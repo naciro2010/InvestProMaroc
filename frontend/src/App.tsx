@@ -5,6 +5,10 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import Dashboard from './pages/Dashboard'
 import ProjetsCRUD from './pages/ProjetsCRUD'
+import ConventionsCRUD from './pages/ConventionsCRUD'
+import FournisseursCRUD from './pages/FournisseursCRUD'
+import AxesAnalytiquesCRUD from './pages/AxesAnalytiquesCRUD'
+import ComptesBancairesCRUD from './pages/ComptesBancairesCRUD'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -93,7 +97,7 @@ function App() {
             path="/conventions"
             element={
               <ProtectedRoute>
-                <ComingSoon title="Conventions de Commissions" />
+                <ConventionsCRUD />
               </ProtectedRoute>
             }
           />
@@ -109,7 +113,7 @@ function App() {
             path="/fournisseurs"
             element={
               <ProtectedRoute>
-                <ComingSoon title="Gestion des Fournisseurs" />
+                <FournisseursCRUD />
               </ProtectedRoute>
             }
           />
@@ -117,7 +121,7 @@ function App() {
             path="/axes-analytiques"
             element={
               <ProtectedRoute>
-                <ComingSoon title="Axes Analytiques" />
+                <AxesAnalytiquesCRUD />
               </ProtectedRoute>
             }
           />
@@ -125,7 +129,7 @@ function App() {
             path="/comptes-bancaires"
             element={
               <ProtectedRoute>
-                <ComingSoon title="Comptes Bancaires" />
+                <ComptesBancairesCRUD />
               </ProtectedRoute>
             }
           />

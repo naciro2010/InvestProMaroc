@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import Dashboard from './pages/Dashboard'
+import ProjetsCRUD from './pages/ProjetsCRUD'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -33,6 +34,24 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" />
+}
+
+// Placeholder component for pages not yet created
+const ComingSoon = ({ title }: { title: string }) => {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">{title}</h1>
+        <p className="text-gray-600">Cette page sera bientôt disponible...</p>
+        <button
+          onClick={() => window.history.back()}
+          className="mt-6 btn-primary"
+        >
+          Retour
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function App() {
@@ -65,6 +84,84 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Référentiels - CRUD Pages */}
+          <Route
+            path="/conventions"
+            element={
+              <ProtectedRoute>
+                <ComingSoon title="Conventions de Commissions" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projets"
+            element={
+              <ProtectedRoute>
+                <ProjetsCRUD />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/fournisseurs"
+            element={
+              <ProtectedRoute>
+                <ComingSoon title="Gestion des Fournisseurs" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/axes-analytiques"
+            element={
+              <ProtectedRoute>
+                <ComingSoon title="Axes Analytiques" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/comptes-bancaires"
+            element={
+              <ProtectedRoute>
+                <ComingSoon title="Comptes Bancaires" />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Operations */}
+          <Route
+            path="/depenses"
+            element={
+              <ProtectedRoute>
+                <ComingSoon title="Dépenses d'Investissement" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/commissions"
+            element={
+              <ProtectedRoute>
+                <ComingSoon title="Commissions d'Intervention" />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* User */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ComingSoon title="Mon Profil" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <ComingSoon title="Paramètres" />
               </ProtectedRoute>
             }
           />

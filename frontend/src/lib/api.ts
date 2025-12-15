@@ -80,9 +80,54 @@ export const conventionsAPI = {
   getAll: () => api.get('/conventions'),
   getActive: () => api.get('/conventions/active'),
   getById: (id: number) => api.get(`/conventions/${id}`),
+  search: (q: string) => api.get(`/conventions/search?q=${q}`),
   create: (data: any) => api.post('/conventions', data),
   update: (id: number, data: any) => api.put(`/conventions/${id}`, data),
   delete: (id: number) => api.delete(`/conventions/${id}`),
+}
+
+// Projets API
+export const projetsAPI = {
+  getAll: () => api.get('/projets'),
+  getActive: () => api.get('/projets/active'),
+  getById: (id: number) => api.get(`/projets/${id}`),
+  search: (q: string) => api.get(`/projets/search?q=${q}`),
+  create: (data: any) => api.post('/projets', data),
+  update: (id: number, data: any) => api.put(`/projets/${id}`, data),
+  delete: (id: number) => api.delete(`/projets/${id}`),
+}
+
+// Fournisseurs API
+export const fournisseursAPI = {
+  getAll: () => api.get('/fournisseurs'),
+  getActive: () => api.get('/fournisseurs/active'),
+  getById: (id: number) => api.get(`/fournisseurs/${id}`),
+  search: (q: string) => api.get(`/fournisseurs/search?q=${q}`),
+  create: (data: any) => api.post('/fournisseurs', data),
+  update: (id: number, data: any) => api.put(`/fournisseurs/${id}`, data),
+  delete: (id: number) => api.delete(`/fournisseurs/${id}`),
+}
+
+// Axes Analytiques API
+export const axesAnalytiquesAPI = {
+  getAll: () => api.get('/axes-analytiques'),
+  getActive: () => api.get('/axes-analytiques/active'),
+  getById: (id: number) => api.get(`/axes-analytiques/${id}`),
+  search: (q: string) => api.get(`/axes-analytiques/search?q=${q}`),
+  create: (data: any) => api.post('/axes-analytiques', data),
+  update: (id: number, data: any) => api.put(`/axes-analytiques/${id}`, data),
+  delete: (id: number) => api.delete(`/axes-analytiques/${id}`),
+}
+
+// Comptes Bancaires API
+export const comptesBancairesAPI = {
+  getAll: () => api.get('/comptes-bancaires'),
+  getActive: () => api.get('/comptes-bancaires/active'),
+  getById: (id: number) => api.get(`/comptes-bancaires/${id}`),
+  search: (q: string) => api.get(`/comptes-bancaires/search?q=${q}`),
+  create: (data: any) => api.post('/comptes-bancaires', data),
+  update: (id: number, data: any) => api.put(`/comptes-bancaires/${id}`, data),
+  delete: (id: number) => api.delete(`/comptes-bancaires/${id}`),
 }
 
 // Users API

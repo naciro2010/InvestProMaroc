@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
+import AppLayout from '@/components/layout/AppLayout'
 import {
   TrendingUp, DollarSign, Briefcase, FileText,
-  ArrowUpRight, ArrowDownRight, Calendar, Users
+  ArrowUpRight, ArrowDownRight, Calendar
 } from 'lucide-react'
 
 const Dashboard = () => {
@@ -44,36 +45,8 @@ const Dashboard = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container-custom py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Tableau de bord
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Bienvenue, {user?.fullName} 👋
-              </p>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <button className="btn-secondary flex items-center space-x-2">
-                <Calendar className="w-4 h-4" />
-                <span>Aujourd'hui</span>
-              </button>
-              <button className="btn-primary flex items-center space-x-2">
-                <FileText className="w-4 h-4" />
-                <span>Nouvelle dépense</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="container-custom py-8">
+    <AppLayout>
+      <div className="space-y-6">
         {/* Stats Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
@@ -154,7 +127,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   )
 }
 

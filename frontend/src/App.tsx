@@ -1,14 +1,15 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import LandingPage from './pages/LandingPage'
+import LandingPageMassari from './pages/LandingPageMassari'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import Dashboard from './pages/Dashboard'
+import DashboardMassari from './pages/DashboardMassari'
 import ProjetsCRUD from './pages/ProjetsCRUD'
 import ConventionsCRUD from './pages/ConventionsCRUD'
 import FournisseursCRUD from './pages/FournisseursCRUD'
 import AxesAnalytiquesCRUD from './pages/AxesAnalytiquesCRUD'
 import ComptesBancairesCRUD from './pages/ComptesBancairesCRUD'
+import DepensesCRUD from './pages/DepensesCRUD'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -64,7 +65,7 @@ function App() {
       <AuthProvider>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<LandingPageMassari />} />
           <Route
             path="/login"
             element={
@@ -87,7 +88,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <DashboardMassari />
               </ProtectedRoute>
             }
           />
@@ -139,7 +140,7 @@ function App() {
             path="/depenses"
             element={
               <ProtectedRoute>
-                <ComingSoon title="Dépenses d'Investissement" />
+                <DepensesCRUD />
               </ProtectedRoute>
             }
           />

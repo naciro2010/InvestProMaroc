@@ -1,23 +1,26 @@
-# InvestPro Maroc - Backend
+# InvestPro Maroc - Backend (Kotlin + Spring Boot + Gradle)
 
-Backend API pour la gestion des dépenses d'investissement et calcul des commissions d'intervention.
+Backend API moderne pour la gestion des dépenses d'investissement et calcul des commissions d'intervention.
 
 ## 🛠️ Stack Technique
 
-- **Java 21**
-- **Spring Boot 3.2.5**
-- **PostgreSQL** (via Spring Data JPA)
-- **Flyway** (migrations de base de données)
-- **Spring Security** (JWT Authentication)
-- **Swagger/OpenAPI** (documentation API)
+- **Kotlin 1.9.23** - Langage moderne et concis
+- **Spring Boot 3.2.5** - Framework application
+- **Java 21** - Runtime JVM
+- **Gradle 8.7** - Build tool avec Kotlin DSL
+- **PostgreSQL** - Base de données
+- **Flyway** - Migrations de base de données
+- **Spring Security + JWT** - Authentification
+- **Testcontainers** - Tests d'intégration
+- **Swagger/OpenAPI** - Documentation API
 
 ## 🚀 Démarrage Rapide
 
 ### Prérequis
 
-- Java 21
-- Maven 3.9+
-- PostgreSQL 14+
+- Java 21+
+- Docker (pour PostgreSQL et tests)
+- Gradle 8.7+ (ou utilisez le wrapper inclus)
 
 ### Installation locale
 
@@ -29,41 +32,62 @@ cd InvestProMaroc/backend
 
 2. **Configurer PostgreSQL**
 ```bash
-# Créer la base de données
-createdb investpro
-
-# Ou via psql
-psql -U postgres -c "CREATE DATABASE investpro;"
+# Via Docker (recommandé)
+docker run --name investpro-postgres \
+  -e POSTGRES_DB=investpro \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  -d postgres:16-alpine
 ```
 
-3. **Configurer les variables d'environnement**
+3. **Lancer l'application**
 ```bash
-# Copier l'exemple
-cp .env.example .env
+# Avec Gradle wrapper
+./gradlew bootRun
 
-# Éditer avec vos valeurs
-vim .env
-```
-
-4. **Lancer l'application**
-```bash
-mvn spring-boot:run
+# Ou avec Gradle installé
+gradle bootRun
 ```
 
 L'API sera disponible sur : http://localhost:8080
 
 ## 📚 Documentation API
 
-Une fois l'application lancée, accédez à :
+Une fois l'application lancée :
 
 - **Swagger UI** : http://localhost:8080/swagger-ui.html
 - **API Docs (JSON)** : http://localhost:8080/api-docs
+
+## 🧪 Tests
+
+### Lancer tous les tests
+
+```bash
+./gradlew test
+```
+
+### Tests d'intégration avec Testcontainers
+
+Les tests utilisent automatiquement des containers PostgreSQL :
+
+```bash
+./gradlew test --tests "ma.investpro.integration.*"
+```
+
+### Rapport de couverture
+
+```bash
+./gradlew test jacocoTestReport
+# Rapport dans: build/reports/jacoco/test/html/index.html
+```
 
 ## 🐳 Docker
 
 ### Build l'image
 
 ```bash
+# Depuis la racine du projet
 docker build -t investpro-backend .
 ```
 
@@ -80,12 +104,7 @@ docker-compose up -d
 
 Consultez le guide complet : [RAILWAY_DEPLOYMENT.md](../RAILWAY_DEPLOYMENT.md)
 
-Étapes rapides :
-1. Créer un compte sur https://railway.app
-2. Connecter votre repository GitHub
-3. Ajouter un plugin PostgreSQL
-4. Configurer les variables d'environnement
-5. Déployer automatiquement
+**Important** : Le backend utilise maintenant **Gradle** au lieu de Maven. Railway détectera automatiquement le `build.gradle.kts`.
 
 ## 🗄️ Base de données
 
@@ -93,51 +112,44 @@ Consultez le guide complet : [RAILWAY_DEPLOYMENT.md](../RAILWAY_DEPLOYMENT.md)
 
 Les migrations sont dans `src/main/resources/db/migration/`
 
-- `V1__*` : Schéma initial
-- `V2__*` : Ajouts/modifications ultérieures
-
-### Exécuter les migrations manuellement
-
 ```bash
-mvn flyway:migrate
+# Appliquer les migrations
+./gradlew flywayMigrate
+
+# Nettoyer la base de données
+./gradlew flywayClean
 ```
 
-## 🔐 Sécurité
+## 🔐 Sécurité & JWT
 
-### JWT Authentication
+### Configuration JWT
 
-L'API utilise JWT pour l'authentification :
-
-1. **Login** : `POST /api/auth/login`
-2. Recevoir `accessToken` et `refreshToken`
-3. Utiliser `accessToken` dans le header : `Authorization: Bearer <token>`
-
-### Variables de sécurité
+Variables d'environnement requises :
 
 ```properties
-app.jwt.secret=<secret-key>
-app.jwt.expiration-ms=86400000        # 24 heures
-app.jwt.refresh-expiration-ms=604800000  # 7 jours
+APP_JWT_SECRET=<votre-secret-base64>
+APP_JWT_EXPIRATION_MS=86400000        # 24 heures
+APP_JWT_REFRESH_EXPIRATION_MS=604800000  # 7 jours
 ```
 
-## 🧪 Tests
+### Générer un secret JWT
 
 ```bash
-# Lancer les tests
-mvn test
+# Option 1: OpenSSL
+openssl rand -base64 64
 
-# Avec couverture
-mvn test jacoco:report
+# Option 2: Kotlin
+kotlin -e "println(java.util.Base64.getEncoder().encodeToString(java.security.SecureRandom().generateSeed(64)))"
 ```
 
 ## 📦 Build Production
 
 ```bash
 # Build le JAR
-mvn clean package
+./gradlew clean bootJar
 
-# Le JAR sera dans target/
-java -jar target/investpro-backend-1.0.0.jar
+# Le JAR sera dans build/libs/
+java -jar build/libs/investpro-backend-1.0.0.jar
 ```
 
 ## 🔧 Configuration
@@ -146,10 +158,11 @@ java -jar target/investpro-backend-1.0.0.jar
 
 - **default** : Développement local
 - **prod** : Production (Railway, etc.)
+- **test** : Tests (avec Testcontainers)
 
 ```bash
-# Lancer avec le profil prod
-java -jar app.jar --spring.profiles.active=prod
+# Lancer avec profil spécifique
+./gradlew bootRun --args='--spring.profiles.active=prod'
 ```
 
 ### Variables d'environnement importantes
@@ -157,61 +170,94 @@ java -jar app.jar --spring.profiles.active=prod
 | Variable | Description | Défaut |
 |----------|-------------|--------|
 | `DATABASE_URL` | URL PostgreSQL | `jdbc:postgresql://localhost:5432/investpro` |
-| `JWT_SECRET` | Secret pour JWT | *À configurer* |
-| `CORS_ALLOWED_ORIGINS` | Origines CORS autorisées | `http://localhost:5173` |
-| `PORT` | Port du serveur | `8080` |
+| `JWT_SECRET` | Secret JWT (Base64) | *À configurer* |
+| `CORS_ALLOWED_ORIGINS` | Origines CORS | `http://localhost:5173` |
+| `PORT` | Port serveur | `8080` |
 
 ## 📊 Endpoints principaux
 
 ### Authentication
-- `POST /api/auth/login` - Connexion
 - `POST /api/auth/register` - Inscription
+- `POST /api/auth/login` - Connexion
 - `POST /api/auth/refresh` - Rafraîchir le token
-
-### Référentiels
-- `GET/POST/PUT/DELETE /api/conventions` - Conventions
-- `GET/POST/PUT/DELETE /api/projets` - Projets
-- `GET/POST/PUT/DELETE /api/fournisseurs` - Fournisseurs
-- `GET/POST/PUT/DELETE /api/axes-analytiques` - Axes analytiques
-- `GET/POST/PUT/DELETE /api/comptes-bancaires` - Comptes bancaires
 
 ### Monitoring
 - `GET /actuator/health` - Health check
-- `GET /actuator/info` - Informations de l'application
+- `GET /actuator/info` - Informations
+
+## 🎯 Avantages de Kotlin
+
+### Code plus concis
+```kotlin
+// Kotlin - Data class
+data class User(val id: Long, val username: String, val email: String)
+
+// vs Java - nécessite getters, setters, equals, hashCode, toString
+```
+
+### Null Safety
+```kotlin
+val user: User? = findUser()  // Nullable explicite
+user?.email                     // Safe call
+user!!.email                    // Non-null assertion
+```
+
+### Extensions Functions
+```kotlin
+fun User.toDTO() = UserDTO(id, username, email)
+```
+
+### Coroutines (async/await intégré)
+```kotlin
+suspend fun fetchData() = coroutineScope {
+    val result = async { repository.findAll() }
+    result.await()
+}
+```
 
 ## 🐛 Debugging
 
 ### Logs
 
-Niveaux de logs configurables dans `application.properties` :
+Configuration dans `application.properties` :
 
 ```properties
 logging.level.ma.investpro=DEBUG
 logging.level.org.springframework.web=DEBUG
-logging.level.org.hibernate.SQL=DEBUG
 ```
 
-### Mode Debug
+### Mode Debug IntelliJ IDEA
 
-```bash
-mvn spring-boot:run -Ddebug
-```
+1. Ouvrir le projet dans IntelliJ
+2. Run → Debug 'InvestProApplication'
+3. Placer des breakpoints
 
 ## 🤝 Contribution
 
 1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
-3. Commit vos changements (`git commit -m 'Add AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
+2. Créer une branche (`git checkout -b feature/AmazingFeature`)
+3. Commit (`git commit -m 'Add AmazingFeature'`)
+4. Push (`git push origin feature/AmazingFeature`)
 5. Ouvrir une Pull Request
 
-## 📝 License
+## 📝 Migration Java → Kotlin
 
-Ce projet est propriétaire - InvestPro Maroc © 2024
+Ce backend a été migré de Java + Maven vers Kotlin + Gradle pour :
 
-## 🆘 Support
+✅ **Code plus concis** (-40% de lignes)
+✅ **Null safety** (moins de NullPointerException)
+✅ **Data classes** (moins de boilerplate)
+✅ **Coroutines** (async simplifié)
+✅ **Extension functions** (code plus expressif)
+✅ **Testcontainers** (tests d'intégration robustes)
 
-Pour toute question ou problème :
+## 📧 Support
+
+Pour toute question :
 - Ouvrir une issue sur GitHub
-- Consulter la documentation Swagger
-- Vérifier les logs de l'application
+- Documentation Swagger
+- Logs de l'application
+
+## 📜 License
+
+Propriétaire - InvestPro Maroc © 2024

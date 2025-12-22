@@ -1,16 +1,23 @@
-# Dockerfile pour Railway.app - Build depuis la racine du projet
-# Ce fichier permet à Railway de builder le backend depuis la racine
+# Dockerfile pour Railway.app - Backend Kotlin avec Gradle
+# Multi-stage build pour optimiser la taille
 
-# Multi-stage build pour optimiser la taille de l'image
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
+# Stage 1: Build
+FROM gradle:8.7-jdk21-alpine AS build
 
 WORKDIR /app
 
-# Copier tout le contenu du backend
-COPY backend/ .
+# Copier les fichiers Gradle
+COPY backend/build.gradle.kts backend/settings.gradle.kts ./
+COPY backend/gradle ./gradle
+
+# Télécharger les dépendances (cache layer)
+RUN gradle dependencies --no-daemon || true
+
+# Copier le code source
+COPY backend/src ./src
 
 # Build l'application
-RUN mvn clean package -DskipTests -B
+RUN gradle clean bootJar --no-daemon
 
 # Stage de production - image légère
 FROM eclipse-temurin:21-jre-alpine
@@ -25,7 +32,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 # Copier le JAR depuis le stage de build
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/build/libs/*.jar app.jar
 
 # Exposer le port
 EXPOSE 8080

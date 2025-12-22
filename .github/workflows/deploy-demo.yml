@@ -3,6 +3,7 @@ name: Deploy Demo to GitHub Pages
 on:
   push:
     branches:
+      - main
       - claude/deploy-static-demo-page-TgOpe
   workflow_dispatch:
 

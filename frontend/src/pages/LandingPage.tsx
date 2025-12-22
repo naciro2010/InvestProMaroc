@@ -20,26 +20,26 @@ const LandingPage = () => {
   const features = [
     {
       icon: <TrendingUp className="w-8 h-8" />,
-      title: 'Gestion Intelligente',
-      description: 'Suivez vos dépenses d\'investissement en temps réel avec des tableaux de bord intuitifs',
+      title: 'Gestion Complète',
+      description: '7 modules métier: Conventions, Projets, Fournisseurs, Axes Analytiques, Comptes Bancaires, Dépenses et Commissions',
       color: 'from-blue-500 to-cyan-500'
     },
     {
       icon: <BarChart3 className="w-8 h-8" />,
       title: 'Calcul Automatique',
-      description: 'Calculez automatiquement les commissions d\'intervention selon vos conventions',
+      description: 'Commissions calculées automatiquement avec historisation des taux (HT, TTC) et génération de la TVA',
       color: 'from-purple-500 to-pink-500'
     },
     {
       icon: <Shield className="w-8 h-8" />,
-      title: 'Sécurité Maximale',
-      description: 'Vos données sont protégées avec un chiffrement de niveau entreprise',
+      title: 'Conformité Maroc',
+      description: 'Validation ICE (15 chiffres), IF, RIB (24 chiffres), retenues fiscales automatiques (TVA, IS, Garantie)',
       color: 'from-green-500 to-emerald-500'
     },
     {
       icon: <Zap className="w-8 h-8" />,
-      title: 'Performance Optimale',
-      description: 'Une application rapide et réactive pour une productivité maximale',
+      title: 'API REST Moderne',
+      description: '28+ endpoints REST avec Kotlin, Spring Boot 3.2.5, JWT, et documentation Swagger complète',
       color: 'from-orange-500 to-red-500'
     }
   ]
@@ -52,12 +52,14 @@ const LandingPage = () => {
   ]
 
   const benefits = [
-    'Conformité totale avec la réglementation marocaine',
-    'TVA 20%, IF, ICE et retenues automatiques',
-    'Export Excel personnalisé et professionnel',
-    'Rapports détaillés et tableaux de bord',
-    'Multi-projets et multi-fournisseurs',
-    'Historique complet des opérations'
+    '🎯 Gestion Conventions - Taux de commission, périodes de validité, bases de calcul (HT/TTC)',
+    '🏗️ Projets d\'Investissement - Suivi multi-projets avec responsables et statuts',
+    '🏢 Fournisseurs - Base complète avec validation ICE (15 chiffres), IF et gestion non-résidents',
+    '📊 Axes Analytiques - Dimensions analytiques pour reporting multidimensionnel',
+    '🏦 Comptes Bancaires - Gestion avec validation RIB marocain (24 chiffres)',
+    '💸 Dépenses - TVA 20% automatique, retenues fiscales (IS 10%, Garantie, Non-résidents)',
+    '📈 Commissions - Calcul automatique avec historisation des taux au moment de la saisie',
+    '📋 Exports Excel - Rapports détaillés et tableaux de bord personnalisés'
   ]
 
   return (

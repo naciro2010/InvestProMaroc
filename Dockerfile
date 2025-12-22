@@ -6,14 +6,8 @@ FROM maven:3.9-eclipse-temurin-21-alpine AS build
 
 WORKDIR /app
 
-# Copier les fichiers de configuration Maven depuis le dossier backend
-COPY backend/pom.xml .
-
-# Télécharger les dépendances (mise en cache si pom.xml n'a pas changé)
-RUN mvn dependency:go-offline -B
-
-# Copier le code source du backend
-COPY backend/src ./src
+# Copier tout le contenu du backend
+COPY backend/ .
 
 # Build l'application
 RUN mvn clean package -DskipTests -B

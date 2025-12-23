@@ -799,25 +799,25 @@ L'application intègre les spécificités fiscales marocaines :
 
 | Poste | Détail | Montant HT |
 |-------|--------|------------|
-| **Conception** | Architecture, maquettes, spécifications | 15 000 MAD |
-| **Développement Backend** | Kotlin, Spring Boot, PostgreSQL, API REST | 80 000 MAD |
-| **Développement Frontend** | React, UI/UX, intégration | 60 000 MAD |
-| **Reporting & Exports** | Dashboard, statistiques, Excel | 30 000 MAD |
-| **Tests & Qualité** | Tests unitaires, intégration, sécurité | 20 000 MAD |
-| **Déploiement & DevOps** | Railway, CI/CD, monitoring | 15 000 MAD |
-| **Formation** | 4 journées (2 admins + 2 users) | 12 000 MAD |
-| **Documentation** | Technique, utilisateur, API | 10 000 MAD |
-| **Support 3 mois** | Hotline, correctifs, assistance | 18 000 MAD |
-| **TOTAL HT** | | **260 000 MAD** |
-| **TVA 20%** | | **52 000 MAD** |
-| **TOTAL TTC** | | **312 000 MAD** |
+| **Conception** | Architecture, maquettes, spécifications | X MAD |
+| **Développement Backend** | Kotlin, Spring Boot, PostgreSQL, API REST | X MAD |
+| **Développement Frontend** | React, UI/UX, intégration | X MAD |
+| **Reporting & Exports** | Dashboard, statistiques, Excel | X MAD |
+| **Tests & Qualité** | Tests unitaires, intégration, sécurité | X 0 MAD |
+| **Déploiement & DevOps** | Railway, CI/CD, monitoring | X MAD |
+| **Formation** | 4 journées (2 admins + 2 users) | X MAD |
+| **Documentation** | Technique, utilisateur, API | X MAD |
+| **Support 3 mois** | Hotline, correctifs, assistance | X MAD |
+| **TOTAL HT** | | **X MAD** |
+| **TVA 20%** | | **X MAD** |
+| **TOTAL TTC** | | **X MAD** |
 
 ### 10.2 Modalités de Paiement
 
 **Échéancier proposé :**
-- 30% à la signature du contrat : **78 000 MAD HT** (93 600 MAD TTC)
-- 40% à la fin du développement (S11) : **104 000 MAD HT** (124 800 MAD TTC)
-- 30% après recette et mise en production : **78 000 MAD HT** (93 600 MAD TTC)
+- 30% à la signature du contrat : 
+- 40% à la fin du développement (:
+- 30% après recette et mise en production :
 
 **Conditions :**
 - Paiement par virement bancaire
@@ -869,7 +869,7 @@ L'application intègre les spécificités fiscales marocaines :
 
 - Nom de domaine personnalisé (optionnel) : ~100 MAD/an
 
-**Total exploitation : ~50 MAD/mois** (plan gratuit Railway)
+**Total exploitation : ~200 MAD/mois** (plan gratuit Railway)
 
 ---
 
@@ -1111,29 +1111,9 @@ Ce devis est valable **60 jours** à compter de sa date d'émission.
 
 ---
 
-## ANNEXES
+*
 
-### Annexe A : Exemple de Calcul de Commission
-
-**Scénario :**
-- Dépense HT : 100 000 MAD
-- TVA 20% : 20 000 MAD
-- Dépense TTC : 120 000 MAD
-- Convention : Taux 2,5%, Base HT, TVA 20%
-
-**Calcul automatique :**
-1. Base de calcul = 100 000 MAD (HT)
-2. Commission HT = 100 000 × 2,5% = 2 500 MAD
-3. TVA Commission = 2 500 × 20% = 500 MAD
-4. Commission TTC = 2 500 + 500 = **3 000 MAD**
-
-**Retenues (exemple fournisseur non-résident) :**
-- Retenue TVA : 20 000 MAD
-- Retenue IS Tiers (10%) : 10 000 MAD
-- Retenue Garantie (10%) : 10 000 MAD
-- **Net à payer : 120 000 - 40 000 = 80 000 MAD**
-
-### Annexe B : Captures d'Écran (Maquettes)
+### Annexe  : Captures d'Écran (Maquettes)
 
 *[Maquettes UI/UX seront fournies pendant la phase de conception]*
 

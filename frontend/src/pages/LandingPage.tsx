@@ -59,7 +59,11 @@ const LandingPage = () => {
     '🏦 Comptes Bancaires - Gestion avec validation RIB marocain (24 chiffres)',
     '💸 Dépenses - TVA 20% automatique, retenues fiscales (IS 10%, Garantie, Non-résidents)',
     '📈 Commissions - Calcul automatique avec historisation des taux au moment de la saisie',
-    '📋 Exports Excel - Rapports détaillés et tableaux de bord personnalisés'
+    '🔍 Recherche Avancée - Filtrage par période, projet, fournisseur, convention, axe, compte',
+    '📊 Reporting Complet - Statistiques détaillées par projet, fournisseur, période',
+    '💰 Suivi Paiements - Taux de paiement, montants payés/en attente, historique complet',
+    '📈 Dashboard Global - Vue d\'ensemble avec top projets, top fournisseurs, KPIs',
+    '📋 Exports Excel - Dépenses, commissions et statistiques exportables en un clic'
   ]
 
   return (

@@ -149,9 +149,40 @@ POST   /api/depenses              → Créer (USER/MANAGER/ADMIN)
 GET    /api/commissions              → Liste toutes
 GET    /api/commissions/year/{year}  → Par année
 GET    /api/commissions/depense/{id} → D'une dépense
+POST   /api/commissions              → Créer (ADMIN/MANAGER)
 ```
 
-**Plus 15 autres endpoints** - Voir Swagger UI
+### 📈 Reporting & Statistiques
+```
+POST   /api/reporting/depenses/search         → Recherche avancée dépenses
+POST   /api/reporting/commissions/search      → Recherche avancée commissions
+GET    /api/reporting/dashboard               → Dashboard global (KPIs)
+GET    /api/reporting/depenses/stats/periode  → Stats dépenses par période
+GET    /api/reporting/depenses/stats/projet   → Stats dépenses par projet
+GET    /api/reporting/depenses/stats/fournisseur → Stats dépenses par fournisseur
+GET    /api/reporting/commissions/stats/periode  → Stats commissions par période
+GET    /api/reporting/commissions/stats/projet   → Stats commissions par projet
+GET    /api/reporting/commissions/stats/fournisseur → Stats commissions par fournisseur
+GET    /api/reporting/commissions/stats/convention  → Stats commissions par convention
+GET    /api/reporting/paiements/stats         → Stats paiements (taux, montants)
+```
+
+### 📥 Exports Excel
+```
+POST   /api/export/excel/depenses                  → Export dépenses (critères)
+GET    /api/export/excel/depenses/all              → Export toutes dépenses
+POST   /api/export/excel/commissions               → Export commissions (critères)
+GET    /api/export/excel/commissions/all           → Export toutes commissions
+GET    /api/export/excel/stats/depenses/periode    → Export stats dépenses/période
+GET    /api/export/excel/stats/depenses/projet     → Export stats dépenses/projet
+GET    /api/export/excel/stats/depenses/fournisseur → Export stats dépenses/fournisseur
+GET    /api/export/excel/stats/commissions/periode  → Export stats commissions/période
+GET    /api/export/excel/stats/commissions/projet   → Export stats commissions/projet
+GET    /api/export/excel/stats/commissions/fournisseur → Export stats commissions/fournisseur
+GET    /api/export/excel/stats/commissions/convention  → Export stats commissions/convention
+```
+
+**Total: 45+ endpoints** - Documentation complète sur Swagger UI
 
 ---
 
@@ -246,12 +277,14 @@ Frontend (React)
 ## 📊 Statistiques
 
 ```
-📝 Lignes Kotlin:     ~2,100 lignes
+📝 Lignes Kotlin:     ~4,500 lignes
 🗑️  Code supprimé:    -3,500 lignes Java
 📉 Réduction:         -40% de code
 
 🎯 Entités:           7 entités métier
-🔌 Endpoints:         28+ REST endpoints
+🔌 Endpoints:         45+ REST endpoints
+📊 Reporting:         12+ endpoints statistiques
+📥 Exports Excel:     11+ endpoints export
 🧪 Tests:             Testcontainers intégration
 📚 Documentation:     Swagger/OpenAPI complète
 ```

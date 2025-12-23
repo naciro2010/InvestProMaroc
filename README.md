@@ -1,80 +1,285 @@
-# InvestPro Maroc - Gestion des Dépenses d'Investissement
+# 🏦 InvestPro Maroc - Gestion Intelligente des Dépenses d'Investissement
+
+> **Plateforme complète de gestion des dépenses d'investissement et calcul automatique des commissions d'intervention**
+
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.23-purple?logo=kotlin)](https://kotlinlang.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green?logo=spring)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://react.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
+
+---
 
 ## 📋 Description
 
-Application web de gestion des dépenses d'investissement et de calcul des commissions d'intervention.
+Application web moderne de **gestion des dépenses d'investissement** et de **calcul automatique des commissions d'intervention**, conçue pour le secteur public et les grands projets au Maroc.
 
-### Fonctionnalités principales
+### ✨ Fonctionnalités Principales
 
-- ✅ **Gestion des référentiels** : Conventions, Projets, Fournisseurs, Axes analytiques, Comptes bancaires
-- ✅ **Saisie et suivi des dépenses** : Factures, paiements, retenues
-- ✅ **Calcul automatique des commissions** : Selon conventions paramétrées
-- ✅ **Reporting avancé** : États détaillés, export Excel
+#### 🎯 Gestion Complète des Référentiels
+- ✅ **Conventions** - Configuration des taux de commission et périodes de validité
+- ✅ **Projets** - Gestion des projets d'investissement avec responsables et statuts
+- ✅ **Fournisseurs** - Base complète avec validation ICE (15 chiffres) et IF
+- ✅ **Axes Analytiques** - Dimensions analytiques pour reporting multidimensionnel
+- ✅ **Comptes Bancaires** - Gestion avec validation RIB marocain (24 chiffres)
 
-### Spécificités Maroc
+#### 💸 Gestion des Dépenses d'Investissement
+- ✅ **Saisie factures** - Enregistrement détaillé avec validation
+- ✅ **Calculs automatiques** - TVA 20%, montants HT/TTC
+- ✅ **Retenues fiscales** - TVA, IS tiers 10%, garantie 10%, non-résidents
+- ✅ **Suivi paiements** - Statuts payé/non payé, références, dates
+- ✅ **Filtres avancés** - Par année, projet, fournisseur, statut paiement
 
-- TVA 20% (taux standard)
-- IF et ICE pour fournisseurs
-- Retenue garantie 10%
-- IS tiers 10% pour non-résidents
-- RIB 24 caractères format marocain
+#### 📊 Calcul Automatique des Commissions
+- ✅ **Calcul intelligent** - Commission = Base × Taux + TVA
+- ✅ **Bases multiples** - HT, TTC ou autre base paramétrable
+- ✅ **Historisation** - Conservation des taux au moment du calcul
+- ✅ **Reporting** - États par convention, année, projet
 
-## 🏗️ Architecture
+#### 📈 Reporting et Exports
+- ✅ **Tableaux de bord** - KPIs en temps réel
+- ✅ **Export Excel** - Dépenses, commissions, états détaillés
+- ✅ **Statistiques** - Répartition par projet, fournisseur, période
 
-### Backend
-- **Framework** : Spring Boot 3.2+
-- **Database** : PostgreSQL 15+
-- **Migrations** : Flyway
-- **Sécurité** : JWT
-- **API** : REST
+---
 
-### Frontend
-- **Framework** : React 18 + Vite
-- **UI** : TailwindCSS + Shadcn/ui
-- **State** : React Query
-- **Forms** : React Hook Form + Zod
-- **Export** : ExcelJS
+## 🛠️ Stack Technique
 
-## 🚀 Démarrage rapide
-
-### Prérequis
-
-- Java 21+
-- Node.js 20+
-- PostgreSQL 15+
-- Maven 3.9+
-
-### Installation
-
-#### Backend
-```bash
-cd backend
-./mvnw clean install
-./mvnw spring-boot:run
+### Backend - Kotlin Spring Boot
+```
+🎨 Kotlin 1.9.23          → Langage moderne, concis, null-safe
+🚀 Spring Boot 3.2.5      → Framework enterprise
+🐘 Gradle 8.7             → Build tool avec Kotlin DSL
+🐘 PostgreSQL 16          → Base de données
+🔄 Flyway                 → Migrations automatiques
+🔐 JWT + Spring Security  → Authentification sécurisée
+📚 Swagger/OpenAPI        → Documentation API
+🧪 Testcontainers         → Tests d'intégration
+☕ Java 21 LTS            → Runtime JVM
 ```
 
-#### Frontend
+### Frontend - React Modern
+```
+⚛️  React 18              → Library UI
+⚡ Vite                   → Build ultra-rapide
+🎨 TailwindCSS            → Design system
+🔄 React Query            → State management
+📋 React Hook Form + Zod  → Validation
+📊 Recharts               → Graphiques
+```
+
+---
+
+## 🚀 Démarrage Rapide
+
+### Prérequis
+- Java 21+
+- Node.js 20+
+- PostgreSQL 16+ (ou Docker)
+
+### 1️⃣ PostgreSQL avec Docker
+```bash
+docker run --name investpro-postgres \
+  -e POSTGRES_DB=investpro \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  -d postgres:16-alpine
+```
+
+### 2️⃣ Backend
+```bash
+cd backend
+./gradlew bootRun
+# API sur http://localhost:8080
+# Swagger: http://localhost:8080/swagger-ui.html
+```
+
+### 3️⃣ Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
+# UI sur http://localhost:5173
 ```
 
-### Configuration
+---
 
-Créer `backend/src/main/resources/application-local.properties` :
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/investpro
-spring.datasource.username=postgres
-spring.datasource.password=your_password
+## 📚 API Endpoints
+
+### 🔐 Authentification
+```
+POST   /api/auth/register     → Inscription
+POST   /api/auth/login        → Connexion (JWT)
+POST   /api/auth/refresh      → Rafraîchir token
 ```
 
-## 📚 Documentation
+### 📜 Conventions
+```
+GET    /api/conventions        → Liste toutes
+GET    /api/conventions/active → Actives uniquement
+POST   /api/conventions        → Créer (ADMIN)
+PUT    /api/conventions/{id}   → Modifier (ADMIN)
+DELETE /api/conventions/{id}   → Supprimer (ADMIN)
+```
 
-- [Guide Utilisateur](docs/USER_GUIDE.md)
-- [API Documentation](http://localhost:8080/swagger-ui.html)
-- [Architecture](docs/ARCHITECTURE.md)
+### 🏗️ Projets
+```
+GET    /api/projets            → Liste tous
+GET    /api/projets/active     → Actifs uniquement
+POST   /api/projets            → Créer (ADMIN/MANAGER)
+```
 
-## 📄 Licence
+### 🏢 Fournisseurs
+```
+GET    /api/fournisseurs                → Liste tous
+GET    /api/fournisseurs/non-residents  → Non-résidents
+POST   /api/fournisseurs                → Créer (ADMIN/MANAGER)
+```
 
-Propriétaire - Tous droits réservés
+### 💸 Dépenses
+```
+GET    /api/depenses              → Liste toutes
+GET    /api/depenses/unpaid       → Non payées
+GET    /api/depenses/year/{year}  → Par année
+POST   /api/depenses              → Créer (USER/MANAGER/ADMIN)
+```
+
+### 📊 Commissions
+```
+GET    /api/commissions              → Liste toutes
+GET    /api/commissions/year/{year}  → Par année
+GET    /api/commissions/depense/{id} → D'une dépense
+```
+
+**Plus 15 autres endpoints** - Voir Swagger UI
+
+---
+
+## 🎯 Spécificités Maroc
+
+### Conformité Fiscale
+- ✅ **TVA 20%** - Taux standard automatique
+- ✅ **ICE** - Validation 15 chiffres
+- ✅ **IF** - Identifiant Fiscal
+- ✅ **RIB** - Format 24 chiffres validé
+- ✅ **IS Tiers 10%** - Pour non-résidents
+- ✅ **Retenue Garantie** - Paramétrable
+
+### Devise
+- 💵 **MAD** (Dirham) par défaut
+- 🌍 Multi-devises supporté
+
+---
+
+## 🧪 Tests
+
+```bash
+cd backend
+
+# Tests avec PostgreSQL réel (Testcontainers)
+./gradlew test
+
+# Rapport couverture
+./gradlew jacocoTestReport
+```
+
+**Tests disponibles :**
+- ✅ Authentification (register, login, refresh)
+- ✅ Connexion PostgreSQL
+- ✅ Validation business rules
+
+---
+
+## ☁️ Déploiement
+
+### 🚂 Railway.app (Backend)
+**Guide complet** : [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)
+
+1. Connecter GitHub à Railway
+2. Ajouter PostgreSQL plugin
+3. Variables d'environnement :
+   ```
+   SPRING_PROFILES_ACTIVE=prod
+   JWT_SECRET=<générer avec openssl rand -base64 64>
+   CORS_ALLOWED_ORIGINS=https://naciro2010.github.io
+   ```
+4. Déploiement automatique ! ✨
+
+**Coût** : ~$5/mois (plan gratuit Railway)
+
+### 🌐 GitHub Pages (Frontend)
+Déjà configuré ! Push sur `main` déclenche le déploiement.
+
+**URL Démo** : https://naciro2010.github.io/InvestProMaroc/
+
+---
+
+## 📖 Documentation
+
+- **[KOTLIN_MIGRATION.md](KOTLIN_MIGRATION.md)** - Migration Java→Kotlin
+- **[backend/README.md](backend/README.md)** - Doc backend détaillée
+- **[RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)** - Guide Railway
+- **[DEMO_DEPLOYMENT.md](DEMO_DEPLOYMENT.md)** - Guide GitHub Pages
+
+---
+
+## 🏗️ Architecture
+
+```
+Backend (Kotlin)
+├── Entities      → 7 entités métier
+├── DTOs          → Data Transfer Objects
+├── Repositories  → Spring Data JPA
+├── Services      → Business logic + calculs
+├── Controllers   → REST API (28+ endpoints)
+└── Security      → JWT + Rôles (ADMIN/MANAGER/USER)
+
+Frontend (React)
+├── Pages         → Dashboard, CRUD, Auth
+├── Components    → UI réutilisables
+├── Services      → API calls
+└── Stores        → State management
+```
+
+---
+
+## 📊 Statistiques
+
+```
+📝 Lignes Kotlin:     ~2,100 lignes
+🗑️  Code supprimé:    -3,500 lignes Java
+📉 Réduction:         -40% de code
+
+🎯 Entités:           7 entités métier
+🔌 Endpoints:         28+ REST endpoints
+🧪 Tests:             Testcontainers intégration
+📚 Documentation:     Swagger/OpenAPI complète
+```
+
+---
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créer branche (`git checkout -b feature/AmazingFeature`)
+3. Commit (`git commit -m 'Add AmazingFeature'`)
+4. Push (`git push origin feature/AmazingFeature`)
+5. Ouvrir Pull Request
+
+---
+
+## 📜 Licence
+
+**Propriétaire** - © 2024 InvestPro Maroc
+
+---
+
+## 📧 Support
+
+- **GitHub Issues** : [Ouvrir une issue](https://github.com/naciro2010/InvestProMaroc/issues)
+- **API Docs** : http://localhost:8080/swagger-ui.html
+- **Email** : contact@investpro.ma
+
+---
+
+**Made with** 🎨 **Kotlin** • 🚀 **Spring Boot** • ⚛️ **React** • 🐘 **PostgreSQL**

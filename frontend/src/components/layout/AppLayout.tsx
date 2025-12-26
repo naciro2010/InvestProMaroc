@@ -45,7 +45,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={{ duration: 0.3 }}
-            className="fixed left-0 top-0 h-full w-70 bg-white border-r border-gray-200 z-40 overflow-y-auto"
+            className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-gray-200 z-40 overflow-y-auto"
           >
             {/* Logo */}
             <div className="p-6 border-b border-gray-200">
@@ -140,7 +140,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-70' : 'ml-0'}`}>
+      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-[280px]' : 'ml-0'}`}>
         {/* Header */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
           <div className="px-6 py-4 flex items-center justify-between">

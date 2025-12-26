@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ToastProvider } from './contexts/ToastContext'
 import LandingPageMassari from './pages/LandingPageMassari'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -63,7 +64,8 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
+        <ToastProvider>
+          <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPageMassari />} />
           <Route
@@ -173,7 +175,8 @@ function App() {
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+          </Routes>
+        </ToastProvider>
       </AuthProvider>
     </Router>
   )

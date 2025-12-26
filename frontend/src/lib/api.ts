@@ -23,6 +23,15 @@ api.interceptors.request.use(
   }
 )
 
+// Event pour envoyer les notifications d'erreur
+const dispatchToastEvent = (message: string, type: 'error' | 'success' | 'warning' | 'info') => {
+  window.dispatchEvent(
+    new CustomEvent('showToast', {
+      detail: { message, type }
+    })
+  )
+}
+
 // Response interceptor pour gérer les erreurs
 api.interceptors.response.use(
   (response) => response,
@@ -52,6 +61,30 @@ api.interceptors.response.use(
         localStorage.removeItem('user')
         window.location.href = '/login'
       }
+    }
+
+    // Si erreur 403 (Forbidden) - Pas de permission
+    if (error.response?.status === 403) {
+      dispatchToastEvent(
+        '❌ Vous n\'avez pas les droits nécessaires pour effectuer cette action. Seuls les administrateurs peuvent modifier ou supprimer cet élément.',
+        'error'
+      )
+    }
+
+    // Si erreur 404 (Not Found)
+    if (error.response?.status === 404) {
+      dispatchToastEvent(
+        '⚠️ L\'élément demandé n\'a pas été trouvé.',
+        'warning'
+      )
+    }
+
+    // Si erreur 500 (Server Error)
+    if (error.response?.status >= 500) {
+      dispatchToastEvent(
+        '🔥 Une erreur serveur s\'est produite. Veuillez réessayer plus tard.',
+        'error'
+      )
     }
 
     return Promise.reject(error)

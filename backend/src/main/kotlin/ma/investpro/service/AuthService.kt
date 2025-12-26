@@ -23,14 +23,27 @@ class AuthService(
 
     @Transactional
     fun register(request: RegisterRequest): AuthResponse {
-        logger.info { "Tentative d'inscription pour: ${request.username}" }
-
-        require(!userRepository.existsByUsername(request.username)) {
-            "Le nom d'utilisateur '${request.username}' est déjà utilisé"
+        logger.info {
+            """
+            📝 INSCRIPTION - DÉBUT
+            ───────────────────────────────────────────────────────────────────
+            👤 Username      : ${request.username}
+            📧 Email         : ${request.email}
+            👨 Nom complet   : ${request.fullName}
+            🎭 Rôles demand. : ${request.roles.joinToString(", ")}
+            ═══════════════════════════════════════════════════════════════════
+            """.trimIndent()
         }
 
-        require(!userRepository.existsByEmail(request.email)) {
-            "L'email '${request.email}' est déjà utilisé"
+        // Vérifications
+        if (userRepository.existsByUsername(request.username)) {
+            logger.warn { "❌ INSCRIPTION REFUSÉE - Username déjà utilisé: ${request.username}" }
+            throw IllegalArgumentException("Le nom d'utilisateur '${request.username}' est déjà utilisé")
+        }
+
+        if (userRepository.existsByEmail(request.email)) {
+            logger.warn { "❌ INSCRIPTION REFUSÉE - Email déjà utilisé: ${request.email}" }
+            throw IllegalArgumentException("L'email '${request.email}' est déjà utilisé")
         }
 
         val user = User(
@@ -42,7 +55,20 @@ class AuthService(
         )
 
         val savedUser = userRepository.save(user)
-        logger.info { "Utilisateur créé avec succès: ${savedUser.username}" }
+
+        logger.info {
+            """
+            ✅ INSCRIPTION RÉUSSIE
+            ───────────────────────────────────────────────────────────────────
+            👤 Username      : ${savedUser.username}
+            📧 Email         : ${savedUser.email}
+            👨 Nom complet   : ${savedUser.fullName}
+            🎭 Rôles         : ${savedUser.roles.joinToString(", ")}
+            🆔 User ID       : ${savedUser.id}
+            🔐 Actif         : ${savedUser.actif}
+            ═══════════════════════════════════════════════════════════════════
+            """.trimIndent()
+        }
 
         val accessToken = jwtService.generateToken(savedUser)
         val refreshToken = jwtService.generateRefreshToken(savedUser)
@@ -55,44 +81,127 @@ class AuthService(
     }
 
     fun login(request: LoginRequest): AuthResponse {
-        logger.info { "Tentative de connexion pour: ${request.username}" }
+        logger.info {
+            """
+            🔐 CONNEXION - DÉBUT
+            ───────────────────────────────────────────────────────────────────
+            👤 Username      : ${request.username}
+            ═══════════════════════════════════════════════════════════════════
+            """.trimIndent()
+        }
 
-        authenticationManager.authenticate(
-            UsernamePasswordAuthenticationToken(request.username, request.password)
-        )
+        try {
+            authenticationManager.authenticate(
+                UsernamePasswordAuthenticationToken(request.username, request.password)
+            )
 
-        val user = userRepository.findByUsername(request.username)
-            .orElseThrow { IllegalArgumentException("Utilisateur non trouvé") }
+            val user = userRepository.findByUsername(request.username)
+                .orElseThrow {
+                    logger.error { "❌ CONNEXION ÉCHOUÉE - Utilisateur non trouvé: ${request.username}" }
+                    IllegalArgumentException("Utilisateur non trouvé")
+                }
 
-        val accessToken = jwtService.generateToken(user)
-        val refreshToken = jwtService.generateRefreshToken(user)
+            val accessToken = jwtService.generateToken(user)
+            val refreshToken = jwtService.generateRefreshToken(user)
 
-        logger.info { "Connexion réussie pour: ${user.username}" }
+            logger.info {
+                """
+                ✅ CONNEXION RÉUSSIE
+                ───────────────────────────────────────────────────────────────────
+                👤 Username      : ${user.username}
+                📧 Email         : ${user.email}
+                👨 Nom complet   : ${user.fullName}
+                🎭 Rôles         : ${user.roles.joinToString(", ")}
+                🆔 User ID       : ${user.id}
+                🔐 Actif         : ${user.actif}
+                🎫 Token généré  : ${accessToken.take(30)}...
+                ═══════════════════════════════════════════════════════════════════
+                """.trimIndent()
+            }
 
-        return AuthResponse(
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            user = user.toDTO()
-        )
+            return AuthResponse(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                user = user.toDTO()
+            )
+        } catch (e: Exception) {
+            logger.error {
+                """
+                ❌ CONNEXION ÉCHOUÉE
+                ───────────────────────────────────────────────────────────────────
+                👤 Username      : ${request.username}
+                🚨 Erreur        : ${e.message}
+                📍 Type          : ${e.javaClass.simpleName}
+                ═══════════════════════════════════════════════════════════════════
+                """.trimIndent()
+            }
+            throw e
+        }
     }
 
     fun refreshToken(refreshToken: String): AuthResponse {
-        val username = jwtService.extractUsername(refreshToken)
-        val user = userRepository.findByUsername(username)
-            .orElseThrow { IllegalArgumentException("Utilisateur non trouvé") }
-
-        require(jwtService.isTokenValid(refreshToken, user)) {
-            "Token de rafraîchissement invalide"
+        logger.info {
+            """
+            🔄 REFRESH TOKEN - DÉBUT
+            ───────────────────────────────────────────────────────────────────
+            🎫 Token          : ${refreshToken.take(30)}...
+            ═══════════════════════════════════════════════════════════════════
+            """.trimIndent()
         }
 
-        val newAccessToken = jwtService.generateToken(user)
-        val newRefreshToken = jwtService.generateRefreshToken(user)
+        try {
+            val username = jwtService.extractUsername(refreshToken)
+            logger.debug { "🔍 Username extrait du token: $username" }
 
-        return AuthResponse(
-            accessToken = newAccessToken,
-            refreshToken = newRefreshToken,
-            user = user.toDTO()
-        )
+            val user = userRepository.findByUsername(username)
+                .orElseThrow {
+                    logger.error { "❌ REFRESH TOKEN ÉCHOUÉ - Utilisateur non trouvé: $username" }
+                    IllegalArgumentException("Utilisateur non trouvé")
+                }
+
+            require(jwtService.isTokenValid(refreshToken, user)) {
+                logger.error {
+                    """
+                    ❌ REFRESH TOKEN ÉCHOUÉ - Token invalide
+                    👤 Username      : $username
+                    🆔 User ID       : ${user.id}
+                    """.trimIndent()
+                }
+                "Token de rafraîchissement invalide"
+            }
+
+            val newAccessToken = jwtService.generateToken(user)
+            val newRefreshToken = jwtService.generateRefreshToken(user)
+
+            logger.info {
+                """
+                ✅ REFRESH TOKEN RÉUSSI
+                ───────────────────────────────────────────────────────────────────
+                👤 Username      : ${user.username}
+                🎭 Rôles         : ${user.roles.joinToString(", ")}
+                🆔 User ID       : ${user.id}
+                🎫 Nouveau token : ${newAccessToken.take(30)}...
+                ═══════════════════════════════════════════════════════════════════
+                """.trimIndent()
+            }
+
+            return AuthResponse(
+                accessToken = newAccessToken,
+                refreshToken = newRefreshToken,
+                user = user.toDTO()
+            )
+        } catch (e: Exception) {
+            logger.error {
+                """
+                ❌ REFRESH TOKEN ÉCHOUÉ
+                ───────────────────────────────────────────────────────────────────
+                🚨 Erreur        : ${e.message}
+                📍 Type          : ${e.javaClass.simpleName}
+                ═══════════════════════════════════════════════════════════════════
+                """.trimIndent()
+            }
+            throw e
+        }
     }
 
     private fun User.toDTO() = UserDTO(

@@ -178,4 +178,72 @@ export const usersAPI = {
     api.post(`/users/${id}/change-password`, { oldPassword, newPassword }),
 }
 
+// Budgets API
+export const budgetsAPI = {
+  getAll: () => api.get('/budgets'),
+  getByConvention: (conventionId: number) => api.get(`/budgets?conventionId=${conventionId}`),
+  getById: (id: number) => api.get(`/budgets/${id}`),
+  create: (data: any) => api.post('/budgets', data),
+  update: (id: number, data: any) => api.put(`/budgets/${id}`, data),
+  delete: (id: number) => api.delete(`/budgets/${id}`),
+  soumettre: (id: number) => api.post(`/budgets/${id}/soumettre`),
+  valider: (id: number, valideParId: number) => api.post(`/budgets/${id}/valider`, { valideParId }),
+}
+
+// Décomptes API
+export const decomptesAPI = {
+  getAll: () => api.get('/decomptes'),
+  getByMarche: (marcheId: number) => api.get(`/decomptes?marcheId=${marcheId}`),
+  getById: (id: number) => api.get(`/decomptes/${id}`),
+  create: (data: any) => api.post('/decomptes', data),
+  update: (id: number, data: any) => api.put(`/decomptes/${id}`, data),
+  delete: (id: number) => api.delete(`/decomptes/${id}`),
+  soumettre: (id: number) => api.post(`/decomptes/${id}/soumettre`),
+  valider: (id: number, valideParId: number) => api.post(`/decomptes/${id}/valider`, { valideParId }),
+}
+
+// Ordres de Paiement API
+export const ordresPaiementAPI = {
+  getAll: () => api.get('/ordres-paiement'),
+  getByDecompte: (decompteId: number) => api.get(`/ordres-paiement?decompteId=${decompteId}`),
+  getById: (id: number) => api.get(`/ordres-paiement/${id}`),
+  create: (data: any) => api.post('/ordres-paiement', data),
+  update: (id: number, data: any) => api.put(`/ordres-paiement/${id}`, data),
+  delete: (id: number) => api.delete(`/ordres-paiement/${id}`),
+  valider: (id: number, valideParId: number) => api.post(`/ordres-paiement/${id}/valider`, { valideParId }),
+  executer: (id: number) => api.post(`/ordres-paiement/${id}/executer`),
+}
+
+// Paiements API
+export const paiementsAPI = {
+  getAll: () => api.get('/paiements'),
+  getByOP: (opId: number) => api.get(`/paiements?opId=${opId}`),
+  getById: (id: number) => api.get(`/paiements/${id}`),
+  create: (data: any) => api.post('/paiements', data),
+  update: (id: number, data: any) => api.put(`/paiements/${id}`, data),
+  delete: (id: number) => api.delete(`/paiements/${id}`),
+}
+
+// Avenants API
+export const avenantsAPI = {
+  getAll: () => api.get('/avenants'),
+  getByConvention: (conventionId: number) => api.get(`/avenants?conventionId=${conventionId}`),
+  getById: (id: number) => api.get(`/avenants/${id}`),
+  create: (data: any) => api.post('/avenants', data),
+  update: (id: number, data: any) => api.put(`/avenants/${id}`, data),
+  delete: (id: number) => api.delete(`/avenants/${id}`),
+  soumettre: (id: number) => api.post(`/avenants/${id}/soumettre`),
+  valider: (id: number, valideParId: number) => api.post(`/avenants/${id}/valider`, { valideParId }),
+}
+
+// Subventions API
+export const subventionsAPI = {
+  getAll: () => api.get('/subventions'),
+  getByConvention: (conventionId: number) => api.get(`/subventions?conventionId=${conventionId}`),
+  getById: (id: number) => api.get(`/subventions/${id}`),
+  create: (data: any) => api.post('/subventions', data),
+  update: (id: number, data: any) => api.put(`/subventions/${id}`, data),
+  delete: (id: number) => api.delete(`/subventions/${id}`),
+}
+
 export default api

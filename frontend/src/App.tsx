@@ -17,6 +17,9 @@ import ConventionFormPage from './pages/conventions/ConventionFormPage'
 import CommissionsPage from './pages/commissions/CommissionsPage'
 import UsersPage from './pages/users/UsersPage'
 import ProfilePage from './pages/ProfilePage'
+import BudgetsPage from './pages/budgets/BudgetsPage'
+import DecomptesPage from './pages/decomptes/DecomptesPage'
+import PaiementsPage from './pages/paiements/PaiementsPage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -191,6 +194,36 @@ function App() {
             element={
               <ProtectedRoute>
                 <MarcheDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Budgets */}
+          <Route
+            path="/budgets"
+            element={
+              <ProtectedRoute>
+                <BudgetsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Décomptes */}
+          <Route
+            path="/decomptes"
+            element={
+              <ProtectedRoute>
+                <DecomptesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Paiements */}
+          <Route
+            path="/paiements"
+            element={
+              <ProtectedRoute>
+                <PaiementsPage />
               </ProtectedRoute>
             }
           />

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FaPlus, FaSearch, FaFileAlt } from 'react-icons/fa'
 import AppLayout from '../../components/layout/AppLayout'
-import { XcomptaCard, XcomptaButton, StatusBadge } from '../../components/ui/xcompta'
-import type { Status } from '../../components/ui/xcompta/StatusBadge'
+import { Card, Button, StatusBadge } from '../../components/ui'
+import type { Status } from '../../components/ui/StatusBadge'
 import api from '../../lib/api'
 
 interface Convention {
@@ -137,40 +137,40 @@ export default function ConventionsPage() {
             <h1 className="text-3xl font-bold font-rubik text-gray-800">Conventions XCOMPTA</h1>
             <p className="text-gray-600 mt-1">Gestion des conventions d'intervention</p>
           </div>
-          <XcomptaButton
+          <Button
             variant="success"
             icon={<FaPlus />}
             onClick={() => navigate('/conventions/nouvelle')}
           >
             Nouvelle Convention
-          </XcomptaButton>
+          </Button>
         </div>
 
         {/* Stats rapides */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <XcomptaCard title="Total Conventions" headerColor="info">
+          <Card title="Total Conventions">
             <div className="text-3xl font-bold font-rubik text-gray-800">{stats.total}</div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Cadre" headerColor="info">
+          <Card title="Cadre">
             <div className="text-3xl font-bold font-rubik text-info">{stats.cadre}</div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Non-Cadre" headerColor="success">
+          <Card title="Non-Cadre">
             <div className="text-3xl font-bold font-rubik text-success">{stats.nonCadre}</div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Spécifique" headerColor="warning">
+          <Card title="Spécifique">
             <div className="text-3xl font-bold font-rubik text-warning">{stats.specifique}</div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Avenant" headerColor="primary">
-            <div className="text-3xl font-bold font-rubik text-xcompta-orange">{stats.avenant}</div>
-          </XcomptaCard>
+          <Card title="Avenant">
+            <div className="text-3xl font-bold font-rubik text-gitlab-orange">{stats.avenant}</div>
+          </Card>
         </div>
 
         {/* Filtres et recherche */}
-        <XcomptaCard title="Recherche et Filtres" headerColor="primary">
+        <Card title="Recherche et Filtres">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -208,10 +208,10 @@ export default function ConventionsPage() {
               <option value="ANNULE">Annulé</option>
             </select>
           </div>
-        </XcomptaCard>
+        </Card>
 
         {/* Table des conventions */}
-        <XcomptaCard title="Liste des Conventions" headerColor="info">
+        <Card title="Liste des Conventions">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -309,7 +309,7 @@ export default function ConventionsPage() {
               </div>
             )}
           </div>
-        </XcomptaCard>
+        </Card>
       </div>
     </AppLayout>
   )

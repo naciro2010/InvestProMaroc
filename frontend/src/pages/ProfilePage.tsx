@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FaUser, FaEnvelope, FaLock, FaUserShield, FaEdit, FaSave } from 'react-icons/fa'
 import AppLayout from '../components/layout/AppLayout'
-import { XcomptaCard, XcomptaButton } from '../components/ui/xcompta'
+import { Card, Button } from '../components/ui'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
 
@@ -142,7 +142,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Card Profil Principal */}
-        <XcomptaCard title="Informations Personnelles" headerColor="info">
+        <Card title="Informations Personnelles">
           <div className="p-6">
             {/* Avatar et Rôle */}
             <div className="flex items-center gap-6 mb-8 pb-6 border-b border-neutral-200">
@@ -166,13 +166,13 @@ export default function ProfilePage() {
                 </div>
               </div>
               {!editMode && (
-                <XcomptaButton
-                  variant="outline-info"
+                <Button
+                  variant="secondary"
                   icon={<FaEdit />}
                   onClick={() => setEditMode(true)}
                 >
                   Modifier
-                </XcomptaButton>
+                </Button>
               )}
             </div>
 
@@ -305,10 +305,10 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
-        </XcomptaCard>
+        </Card>
 
         {/* Card Sécurité */}
-        <XcomptaCard title="Sécurité" headerColor="warning">
+        <Card title="Sécurité">
           <div className="p-6">
             {!passwordMode ? (
               <div className="flex items-center justify-between">
@@ -323,13 +323,13 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <XcomptaButton
-                  variant="outline-info"
+                <Button
+                  variant="secondary"
                   icon={<FaLock />}
                   onClick={() => setPasswordMode(true)}
                 >
                   Changer le mot de passe
-                </XcomptaButton>
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleChangePassword} className="space-y-4">
@@ -400,7 +400,7 @@ export default function ProfilePage() {
               </form>
             )}
           </div>
-        </XcomptaCard>
+        </Card>
       </div>
     </AppLayout>
   )

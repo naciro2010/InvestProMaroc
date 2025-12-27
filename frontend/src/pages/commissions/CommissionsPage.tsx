@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FaSearch, FaCalculator, FaFileInvoice } from 'react-icons/fa'
 import AppLayout from '../../components/layout/AppLayout'
-import { XcomptaCard, XcomptaButton } from '../../components/ui/xcompta'
+import { Card, Button } from '../../components/ui'
 import api from '../../lib/api'
 
 interface Commission {
@@ -118,42 +118,42 @@ export default function CommissionsPage() {
             <h1 className="text-3xl font-bold font-rubik text-gray-800">Commissions d'Intervention</h1>
             <p className="text-gray-600 mt-1">Calcul et suivi des commissions selon les conventions</p>
           </div>
-          <XcomptaButton
+          <Button
             variant="success"
             icon={<FaCalculator />}
             onClick={() => alert('Calcul automatique des commissions (à implémenter)')}
           >
             Calculer Commissions
-          </XcomptaButton>
+          </Button>
         </div>
 
         {/* Stats rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <XcomptaCard title="Total Commissions" headerColor="info">
+          <Card title="Total Commissions">
             <div className="text-3xl font-bold font-rubik text-gray-800">{stats.total}</div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Montant HT" headerColor="success">
+          <Card title="Montant HT">
             <div className="text-2xl font-bold font-rubik text-success">
               {formatCurrency(stats.montantTotal)}
             </div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="TVA" headerColor="warning">
+          <Card title="TVA">
             <div className="text-2xl font-bold font-rubik text-warning">
               {formatCurrency(stats.montantTvaTotal)}
             </div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Montant TTC" headerColor="primary">
+          <Card title="Montant TTC">
             <div className="text-2xl font-bold font-rubik text-info">
               {formatCurrency(stats.montantTtcTotal)}
             </div>
-          </XcomptaCard>
+          </Card>
         </div>
 
         {/* Filtres et recherche */}
-        <XcomptaCard title="Recherche et Filtres" headerColor="primary">
+        <Card title="Recherche et Filtres">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -178,10 +178,10 @@ export default function CommissionsPage() {
               ))}
             </select>
           </div>
-        </XcomptaCard>
+        </Card>
 
         {/* Table des commissions */}
-        <XcomptaCard title="Liste des Commissions" headerColor="info">
+        <Card title="Liste des Commissions">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -281,7 +281,7 @@ export default function CommissionsPage() {
               </div>
             )}
           </div>
-        </XcomptaCard>
+        </Card>
       </div>
     </AppLayout>
   )

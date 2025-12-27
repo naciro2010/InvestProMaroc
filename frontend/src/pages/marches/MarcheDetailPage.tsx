@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { FaArrowLeft, FaEdit, FaFileInvoice, FaShoppingCart, FaChartLine } from 'react-icons/fa'
-import { XcomptaCard, XcomptaButton, StatusBadge } from '../../components/ui/xcompta'
+import { Card, Button, StatusBadge } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
 import api from '../../lib/api'
 
@@ -129,37 +129,37 @@ export default function MarcheDetailPage() {
           </div>
         </div>
         <Link to={`/marches/${id}/edit`}>
-          <XcomptaButton variant="outline-info" icon={<FaEdit />}>
+          <Button variant="secondary" icon={<FaEdit />}>
             Modifier
-          </XcomptaButton>
+          </Button>
         </Link>
       </div>
 
       {/* Stats rapides */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <XcomptaCard title="Montant TTC" headerColor="primary">
-          <div className="text-2xl font-bold font-rubik text-xcompta-blue">
+        <Card title="Montant TTC">
+          <div className="text-2xl font-bold font-rubik text-info">
             {formatCurrency(marche.montantTtc)}
           </div>
-        </XcomptaCard>
+        </Card>
 
-        <XcomptaCard title="Total Payé" headerColor="success">
+        <Card title="Total Payé">
           <div className="text-2xl font-bold font-rubik text-success">
             {formatCurrency(totalPaye)}
           </div>
-        </XcomptaCard>
+        </Card>
 
-        <XcomptaCard title="Reste à Payer" headerColor="warning">
+        <Card title="Reste à Payer">
           <div className="text-2xl font-bold font-rubik text-warning">
             {formatCurrency(calculateResteAPayer())}
           </div>
-        </XcomptaCard>
+        </Card>
 
-        <XcomptaCard title="Avancement" headerColor="info">
+        <Card title="Avancement">
           <div className="text-2xl font-bold font-rubik text-info">
             {calculateAvancementGlobal().toFixed(1)}%
           </div>
-        </XcomptaCard>
+        </Card>
       </div>
 
       {/* Onglets */}
@@ -205,7 +205,7 @@ export default function MarcheDetailPage() {
       {activeTab === 'details' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Informations générales */}
-          <XcomptaCard title="Informations Générales" headerColor="info">
+          <Card title="Informations Générales">
             <dl className="space-y-3">
               <div className="flex justify-between">
                 <dt className="text-sm font-medium text-gray-500">N° Marché</dt>
@@ -240,10 +240,10 @@ export default function MarcheDetailPage() {
                 </dd>
               </div>
             </dl>
-          </XcomptaCard>
+          </Card>
 
           {/* Montants */}
-          <XcomptaCard title="Détail des Montants" headerColor="success">
+          <Card title="Détail des Montants">
             <dl className="space-y-3">
               <div className="flex justify-between">
                 <dt className="text-sm font-medium text-gray-500">Montant HT</dt>
@@ -268,10 +268,10 @@ export default function MarcheDetailPage() {
                 <dd className="text-sm text-gray-900">{formatCurrency(marche.retenueGarantie)}</dd>
               </div>
             </dl>
-          </XcomptaCard>
+          </Card>
 
           {/* Partenaires */}
-          <XcomptaCard title="Fournisseur" headerColor="warning">
+          <Card title="Fournisseur">
             <dl className="space-y-3">
               <div className="flex justify-between">
                 <dt className="text-sm font-medium text-gray-500">Raison Sociale</dt>
@@ -284,10 +284,10 @@ export default function MarcheDetailPage() {
                 <dd className="text-sm text-gray-900">{marche.fournisseur?.ice || '-'}</dd>
               </div>
             </dl>
-          </XcomptaCard>
+          </Card>
 
           {/* Projet */}
-          <XcomptaCard title="Projet Associé" headerColor="primary">
+          <Card title="Projet Associé">
             <dl className="space-y-3">
               <div className="flex justify-between">
                 <dt className="text-sm font-medium text-gray-500">Code Projet</dt>
@@ -300,26 +300,25 @@ export default function MarcheDetailPage() {
                 <dd className="text-sm text-gray-900">{marche.projet?.nom || '-'}</dd>
               </div>
             </dl>
-          </XcomptaCard>
+          </Card>
 
           {/* Remarques */}
           {marche.remarques && (
-            <XcomptaCard title="Remarques" headerColor="info" className="lg:col-span-2">
+            <Card title="Remarques" className="lg:col-span-2">
               <p className="text-sm text-gray-700 whitespace-pre-wrap">{marche.remarques}</p>
-            </XcomptaCard>
+            </Card>
           )}
         </div>
       )}
 
       {activeTab === 'decomptes' && (
-        <XcomptaCard
+        <Card
           title="Décomptes du Marché"
-          headerColor="info"
           actions={
             <Link to={`/decomptes/nouveau?marcheId=${id}`}>
-              <XcomptaButton variant="success" icon={<FaFileInvoice />}>
+              <Button variant="success" icon={<FaFileInvoice />}>
                 Nouveau Décompte
-              </XcomptaButton>
+              </Button>
             </Link>
           }
         >
@@ -419,15 +418,15 @@ export default function MarcheDetailPage() {
               </div>
             )}
           </div>
-        </XcomptaCard>
+        </Card>
       )}
 
       {activeTab === 'bonscommande' && (
-        <XcomptaCard title="Bons de Commande" headerColor="warning">
+        <Card title="Bons de Commande">
           <div className="text-center py-12">
             <p className="text-gray-500">Fonctionnalité en cours de développement</p>
           </div>
-        </XcomptaCard>
+        </Card>
       )}
       </div>
     </AppLayout>

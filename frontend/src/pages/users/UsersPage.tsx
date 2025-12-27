@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaUserShield, FaUser } from 'react-icons/fa'
 import AppLayout from '../../components/layout/AppLayout'
-import { XcomptaCard, XcomptaButton } from '../../components/ui/xcompta'
+import { Card, Button } from '../../components/ui'
 import api from '../../lib/api'
 
 interface User {
@@ -169,38 +169,38 @@ export default function UsersPage() {
             </h1>
             <p className="text-neutral-600 mt-1">Gérer les comptes et les permissions</p>
           </div>
-          <XcomptaButton
+          <Button
             variant="success"
             icon={<FaPlus />}
             onClick={() => handleOpenModal()}
           >
             Nouvel Utilisateur
-          </XcomptaButton>
+          </Button>
         </div>
 
         {/* Stats rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <XcomptaCard title="Total Utilisateurs" headerColor="info">
+          <Card title="Total Utilisateurs">
             <div className="text-3xl font-bold font-rubik text-neutral-800">{stats.total}</div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Administrateurs" headerColor="primary">
+          <Card title="Administrateurs">
             <div className="text-3xl font-bold font-rubik text-soft-purple">
               {stats.admins}
             </div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Gestionnaires" headerColor="info">
+          <Card title="Gestionnaires">
             <div className="text-3xl font-bold font-rubik text-soft-blue">{stats.managers}</div>
-          </XcomptaCard>
+          </Card>
 
-          <XcomptaCard title="Utilisateurs" headerColor="success">
+          <Card title="Utilisateurs">
             <div className="text-3xl font-bold font-rubik text-soft-green">{stats.users}</div>
-          </XcomptaCard>
+          </Card>
         </div>
 
         {/* Filtres et recherche */}
-        <XcomptaCard title="Recherche et Filtres" headerColor="primary">
+        <Card title="Recherche et Filtres">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
@@ -224,10 +224,10 @@ export default function UsersPage() {
               <option value="USER">Utilisateurs</option>
             </select>
           </div>
-        </XcomptaCard>
+        </Card>
 
         {/* Table des utilisateurs */}
-        <XcomptaCard title="Liste des Utilisateurs" headerColor="info">
+        <Card title="Liste des Utilisateurs">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-neutral-200">
               <thead className="bg-neutral-50">
@@ -322,7 +322,7 @@ export default function UsersPage() {
               </div>
             )}
           </div>
-        </XcomptaCard>
+        </Card>
       </div>
 
       {/* Modal */}

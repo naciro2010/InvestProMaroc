@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { FaPlus, FaEdit, FaTrash, FaEye, FaFileExcel, FaSearch } from 'react-icons/fa'
-import { XcomptaCard, XcomptaButton, StatusBadge } from '../../components/ui/xcompta'
+import { Card, Button, StatusBadge } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
 import api from '../../lib/api'
 
@@ -132,43 +132,42 @@ export default function MarchesPage() {
       <div className="space-y-6">
       {/* En-tête avec stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <XcomptaCard title="Total Marchés" headerColor="info">
+        <Card title="Total Marchés">
           <div className="text-3xl font-bold font-rubik text-gray-800">{stats.total}</div>
-        </XcomptaCard>
+        </Card>
 
-        <XcomptaCard title="En Cours" headerColor="warning">
+        <Card title="En Cours">
           <div className="text-3xl font-bold font-rubik text-warning">{stats.enCours}</div>
-        </XcomptaCard>
+        </Card>
 
-        <XcomptaCard title="Validés" headerColor="success">
+        <Card title="Validés">
           <div className="text-3xl font-bold font-rubik text-success">{stats.valide}</div>
-        </XcomptaCard>
+        </Card>
 
-        <XcomptaCard title="Terminés" headerColor="info">
+        <Card title="Terminés">
           <div className="text-3xl font-bold font-rubik text-info">{stats.termine}</div>
-        </XcomptaCard>
+        </Card>
 
-        <XcomptaCard title="Montant Total" headerColor="primary">
-          <div className="text-2xl font-bold font-rubik text-xcompta-blue">
+        <Card title="Montant Total">
+          <div className="text-2xl font-bold font-rubik text-info">
             {formatCurrency(stats.montantTotal)}
           </div>
-        </XcomptaCard>
+        </Card>
       </div>
 
       {/* Carte principale */}
-      <XcomptaCard
+      <Card
         title="Gestion des Marchés"
-        headerColor="info"
         actions={
           <div className="flex gap-2">
             <Link to="/marches/nouveau">
-              <XcomptaButton variant="success" icon={<FaPlus />}>
+              <Button variant="success" icon={<FaPlus />}>
                 Nouveau Marché
-              </XcomptaButton>
+              </Button>
             </Link>
-            <XcomptaButton variant="outline-success" icon={<FaFileExcel />}>
+            <Button variant="secondary" icon={<FaFileExcel />}>
               Exporter Excel
-            </XcomptaButton>
+            </Button>
           </div>
         }
       >
@@ -320,7 +319,7 @@ export default function MarchesPage() {
             </div>
           )}
         </div>
-      </XcomptaCard>
+      </Card>
       </div>
     </AppLayout>
   )

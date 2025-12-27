@@ -16,20 +16,20 @@ ALTER TABLE depenses_investissement
 
 -- Add check constraints for enums
 ALTER TABLE depenses_investissement
-    ADD CONSTRAINT IF NOT EXISTS chk_type_depense
+    ADD CONSTRAINT chk_type_depense
         CHECK (type_depense IN ('STANDARD', 'CADRE', 'NON_CADRE', 'SPECIFIQUE', 'AVENANT'));
 
 ALTER TABLE depenses_investissement
-    ADD CONSTRAINT IF NOT EXISTS chk_statut_depense
+    ADD CONSTRAINT chk_statut_depense
         CHECK (statut IN ('VALIDEE', 'EN_COURS', 'ACHEVE', 'EN_RETARD', 'ANNULE'));
 
 ALTER TABLE depenses_investissement
-    ADD CONSTRAINT IF NOT EXISTS chk_base_calcul
+    ADD CONSTRAINT chk_base_calcul
         CHECK (base_calcul IN ('TTC', 'HT'));
 
 -- Add check constraint for taux_commission (between 0 and 100)
 ALTER TABLE depenses_investissement
-    ADD CONSTRAINT IF NOT EXISTS chk_taux_commission
+    ADD CONSTRAINT chk_taux_commission
         CHECK (taux_commission IS NULL OR (taux_commission >= 0 AND taux_commission <= 100));
 
 -- Create indexes for better query performance

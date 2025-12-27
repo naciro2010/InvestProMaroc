@@ -113,6 +113,49 @@ interface AvenantRepository : JpaRepository<Avenant, Long> {
 }
 
 @Repository
+interface BudgetRepository : JpaRepository<Budget, Long> {
+    fun findByConventionId(conventionId: Long): List<Budget>
+    fun findByVersion(version: String): List<Budget>
+    fun findByStatut(statut: StatutBudget): List<Budget>
+
+    @Query("SELECT b FROM Budget b WHERE b.convention.id = :conventionId ORDER BY b.version DESC")
+    fun findByConventionOrderByVersion(conventionId: Long): List<Budget>
+
+    @Query("SELECT b FROM Budget b WHERE b.convention.id = :conventionId AND b.statut = 'VALIDE' ORDER BY b.version DESC")
+    fun findLatestValidatedByConvention(conventionId: Long): Optional<Budget>
+}
+
+@Repository
+interface LigneBudgetRepository : JpaRepository<LigneBudget, Long> {
+    fun findByBudgetId(budgetId: Long): List<LigneBudget>
+    fun findByCode(code: String): List<LigneBudget>
+}
+
+@Repository
+interface OrdrePaiementRepository : JpaRepository<OrdrePaiement, Long> {
+    fun findByNumeroOP(numeroOP: String): Optional<OrdrePaiement>
+    fun findByDecompteId(decompteId: Long): List<OrdrePaiement>
+    fun findByStatut(statut: StatutOP): List<OrdrePaiement>
+    fun existsByNumeroOP(numeroOP: String): Boolean
+
+    @Query("SELECT op FROM OrdrePaiement op WHERE YEAR(op.dateOP) = :year")
+    fun findByYear(year: Int): List<OrdrePaiement>
+}
+
+@Repository
+interface PaiementRepository : JpaRepository<Paiement, Long> {
+    fun findByReferencePaiement(reference: String): Optional<Paiement>
+    fun findByOrdrePaiementId(opId: Long): List<Paiement>
+    fun existsByReferencePaiement(reference: String): Boolean
+
+    @Query("SELECT p FROM Paiement p WHERE YEAR(p.dateValeur) = :year")
+    fun findByYear(year: Int): List<Paiement>
+
+    @Query("SELECT SUM(p.montantPaye) FROM Paiement p WHERE YEAR(p.dateValeur) = :year")
+    fun getTotalPaiementsByYear(year: Int): java.math.BigDecimal?
+}
+
+@Repository
 interface BonCommandeRepository : JpaRepository<BonCommande, Long> {
     fun findByNumero(numero: String): Optional<BonCommande>
     fun findByMarcheId(marcheId: Long): List<BonCommande>

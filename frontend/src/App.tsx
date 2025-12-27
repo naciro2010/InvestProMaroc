@@ -14,6 +14,8 @@ import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
 import ConventionsPage from './pages/conventions/ConventionsPage'
 import CommissionsPage from './pages/commissions/CommissionsPage'
+import UsersPage from './pages/users/UsersPage'
+import ProfilePage from './pages/ProfilePage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -176,12 +178,20 @@ function App() {
             }
           />
 
-          {/* User */}
+          {/* User Management */}
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/profile"
             element={
               <ProtectedRoute>
-                <ComingSoon title="Mon Profil" />
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

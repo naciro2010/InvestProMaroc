@@ -7,6 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Palette moderne et douce - tons pastel et neutres
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -20,35 +21,52 @@ export default {
           900: '#0c4a6e',
           950: '#082f49',
         },
-        accent: {
-          50: '#fdf4ff',
-          100: '#fae8ff',
-          200: '#f5d0fe',
-          300: '#f0abfc',
-          400: '#e879f9',
-          500: '#d946ef',
-          600: '#c026d3',
-          700: '#a21caf',
-          800: '#86198f',
-          900: '#701a75',
-          950: '#4a044e',
+        // Couleurs douces et modernes (non flashy)
+        soft: {
+          blue: '#6B9BD1',      // Bleu doux
+          green: '#7BC96F',     // Vert menthe doux
+          purple: '#9B87D5',    // Violet pastel
+          orange: '#E8A87C',    // Orange pêche
+          pink: '#E5A1B5',      // Rose poudré
+          teal: '#64B5AD',      // Turquoise doux
+          yellow: '#F0C87F',    // Jaune miel
+          indigo: '#7986CB',    // Indigo doux
         },
-        // XCOMPTA Design System Colors
-        'xcompta-blue': '#3cb0e5',
-        'xcompta-green': '#80c342',
-        'xcompta-red': '#ff3b3b',
-        'xcompta-orange': '#f7931a',
-        'xcompta-cyan': '#3cc8c8',
-        // Semantic color aliases for XCOMPTA
-        success: '#80c342',
-        danger: '#ff3b3b',
-        warning: '#f7931a',
-        info: '#3cc8c8',
+        // Nuances de gris modernes
+        neutral: {
+          50: '#FAFAFA',
+          100: '#F5F5F5',
+          150: '#EEEEEE',
+          200: '#E5E5E5',
+          300: '#D4D4D4',
+          400: '#A3A3A3',
+          500: '#737373',
+          600: '#525252',
+          700: '#404040',
+          800: '#262626',
+          900: '#171717',
+        },
+        // Couleurs XCOMPTA modernisées (versions douces)
+        'xcompta-blue': '#6B9BD1',
+        'xcompta-green': '#7BC96F',
+        'xcompta-red': '#E57373',      // Rouge doux au lieu de #ff3b3b
+        'xcompta-orange': '#E8A87C',
+        'xcompta-cyan': '#64B5AD',
+        // Semantic colors avec tons doux
+        success: '#7BC96F',
+        danger: '#E57373',
+        warning: '#E8A87C',
+        info: '#6B9BD1',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Poppins', 'system-ui', 'sans-serif'],
         rubik: ['Rubik', 'sans-serif'],
+      },
+      boxShadow: {
+        'soft': '0 2px 8px rgba(0, 0, 0, 0.04)',
+        'soft-lg': '0 4px 16px rgba(0, 0, 0, 0.06)',
+        'soft-xl': '0 8px 24px rgba(0, 0, 0, 0.08)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

@@ -12,12 +12,19 @@ interface Convention {
   code: string
   libelle: string
   typeConvention: 'CADRE' | 'NON_CADRE' | 'SPECIFIQUE' | 'AVENANT'
-  statut: 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
+  statut: 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
   dateConvention: string
   budget: number
   tauxCommission: number
   dateDebut: string
   dateFin?: string
+  // Workflow fields
+  dateSoumission?: string
+  dateValidation?: string
+  valideParId?: number
+  version?: string
+  isLocked: boolean
+  motifVerrouillage?: string
 }
 
 export default function ConventionsPage() {
@@ -109,13 +116,82 @@ export default function ConventionsPage() {
 
   const mapStatutToBadge = (statut: string): Status => {
     const mapping: Record<string, Status> = {
+      BROUILLON: 'BROUILLON',
+      SOUMIS: 'SOUMIS',
       VALIDEE: 'VALIDEE',
       EN_COURS: 'EN_COURS',
       ACHEVE: 'ACHEVE',
       EN_RETARD: 'EN_RETARD',
       ANNULE: 'ANNULE',
     }
-    return mapping[statut] || 'EN_COURS'
+    return mapping[statut] || 'BROUILLON'
+  }
+
+  // Workflow actions
+  const handleSoumettre = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('Voulez-vous soumettre cette convention pour validation ?')) return
+
+    try {
+      const response = await api.post(`/api/conventions/${id}/soumettre`)
+      if (response.data.success) {
+        alert('Convention soumise pour validation avec succès')
+        fetchConventions()
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Erreur lors de la soumission')
+    }
+  }
+
+  const handleValider = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('Voulez-vous valider cette convention ? Une version V0 sera créée et la convention sera verrouillée.')) return
+
+    try {
+      // Get current user ID from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const response = await api.post(`/api/conventions/${id}/valider`, {
+        valideParId: user.id || 1
+      })
+      if (response.data.success) {
+        alert('Convention validée avec succès - Version V0 créée')
+        fetchConventions()
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Erreur lors de la validation')
+    }
+  }
+
+  const handleRejeter = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const motif = prompt('Motif du rejet:')
+    if (!motif) return
+
+    try {
+      const response = await api.post(`/api/conventions/${id}/rejeter`, { motif })
+      if (response.data.success) {
+        alert('Convention rejetée - retour en brouillon')
+        fetchConventions()
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Erreur lors du rejet')
+    }
+  }
+
+  const handleAnnuler = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const motif = prompt('Motif de l\'annulation:')
+    if (!motif) return
+
+    try {
+      const response = await api.post(`/api/conventions/${id}/annuler`, { motif })
+      if (response.data.success) {
+        alert('Convention annulée')
+        fetchConventions()
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Erreur lors de l\'annulation')
+    }
   }
 
   if (loading) {
@@ -201,6 +277,8 @@ export default function ConventionsPage() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-info"
             >
               <option value="ALL">Tous les statuts</option>
+              <option value="BROUILLON">Brouillon</option>
+              <option value="SOUMIS">Soumis</option>
               <option value="VALIDEE">Validée</option>
               <option value="EN_COURS">En cours</option>
               <option value="ACHEVE">Achevé</option>
@@ -288,15 +366,60 @@ export default function ConventionsPage() {
                       <StatusBadge status={mapStatutToBadge(convention.statut)} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigate(`/conventions/${convention.id}`)
-                        }}
-                        className="text-info hover:text-info-dark"
-                      >
-                        Détails
-                      </button>
+                      <div className="flex gap-2">
+                        {/* Détails button (always available) */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/conventions/${convention.id}`)
+                          }}
+                          className="text-info hover:text-info-dark"
+                        >
+                          Détails
+                        </button>
+
+                        {/* Workflow buttons based on status */}
+                        {convention.statut === 'BROUILLON' && (
+                          <button
+                            onClick={(e) => handleSoumettre(convention.id, e)}
+                            className="text-success hover:text-success-dark font-semibold"
+                          >
+                            Soumettre
+                          </button>
+                        )}
+
+                        {convention.statut === 'SOUMIS' && (
+                          <>
+                            <button
+                              onClick={(e) => handleValider(convention.id, e)}
+                              className="text-success hover:text-success-dark font-semibold"
+                            >
+                              Valider
+                            </button>
+                            <button
+                              onClick={(e) => handleRejeter(convention.id, e)}
+                              className="text-danger hover:text-danger-dark"
+                            >
+                              Rejeter
+                            </button>
+                          </>
+                        )}
+
+                        {convention.statut === 'VALIDEE' && convention.version && (
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            {convention.version}
+                          </span>
+                        )}
+
+                        {convention.statut !== 'ANNULE' && (
+                          <button
+                            onClick={(e) => handleAnnuler(convention.id, e)}
+                            className="text-danger hover:text-danger-dark text-xs"
+                          >
+                            Annuler
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

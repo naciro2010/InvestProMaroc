@@ -42,7 +42,7 @@ class Convention(
 
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
-    var statut: StatutConvention = StatutConvention.EN_COURS,
+    var statut: StatutConvention = StatutConvention.BROUILLON,
 
     @Column(nullable = false, length = 200)
     @field:NotBlank
@@ -79,6 +79,25 @@ class Convention(
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
 
+    // Workflow fields
+    @Column(name = "date_soumission")
+    var dateSoumission: LocalDate? = null, // Date de soumission pour validation
+
+    @Column(name = "date_validation")
+    var dateValidation: LocalDate? = null, // Date de validation (création V0)
+
+    @Column(name = "valide_par_id")
+    var valideParId: Long? = null, // ID de l'utilisateur qui a validé
+
+    @Column(name = "version", length = 10)
+    var version: String? = null, // Version courante (V0, V1, V2...)
+
+    @Column(name = "is_locked", nullable = false)
+    var isLocked: Boolean = false, // True si la convention est verrouillée après validation
+
+    @Column(name = "motif_verrouillage", columnDefinition = "TEXT")
+    var motifVerrouillage: String? = null, // Raison du verrouillage
+
     // Relations
     @OneToMany(mappedBy = "convention", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var partenaires: MutableList<ConventionPartenaire> = mutableListOf(),
@@ -102,10 +121,12 @@ enum class TypeConvention {
 }
 
 /**
- * Statut de la convention selon XCOMPTA
+ * Statut de la convention selon XCOMPTA avec workflow complet
  */
 enum class StatutConvention {
-    VALIDEE,        // Convention validée
+    BROUILLON,      // Brouillon en cours de saisie (éditable)
+    SOUMIS,         // Soumis pour validation (non éditable)
+    VALIDEE,        // Convention validée avec V0 créée (verrouillée)
     EN_COURS,       // En cours d'exécution
     ACHEVE,         // Achevée/Terminée
     EN_RETARD,      // En retard par rapport au planning

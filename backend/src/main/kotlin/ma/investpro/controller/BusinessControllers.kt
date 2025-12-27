@@ -54,7 +54,82 @@ class ConventionController(private val service: ConventionService) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse(false, "Convention non trouvée"))
         }
     }
+
+    // Workflow endpoints
+    @PostMapping("/{id}/soumettre")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    fun soumettre(@PathVariable id: Long): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val convention = service.soumettre(id)
+            ResponseEntity.ok(ApiResponse(true, "Convention soumise pour validation", convention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
+
+    @PostMapping("/{id}/valider")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun valider(
+        @PathVariable id: Long,
+        @RequestBody request: ValiderConventionRequest
+    ): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val convention = service.valider(id, request.valideParId)
+            ResponseEntity.ok(ApiResponse(true, "Convention validée - Version V0 créée", convention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
+
+    @PostMapping("/{id}/rejeter")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun rejeter(
+        @PathVariable id: Long,
+        @RequestBody request: RejeterConventionRequest
+    ): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val convention = service.rejeter(id, request.motif)
+            ResponseEntity.ok(ApiResponse(true, "Convention rejetée - retour en brouillon", convention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
+
+    @PostMapping("/{id}/annuler")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun annuler(
+        @PathVariable id: Long,
+        @RequestBody request: AnnulerConventionRequest
+    ): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val convention = service.annuler(id, request.motif)
+            ResponseEntity.ok(ApiResponse(true, "Convention annulée", convention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
 }
+
+// DTOs for workflow requests
+data class ValiderConventionRequest(val valideParId: Long)
+data class RejeterConventionRequest(val motif: String)
+data class AnnulerConventionRequest(val motif: String)
 
 @RestController
 @RequestMapping("/api/projets")

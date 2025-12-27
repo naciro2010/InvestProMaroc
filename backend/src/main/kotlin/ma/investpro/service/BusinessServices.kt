@@ -24,8 +24,115 @@ class ConventionService(
         require(!conventionRepository.existsByCode(entity.code)) {
             "Une convention avec le code '${entity.code}' existe déjà"
         }
+        // New conventions start as BROUILLON
+        entity.statut = StatutConvention.BROUILLON
+        entity.isLocked = false
         logger.info { "Création de la convention: ${entity.code}" }
         return super.create(entity)
+    }
+
+    override fun update(id: Long, entity: Convention): Convention? {
+        val existing = findById(id) ?: return null
+
+        // Check if convention is locked
+        if (existing.isLocked) {
+            throw IllegalStateException(
+                "La convention ${existing.code} est verrouillée et ne peut pas être modifiée. " +
+                "Motif: ${existing.motifVerrouillage ?: "Convention validée"}"
+            )
+        }
+
+        return super.update(id, entity)
+    }
+
+    /**
+     * Soumet une convention pour validation (BROUILLON -> SOUMIS)
+     */
+    fun soumettre(id: Long): Convention {
+        val convention = findById(id)
+            ?: throw IllegalArgumentException("Convention non trouvée: $id")
+
+        require(convention.statut == StatutConvention.BROUILLON) {
+            "Seules les conventions en statut BROUILLON peuvent être soumises. " +
+            "Statut actuel: ${convention.statut}"
+        }
+
+        require(!convention.isLocked) {
+            "La convention est verrouillée et ne peut pas être soumise"
+        }
+
+        convention.statut = StatutConvention.SOUMIS
+        convention.dateSoumission = java.time.LocalDate.now()
+
+        logger.info { "Convention ${convention.code} soumise pour validation" }
+        return conventionRepository.save(convention)
+    }
+
+    /**
+     * Valide une convention (SOUMIS -> VALIDEE, création V0)
+     */
+    fun valider(id: Long, valideParId: Long): Convention {
+        val convention = findById(id)
+            ?: throw IllegalArgumentException("Convention non trouvée: $id")
+
+        require(convention.statut == StatutConvention.SOUMIS) {
+            "Seules les conventions en statut SOUMIS peuvent être validées. " +
+            "Statut actuel: ${convention.statut}"
+        }
+
+        require(!convention.isLocked) {
+            "La convention est déjà verrouillée"
+        }
+
+        // Transition to VALIDEE
+        convention.statut = StatutConvention.VALIDEE
+        convention.dateValidation = java.time.LocalDate.now()
+        convention.valideParId = valideParId
+        convention.version = "V0" // First version
+        convention.isLocked = true
+        convention.motifVerrouillage = "Convention validée le ${convention.dateValidation} - Version V0 créée"
+
+        logger.info { "Convention ${convention.code} validée par utilisateur $valideParId - Version V0 créée" }
+        return conventionRepository.save(convention)
+    }
+
+    /**
+     * Rejette une convention (SOUMIS -> BROUILLON)
+     */
+    fun rejeter(id: Long, motif: String): Convention {
+        val convention = findById(id)
+            ?: throw IllegalArgumentException("Convention non trouvée: $id")
+
+        require(convention.statut == StatutConvention.SOUMIS) {
+            "Seules les conventions en statut SOUMIS peuvent être rejetées. " +
+            "Statut actuel: ${convention.statut}"
+        }
+
+        convention.statut = StatutConvention.BROUILLON
+        convention.dateSoumission = null
+        convention.motifVerrouillage = "Rejetée: $motif"
+
+        logger.info { "Convention ${convention.code} rejetée - retour en BROUILLON" }
+        return conventionRepository.save(convention)
+    }
+
+    /**
+     * Annule une convention
+     */
+    fun annuler(id: Long, motif: String): Convention {
+        val convention = findById(id)
+            ?: throw IllegalArgumentException("Convention non trouvée: $id")
+
+        require(convention.statut != StatutConvention.ANNULE) {
+            "La convention est déjà annulée"
+        }
+
+        convention.statut = StatutConvention.ANNULE
+        convention.isLocked = true
+        convention.motifVerrouillage = "Annulée: $motif"
+
+        logger.info { "Convention ${convention.code} annulée" }
+        return conventionRepository.save(convention)
     }
 }
 

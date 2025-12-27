@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { FaPlus, FaEdit, FaTrash, FaEye, FaFileExcel, FaSearch } from 'react-icons/fa'
 import { XcomptaCard, XcomptaButton, StatusBadge } from '../../components/ui/xcompta'
+import AppLayout from '../../components/layout/AppLayout'
 import api from '../../lib/api'
 
 interface Marche {
@@ -118,14 +119,17 @@ export default function MarchesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-info"></div>
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-info"></div>
+        </div>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <AppLayout>
+      <div className="space-y-6">
       {/* En-tête avec stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <XcomptaCard title="Total Marchés" headerColor="info">
@@ -317,6 +321,7 @@ export default function MarchesPage() {
           )}
         </div>
       </XcomptaCard>
-    </div>
+      </div>
+    </AppLayout>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { FaArrowLeft, FaEdit, FaFileInvoice, FaShoppingCart, FaChartLine } from 'react-icons/fa'
 import { XcomptaCard, XcomptaButton, StatusBadge } from '../../components/ui/xcompta'
+import AppLayout from '../../components/layout/AppLayout'
 import api from '../../lib/api'
 
 interface Marche {
@@ -100,16 +101,19 @@ export default function MarcheDetailPage() {
 
   if (loading || !marche) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-info"></div>
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-info"></div>
+        </div>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
+    <AppLayout>
+      <div className="space-y-6">
+        {/* En-tête */}
+        <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/marches')}
@@ -425,6 +429,7 @@ export default function MarcheDetailPage() {
           </div>
         </XcomptaCard>
       )}
-    </div>
+      </div>
+    </AppLayout>
   )
 }

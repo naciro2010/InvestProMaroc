@@ -99,6 +99,60 @@ class DepenseInvestissement(
     var paye: Boolean = false,
 
     @Column(columnDefinition = "TEXT")
-    var remarques: String? = null
+    var remarques: String? = null,
+
+    // XCOMPTA-inspired fields
+    @Column(name = "type_depense", length = 20)
+    @Enumerated(EnumType.STRING)
+    var typeDepense: TypeDepense = TypeDepense.STANDARD,
+
+    @Column(name = "statut", length = 20)
+    @Enumerated(EnumType.STRING)
+    var statut: StatutDepense = StatutDepense.EN_COURS,
+
+    @Column(name = "taux_commission", precision = 5, scale = 2)
+    @field:DecimalMin("0.00")
+    @field:DecimalMax("100.00")
+    var tauxCommission: BigDecimal? = null,
+
+    @Column(name = "base_calcul", length = 10)
+    @Enumerated(EnumType.STRING)
+    var baseCalcul: BaseCalcul = BaseCalcul.TTC,
+
+    @Column(name = "objet", columnDefinition = "TEXT")
+    var objet: String? = null,
+
+    @Column(name = "date_demarrage")
+    var dateDemarrage: LocalDate? = null,
+
+    @Column(name = "delai_mois")
+    var delaiMois: Int? = null,
+
+    @Column(name = "date_fin_prevue")
+    var dateFinPrevue: LocalDate? = null,
+
+    @Column(name = "designation", length = 500)
+    var designation: String? = null
 
 ) : BaseEntity()
+
+enum class TypeDepense {
+    STANDARD,
+    CADRE,
+    NON_CADRE,
+    SPECIFIQUE,
+    AVENANT
+}
+
+enum class StatutDepense {
+    VALIDEE,
+    EN_COURS,
+    ACHEVE,
+    EN_RETARD,
+    ANNULE
+}
+
+enum class BaseCalcul {
+    TTC,
+    HT
+}

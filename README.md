@@ -9,310 +9,830 @@
 
 ---
 
-## 📋 Description
+## 📋 Table des Matières
 
-Application web moderne de **gestion des dépenses d'investissement** et de **calcul automatique des commissions d'intervention**, conçue pour le secteur public et les grands projets au Maroc.
+1. [Architecture Métier](#-architecture-métier)
+2. [Workflow Conventions](#-workflow-conventions)
+3. [Modèle de Données](#-modèle-de-données)
+4. [Fonctionnalités Implémentées](#-fonctionnalités-implémentées)
+5. [Fonctionnalités Manquantes](#-fonctionnalités-manquantes)
+6. [Stack Technique](#️-stack-technique)
+7. [Déploiement](#-déploiement)
 
-### ✨ Fonctionnalités Principales
+---
 
-#### 🎯 Gestion Complète des Référentiels
-- ✅ **Conventions** - Configuration des taux de commission et périodes de validité
-- ✅ **Projets** - Gestion des projets d'investissement avec responsables et statuts
-- ✅ **Fournisseurs** - Base complète avec validation ICE (15 chiffres) et IF
-- ✅ **Axes Analytiques** - Dimensions analytiques pour reporting multidimensionnel
-- ✅ **Comptes Bancaires** - Gestion avec validation RIB marocain (24 chiffres)
+## 📐 Architecture Métier
 
-#### 💸 Gestion des Dépenses d'Investissement
-- ✅ **Saisie factures** - Enregistrement détaillé avec validation
-- ✅ **Calculs automatiques** - TVA 20%, montants HT/TTC
-- ✅ **Retenues fiscales** - TVA, IS tiers 10%, garantie 10%, non-résidents
-- ✅ **Suivi paiements** - Statuts payé/non payé, références, dates
-- ✅ **Filtres avancés** - Par année, projet, fournisseur, statut paiement
+### Vue d'ensemble
 
-#### 📊 Calcul Automatique des Commissions
-- ✅ **Calcul intelligent** - Commission = Base × Taux + TVA
-- ✅ **Bases multiples** - HT, TTC ou autre base paramétrable
-- ✅ **Historisation** - Conservation des taux au moment du calcul
-- ✅ **Reporting** - États par convention, année, projet
+InvestPro Maroc est un système de gestion budgétaire et financière pour les projets d'investissement au Maroc. Il gère le cycle de vie complet des conventions, marchés, engagements et paiements.
 
-#### 📈 Reporting et Exports
-- ✅ **Tableaux de bord** - KPIs en temps réel
-- ✅ **Export Excel** - Dépenses, commissions, états détaillés
-- ✅ **Statistiques** - Répartition par projet, fournisseur, période
+### Concepts Clés
+
+#### 1. **Convention** (Cadre juridique)
+Convention d'intervention définissant les modalités de calcul et paiement des commissions.
+
+**Types de conventions:**
+- **Convention Cadre** - Convention générique réutilisable
+- **Convention Spécifique** - Convention pour un projet spécifique
+- **Convention Non-Cadre** - Convention hors cadre standard
+- **Sous-Convention** - Hérite d'une convention parente
+- **Avenant** - Modification d'une convention existante
+
+#### 2. **Projet** (Opération/Programme)
+Programme d'investissement avec budget et axes analytiques.
+
+#### 3. **Marché** (Engagement contractuel)
+Contrat avec un fournisseur pour travaux/fournitures/services.
+
+**Hiérarchie:**
+```
+CONVENTION
+  └─ MARCHE (1..n)
+       ├─ MARCHE_LIGNE (1..n)
+       ├─ AVENANT_MARCHE (0..n)
+       └─ DECOMPTE (0..n)
+            ├─ DECOMPTE_RETENUE (0..n)
+            └─ DECOMPTE_IMPUTATION (1..n)
+                 └─ PAIEMENT (1..n)
+                      └─ PAIEMENT_IMPUTATION (option)
+```
+
+#### 4. **Budget** (Enveloppe financière)
+- **Plafond Convention** - Budget global alloué
+- **Budget Initial (V0)** - Baseline de référence
+- **Révisions Budgétaires (V1, V2...)** - Ajustements et contrôle
+- **Budget Validé** - Dernière version consolidée
+
+#### 5. **Engagement** (Marché ou BC)
+Engagement ferme de dépense (marché public ou bon de commande).
+
+#### 6. **Décompte** (Situation de travaux)
+État d'avancement des travaux avec retenues et garanties.
+
+**Types de décomptes:**
+- **Décompte Retenue** - Garantie, RAS, pénalités, avances
+- **Décompte Imputation** - Ventilation par projet/axe/budget
+
+#### 7. **Paiement** (Ordre de paiement)
+Instruction de paiement effectif au fournisseur.
+
+---
+
+## 🔄 Workflow Conventions
+
+### Schéma 1: Cycle de Vie Convention
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  0) DÉMARRER                                                     │
+│  Choisir:                                                        │
+│    - Convention cadre                                            │
+│    - Convention spécifique                                       │
+│    - Convention non cadre                                        │
+│    (+ option: sous-convention)                                   │
+└──────────────────────────────────────────────────────────────────┘
+                            ↓
+┌──────────────────────────────────────────────────────────────────┐
+│  1) CRÉER EN BROUILLON                                           │
+│  Statut: BROUILLON                                               │
+│  Saisie:                                                         │
+│    - Identité (objet, dates, ref)                               │
+│    - Montants + détail                                           │
+│    - Commission (base, taux, etc)                                │
+│    - Subventions (échéancier)                                    │
+│    - Partenaires                                                 │
+│  Contrôles: champs obligatoires                                  │
+└──────────────────────────────────────────────────────────────────┘
+                            ↓
+            ┌───────────────┴────────────────┐
+            │                                │
+┌───────────▼──────────┐       ┌─────────────▼────────────────────┐
+│  2A) SAUVEGARDER     │       │  2B) SOUMETTRE À VALIDATION      │
+│  rester BROUILLON    │       │  Passage: BROUILLON → SOUMIS     │
+└──────────────────────┘       │  Contrôles:                      │
+                               │    - Cohérence montants          │
+                               │    - Commission paramétrée       │
+                               │    - Pièces jointes (PDF) ?      │
+                               └──────────────────────────────────┘
+                                              ↓
+                               ┌──────────────────────────────────┐
+                               │  3) VALIDATION                   │
+                               │  Passage: SOUMIS → VALIDÉE       │
+                               │  Effets:                         │
+                               │    - Version créée: V0           │
+                               │    - Verrouillage des champs     │
+                               │      "sensibles" (montants/CI)   │
+                               │    - Génération fiche synthèse   │
+                               └──────────────────────────────────┘
+                                              ↓
+                    ┌─────────────────────────┴─────────────────────────┐
+                    │                                                   │
+┌───────────────────▼────────────┐              ┌────────────────────────▼─────────┐
+│  4) GÉRER LES SOUS-CONVENTIONS │              │  5) GÉRER LES AVENANTS          │
+│  (enfants)                     │              │  (modifs/compléments)           │
+│  Action: "Créer sous-conv."    │              │  Action: "Créer avenant"        │
+│  Statut: BROUILLON             │              │  Statut: BROUILLON              │
+│  Hérite du parent:             │              │  Saisie:                        │
+│    - partenaires               │              │    - N° avenant / dates         │
+│    - paramètres par défaut     │              │    - objet / motif              │
+│  Peut surcharger:              │              │    - impacts: montants/CI/délais│
+│    - montants                  │              │    - détails: AVANT / APRÈS     │
+│    - commission                │              │    - pièce jointe avenant       │
+│    - subventions               │              └─────────────────────────────────┘
+└────────────────────────────────┘                              ↓
+                    ↓                              ┌────────────────────────────────┐
+┌───────────────────────────────┐                 │  6) VALIDER L'AVENANT          │
+│  4B) VALIDER SOUS-CONVENTION  │                 │  Passage: BROUILLON → SOUMIS   │
+│  Passage: BROUILLON→SOUMIS    │                 │  puis SOUMIS → VALIDE          │
+│  Effets: Version V0 enfant    │                 │  Effets:                       │
+└───────────────────────────────┘                 │    - création version V1, V2...│
+                    ↓                              │    - FACULTATIF "version consolidée"│
+┌───────────────────────────────┐                 │    - traçabilité complète      │
+│  7) VERSION CONSOLIDÉE        │                 └────────────────────────────────┘
+│  (Convention + avenants validés)│                              ↓
+│  Règle:                       │                 ┌────────────────────────────────┐
+│  Vn = V0 + avenants validés   │                 │  8) SORTIES / ÉTATS            │
+│  Ordre: date_effet puis numéro│                 │    - Fiche convention (Vn)     │
+└───────────────────────────────┘                 │    - Fiche commission (Vn)     │
+                    ↓                              │    - Historique versions       │
+┌───────────────────────────────┐                 │    - Liste sous-conventions    │
+│  9) CLÔTURE (option)          │                 └────────────────────────────────┘
+│  Statut: CLOTUREE             │
+│  Effets: lecture seule        │
+│  (plus d'avenants possibles)  │
+└───────────────────────────────┘
+```
+
+### Statuts Convention
+- **BROUILLON** - En cours de saisie
+- **SOUMIS** - Soumis pour validation
+- **VALIDEE** - Convention active
+- **CLOTUREE** - Convention terminée (lecture seule)
+
+---
+
+## 📊 Modèle de Données
+
+### Schéma 2: Référentiel Conventions
+
+```
+                      ┌────────────────────────┐
+                      │ RÉFÉRENTIEL CONVENTIONS│
+                      └──────────┬─────────────┘
+                                 ↓
+                      ┌─────────────────────────┐
+                      │  CONVENTION (RACINE)    │
+                      │  Type:                  │
+                      │    - Convention cadre   │
+                      │    - Convention spécifique│
+                      │    - Convention non cadre│
+                      └──────────┬──────────────┘
+                                 │
+        ┌────────────────────────┼────────────────────────┐
+        │                        │                        │
+┌───────▼─────────┐   ┌─────────▼────────┐    ┌─────────▼──────────┐
+│  FICHE ID       │   │ MONTANTS PRÉVUS  │    │ COMMISSION (CI)    │
+│  - Objet        │   │  - Global        │    │  - Base (calcul)   │
+│  - Dates        │   │  - Détail lignes │    │  - Mode (taux/     │
+│  - Références   │   │    (travaux, etc)│    │    tranches/mix)   │
+│  - Statut       │   │  - HT/TTC/TVA    │    │  - Exclusions      │
+│  - PDF signé    │   └──────────────────┘    │  - Plafond/min     │
+└─────────────────┘                           │  - Déclencheur     │
+                                               └────────────────────┘
+                                 │
+                                 ↓
+                      ┌──────────────────────┐
+                      │ SUBVENTIONS PRÉVUES  │
+                      │  - Organisme/bailleur│
+                      │  - Type              │
+                      │  - Échéancier        │
+                      │    (date/montant)    │
+                      │  - Conditions        │
+                      └──────────────────────┘
+                                 │
+                                 ↓
+                      ┌──────────────────────┐
+                      │ PARTENAIRES / RÔLES  │
+                      │  - MOA / MOD / Bailleur│
+                      │  - Identifiants      │
+                      │    (ICE/RC/IF)       │
+                      │  - Représentant      │
+                      │    signataire        │
+                      └──────────────────────┘
+                                 │
+                                 ↓
+                      ┌──────────────────────┐
+                      │ VALIDATION & VERSIONING│
+                      │  - Version V0        │
+                      │  - Verrouillage si   │
+                      │    validée           │
+                      └──────────────────────┘
+                                 │
+        ┌────────────────────────┼────────────────────────┐
+        │                        │                        │
+┌───────▼─────────────┐  ┌──────▼──────┐   ┌───────────▼──────────┐
+│ SOUS-CONVENTIONS    │  │  AVENANTS   │   │ SORTIES / ÉTATS      │
+│ (enfants)           │  │ (modifications)│ │  - Fiche convention  │
+│  - Héritent parent  │  │  - N° / dates │   │  - Fiche commission  │
+│  - peuvent surcharger│ │  - impact     │   │  - Historique avenants│
+│  - montants/CI/etc  │  │   (montant,   │   │  - Version consolidée│
+└─────────────────────┘  │   CI, délais..)│  └──────────────────────┘
+                         └───────────────┘
+                                 │
+                      ┌──────────┴──────────┐
+                      │                     │
+             ┌────────▼─────────┐    ┌─────▼────────┐
+             │   N..N           │    │   N..N       │
+             │  CONVENTION      │    │   PROJET     │
+             │  (cadre/         │    │  (opération/ │
+             │   spécifique/...)│    │   programme) │
+             └──────────────────┘    └──────────────┘
+                                           │
+                                           │ N..N
+                                           ↓
+                                    ┌──────────────┐
+                                    │     AXE      │
+                                    │ (financeur/  │
+                                    │  phase/...)  │
+                                    └──────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  Workflow Simpllifié:                                           │
+│  1) CRÉER / VALIDER PROJETS                                     │
+│  2) CRÉER / VALIDER AXES                                        │
+│  3) RATTACHER AXES AUX PROJETS (Projet ↔ Axe)                  │
+│  4) CRÉER / ÉDITER CONVENTION (palier 1)                        │
+│  5) RATTACHER PROJETS À CONV. (Convention ↔ Projet)            │
+│     Règle: ≥ 1 projet obligatoire                              │
+│  6) (OPTION) SÉLECTION AXES par Convention & Projet             │
+│     si besoin de filtrer                                        │
+│  7) VALIDATION CONVENTION                                       │
+│     Contrôle: au moins 1 projet (+ axes hérités via projets)   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Relations Clés
+- **Convention N..N Projet** - Une convention peut couvrir plusieurs projets
+- **Projet N..N Axe** - Un projet peut avoir plusieurs axes analytiques
+- **Convention → Sous-Conventions (1..N)** - Hiérarchie parent-enfant
+- **Convention → Avenants (0..N)** - Modifications successives
+
+---
+
+## 💰 Schéma 3: Gestion Budgétaire
+
+```
+CONVENTION
+  └─ Plafond (global + détail éventuel)
+       │
+       ├─ BUDGET INITIAL (baseline V0)
+       │    ├─ Détaillé par postes (chapitres / lignes)
+       │    └─ Validation (verrouillage)
+       │
+       ├─ RÉVISIONS BUDGÉTAIRES (V1, V2, ...)
+       │    ├─ Ajustements (delta)
+       │    ├─ Contrôle plafond convention
+       │    └─ Historique & justification
+       │
+       ├─ VENTILATION ANALYTIQUE
+       │    ├─ Convention → Projets
+       │    ├─ Projets → Axes
+       │    └─ Modifications contrôlées
+       │
+       └─ BUDGET VALIDÉ
+            └─ Dernière version active
+
+┌─────────────────────────────────────────────────────────────────┐
+│  Workflow Budget:                                               │
+│  1) DÉFINIR PLAFOND CONVENTION (existant au palier 1)          │
+│  2) CRÉER BUDGET INITIAL (V0)                                   │
+│     - détaillé (postes + lignes)                                │
+│     - périodes (option)                                         │
+│     - pièces justificatives (opt.)                              │
+│  3) CONTRÔLES AVANT VALIDATION                                  │
+│     - Total budget ≤ plafond conv.                              │
+│     - Totaux par poste cohérents                                │
+│  4) VALIDER BUDGET INITIAL - Baseline figée (V0)                │
+│  5) CRÉER RÉVISION (V1, V2...)                                  │
+│     - motif + date                                              │
+│     - ajustements (delta)                                       │
+│  6) CONTRÔLE PLAFOND                                            │
+│     - Total révisé ≤ plafond conv.                              │
+│     - Validation automatique → nouvelle variante                │
+│  7) VALIDER RÉVISION - nouvelle version active                  │
+│  8) VENTILER (par analytique)                                   │
+│     - Convention → Projets                                      │
+│     - Projets → Axes                                            │
+│     - Contrôles de totaux                                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### États Budget
+- **V0** - Budget initial de référence (baseline)
+- **V1, V2, V3...** - Révisions budgétaires successives
+- **Budget Validé** - Dernière version consolidée
+
+---
+
+## 🔨 Schéma 4: Marchés, Décomptes & Paiements
+
+```
+BUDGET VALIDÉ
+    ↓
+ENGAGEMENT (marché / BC)
+    ↓
+SITUATIONS / DÉCOMPTES
+    ↓
+PAIEMENTS
+    ↓
+SUIVI RÉEL vs BUDGET
+
+┌─────────────────────────────────────────────────────────────────┐
+│  1) PARAMÉTRAGE CONVENTION (palier 1)                           │
+│  2) DONNÉES DISPONIBLES (marchés / décomptes / paiements)       │
+│  3) LANCER CALCUL CI                                            │
+│     ↓                                                            │
+│  4) DÉTAIL DU CALCUL                                            │
+│     - base                                                       │
+│     - taux                                                       │
+│     - exclusions                                                 │
+│  5) VALIDATION CI                                               │
+│  6) GÉNÉRATION ÉTAT / FACTURE                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+CONVENTION
+  └─── MARCHE (1..n)
+         ├─── MARCHE_LIGNE (1..n)
+         ├─── AVENANT_MARCHE (0..n)
+         └─── DECOMPTE (0..n)
+                ├─── DECOMPTE_RETENUE (0..n)
+                │      └─── (garantie, RAS, pénalités, avances...)
+                └─── DECOMPTE_IMPUTATION (1..n)
+                       └─── (projet/axe/budget)
+
+DÉCOMPTE VALIDÉ
+  (montants + retenues + net à payer calculé)
+    ↓
+CRÉER ORDRE DE PAIEMENT (OP) [brouillon]
+    ├─ renseigner date prévue, mode, banque, référence interne
+    ├─ proposer montant à payer (par défaut = reste à payer)
+    └─ répartir l'imputation analytique (héritée du décompte)
+    ↓
+VALIDER OP
+    ↓
+ENREGISTRER PAIEMENT EFFECTIF
+    ├─ date valeur / date exécution
+    ├─ référence virement / chèque
+    └─ montant payé (peut être partiel)
+    ↓
+RAPPROCHEMENT BANCAIRE (optionnel palier suivant)
+    ↓
+DÉCOMPTE SOLDÉ (quand cumul payé = net à payer)
+
+┌─────────────────────────────────────────────────────────────────┐
+│  DÉCOMPTE                                                       │
+│    ├─ DECOMPTE_RETENUE (garantie, RAS, pénalités, avances...) │
+│    └─ DECOMPTE_IMPUTATION (projet/axe/budget)                  │
+│         └─ ORDRE_PAIEMENT (brouillon)                          │
+│              └─ PAIEMENT (1..n)                                │
+│                   └─ PAIEMENT_IMPUTATION (option)              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Types de Retenues
+- **Garantie** - Retenue de garantie
+- **RAS** - Retenue à la source (impôts)
+- **Pénalités** - Pénalités de retard
+- **Avances** - Remboursement d'avances
+
+---
+
+## ✅ Fonctionnalités Implémentées
+
+### Backend (API REST)
+
+✅ **Authentification & Sécurité**
+- JWT Authentication
+- Rôles: ADMIN, MANAGER, USER
+- Filtres de logging (clean, sans emojis)
+
+✅ **Conventions**
+- CRUD complet
+- Types: CADRE, NON_CADRE, SPECIFIQUE, AVENANT
+- Statuts: BROUILLON, EN_COURS, VALIDEE, ACHEVE, EN_RETARD, ANNULE
+- Formulaire création/édition
+
+✅ **Projets**
+- CRUD complet
+- Association multi-projets
+
+✅ **Fournisseurs**
+- CRUD complet
+- Validation ICE (15 chiffres)
+- Validation IF
+
+✅ **Axes Analytiques**
+- CRUD complet
+- Dimensions multiples
+
+✅ **Comptes Bancaires**
+- CRUD complet
+- Validation RIB (24 chiffres)
+
+✅ **Dépenses**
+- CRUD complet
+- Calcul automatique TVA 20%
+- Retenues fiscales
+- Filtres avancés
+
+✅ **Commissions**
+- Page listing
+- Calcul automatique
+
+✅ **Marchés**
+- Page listing
+- Détails marché
+- Statuts
+
+✅ **Utilisateurs**
+- Gestion complète
+- Rôles et permissions
+
+### Frontend (React + TypeScript)
+
+✅ **Landing Page GitLab-Style**
+- Design moderne orange (#FC6D26)
+- 12 features détaillées
+- 100% responsive
+- Animations framer-motion
+
+✅ **Dashboard Moderne**
+- 4 KPI cards (Dépenses, Commissions, Projets, Fournisseurs)
+- 4 graphiques Recharts (Area, Bar, Pie)
+- Données réelles de l'API
+- 100% responsive
+
+✅ **Conventions**
+- Liste avec filtres
+- Formulaire création/édition
+- Stats par type
+- Responsive
+
+✅ **Marchés**
+- Liste avec stats
+- Détails marché
+- Filtres
+
+✅ **Profil Utilisateur**
+- Affichage données AuthContext
+- Édition informations
+- Changement mot de passe
+
+✅ **Design System GitLab**
+- Composants génériques: Card, Button, Badge, StatusBadge
+- Sidebar responsive (mobile, tablet, desktop)
+- Couleurs GitLab
+- AppLayout avec menu hamburger mobile
+
+---
+
+## ❌ Fonctionnalités Manquantes
+
+### 🔴 Priorité HAUTE
+
+#### 1. **Workflow Conventions Complet**
+```
+MANQUE:
+❌ Gestion des statuts (BROUILLON → SOUMIS → VALIDEE)
+❌ Validation avec création version V0
+❌ Verrouillage champs sensibles après validation
+❌ Génération fiche synthèse PDF
+
+IMPACT: Le workflow métier n'est pas complet
+```
+
+#### 2. **Sous-Conventions**
+```
+MANQUE:
+❌ Entity SousConvention (hérite de Convention)
+❌ Relation parent-enfant
+❌ Héritage paramètres (partenaires, commission)
+❌ Surcharge possible (montants, taux)
+❌ UI création sous-convention
+
+IMPACT: Impossibilité de créer des conventions dérivées
+```
+
+#### 3. **Avenants**
+```
+MANQUE:
+❌ Entity Avenant
+❌ Numéro avenant / dates
+❌ Impacts (montants, CI, délais)
+❌ Détails AVANT/APRÈS
+❌ Création versions (V1, V2, V3...)
+❌ Version consolidée
+❌ UI gestion avenants
+
+IMPACT: Impossible de modifier une convention validée
+```
+
+#### 4. **Budget Initial & Révisions**
+```
+MANQUE:
+❌ Entity Budget (V0, V1, V2...)
+❌ Plafond convention
+❌ Détail par postes (chapitres/lignes)
+❌ Contrôles: total ≤ plafond
+❌ Révisions budgétaires avec delta
+❌ Historique & justifications
+❌ UI budget avec versions
+
+IMPACT: Pas de gestion budgétaire
+```
+
+#### 5. **Marchés Complet**
+```
+MANQUE:
+❌ MARCHE_LIGNE (détail lignes)
+❌ AVENANT_MARCHE
+❌ Relation Convention → Marché
+❌ Formulaire création marché
+❌ Édition marché
+
+IMPACT: Marchés incomplets, pas de lien avec conventions
+```
+
+#### 6. **Décomptes**
+```
+MANQUE:
+❌ Entity Decompte
+❌ DECOMPTE_RETENUE (garantie, RAS, pénalités, avances)
+❌ DECOMPTE_IMPUTATION (projet/axe/budget)
+❌ Calcul net à payer
+❌ UI décomptes
+
+IMPACT: Pas de suivi situations travaux
+```
+
+#### 7. **Ordres de Paiement**
+```
+MANQUE:
+❌ Entity OrdrePaiement (OP)
+❌ Statut BROUILLON → VALIDE
+❌ Date prévue, mode, banque
+❌ Montant à payer (partiel possible)
+❌ Imputation analytique
+❌ UI création OP
+
+IMPACT: Pas de gestion paiements structurée
+```
+
+#### 8. **Paiements**
+```
+MANQUE:
+❌ Entity Paiement
+❌ Date valeur / exécution
+❌ Référence virement/chèque
+❌ Montant payé (partiel)
+❌ PAIEMENT_IMPUTATION
+❌ Suivi RÉEL vs BUDGET
+❌ Décompte soldé (cumul payé = net à payer)
+❌ UI paiements
+
+IMPACT: Pas de suivi réel des paiements
+```
+
+### 🟡 Priorité MOYENNE
+
+#### 9. **Subventions**
+```
+MANQUE:
+❌ Entity Subvention
+❌ Organisme/bailleur
+❌ Échéancier (date/montant)
+❌ Conditions
+❌ UI subventions
+
+IMPACT: Pas de suivi financements externes
+```
+
+#### 10. **Partenaires/Rôles**
+```
+MANQUE:
+❌ Entity Partenaire
+❌ Rôles: MOA, MOD, Bailleur
+❌ Identifiants (ICE, RC, IF)
+❌ Représentant signataire
+❌ UI partenaires
+
+IMPACT: Pas de suivi acteurs convention
+```
+
+#### 11. **Commission d'Intervention Avancée**
+```
+MANQUE:
+❌ Base calcul (HT/TTC/Autre)
+❌ Mode calcul (taux/tranches/mix)
+❌ Exclusions
+❌ Plafond/minimum
+❌ Déclencheur
+❌ Génération état/facture CI
+
+IMPACT: Calcul CI basique seulement
+```
+
+#### 12. **Ventilation Analytique**
+```
+MANQUE:
+❌ Rattachement Convention ↔ Projet (N..N)
+❌ Rattachement Projet ↔ Axe (N..N)
+❌ Sélection axes par Convention & Projet
+❌ Contrôles totaux
+❌ UI ventilation
+
+IMPACT: Pas d'analyse multidimensionnelle
+```
+
+### 🟢 Priorité BASSE
+
+#### 13. **Rapprochement Bancaire**
+```
+MANQUE:
+❌ Entity RapprochementBancaire
+❌ Import relevés bancaires
+❌ Matching automatique
+❌ UI rapprochement
+
+IMPACT: Rapprochement manuel externe
+```
+
+#### 14. **Documents/Pièces Jointes**
+```
+MANQUE:
+❌ Upload PDF signé convention
+❌ Pièces justificatives budget
+❌ Documents décomptes
+❌ Stockage fichiers (S3/local)
+❌ UI gestion documents
+
+IMPACT: Pas de GED intégrée
+```
+
+#### 15. **Exports Avancés**
+```
+MANQUE:
+❌ Export Excel décomptes
+❌ Export Excel paiements
+❌ Export PDF fiche convention
+❌ Export PDF fiche commission
+❌ Historique versions (PDF)
+
+IMPACT: Exports basiques seulement
+```
+
+#### 16. **Notifications**
+```
+MANQUE:
+❌ Alertes expiration convention
+❌ Notifications validation en attente
+❌ Rappels paiements
+❌ Emails automatiques
+
+IMPACT: Pas de système d'alertes
+```
 
 ---
 
 ## 🛠️ Stack Technique
 
-### Backend - Kotlin Spring Boot
-```
-🎨 Kotlin 1.9.23          → Langage moderne, concis, null-safe
-🚀 Spring Boot 3.2.5      → Framework enterprise
-🐘 Gradle 8.7             → Build tool avec Kotlin DSL
-🐘 PostgreSQL 16          → Base de données
-🔄 Flyway                 → Migrations automatiques
-🔐 JWT + Spring Security  → Authentification sécurisée
-📚 Swagger/OpenAPI        → Documentation API
-🧪 Testcontainers         → Tests d'intégration
-☕ Java 21 LTS            → Runtime JVM
-```
+### Backend
+- **Kotlin 1.9.23** + **Spring Boot 3.2.5**
+- **Java 21** JVM
+- **Gradle 8.7** (Kotlin DSL)
+- **PostgreSQL 16**
+- **Flyway** migrations
+- **Spring Security + JWT**
+- **Swagger/OpenAPI** documentation
 
-### Frontend - React Modern
-```
-⚛️  React 18              → Library UI
-⚡ Vite                   → Build ultra-rapide
-🎨 TailwindCSS            → Design system
-🔄 React Query            → State management
-📋 React Hook Form + Zod  → Validation
-📊 Recharts               → Graphiques
-```
+### Frontend
+- **React 18** + **TypeScript**
+- **Vite** bundler
+- **TailwindCSS** styling
+- **Framer Motion** animations
+- **Recharts** graphiques
+- **React Router** navigation
+- **Axios** HTTP client
+
+### DevOps
+- **Docker** containerization
+- **Railway** deployment
+- **GitHub Actions** CI/CD
 
 ---
 
-## 🚀 Démarrage Rapide
+## 🚀 Déploiement
 
-### Prérequis
-- Java 21+
-- Node.js 20+
-- PostgreSQL 16+ (ou Docker)
+### Backend (Railway)
 
-### 1️⃣ PostgreSQL avec Docker
+**Prérequis:**
+- Compte Railway
+- PostgreSQL addon
+
+**Variables d'environnement:**
 ```bash
-docker run --name investpro-postgres \
-  -e POSTGRES_DB=investpro \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  -d postgres:16-alpine
+DATABASE_URL=postgresql://user:password@host:5432/investpro
+JWT_SECRET=your-secret-key
+JWT_EXPIRATION=86400000
+PORT=8080
 ```
 
-### 2️⃣ Backend
+**Déploiement:**
 ```bash
-cd backend
-./gradlew bootRun
-# API sur http://localhost:8080
-# Swagger: http://localhost:8080/swagger-ui.html
+# Build
+./gradlew clean build -x test
+
+# Railway déploie automatiquement depuis GitHub
+# Le backend démarre sur le port défini dans $PORT
 ```
 
-### 3️⃣ Frontend
+### Frontend (Railway/Vercel)
+
+**Variables d'environnement:**
 ```bash
-cd frontend
-npm install
-npm run dev
-# UI sur http://localhost:5173
+VITE_API_URL=https://your-backend-url.railway.app
 ```
 
----
-
-## 📚 API Endpoints
-
-### 🔐 Authentification
-```
-POST   /api/auth/register     → Inscription
-POST   /api/auth/login        → Connexion (JWT)
-POST   /api/auth/refresh      → Rafraîchir token
-```
-
-### 📜 Conventions
-```
-GET    /api/conventions        → Liste toutes
-GET    /api/conventions/active → Actives uniquement
-POST   /api/conventions        → Créer (ADMIN)
-PUT    /api/conventions/{id}   → Modifier (ADMIN)
-DELETE /api/conventions/{id}   → Supprimer (ADMIN)
-```
-
-### 🏗️ Projets
-```
-GET    /api/projets            → Liste tous
-GET    /api/projets/active     → Actifs uniquement
-POST   /api/projets            → Créer (ADMIN/MANAGER)
-```
-
-### 🏢 Fournisseurs
-```
-GET    /api/fournisseurs                → Liste tous
-GET    /api/fournisseurs/non-residents  → Non-résidents
-POST   /api/fournisseurs                → Créer (ADMIN/MANAGER)
-```
-
-### 💸 Dépenses
-```
-GET    /api/depenses              → Liste toutes
-GET    /api/depenses/unpaid       → Non payées
-GET    /api/depenses/year/{year}  → Par année
-POST   /api/depenses              → Créer (USER/MANAGER/ADMIN)
-```
-
-### 📊 Commissions
-```
-GET    /api/commissions              → Liste toutes
-GET    /api/commissions/year/{year}  → Par année
-GET    /api/commissions/depense/{id} → D'une dépense
-POST   /api/commissions              → Créer (ADMIN/MANAGER)
-```
-
-### 📈 Reporting & Statistiques
-```
-POST   /api/reporting/depenses/search         → Recherche avancée dépenses
-POST   /api/reporting/commissions/search      → Recherche avancée commissions
-GET    /api/reporting/dashboard               → Dashboard global (KPIs)
-GET    /api/reporting/depenses/stats/periode  → Stats dépenses par période
-GET    /api/reporting/depenses/stats/projet   → Stats dépenses par projet
-GET    /api/reporting/depenses/stats/fournisseur → Stats dépenses par fournisseur
-GET    /api/reporting/commissions/stats/periode  → Stats commissions par période
-GET    /api/reporting/commissions/stats/projet   → Stats commissions par projet
-GET    /api/reporting/commissions/stats/fournisseur → Stats commissions par fournisseur
-GET    /api/reporting/commissions/stats/convention  → Stats commissions par convention
-GET    /api/reporting/paiements/stats         → Stats paiements (taux, montants)
-```
-
-### 📥 Exports Excel
-```
-POST   /api/export/excel/depenses                  → Export dépenses (critères)
-GET    /api/export/excel/depenses/all              → Export toutes dépenses
-POST   /api/export/excel/commissions               → Export commissions (critères)
-GET    /api/export/excel/commissions/all           → Export toutes commissions
-GET    /api/export/excel/stats/depenses/periode    → Export stats dépenses/période
-GET    /api/export/excel/stats/depenses/projet     → Export stats dépenses/projet
-GET    /api/export/excel/stats/depenses/fournisseur → Export stats dépenses/fournisseur
-GET    /api/export/excel/stats/commissions/periode  → Export stats commissions/période
-GET    /api/export/excel/stats/commissions/projet   → Export stats commissions/projet
-GET    /api/export/excel/stats/commissions/fournisseur → Export stats commissions/fournisseur
-GET    /api/export/excel/stats/commissions/convention  → Export stats commissions/convention
-```
-
-**Total: 45+ endpoints** - Documentation complète sur Swagger UI
-
----
-
-## 🎯 Spécificités Maroc
-
-### Conformité Fiscale
-- ✅ **TVA 20%** - Taux standard automatique
-- ✅ **ICE** - Validation 15 chiffres
-- ✅ **IF** - Identifiant Fiscal
-- ✅ **RIB** - Format 24 chiffres validé
-- ✅ **IS Tiers 10%** - Pour non-résidents
-- ✅ **Retenue Garantie** - Paramétrable
-
-### Devise
-- 💵 **MAD** (Dirham) par défaut
-- 🌍 Multi-devises supporté
-
----
-
-## 🧪 Tests
-
+**Déploiement:**
 ```bash
-cd backend
+# Build
+npm run build
 
-# Tests avec PostgreSQL réel (Testcontainers)
-./gradlew test
+# Deploy to Railway
+railway up
 
-# Rapport couverture
-./gradlew jacocoTestReport
+# Ou deploy to Vercel
+vercel --prod
 ```
 
-**Tests disponibles :**
-- ✅ Authentification (register, login, refresh)
-- ✅ Connexion PostgreSQL
-- ✅ Validation business rules
+### Base de Données
 
----
-
-## ☁️ Déploiement
-
-### 🚂 Railway.app (Backend)
-**Guide complet** : [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)
-
-1. Connecter GitHub à Railway
-2. Ajouter PostgreSQL plugin
-3. Variables d'environnement :
-   ```
-   SPRING_PROFILES_ACTIVE=prod
-   JWT_SECRET=<générer avec openssl rand -base64 64>
-   CORS_ALLOWED_ORIGINS=https://naciro2010.github.io
-   ```
-4. Déploiement automatique ! ✨
-
-**Coût** : ~$5/mois (plan gratuit Railway)
-
-### 🌐 GitHub Pages (Frontend)
-Déjà configuré ! Push sur `main` déclenche le déploiement.
-
-**URL Démo** : https://naciro2010.github.io/InvestProMaroc/
-
----
-
-## 📖 Documentation
-
-- **[KOTLIN_MIGRATION.md](KOTLIN_MIGRATION.md)** - Migration Java→Kotlin
-- **[backend/README.md](backend/README.md)** - Doc backend détaillée
-- **[RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)** - Guide Railway
-- **[DEMO_DEPLOYMENT.md](DEMO_DEPLOYMENT.md)** - Guide GitHub Pages
-
----
-
-## 🏗️ Architecture
-
+**Migrations Flyway:**
+```bash
+# Les migrations s'exécutent automatiquement au démarrage
+# Fichiers dans: backend/src/main/resources/db/migration/
 ```
-Backend (Kotlin)
-├── Entities      → 7 entités métier
-├── DTOs          → Data Transfer Objects
-├── Repositories  → Spring Data JPA
-├── Services      → Business logic + calculs
-├── Controllers   → REST API (28+ endpoints)
-└── Security      → JWT + Rôles (ADMIN/MANAGER/USER)
 
-Frontend (React)
-├── Pages         → Dashboard, CRUD, Auth
-├── Components    → UI réutilisables
-├── Services      → API calls
-└── Stores        → State management
+**Structure:**
+```
+V1__initial_schema.sql
+V2__add_conventions.sql
+V3__add_marches.sql
+...
 ```
 
 ---
 
-## 📊 Statistiques
+## 📈 Prochaines Étapes
 
-```
-📝 Lignes Kotlin:     ~4,500 lignes
-🗑️  Code supprimé:    -3,500 lignes Java
-📉 Réduction:         -40% de code
+### Phase 1: Workflow Conventions (Sprint 1-2)
+1. ✅ Statuts et transitions
+2. ✅ Validation avec version V0
+3. ✅ Sous-conventions
+4. ✅ Avenants et versions
 
-🎯 Entités:           7 entités métier
-🔌 Endpoints:         45+ REST endpoints
-📊 Reporting:         12+ endpoints statistiques
-📥 Exports Excel:     11+ endpoints export
-🧪 Tests:             Testcontainers intégration
-📚 Documentation:     Swagger/OpenAPI complète
-```
+### Phase 2: Budget (Sprint 3-4)
+1. ✅ Budget initial V0
+2. ✅ Révisions budgétaires
+3. ✅ Ventilation analytique
+4. ✅ Contrôles plafond
 
----
+### Phase 3: Marchés & Décomptes (Sprint 5-6)
+1. ✅ Marchés complets
+2. ✅ Décomptes avec retenues
+3. ✅ Ordres de paiement
+4. ✅ Paiements effectifs
 
-## 🤝 Contribution
-
-1. Fork le projet
-2. Créer branche (`git checkout -b feature/AmazingFeature`)
-3. Commit (`git commit -m 'Add AmazingFeature'`)
-4. Push (`git push origin feature/AmazingFeature`)
-5. Ouvrir Pull Request
-
----
-
-## 📜 Licence
-
-**Propriétaire** - © 2024 InvestPro Maroc
+### Phase 4: Commission & Reporting (Sprint 7-8)
+1. ✅ Calcul CI avancé
+2. ✅ Génération factures
+3. ✅ Exports Excel/PDF
+4. ✅ Dashboards analytiques
 
 ---
 
-## 📧 Support
+## 📝 Licence
 
-- **GitHub Issues** : [Ouvrir une issue](https://github.com/naciro2010/InvestProMaroc/issues)
-- **API Docs** : http://localhost:8080/swagger-ui.html
-- **Email** : contact@investpro.ma
+© 2024 InvestPro Maroc - Tous droits réservés
 
 ---
 
-**Made with** 🎨 **Kotlin** • 🚀 **Spring Boot** • ⚛️ **React** • 🐘 **PostgreSQL**
+## 👥 Contact
+
+- **Email:** support@investpro.ma
+- **GitHub:** [naciro2010/InvestProMaroc](https://github.com/naciro2010/InvestProMaroc)
+
+---
+
+**Made with ❤️ in Morocco 🇲🇦**

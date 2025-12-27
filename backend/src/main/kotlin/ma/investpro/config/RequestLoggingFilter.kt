@@ -63,7 +63,6 @@ class RequestLoggingFilter : OncePerRequestFilter() {
 
         } catch (ex: Exception) {
             val duration = System.currentTimeMillis() - startTime
-            logger.error(ex) { "EXCEPTION: $method $fullUrl | User: $username | Roles: $roles | Duration: ${duration}ms | Error: ${ex.message}" }
             throw ex
         }
     }

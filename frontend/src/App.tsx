@@ -6,13 +6,14 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardMassari from './pages/DashboardMassari'
 import ProjetsCRUD from './pages/ProjetsCRUD'
-import ConventionsCRUD from './pages/ConventionsCRUD'
 import FournisseursCRUD from './pages/FournisseursCRUD'
 import AxesAnalytiquesCRUD from './pages/AxesAnalytiquesCRUD'
 import ComptesBancairesCRUD from './pages/ComptesBancairesCRUD'
 import DepensesCRUD from './pages/DepensesCRUD'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
+import ConventionsPage from './pages/conventions/ConventionsPage'
+import CommissionsPage from './pages/commissions/CommissionsPage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -102,7 +103,7 @@ function App() {
             path="/conventions"
             element={
               <ProtectedRoute>
-                <ConventionsCRUD />
+                <ConventionsPage />
               </ProtectedRoute>
             }
           />
@@ -152,7 +153,7 @@ function App() {
             path="/commissions"
             element={
               <ProtectedRoute>
-                <ComingSoon title="Commissions d'Intervention" />
+                <CommissionsPage />
               </ProtectedRoute>
             }
           />

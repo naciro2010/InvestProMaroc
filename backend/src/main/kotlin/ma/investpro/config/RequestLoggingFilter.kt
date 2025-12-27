@@ -126,7 +126,7 @@ class RequestLoggingFilter : OncePerRequestFilter() {
                 🔥 Exception     : ${ex.javaClass.simpleName}
                 📝 Message       : ${ex.message}
                 ═══════════════════════════════════════════════════════════════════
-                """.trimIndent()
+                """
             }
 
             throw ex

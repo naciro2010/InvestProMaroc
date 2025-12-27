@@ -4,7 +4,7 @@ import { ToastProvider } from './contexts/ToastContext'
 import LandingPageGitLab from './pages/LandingPageGitLab'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import DashboardMassari from './pages/DashboardMassari'
+import DashboardModern from './pages/DashboardModern'
 import ProjetsCRUD from './pages/ProjetsCRUD'
 import FournisseursCRUD from './pages/FournisseursCRUD'
 import AxesAnalytiquesCRUD from './pages/AxesAnalytiquesCRUD'
@@ -13,6 +13,7 @@ import DepensesCRUD from './pages/DepensesCRUD'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
 import ConventionsPage from './pages/conventions/ConventionsPage'
+import ConventionFormPage from './pages/conventions/ConventionFormPage'
 import CommissionsPage from './pages/commissions/CommissionsPage'
 import UsersPage from './pages/users/UsersPage'
 import ProfilePage from './pages/ProfilePage'
@@ -95,7 +96,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardMassari />
+                <DashboardModern />
               </ProtectedRoute>
             }
           />
@@ -106,6 +107,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ConventionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/conventions/nouvelle"
+            element={
+              <ProtectedRoute>
+                <ConventionFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/conventions/:id/edit"
+            element={
+              <ProtectedRoute>
+                <ConventionFormPage />
               </ProtectedRoute>
             }
           />

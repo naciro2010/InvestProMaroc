@@ -117,6 +117,11 @@ export const conventionsAPI = {
   create: (data: any) => api.post('/conventions', data),
   update: (id: number, data: any) => api.put(`/conventions/${id}`, data),
   delete: (id: number) => api.delete(`/conventions/${id}`),
+  // Workflow endpoints
+  soumettre: (id: number) => api.post(`/conventions/${id}/soumettre`),
+  valider: (id: number, valideParId: number) => api.post(`/conventions/${id}/valider`, { valideParId }),
+  rejeter: (id: number, motif: string) => api.post(`/conventions/${id}/rejeter`, { motif }),
+  annuler: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
 }
 
 // Projets API

@@ -99,6 +99,20 @@ interface MarcheRepository : JpaRepository<Marche, Long> {
 }
 
 @Repository
+interface AvenantRepository : JpaRepository<Avenant, Long> {
+    fun findByConventionId(conventionId: Long): List<Avenant>
+    fun findByNumeroAvenant(numeroAvenant: String): Optional<Avenant>
+    fun findByStatut(statut: StatutAvenant): List<Avenant>
+    fun existsByNumeroAvenant(numeroAvenant: String): Boolean
+
+    @Query("SELECT a FROM Avenant a WHERE a.convention.id = :conventionId ORDER BY a.dateAvenant DESC")
+    fun findByConventionOrderByDateDesc(conventionId: Long): List<Avenant>
+
+    @Query("SELECT a FROM Avenant a WHERE a.convention.id = :conventionId AND a.statut = 'VALIDE' ORDER BY a.versionResultante DESC")
+    fun findValidatedByConvention(conventionId: Long): List<Avenant>
+}
+
+@Repository
 interface BonCommandeRepository : JpaRepository<BonCommande, Long> {
     fun findByNumero(numero: String): Optional<BonCommande>
     fun findByMarcheId(marcheId: Long): List<BonCommande>

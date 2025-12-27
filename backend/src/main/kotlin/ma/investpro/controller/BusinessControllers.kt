@@ -54,7 +54,150 @@ class ConventionController(private val service: ConventionService) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse(false, "Convention non trouvée"))
         }
     }
+
+    // Workflow endpoints
+    @PostMapping("/{id}/soumettre")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    fun soumettre(@PathVariable id: Long): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val convention = service.soumettre(id)
+            ResponseEntity.ok(ApiResponse(true, "Convention soumise pour validation", convention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
+
+    @PostMapping("/{id}/valider")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun valider(
+        @PathVariable id: Long,
+        @RequestBody request: ValiderConventionRequest
+    ): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val convention = service.valider(id, request.valideParId)
+            ResponseEntity.ok(ApiResponse(true, "Convention validée - Version V0 créée", convention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
+
+    @PostMapping("/{id}/rejeter")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun rejeter(
+        @PathVariable id: Long,
+        @RequestBody request: RejeterConventionRequest
+    ): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val convention = service.rejeter(id, request.motif)
+            ResponseEntity.ok(ApiResponse(true, "Convention rejetée - retour en brouillon", convention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
+
+    @PostMapping("/{id}/annuler")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun annuler(
+        @PathVariable id: Long,
+        @RequestBody request: AnnulerConventionRequest
+    ): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val convention = service.annuler(id, request.motif)
+            ResponseEntity.ok(ApiResponse(true, "Convention annulée", convention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
+
+    // Sous-conventions endpoints
+    @PostMapping("/{parentId}/sous-conventions")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    fun creerSousConvention(
+        @PathVariable parentId: Long,
+        @Valid @RequestBody request: CreerSousConventionRequest
+    ): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val sousConvention = service.creerSousConvention(
+                parentId,
+                request.sousConvention,
+                request.heriteParametres
+            )
+            ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse(true, "Sous-convention créée", sousConvention))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention parente non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
+
+    @GetMapping("/{parentId}/sous-conventions")
+    fun getSousConventions(@PathVariable parentId: Long): ResponseEntity<ApiResponse<List<Convention>>> {
+        return try {
+            val sousConventions = service.getSousConventions(parentId)
+            ResponseEntity.ok(ApiResponse(true, "Sous-conventions récupérées", sousConventions))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Convention non trouvée"))
+        }
+    }
+
+    @PutMapping("/{id}/parametres-surcharge")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    fun updateParametresSousConvention(
+        @PathVariable id: Long,
+        @RequestBody request: UpdateParametresSousConventionRequest
+    ): ResponseEntity<ApiResponse<Convention>> {
+        return try {
+            val updated = service.updateParametresSousConvention(
+                id,
+                request.surchargeTauxCommission,
+                request.surchargeBaseCalcul
+            )
+            ResponseEntity.ok(ApiResponse(true, "Paramètres mis à jour", updated))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse(false, e.message ?: "Sous-convention non trouvée"))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse(false, e.message ?: "Opération invalide"))
+        }
+    }
 }
+
+// DTOs for workflow requests
+data class ValiderConventionRequest(val valideParId: Long)
+data class RejeterConventionRequest(val motif: String)
+data class AnnulerConventionRequest(val motif: String)
+
+// DTOs for sous-conventions
+data class CreerSousConventionRequest(
+    val sousConvention: Convention,
+    val heriteParametres: Boolean
+)
+
+data class UpdateParametresSousConventionRequest(
+    val surchargeTauxCommission: java.math.BigDecimal?,
+    val surchargeBaseCalcul: String?
+)
 
 @RestController
 @RequestMapping("/api/projets")

@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en" xmlns="http://www.w3.org/1999/html">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="wrappixel, admin dashboard, html css dashboard, web dashboard, bootstrap 4 admin, bootstrap 4, css3 dashboard, bootstrap 4 dashboard, monster admin bootstrap 4 dashboard, frontend, responsive bootstrap 4 admin template, material design, material dashboard bootstrap 4 dashboard template">
+    <meta name="description"
+          content="Monster is powerful and clean admin dashboard template, inpired from Google's Material Design">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Monster Template by WrapPixel</title>
+    <!-- Favicon icon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon.png">
+    <!-- This page CSS -->
+    <link href="../assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
+    <link href="../assets/extra-libs/jquery-steps/jquery.steps.css" rel="stylesheet">
+    <link href="../assets/extra-libs/jquery-steps/steps.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
+    <link href="../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <script src="common/includeHtml.js"></script>
+
+    <!-- This Page CSS -->
+    <link rel="stylesheet" type="text/css" href="../assets/libs/dropzone/dist/min/dropzone.min.css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+<!-- ============================================================== -->
+<!-- Preloader - style you can find in spinners.css -->
+<!-- ============================================================== -->
+<div class="preloader">
+    <div class="lds-ripple">
+        <div class="lds-pos"></div>
+        <div class="lds-pos"></div>
+    </div>
+</div>
+<!-- ============================================================== -->
+<!-- Main wrapper - style you can find in pages.scss -->
+<!-- ============================================================== -->
+<div id="main-wrapper">
+
+    <div w3-include-html="common/leftSideBarInside.html"></div>
+
+    <script>
+        includeHTML();
+    </script>
+    <!-- ============================================================== -->
+    <!-- End Left Sidebar - style you can find in sidebar.scss  -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- Page wrapper  -->
+    <!-- ============================================================== -->
+    <div class="page-wrapper">
+        <!-- ============================================================== -->
+        <!-- Bread crumb and right sidebar toggle -->
+        <!-- ============================================================== -->
+        <div class="page-breadcrumb">
+            <div class="row">
+                <div class="col-md-5 align-self-center">
+                    <div class="d-flex align-items-center">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item active"><a href="">Achat</a></li>
+                                <li class="breadcrumb-item active"><a href="marche.html">Marché</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Décompte</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+
+                <div class="col-md-7 d-flex justify-content-end align-self-center d-none d-md-flex">
+                    <div class="d-flex">
+                        <button class="btn btn-success" data-toggle="modal" data-target="#full-width-modal"><i
+                                class="mdi mdi-plus-circle"></i> Ajout Décompte
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Bread crumb and right sidebar toggle -->
+        <!-- ============================================================== -->
+
+        <!-- ============================================================== -->
+        <div class="container-fluid">
+            <!-- ============================================================== -->
+            <!-- Start Page Content -->
+            <!-- ============================================================== -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-bottom shadow border-info">
+                                        <div class="card-body">
+                                            <div class="d-flex no-block align-items-center">
+                                                    <div class="table-responsive">
+                                                        <table
+                                                                class="table table-bordered m-t-30 contact-list no-wrap table-striped"
+                                                                data-paging="true"
+                                                                data-paging-size="7">
+                                                            <tbody class="table-borderless">
+                                                            <tr data-expanded="true">
+                                                                <td><h6 class="text-info">N° Marché :</h6></td>
+                                                                <td><h6 class="text-wrap" align="left">
+                                                                    13949JD</h6></td>
+                                                                <td><h6 class="text-info">N° d'AO :</h6></td>
+                                                                <td><h6 class="text-wrap" align="left">
+                                                                    213.D31.333</h6></td>
+                                                            </tr>
+                                                            <tr data-expanded="true">
+                                                                <td><h6 class="text-info">Montant :</h6></td>
+                                                                <td><h6 class="text-wrap" align="left">
+                                                                    200.000.000,00</h6></td>
+                                                                <td><h6 class="text-info">Montant RG :</h6></td>
+                                                                <td><h6 class="text-wrap" align="left">
+                                                                   213.000.000,31</h6></td>
+                                                            </tr>
+                                                            <tr data-expanded="true">
+                                                                <td><h6 class="text-info">Fournisseur :</h6></td>
+                                                                <td  style="width:60%" colspan="3"><h6 class="text-wrap" align="left">
+                                                                    fournisseur 1</h6></td>
+                                                            </tr>
+                                                            <tr data-expanded="true">
+                                                                <td style="width:20%"><h6 class="text-info">Objet :</h6></td>
+                                                                <td style="width:80%" colspan="3"><textarea
+                                                                        class="form-control font-12" rows="4"
+                                                                        placeholder="" disabled></textarea></td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-bottom shadow ">
+                                        <div class="card-body">
+                                            <div class="d-flex no-block align-items-center">
+                                                <div class="table-responsive">
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead class="bg-dark-success text-white">
+                                                        <tr>
+                                                            <th colspan="3" class="bg-white border-0"></th>
+                                                            <th colspan="3" class="text-center"><h6 class="text-white">Cumulé TTC</h6></th>
+
+                                                        </tr>
+                                                        <tr class="footable-filtering">
+                                                            <th style="width:5%"><h6 class="text-white">N°</h6></th>
+                                                            <th style="width:5%"><h6 class="text-white">Date</h6></th>
+                                                            <th style="width:5%"><h6 class="text-white">Montant TTC</h6></th>
+                                                            <th style="width:5%"><h6 class="text-white">Montant</h6></th>
+                                                            <th style="width:5%"><h6 class="text-white">RG</h6></th>
+                                                            <th style="width:5%"><h6 class="text-white"> %</h6></th>
+
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr data-expanded="true">
+                                                            <td><a href="#decompte-details">34</a></td>
+                                                            <td>12/02/2019</td>
+                                                            <td align="right">100,000,000.00</td>
+                                                            <td align="right">120,000,000.00</td>
+                                                            <td align="right">12,000,500.00</td>
+                                                            <td>15</td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td><a href="#decompte-details">22</a></td>
+                                                            <td>12/12/2019</td>
+                                                            <td align="right">12,000.00</td>
+                                                            <td align="right">12,000.00</td>
+                                                            <td align="right">12,500.00</td>
+                                                            <td>15</td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td><a href="#decompte-details">22</a></td>
+                                                            <td>12/02/2021</td>
+                                                            <td align="right">15,000.00</td>
+                                                            <td align="right">112,000.00</td>
+                                                            <td align="right">112,500.00</td>
+                                                            <td>15</td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td><a href="#decompte-details">41</a></td>
+                                                            <td>02/12/2022</td>
+                                                            <td align="right">210,000.00</td>
+                                                            <td align="right">312,000.00</td>
+                                                            <td align="right">312,500.00</td>
+                                                            <td>15</td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body" id="decompte-details">
+                            <div class="row">
+                                <div class="col-md-12 col-sm-12">
+                                    <div class="card border-bottom shadow border-cyan">
+                                        <div class="card-body">
+                                            <div class="d-flex no-block align-items-center">
+                                                <div class="table-responsive">
+                                                    <h4 class="text-sm-left text-info">Décompte :</h4>
+
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped "
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tbody class="table-borderless">
+
+                                                        <tr></tr>
+                                                        <tr data-expanded="true">
+                                                            <td align="left"><h6>Numéro : </h6></td>
+                                                            <td align="right "><input type="number"
+                                                                                      class=" font-13 col-xs-1 "
+                                                                                      placeholder="233/E13/31D3"
+                                                                                      disabled></h6></td>
+                                                            <td align="left"><h6>Date : </h6></td>
+                                                            <td align="left"><input type="number"
+                                                                                    class=" font-13 col-xs-1 "
+                                                                                    placeholder="16/02/2021" disabled>
+                                                            </td>
+                                                            <td align="left"></td>
+                                                            <td align="left">
+                                                            </td>
+                                                            <td align="right"><h6>Pièce jointe : </h6></td>
+                                                            <td align="left" rowspan="2" style="width:30%"><a
+                                                                    href="pieceJoint.pdf">
+                                                                <h6 class="text-info">Facture3132134.pdf</h6></a>
+                                                            </td>
+                                                            <td></td>
+
+                                                        </tr>
+                                                        <tr></tr>
+
+
+
+                                                        </tbody>
+                                                    </table>
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tr class="footable-filtering bg-dark- ">
+                                                            <th style="width:5%"><h6>N°Prix</h6></th>
+                                                            <th><h6>Désignation</h6></th>
+                                                            <th style="width:5%"><h6>Unité</h6></th>
+                                                            <th style="width:5%"><h6>Quantité</h6></th>
+                                                            <th style="width:5%"><h6>PU HT</h6></th>
+                                                            <th style="width:5%"><h6>Total</h6></th>
+
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody>
+
+                                                        <tr data-expanded="true">
+                                                            <td align="right">12.500,00</td>
+                                                            <td>Désignation 1</td>
+                                                            <td>Article</td>
+                                                            <td>100</td>
+                                                            <td align="right">4.341,30</td>
+                                                            <td align="right">134.341.300,00</td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td align="right">4.500,00</td>
+                                                            <td>Désignation 2</td>
+                                                            <td>Article</td>
+                                                            <td>134</td>
+                                                            <td align="right">41.341,00</td>
+                                                            <td align="right">541.341.300,00</td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td align="right">1.500,00</td>
+                                                            <td>Désignation 3</td>
+                                                            <td>Article</td>
+                                                            <td>34</td>
+                                                            <td align="right">123.230.00,000</td>
+                                                            <td align="right">134.341.300,00</td>
+                                                        </tr>
+
+
+                                                        </tbody>
+                                                        <tbody class="table-borderless">
+                                                        <tr></tr>
+
+                                                        <tr data-expanded="true">
+                                                            <td colspan="4"></td>
+                                                            <td align="left"><h6>Montant Hors TVA </h6></td>
+                                                            <td align="right"><h6>123.123.000,12</h6></td>
+
+                                                        </tr>
+                                                        <tr></tr>
+
+                                                        <tr data-expanded="true">
+                                                            <td colspan="4"></td>
+                                                            <td align="left"><h6>TVA </h6></td>
+                                                            <td align="right"><h6>134.000,12</h6></td>
+
+                                                        </tr>
+                                                        <tr></tr>
+                                                        <tr data-expanded="true">
+                                                            <td colspan="4"></td>
+                                                            <td align="left"><h6>Total TTC </h6></td>
+                                                            <td align="right"><h6>199.123.000,12</h6></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="card border-bottom shadow border-cyan">
+                                        <div class="card-body">
+                                            <div class="d-flex no-block align-items-center">
+                                                <div class="table-responsive">
+                                                    <h4 class="text-sm-left text-info">Imputations :</h4>
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tr class="footable-filtering bg-dark- ">
+                                                            <th style="width:7%"><h6> Convention</h6></th>
+                                                            <th style="width:7%"><h6>Axe</h6></th>
+                                                            <th style="width:7%"><h6>Projet</h6></th>
+                                                            <th style="width:7%"><h6>Volet</h6></th>
+                                                            <th style="width:20%"><h6>Montant TTC</h6></th>
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody>
+
+                                                        <tr data-expanded="true">
+                                                            <td href=""> Convention 1</td>
+                                                            <td>Axe 1</td>
+                                                            <td>Projet 1</td>
+                                                            <td>Volet</td>
+                                                            <td align="right">12,500.00</td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td href=""> Convention 2</td>
+                                                            <td>Axe 2</td>
+                                                            <td>Projet 2</td>
+                                                            <td>Volet 2</td>
+                                                            <td align="right">12,500.00</td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td href=""> Convention 3</td>
+                                                            <td>Axe 3</td>
+                                                            <td>Projet 3</td>
+                                                            <td>Volet 3</td>
+                                                            <td align="right">42,500.00</td>
+
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td href=""> Convention 4</td>
+                                                            <td>Axe 4</td>
+                                                            <td>Projet 4</td>
+                                                            <td>Volet</td>
+                                                            <td align="right">52,500.00</td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td href=""> Convention 5</td>
+                                                            <td>Axe 5</td>
+                                                            <td>Projet 5</td>
+                                                            <td>Volet</td>
+                                                            <td align="right">15,500.00</td>
+                                                        </tr>
+                                                        </tbody>
+                                                        <tbody class="table-borderless">
+                                                        <tr></tr>
+
+                                                        <tr data-expanded="true">
+                                                            <td colspan="3"></td>
+                                                            <td align="left"><h6>Total </h6></td>
+                                                            <td align="right"><h6>123.123.000,12</h6></td>
+                                                        </tr>
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="card border-bottom shadow border-cyan">
+                                        <div class="card-body">
+                                            <div class="d-flex no-block align-items-center">
+                                                <div class="table-responsive">
+                                                    <h4 class="text-sm-left text-info">Paiements :</h4>
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tr class="footable-filtering bg-dark- ">
+                                                            <th style="width:5%"><h6>Banque</h6></th>
+                                                            <th style="width:15%"><h6>Type <br/> Paiement</h6></th>
+                                                            <th style="width:20%"><h6>Ref Paiement</h6></th>
+                                                            <th style="width:5%"><h6>Date opé.</h6></th>
+                                                            <th style="width:5%"><h6>Date Valeur</h6></th>
+                                                            <th style="width:5%"><h6>Montant</h6></th>
+                                                            <th style="width:5%"><h6>PJ</h6></th>
+
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+
+                                                        <tr data-expanded="true">
+                                                            <td>SG</td>
+                                                            <td>Chéque</td>
+                                                            <td>12/3D31/DF</td>
+                                                            <td align="right">12/12/2021</td>
+                                                            <td align="right">15/12/2021</td>
+                                                            <td align="right">13.431.00</td>
+                                                            <td></td>
+                                                        </tr>
+                                                        <tr data-expanded="true">
+                                                            <td>GAP</td>
+                                                            <td>Virement</td>
+                                                            <td>13/3D31/DF</td>
+                                                            <td align="right">12/01/2021</td>
+                                                            <td align="right">15/12/2021</td>
+                                                            <td align="right">14.532.00</td>
+                                                            <td></td>
+                                                        </tr>
+                                                        </tbody>
+
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 col-sm-12">
+                                    <div class="card border-bottom shadow border-cyan">
+                                        <div class="card-body">
+                                            <div class="d-flex no-block align-items-center">
+                                                <div class="table-responsive">
+                                                    <h4 class="text-sm-left text-info">Facture :</h4>
+
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped "
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tbody class="table-borderless">
+
+                                                        <tr></tr>
+                                                        <tr data-expanded="true">
+                                                            <td align="left"><h6>Numéro : </h6></td>
+                                                            <td align="right "><input type="number"
+                                                                                      class=" font-13 col-xs-1 "
+                                                                                      placeholder="213/EAD/31D3"
+                                                                                      disabled></h6></td>
+                                                            <td align="left"><h6>Date : </h6></td>
+                                                            <td align="left"><input type="number"
+                                                                                    class=" font-13 col-xs-1 "
+                                                                                    placeholder="16/02/2021" disabled>
+                                                            </td>
+                                                            <td align="left"><h6>Date récéption : </h6></td>
+                                                            <td align="left"><input type="number"
+                                                                                    class=" font-13 col-xs-1 "
+                                                                                    placeholder="12/02/2021" disabled>
+                                                            </td>
+                                                            <td align="right"><h6>Pièce jointe : </h6></td>
+                                                            <td align="left" rowspan="2" style="width:30%"><a
+                                                                    href="pieceJoint.pdf">
+                                                                <h6 class="text-info">Facture3132134.pdf</h6></a>
+                                                            </td>
+                                                            <td></td>
+
+                                                        </tr>
+                                                        <tr></tr>
+
+                                                        <tr data-expanded="true" style="padding-bottom: 5px">
+                                                            <td colspan="2"></td>
+                                                            <td align="right"><h6>Montant TTC : </h6></td>
+                                                            <td align="left"><input type="number"
+                                                                                    class=" font-13 col-xs-1 "
+                                                                                    placeholder="223.321.000" disabled>
+                                                            </td>
+                                                            <td colspan="2"></td>
+
+                                                        </tr>
+
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 col-sm-12">
+                                    <div class="card border-bottom shadow border-cyan">
+                                        <div class="card-body">
+                                            <div class="d-flex no-block align-items-center">
+                                                <div class="table-responsive">
+                                                    <h4 class="text-sm-left text-info">Caution bancaire:</h4>
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tbody class="table-borderless">
+                                                        <tr></tr>
+                                                        <tr data-expanded="true">
+
+                                                            <td align="left" style="width:5%"><h6>Date : </h6></td>
+                                                            <td align="left"><input type="number"
+                                                                                    class=" font-13 col-xs-1 "
+                                                                                    placeholder="12/01/2021" disabled>
+                                                            </td>
+                                                            <td align="left" colspan="2"><h6></h6></td>
+
+                                                            <td align="right"><h6>Pièce jointe : </h6></td>
+                                                            <td align="left" rowspan="2" style="width:30%"><a
+                                                                    href="pieceJoint.pdf">
+                                                                <h6 class="text-info">Decompte13DD.pdf</h6></a>
+                                                            </td>
+                                                            <td></td>
+
+                                                        </tr>
+                                                        <tr></tr>
+                                                        <tr data-expanded="true" style="padding-bottom: 5px">
+                                                            <td align="left" style="width:5%"><h6>Montant :</h6></td>
+                                                            <td align="left"><input type="number"
+                                                                                    class=" font-13 col-xs-1 "
+                                                                                    placeholder="123.321.000" disabled>
+                                                            </td>
+                                                            <td colspan="3"></td>
+                                                        </tr>
+
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col-12">
+                    <div id="full-width-modal" class="modal fade" tabindex="-1" role="dialog"
+                         aria-labelledby="fullWidthModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-full-width">
+                            <div class="modal-content">
+                                <div class="modal-header d-flex align-items-center bg-success">
+                                    <h4 class="modal-title text-white" id="fullWidthModalLabel">Création décompte :</h4>
+                                    <button type="button" class="close ml-auto" data-dismiss="modal"
+                                            aria-hidden="true">×
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="card">
+                                        <div class="card-body wizard-content">
+                                            <h6 class="card-subtitle"></h6>
+                                            <form action="#" class="tab-wizard wizard-circle">
+                                                <!-- Step 1 -->
+                                                <h6>Décompte</h6>
+                                                <section>
+                                                    <div class="table-responsive">
+                                                        <table
+                                                                class="table table-bordered m-t-30 contact-list no-wrap table-striped">
+
+                                                            <tbody class="table-borderless">
+                                                            <tr></tr>
+                                                            <tr>
+                                                                <td style="width:5%"><label
+                                                                        class="col-form-label font-12">Numéro:</label></td>
+                                                                <td style="width:25%" >
+                                                                    <input type="number"
+                                                                           class="form-control font-12 col-xs-1"
+                                                                           placeholder="314DLF" disabled>
+                                                                </td>
+                                                                <td style="width:10%"><label
+                                                                        class="col-form-label font-12">Date:</label></td>
+                                                                <td style="width:10%" colspan="1"><input type="date" class="form-control font-12 col-xs-1"></td>
+
+
+                                                            </tr>
+                                                            <tr></tr>
+                                                            <tr>
+                                                                <td colspan="3"></td>
+                                                                <td style="width:20%" align="right">Piece jointe</td>
+                                                                <td>
+                                                                    <input type="file">
+                                                                </td>
+
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+
+                                                        <table
+                                                                class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                                data-paging="true"
+                                                                data-paging-size="7">
+                                                            <thead class="bg-dark-success text-white">
+                                                            <tr class="footable-filtering bg-dark- ">
+                                                                <th style="width:5%"><h6 class="text-white">N°Prix</h6></th>
+                                                                <th><h6 class="text-white">Désignation</h6></th>
+                                                                <th style="width:5%"><h6 class="text-white">Unité</h6></th>
+                                                                <th style="width:5%"><h6 class="text-white">QTE <br/> Restante</h6></th>
+                                                                <th style="width:5%"><h6 class="text-white">Quantité</h6></th>
+                                                                <th style="width:5%"><h6 class="text-white">PU HT</h6></th>
+                                                                <th style="width:5%"><h6 class="text-white">Total</h6></th>
+
+                                                            </tr>
+
+                                                            </thead>
+                                                            <tbody>
+
+                                                            <tr data-expanded="true">
+                                                                <td align="right">1243/43</td>
+                                                                <td>Désignation 1</td>
+                                                                <td>Article</td>
+                                                                <td>100</td>
+                                                                <td> <input type="text"
+                                                                            class="form-control font-12 col-xs-1"></td>
+                                                                <td align="right">4.341,30</td>
+                                                                <td align="right">134.341.300,00</td>
+                                                            </tr>
+                                                            <tr data-expanded="true">
+                                                                <td align="right">1243/41</td>
+                                                                <td>Désignation 2</td>
+                                                                <td>Article</td>
+                                                                <td>134</td>
+                                                                <td> <input type="text"
+                                                                            class="form-control font-12 col-xs-1"></td>
+                                                                <td align="right">41.341,00</td>
+                                                                <td align="right">541.341.300,00</td>
+                                                            </tr>
+                                                            <tr data-expanded="true">
+                                                                <td align="right">1243/44</td>
+                                                                <td>Désignation 3</td>
+                                                                <td>Article</td>
+                                                                <td>34</td>
+                                                                <td> <input type="text"
+                                                                            class="form-control font-12 col-xs-1"></td>
+                                                                <td align="right">123.230.00,000</td>
+                                                                <td align="right">134.341.300,00</td>
+                                                            </tr>
+
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </section>
+                                                <!-- Step 2 -->
+                                                <h6>Imputation</h6>
+                                                <section>
+
+                                                    <div class="table-responsive">
+                                                        <table id="empTable"
+                                                               class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                               data-paging="true"
+                                                               data-paging-size="7">
+                                                            <thead class="bg-dark-success text-white">
+                                                            <tr>
+                                                                <th style="width:20%"><h6 class="text-white">Convention</h6></th>
+                                                                <th style="width:15%"><h6 class="text-white">Axe</h6></th>
+                                                                <th style="width:20%"><h6 class="text-white">Projet</h6></th>
+                                                                <th style="width:20%"><h6 class="text-white">Volet</h6></th>
+                                                                <th style="width:20%"><h6 class="text-white">Montant TTC</h6></th>
+                                                                <th style="width:5%"><h6 class="text-white">Tx TVA (%)</h6></th>
+
+                                                            </tr>
+
+                                                            </thead>
+                                                            <tbody>
+
+                                                            <tr data-expanded="true">
+                                                                <td>Fournisseur1</td>
+                                                                <td>Axe2</td>
+                                                                <td>Projet1</td>
+                                                                <td>Volet1</td>
+                                                                <td align="right"><input type="number"
+                                                                                         class="form-control font-12">
+                                                                </td>
+                                                                <td align="right"><input type="number"
+                                                                                         class="form-control font-12">
+                                                                </td>
+                                                            </tr>
+                                                            <tr data-expanded="true">
+                                                                <td>Fournisseur2</td>
+                                                                <td>Axe1</td>
+                                                                <td>Projet1</td>
+                                                                <td>Volet1</td>
+                                                                <td align="right"><input type="number"
+                                                                                         class="form-control font-12">
+                                                                </td>
+                                                                <td align="right"><input type="number"
+                                                                                         class="form-control font-12">
+                                                                </td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </section>
+                                                <!-- Step 3 -->
+                                                <h6>Facture</h6>
+                                                <section>
+                                                    <div class="table-responsive">
+                                                        <table
+                                                                class="table table-bordered m-t-30 contact-list no-wrap table-striped"
+                                                                data-paging="true"
+                                                                data-paging-size="7">
+                                                            <thead>
+                                                            <tbody class="table-borderless">
+                                                            <tr></tr>
+                                                            <tr>
+                                                                <td align="left"><label
+                                                                        class="col-form-label font-12">Numéro :</label></td>
+                                                                <td align="right "><input type="number"
+                                                                                          class="form-control font-12">
+                                                                </td>
+                                                                <td align="left"><label
+                                                                        class="col-form-label font-12">Date :</label></td>
+                                                                <td align="left"><input type="date"
+                                                                                        class="form-control font-12">
+                                                                </td>
+
+                                                                <td></td>
+
+                                                            </tr>
+                                                            <tr></tr>
+                                                            <tr>
+                                                                <td align="left"><label
+                                                                        class="col-form-label font-12">Montant TTC :</label></td>
+                                                                <td align="left"><input type="number"
+                                                                                        class="form-control font-12">
+                                                                </td>
+                                                                <td align="left"><label
+                                                                        class="col-form-label font-12">Date de la récéption :</label></td>
+                                                                <td align="left"><input type="date"
+                                                                                        class="form-control font-12">
+                                                                </td>
+                                                                <td></td>
+
+                                                            </tr>
+                                                            <tr></tr>
+                                                            <tr>
+                                                                <td align="left"><label
+                                                                        class="col-form-label font-12">Pièce jointe :</label></td>
+                                                                <td align="right" rowspan="5" style="width:30%"></td>
+                                                            </tr>
+
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </section>
+                                                <!-- Step 4 -->
+                                                <h6>Caution Bancaire</h6>
+                                                <section>
+                                                    <div class="table-responsive">
+                                                        <table
+                                                                class="table table-bordered m-t-30 contact-list no-wrap table-striped "
+                                                                data-paging="true"
+                                                                data-paging-size="7">
+                                                            <thead>
+                                                            <tbody class="table-borderless">
+                                                            <tr></tr>
+                                                            <tr data-expanded="true">
+                                                                <td align="left" style="width:5%"><label
+                                                                        class="col-form-label font-12">Date :</label></td>
+                                                                <td align="left"><input type="date"
+                                                                                        class="form-control font-12">
+                                                                </td>
+                                                                <td align="left" style="width:5%"><label
+                                                                        class="col-form-label font-12">Montant :</label>
+                                                                </td>
+                                                                <td align="left"><input type="number"
+                                                                                        class="form-control font-12">
+                                                                </td>
+
+                                                            </tr>
+                                                            <tr></tr>
+                                                            <tr data-expanded="true">
+                                                                <td align="right"><label
+                                                                        class="col-form-label font-12">Pièce jointe :</label></td>
+                                                                <td align="right" rowspan="3" style="width:30%">
+                                                                </td>
+
+                                                            </tr>
+                                                            <tr></tr>
+
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </section>
+
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><!-- /.modal-content -->
+                        </div><!-- /.modal-dialog -->
+                    </div>
+                </div>
+                <!-- ============================================================== -->
+                <!-- ============================================================== -->
+                <!-- footer -->
+                <!-- ============================================================== -->
+                <footer class="footer">
+                    © 2020 Xcompta Admin by Mohamed Samir
+                </footer>
+                <!-- ============================================================== -->
+                <!-- End footer -->
+                <!-- ============================================================== -->
+            </div>
+            <!-- ============================================================== -->
+            <!-- End Page wrapper  -->
+            <!-- ============================================================== -->
+        </div>
+    </div>
+</div>
+<!-- ============================================================== -->
+<!-- End Wrapper -->
+<!-- ============================================================== -->
+<!-- ============================================================== -->
+<!-- customizer Panel -->
+<!-- ============================================================== -->
+<!-- All Jquery -->
+<!-- ============================================================== -->
+
+<script src="../assets/libs/jquery/dist/jquery.min.js"></script>
+<!-- Bootstrap tether Core JavaScript -->
+<script src="../assets/libs/popper.js/dist/umd/popper.min.js"></script>
+<script src="../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
+<!-- apps -->
+<script src="../../dist/js/app.min.js"></script>
+<script src="../../dist/js/app.init.js"></script>
+<script src="../../dist/js/app.init.horizontal.js"></script>
+<script src="../../dist/js/app-style-switcher.horizontal.js"></script>
+<!-- Theme settings -->
+<script src="../../dist/js/app-style-switcher.js"></script>
+<!-- slimscrollbar scrollbar JavaScript -->
+<script src="../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+<script src="../assets/libs/jquery-sparkline/jquery.sparkline.min.js"></script>
+<!--Wave Effects -->
+<script src="../../dist/js/waves.js"></script>
+<!--Menu sidebar -->
+<script src="../../dist/js/sidebarmenu.js"></script>
+<!--Custom JavaScript -->
+<script src="../../dist/js/feather.min.js"></script>
+<script src="../../dist/js/custom.min.js"></script>
+<script src="../assets/libs/jquery-steps/build/jquery.steps.min.js"></script>
+<script src="../assets/libs/jquery-validation/dist/jquery.validate.min.js"></script>
+<script>
+    //Basic Example
+    $("#example-basic").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        autoFocus: true
+    });
+
+    // Basic Example with form
+    var form = $("#example-form");
+    form.validate({
+        errorPlacement: function errorPlacement(error, element) {
+            element.before(error);
+        },
+        rules: {
+            confirm: {
+                equalTo: "#password"
+            }
+        }
+    });
+    form.children("div").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        onStepChanging: function (event, currentIndex, newIndex) {
+            form.validate().settings.ignore = ":disabled,:hidden";
+            return form.valid();
+        },
+        onFinishing: function (event, currentIndex) {
+            form.validate().settings.ignore = ":disabled";
+            return form.valid();
+        },
+        onFinished: function (event, currentIndex) {
+            alert("Submitted!");
+        }
+    });
+
+    // Advance Example
+
+    var form = $("#example-advanced-form").show();
+
+    form.steps({
+        headerTag: "h3",
+        bodyTag: "fieldset",
+        transitionEffect: "slideLeft",
+        onStepChanging: function (event, currentIndex, newIndex) {
+            // Allways allow previous action even if the current form is not valid!
+            if (currentIndex > newIndex) {
+                return true;
+            }
+            // Forbid next action on "Warning" step if the user is to young
+            if (newIndex === 3 && Number($("#age-2").val()) < 18) {
+                return false;
+            }
+            // Needed in some cases if the user went back (clean up)
+            if (currentIndex < newIndex) {
+                // To remove error styles
+                form.find(".body:eq(" + newIndex + ") label.error").remove();
+                form.find(".body:eq(" + newIndex + ") .error").removeClass("error");
+            }
+            form.validate().settings.ignore = ":disabled,:hidden";
+            return form.valid();
+        },
+        onStepChanged: function (event, currentIndex, priorIndex) {
+            // Used to skip the "Warning" step if the user is old enough.
+            if (currentIndex === 2 && Number($("#age-2").val()) >= 18) {
+                form.steps("Suivant");
+            }
+            // Used to skip the "Warning" step if the user is old enough and wants to the previous step.
+            if (currentIndex === 2 && priorIndex === 3) {
+                form.steps("Précédent");
+            }
+        },
+        onFinishing: function (event, currentIndex) {
+            form.validate().settings.ignore = ":disabled";
+            return form.valid();
+        },
+        onFinished: function (event, currentIndex) {
+            alert("Submitted!");
+        }
+    }).validate({
+        errorPlacement: function errorPlacement(error, element) {
+            element.before(error);
+        },
+        rules: {
+            confirm: {
+                equalTo: "#password-2"
+            }
+        }
+    });
+
+    // Dynamic Manipulation
+    $("#example-manipulation").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        enableAllSteps: true,
+        enablePagination: false
+    });
+
+    //Vertical Steps
+
+    $("#example-vertical").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        stepsOrientation: "vertical"
+    });
+
+    //Custom design form example
+    $(".tab-wizard").steps({
+        headerTag: "h6",
+        bodyTag: "section",
+        transitionEffect: "fade",
+        titleTemplate: '<span class="step">#index#</span> #title#',
+        labels: {
+            finish: "Submit"
+        },
+        onFinished: function (event, currentIndex) {
+            swal("Form Submitted!", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem erat eleifend ex semper, lobortis purus sed.");
+
+        }
+    });
+
+
+    var form = $(".validation-wizard").show();
+
+    $(".validation-wizard").steps({
+        headerTag: "h6",
+        bodyTag: "section",
+        transitionEffect: "fade",
+        titleTemplate: '<span class="step">#index#</span> #title#',
+        labels: {
+            finish: "Submit"
+        },
+        onStepChanging: function (event, currentIndex, newIndex) {
+            return currentIndex > newIndex || !(3 === newIndex && Number($("#age-2").val()) < 18) && (currentIndex < newIndex && (form.find(".body:eq(" + newIndex + ") label.error").remove(), form.find(".body:eq(" + newIndex + ") .error").removeClass("error")), form.validate().settings.ignore = ":disabled,:hidden", form.valid())
+        },
+        onFinishing: function (event, currentIndex) {
+            return form.validate().settings.ignore = ":disabled", form.valid()
+        },
+        onFinished: function (event, currentIndex) {
+            swal("Form Submitted!", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem erat eleifend ex semper, lobortis purus sed.");
+        }
+    }), $(".validation-wizard").validate({
+        ignore: "input[type=hidden]",
+        errorClass: "text-danger",
+        successClass: "text-success",
+        highlight: function (element, errorClass) {
+            $(element).removeClass(errorClass)
+        },
+        unhighlight: function (element, errorClass) {
+            $(element).removeClass(errorClass)
+        },
+        errorPlacement: function (error, element) {
+            error.insertAfter(element)
+        },
+        rules: {
+            email: {
+                email: !0
+            }
+        }
+    })
+</script>
+</body>
+
+</html>

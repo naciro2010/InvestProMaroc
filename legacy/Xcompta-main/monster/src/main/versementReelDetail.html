@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="wrappixel, admin dashboard, html css dashboard, web dashboard, bootstrap 4 admin, bootstrap 4, css3 dashboard, bootstrap 4 dashboard, monster admin bootstrap 4 dashboard, frontend, responsive bootstrap 4 admin template, material design, material dashboard bootstrap 4 dashboard template">
+    <meta name="description"
+          content="Monster is powerful and clean admin dashboard template, inpired from Google's Material Design">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Monster Template by WrapPixel</title>
+    <!-- Favicon icon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon.png">
+    <!-- Custom CSS -->
+    <link href="../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
+    <link href="../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <script src="common/includeHtml.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+<!-- ============================================================== -->
+<!-- Preloader - style you can find in spinners.css -->
+<!-- ============================================================== -->
+<div class="preloader">
+    <div class="lds-ripple">
+        <div class="lds-pos"></div>
+        <div class="lds-pos"></div>
+    </div>
+</div>
+<!-- ============================================================== -->
+<!-- Main wrapper - style you can find in pages.scss -->
+<!-- ============================================================== -->
+<div id="main-wrapper">
+
+    <div w3-include-html="common/leftSideBarInside.html"></div>
+
+    <script>
+        includeHTML();
+    </script>
+    <!-- ============================================================== -->
+    <!-- End Left Sidebar - style you can find in sidebar.scss  -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- Page wrapper  -->
+    <!-- ============================================================== -->
+    <div class="page-wrapper">
+        <!-- ============================================================== -->
+        <!-- Bread crumb and right sidebar toggle -->
+        <!-- ============================================================== -->
+        <div class="page-breadcrumb">
+            <div class="row">
+                <div class="col-md-5 align-self-center">
+                    <div class="d-flex align-items-center">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="conventions.html">Convention</a></li>
+                                <li class="breadcrumb-item active" aria-current="page"><a href="versementReel.html">
+                                    Versements Réels</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Détail du versements Réels</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+                <div class="col-md-7 d-flex justify-content-end align-self-center d-none d-md-flex">
+                    <div class="d-flex">
+                        <button class="btn btn-success" data-toggle="modal" data-target="#full-width-modal"><i
+                                class="mdi mdi-plus-circle"></i> Ajout Versement
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Bread crumb and right sidebar toggle -->
+        <!-- ============================================================== -->
+
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card border-bottom shadow border-info">
+                    <div class="card-body">
+                        <div class="d-flex no-block align-items-center">
+                            <div>
+                                <h5 class="text-info">Libellé de la convention :</h5>
+                                <h6 class="text-wrap"> Convention Cadre de la Creation d'une nouvelle ville
+                                    au maroc</h6>
+                                <h5 class="text-info">Objet de la convention :</h5>
+                                <h6 class="text-wrap">C'est la description de cette convention Cadre </h6>
+                                <h5 class="text-info">Taux de la commission de l'intervention :</h5>
+                                <h6 class="text-wrap"> 7 % TTC sur les décaissements TTC </h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <h5 class="text-info">Détail de versement par convention</h5>
+                            <table id="demo-foo-row-toggler" class="table table-bordered no-wrap"
+                                   data-toggle-column="first">
+                                <thead class="bg-success text-white">
+                                <tr>
+                                    <th style="width:1%"></th>
+                                    <th data-breakpoints="xs" data-title="Axe" style="width:5%">Axe</th>
+                                    <th data-breakpoints="xs" data-title="Projet" style="width:5%">Projet</th>
+                                    <th data-breakpoints="xs" data-title="Volet" style="width:5%">Volet</th>
+                                    <th data-breakpoints="xs" data-title="Partenaire" style="width:5%">
+                                        Partenaire
+                                    </th>
+                                    <th data-breakpoints="xs" data-title="Libellé MOD" style="width:5%">MOD</th>
+                                    <th align="right" style="width:5%">Date<br/> prévue</th>
+                                    <th align="right" style="width:5%">Montant prévu</th>
+                                    <th align="right" style="width:5%">Montant versé</th>
+                                    <th align="right" style="width:5%">Reste à verser</th>
+                                    <th data-breakpoints="all" data-title="Libellé axe" style="width:5%">Libellé axe
+                                    </th>
+                                    <th data-breakpoints="all" data-title="Libellé Projet" style="width:5%">Libellé
+                                        Projet
+                                    </th>
+                                    <th data-breakpoints="all" data-title="Libellé Volet" style="width:5%">Libellé
+                                        Volet
+                                    </th>
+                                    <th data-breakpoints="all" data-title="Libellé Partenaire" style="width:5%">Libellé
+                                        Partenaire
+                                    </th>
+                                    <th data-breakpoints="all" data-title="Libellé MOD" style="width:5%">Libellé MOD
+                                    </th>
+
+
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td></td>
+
+                                    <td>AOO1</td>
+                                    <td>P002</td>
+                                    <td>V003</td>
+                                    <td>P001</td>
+                                    <td>MOD001</td>
+                                    <td align="center">
+                                        12/02/2021
+                                    </td>
+                                    <td align="right">
+                                        120 430 134,99
+                                    </td>
+                                    <td align="right">
+                                        <a href="#detail_versement_div" data-toggle="collapse">50 000 938,99</a>
+                                    </td>
+                                    <td align="right">
+                                        20 500 939,00
+                                    </td>
+                                    <td style="width:90%">AXE 1</td>
+                                    <td style="width:90%">Projet 1</td>
+                                    <td style="width:90%">Volet 1</td>
+                                    <td style="width:90%">Partenaire 1</td>
+                                    <td style="width:90%">Libellé 1</td>
+
+                                </tr>
+                                <tr>
+                                    <td></td>
+
+                                    <td>A001</td>
+                                    <td>P001</td>
+                                    <td>V0021</td>
+                                    <td>P0021</td>
+                                    <td>M001</td>
+                                    <td align="center">
+                                        12/02/2021
+                                    </td>
+                                    <td align="right">
+                                        12 450 000,99
+                                    </td>
+                                    <td align="right">
+                                        <a href="#detail_versement_div2" data-toggle="collapse"> 100 000 000,99</a>
+                                    </td>
+                                    <td align="right">
+                                        200 430 134,99
+                                    </td>
+                                    <td style="width:90%">AXE 1</td>
+                                    <td style="width:90%">Projet 1</td>
+                                    <td style="width:90%">Volet 1</td>
+                                    <td style="width:90%">Partenaire 1</td>
+                                    <td style="width:90%">Libellé 1</td>
+
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>A003</td>
+                                    <td>P0013</td>
+                                    <td>V00DF</td>
+                                    <td>P000F</td>
+                                    <td>M0001</td>
+                                    <td align="center">
+                                        12/02/2022
+                                    </td>
+                                    <td align="right">
+                                        150 430 134,99
+                                    </td>
+                                    <td align="right">
+                                        <a href="#detail_versement_div3" data-toggle="collapse"> 40 000 000,99</a>
+                                    </td>
+                                    <td align="right">
+                                        60 430 134,99
+                                    </td>
+                                    <td style="width:90%">AXE 1</td>
+                                    <td style="width:90%">Projet 1</td>
+                                    <td style="width:90%">Volet 1</td>
+                                    <td style="width:90%">Partenaire 1</td>
+                                    <td style="width:90%">Libellé 1</td>
+                                </tr>
+
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-12">
+                <div id="detail_versement_div" class="collapse">
+                    <div class="card">
+                        <div class="card-body ">
+                            <div class="table-responsive">
+                                <h5 class="text-info">Détail de versement : <label class="text-success">50 000
+                                    938,99</label></h5>
+                                <table id="detail_versement" class="table table-bordered no-wrap"
+                                       data-toggle-column="first">
+                                    <thead class="bg-success text-white">
+                                    <tr>
+
+                                        <th data-breakpoints="xs" data-title="Libellé axe" style="width:5%">Axe</th>
+                                        <th data-breakpoints="xs" data-title="Libellé Projet" style="width:5%">Projet
+                                        </th>
+                                        <th data-breakpoints="xs" data-title="Libellé Volet" style="width:5%">Volet</th>
+                                        <th data-breakpoints="xs" data-title="Libellé Partenaire" style="width:5%">
+                                            Partenaire
+                                        </th>
+                                        <th data-breakpoints="xs" data-title="Libellé MOD" style="width:5%">MOD</th>
+                                        <th align="right" style="width:5%">Banque</th>
+                                        <th align="center" style="width:5%">Date<br/> Opération</th>
+                                        <th align="center" style="width:5%">Date <br/> valeur</th>
+                                        <th align="right" style="width:5%">Montant</th>
+
+
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+
+                                        <td>AXE 1</td>
+                                        <td>Projet 1</td>
+                                        <td>Volet 1</td>
+                                        <td>Partenaire 1</td>
+                                        <td>MOD 1</td>
+                                        <td align="center">
+                                            Societé générale
+                                        </td>
+                                        <td align="right">
+                                            120 430 134,99
+                                        </td>
+                                        <td align="right">
+                                            100 000 000,99
+                                        </td>
+                                        <td align="right">
+                                            20 430 134,99
+                                        </td>
+
+                                    </tr>
+                                    <tr>
+
+                                        <td>AXE 2</td>
+                                        <td>Projet 4</td>
+                                        <td>Volet D</td>
+                                        <td>Partenaire 1</td>
+                                        <td>MOD 1</td>
+                                        <td align="center">
+                                            Banque populaire
+                                        </td>
+                                        <td align="right">
+                                            213 430 134,99
+                                        </td>
+                                        <td align="right">
+                                            150 000 000,99
+                                        </td>
+                                        <td align="right">
+                                            49 430 134,99
+                                        </td>
+
+                                    </tr>
+
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="detail_versement_div2" class="collapse">
+                    <div class="card">
+                        <div class="card-body ">
+                            <div class="table-responsive">
+                                <h5 class="text-info">Détail de versement: <label class="text-success">100 000
+                                    000,99</label></h5>
+                                <table id="detail_versement2" class="table table-bordered no-wrap"
+                                       data-toggle-column="first">
+                                    <thead class="bg-success text-white">
+                                    <tr>
+
+                                        <th data-breakpoints="xs" data-title="Libellé axe" style="width:5%">Axe</th>
+                                        <th data-breakpoints="xs" data-title="Libellé Projet" style="width:5%">Projet
+                                        </th>
+                                        <th data-breakpoints="xs" data-title="Libellé Volet" style="width:5%">Volet</th>
+                                        <th data-breakpoints="xs" data-title="Libellé Partenaire" style="width:5%">
+                                            Partenaire
+                                        </th>
+                                        <th data-breakpoints="xs" data-title="Libellé MOD" style="width:5%">MOD</th>
+                                        <th align="right" style="width:5%">Banque</th>
+                                        <th align="center" style="width:5%">Date<br/> Opération</th>
+                                        <th align="center" style="width:5%">Date <br/> valeur</th>
+                                        <th align="right" style="width:5%">Montant</th>
+
+
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+
+                                        <td>AXE 3</td>
+                                        <td>Projet 5</td>
+                                        <td>Volet 1</td>
+                                        <td>Partenaire 1</td>
+                                        <td>MOD 1</td>
+                                        <td align="center">
+                                            Societé générale
+                                        </td>
+                                        <td align="right">
+                                            134 523 312,99
+                                        </td>
+                                        <td align="right">
+                                            124 000 000,99
+                                        </td>
+                                        <td align="right">
+                                            10 430 134,99
+                                        </td>
+
+                                    </tr>
+                                    <tr>
+
+                                        <td>AXE 001</td>
+                                        <td>Projet 003</td>
+                                        <td>Volet 001</td>
+                                        <td>Partenaire 0001</td>
+                                        <td>MOD 1</td>
+                                        <td align="center">
+                                            Societé générale
+                                        </td>
+                                        <td align="right">
+                                            120 340 134,99
+                                        </td>
+                                        <td align="right">
+                                            100 150 000,99
+                                        </td>
+                                        <td align="right">
+                                            140 000,99
+                                        </td>
+
+                                    </tr>
+                                    <tr>
+
+                                        <td>AXE 2</td>
+                                        <td>Projet 4</td>
+                                        <td>Volet D</td>
+                                        <td>Partenaire 1</td>
+                                        <td>MOD 1</td>
+                                        <td align="center">
+                                            Banque populaire
+                                        </td>
+                                        <td align="right">
+                                            213 430 134,99
+                                        </td>
+                                        <td align="right">
+                                            150 000 000,99
+                                        </td>
+                                        <td align="right">
+                                            49 430 134,99
+                                        </td>
+
+                                    </tr>
+
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="detail_versement_div3" class="collapse">
+                    <div class="card">
+                        <div class="card-body ">
+                            <div class="table-responsive">
+                                <h5 class="text-info">Détail de versement : <label class="text-success">40 000
+                                    000,99</label></h5>
+                                <table id="detail_versement3" class="table table-bordered no-wrap"
+                                       data-toggle-column="first">
+                                    <thead class="bg-success text-white">
+                                    <tr>
+
+                                        <th data-breakpoints="xs" data-title="Libellé axe" style="width:5%">Axe</th>
+                                        <th data-breakpoints="xs" data-title="Libellé Projet" style="width:5%">Projet
+                                        </th>
+                                        <th data-breakpoints="xs" data-title="Libellé Volet" style="width:5%">Volet</th>
+                                        <th data-breakpoints="xs" data-title="Libellé Partenaire" style="width:5%">
+                                            Partenaire
+                                        </th>
+                                        <th data-breakpoints="xs" data-title="Libellé MOD" style="width:5%">MOD</th>
+                                        <th align="right" style="width:5%">Banque</th>
+                                        <th align="center" style="width:5%">Date<br/> Opération</th>
+                                        <th align="center" style="width:5%">Date <br/> valeur</th>
+                                        <th align="right" style="width:5%">Montant</th>
+
+
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+
+                                        <td>AXE 23</td>
+                                        <td>Projet 43</td>
+                                        <td>Volet 1</td>
+                                        <td>Partenaire 214</td>
+                                        <td>MOD 1</td>
+                                        <td align="center">
+                                            Societé générale
+                                        </td>
+                                        <td align="right">
+                                            120 430 134,99
+                                        </td>
+                                        <td align="right">
+                                            100 000 000,99
+                                        </td>
+                                        <td align="right">
+                                            20 430 134,99
+                                        </td>
+
+                                    </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Column -->
+
+        <!-- Steeper -->
+        <div class="col-12">
+            <div id="full-width-modal" class="modal fade" tabindex="-1" role="dialog"
+                 aria-labelledby="fullWidthModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-full-width">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center bg-success">
+                            <h4 class="modal-title text-white" id="fullWidthModalLabel">Création de la convention :</h4>
+                            <button type="button" class="close ml-auto" data-dismiss="modal"
+                                    aria-hidden="true">×
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card">
+                                <div class="card-body wizard-content">
+                                    <form action="#" class="tab-wizard wizard-circle">
+                                        <!-- Step 4 -->
+                                        <h6>Versements</h6>
+                                        <section>
+                                            <div class="table-responsive">
+
+                                                <table
+                                                        class="table table-bordered m-t-30 contact-list no-wrap table-striped"
+                                                        data-paging="true"
+                                                        data-paging-size="7">
+                                                    <thead>
+                                                    <tbody class="table-borderless">
+                                                    <tr></tr>
+                                                    <tr>
+                                                        <td style="width:5%" colspan="1"><label
+                                                                class="col-form-label font-12">N° Conv</label></td>
+                                                        <td style="width:20%" colspan="1"><input type="text"
+                                                                                                 class="form-control font-12 col-xs-1"
+                                                                                                 placeholder="12/DZS1/2039"
+                                                                                                 disabled></td>
+                                                        <td colspan="3"></td>
+                                                    </tr>
+                                                    <tr></tr>
+                                                    <tr>
+                                                        <td style="width:5%"><label
+                                                                class="col-form-label font-12">Axe</label></td>
+                                                        <td style="width:20%" colspan="1">
+                                                            <select class="form-control font-12">\n' +
+                                                                <option>A001
+                                                                </option>
+                                                                <option>A002</option>
+                                                                <option>A003</option>
+                                                            </select>
+                                                        </td>
+                                                        <td data-breakpoints="xs" style="width:5%"><label
+                                                                class="col-form-label font-12">Projet</label>
+                                                        </td>
+                                                        <td style="width:20%" data-breakpoints="xs" colspan="1">
+                                                            <select class="form-control font-12">\n' +
+                                                                <option>P001
+                                                                </option>
+                                                                <option>P002</option>
+                                                                <option>P003</option>
+                                                            </select>
+                                                        </td>
+                                                        <td style="width:5%" data-breakpoints="xs"><label
+                                                                class="col-form-label font-12">Volet</label>
+                                                        </td>
+                                                        <td style="width:20%" colspan="1" data-breakpoints="xs">
+                                                            <select class="form-control font-12">\n' +
+                                                                <option>V001
+                                                                </option>
+                                                                <option>V002</option>
+                                                                <option>V003</option>
+                                                            </select>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="width:5%"><label
+                                                                class="col-form-label font-12">MOD</label></td>
+                                                        <td style="width:20%" colspan="1">
+                                                            <select class="form-control font-12">\n' +
+                                                                <option>MOD001
+                                                                </option>
+                                                                <option>MOD002</option>
+                                                                <option>MOD003</option>
+                                                            </select>
+                                                        </td>
+                                                        <td colspan="1" style="width:5%" data-breakpoints="xs"><label
+                                                                class="col-form-label font-12">Partenaire</label></td>
+                                                        <td style="width:20%" colspan="1" data-breakpoints="xs"><select
+                                                                class="form-control font-12">\n' +
+                                                            <option>Partenaire 1
+                                                            </option>
+                                                            <option>Partenaire 2</option>
+                                                            <option>Partenaire 3</option>
+                                                        </select></td>
+
+                                                    </tr>
+                                                    <tr>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="1" style="width:5%"><label
+                                                                class="col-form-label font-12">Date Opé.</label></td>
+                                                        <td style="width:20%" colspan="1"><input type="date"
+                                                                                                 class="form-control font-12 col-xs-1"
+                                                                                                 placeholder="">
+                                                        </td>
+                                                        <td colspan="1" style="width:5%" data-breakpoints="xs"><label
+                                                                class="col-form-label font-12">Date Valeur.</label></td>
+                                                        <td style="width:20%" colspan="1" data-breakpoints="xs"><input
+                                                                type="date"
+                                                                class="form-control font-12 col-xs-1"
+                                                                placeholder="">
+                                                        </td>
+                                                        <td colspan="1" style="width:5%"><label
+                                                                class="col-form-label font-12" data-breakpoints="xs">Banque</label>
+                                                        </td>
+                                                        <td style="width:20%" colspan="1" data-breakpoints="xs"><input
+                                                                type="text"
+                                                                class="form-control font-12 col-xs-1"
+                                                                placeholder=""></td>
+
+                                                    </tr>
+                                                    <tr>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="1" style="width:5%"><label
+                                                                class="col-form-label font-12"> Montant</label></td>
+                                                        <td style="width:20%" colspan="1"><input type="number"
+                                                                                                 class="form-control font-12 col-xs-1"
+                                                                                                 placeholder="">
+                                                        </td>
+                                                        <td colspan="1" style="width:5%" data-breakpoints="xs"><label
+                                                                class="col-form-label font-12"> Montant Prévu</label>
+                                                        </td>
+                                                        <td style="width:20%" colspan="1" data-breakpoints="xs"><input
+                                                                type="number"
+                                                                class="form-control font-12 col-xs-1"
+                                                                placeholder="120 232 242,12" disabled></td>
+                                                        <td colspan="1" style="width:5%" data-breakpoints="xs"><label
+                                                                class="col-form-label font-12"> Reste à verser</label>
+                                                        </td>
+                                                        <td style="width:20%" colspan="1" data-breakpoints="xs"><input
+                                                                type="number"
+                                                                class="form-control font-12 col-xs-1"
+                                                                placeholder="120 232 242,12" disabled></td>
+
+                                                    </tr>
+                                                    <tr>
+
+                                                    </tr>
+
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </section>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div>
+        </div>
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- footer -->
+        <!-- ============================================================== -->
+        <footer class="footer">
+            © 2020 Xcompta Admin by Mohamed Samir
+        </footer>
+        <!-- ============================================================== -->
+        <!-- End footer -->
+        <!-- ============================================================== -->
+    </div>
+    <!-- ============================================================== -->
+    <!-- End Page wrapper  -->
+    <!-- ============================================================== -->
+</div>
+<!-- ============================================================== -->
+<!-- End Wrapper -->
+<!-- ============================================================== -->
+<!-- ============================================================== -->
+<!-- customizer Panel -->
+<!-- ============================================================== -->
+<!-- All Jquery -->
+<!-- ============================================================== -->
+<script src="../assets/libs/jquery/dist/jquery.min.js"></script>
+<!-- Bootstrap tether Core JavaScript -->
+<script src="../assets/libs/popper.js/dist/umd/popper.min.js"></script>
+<script src="../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
+<!-- apps -->
+<script src="../../dist/js/app.min.js"></script>
+<script src="../../dist/js/app.init.js"></script>
+<script src="../../dist/js/app.init.horizontal.js"></script>
+<script src="../../dist/js/app-style-switcher.horizontal.js"></script>
+
+<!-- Theme settings -->
+<script src="../../dist/js/app-style-switcher.js"></script>
+<!-- slimscrollbar scrollbar JavaScript -->
+<script src="../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+<script src="../assets/libs/jquery-sparkline/jquery.sparkline.min.js"></script>
+<!--Wave Effects -->
+<script src="../../dist/js/waves.js"></script>
+<!--Menu sidebar -->
+<script src="../../dist/js/sidebarmenu.js"></script>
+<!--Custom JavaScript -->
+<script src="../../dist/js/feather.min.js"></script>
+<script src="../../dist/js/custom.min.js"></script>
+<!-- This page CSS -->
+<link href="../assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
+<link href="../assets/extra-libs/jquery-steps/jquery.steps.css" rel="stylesheet">
+<link href="../assets/extra-libs/jquery-steps/steps.css" rel="stylesheet">
+<!--This page JavaScript -->
+<script src="../assets/libs/chartist/dist/chartist.min.js"></script>
+<script src="../assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
+<script src="../../dist/js/pages/dashboards/dashboard2.js"></script>
+<script src="../assets/libs/footable/js/footable.min.js"></script>
+<script src="../../dist/js/pages/tables/footable-init.js"></script>
+<!--add info table -->
+<script src="../assets/extra-libs/jquery.repeater/dff.js"></script>
+<script src="../assets/libs/moment/moment.js" type="text/javascript"></script>
+<!--This page steeper -->
+<script src="../assets/libs/jquery-steps/build/jquery.steps.min.js"></script>
+<script src="../assets/libs/jquery-validation/dist/jquery.validate.min.js"></script>
+<script>
+    //Basic Example
+    $("#example-basic").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        autoFocus: true
+    });
+
+    // Basic Example with form
+    var form = $("#example-form");
+    form.validate({
+        errorPlacement: function errorPlacement(error, element) {
+            element.before(error);
+        },
+        rules: {
+            confirm: {
+                equalTo: "#password"
+            }
+        }
+    });
+    form.children("div").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        onStepChanging: function (event, currentIndex, newIndex) {
+            form.validate().settings.ignore = ":disabled,:hidden";
+            return form.valid();
+        },
+        onFinishing: function (event, currentIndex) {
+            form.validate().settings.ignore = ":disabled";
+            return form.valid();
+        },
+        onFinished: function (event, currentIndex) {
+            alert("Submitted!");
+        }
+    });
+
+    // Advance Example
+
+    var form = $("#example-advanced-form").show();
+
+    form.steps({
+        headerTag: "h3",
+        bodyTag: "fieldset",
+        transitionEffect: "slideLeft",
+        onStepChanging: function (event, currentIndex, newIndex) {
+            // Allways allow previous action even if the current form is not valid!
+            if (currentIndex > newIndex) {
+                return true;
+            }
+            // Forbid next action on "Warning" step if the user is to young
+            if (newIndex === 3 && Number($("#age-2").val()) < 18) {
+                return false;
+            }
+            // Needed in some cases if the user went back (clean up)
+            if (currentIndex < newIndex) {
+                // To remove error styles
+                form.find(".body:eq(" + newIndex + ") label.error").remove();
+                form.find(".body:eq(" + newIndex + ") .error").removeClass("error");
+            }
+            form.validate().settings.ignore = ":disabled,:hidden";
+            return form.valid();
+        },
+        onStepChanged: function (event, currentIndex, priorIndex) {
+            // Used to skip the "Warning" step if the user is old enough.
+            if (currentIndex === 2 && Number($("#age-2").val()) >= 18) {
+                form.steps("Suivant");
+            }
+            // Used to skip the "Warning" step if the user is old enough and wants to the previous step.
+            if (currentIndex === 2 && priorIndex === 3) {
+                form.steps("Précédent");
+            }
+        },
+        onFinishing: function (event, currentIndex) {
+            form.validate().settings.ignore = ":disabled";
+            return form.valid();
+        },
+        onFinished: function (event, currentIndex) {
+            alert("Submitted!");
+        }
+    }).validate({
+        errorPlacement: function errorPlacement(error, element) {
+            element.before(error);
+        },
+        rules: {
+            confirm: {
+                equalTo: "#password-2"
+            }
+        }
+    });
+
+    // Dynamic Manipulation
+    $("#example-manipulation").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        enableAllSteps: true,
+        enablePagination: false
+    });
+
+    //Vertical Steps
+
+    $("#example-vertical").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        stepsOrientation: "vertical"
+    });
+
+    //Custom design form example
+    $(".tab-wizard").steps({
+        headerTag: "h6",
+        bodyTag: "section",
+        transitionEffect: "fade",
+        titleTemplate: '<span class="step">#index#</span> #title#',
+        labels: {
+            finish: "Submit"
+        },
+        onFinished: function (event, currentIndex) {
+            swal("Form Submitted!", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem erat eleifend ex semper, lobortis purus sed.");
+
+        }
+    });
+
+
+    var form = $(".validation-wizard").show();
+
+    $(".validation-wizard").steps({
+        headerTag: "h6",
+        bodyTag: "section",
+        transitionEffect: "fade",
+        titleTemplate: '<span class="step">#index#</span> #title#',
+        labels: {
+            finish: "Submit"
+        },
+        onStepChanging: function (event, currentIndex, newIndex) {
+            return currentIndex > newIndex || !(3 === newIndex && Number($("#age-2").val()) < 18) && (currentIndex < newIndex && (form.find(".body:eq(" + newIndex + ") label.error").remove(), form.find(".body:eq(" + newIndex + ") .error").removeClass("error")), form.validate().settings.ignore = ":disabled,:hidden", form.valid())
+        },
+        onFinishing: function (event, currentIndex) {
+            return form.validate().settings.ignore = ":disabled", form.valid()
+        },
+        onFinished: function (event, currentIndex) {
+            swal("Form Submitted!", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem erat eleifend ex semper, lobortis purus sed.");
+        }
+    }), $(".validation-wizard").validate({
+        ignore: "input[type=hidden]",
+        errorClass: "text-danger",
+        successClass: "text-success",
+        highlight: function (element, errorClass) {
+            $(element).removeClass(errorClass)
+        },
+        unhighlight: function (element, errorClass) {
+            $(element).removeClass(errorClass)
+        },
+        errorPlacement: function (error, element) {
+            error.insertAfter(element)
+        },
+        rules: {
+            email: {
+                email: !0
+            }
+        }
+    })
+</script>
+</body>
+
+</html>

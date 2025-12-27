@@ -1,0 +1,22 @@
+[
+  {
+    "name": "numConv",
+    "title": "Num Conv"
+  },
+  {
+    "name": "libConv",
+    "title": "Libellé convention"
+  },
+  {
+    "name": "objetConv",
+    "title": "Objet Convention"
+  },
+  {
+    "name": "dateSignature",
+    "title": "Date signature"
+  },
+  {
+    "name": "status",
+    "title": "Statut"
+  }
+]

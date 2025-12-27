@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, Menu, X, User, Settings,
-  Briefcase, ChevronDown, ShoppingCart
+  Briefcase, ChevronDown, ShoppingCart, UserCog
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -29,6 +29,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     { icon: <Receipt className="w-5 h-5" />, label: 'Dépenses', path: '/depenses' },
     { icon: <ShoppingCart className="w-5 h-5" />, label: 'Marchés', path: '/marches' },
     { icon: <DollarSign className="w-5 h-5" />, label: 'Commissions', path: '/commissions' },
+    { icon: <UserCog className="w-5 h-5" />, label: 'Utilisateurs', path: '/users' },
   ]
 
   const handleLogout = () => {

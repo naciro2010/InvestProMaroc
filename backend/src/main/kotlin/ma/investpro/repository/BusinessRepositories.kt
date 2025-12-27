@@ -9,11 +9,23 @@ import java.util.*
 @Repository
 interface ConventionRepository : JpaRepository<Convention, Long> {
     fun findByCode(code: String): Optional<Convention>
+    fun findByNumero(numero: String): Optional<Convention>
     fun findByActifTrue(): List<Convention>
     fun existsByCode(code: String): Boolean
+    fun existsByNumero(numero: String): Boolean
+
+    // XCOMPTA - Requêtes par type et statut
+    fun findByTypeConvention(type: TypeConvention): List<Convention>
+    fun findByStatut(statut: StatutConvention): List<Convention>
 
     @Query("SELECT c FROM Convention c WHERE c.actif = true AND (c.dateFin IS NULL OR c.dateFin >= CURRENT_DATE)")
     fun findActiveConventions(): List<Convention>
+
+    @Query("SELECT c FROM Convention c WHERE YEAR(c.dateConvention) = :year")
+    fun findByYear(year: Int): List<Convention>
+
+    @Query("SELECT c FROM Convention c WHERE c.statut = 'EN_COURS' AND c.dateFinPrevue < CURRENT_DATE")
+    fun findConventionsEnRetard(): List<Convention>
 }
 
 @Repository
@@ -114,4 +126,46 @@ interface DecompteRepository : JpaRepository<Decompte, Long> {
 
     @Query("SELECT SUM(d.montantTtc) FROM Decompte d WHERE d.marche.id = :marcheId AND d.statut IN ('VALIDE', 'PAYE')")
     fun getTotalPayeByMarche(marcheId: Long): java.math.BigDecimal?
+}
+
+// ==================== XCOMPTA Repositories ====================
+
+@Repository
+interface PartenaireRepository : JpaRepository<Partenaire, Long> {
+    fun findByCode(code: String): Optional<Partenaire>
+    fun findByActifTrue(): List<Partenaire>
+    fun existsByCode(code: String): Boolean
+    fun findByTypePartenaire(type: String): List<Partenaire>
+}
+
+@Repository
+interface ConventionPartenaireRepository : JpaRepository<ConventionPartenaire, Long> {
+    fun findByConventionId(conventionId: Long): List<ConventionPartenaire>
+    fun findByPartenaireId(partenaireId: Long): List<ConventionPartenaire>
+
+    @Query("SELECT cp FROM ConventionPartenaire cp WHERE cp.convention.id = :conventionId AND cp.estMaitreOeuvre = true")
+    fun findMaitresOeuvreByConvention(conventionId: Long): List<ConventionPartenaire>
+
+    @Query("SELECT cp FROM ConventionPartenaire cp WHERE cp.convention.id = :conventionId AND cp.estMaitreOeuvreDelegue = true")
+    fun findMaitresOeuvreDeleguesByConvention(conventionId: Long): List<ConventionPartenaire>
+}
+
+@Repository
+interface ImputationPrevisionnelleRepository : JpaRepository<ImputationPrevisionnelle, Long> {
+    fun findByConventionId(conventionId: Long): List<ImputationPrevisionnelle>
+    fun findByProjetId(projetId: Long): List<ImputationPrevisionnelle>
+    fun findByAxeAnalytiqueId(axeId: Long): List<ImputationPrevisionnelle>
+}
+
+@Repository
+interface VersementPrevisionnelRepository : JpaRepository<VersementPrevisionnel, Long> {
+    fun findByConventionId(conventionId: Long): List<VersementPrevisionnel>
+    fun findByPartenaireId(partenaireId: Long): List<VersementPrevisionnel>
+    fun findByProjetId(projetId: Long): List<VersementPrevisionnel>
+
+    @Query("SELECT SUM(v.montant) FROM VersementPrevisionnel v WHERE v.convention.id = :conventionId")
+    fun getTotalVersementsByConvention(conventionId: Long): java.math.BigDecimal?
+
+    @Query("SELECT v FROM VersementPrevisionnel v WHERE YEAR(v.dateVersement) = :year")
+    fun findByYear(year: Int): List<VersementPrevisionnel>
 }

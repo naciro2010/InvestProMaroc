@@ -11,6 +11,8 @@ import FournisseursCRUD from './pages/FournisseursCRUD'
 import AxesAnalytiquesCRUD from './pages/AxesAnalytiquesCRUD'
 import ComptesBancairesCRUD from './pages/ComptesBancairesCRUD'
 import DepensesCRUD from './pages/DepensesCRUD'
+import MarchesPage from './pages/marches/MarchesPage'
+import MarcheDetailPage from './pages/marches/MarcheDetailPage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -151,6 +153,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <ComingSoon title="Commissions d'Intervention" />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Marchés */}
+          <Route
+            path="/marches"
+            element={
+              <ProtectedRoute>
+                <MarchesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/marches/:id"
+            element={
+              <ProtectedRoute>
+                <MarcheDetailPage />
               </ProtectedRoute>
             }
           />

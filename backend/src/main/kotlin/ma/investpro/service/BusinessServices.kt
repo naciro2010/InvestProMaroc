@@ -134,6 +134,74 @@ class ConventionService(
         logger.info { "Convention ${convention.code} annulée" }
         return conventionRepository.save(convention)
     }
+
+    /**
+     * Crée une sous-convention à partir d'une convention parente
+     */
+    fun creerSousConvention(parentId: Long, sousConvention: Convention, heriteParametres: Boolean): Convention {
+        val parent = findById(parentId)
+            ?: throw IllegalArgumentException("Convention parente non trouvée: $parentId")
+
+        require(parent.statut == StatutConvention.VALIDEE) {
+            "Seules les conventions validées peuvent avoir des sous-conventions. " +
+            "Statut actuel: ${parent.statut}"
+        }
+
+        // Configure parent-child relationship
+        sousConvention.parentConvention = parent
+        sousConvention.heriteParametres = heriteParametres
+
+        // If inheriting parameters, copy from parent
+        if (heriteParametres) {
+            sousConvention.tauxCommission = parent.tauxCommission
+            sousConvention.baseCalcul = parent.baseCalcul
+            sousConvention.tauxTva = parent.tauxTva
+        }
+
+        // Sous-conventions start as BROUILLON
+        sousConvention.statut = StatutConvention.BROUILLON
+        sousConvention.isLocked = false
+
+        logger.info { "Création sous-convention ${sousConvention.code} pour parent ${parent.code}" }
+        return conventionRepository.save(sousConvention)
+    }
+
+    /**
+     * Récupère toutes les sous-conventions d'une convention parente
+     */
+    fun getSousConventions(parentId: Long): List<Convention> {
+        val parent = findById(parentId)
+            ?: throw IllegalArgumentException("Convention non trouvée: $parentId")
+
+        return conventionRepository.findAll()
+            .filter { it.parentConvention?.id == parentId }
+    }
+
+    /**
+     * Met à jour les paramètres surchargés d'une sous-convention
+     */
+    fun updateParametresSousConvention(
+        id: Long,
+        surchargeTauxCommission: java.math.BigDecimal?,
+        surchargeBaseCalcul: String?
+    ): Convention {
+        val sousConvention = findById(id)
+            ?: throw IllegalArgumentException("Sous-convention non trouvée: $id")
+
+        require(sousConvention.isSousConvention()) {
+            "Cette convention n'est pas une sous-convention"
+        }
+
+        require(sousConvention.statut == StatutConvention.BROUILLON) {
+            "Impossible de modifier les paramètres d'une sous-convention qui n'est pas en brouillon"
+        }
+
+        sousConvention.surchargeTauxCommission = surchargeTauxCommission
+        sousConvention.surchargeBaseCalcul = surchargeBaseCalcul
+
+        logger.info { "Mise à jour paramètres surchargés pour sous-convention ${sousConvention.code}" }
+        return conventionRepository.save(sousConvention)
+    }
 }
 
 @Service

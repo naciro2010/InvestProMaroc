@@ -98,7 +98,24 @@ class Convention(
     @Column(name = "motif_verrouillage", columnDefinition = "TEXT")
     var motifVerrouillage: String? = null, // Raison du verrouillage
 
+    // Sous-convention fields (self-referencing parent-child)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_convention_id")
+    var parentConvention: Convention? = null, // Convention parente pour sous-conventions
+
+    @Column(name = "herite_parametres", nullable = false)
+    var heriteParametres: Boolean = false, // True si hérite des paramètres de la convention parente
+
+    @Column(name = "surcharge_taux_commission")
+    var surchargeTauxCommission: BigDecimal? = null, // Surcharge du taux de commission (si différent du parent)
+
+    @Column(name = "surcharge_base_calcul", length = 50)
+    var surchargeBaseCalcul: String? = null, // Surcharge de la base de calcul (si différent du parent)
+
     // Relations
+    @OneToMany(mappedBy = "parentConvention", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    var sousConventions: MutableList<Convention> = mutableListOf(), // Sous-conventions de cette convention
+
     @OneToMany(mappedBy = "convention", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var partenaires: MutableList<ConventionPartenaire> = mutableListOf(),
 
@@ -108,7 +125,40 @@ class Convention(
     @OneToMany(mappedBy = "convention", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var versementsPrevisionnels: MutableList<VersementPrevisionnel> = mutableListOf()
 
-) : BaseEntity()
+) : BaseEntity() {
+
+    /**
+     * Retourne le taux de commission effectif (avec héritage si sous-convention)
+     */
+    fun getTauxCommissionEffectif(): BigDecimal {
+        return if (heriteParametres && parentConvention != null) {
+            surchargeTauxCommission ?: parentConvention!!.getTauxCommissionEffectif()
+        } else {
+            tauxCommission
+        }
+    }
+
+    /**
+     * Retourne la base de calcul effective (avec héritage si sous-convention)
+     */
+    fun getBaseCalculEffective(): String {
+        return if (heriteParametres && parentConvention != null) {
+            surchargeBaseCalcul ?: parentConvention!!.getBaseCalculEffective()
+        } else {
+            baseCalcul
+        }
+    }
+
+    /**
+     * Vérifie si cette convention est une sous-convention
+     */
+    fun isSousConvention(): Boolean = parentConvention != null
+
+    /**
+     * Vérifie si cette convention a des sous-conventions
+     */
+    fun hasSousConventions(): Boolean = sousConventions.isNotEmpty()
+}
 
 /**
  * Type de convention selon XCOMPTA

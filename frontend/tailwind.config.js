@@ -33,10 +33,22 @@ export default {
           900: '#701a75',
           950: '#4a044e',
         },
+        // XCOMPTA Design System Colors
+        'xcompta-blue': '#3cb0e5',
+        'xcompta-green': '#80c342',
+        'xcompta-red': '#ff3b3b',
+        'xcompta-orange': '#f7931a',
+        'xcompta-cyan': '#3cc8c8',
+        // Semantic color aliases for XCOMPTA
+        success: '#80c342',
+        danger: '#ff3b3b',
+        warning: '#f7931a',
+        info: '#3cc8c8',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Poppins', 'system-ui', 'sans-serif'],
+        rubik: ['Rubik', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

@@ -432,7 +432,7 @@ export default function MarcheFormPage() {
           actions={
             <Button
               type="button"
-              variant="info"
+              variant="primary"
               icon={<FaPlus />}
               onClick={ajouterLigne}
             >

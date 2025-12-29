@@ -25,7 +25,7 @@ export default function DecomptesPage() {
     }
   }
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-MA', {
       style: 'currency',
       currency: 'MAD'

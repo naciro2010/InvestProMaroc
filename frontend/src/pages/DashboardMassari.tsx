@@ -278,7 +278,7 @@ const DashboardMassari = () => {
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #E5E7EB',
@@ -307,8 +307,8 @@ const DashboardMassari = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} (${(percent * 100).toFixed(0)}%)`
+                  label={({ name, percent }: any) =>
+                    `${name} (${((percent || 0) * 100).toFixed(0)}%)`
                   }
                   outerRadius={100}
                   fill="#8884d8"
@@ -319,7 +319,7 @@ const DashboardMassari = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #E5E7EB',
@@ -352,7 +352,7 @@ const DashboardMassari = () => {
                 />
                 <YAxis type="category" dataKey="nom" width={150} />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #E5E7EB',
@@ -385,8 +385,8 @@ const DashboardMassari = () => {
                   fill="#8884d8"
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) =>
-                    `${(percent * 100).toFixed(0)}%`
+                  label={({ name, percent }: any) =>
+                    `${((percent || 0) * 100).toFixed(0)}%`
                   }
                 >
                   {commissionsByConvention.map((entry, index) => (
@@ -394,7 +394,7 @@ const DashboardMassari = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #E5E7EB',

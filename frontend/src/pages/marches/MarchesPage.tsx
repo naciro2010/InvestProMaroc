@@ -12,17 +12,21 @@ interface Marche {
   dateMarche: string
   objet: string
   montantTtc: number
+  montantHt: number
   statut: 'EN_COURS' | 'VALIDE' | 'TERMINE' | 'SUSPENDU' | 'ANNULE' | 'EN_ATTENTE'
   fournisseur?: {
     id: number
     raisonSociale: string
   }
-  projet?: {
+  convention?: {
     id: number
-    nom: string
+    code: string
+    libelle: string
   }
   dateFinPrevue?: string
-  tauxAvancement?: number
+  nbLignes?: number
+  nbAvenants?: number
+  nbDecomptes?: number
 }
 
 const statutColors: Record<string, 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'> = {
@@ -71,7 +75,7 @@ export default function MarchesPage() {
         m.numeroMarche.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.objet.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.fournisseur?.raisonSociale.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.projet?.nom.toLowerCase().includes(searchTerm.toLowerCase())
+        m.convention?.libelle.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -180,7 +184,7 @@ export default function MarchesPage() {
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Rechercher par numéro, objet, fournisseur, projet..."
+                  placeholder="Rechercher par numéro, objet, fournisseur, convention..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info focus:border-transparent"
@@ -231,13 +235,16 @@ export default function MarchesPage() {
                   Fournisseur
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Projet
+                  Convention
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Montant TTC
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Lignes
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Avenants
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Statut
@@ -272,7 +279,10 @@ export default function MarchesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {marche.projet?.nom || '-'}
+                      {marche.convention?.code || '-'}
+                    </div>
+                    <div className="text-xs text-gray-500 max-w-xs truncate">
+                      {marche.convention?.libelle}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -280,10 +290,15 @@ export default function MarchesPage() {
                       {formatCurrency(marche.montantTtc)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {formatDate(marche.dateMarche)}
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {marche.nbLignes || 0}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                      {marche.nbAvenants || 0}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <StatusBadge status={statutColors[marche.statut]} />

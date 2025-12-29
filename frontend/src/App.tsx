@@ -7,6 +7,8 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardSimple from './pages/DashboardSimple'
 import ConventionsPage from './pages/conventions/ConventionsPage'
 import ConventionFormPage from './pages/conventions/ConventionFormPage'
+import MarchesPage from './pages/marches/MarchesPage'
+import MarcheDetailPage from './pages/marches/MarcheDetailPage'
 import ProfilePage from './pages/ProfilePage'
 
 // Protected Route Component
@@ -114,6 +116,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <ConventionFormPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Marchés */}
+          <Route
+            path="/marches"
+            element={
+              <ProtectedRoute>
+                <MarchesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/marches/:id"
+            element={
+              <ProtectedRoute>
+                <MarcheDetailPage />
               </ProtectedRoute>
             }
           />

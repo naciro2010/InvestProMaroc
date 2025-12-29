@@ -246,4 +246,49 @@ export const subventionsAPI = {
   delete: (id: number) => api.delete(`/subventions/${id}`),
 }
 
+// Dimensions Analytiques API
+export const dimensionsAPI = {
+  getAll: () => api.get('/dimensions'),
+  getActives: () => api.get('/dimensions/actives'),
+  getObligatoires: () => api.get('/dimensions/obligatoires'),
+  getById: (id: number) => api.get(`/dimensions/${id}`),
+  getByCode: (code: string) => api.get(`/dimensions/code/${code}`),
+  create: (data: any) => api.post('/dimensions', data),
+  update: (id: number, data: any) => api.put(`/dimensions/${id}`, data),
+  delete: (id: number) => api.delete(`/dimensions/${id}`),
+  toggleActive: (id: number) => api.post(`/dimensions/${id}/toggle-active`),
+  getStatistiques: () => api.get('/dimensions/statistiques'),
+
+  // Valeurs
+  getValeurs: (dimensionId: number) => api.get(`/dimensions/${dimensionId}/valeurs`),
+  getValeursActives: (dimensionId: number) => api.get(`/dimensions/${dimensionId}/valeurs/actives`),
+  createValeur: (dimensionId: number, data: any) => api.post(`/dimensions/${dimensionId}/valeurs`, data),
+  updateValeur: (valeurId: number, data: any) => api.put(`/dimensions/valeurs/${valeurId}`, data),
+  deleteValeur: (valeurId: number) => api.delete(`/dimensions/valeurs/${valeurId}`),
+  toggleValeurActive: (valeurId: number) => api.post(`/dimensions/valeurs/${valeurId}/toggle-active`),
+}
+
+// Imputations Analytiques API
+export const imputationsAPI = {
+  getAll: (params?: { type?: string; referenceId?: number }) =>
+    api.get('/imputations', { params }),
+  getById: (id: number) => api.get(`/imputations/${id}`),
+  create: (data: any) => api.post('/imputations', data),
+  update: (id: number, data: any) => api.put(`/imputations/${id}`, data),
+  delete: (id: number) => api.delete(`/imputations/${id}`),
+
+  // Validation
+  validateTotal: (params: { type: string; referenceId: number; montantAttendu: number }) =>
+    api.get('/imputations/validate-total', { params }),
+  getTotal: (params: { type: string; referenceId: number }) =>
+    api.get('/imputations/total', { params }),
+
+  // Reporting
+  aggregateByDimension: (params: { type: string; dimension: string }) =>
+    api.get('/imputations/reporting/by-dimension', { params }),
+  aggregateByTwoDimensions: (params: { type: string; dimension1: string; dimension2: string }) =>
+    api.get('/imputations/reporting/by-two-dimensions', { params }),
+  getStatistiques: () => api.get('/imputations/statistiques'),
+}
+
 export default api

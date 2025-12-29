@@ -199,7 +199,7 @@ class AvenantService(
      * Obtenir la version consolidée d'une convention
      * (convention de base + tous les avenants validés)
      */
-    fun getVersionConsolidee(conventionId: Long): Map<String, Any> {
+    fun getVersionConsolidee(conventionId: Long): Map<String, Any?> {
         val convention = conventionRepository.findByIdOrNull(conventionId)
             ?: throw IllegalArgumentException("Convention $conventionId introuvable")
 

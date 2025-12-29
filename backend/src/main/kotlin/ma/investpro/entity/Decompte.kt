@@ -2,6 +2,8 @@ package ma.investpro.entity
 
 import jakarta.persistence.*
 import jakarta.validation.constraints.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -126,7 +128,13 @@ class Decompte(
  * Retenues sur décompte (garantie, RAS, pénalités...)
  */
 @Entity
-@Table(name = "decompte_retenues")
+@Table(
+    name = "decompte_retenues",
+    indexes = [
+        Index(name = "idx_decompte_ret_decompte", columnList = "decompte_id"),
+        Index(name = "idx_decompte_ret_type", columnList = "type_retenue")
+    ]
+)
 class DecompteRetenue(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "decompte_id", nullable = false)
@@ -143,36 +151,67 @@ class DecompteRetenue(
     var tauxPourcent: BigDecimal? = null,
 
     @Column(length = 200)
-    var libelle: String? = null
+    var libelle: String? = null,
+
+    @Column(nullable = false)
+    var actif: Boolean = true // Permet de désactiver une retenue
 
 ) : BaseEntity()
 
 /**
- * Imputation analytique du décompte
+ * Imputation analytique du décompte (Plan Analytique Dynamique)
  */
 @Entity
-@Table(name = "decompte_imputations")
+@Table(
+    name = "decompte_imputations",
+    indexes = [
+        Index(name = "idx_decompte_imp_decompte", columnList = "decompte_id"),
+        Index(name = "idx_decompte_imp_dimensions", columnList = "dimensions_valeurs")
+    ]
+)
 class DecompteImputation(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "decompte_id", nullable = false)
     var decompte: Decompte,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "projet_id")
-    var projet: Projet? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "axe_id")
-    var axe: AxeAnalytique? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "budget_id")
-    var budget: Budget? = null,
-
     @Column(nullable = false, precision = 15, scale = 2)
-    var montant: BigDecimal = BigDecimal.ZERO
+    var montant: BigDecimal = BigDecimal.ZERO,
 
-) : BaseEntity()
+    // Imputation analytique flexible (Plan Analytique Dynamique)
+    // Stockage JSONB des valeurs de dimensions
+    // Exemple: {"REG": "CAS", "MARCH": "TRAVAUX", "PHASE": "REAL", "SOURCE": "AFD"}
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "dimensions_valeurs", nullable = false, columnDefinition = "jsonb")
+    var dimensionsValeurs: Map<String, String> = mutableMapOf(),
+
+    @Column(columnDefinition = "TEXT")
+    var remarques: String? = null
+
+) : BaseEntity() {
+
+    /**
+     * Obtenir la valeur d'une dimension spécifique
+     */
+    fun getValeurDimension(codeDimension: String): String? {
+        return dimensionsValeurs[codeDimension]
+    }
+
+    /**
+     * Définir la valeur d'une dimension
+     */
+    fun setValeurDimension(codeDimension: String, codeValeur: String) {
+        val mutableMap = dimensionsValeurs.toMutableMap()
+        mutableMap[codeDimension] = codeValeur
+        dimensionsValeurs = mutableMap
+    }
+
+    /**
+     * Vérifier si toutes les dimensions obligatoires sont renseignées
+     */
+    fun isComplete(dimensionsObligatoires: List<String>): Boolean {
+        return dimensionsObligatoires.all { dimensionsValeurs.containsKey(it) }
+    }
+}
 
 /**
  * Type de retenue

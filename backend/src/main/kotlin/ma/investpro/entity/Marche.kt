@@ -8,10 +8,14 @@ import java.time.LocalDate
 /**
  * Entité Marché - Gestion des marchés publics/contrats de procurement
  *
- * Un marché représente un contrat d'achat avec un fournisseur pour un projet spécifique.
+ * Un marché représente un contrat d'achat avec un fournisseur dans le cadre d'une convention.
+ * Chaque marché peut avoir plusieurs lignes avec imputation analytique flexible.
+ *
  * Relations:
+ * - Marché → Convention (Many-to-One)
  * - Marché → Fournisseur (Many-to-One)
- * - Marché → Projet (Many-to-One)
+ * - Marché → MarcheLignes (One-to-Many)
+ * - Marché → AvenantMarches (One-to-Many)
  * - Marché → BonsCommande (One-to-Many)
  * - Marché → Décomptes (One-to-Many)
  */
@@ -22,7 +26,7 @@ import java.time.LocalDate
         Index(name = "idx_marches_numero", columnList = "numero_marche", unique = true),
         Index(name = "idx_marches_num_ao", columnList = "num_ao"),
         Index(name = "idx_marches_fournisseur", columnList = "fournisseur_id"),
-        Index(name = "idx_marches_projet", columnList = "projet_id"),
+        Index(name = "idx_marches_convention", columnList = "convention_id"),
         Index(name = "idx_marches_statut", columnList = "statut"),
         Index(name = "idx_marches_date", columnList = "date_marche")
     ]
@@ -44,8 +48,8 @@ class Marche(
     var fournisseur: Fournisseur? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "projet_id", nullable = false)
-    var projet: Projet? = null,
+    @JoinColumn(name = "convention_id")
+    var convention: Convention? = null, // Rattachement à une convention
 
     @Column(name = "objet", columnDefinition = "TEXT", nullable = false)
     @field:NotBlank
@@ -89,12 +93,44 @@ class Marche(
 
     // Relations inverses
     @OneToMany(mappedBy = "marche", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var lignes: MutableList<MarcheLigne> = mutableListOf(),
+
+    @OneToMany(mappedBy = "marche", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var avenants: MutableList<AvenantMarche> = mutableListOf(),
+
+    @OneToMany(mappedBy = "marche", cascade = [CascadeType.ALL], orphanRemoval = true)
     var bonsCommande: MutableList<BonCommande> = mutableListOf(),
 
     @OneToMany(mappedBy = "marche", cascade = [CascadeType.ALL], orphanRemoval = true)
     var decomptes: MutableList<Decompte> = mutableListOf()
 
-) : BaseEntity()
+) : BaseEntity() {
+
+    /**
+     * Calcule le montant total du marché à partir des lignes
+     */
+    fun calculerMontantsDepuisLignes() {
+        montantHt = lignes.sumOf { it.montantHT }
+        montantTva = lignes.sumOf { it.montantTVA }
+        montantTtc = lignes.sumOf { it.montantTTC }
+    }
+
+    /**
+     * Ajoute une ligne au marché
+     */
+    fun ajouterLigne(ligne: MarcheLigne) {
+        ligne.marche = this
+        lignes.add(ligne)
+    }
+
+    /**
+     * Ajoute un avenant au marché
+     */
+    fun ajouterAvenant(avenant: AvenantMarche) {
+        avenant.marche = this
+        avenants.add(avenant)
+    }
+}
 
 enum class StatutMarche {
     EN_COURS,      // Marché en cours d'exécution

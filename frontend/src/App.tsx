@@ -10,6 +10,8 @@ import ConventionFormPage from './pages/conventions/ConventionFormPage'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
 import ProfilePage from './pages/ProfilePage'
+import PlanAnalytiquePage from './pages/parametrage/PlanAnalytiquePage'
+import ReportingAnalytiquePage from './pages/reporting/ReportingAnalytiquePage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -144,6 +146,26 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Plan Analytique Dynamique */}
+          <Route
+            path="/parametrage/plan-analytique"
+            element={
+              <ProtectedRoute>
+                <PlanAnalytiquePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Reporting Analytique */}
+          <Route
+            path="/reporting/analytique"
+            element={
+              <ProtectedRoute>
+                <ReportingAnalytiquePage />
               </ProtectedRoute>
             }
           />

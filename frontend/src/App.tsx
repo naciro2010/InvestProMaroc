@@ -1,25 +1,15 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
-import LandingPageGitLab from './pages/LandingPageGitLab'
+import LandingPageSimple from './pages/LandingPageSimple'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import DashboardModern from './pages/DashboardModern'
-import ProjetsCRUD from './pages/ProjetsCRUD'
-import FournisseursCRUD from './pages/FournisseursCRUD'
-import AxesAnalytiquesCRUD from './pages/AxesAnalytiquesCRUD'
-import ComptesBancairesCRUD from './pages/ComptesBancairesCRUD'
-import DepensesCRUD from './pages/DepensesCRUD'
+import DashboardSimple from './pages/DashboardSimple'
+import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
+import ConventionFormPage from './pages/conventions/ConventionFormPage'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
-import ConventionsPage from './pages/conventions/ConventionsPage'
-import ConventionFormPage from './pages/conventions/ConventionFormPage'
-import CommissionsPage from './pages/commissions/CommissionsPage'
-import UsersPage from './pages/users/UsersPage'
 import ProfilePage from './pages/ProfilePage'
-import BudgetsPage from './pages/budgets/BudgetsPage'
-import DecomptesPage from './pages/decomptes/DecomptesPage'
-import PaiementsPage from './pages/paiements/PaiementsPage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -76,7 +66,7 @@ function App() {
         <ToastProvider>
           <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<LandingPageGitLab />} />
+          <Route path="/" element={<LandingPageSimple />} />
           <Route
             path="/login"
             element={
@@ -99,17 +89,17 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardModern />
+                <DashboardSimple />
               </ProtectedRoute>
             }
           />
 
-          {/* Référentiels - CRUD Pages */}
+          {/* Conventions - Focus principal */}
           <Route
             path="/conventions"
             element={
               <ProtectedRoute>
-                <ConventionsPage />
+                <ConventionsPageMUI />
               </ProtectedRoute>
             }
           />
@@ -126,56 +116,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <ConventionFormPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/projets"
-            element={
-              <ProtectedRoute>
-                <ProjetsCRUD />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/fournisseurs"
-            element={
-              <ProtectedRoute>
-                <FournisseursCRUD />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/axes-analytiques"
-            element={
-              <ProtectedRoute>
-                <AxesAnalytiquesCRUD />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/comptes-bancaires"
-            element={
-              <ProtectedRoute>
-                <ComptesBancairesCRUD />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Operations */}
-          <Route
-            path="/depenses"
-            element={
-              <ProtectedRoute>
-                <DepensesCRUD />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/commissions"
-            element={
-              <ProtectedRoute>
-                <CommissionsPage />
               </ProtectedRoute>
             }
           />
@@ -198,58 +138,12 @@ function App() {
             }
           />
 
-          {/* Budgets */}
-          <Route
-            path="/budgets"
-            element={
-              <ProtectedRoute>
-                <BudgetsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Décomptes */}
-          <Route
-            path="/decomptes"
-            element={
-              <ProtectedRoute>
-                <DecomptesPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Paiements */}
-          <Route
-            path="/paiements"
-            element={
-              <ProtectedRoute>
-                <PaiementsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* User Management */}
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
-                <UsersPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* User Profile */}
           <Route
             path="/profile"
             element={
               <ProtectedRoute>
                 <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <ComingSoon title="Paramètres" />
               </ProtectedRoute>
             }
           />

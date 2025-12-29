@@ -2,6 +2,8 @@ package ma.investpro.entity
 
 import jakarta.persistence.*
 import jakarta.validation.constraints.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -71,31 +73,59 @@ class OrdrePaiement(
 ) : BaseEntity()
 
 /**
- * Imputation analytique de l'ordre de paiement
+ * Imputation analytique de l'ordre de paiement (Plan Analytique Dynamique)
  */
 @Entity
-@Table(name = "op_imputations")
+@Table(
+    name = "op_imputations",
+    indexes = [
+        Index(name = "idx_op_imp_op", columnList = "ordre_paiement_id"),
+        Index(name = "idx_op_imp_dimensions", columnList = "dimensions_valeurs")
+    ]
+)
 class OPImputation(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ordre_paiement_id", nullable = false)
     var ordrePaiement: OrdrePaiement,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "projet_id")
-    var projet: Projet? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "axe_id")
-    var axe: AxeAnalytique? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "budget_id")
-    var budget: Budget? = null,
-
     @Column(nullable = false, precision = 15, scale = 2)
-    var montant: BigDecimal = BigDecimal.ZERO
+    var montant: BigDecimal = BigDecimal.ZERO,
 
-) : BaseEntity()
+    // Imputation analytique flexible (Plan Analytique Dynamique)
+    // Stockage JSONB des valeurs de dimensions
+    // Exemple: {"REG": "CAS", "MARCH": "TRAVAUX", "PHASE": "REAL", "SOURCE": "AFD"}
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "dimensions_valeurs", nullable = false, columnDefinition = "jsonb")
+    var dimensionsValeurs: Map<String, String> = mutableMapOf(),
+
+    @Column(columnDefinition = "TEXT")
+    var remarques: String? = null
+
+) : BaseEntity() {
+
+    /**
+     * Obtenir la valeur d'une dimension spécifique
+     */
+    fun getValeurDimension(codeDimension: String): String? {
+        return dimensionsValeurs[codeDimension]
+    }
+
+    /**
+     * Définir la valeur d'une dimension
+     */
+    fun setValeurDimension(codeDimension: String, codeValeur: String) {
+        val mutableMap = dimensionsValeurs.toMutableMap()
+        mutableMap[codeDimension] = codeValeur
+        dimensionsValeurs = mutableMap
+    }
+
+    /**
+     * Vérifier si toutes les dimensions obligatoires sont renseignées
+     */
+    fun isComplete(dimensionsObligatoires: List<String>): Boolean {
+        return dimensionsObligatoires.all { dimensionsValeurs.containsKey(it) }
+    }
+}
 
 /**
  * Mode de paiement

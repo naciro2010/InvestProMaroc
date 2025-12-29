@@ -5,7 +5,7 @@ import LandingPageSimple from './pages/LandingPageSimple'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardSimple from './pages/DashboardSimple'
-import ConventionsPage from './pages/conventions/ConventionsPage'
+import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
 import ConventionFormPage from './pages/conventions/ConventionFormPage'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
@@ -99,7 +99,7 @@ function App() {
             path="/conventions"
             element={
               <ProtectedRoute>
-                <ConventionsPage />
+                <ConventionsPageMUI />
               </ProtectedRoute>
             }
           />

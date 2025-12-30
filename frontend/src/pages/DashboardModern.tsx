@@ -343,7 +343,7 @@ const DashboardModern = () => {
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} tick={{ fontSize: 12 }} />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #E5E7EB',
@@ -371,7 +371,7 @@ const DashboardModern = () => {
                 <XAxis type="number" tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="nom" width={150} tick={{ fontSize: 11 }} />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #E5E7EB',
@@ -403,7 +403,7 @@ const DashboardModern = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={(entry) => `${entry.nom} (${((entry.montant / stats.totalDepenses) * 100).toFixed(1)}%)`}
+                  label={(entry: any) => `${entry.nom} (${((entry.montant / stats.totalDepenses) * 100).toFixed(1)}%)`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="montant"
@@ -413,7 +413,7 @@ const DashboardModern = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #E5E7EB',
@@ -440,7 +440,7 @@ const DashboardModern = () => {
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
                 <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} tick={{ fontSize: 12 }} />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(value)}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #E5E7EB',

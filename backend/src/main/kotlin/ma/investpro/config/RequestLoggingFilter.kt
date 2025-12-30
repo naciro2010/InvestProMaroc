@@ -19,65 +19,42 @@ class RequestLoggingFilter : OncePerRequestFilter() {
         filterChain: FilterChain
     ) {
         val startTime = System.currentTimeMillis()
-
-        // Request info
         val method = request.method
         val uri = request.requestURI
         val queryString = request.queryString
         val fullUrl = if (queryString != null) "$uri?$queryString" else uri
         val remoteAddr = getClientIpAddress(request)
 
-        // Auth info
         val authentication = SecurityContextHolder.getContext().authentication
         val username = authentication?.name ?: "anonymous"
         val roles = authentication?.authorities?.joinToString(", ") { it.authority } ?: "NONE"
 
-        // Log request
         logger.info { "REQUEST: $method $fullUrl | User: $username | Roles: $roles | IP: $remoteAddr" }
 
-        try {
-            // Execute request
-            filterChain.doFilter(request, response)
+        filterChain.doFilter(request, response)
 
-            val duration = System.currentTimeMillis() - startTime
-            val status = response.status
+        val duration = System.currentTimeMillis() - startTime
+        val status = response.status
 
-            // Log response
-            val level = when {
-                status < 300 -> "SUCCESS"
-                status < 400 -> "REDIRECT"
-                status < 500 -> "CLIENT_ERROR"
-                else -> "SERVER_ERROR"
-            }
+        val level = when {
+            status < 300 -> "SUCCESS"
+            status < 400 -> "REDIRECT"
+            status < 500 -> "CLIENT_ERROR"
+            else -> "SERVER_ERROR"
+        }
 
-            logger.info { "RESPONSE: $status $level | $method $fullUrl | User: $username | Duration: ${duration}ms" }
+        logger.info { "RESPONSE: $status $level | $method $fullUrl | User: $username | Duration: ${duration}ms" }
 
-            // Log errors
-            if (status == 403) {
-                logger.warn { "ACCESS_DENIED: User $username ($roles) tried to access $method $fullUrl" }
-            }
-
-            if (status == 401) {
-                logger.warn { "UNAUTHORIZED: Missing or invalid token for $method $fullUrl | IP: $remoteAddr" }
-            }
-
-        } catch (ex: Exception) {
-            val duration = System.currentTimeMillis() - startTime
-            throw ex
+        if (status == 403) {
+            logger.warn { "ACCESS_DENIED: User $username ($roles) tried to access $method $fullUrl" }
+        } else if (status == 401) {
+            logger.warn { "UNAUTHORIZED: Missing or invalid token for $method $fullUrl | IP: $remoteAddr" }
         }
     }
 
-    private fun getClientIpAddress(request: HttpServletRequest): String {
-        val xForwardedFor = request.getHeader("X-Forwarded-For")
-        if (!xForwardedFor.isNullOrEmpty()) {
-            return xForwardedFor.split(",")[0].trim()
-        }
-
-        val xRealIp = request.getHeader("X-Real-IP")
-        if (!xRealIp.isNullOrEmpty()) {
-            return xRealIp
-        }
-
-        return request.remoteAddr ?: "Unknown"
-    }
+    private fun getClientIpAddress(request: HttpServletRequest): String =
+        request.getHeader("X-Forwarded-For")?.takeIf { it.isNotEmpty() }?.split(",")?.get(0)?.trim()
+            ?: request.getHeader("X-Real-IP")?.takeIf { it.isNotEmpty() }
+            ?: request.remoteAddr
+            ?: "Unknown"
 }

@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.ImputationStatistiques
 import ma.investpro.entity.ImputationAnalytique
 import ma.investpro.entity.TypeImputation
 import ma.investpro.repository.ImputationAnalytiqueRepository
@@ -150,14 +151,16 @@ class ImputationAnalytiqueService(
 
     // ========== Statistiques ==========
 
-    fun getStatistiques(): Map<String, Any> {
-        return mapOf(
-            "totalImputations" to imputationRepository.count(),
-            "parType" to mapOf(
-                "BUDGET" to imputationRepository.findByTypeImputation(TypeImputation.BUDGET).size,
-                "DECOMPTE" to imputationRepository.findByTypeImputation(TypeImputation.DECOMPTE).size,
-                "PAIEMENT" to imputationRepository.findByTypeImputation(TypeImputation.PAIEMENT).size
-            )
+    fun getStatistiques(): ImputationStatistiques {
+        val allImputations = imputationRepository.findAll()
+        val totalMontant = allImputations.fold(BigDecimal.ZERO) { acc, imputation ->
+            acc + imputation.montant
+        }
+
+        return ImputationStatistiques(
+            totalImputations = allImputations.size.toLong(),
+            totalMontantImpute = totalMontant,
+            nombreTypes = TypeImputation.entries.size
         )
     }
 }

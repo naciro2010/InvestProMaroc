@@ -50,22 +50,19 @@ class SecurityConfig(
     }
 
     @Bean
-    fun corsConfigurationSource(): CorsConfigurationSource {
-        val configuration = CorsConfiguration().apply {
-            allowedOrigins = listOf(
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "https://naciro2010.github.io"
-            )
-            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-            allowedHeaders = listOf("*")
-            allowCredentials = true
+    fun corsConfigurationSource(): CorsConfigurationSource =
+        UrlBasedCorsConfigurationSource().apply {
+            registerCorsConfiguration("/**", CorsConfiguration().apply {
+                allowedOrigins = listOf(
+                    "http://localhost:5173",
+                    "http://localhost:3000",
+                    "https://naciro2010.github.io"
+                )
+                allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                allowedHeaders = listOf("*")
+                allowCredentials = true
+            })
         }
-
-        return UrlBasedCorsConfigurationSource().apply {
-            registerCorsConfiguration("/**", configuration)
-        }
-    }
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()

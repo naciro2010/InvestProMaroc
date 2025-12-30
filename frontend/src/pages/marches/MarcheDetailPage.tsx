@@ -4,28 +4,15 @@ import { FaArrowLeft, FaEdit, FaFileInvoice, FaShoppingCart, FaChartLine } from 
 import { Card, Button, StatusBadge } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
 import api from '../../lib/api'
+import { Marche as MarcheType, Decompte as DecompteType, Fournisseur } from '../../types/entities'
 
-interface Marche {
-  id: number
-  numeroMarche: string
-  numAo?: string
-  dateMarche: string
-  objet: string
+// Marche étendu avec champs calculés
+interface Marche extends Omit<MarcheType, 'montantHT' | 'montantTVA' | 'montantTTC' | 'tauxTVA'> {
   montantHt: number
   montantTva: number
   montantTtc: number
   tauxTva: number
-  statut: string
-  dateDebut?: string
-  dateFinPrevue?: string
-  delaiExecutionMois?: number
-  retenueGarantie: number
-  remarques?: string
-  fournisseur?: {
-    id: number
-    raisonSociale: string
-    ice?: string
-  }
+  fournisseur?: Partial<Fournisseur>
   projet?: {
     id: number
     nom: string
@@ -33,16 +20,12 @@ interface Marche {
   }
 }
 
-interface Decompte {
-  id: number
-  numeroDecompte: string
+// Decompte étendu avec champs calculés
+interface Decompte extends DecompteType {
   numeroSituation?: number
-  typeDecompte: string
+  typeDecompte?: string
   montantTtc: number
-  cumulActuel: number
-  tauxAvancement: number
-  statut: string
-  dateDecompte: string
+  tauxAvancement?: number
 }
 
 export default function MarcheDetailPage() {

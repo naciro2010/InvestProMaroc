@@ -240,3 +240,238 @@ export interface EcheanceSubvention {
   dateReception?: string
   libelle?: string
 }
+
+// =====================================================
+// MARCHÉS & AVENANTS
+// =====================================================
+
+export type StatutMarche = 'EN_COURS' | 'TERMINE' | 'RESILIE' | 'SUSPENDU'
+
+export interface Marche {
+  id: number
+  numeroMarche: string
+  conventionId?: number
+  fournisseurId?: number
+  objet?: string
+  numAO?: string
+  dateMarche?: string
+  dateDebut?: string
+  dateFinPrevue?: string
+  delaiExecutionMois?: number
+  montantHT: number
+  tauxTVA: number
+  montantTVA: number
+  montantTTC: number
+  retenueGarantie?: number
+  statut: StatutMarche
+  remarques?: string
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface MarcheLigne {
+  id: number
+  marcheId: number
+  numeroLigne: number
+  designation: string
+  unite?: string
+  quantite?: number
+  prixUnitaireHT: number
+  montantHT: number
+  tauxTVA: number
+  montantTVA: number
+  montantTTC: number
+  imputationAnalytique?: any // JSONB
+  remarques?: string
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type StatutAvenantMarche = 'BROUILLON' | 'SOUMIS' | 'VALIDE' | 'REJETE' | 'ANNULE'
+
+export interface AvenantMarche {
+  id: number
+  marcheId: number
+  numeroAvenant: string
+  dateAvenant: string
+  dateEffet?: string
+  objet: string
+  motif?: string
+  statut: StatutAvenantMarche
+
+  // Impacts financiers
+  montantInitialHT?: number
+  montantAvenantHT?: number
+  montantApresHT?: number
+  pourcentageVariation?: number
+
+  // Impacts délais
+  delaiInitialMois?: number
+  delaiSupplementaireMois?: number
+  delaiApresMois?: number
+  dateFinInitiale?: string
+  dateFinApres?: string
+
+  // Détails
+  detailsAvant?: string
+  detailsApres?: string
+  detailsModifications?: string
+
+  // Validation
+  dateValidation?: string
+  valideParId?: number
+  remarques?: string
+  fichierAvenant?: string
+
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+// =====================================================
+// RÉFÉRENTIELS
+// =====================================================
+
+export interface Fournisseur {
+  id: number
+  code: string
+  raisonSociale: string
+  ice?: string
+  identifiantFiscal?: string
+  adresse?: string
+  ville?: string
+  telephone?: string
+  fax?: string
+  email?: string
+  contactNom?: string
+  nonResident: boolean
+  remarques?: string
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface CompteBancaire {
+  id: number
+  code: string
+  libelle: string
+  banque?: string
+  agence?: string
+  rib?: string
+  iban?: string
+  swift?: string
+  typeCompte?: string
+  titulaire?: string
+  devise: string
+  remarques?: string
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type StatutCommission = 'CALCULEE' | 'VALIDEE' | 'PAYEE' | 'ANNULEE'
+
+export interface Commission {
+  id: number
+  reference: string
+  periode?: string
+  depenseId?: number
+  conventionId?: number
+  baseCalcul: number
+  montantBase?: number
+  tauxCommission: number
+  tauxTVA?: number
+  montantCommission: number
+  montantCommissionHT?: number
+  montantTVACommission?: number
+  montantCommissionTTC?: number
+  statut: StatutCommission
+  dateCalcul?: string
+  remarques?: string
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type StatutDepense = 'EN_COURS' | 'VALIDEE' | 'PAYEE' | 'ANNULEE'
+export type TypeDepense = 'INVESTISSEMENT' | 'FONCTIONNEMENT' | 'AUTRE'
+export type BaseCalculDepense = 'HT' | 'TTC'
+
+export interface DepenseInvestissement {
+  id: number
+  reference: string
+  numeroFacture?: string
+  description?: string
+  dateFacture?: string
+  montantHT: number
+  tauxTVA: number
+  montantTVA?: number
+  montantTTC?: number
+  dateDepense?: string
+  fournisseurId?: number
+  projetId?: number
+  axeAnalytiqueId?: number
+  conventionId?: number
+  referenceMarche?: string
+  numeroDecompte?: string
+
+  // Retenues
+  retenueTVA?: number
+  retenueIsTiers?: number
+  retenueNonResident?: number
+  retenueGarantie?: number
+
+  // Paiement
+  datePaiement?: string
+  referencePaiement?: string
+  compteBancaireId?: number
+  paye: boolean
+
+  // Classification
+  typeDepense?: TypeDepense
+  tauxCommission?: number
+  baseCalcul?: BaseCalculDepense
+
+  // Détails projet
+  objet?: string
+  dateDemarrage?: string
+  delaiMois?: number
+  dateFinPrevue?: string
+  designation?: string
+
+  statut: StatutDepense
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+// =====================================================
+// PLAN ANALYTIQUE DYNAMIQUE
+// =====================================================
+
+export interface DimensionAnalytique {
+  id: number
+  code: string
+  libelle: string
+  description?: string
+  ordre: number
+  obligatoire: boolean
+  createdById?: number
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface ValeurDimension {
+  id: number
+  dimensionId: number
+  code: string
+  libelle: string
+  description?: string
+  ordre: number
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}

@@ -46,8 +46,8 @@ dependencies {
     // Apache POI for Excel
     implementation("org.apache.poi:poi-ooxml:5.3.0")
 
-    // OpenAPI/Swagger
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+    // OpenAPI/Swagger (API only, UI disabled in production)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.7.0")
 
     // Development
     developmentOnly("org.springframework.boot:spring-boot-devtools")

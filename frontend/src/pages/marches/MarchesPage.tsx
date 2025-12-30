@@ -4,26 +4,18 @@ import { FaPlus, FaEdit, FaTrash, FaEye, FaFileExcel, FaSearch } from 'react-ico
 import { Card, Button, StatusBadge } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
 import api from '../../lib/api'
+import { Marche as MarcheType, Fournisseur } from '../../types/entities'
 
-interface Marche {
-  id: number
-  numeroMarche: string
-  numAo?: string
-  dateMarche: string
-  objet: string
-  montantTtc: number
-  montantHt: number
-  statut: 'EN_COURS' | 'VALIDE' | 'TERMINE' | 'SUSPENDU' | 'ANNULE' | 'EN_ATTENTE'
-  fournisseur?: {
-    id: number
-    raisonSociale: string
-  }
+// Interface étendue avec champs calculés par le backend
+interface Marche extends Omit<MarcheType, 'montantHT' | 'montantTTC'> {
+  montantHt: number // Backend uses camelCase
+  montantTtc: number // Backend uses camelCase
+  fournisseur?: Partial<Fournisseur>
   convention?: {
     id: number
     code: string
     libelle: string
   }
-  dateFinPrevue?: string
   nbLignes?: number
   nbAvenants?: number
   nbDecomptes?: number

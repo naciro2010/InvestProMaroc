@@ -4,27 +4,10 @@ import { FaPlus, FaTrash, FaSave, FaTimes } from 'react-icons/fa'
 import { Card, Button } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
 import api from '../../lib/api'
+import { MarcheLigne, DimensionAnalytique } from '../../types/entities'
 
-interface MarcheLigne {
-  id?: number
-  numeroLigne: number
-  designation: string
-  unite?: string
-  quantite?: number
-  prixUnitaireHT: number
-  montantHT: number
-  tauxTVA: number
-  montantTVA: number
-  montantTTC: number
-  imputationAnalytique?: Record<string, string>
-  remarques?: string
-}
-
-interface Dimension {
-  id: number
-  code: string
-  nom: string
-  obligatoire: boolean
+// Dimension avec valeurs - étendu de DimensionAnalytique
+interface Dimension extends DimensionAnalytique {
   valeurs: { code: string; libelle: string }[]
 }
 

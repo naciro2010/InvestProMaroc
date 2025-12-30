@@ -1,31 +1,89 @@
-# Gradle
-.gradle/
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+# Build directories
+/build
+/out
+/target
+/.gradle
+/gradle-build-cache
 
-# IntelliJ IDEA
+# IDE
 .idea/
-*.iws
+.vscode/
 *.iml
+*.iws
 *.ipr
-out/
+*.swp
+*.swo
+*~
+.DS_Store
 
-# Eclipse
-.classpath
-.project
-.settings/
+# JVM
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# Kotlin
+*.kt.bak
+.kotlin_metadata
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+application-local.properties
+application-prod.properties
+secrets.yaml
+
+# Logs
+logs/
+*.log
+log/
+
+# Runtime
+.tmp/
+tmp/
+temp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node (frontend if integrated)
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # VS Code
 .vscode/
+*.code-workspace
 
-# macOS
-.DS_Store
-
-# Logs
-*.log
-
-# Environment
-.env
-.env.local
+# Misc
+.classpath
+.project
+.settings/
+*.launch
+.c9/
+*.sublime-workspace
+.history/
+.factorypath
+.gradle/cache

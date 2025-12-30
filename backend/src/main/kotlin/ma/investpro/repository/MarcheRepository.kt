@@ -85,4 +85,20 @@ interface MarcheRepository : JpaRepository<Marche, Long> {
         @Param("dateDebut") dateDebut: LocalDate?,
         @Param("dateFin") dateFin: LocalDate?
     ): List<Marche>
+
+    /**
+     * Vérifier si un numéro de marché existe
+     */
+    fun existsByNumeroMarche(numeroMarche: String): Boolean
+
+    /**
+     * Recherche les marchés en retard (date de fin passée mais non terminés)
+     */
+    @Query("""
+        SELECT m FROM Marche m
+        WHERE m.dateFinPrevue < CURRENT_DATE
+        AND m.statut IN ('EN_COURS', 'VALIDE')
+        ORDER BY m.dateFinPrevue ASC
+    """)
+    fun findMarchesEnRetard(): List<Marche>
 }

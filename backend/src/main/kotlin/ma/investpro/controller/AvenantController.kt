@@ -1,5 +1,7 @@
 package ma.investpro.controller
 
+import ma.investpro.dto.ConsolidatedVersionResponse
+import ma.investpro.dto.VersionHistoryEntry
 import ma.investpro.entity.Avenant
 import ma.investpro.service.AvenantService
 import org.springframework.http.HttpStatus
@@ -129,12 +131,12 @@ class AvenantController(
     // ========== Version & Historique ==========
 
     @GetMapping("/convention/{conventionId}/version-consolidee")
-    fun getVersionConsolidee(@PathVariable conventionId: Long): ResponseEntity<Map<String, Any>> {
+    fun getVersionConsolidee(@PathVariable conventionId: Long): ResponseEntity<ConsolidatedVersionResponse> {
         return ResponseEntity.ok(avenantService.getVersionConsolidee(conventionId))
     }
 
     @GetMapping("/convention/{conventionId}/historique")
-    fun getHistoriqueVersions(@PathVariable conventionId: Long): ResponseEntity<List<Map<String, Any?>>> {
+    fun getHistoriqueVersions(@PathVariable conventionId: Long): ResponseEntity<List<VersionHistoryEntry>> {
         return ResponseEntity.ok(avenantService.getHistoriqueVersions(conventionId))
     }
 }

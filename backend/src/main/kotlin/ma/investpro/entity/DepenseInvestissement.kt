@@ -32,14 +32,6 @@ class DepenseInvestissement(
     var fournisseur: Fournisseur? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "projet_id", nullable = false)
-    var projet: Projet? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "axe_analytique_id")
-    var axeAnalytique: AxeAnalytique? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "convention_id")
     var convention: Convention? = null,
 

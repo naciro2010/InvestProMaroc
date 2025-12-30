@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.DecompteStatistiques
 import ma.investpro.entity.Decompte
 import ma.investpro.entity.StatutDecompte
 import ma.investpro.repository.DecompteRepository
@@ -144,14 +145,14 @@ class DecompteService(
         ).sumOf { it.montantPaye }
     }
 
-    fun getStatistiques(): Map<String, Any> {
+    fun getStatistiques(): DecompteStatistiques {
         val all = decompteRepository.findAll()
-        return mapOf(
-            "total" to all.size,
-            "brouillon" to all.count { it.statut == StatutDecompte.BROUILLON },
-            "soumis" to all.count { it.statut == StatutDecompte.SOUMIS },
-            "valides" to all.count { it.statut == StatutDecompte.VALIDE },
-            "montantTotal" to all.sumOf { it.montantTTC }
+        return DecompteStatistiques(
+            total = all.size,
+            brouillon = all.count { it.statut == StatutDecompte.BROUILLON },
+            soumis = all.count { it.statut == StatutDecompte.SOUMIS },
+            valides = all.count { it.statut == StatutDecompte.VALIDE },
+            montantTotal = all.sumOf { it.montantTTC }
         )
     }
 }

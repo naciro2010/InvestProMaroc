@@ -50,16 +50,6 @@ class ReportingController(private val reportingService: ReportingService) {
         )
     )
 
-    @GetMapping("/commissions/stats/projet")
-    fun getCommissionStatsByProjet(@RequestParam(required = false) projetId: Long?) =
-        ResponseEntity.ok(
-            ApiResponse(
-                true,
-                "Statistiques commissions par projet",
-                reportingService.getCommissionStatsByProjet(projetId)
-            )
-        )
-
     @GetMapping("/commissions/stats/fournisseur")
     fun getCommissionStatsByFournisseur(@RequestParam(required = false) fournisseurId: Long?) =
         ResponseEntity.ok(
@@ -93,16 +83,6 @@ class ReportingController(private val reportingService: ReportingService) {
             reportingService.getDepenseStatsByPeriod(annee, mois)
         )
     )
-
-    @GetMapping("/depenses/stats/projet")
-    fun getDepenseStatsByProjet(@RequestParam(required = false) projetId: Long?) =
-        ResponseEntity.ok(
-            ApiResponse(
-                true,
-                "Statistiques dépenses par projet",
-                reportingService.getDepenseStatsByProjet(projetId)
-            )
-        )
 
     @GetMapping("/depenses/stats/fournisseur")
     fun getDepenseStatsByFournisseur(@RequestParam(required = false) fournisseurId: Long?) =

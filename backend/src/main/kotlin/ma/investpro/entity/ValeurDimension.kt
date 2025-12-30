@@ -41,9 +41,6 @@ class ValeurDimension(
     var active: Boolean = true, // Active ou non
 
     @Column(nullable = false)
-    var ordre: Int = 0, // Ordre d'affichage
-
-    @Column(name = "created_at", nullable = false)
-    var createdAt: LocalDateTime = LocalDateTime.now()
+    var ordre: Int = 0 // Ordre d'affichage
 
 ) : BaseEntity()

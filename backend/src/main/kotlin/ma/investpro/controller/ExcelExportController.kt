@@ -109,21 +109,6 @@ class ExcelExportController(
             .body(excelData)
     }
 
-    @GetMapping("/stats/depenses/projet")
-    fun exportDepenseStatsByProjet(@RequestParam(required = false) projetId: Long?): ResponseEntity<ByteArray> {
-        logger.info { "Export Excel statistiques dépenses par projet" }
-
-        val stats = reportingService.getDepenseStatsByProjet(projetId)
-        val excelData = excelExportService.exportDepenseStats(stats, "projet")
-
-        val filename = "stats_depenses_projet_${LocalDate.now().format(dateFormatter)}.xlsx"
-
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$filename\"")
-            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-            .body(excelData)
-    }
-
     @GetMapping("/stats/depenses/fournisseur")
     fun exportDepenseStatsByFournisseur(@RequestParam(required = false) fournisseurId: Long?): ResponseEntity<ByteArray> {
         logger.info { "Export Excel statistiques dépenses par fournisseur" }
@@ -152,21 +137,6 @@ class ExcelExportController(
         val excelData = excelExportService.exportCommissionStats(stats, "periode")
 
         val filename = "stats_commissions_periode_${LocalDate.now().format(dateFormatter)}.xlsx"
-
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$filename\"")
-            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-            .body(excelData)
-    }
-
-    @GetMapping("/stats/commissions/projet")
-    fun exportCommissionStatsByProjet(@RequestParam(required = false) projetId: Long?): ResponseEntity<ByteArray> {
-        logger.info { "Export Excel statistiques commissions par projet" }
-
-        val stats = reportingService.getCommissionStatsByProjet(projetId)
-        val excelData = excelExportService.exportCommissionStats(stats, "projet")
-
-        val filename = "stats_commissions_projet_${LocalDate.now().format(dateFormatter)}.xlsx"
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$filename\"")

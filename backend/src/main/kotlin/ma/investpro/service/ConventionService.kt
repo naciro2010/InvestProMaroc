@@ -255,7 +255,6 @@ class ConventionService(
         require(convention.tauxCommission >= BigDecimal.ZERO && convention.tauxCommission <= BigDecimal(100)) {
             "Le taux de commission doit être entre 0 et 100%"
         }
-        require(convention.dateDebut != null) { "La date de début est obligatoire" }
 
         convention.dateFin?.let { dateFin ->
             require(dateFin >= convention.dateDebut) {

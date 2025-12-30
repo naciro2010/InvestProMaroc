@@ -6,7 +6,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
- * Entité Convention - Conforme à XCOMPTA
+ * Entité Convention - Gestion des conventions d'investissement
  * Gestion des conventions avec 4 types: CADRE, NON_CADRE, SPECIFIQUE, AVENANT
  */
 @Entity
@@ -27,7 +27,7 @@ class Convention(
     @field:NotBlank
     var code: String = "",
 
-    // Champs XCOMPTA - Informations de base
+    // Informations de base
     @Column(nullable = false, unique = true, length = 100)
     @field:NotBlank
     var numero: String = "", // Numéro unique de la convention (ex: CONV-2024-001)
@@ -161,7 +161,7 @@ class Convention(
 }
 
 /**
- * Type de convention selon XCOMPTA
+ * Type de convention
  */
 enum class TypeConvention {
     CADRE,          // Convention mère qui sert de cadre
@@ -171,7 +171,7 @@ enum class TypeConvention {
 }
 
 /**
- * Statut de la convention selon XCOMPTA avec workflow complet
+ * Statut de la convention avec workflow complet
  */
 enum class StatutConvention {
     BROUILLON,      // Brouillon en cours de saisie (éditable)

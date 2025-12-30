@@ -93,7 +93,7 @@ class DepenseInvestissement(
     @Column(columnDefinition = "TEXT")
     var remarques: String? = null,
 
-    // XCOMPTA-inspired fields
+    // Champs de gestion avancée
     @Column(name = "type_depense", length = 20)
     @Enumerated(EnumType.STRING)
     var typeDepense: TypeDepense = TypeDepense.STANDARD,

@@ -109,7 +109,7 @@ export default function ConventionsPage() {
       CADRE: 'bg-info text-white',
       NON_CADRE: 'bg-success text-white',
       SPECIFIQUE: 'bg-warning text-white',
-      AVENANT: 'bg-xcompta-orange text-white',
+      AVENANT: 'bg-orange-500 text-white',
     }
     return colors[type] || 'bg-gray-500 text-white'
   }
@@ -210,7 +210,7 @@ export default function ConventionsPage() {
         {/* En-tête */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-rubik text-gray-800">Conventions XCOMPTA</h1>
+            <h1 className="text-3xl font-bold font-rubik text-gray-800">Conventions</h1>
             <p className="text-gray-600 mt-1">Gestion des conventions d'intervention</p>
           </div>
           <Button

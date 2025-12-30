@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords"
+          content="wrappixel, admin dashboard, html css dashboard, web dashboard, bootstrap 4 admin, bootstrap 4, css3 dashboard, bootstrap 4 dashboard, monster admin bootstrap 4 dashboard, frontend, responsive bootstrap 4 admin template, material design, material dashboard bootstrap 4 dashboard template">
+    <meta name="description"
+          content="Monster is powerful and clean admin dashboard template, inpired from Google's Material Design">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Monster Template by WrapPixel</title>
+    <!-- Favicon icon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon.png">
+    <!-- Custom CSS -->
+    <link href="../assets/libs/chartist/dist/chartist.min.css" rel="stylesheet">
+    <link href="../assets/extra-libs/c3/c3.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="../../dist/css/style.min.css" rel="stylesheet">
+    <script src="common/includeHtml.js"></script>
+
+    <!-- This page CSS -->
+    <link href="../assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.css" rel="stylesheet">
+    <link href="../assets/extra-libs/jquery-steps/jquery.steps.css" rel="stylesheet">
+    <link href="../assets/extra-libs/jquery-steps/steps.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+<!-- ============================================================== -->
+<!-- Preloader - style you can find in spinners.css -->
+<!-- ============================================================== -->
+<div class="preloader">
+    <div class="lds-ripple">
+        <div class="lds-pos"></div>
+        <div class="lds-pos"></div>
+    </div>
+</div>
+<!-- ============================================================== -->
+<!-- Main wrapper - style you can find in pages.scss -->
+<!-- ============================================================== -->
+<div id="main-wrapper">
+
+    <div w3-include-html="common/leftSideBarInside.html"></div>
+
+    <script>
+        includeHTML();
+    </script>
+    <!-- ============================================================== -->
+    <!-- End Left Sidebar - style you can find in sidebar.scss  -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- Page wrapper  -->
+    <!-- ============================================================== -->
+    <div class="page-wrapper">
+        <!-- ============================================================== -->
+        <!-- Bread crumb and right sidebar toggle -->
+        <!-- ============================================================== -->
+        <div class="page-breadcrumb">
+            <div class="row">
+                <div class="col-md-5 align-self-center">
+                    <div class="d-flex align-items-center">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="conventions.html">Convention</a></li>
+                                <li class="breadcrumb-item"><a href="conventionCadre.html">Convention Cadre</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Convention spécifique</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+                <div class="col-md-7 d-flex justify-content-end align-self-center d-none d-md-flex">
+                    <div class="d-flex">
+                        <div class="dropdown mr-2 hidden-sm-down">
+                            <button class="btn btn-outline-orange" data-toggle="modal"
+                                    data-target="#full-width-modal-avenant">
+                                <i
+                                        class="mdi mdi-plus-circle"></i> Ajout Avenant
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Bread crumb and right sidebar toggle -->
+        <!-- ============================================================== -->
+
+        <!-- ============================================================== -->
+        <!-- Column -->
+        <div class="card">
+            <div class="card-body">
+                <!-- Accordian -->
+                <div class="accordion" id="accordionTable">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-bottom shadow border-info">
+                                <div class="card-body">
+                                    <div class="d-flex no-block align-items-center">
+                                        <div>
+                                            <h5 class="text-info">Libellé de la convention :</h5>
+                                            <h5 class="text-wrap">Creation d'une nouvelle ville au maroc</h5>
+                                            <h5 class="text-info">Objet de la convention :</h5>
+                                            <h5 class="text-wrap">Nouvelle Objet </h5>
+                                            <h5 class="text-info">Taux de la commission de l'intervention :</h5>
+                                            <h5 class="text-wrap"> 7 % TTC sur les décaissements TTC </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-bottom shadow border-cyan">
+                                <div class="card-body">
+                                    <div class="d-flex no-block align-items-center">
+                                        <div class="table-responsive">
+                                            <table id="conventionDetail"
+                                                   class="table table-bordered m-b-0 toggle-arrow-tiny no-wrap"
+                                                   data-filtering="true" data-paging="true" data-sorting="true"
+                                                   data-paging-size="10">
+                                                <thead>
+                                                <tr class="footable-filtering">
+                                                    <th data-breakpoints="xs">Num</th>
+                                                    <th>Date signature</th>
+                                                    <th>Budget</th>
+                                                    <th>PJ</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr data-expanded="true">
+                                                    <td><span class="badge py-1 badge-secondary mr-2"> I </span>
+                                                        NUM1</span>
+                                                    </td>
+                                                    <td>19/09/2015</td>
+                                                    <td>300 M DH</td>
+                                                    <td><i class="fa fa-paperclip"></i></td>
+                                                </tr>
+                                                <tr data-expanded="true">
+                                                    <td><span class="badge py-1 badge-secondary mr-2"> A </span>NUM2
+                                                    </td>
+                                                    <td>19/09/2019</td>
+                                                    <td>203 M DH</td>
+                                                    <td><i class="fa fa-paperclip"></i></td>
+                                                </tr>
+                                                <tr data-expanded="true">
+                                                    <td><span class="badge py-1 badge-secondary mr-2"> A </span>NUM3
+                                                    </td>
+                                                    <td>19/09/2021</td>
+                                                    <td>234 M DH</td>
+                                                    <td><i class="fa fa-paperclip"></i></td>
+                                                </tr>
+                                                <tr data-expanded="true">
+                                                    <td><span class="badge py-1 badge-success mr-2"> A </span> NUM4
+                                                    </td>
+                                                    <td>19/10/2020</td>
+                                                    <td>34 M DH</td>
+                                                    <td><i class="fa fa-paperclip"></i></td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="card">
+            <div class="card-body">
+
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="row draggable-cards" id="draggable-area">
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="card  card-hover">
+                                        <div class="card-header bg-light-info">
+                                            <h4 class="mb-0 text-dark">Partenaire</h4></div>
+                                        <div class="card-body">
+
+                                            <table id="partenaire"
+                                                   class="table table-bordered m-b-0 toggle-arrow-tiny text-wrap">
+                                                <thead>
+                                                <tr class="footable-filtering">
+                                                    <th>Partenaire</th>
+                                                    <th>Budget</th>
+                                                    <th>%</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr>
+                                                    <td>
+                                                        <a href="conventionCadreAvenant.html">Partenaire A</a>
+                                                    </td>
+                                                    <td>300 M</td>
+                                                    <td>10 %</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <a href="conventionCadreAvenant.html">Partenaire C</a>
+                                                    </td>
+                                                    <td>300 M</td>
+                                                    <td>10 %</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card  card-hover">
+                                        <div class="card-header bg-light-danger">
+                                            <h4 class="mb-0 text-dark">Maitre d'oeuvre:</h4></div>
+                                        <div class="card-body">
+                                            <ul>
+                                                <li>
+                                                    <h6>MO1</h6>
+                                                </li>
+                                                <li>
+                                                    <h6>MO2</h6>
+                                                </li>
+                                            </ul>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card  card-hover">
+                                        <div class="card-header bg-light-success">
+                                            <h4 class="mb-0 text-dark">Maitre d'oeuvre délégué:</h4></div>
+                                        <div class="card-body">
+                                            <ul>
+                                                <li>
+                                                    <h6>MOD1</h6>
+                                                </li>
+                                                <li>
+                                                    <h6>MOD2</h6>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 col-sm-12">
+                                    <div class="card  card-hover">
+                                        <div class="card-header bg-light-megna">
+                                            <h4 class="mb-0 text-dark">Axe</h4></div>
+                                        <div class="card-body">
+                                            <table id="axes"
+                                                   class="table table-bordered m-b-0 toggle-arrow-tiny no-wrap"
+                                                   data-filtering="true" data-paging="true" data-sorting="true"
+                                                   data-paging-size="10">
+                                                <thead>
+                                                <tr class="footable-filtering">
+                                                    <th>Axe</th>
+                                                    <th>Projet</th>
+                                                    <th>Volet</th>
+                                                    <th>Date démarage</th>
+                                                    <th>Délai</th>
+                                                    <th>Date fin prévue</th>
+
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr>
+                                                    <td>Rabat</td>
+                                                    <td>
+                                                        <a href="conventionCadreAvenant.html"> Projet A</a>
+                                                    </td>
+                                                    <td>Volet 1</td>
+                                                    <td>12/12/2020</td>
+                                                    <td>24 mois</td>
+                                                    <td>12/12/2021</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>AGADIR</td>
+                                                    <td>
+                                                        <a href="conventionCadreAvenant.html"> Projet A</a>
+                                                    </td>
+                                                    <td>Volet 1</td>
+                                                    <td>12/12/2020</td>
+                                                    <td>24 mois</td>
+                                                    <td>12/12/2021</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 col-sm-12">
+                                    <div class="card  card-hover">
+                                        <div class="card-header bg-light-info">
+                                            <h4 class="mb-0 text-dark">Versements prévisionels</h4></div>
+                                        <div class="card-body">
+                                            <table id="versement"
+                                                   class="table table-bordered m-b-0 toggle-arrow-tiny no-wrap"
+                                                   data-filtering="true" data-paging="true"
+                                                   data-sorting="true"
+                                                   data-paging-size="10">
+                                                <thead>
+                                                <tr class="footable-filtering">
+                                                    <th>Date <br/> versement</th>
+                                                    <th>Montant</th>
+                                                    <th>Partenaire</th>
+                                                    <th>MOD</th>
+                                                    <th>Axe</th>
+                                                    <th>Projet</th>
+                                                    <th>Volet</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr>
+                                                    <td>
+                                                        13/12/2021
+                                                    </td>
+                                                    <td>10 M</td>
+                                                    <td><a href="">Partenaire1</a></td>
+                                                    <td><a href="">MOD V</a></td>
+                                                    <td>CASA</td>
+                                                    <td>CASA Aménagement</td>
+                                                    <td>
+                                                        Volet4
+                                                    </td>
+
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        13/12/2022
+                                                    </td>
+                                                    <td>15 M</td>
+                                                    <td><a href="">Partenaire1</a></td>
+                                                    <td><a href="">MOD V</a></td>
+                                                    <td>CASA</td>
+                                                    <td>CASA Aménagement</td>
+                                                    <td>
+                                                        Volet2
+                                                    </td>
+
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        13/12/2021
+                                                    </td>
+                                                    <td>15 M</td>
+                                                    <td><a href="">Partenaire2</a></td>
+                                                    <td><a href="">MOD V</a></td>
+                                                    <td>CASA</td>
+                                                    <td>CASA Aménagement</td>
+                                                    <td>
+                                                        Volet4
+                                                    </td>
+
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column steeper -->
+
+            <div class="col-12">
+                <div id="full-width-modal" class="modal fade" tabindex="-1" role="dialog"
+                     aria-labelledby="fullWidthModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-full-width">
+                        <div class="modal-content">
+                            <div class="modal-header d-flex align-items-center bg-success">
+                                <h4 class="modal-title text-white" id="fullWidthModalLabel">Ajout Spécifique:</h4>
+                                <button type="button" class="close ml-auto" data-dismiss="modal"
+                                        aria-hidden="true">×
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="card">
+                                    <div class="card-body wizard-content">
+                                        <h6 class="card-subtitle"></h6>
+                                        <form action="#" class="tab-wizard wizard-circle">
+                                            <!-- Step 1 -->
+                                            <h6>Convention</h6>
+                                            <section>
+                                                <div class="table-responsive">
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tbody class="table-borderless">
+                                                        <tr></tr>
+                                                        <tr>
+                                                            <td style="width:5%">Numéro</td>
+                                                            <td style="width:20%" colspan="1">
+
+                                                                <input type="number"
+                                                                       class="form-control font-12 col-xs-1"
+                                                                       placeholder="">
+                                                            </td>
+                                                            <td style="width:5%">Date</td>
+                                                            <td style="width:5%" colspan="1"><input type="date"
+                                                                                                    class="form-control font-12">
+                                                            <td colspan="1" style="width:10%">Type</td>
+                                                            <td style="width:20%" colspan="1"><select
+                                                                    class="form-control font-12">
+                                                                <option selected>Spécifique</option>
+                                                            </select></td>
+                                                        </tr>
+                                                        <tr>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="1" style="width:6%">Statut</td>
+                                                            <td style="width:20%" colspan="1"><select
+                                                                    class="form-control font-12">
+                                                                <option>Statut
+                                                                </option>
+                                                                <option selected>Validée</option>
+                                                                <option>En cours</option>
+                                                                <option>Achevé</option>
+                                                                <option>En retard</option>
+                                                                <option>Annulé</option>
+                                                            </select>
+                                                            </td>
+                                                            <td colspan="1" style="width:5%">Taux</td>
+                                                            <td style="width:5%" colspan="1"><input type="number"
+                                                                                                    class="form-control font-12 col-xs-1"
+                                                                                                    placeholder=""></td>
+                                                            <td colspan="1" style="width:5%">Budget</td>
+                                                            <td style="width:5%" colspan="1"><input type="number"
+                                                                                                    class="form-control font-12 col-xs-1"
+                                                                                                    placeholder=""></td>
+                                                        </tr>
+                                                        <tr>
+                                                        </tr>
+                                                        <td colspan="1" style="width:10%">Base de calcul</td>
+                                                        <td style="width:20%" colspan="2"><select
+                                                                class="form-control font-12">
+                                                            <option>
+                                                            </option>
+                                                            <option selected>Décaissements TTC</option>
+                                                            <option>Décaissements HT</option>
+                                                        </select>
+                                                        </td>
+                                                        <td style="width:20%" colspan="3">
+                                                        </td>
+
+                                                        </tr>
+                                                        <tr>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="width:10%">Libellé</td>
+                                                            <td style="width:20%" colspan="5">
+
+                                                            <textarea
+                                                                    class="form-control font-12 col-xs-1" rows="1"
+                                                                    cols="5"
+                                                            > </textarea>
+                                                            </td>
+                                                        </tr>
+
+                                                        <tr>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="width:10%">Objet</td>
+                                                            <td style="width:20%" colspan="5">
+
+                                                            <textarea
+                                                                    class="form-control font-12 col-xs-1" rows="3"
+                                                                    cols="5"
+                                                            > </textarea>
+                                                            </td>
+
+                                                        </tr>
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                            </section>
+                                            <!-- Step 2 -->
+                                            <h6>Partenaire</h6>
+                                            <section>
+                                                <div class="table-responsive">
+                                                    <table id="idPartenaire"
+                                                           class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                           data-paging="true"
+                                                           data-paging-size="7">
+                                                        <thead class="bg-dark-success text-white">
+                                                        <tr>
+                                                            <th style="width:20%"><h6 class="text-white">Partenaire</h6>
+                                                            </th>
+                                                            <th style="width:30%"><h6 class="text-white">Budget</h6></th>
+                                                            <th style="width:10%"><h6 class="text-white">%</h6></th>
+                                                            <th style="width:20%"><h6 class="text-white">CI</h6></th>
+                                                            <th style="width:5%"
+                                                                class="align-content-center">
+                                                                <button class="btn btn-dark-info font-10"
+                                                                        type="button"
+                                                                        onclick="partenaire_fields();">
+                                                                    <i class="fa fa-plus"></i>
+                                                                </button>
+                                                            </th>
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody id="partenaire_fields">
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </section>
+                                            <h6>MO/MOD</h6>
+                                            <section>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="row" id="draggable-areas">
+                                                            <div class="col-md-6 col-sm-6">
+                                                                <table id="idMO"
+                                                                       class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                                       data-paging="true"
+                                                                       data-paging-size="7">
+                                                                    <thead class="bg-dark-success text-white">
+                                                                    <tr>
+                                                                        <th><h6 class="text-white">Maitre d'oeuvre</h6>
+                                                                        </th>
+                                                                        <th style="width:5%"
+                                                                            class="align-content-center">
+                                                                            <button class="btn btn-dark-info font-10"
+                                                                                    type="button"
+                                                                                    onclick="mo_fields();">
+                                                                                <i class="fa fa-plus"></i>
+                                                                            </button>
+                                                                        </th>
+                                                                    </tr>
+
+                                                                    </thead>
+                                                                    <tbody id="mo_fields">
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            <div class="col-md-6 col-sm-6">
+                                                                <table id="idMOD"
+                                                                       class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                                       data-paging="true"
+                                                                       data-paging-size="7">
+                                                                    <thead class="bg-dark-success text-white">
+                                                                    <tr>
+                                                                        <th><h6 class="text-white">Maitre d'oeuvre
+                                                                            Délégué</h6>
+                                                                        </th>
+                                                                        <th style="width:5%"
+                                                                            class="align-content-center">
+                                                                            <button class="btn btn-dark-info font-10"
+                                                                                    type="button"
+                                                                                    onclick="mod_fields();">
+                                                                                <i class="fa fa-plus"></i>
+                                                                            </button>
+                                                                        </th>
+                                                                    </tr>
+
+                                                                    </thead>
+                                                                    <tbody id="mod_fields">
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </section>
+                                            <!-- Step 3 -->
+                                            <h6>Imputations</h6>
+                                            <section>
+                                                <div class="table-responsive">
+                                                    <table id="imputationprevisionnelle"
+                                                           class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                           data-paging="true"
+                                                           data-paging-size="7">
+                                                        <thead class="bg-dark-success text-white">
+                                                        <tr>
+                                                            <th style="width:17%"><h6 class="text-white">Axe</h6>
+                                                            </th>
+                                                            <th style="width:15%"><h6 class="text-white">Projet</h6></th>
+                                                            <th style="width:15%"><h6 class="text-white">Volet</h6></th>
+                                                            <th style="width:10%"><h6 class="text-white">Date Démarage</h6>
+                                                            </th>
+                                                            <th style="width:15%"><h6 class="text-white">Délai</h6></th>
+                                                            <th style="width:23%"><h6 class="text-white">Date fin</h6></th>
+                                                            <th style="width:5%"
+                                                                class="align-content-center">
+                                                                <button class="btn btn-dark-info font-10"
+                                                                        type="button"
+                                                                        onclick="imputationprevisionnelle_fields();">
+                                                                    <i class="fa fa-plus"></i>
+                                                                </button>
+                                                            </th>
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody id="imputationprevisionnelle_fields">
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </section>
+                                            <!-- Step 4 -->
+                                            <h6>Versements</h6>
+                                            <section>
+                                                <div class="table-responsive">
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tbody class="table-borderless">
+                                                        <tr></tr>
+                                                        <tr>
+                                                            <td style="width:5%">Axe</td>
+                                                            <td style="width:20%" colspan="1">
+                                                                <select class="form-control font-12">\n' +
+                                                                    <option>A001
+                                                                    </option>
+                                                                    <option>A002</option>
+                                                                    <option>A003</option>
+                                                                </select>
+                                                            </td>
+                                                            <td style="width:5%">Projet</td>
+                                                            <td style="width:20%" colspan="1">
+                                                                <select class="form-control font-12">\n' +
+                                                                    <option>P001
+                                                                    </option>
+                                                                    <option>P002</option>
+                                                                    <option>P003</option>
+                                                                </select>
+                                                            </td>
+                                                            <td style="width:5%">Volet</td>
+                                                            <td style="width:20%" colspan="1">
+                                                                <select class="form-control font-12">\n' +
+                                                                    <option>V001
+                                                                    </option>
+                                                                    <option>V002</option>
+                                                                    <option>V003</option>
+                                                                </select>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="1" style="width:5%">Date</td>
+                                                            <td style="width:20%" colspan="1"><input type="date"
+                                                                                                     class="form-control font-12 col-xs-1"
+                                                                                                     placeholder="">
+                                                            </td>
+                                                            <td colspan="1" style="width:5%">Montant</td>
+                                                            <td style="width:20%" colspan="1"><input type="number"
+                                                                                                     class="form-control font-12 col-xs-1"
+                                                                                                     placeholder=""></td>
+                                                            <td colspan="1" style="width:5%">Partenaire</td>
+                                                            <td style="width:20%" colspan="1"><select
+                                                                    class="form-control font-12">\n' +
+                                                                <option>Partenaire 1
+                                                                </option>
+                                                                <option>Partenaire 2</option>
+                                                                <option>Partenaire 3</option>
+                                                            </select></td>
+                                                        </tr>
+                                                        <tr>
+
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="width:5%">MOD</td>
+                                                            <td style="width:20%" colspan="3">
+                                                            <textarea
+                                                                    class="form-control font-12 col-xs-1" rows="1"
+                                                                    cols="5"
+                                                            > </textarea>
+                                                            </td>
+                                                            <td colspan="2"></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <table id="versementperv"
+                                                           class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                           data-paging="true"
+                                                           data-paging-size="7">
+                                                        <thead class="bg-dark-success text-white">
+                                                        <tr>
+                                                            <th style="width:17%"><h6 class="text-white">Axe</h6>
+                                                            </th>
+                                                            <th style="width:15%"><h6 class="text-white">Projet</h6></th>
+                                                            <th style="width:15%"><h6 class="text-white">Volet</h6></th>
+                                                            <th style="width:5%"><h6 class="text-white">Date</h6></th>
+                                                            <th style="width:15%"><h6 class="text-white">Montant</h6></th>
+                                                            <th style="width:25%"><h6 class="text-white">Partenaire</h6>
+                                                            </th>
+                                                            <th style="width:25%"><h6 class="text-white">MOD</h6></th>
+                                                            <th style="width:5%"
+                                                                class="align-content-center">
+                                                                <button class="btn btn-dark-info font-10"
+                                                                        type="button"
+                                                                        onclick="versementperv_fields();">
+                                                                    <i class="fa fa-plus"></i>
+                                                                </button>
+                                                            </th>
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody id="versementperv_fields">
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </section>
+                                        </form>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div>
+                <div id="full-width-modal-avenant" class="modal fade" tabindex="-1" role="dialog"
+                     aria-labelledby="fullWidthModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-full-width">
+                        <div class="modal-content">
+                            <div class="modal-header d-flex align-items-center bg-info">
+                                <h4 class="modal-title text-white" id="fullWidthModalLabel-avenant">Ajout Avenant:</h4>
+                                <button type="button" class="close ml-auto" data-dismiss="modal"
+                                        aria-hidden="true">×
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="card">
+                                    <div class="card-body wizard-content">
+                                        <h6 class="card-subtitle"></h6>
+                                        <form action="#" class="tab-wizard wizard-circle">
+                                            <!-- Step 1 -->
+                                            <h6>Convention</h6>
+                                            <section>
+                                                <div class="table-responsive">
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tbody class="table-borderless">
+                                                        <tr></tr>
+                                                        <tr>
+                                                            <td style="width:5%">Numéro</td>
+                                                            <td style="width:20%" colspan="1">
+
+                                                                <input type="number"
+                                                                       class="form-control font-12 col-xs-1"
+                                                                       placeholder="12/3D3/2031">
+                                                            </td>
+                                                            <td style="width:5%">Date</td>
+                                                            <td style="width:5%" colspan="1"><input type="date"
+                                                                                                    class="form-control font-12"
+                                                                                                    placeholder="13/09/2021">
+                                                            <td colspan="1" style="width:10%">Type</td>
+                                                            <td style="width:20%" colspan="1"><select
+                                                                    class="form-control font-12">
+                                                                <option selected>Avenant</option>
+                                                            </select></td>
+                                                        </tr>
+                                                        <tr>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="1" style="width:6%">Statut</td>
+                                                            <td style="width:20%" colspan="1"><select
+                                                                    class="form-control font-12">
+                                                                <option>Statut
+                                                                </option>
+                                                                <option>Validée</option>
+                                                                <option selected>En cours</option>
+                                                                <option>Achevé</option>
+                                                                <option>En retard</option>
+                                                                <option>Annulé</option>
+                                                            </select>
+                                                            </td>
+                                                            <td colspan="1" style="width:5%">Taux</td>
+                                                            <td style="width:5%" colspan="1"><input type="number"
+                                                                                                    class="form-control font-12 col-xs-1"
+                                                                                                    placeholder="20"></td>
+                                                            <td colspan="1" style="width:5%">Budget</td>
+                                                            <td style="width:5%" colspan="1"><input type="number"
+                                                                                                    class="form-control font-12 col-xs-1"
+                                                                                                    placeholder="203.000.000,00">
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                        </tr>
+                                                        <td colspan="1" style="width:10%">Base de calcul</td>
+                                                        <td style="width:20%" colspan="2"><select
+                                                                class="form-control font-12">
+                                                            <option>
+                                                            </option>
+                                                            <option>Décaissements TTC</option>
+                                                            <option selected>Décaissements HT</option>
+                                                        </select>
+                                                        </td>
+                                                        <td style="width:20%" colspan="3">
+                                                        </td>
+
+                                                        </tr>
+                                                        <tr>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="width:10%">Libellé</td>
+                                                            <td style="width:20%" colspan="5">
+
+                                                            <textarea
+                                                                    class="form-control font-12 col-xs-1" rows="1"
+                                                                    cols="5"
+                                                            >Convention d'aménagement de la plage Adagir </textarea>
+                                                            </td>
+                                                        </tr>
+
+                                                        <tr>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="width:10%">Objet</td>
+                                                            <td style="width:20%" colspan="5">
+
+                                                            <textarea
+                                                                    class="form-control font-12 col-xs-1" rows="3"
+                                                                    cols="5"
+                                                            > Activité et sport </textarea>
+                                                            </td>
+
+                                                        </tr>
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                            </section>
+                                            <!-- Step 2 -->
+                                            <h6>Partenaire</h6>
+                                            <section>
+                                                <div class="table-responsive">
+                                                    <table id="idPartenaireAvenant"
+                                                           class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                           data-paging="true"
+                                                           data-paging-size="7">
+                                                        <thead class="bg-dark-success text-white">
+                                                        <tr>
+                                                            <th style="width:20%"><h6 class="text-white">Partenaire</h6>
+                                                            </th>
+                                                            <th style="width:30%"><h6 class="text-white">Budget</h6></th>
+                                                            <th style="width:10%"><h6 class="text-white">%</h6></th>
+                                                            <th style="width:20%"><h6 class="text-white">CI</h6></th>
+                                                            <th style="width:5%"
+                                                                class="align-content-center">
+                                                                <button class="btn btn-dark-info font-10"
+                                                                        type="button"
+                                                                        onclick="partenaire_fields_avenant();">
+                                                                    <i class="fa fa-plus"></i>
+                                                                </button>
+                                                            </th>
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody id="partenaire_fields_body">
+
+                                                        <tr data-expanded="true">
+                                                            <td style="width:20%" colspan="1"><select
+                                                                    class="form-control font-12">
+                                                                <option> Partenaire
+                                                                </option>
+                                                                <option selected>Partenaire 1</option>
+                                                                <option>Partenaire 2</option>
+                                                                <option>Partenaire 3</option>
+                                                                <option>Partenaire 4</option>
+                                                            </select></td>
+                                                            <td align="right"><input type="number"
+                                                                                     class="form-control font-12"
+                                                                                     placeholder="213.398.000,21">
+                                                            </td>
+                                                            <td align="right"><input type="number"
+                                                                                     class="form-control font-12"
+                                                                                     placeholder="34,5" disabled>
+                                                            </td>
+                                                            <td align="right"><input type="number"
+                                                                                     class="form-control font-12"
+                                                                                     placeholder="100.398.000,21" disabled>
+                                                            </td>
+                                                            <td>
+                                                                <button class="btn btn-danger font-10" type="button"
+                                                                        onclick="remove_education_fields(' + room + ');"><i
+                                                                        class="fa fa-minus"></i></button>
+                                                            </td>
+                                                        </tr>
+
+                                                        <tr data-expanded="true">
+                                                            <td style="width:20%" colspan="1"><select
+                                                                    class="form-control font-12">
+                                                                <option> Partenaire
+                                                                </option>
+                                                                <option>Partenaire 1</option>
+                                                                <option>Partenaire 2</option>
+                                                                <option selected>Partenaire 3</option>
+                                                                <option>Partenaire 4</option>
+                                                            </select></td>
+                                                            <td align="right"><input type="number"
+                                                                                     class="form-control font-12"
+                                                                                     placeholder="130.450.000,21">
+                                                            </td>
+                                                            <td align="right"><input type="number"
+                                                                                     class="form-control font-12"
+                                                                                     placeholder="44,5" disabled>
+                                                            </td>
+                                                            <td align="right"><input type="number"
+                                                                                     class="form-control font-12"
+                                                                                     placeholder="230.398.000,21" disabled>
+                                                            </td>
+                                                            <td>
+                                                                <button class="btn btn-danger font-10" type="button"
+                                                                        onclick="remove_education_fields(' + room + ');"><i
+                                                                        class="fa fa-minus"></i></button>
+                                                            </td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </section>
+                                            <h6>MO/MOD</h6>
+                                            <section>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="row" id="draggable-areasAvenat">
+                                                            <div class="col-md-6 col-sm-6">
+                                                                <table id="idMOAvenant"
+                                                                       class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                                       data-paging="true"
+                                                                       data-paging-size="7">
+                                                                    <thead class="bg-dark-success text-white">
+                                                                    <tr>
+                                                                        <th><h6 class="text-white">Maitre d'oeuvre</h6>
+                                                                        </th>
+                                                                        <th style="width:5%"
+                                                                            class="align-content-center">
+                                                                            <button class="btn btn-dark-info font-10"
+                                                                                    type="button"
+                                                                                    onclick="mo_fields_avenant();">
+                                                                                <i class="fa fa-plus"></i>
+                                                                            </button>
+                                                                        </th>
+                                                                    </tr>
+
+                                                                    </thead>
+                                                                    <tbody id="mo_fields_avenant">
+                                                                    <tr data-expanded="true">
+                                                                        <td style="width:20%" colspan="1"><select
+                                                                                class="form-control font-12">
+                                                                            <option> MO 0
+                                                                            </option>
+                                                                            <option>MO 1</option>
+                                                                            <option>MO 2</option>
+                                                                            <option selected>MO 3</option>
+                                                                            <option>MO 4</option>
+                                                                        </select></td>
+                                                                        <td>
+                                                                            <button class="btn btn-danger font-10"
+                                                                                    type="button"
+                                                                                    onclick="remove_education_fields(' + room + ');">
+                                                                                <i
+                                                                                        class="fa fa-minus"></i></button>
+                                                                        </td>
+                                                                    </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            <div class="col-md-6 col-sm-6">
+                                                                <table id="idMODAvenant"
+                                                                       class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                                       data-paging="true"
+                                                                       data-paging-size="7">
+                                                                    <thead class="bg-dark-success text-white">
+                                                                    <tr>
+                                                                        <th><h6 class="text-white">Maitre d'oeuvre
+                                                                            Délégué</h6>
+                                                                        </th>
+                                                                        <th style="width:5%"
+                                                                            class="align-content-center">
+                                                                            <button class="btn btn-dark-info font-10"
+                                                                                    type="button"
+                                                                                    onclick="mod_fields_avenant();">
+                                                                                <i class="fa fa-plus"></i>
+                                                                            </button>
+                                                                        </th>
+                                                                    </tr>
+
+                                                                    </thead>
+                                                                    <tbody id="mod_fields_avenant">
+                                                                    <tr data-expanded="true">
+                                                                        <td style="width:20%" colspan="1"><select
+                                                                                class="form-control font-12">
+                                                                            <option>MOD 0
+                                                                            </option>
+                                                                            <option>MOD 1</option>
+                                                                            <option>MOD 2</option>
+                                                                            <option selected>MOD 3</option>
+                                                                            <option>MOD 4</option>
+                                                                        </select></td>
+                                                                        <td>
+                                                                            <button class="btn btn-danger font-10"
+                                                                                    type="button"
+                                                                                    onclick="remove_education_fields(' + room + ');">
+                                                                                <i
+                                                                                        class="fa fa-minus"></i></button>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td style="width:20%" colspan="1"><select
+                                                                                class="form-control font-12">
+                                                                            <option>MOD 0
+                                                                            </option>
+                                                                            <option>MOD 1</option>
+                                                                            <option selected>MOD 2</option>
+                                                                            <option>MOD 3</option>
+                                                                            <option>MOD 4</option>
+                                                                        </select></td>
+                                                                        <td>
+                                                                            <button class="btn btn-danger font-10"
+                                                                                    type="button"
+                                                                                    onclick="remove_education_fields(' + room + ');">
+                                                                                <i
+                                                                                        class="fa fa-minus"></i></button>
+                                                                        </td>
+
+                                                                    </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </section>
+                                            <!-- Step 3 -->
+                                            <h6>Imputations</h6>
+                                            <section>
+                                                <div class="table-responsive">
+                                                    <table id=""
+                                                           class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                           data-paging="true"
+                                                           data-paging-size="7">
+                                                        <thead class="bg-dark-success text-white">
+                                                        <tr>
+                                                            <th style="width:17%"><h6 class="text-white">Axe</h6>
+                                                            </th>
+                                                            <th style="width:15%"><h6 class="text-white">Projet</h6></th>
+                                                            <th style="width:15%"><h6 class="text-white">Volet</h6></th>
+                                                            <th style="width:10%"><h6 class="text-white">Date Démarage</h6>
+                                                            </th>
+                                                            <th style="width:15%"><h6 class="text-white">Délai</h6></th>
+                                                            <th style="width:23%"><h6 class="text-white">Date fin</h6></th>
+                                                            <th style="width:5%"
+                                                                class="align-content-center">
+                                                                <button class="btn btn-dark-info font-10"
+                                                                        type="button"
+                                                                        onclick="imputationprevisionnelle_avenant();">
+                                                                    <i class="fa fa-plus"></i>
+                                                                </button>
+                                                            </th>
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody id="imputationprevisionnelle_avenant">
+
+                                                        <tr>
+                                                            <td><select class="form-control font-12">
+                                                                <option>A001
+                                                                </option>
+                                                                <option selected>A002</option>
+                                                                <option>A003</option>
+                                                            </select></td>
+                                                            <td><select class="form-control font-12">
+                                                                <option>P001
+                                                                </option>
+                                                                <option selected>P002</option>
+                                                                <option>P003</option>
+                                                            </select>
+                                                            <td><select class="form-control font-12">
+                                                                <option>V001
+                                                                </option>
+                                                                <option selected>V002</option>
+                                                            </select></td>
+                                                            <td><input type="date" class="form-control font-12"
+                                                                       placeholder="02/02/2021"></td>
+                                                            <td><input type="text" class="form-control font-12"
+                                                                       placeholder="12"></td>
+                                                            <td><input type="text" class="form-control font-12"
+                                                                       placeholder="02/02/2022" disabled></td>
+
+                                                            <td>
+                                                                <button class="btn btn-danger font-10" type="button"
+                                                                        onclick="remove_education_fields(' + room + ');"><i
+                                                                        class="fa fa-minus"></i></button>
+                                                            </td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </section>
+                                            <!-- Step 4 -->
+                                            <h6>Versements</h6>
+                                            <section>
+                                                <div class="table-responsive">
+                                                    <table
+                                                            class="table table-bordered m-t-30 contact-list no-wrap table-striped"
+                                                            data-paging="true"
+                                                            data-paging-size="7">
+                                                        <thead>
+                                                        <tbody class="table-borderless">
+                                                        <tr></tr>
+                                                        <tr>
+                                                            <td style="width:5%">Axe</td>
+                                                            <td style="width:20%" colspan="1">
+                                                                <select class="form-control font-12">
+                                                                    <option>A001
+                                                                    </option>
+                                                                    <option selected>A002</option>
+                                                                    <option>A003</option>
+                                                                </select>
+                                                            </td>
+                                                            <td style="width:5%">Projet</td>
+                                                            <td style="width:20%" colspan="1">
+                                                                <select class="form-control font-12">
+                                                                    <option>P001
+                                                                    </option>
+                                                                    <option selected>P002</option>
+                                                                    <option>P003</option>
+                                                                </select>
+                                                            </td>
+                                                            <td style="width:5%">Volet</td>
+                                                            <td style="width:20%" colspan="1">
+                                                                <select class="form-control font-12">
+                                                                    <option>V001
+                                                                    </option>
+                                                                    <option>V002</option>
+                                                                    <option selected>V003</option>
+                                                                </select>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="1" style="width:5%">Date</td>
+                                                            <td style="width:20%" colspan="1"><input type="date"
+                                                                                                     class="form-control font-12 col-xs-1"
+                                                                                                     placeholder="">
+                                                            </td>
+                                                            <td colspan="1" style="width:5%">Montant</td>
+                                                            <td style="width:20%" colspan="1"><input type="number"
+                                                                                                     class="form-control font-12 col-xs-1"
+                                                                                                     placeholder="12.000.210,31"></td>
+                                                            <td colspan="1" style="width:5%">Partenaire</td>
+                                                            <td style="width:20%" colspan="1"><select
+                                                                    class="form-control font-12">
+                                                                <option>Partenaire 1
+                                                                </option>
+                                                                <option>Partenaire 2</option>
+                                                                <option>Partenaire 3</option>
+                                                            </select></td>
+                                                        </tr>
+                                                        <tr>
+
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="width:5%">MOD</td>
+                                                            <td style="width:20%" colspan="3">
+                                                            <textarea
+                                                                    class="form-control font-12 col-xs-1" rows="1"
+                                                                    cols="5"
+                                                            > MOD 1</textarea>
+                                                            </td>
+                                                            <td colspan="2"></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <table id="dd"
+                                                           class="table table-bordered m-t-30 contact-list no-wrap table-striped table-hover"
+                                                           data-paging="true"
+                                                           data-paging-size="7">
+                                                        <thead class="bg-dark-success text-white">
+                                                        <tr>
+                                                            <th style="width:17%"><h6 class="text-white">Axe</h6>
+                                                            </th>
+                                                            <th style="width:15%"><h6 class="text-white">Projet</h6></th>
+                                                            <th style="width:15%"><h6 class="text-white">Volet</h6></th>
+                                                            <th style="width:5%"><h6 class="text-white">Date</h6></th>
+                                                            <th style="width:15%"><h6 class="text-white">Montant</h6></th>
+                                                            <th style="width:25%"><h6 class="text-white">Partenaire</h6>
+                                                            </th>
+                                                            <th style="width:25%"><h6 class="text-white">MOD</h6></th>
+                                                            <th style="width:5%"
+                                                                class="align-content-center">
+                                                                <button class="btn btn-dark-info font-10"
+                                                                        type="button"
+                                                                        onclick="versementperv_avenant();">
+                                                                    <i class="fa fa-plus"></i>
+                                                                </button>
+                                                            </th>
+                                                        </tr>
+
+                                                        </thead>
+                                                        <tbody id="versementperv_avenant">
+
+                                                        <tr>
+                                                            <td>A003</td>
+                                                            <td>P001</td>
+                                                            <td>V003</td>
+                                                            <td>12/03/2021</td>
+                                                            <td>203.093,99</td>
+                                                            <td>Partenaire 1</td>
+                                                            <td>MOD</td>
+                                                            <td>
+                                                                <button class="btn btn-danger font-10" type="button"
+                                                                        onclick="remove_education_fields(' + room + ');"><i
+                                                                        class="fa fa-minus"></i></button>
+                                                            </td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </section>
+                                        </form>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div>
+            </div>
+
+            <!-- Column -->
+            <!-- ============================================================== -->
+            <!-- ============================================================== -->
+            <!-- footer -->
+            <!-- ============================================================== -->
+            <footer class="footer">
+                © 2020 Xcompta Admin by Mohamed Samir
+            </footer>
+            <!-- ============================================================== -->
+            <!-- End footer -->
+            <!-- ============================================================== -->
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Page wrapper  -->
+        <!-- ============================================================== -->
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- End Wrapper -->
+<!-- ============================================================== -->
+<!-- ============================================================== -->
+<!-- customizer Panel -->
+<!-- ============================================================== -->
+<!-- All Jquery -->
+<!-- ============================================================== -->
+
+<script src="../assets/libs/jquery/dist/jquery.min.js"></script>
+<!-- Bootstrap tether Core JavaScript -->
+<script src="../assets/libs/popper.js/dist/umd/popper.min.js"></script>
+<script src="../assets/libs/bootstrap/dist/js/bootstrap.min.js"></script>
+<!-- apps -->
+<script src="../../dist/js/app.min.js"></script>
+<script src="../../dist/js/app.init.js"></script>
+<script src="../../dist/js/app.init.horizontal.js"></script>
+<script src="../../dist/js/app-style-switcher.horizontal.js"></script>
+<!-- Theme settings -->
+<script src="../../dist/js/app-style-switcher.js"></script>
+<!-- slimscrollbar scrollbar JavaScript -->
+<script src="../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+<script src="../assets/libs/jquery-sparkline/jquery.sparkline.min.js"></script>
+<!--Wave Effects -->
+<script src="../../dist/js/waves.js"></script>
+<!--Menu sidebar -->
+<script src="../../dist/js/sidebarmenu.js"></script>
+<!--Custom JavaScript -->
+<script src="../../dist/js/feather.min.js"></script>
+<script src="../../dist/js/custom.min.js"></script>
+<!--This page JavaScript -->
+<script src="../assets/libs/chartist/dist/chartist.min.js"></script>
+<script src="../assets/libs/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
+<script src="../../dist/js/pages/dashboards/dashboard2.js"></script>
+<script src="../assets/libs/footable/js/footable.min.js"></script>
+<script src="../../dist/js/pages/tables/footable-init.js"></script>
+<!--add info table -->
+<script src="../assets/extra-libs/jquery.repeater/dff.js"></script>
+<!--This page steeper -->
+<script src="../assets/libs/jquery-steps/build/jquery.steps.min.js"></script>
+<script src="../assets/libs/jquery-validation/dist/jquery.validate.min.js"></script>
+<script>
+    //Basic Example
+    $("#example-basic").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        autoFocus: true
+    });
+
+    // Basic Example with form
+    var form = $("#example-form");
+    form.validate({
+        errorPlacement: function errorPlacement(error, element) {
+            element.before(error);
+        },
+        rules: {
+            confirm: {
+                equalTo: "#password"
+            }
+        }
+    });
+    form.children("div").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        onStepChanging: function (event, currentIndex, newIndex) {
+            form.validate().settings.ignore = ":disabled,:hidden";
+            return form.valid();
+        },
+        onFinishing: function (event, currentIndex) {
+            form.validate().settings.ignore = ":disabled";
+            return form.valid();
+        },
+        onFinished: function (event, currentIndex) {
+            alert("Submitted!");
+        }
+    });
+
+    // Advance Example
+
+    var form = $("#example-advanced-form").show();
+
+    form.steps({
+        headerTag: "h3",
+        bodyTag: "fieldset",
+        transitionEffect: "slideLeft",
+        onStepChanging: function (event, currentIndex, newIndex) {
+            // Allways allow previous action even if the current form is not valid!
+            if (currentIndex > newIndex) {
+                return true;
+            }
+            // Forbid next action on "Warning" step if the user is to young
+            if (newIndex === 3 && Number($("#age-2").val()) < 18) {
+                return false;
+            }
+            // Needed in some cases if the user went back (clean up)
+            if (currentIndex < newIndex) {
+                // To remove error styles
+                form.find(".body:eq(" + newIndex + ") label.error").remove();
+                form.find(".body:eq(" + newIndex + ") .error").removeClass("error");
+            }
+            form.validate().settings.ignore = ":disabled,:hidden";
+            return form.valid();
+        },
+        onStepChanged: function (event, currentIndex, priorIndex) {
+            // Used to skip the "Warning" step if the user is old enough.
+            if (currentIndex === 2 && Number($("#age-2").val()) >= 18) {
+                form.steps("Suivant");
+            }
+            // Used to skip the "Warning" step if the user is old enough and wants to the previous step.
+            if (currentIndex === 2 && priorIndex === 3) {
+                form.steps("Précédent");
+            }
+        },
+        onFinishing: function (event, currentIndex) {
+            form.validate().settings.ignore = ":disabled";
+            return form.valid();
+        },
+        onFinished: function (event, currentIndex) {
+            alert("Submitted!");
+        }
+    }).validate({
+        errorPlacement: function errorPlacement(error, element) {
+            element.before(error);
+        },
+        rules: {
+            confirm: {
+                equalTo: "#password-2"
+            }
+        }
+    });
+
+    // Dynamic Manipulation
+    $("#example-manipulation").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        enableAllSteps: true,
+        enablePagination: false
+    });
+
+    //Vertical Steps
+
+    $("#example-vertical").steps({
+        headerTag: "h3",
+        bodyTag: "section",
+        transitionEffect: "slideLeft",
+        stepsOrientation: "vertical"
+    });
+
+    //Custom design form example
+    $(".tab-wizard").steps({
+        headerTag: "h6",
+        bodyTag: "section",
+        transitionEffect: "fade",
+        titleTemplate: '<span class="step">#index#</span> #title#',
+        labels: {
+            finish: "Submit"
+        },
+        onFinished: function (event, currentIndex) {
+            swal("Form Submitted!", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem erat eleifend ex semper, lobortis purus sed.");
+
+        }
+    });
+
+
+    var form = $(".validation-wizard").show();
+
+    $(".validation-wizard").steps({
+        headerTag: "h6",
+        bodyTag: "section",
+        transitionEffect: "fade",
+        titleTemplate: '<span class="step">#index#</span> #title#',
+        labels: {
+            finish: "Submit"
+        },
+        onStepChanging: function (event, currentIndex, newIndex) {
+            return currentIndex > newIndex || !(3 === newIndex && Number($("#age-2").val()) < 18) && (currentIndex < newIndex && (form.find(".body:eq(" + newIndex + ") label.error").remove(), form.find(".body:eq(" + newIndex + ") .error").removeClass("error")), form.validate().settings.ignore = ":disabled,:hidden", form.valid())
+        },
+        onFinishing: function (event, currentIndex) {
+            return form.validate().settings.ignore = ":disabled", form.valid()
+        },
+        onFinished: function (event, currentIndex) {
+            swal("Form Submitted!", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed lorem erat eleifend ex semper, lobortis purus sed.");
+        }
+    }), $(".validation-wizard").validate({
+        ignore: "input[type=hidden]",
+        errorClass: "text-danger",
+        successClass: "text-success",
+        highlight: function (element, errorClass) {
+            $(element).removeClass(errorClass)
+        },
+        unhighlight: function (element, errorClass) {
+            $(element).removeClass(errorClass)
+        },
+        errorPlacement: function (error, element) {
+            error.insertAfter(element)
+        },
+        rules: {
+            email: {
+                email: !0
+            }
+        }
+    })
+</script>
+
+</body>
+
+</html>

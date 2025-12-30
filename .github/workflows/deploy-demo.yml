@@ -45,7 +45,7 @@ jobs:
           # Backend API URL (configure this in GitHub repository variables)
           # Settings → Secrets and variables → Actions → Variables → New repository variable
           # Name: VITE_API_URL, Value: https://your-backend.up.railway.app/api
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://investpro-backend-production.up.railway.app/api' }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://investpromaroc-production.up.railway.app/api' }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

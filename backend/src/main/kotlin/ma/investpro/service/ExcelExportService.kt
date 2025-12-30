@@ -6,6 +6,7 @@ import ma.investpro.entity.Commission
 import ma.investpro.entity.DepenseInvestissement
 import mu.KotlinLogging
 import org.apache.poi.ss.usermodel.*
+import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
@@ -96,7 +97,7 @@ class ExcelExportService {
             }
 
             row.createCell(18).setCellValue(depense.referencePaiement ?: "")
-            row.createCell(19).setCellValue(depense.compteBancaire?.libelle ?: "")
+            row.createCell(19).setCellValue(depense.compteBancaire?.code ?: "")
             row.createCell(20).setCellValue(if (depense.paye) "Oui" else "Non")
             row.createCell(21).setCellValue(depense.remarques ?: "")
         }
@@ -297,8 +298,8 @@ class ExcelExportService {
 
     // ==================== HELPERS ====================
 
-    private fun createHeaderStyle(workbook: Workbook): CellStyle {
-        val style = workbook.createCellStyle()
+    private fun createHeaderStyle(workbook: Workbook): XSSFCellStyle {
+        val style = workbook.createCellStyle() as XSSFCellStyle
         val font = workbook.createFont()
         font.bold = true
         font.color = IndexedColors.WHITE.index
@@ -313,19 +314,19 @@ class ExcelExportService {
         return style
     }
 
-    private fun createCurrencyStyle(workbook: Workbook): CellStyle {
-        val style = workbook.createCellStyle()
+    private fun createCurrencyStyle(workbook: Workbook): XSSFCellStyle {
+        val style = workbook.createCellStyle() as XSSFCellStyle
         style.dataFormat = workbook.createDataFormat().getFormat("#,##0.00 MAD")
         return style
     }
 
-    private fun createDateStyle(workbook: Workbook): CellStyle {
-        val style = workbook.createCellStyle()
+    private fun createDateStyle(workbook: Workbook): XSSFCellStyle {
+        val style = workbook.createCellStyle() as XSSFCellStyle
         style.dataFormat = workbook.createDataFormat().getFormat("dd/mm/yyyy")
         return style
     }
 
-    private fun createCurrencyCell(row: Row, columnIndex: Int, value: java.math.BigDecimal, style: CellStyle) {
+    private fun createCurrencyCell(row: Row, columnIndex: Int, value: java.math.BigDecimal, style: XSSFCellStyle) {
         val cell = row.createCell(columnIndex)
         cell.setCellValue(value.toDouble())
         cell.cellStyle = style

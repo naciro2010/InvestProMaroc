@@ -1,0 +1,12 @@
+pages:
+  stage: deploy
+  script:
+    - mkdir -p public
+    - cp -r landingpage/* public/
+    - mkdir -p public/monster
+    - cp -r monster/* public/monster/
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

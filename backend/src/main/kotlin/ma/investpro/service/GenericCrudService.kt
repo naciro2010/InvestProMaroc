@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional
  * Service générique CRUD pour réduire le boilerplate
  */
 @Transactional
-abstract class GenericCrudService<T, ID>(
+abstract class GenericCrudService<T : Any, ID : Any>(
     protected val repository: JpaRepository<T, ID>
 ) {
     open fun findAll(): List<T> = repository.findAll()

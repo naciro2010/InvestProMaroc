@@ -51,7 +51,7 @@ class JwtAuthenticationFilter(
                 }
             }
         } catch (e: Exception) {
-            logger.error(e) { "Cannot set user authentication: ${e.message}" }
+            logger.error("Cannot set user authentication", e)
         }
 
         filterChain.doFilter(request, response)

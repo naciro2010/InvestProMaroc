@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: investpro-postgres
+    environment:
+      POSTGRES_DB: investpro
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - investpro-network
+
+  # Spring Boot Application
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: investpro-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investpro
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_PROFILES_ACTIVE: dev
+      APP_JWT_SECRET: dGVzdF9zZWNyZXRfa2V5X3RvX2JlX2NoYW5nZWRfaW5fcHJvZHVjdGlvbg==
+      APP_JWT_EXPIRATION_MS: 86400000
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - investpro-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  investpro-network:
+    driver: bridge

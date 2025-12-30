@@ -35,8 +35,8 @@ class ExcelExportService {
         // En-tête
         val headerRow = sheet.createRow(0)
         val headers = listOf(
-            "N° Facture", "Date Facture", "Fournisseur", "ICE", "Projet",
-            "Axe Analytique", "Convention", "Montant HT", "TVA %", "Montant TVA",
+            "N° Facture", "Date Facture", "Fournisseur", "ICE",
+            "Convention", "Montant HT", "TVA %", "Montant TVA",
             "Montant TTC", "Retenue TVA", "Retenue IS", "Retenue Non-Résident",
             "Retenue Garantie", "Réf. Marché", "N° Décompte", "Date Paiement",
             "Réf. Paiement", "Compte Bancaire", "Payé", "Remarques"
@@ -64,42 +64,36 @@ class ExcelExportService {
             row.createCell(2).setCellValue(depense.fournisseur?.raisonSociale ?: "")
             row.createCell(3).setCellValue(depense.fournisseur?.ice ?: "")
 
-            // Projet
-            row.createCell(4).setCellValue(depense.projet?.nom ?: "")
-
-            // Axe analytique
-            row.createCell(5).setCellValue(depense.axeAnalytique?.libelle ?: "")
-
             // Convention
-            row.createCell(6).setCellValue(depense.convention?.libelle ?: "")
+            row.createCell(4).setCellValue(depense.convention?.libelle ?: "")
 
             // Montants
-            createCurrencyCell(row, 7, depense.montantHt, currencyStyle)
-            row.createCell(8).setCellValue(depense.tauxTva.toDouble())
-            createCurrencyCell(row, 9, depense.montantTva, currencyStyle)
-            createCurrencyCell(row, 10, depense.montantTtc, currencyStyle)
+            createCurrencyCell(row, 5, depense.montantHt, currencyStyle)
+            row.createCell(6).setCellValue(depense.tauxTva.toDouble())
+            createCurrencyCell(row, 7, depense.montantTva, currencyStyle)
+            createCurrencyCell(row, 8, depense.montantTtc, currencyStyle)
 
             // Retenues
-            createCurrencyCell(row, 11, depense.retenueTva, currencyStyle)
-            createCurrencyCell(row, 12, depense.retenueIsTiers, currencyStyle)
-            createCurrencyCell(row, 13, depense.retenueNonResident, currencyStyle)
-            createCurrencyCell(row, 14, depense.retenueGarantie, currencyStyle)
+            createCurrencyCell(row, 9, depense.retenueTva, currencyStyle)
+            createCurrencyCell(row, 10, depense.retenueIsTiers, currencyStyle)
+            createCurrencyCell(row, 11, depense.retenueNonResident, currencyStyle)
+            createCurrencyCell(row, 12, depense.retenueGarantie, currencyStyle)
 
             // Références
-            row.createCell(15).setCellValue(depense.referenceMarche ?: "")
-            row.createCell(16).setCellValue(depense.numeroDecompte ?: "")
+            row.createCell(13).setCellValue(depense.referenceMarche ?: "")
+            row.createCell(14).setCellValue(depense.numeroDecompte ?: "")
 
             // Paiement
-            val datePaiementCell = row.createCell(17)
+            val datePaiementCell = row.createCell(15)
             depense.datePaiement?.let {
                 datePaiementCell.setCellValue(it.format(dateFormatter))
                 datePaiementCell.cellStyle = dateStyle
             }
 
-            row.createCell(18).setCellValue(depense.referencePaiement ?: "")
-            row.createCell(19).setCellValue(depense.compteBancaire?.code ?: "")
-            row.createCell(20).setCellValue(if (depense.paye) "Oui" else "Non")
-            row.createCell(21).setCellValue(depense.remarques ?: "")
+            row.createCell(16).setCellValue(depense.referencePaiement ?: "")
+            row.createCell(17).setCellValue(depense.compteBancaire?.code ?: "")
+            row.createCell(18).setCellValue(if (depense.paye) "Oui" else "Non")
+            row.createCell(19).setCellValue(depense.remarques ?: "")
         }
 
         // Auto-size columns
@@ -123,7 +117,7 @@ class ExcelExportService {
         // En-tête
         val headerRow = sheet.createRow(0)
         val headers = listOf(
-            "Date Calcul", "N° Facture Dépense", "Fournisseur", "Projet",
+            "Date Calcul", "N° Facture Dépense", "Fournisseur",
             "Convention", "Base Calcul", "Montant Base", "Taux Commission %",
             "Commission HT", "Taux TVA %", "TVA Commission", "Commission TTC"
         )
@@ -149,22 +143,19 @@ class ExcelExportService {
             // Fournisseur
             row.createCell(2).setCellValue(commission.depense?.fournisseur?.raisonSociale ?: "")
 
-            // Projet
-            row.createCell(3).setCellValue(commission.depense?.projet?.nom ?: "")
-
             // Convention
-            row.createCell(4).setCellValue(commission.convention?.libelle ?: "")
+            row.createCell(3).setCellValue(commission.convention?.libelle ?: "")
 
             // Base de calcul
-            row.createCell(5).setCellValue(commission.baseCalcul)
+            row.createCell(4).setCellValue(commission.baseCalcul)
 
             // Montants
-            createCurrencyCell(row, 6, commission.montantBase, currencyStyle)
-            row.createCell(7).setCellValue(commission.tauxCommission.toDouble())
-            createCurrencyCell(row, 8, commission.montantCommissionHt, currencyStyle)
-            row.createCell(9).setCellValue(commission.tauxTva.toDouble())
-            createCurrencyCell(row, 10, commission.montantTvaCommission, currencyStyle)
-            createCurrencyCell(row, 11, commission.montantCommissionTtc, currencyStyle)
+            createCurrencyCell(row, 5, commission.montantBase, currencyStyle)
+            row.createCell(6).setCellValue(commission.tauxCommission.toDouble())
+            createCurrencyCell(row, 7, commission.montantCommissionHt, currencyStyle)
+            row.createCell(8).setCellValue(commission.tauxTva.toDouble())
+            createCurrencyCell(row, 9, commission.montantTvaCommission, currencyStyle)
+            createCurrencyCell(row, 10, commission.montantCommissionTtc, currencyStyle)
         }
 
         // Auto-size columns
@@ -190,9 +181,7 @@ class ExcelExportService {
 
         when (groupBy) {
             "periode" -> headers.add("Période")
-            "projet" -> headers.add("Projet")
             "fournisseur" -> headers.add("Fournisseur")
-            "axe" -> headers.add("Axe Analytique")
             "compte" -> headers.add("Compte Bancaire")
         }
 
@@ -216,9 +205,7 @@ class ExcelExportService {
             // Première colonne selon le groupBy
             when (groupBy) {
                 "periode" -> row.createCell(0).setCellValue(stat.periode ?: "")
-                "projet" -> row.createCell(0).setCellValue(stat.projetNom ?: "")
                 "fournisseur" -> row.createCell(0).setCellValue(stat.fournisseurNom ?: "")
-                "axe" -> row.createCell(0).setCellValue(stat.axeAnalytiqueLibelle ?: "")
                 "compte" -> row.createCell(0).setCellValue(stat.compteBancaireNom ?: "")
             }
 
@@ -256,7 +243,6 @@ class ExcelExportService {
 
         when (groupBy) {
             "periode" -> headers.add("Période")
-            "projet" -> headers.add("Projet")
             "fournisseur" -> headers.add("Fournisseur")
             "convention" -> headers.add("Convention")
         }
@@ -279,7 +265,6 @@ class ExcelExportService {
 
             when (groupBy) {
                 "periode" -> row.createCell(0).setCellValue(stat.periode ?: "")
-                "projet" -> row.createCell(0).setCellValue(stat.projetNom ?: "")
                 "fournisseur" -> row.createCell(0).setCellValue(stat.fournisseurNom ?: "")
                 "convention" -> row.createCell(0).setCellValue(stat.conventionLibelle ?: "")
             }

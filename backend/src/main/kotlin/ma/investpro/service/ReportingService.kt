@@ -40,16 +40,8 @@ class ReportingService(
             depenses = depenses.filter { it.fournisseur?.id == fournisseurId }
         }
 
-        criteria.projetId?.let { projetId ->
-            depenses = depenses.filter { it.projet?.id == projetId }
-        }
-
         criteria.conventionId?.let { conventionId ->
             depenses = depenses.filter { it.convention?.id == conventionId }
-        }
-
-        criteria.axeAnalytiqueId?.let { axeId ->
-            depenses = depenses.filter { it.axeAnalytique?.id == axeId }
         }
 
         criteria.compteBancaireId?.let { compteId ->
@@ -88,10 +80,6 @@ class ReportingService(
             commissions = commissions.filter { it.convention?.id == conventionId }
         }
 
-        criteria.projetId?.let { projetId ->
-            commissions = commissions.filter { it.depense?.projet?.id == projetId }
-        }
-
         criteria.fournisseurId?.let { fournisseurId ->
             commissions = commissions.filter { it.depense?.fournisseur?.id == fournisseurId }
         }
@@ -110,16 +98,13 @@ class ReportingService(
     // ==================== STATISTIQUES COMMISSIONS ====================
 
     fun getCommissionStatsByPeriod(annee: Int? = null, mois: Int? = null): List<CommissionStats> {
-        val commissions = if (annee != null) {
+        var commissions = commissionRepository.findAll()
+
+        if (annee != null) {
+            commissions = commissions.filter { it.dateCalcul.year == annee }
             if (mois != null) {
-                commissionRepository.findAll().filter {
-                    it.dateCalcul.year == annee && it.dateCalcul.monthValue == mois
-                }
-            } else {
-                commissionRepository.findByYear(annee)
+                commissions = commissions.filter { it.dateCalcul.monthValue == mois }
             }
-        } else {
-            commissionRepository.findAll()
         }
 
         val grouped = commissions.groupBy {
@@ -135,26 +120,6 @@ class ReportingService(
                 totalCommissionTtc = commList.sumOf { it.montantCommissionTtc }
             )
         }.sortedByDescending { it.periode }
-    }
-
-    fun getCommissionStatsByProjet(projetId: Long? = null): List<CommissionStats> {
-        val commissions = commissionRepository.findAll()
-            .filter { projetId == null || it.depense?.projet?.id == projetId }
-
-        val grouped = commissions.groupBy { it.depense?.projet }
-
-        return grouped.mapNotNull { (projet, commList) ->
-            projet?.let {
-                CommissionStats(
-                    projetId = it.id,
-                    projetNom = it.nom,
-                    nombreCommissions = commList.size.toLong(),
-                    totalCommissionHt = commList.sumOf { comm -> comm.montantCommissionHt },
-                    totalTvaCommission = commList.sumOf { comm -> comm.montantTvaCommission },
-                    totalCommissionTtc = commList.sumOf { comm -> comm.montantCommissionTtc }
-                )
-            }
-        }.sortedByDescending { it.totalCommissionTtc }
     }
 
     fun getCommissionStatsByFournisseur(fournisseurId: Long? = null): List<CommissionStats> {
@@ -203,16 +168,13 @@ class ReportingService(
     // ==================== STATISTIQUES DÉPENSES ====================
 
     fun getDepenseStatsByPeriod(annee: Int? = null, mois: Int? = null): List<DepenseStats> {
-        val depenses = if (annee != null) {
+        var depenses = depenseRepository.findAll()
+
+        if (annee != null) {
+            depenses = depenses.filter { it.dateFacture.year == annee }
             if (mois != null) {
-                depenseRepository.findAll().filter {
-                    it.dateFacture.year == annee && it.dateFacture.monthValue == mois
-                }
-            } else {
-                depenseRepository.findByYear(annee)
+                depenses = depenses.filter { it.dateFacture.monthValue == mois }
             }
-        } else {
-            depenseRepository.findAll()
         }
 
         val grouped = depenses.groupBy {
@@ -232,33 +194,6 @@ class ReportingService(
                 totalRetenueGarantie = depList.sumOf { it.retenueGarantie }
             )
         }.sortedByDescending { it.periode }
-    }
-
-    fun getDepenseStatsByProjet(projetId: Long? = null): List<DepenseStats> {
-        val depenses = if (projetId != null) {
-            depenseRepository.findByProjetId(projetId)
-        } else {
-            depenseRepository.findAll()
-        }
-
-        val grouped = depenses.groupBy { it.projet }
-
-        return grouped.mapNotNull { (projet, depList) ->
-            projet?.let {
-                DepenseStats(
-                    projetId = it.id,
-                    projetNom = it.nom,
-                    nombreDepenses = depList.size.toLong(),
-                    totalMontantHt = depList.sumOf { dep -> dep.montantHt },
-                    totalMontantTva = depList.sumOf { dep -> dep.montantTva },
-                    totalMontantTtc = depList.sumOf { dep -> dep.montantTtc },
-                    totalRetenueTva = depList.sumOf { dep -> dep.retenueTva },
-                    totalRetenueIs = depList.sumOf { dep -> dep.retenueIsTiers },
-                    totalRetenueNonResident = depList.sumOf { dep -> dep.retenueNonResident },
-                    totalRetenueGarantie = depList.sumOf { dep -> dep.retenueGarantie }
-                )
-            }
-        }.sortedByDescending { it.totalMontantTtc }
     }
 
     fun getDepenseStatsByFournisseur(fournisseurId: Long? = null): List<DepenseStats> {
@@ -351,22 +286,6 @@ class ReportingService(
             moisEnCours = commissionsMois.sumOf { it.montantCommissionTtc }
         )
 
-        // Top projets
-        val topProjets = allDepenses
-            .groupBy { it.projet }
-            .mapNotNull { (projet, depenses) ->
-                projet?.let {
-                    TopProjetStats(
-                        projetId = it.id!!,
-                        projetNom = it.nom,
-                        montantTotal = depenses.sumOf { dep -> dep.montantTtc },
-                        nombreDepenses = depenses.size.toLong()
-                    )
-                }
-            }
-            .sortedByDescending { it.montantTotal }
-            .take(5)
-
         // Top fournisseurs
         val topFournisseurs = allDepenses
             .groupBy { it.fournisseur }
@@ -387,7 +306,6 @@ class ReportingService(
             depenses = depenseStats,
             commissions = commissionStats,
             paiements = getPaiementStats(),
-            topProjets = topProjets,
             topFournisseurs = topFournisseurs
         )
     }

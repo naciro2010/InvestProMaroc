@@ -81,10 +81,4 @@ class DecompteController(private val decompteService: DecompteService) {
         return ResponseEntity.ok(decomptes)
     }
 
-    @GetMapping("/marche/{marcheId}/total-paye")
-    fun getTotalPayeByMarche(@PathVariable marcheId: Long): ResponseEntity<Map<String, BigDecimal>> {
-        logger.info { "🌐 API: GET /api/decomptes/marche/$marcheId/total-paye" }
-        val total = decompteService.getTotalPaye(marcheId)
-        return ResponseEntity.ok(mapOf("totalPaye" to total))
-    }
 }

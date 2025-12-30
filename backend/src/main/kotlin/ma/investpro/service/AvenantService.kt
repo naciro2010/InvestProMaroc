@@ -1,5 +1,7 @@
 package ma.investpro.service
 
+import ma.investpro.dto.ConsolidatedVersionResponse
+import ma.investpro.dto.VersionHistoryEntry
 import ma.investpro.entity.Avenant
 import ma.investpro.entity.StatutAvenant
 import ma.investpro.entity.StatutConvention
@@ -199,41 +201,41 @@ class AvenantService(
      * Obtenir la version consolidée d'une convention
      * (convention de base + tous les avenants validés)
      */
-    fun getVersionConsolidee(conventionId: Long): Map<String, Any?> {
+    fun getVersionConsolidee(conventionId: Long): ConsolidatedVersionResponse {
         val convention = conventionRepository.findByIdOrNull(conventionId)
             ?: throw IllegalArgumentException("Convention $conventionId introuvable")
 
         val avenantsValides = findAvenantsValidesOrdonnes(conventionId)
 
-        return mapOf(
-            "convention" to convention,
-            "versionActuelle" to (convention.version ?: "V0"),
-            "avenants" to avenantsValides,
-            "nombreAvenants" to avenantsValides.size,
-            "montantActuel" to convention.budget,
-            "tauxCommissionActuel" to convention.tauxCommission,
-            "dateFinActuelle" to convention.dateFin
+        return ConsolidatedVersionResponse(
+            convention = convention,
+            versionActuelle = convention.version ?: "V0",
+            avenants = avenantsValides,
+            nombreAvenants = avenantsValides.size,
+            montantActuel = convention.budget,
+            tauxCommissionActuel = convention.tauxCommission,
+            dateFinActuelle = convention.dateFin
         )
     }
 
     /**
      * Obtenir l'historique des versions d'une convention
      */
-    fun getHistoriqueVersions(conventionId: Long): List<Map<String, Any?>> {
+    fun getHistoriqueVersions(conventionId: Long): List<VersionHistoryEntry> {
         val convention = conventionRepository.findByIdOrNull(conventionId)
             ?: throw IllegalArgumentException("Convention $conventionId introuvable")
 
-        val historique = mutableListOf<Map<String, Any?>>()
+        val historique = mutableListOf<VersionHistoryEntry>()
 
         // Version V0 (baseline)
         historique.add(
-            mapOf(
-                "version" to "V0",
-                "date" to convention.dateValidation,
-                "type" to "Convention initiale",
-                "montant" to convention.budget,
-                "tauxCommission" to convention.tauxCommission,
-                "dateFin" to convention.dateFin
+            VersionHistoryEntry(
+                version = "V0",
+                date = convention.dateValidation,
+                type = "Convention initiale",
+                montant = convention.budget,
+                tauxCommission = convention.tauxCommission,
+                dateFin = convention.dateFin
             )
         )
 
@@ -241,16 +243,16 @@ class AvenantService(
         val avenantsValides = findAvenantsValidesOrdonnes(conventionId)
         avenantsValides.forEach { avenant ->
             historique.add(
-                mapOf(
-                    "version" to avenant.versionResultante,
-                    "date" to avenant.dateValidation,
-                    "type" to "Avenant ${avenant.numeroAvenant}",
-                    "objet" to avenant.objet,
-                    "montant" to avenant.montantApres,
-                    "tauxCommission" to avenant.tauxCommissionApres,
-                    "dateFin" to avenant.dateFinApres,
-                    "impactMontant" to avenant.impactMontant,
-                    "impactDelai" to avenant.impactDelaiJours
+                VersionHistoryEntry(
+                    version = avenant.versionResultante,
+                    date = avenant.dateValidation,
+                    type = "Avenant ${avenant.numeroAvenant}",
+                    objet = avenant.objet,
+                    montant = avenant.montantApres,
+                    tauxCommission = avenant.tauxCommissionApres,
+                    dateFin = avenant.dateFinApres,
+                    impactMontant = avenant.impactMontant,
+                    impactDelai = avenant.impactDelaiJours
                 )
             )
         }

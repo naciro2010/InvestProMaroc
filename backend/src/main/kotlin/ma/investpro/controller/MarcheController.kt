@@ -74,13 +74,6 @@ class MarcheController(private val marcheService: MarcheService) {
         }
     }
 
-    @GetMapping("/projet/{projetId}")
-    fun getMarchesByProjet(@PathVariable projetId: Long): ResponseEntity<List<Marche>> {
-        logger.info { "🌐 API: GET /api/marches/projet/$projetId" }
-        val marches = marcheService.findByProjet(projetId)
-        return ResponseEntity.ok(marches)
-    }
-
     @GetMapping("/fournisseur/{fournisseurId}")
     fun getMarchesByFournisseur(@PathVariable fournisseurId: Long): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches/fournisseur/$fournisseurId" }

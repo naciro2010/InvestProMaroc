@@ -151,10 +151,7 @@ class DecompteRetenue(
     var tauxPourcent: BigDecimal? = null,
 
     @Column(length = 200)
-    var libelle: String? = null,
-
-    @Column(nullable = false)
-    var actif: Boolean = true // Permet de désactiver une retenue
+    var libelle: String? = null
 
 ) : BaseEntity()
 

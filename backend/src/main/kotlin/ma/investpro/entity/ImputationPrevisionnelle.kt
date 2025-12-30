@@ -24,16 +24,6 @@ class ImputationPrevisionnelle(
     @field:NotNull
     var convention: Convention? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "axe_analytique_id", nullable = false)
-    @field:NotNull
-    var axeAnalytique: AxeAnalytique? = null,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "projet_id", nullable = false)
-    @field:NotNull
-    var projet: Projet? = null,
-
     @Column(length = 200)
     var volet: String? = null, // Segment/Composante du projet
 

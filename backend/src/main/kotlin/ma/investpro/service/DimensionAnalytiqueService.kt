@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.DimensionStatistiques
 import ma.investpro.entity.DimensionAnalytique
 import ma.investpro.entity.ValeurDimension
 import ma.investpro.repository.DimensionAnalytiqueRepository
@@ -129,11 +130,16 @@ class DimensionAnalytiqueService(
 
     // ========== Statistiques ==========
 
-    fun getStatistiques(): Map<String, Any> {
-        return mapOf(
-            "totalDimensions" to dimensionRepository.count(),
-            "dimensionsActives" to dimensionRepository.countByActiveTrue(),
-            "totalValeurs" to valeurRepository.count()
+    fun getStatistiques(): DimensionStatistiques {
+        val dimensions = dimensionRepository.findAll()
+        val valeurs = valeurRepository.findAll()
+
+        return DimensionStatistiques(
+            totalDimensions = dimensions.size,
+            dimensionsActives = dimensions.count { it.active },
+            dimensionsObligatoires = dimensions.count { it.obligatoire },
+            totalValeurs = valeurs.size,
+            valeursActives = valeurs.count { it.active }
         )
     }
 }

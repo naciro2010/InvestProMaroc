@@ -3,7 +3,6 @@ package ma.investpro.service
 import ma.investpro.entity.Marche
 import ma.investpro.entity.StatutMarche
 import ma.investpro.repository.MarcheRepository
-import ma.investpro.repository.ProjetRepository
 import ma.investpro.repository.FournisseurRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -16,7 +15,6 @@ private val logger = KotlinLogging.logger {}
 @Transactional
 class MarcheService(
     private val marcheRepository: MarcheRepository,
-    private val projetRepository: ProjetRepository,
     private val fournisseurRepository: FournisseurRepository
 ) {
 
@@ -69,7 +67,6 @@ class MarcheService(
             📄 N° Marché      : ${marche.numeroMarche}
             📋 Objet          : ${marche.objet.take(50)}...
             🏢 Fournisseur    : ${marche.fournisseur?.raisonSociale ?: "N/A"}
-            📊 Projet         : ${marche.projet?.nom ?: "N/A"}
             💰 Montant TTC    : ${marche.montantTtc} MAD
             📈 Statut         : ${marche.statut}
             ═══════════════════════════════════════════════════════════════════
@@ -88,7 +85,6 @@ class MarcheService(
             📋 N° AO          : ${marche.numAo ?: "N/A"}
             📅 Date           : ${marche.dateMarche}
             🏢 Fournisseur ID : ${marche.fournisseur?.id}
-            📊 Projet ID      : ${marche.projet?.id}
             💰 Montant HT     : ${marche.montantHt} MAD
             💰 Montant TTC    : ${marche.montantTtc} MAD
             📈 Statut         : ${marche.statut}
@@ -105,15 +101,6 @@ class MarcheService(
                 """.trimIndent()
             }
             throw IllegalArgumentException("Un marché avec le numéro ${marche.numeroMarche} existe déjà")
-        }
-
-        // Vérifier que le projet existe
-        if (marche.projet?.id != null) {
-            val projetExists = projetRepository.existsById(marche.projet!!.id!!)
-            if (!projetExists) {
-                logger.error { "❌ PROJET NON TROUVÉ - ID: ${marche.projet!!.id}" }
-                throw IllegalArgumentException("Projet avec ID ${marche.projet!!.id} non trouvé")
-            }
         }
 
         // Vérifier que le fournisseur existe
@@ -141,7 +128,6 @@ class MarcheService(
             🆔 ID             : ${savedMarche.id}
             📄 N° Marché      : ${savedMarche.numeroMarche}
             🏢 Fournisseur    : ${savedMarche.fournisseur?.raisonSociale ?: "N/A"}
-            📊 Projet         : ${savedMarche.projet?.nom ?: "N/A"}
             💰 Montant TTC    : ${savedMarche.montantTtc} MAD
             📈 Statut         : ${savedMarche.statut}
             ═══════════════════════════════════════════════════════════════════
@@ -182,7 +168,6 @@ class MarcheService(
             numAo = marche.numAo
             dateMarche = marche.dateMarche
             fournisseur = marche.fournisseur
-            projet = marche.projet
             objet = marche.objet
             montantHt = marche.montantHt
             tauxTva = marche.tauxTva
@@ -255,13 +240,6 @@ class MarcheService(
             ═══════════════════════════════════════════════════════════════════
             """.trimIndent()
         }
-    }
-
-    fun findByProjet(projetId: Long): List<Marche> {
-        logger.info { "🔍 Recherche marchés pour projet ID: $projetId" }
-        val marches = marcheRepository.findByProjetId(projetId)
-        logger.info { "✅ ${marches.size} marché(s) trouvé(s) pour le projet $projetId" }
-        return marches
     }
 
     fun findByFournisseur(fournisseurId: Long): List<Marche> {

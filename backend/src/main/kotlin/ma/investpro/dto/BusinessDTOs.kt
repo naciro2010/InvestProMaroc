@@ -21,19 +21,6 @@ data class ConventionDTO(
     val updatedAt: LocalDateTime?
 )
 
-// Projet DTOs
-data class ProjetDTO(
-    val id: Long?,
-    @field:NotBlank val code: String,
-    @field:NotBlank val nom: String,
-    val description: String?,
-    val responsable: String?,
-    val statut: String?,
-    val actif: Boolean,
-    val createdAt: LocalDateTime?,
-    val updatedAt: LocalDateTime?
-)
-
 // Fournisseur DTOs
 data class FournisseurDTO(
     val id: Long?,
@@ -49,18 +36,6 @@ data class FournisseurDTO(
     val contact: String?,
     val nonResident: Boolean,
     val remarques: String?,
-    val actif: Boolean,
-    val createdAt: LocalDateTime?,
-    val updatedAt: LocalDateTime?
-)
-
-// AxeAnalytique DTOs
-data class AxeAnalytiqueDTO(
-    val id: Long?,
-    @field:NotBlank val code: String,
-    @field:NotBlank val libelle: String,
-    val type: String?,
-    val description: String?,
     val actif: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
@@ -89,10 +64,6 @@ data class DepenseInvestissementDTO(
     @field:NotNull val dateFacture: LocalDate,
     val fournisseurId: Long,
     val fournisseur: FournisseurDTO?,
-    val projetId: Long,
-    val projet: ProjetDTO?,
-    val axeAnalytiqueId: Long?,
-    val axeAnalytique: AxeAnalytiqueDTO?,
     val conventionId: Long?,
     val convention: ConventionDTO?,
     @field:DecimalMin("0.00") val montantHt: BigDecimal,
@@ -134,6 +105,77 @@ data class CommissionDTO(
     val actif: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
+)
+
+// Dimension Analytique DTOs
+data class DimensionStatistiques(
+    val totalDimensions: Int,
+    val dimensionsActives: Int,
+    val dimensionsObligatoires: Int,
+    val totalValeurs: Int,
+    val valeursActives: Int
+)
+
+data class ValidationImputationResult(
+    val isValid: Boolean,
+    val montantAttendu: BigDecimal,
+    val totalImpute: BigDecimal,
+    val difference: BigDecimal
+)
+
+data class ImputationAggregation(
+    val dimension: String,
+    val data: Map<String, BigDecimal>
+)
+
+data class ImputationAggregationByTwoDimensions(
+    val dimension1: String,
+    val dimension2: String,
+    val data: List<AggregationRow>
+)
+
+data class AggregationRow(
+    val dimension1Value: String,
+    val dimension2Value: String,
+    val montant: BigDecimal
+)
+
+data class ImputationStatistiques(
+    val totalImputations: Long,
+    val totalMontantImpute: BigDecimal,
+    val nombreTypes: Int
+)
+
+// Avenant DTOs
+data class ConsolidatedVersionResponse(
+    val convention: Any,
+    val versionActuelle: String,
+    val avenants: List<Any>,
+    val nombreAvenants: Int,
+    val montantActuel: BigDecimal,
+    val tauxCommissionActuel: BigDecimal,
+    val dateFinActuelle: LocalDate?
+)
+
+data class VersionHistoryEntry(
+    val version: String,
+    val date: LocalDate?,
+    val type: String,
+    val objet: String? = null,
+    val montant: BigDecimal? = null,
+    val tauxCommission: BigDecimal? = null,
+    val dateFin: LocalDate? = null,
+    val impactMontant: BigDecimal? = null,
+    val impactDelai: Int? = null
+)
+
+// Decompte DTOs
+data class DecompteStatistiques(
+    val total: Int,
+    val brouillon: Int,
+    val soumis: Int,
+    val valides: Int,
+    val montantTotal: BigDecimal
 )
 
 // Response wrapper

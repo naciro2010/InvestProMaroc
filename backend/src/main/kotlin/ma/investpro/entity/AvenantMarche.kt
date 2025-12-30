@@ -141,14 +141,3 @@ class AvenantMarche(
         calculerDelaiApres()
     }
 }
-
-/**
- * Statut de l'avenant
- */
-enum class StatutAvenant {
-    BROUILLON,      // En cours d'élaboration
-    SOUMIS,         // Soumis pour validation
-    VALIDE,         // Validé et en vigueur
-    REJETE,         // Rejeté
-    ANNULE          // Annulé
-}

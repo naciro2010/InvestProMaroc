@@ -1,5 +1,6 @@
 package ma.investpro.controller
 
+import ma.investpro.dto.DimensionStatistiques
 import ma.investpro.entity.DimensionAnalytique
 import ma.investpro.entity.ValeurDimension
 import ma.investpro.service.DimensionAnalytiqueService
@@ -153,7 +154,7 @@ class DimensionAnalytiqueController(
     // ========== Statistiques ==========
 
     @GetMapping("/statistiques")
-    fun getStatistiques(): ResponseEntity<Map<String, Any>> {
+    fun getStatistiques(): ResponseEntity<DimensionStatistiques> {
         return ResponseEntity.ok(dimensionService.getStatistiques())
     }
 }

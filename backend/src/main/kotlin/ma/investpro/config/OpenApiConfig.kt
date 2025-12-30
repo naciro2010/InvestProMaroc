@@ -14,35 +14,23 @@ class OpenApiConfig {
 
     @Bean
     fun customOpenAPI(): OpenAPI {
-        val securitySchemeName = "bearerAuth"
-
+        val bearerAuth = "bearerAuth"
         return OpenAPI()
             .info(
                 Info()
                     .title("InvestPro Maroc API")
                     .version("1.0.0")
                     .description("API pour la gestion des dépenses d'investissement et calcul des commissions")
-                    .contact(
-                        Contact()
-                            .name("InvestPro Team")
-                            .email("contact@investpro.ma")
-                    )
-                    .license(
-                        License()
-                            .name("Propriétaire")
-                            .url("https://investpro.ma")
-                    )
+                    .contact(Contact().name("InvestPro Team").email("contact@investpro.ma"))
+                    .license(License().name("Propriétaire").url("https://investpro.ma"))
             )
-            .addSecurityItem(SecurityRequirement().addList(securitySchemeName))
+            .addSecurityItem(SecurityRequirement().addList(bearerAuth))
             .components(
                 io.swagger.v3.oas.models.Components()
                     .addSecuritySchemes(
-                        securitySchemeName,
-                        SecurityScheme()
-                            .name(securitySchemeName)
-                            .type(SecurityScheme.Type.HTTP)
-                            .scheme("bearer")
-                            .bearerFormat("JWT")
+                        bearerAuth,
+                        SecurityScheme().name(bearerAuth).type(SecurityScheme.Type.HTTP)
+                            .scheme("bearer").bearerFormat("JWT")
                     )
             )
     }

@@ -2,10 +2,11 @@
 
 > **Plateforme complète de gestion des dépenses d'investissement et calcul automatique des commissions d'intervention**
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.23-purple?logo=kotlin)](https://kotlinlang.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-green?logo=spring)](https://spring.io/projects/spring-boot)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-purple?logo=kotlin)](https://kotlinlang.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-green?logo=spring)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://react.dev/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue?logo=postgresql)](https://www.postgresql.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)](https://www.typescriptlang.org/)
 
 ---
 
@@ -410,106 +411,148 @@ DÉCOMPTE SOLDÉ (quand cumul payé = net à payer)
 
 ## ✅ Fonctionnalités Implémentées
 
+### 🎯 Plan Analytique Dynamique (Nouvelle Architecture)
+
+✅ **Système de Dimensions Flexibles (JSONB)**
+- Architecture basée sur PostgreSQL JSONB pour imputation multidimensionnelle
+- Dimensions configurables : Budget, Projet, Secteur, Département, Phase, etc.
+- Valeurs par dimension avec code/libellé
+- Imputation analytique au niveau ligne de marché
+- Requêtes natives optimisées pour filtrage JSONB
+- Migration complète de l'ancien système vers JSONB
+
+✅ **Reporting Analytique Avancé**
+- Filtres dynamiques par dimension et période
+- Graphiques interactifs (Recharts) : évolution temporelle, répartition budgétaire
+- Export Excel avec données filtrées
+- Vues favorites sauvegardables
+- Statistiques temps réel
+- Interface intuitive avec sélection multiple de dimensions
+
 ### Backend (API REST)
 
 ✅ **Authentification & Sécurité**
-- JWT Authentication
+- JWT Authentication avec refresh tokens
 - Rôles: ADMIN, MANAGER, USER
-- Filtres de logging (clean, sans emojis)
+- Spring Security 6.x
+- Protection CSRF et CORS configurables
 
 ✅ **Conventions**
-- CRUD complet
+- CRUD complet avec validation
 - Types: CADRE, NON_CADRE, SPECIFIQUE, AVENANT
 - Statuts: BROUILLON, EN_COURS, VALIDEE, ACHEVE, EN_RETARD, ANNULE
-- Formulaire création/édition
+- Relations N-N avec projets
+- Formulaire création/édition complet
+
+✅ **Marchés (Système Complet)**
+- CRUD complet avec validation métier
+- Relations : Marché ↔ Convention, Marché ↔ Fournisseur
+- **Lignes de marché** avec imputation analytique JSONB
+- **Avenants** : suivi modifications avec impact financier et délais
+- Calcul automatique montants (HT, TVA, TTC)
+- Statuts : EN_COURS, VALIDE, TERMINE, ANNULE
+- Retenue de garantie paramétrable
+- Suivi délais et alertes retards
+- Statistiques avancées : total engagé par convention, marchés en retard
+- Recherche et filtres multicritères
+
+✅ **Décomptes, Ordres de Paiement & Paiements**
+- Entités complètes avec relations
+- Imputation analytique JSONB (dimensions_valeurs)
+- Workflow : Décompte → OP → Paiement
+- Calculs automatiques avec retenues
 
 ✅ **Projets**
 - CRUD complet
-- Association multi-projets
+- Association multi-projets avec conventions
+- Gestion budgets et axes analytiques
 
 ✅ **Fournisseurs**
 - CRUD complet
 - Validation ICE (15 chiffres)
 - Validation IF
+- Suivi marchés par fournisseur
 
-✅ **Axes Analytiques**
-- CRUD complet
-- Dimensions multiples
+✅ **Plan Analytique**
+- Dimensions configurables (code, libellé, ordre, actif)
+- Valeurs par dimension
+- API pour récupération dynamique
 
 ✅ **Comptes Bancaires**
 - CRUD complet
 - Validation RIB (24 chiffres)
 
-✅ **Dépenses**
-- CRUD complet
-- Calcul automatique TVA 20%
-- Retenues fiscales
-- Filtres avancés
-
-✅ **Commissions**
-- Page listing
-- Calcul automatique
-
-✅ **Marchés**
-- Page listing
-- Détails marché
-- Statuts
-
-✅ **Utilisateurs**
-- Gestion complète
-- Rôles et permissions
+✅ **Utilisateurs & Permissions**
+- Gestion complète utilisateurs
+- Rôles et permissions granulaires
+- Profils personnalisables
 
 ### Frontend (React + TypeScript)
 
-✅ **Landing Page GitLab-Style**
-- Design moderne orange (#FC6D26)
-- 12 features détaillées
-- 100% responsive
-- Animations framer-motion
+✅ **Plan Analytique Dynamique**
+- Page de configuration des dimensions et valeurs
+- Interface de reporting avec filtres dynamiques
+- Graphiques interactifs : évolution temporelle, répartition budgétaire, top valeurs
+- Export Excel configurable
+- Vues favorites sauvegardables avec partage
+- Filtres par période (date début/fin)
+
+✅ **Marchés (Interface Complète)**
+- Liste avec statistiques temps réel (total engagé, nombre par statut)
+- Formulaire création/édition complet avec :
+  - Informations générales (numéro, dates, convention, fournisseur)
+  - **Gestion lignes** : ajout/suppression/édition lignes avec imputation analytique
+  - Calcul automatique montants (quantité × prix unitaire, TVA, TTC)
+  - Validation métier
+- Badges visuels : nombre de lignes, avenants, décomptes
+- Recherche et filtres multicritères (statut, convention, fournisseur)
+- Vue détaillée avec historique
+
+✅ **Décomptes**
+- Page liste (structure prête pour développement complet)
+- Filtres et recherche
 
 ✅ **Dashboard Moderne**
-- 4 KPI cards (Dépenses, Commissions, Projets, Fournisseurs)
-- 4 graphiques Recharts (Area, Bar, Pie)
-- Données réelles de l'API
+- 2 styles : Massari (classique) et Modern (épuré)
+- KPI cards : Dépenses, Commissions, Projets, Fournisseurs
+- Graphiques Recharts : Area, Bar, Pie, Line
+- Données temps réel de l'API
 - 100% responsive
 
 ✅ **Conventions**
-- Liste avec filtres
-- Formulaire création/édition
-- Stats par type
-- Responsive
-
-✅ **Marchés**
-- Liste avec stats
-- Détails marché
-- Filtres
+- Liste avec filtres et stats par type
+- Formulaire création/édition complet
+- Gestion statuts et workflow
+- Associations projets
 
 ✅ **Profil Utilisateur**
-- Affichage données AuthContext
-- Édition informations
-- Changement mot de passe
+- Affichage données utilisateur (AuthContext)
+- Édition informations personnelles
+- Changement mot de passe sécurisé
 
-✅ **Design System GitLab**
-- Composants génériques: Card, Button, Badge, StatusBadge
-- Sidebar responsive (mobile, tablet, desktop)
-- Couleurs GitLab
-- AppLayout avec menu hamburger mobile
+✅ **Design System**
+- Composants UI réutilisables : Card, Button, Badge, StatusBadge
+- Layout responsive avec sidebar (mobile, tablet, desktop)
+- Menu hamburger mobile
+- Couleurs et styles cohérents
+- Tailwind CSS
 
 ---
 
-## ❌ Fonctionnalités Manquantes
+## ❌ Fonctionnalités Manquantes / En Développement
 
 ### 🔴 Priorité HAUTE
 
-#### 1. **Workflow Conventions Complet**
+#### 1. **Workflow Conventions Avancé**
 ```
 MANQUE:
-❌ Gestion des statuts (BROUILLON → SOUMIS → VALIDEE)
-❌ Validation avec création version V0
+❌ Gestion complète statuts (BROUILLON → SOUMIS → VALIDEE)
+❌ Validation automatique avec création version V0
 ❌ Verrouillage champs sensibles après validation
 ❌ Génération fiche synthèse PDF
+❌ Notifications transitions d'état
 
-IMPACT: Le workflow métier n'est pas complet
+IMPACT: Workflow métier partiellement implémenté
 ```
 
 #### 2. **Sous-Conventions**
@@ -524,84 +567,59 @@ MANQUE:
 IMPACT: Impossibilité de créer des conventions dérivées
 ```
 
-#### 3. **Avenants**
-```
-MANQUE:
-❌ Entity Avenant
-❌ Numéro avenant / dates
-❌ Impacts (montants, CI, délais)
-❌ Détails AVANT/APRÈS
-❌ Création versions (V1, V2, V3...)
-❌ Version consolidée
-❌ UI gestion avenants
-
-IMPACT: Impossible de modifier une convention validée
-```
-
-#### 4. **Budget Initial & Révisions**
+#### 3. **Budget Initial & Révisions**
 ```
 MANQUE:
 ❌ Entity Budget (V0, V1, V2...)
-❌ Plafond convention
+❌ Plafond convention avec contrôle
 ❌ Détail par postes (chapitres/lignes)
 ❌ Contrôles: total ≤ plafond
 ❌ Révisions budgétaires avec delta
 ❌ Historique & justifications
 ❌ UI budget avec versions
 
-IMPACT: Pas de gestion budgétaire
+IMPACT: Pas de gestion budgétaire structurée
 ```
 
-#### 5. **Marchés Complet**
+#### 4. **Décomptes (Interface Complète)**
 ```
-MANQUE:
-❌ MARCHE_LIGNE (détail lignes)
-❌ AVENANT_MARCHE
-❌ Relation Convention → Marché
-❌ Formulaire création marché
-❌ Édition marché
+EN DÉVELOPPEMENT:
+⏳ Entity Decompte existe mais UI incomplète
+⏳ DECOMPTE_RETENUE (garantie, RAS, pénalités, avances)
+⏳ Formulaire création/édition
+⏳ Workflow validation
+⏳ Calcul net à payer avec retenues
+⏳ Import lignes depuis marché
+⏳ Historique et traçabilité
 
-IMPACT: Marchés incomplets, pas de lien avec conventions
-```
-
-#### 6. **Décomptes**
-```
-MANQUE:
-❌ Entity Decompte
-❌ DECOMPTE_RETENUE (garantie, RAS, pénalités, avances)
-❌ DECOMPTE_IMPUTATION (projet/axe/budget)
-❌ Calcul net à payer
-❌ UI décomptes
-
-IMPACT: Pas de suivi situations travaux
+IMPACT: Backend prêt, frontend à compléter
 ```
 
-#### 7. **Ordres de Paiement**
+#### 5. **Ordres de Paiement (Interface Complète)**
 ```
-MANQUE:
-❌ Entity OrdrePaiement (OP)
-❌ Statut BROUILLON → VALIDE
-❌ Date prévue, mode, banque
-❌ Montant à payer (partiel possible)
-❌ Imputation analytique
-❌ UI création OP
+EN DÉVELOPPEMENT:
+⏳ Entity OrdrePaiement existe mais UI incomplète
+⏳ Workflow statuts (PREPARE → TRANSMIS → VALIDE → EXECUTE)
+⏳ Création depuis décompte validé
+⏳ Calcul retenue de garantie
+⏳ Export format comptable
+⏳ Vérification disponibilité budgétaire
 
-IMPACT: Pas de gestion paiements structurée
+IMPACT: Backend prêt, frontend à compléter
 ```
 
-#### 8. **Paiements**
+#### 6. **Paiements (Interface Complète)**
 ```
-MANQUE:
-❌ Entity Paiement
-❌ Date valeur / exécution
-❌ Référence virement/chèque
-❌ Montant payé (partiel)
-❌ PAIEMENT_IMPUTATION
-❌ Suivi RÉEL vs BUDGET
-❌ Décompte soldé (cumul payé = net à payer)
-❌ UI paiements
+EN DÉVELOPPEMENT:
+⏳ Entity Paiement existe mais UI incomplète
+⏳ Enregistrement paiement effectué
+⏳ Rapprochement bancaire
+⏳ Suivi RÉEL vs BUDGET
+⏳ Décompte soldé (cumul payé = net à payer)
+⏳ Journal des paiements
+⏳ Prévisions trésorerie
 
-IMPACT: Pas de suivi réel des paiements
+IMPACT: Backend prêt, frontend à compléter
 ```
 
 ### 🟡 Priorité MOYENNE
@@ -708,117 +726,194 @@ IMPACT: Pas de système d'alertes
 ## 🛠️ Stack Technique
 
 ### Backend
-- **Kotlin 1.9.23** + **Spring Boot 3.2.5**
+- **Kotlin 2.0.21** + **Spring Boot 3.3.5**
 - **Java 21** JVM
-- **Gradle 8.7** (Kotlin DSL)
-- **PostgreSQL 16**
-- **Flyway** migrations
-- **Spring Security + JWT**
-- **Swagger/OpenAPI** documentation
+- **Gradle 8.x** (Kotlin DSL)
+- **PostgreSQL 14+** avec support JSONB
+- **Spring Data JPA + Hibernate** (DDL auto-update)
+- **Spring Security 6.x + JWT** (access + refresh tokens)
+- **OpenAPI 3.0 / Swagger UI** documentation
+- **KotlinLogging** structured logging
+- **Jackson Kotlin Module** JSON serialization
 
 ### Frontend
-- **React 18** + **TypeScript**
-- **Vite** bundler
-- **TailwindCSS** styling
-- **Framer Motion** animations
-- **Recharts** graphiques
-- **React Router** navigation
-- **Axios** HTTP client
+- **React 18** + **TypeScript 5.x**
+- **Vite 5.x** bundler ultra-rapide
+- **TailwindCSS** utility-first styling
+- **Framer Motion** animations fluides
+- **Recharts** graphiques interactifs (Area, Bar, Pie, Line)
+- **React Router v6** navigation SPA
+- **Axios** HTTP client avec intercepteurs
+- **XLSX** export Excel
 
-### DevOps
-- **Docker** containerization
-- **Railway** deployment
-- **GitHub Actions** CI/CD
+### DevOps & Architecture
+- **Docker** containerization (prêt)
+- **PostgreSQL JSONB** stockage flexible
+- **Hibernate Schema Auto-Update** (pas de migrations manuelles)
+- **CORS configuré** pour développement local
+- **JWT stateless authentication**
+- **RESTful API** design
 
 ---
 
 ## 🚀 Déploiement
 
-### Backend (Railway)
+### Développement Local
 
-**Prérequis:**
-- Compte Railway
-- PostgreSQL addon
+**Backend:**
+```bash
+cd backend
+./gradlew bootRun
+
+# API disponible sur http://localhost:8080
+# Swagger UI: http://localhost:8080/swagger-ui.html
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+
+# Application disponible sur http://localhost:5173
+```
+
+**Base de Données:**
+```bash
+# PostgreSQL 14+ requis
+createdb investpro
+
+# Configuration dans application.properties:
+spring.datasource.url=jdbc:postgresql://localhost:5432/investpro
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+
+# Le schéma se génère automatiquement via Hibernate DDL
+spring.jpa.hibernate.ddl-auto=update
+```
+
+### Production
+
+**Backend (Railway/Heroku/Docker)**
 
 **Variables d'environnement:**
 ```bash
 DATABASE_URL=postgresql://user:password@host:5432/investpro
-JWT_SECRET=your-secret-key
+JWT_SECRET=your-very-secure-secret-key-256-bits-minimum
 JWT_EXPIRATION=86400000
 PORT=8080
+CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
 ```
 
-**Déploiement:**
+**Build:**
 ```bash
-# Build
+cd backend
 ./gradlew clean build -x test
-
-# Railway déploie automatiquement depuis GitHub
-# Le backend démarre sur le port défini dans $PORT
+# JAR généré : build/libs/investpro-backend-1.0.0.jar
 ```
 
-### Frontend (Railway/Vercel)
+**Docker (optionnel):**
+```dockerfile
+FROM openjdk:21-jdk-slim
+COPY build/libs/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+```
+
+**Frontend (Vercel/Netlify)**
 
 **Variables d'environnement:**
 ```bash
-VITE_API_URL=https://your-backend-url.railway.app
+VITE_API_URL=https://your-backend-url.com
 ```
 
-**Déploiement:**
+**Build:**
 ```bash
-# Build
+cd frontend
 npm run build
-
-# Deploy to Railway
-railway up
-
-# Ou deploy to Vercel
-vercel --prod
+# Build disponible dans : dist/
 ```
 
 ### Base de Données
 
-**Migrations Flyway:**
-```bash
-# Les migrations s'exécutent automatiquement au démarrage
-# Fichiers dans: backend/src/main/resources/db/migration/
+**Gestion du Schéma:**
+```
+⚙️  Hibernate DDL Auto-Update (100% Spring)
+- Le schéma se génère automatiquement depuis les entités JPA
+- Pas besoin de migrations manuelles
+- Configuration : spring.jpa.hibernate.ddl-auto=update
+- Création/modification automatique des tables au démarrage
+
+⚠️  Production : Utiliser "validate" au lieu de "update"
+spring.jpa.hibernate.ddl-auto=validate
 ```
 
-**Structure:**
-```
-V1__initial_schema.sql
-V2__add_conventions.sql
-V3__add_marches.sql
-...
+**Backup:**
+```bash
+# Backup complet
+pg_dump -U postgres investpro > backup.sql
+
+# Restore
+psql -U postgres investpro < backup.sql
 ```
 
 ---
 
-## 📈 Prochaines Étapes
+## 🎯 État Actuel du Projet
 
-### Phase 1: Workflow Conventions (Sprint 1-2)
-1. ✅ Statuts et transitions
-2. ✅ Validation avec version V0
-3. ✅ Sous-conventions
-4. ✅ Avenants et versions
+### ✅ Dernières Mises à Jour (Décembre 2024)
 
-### Phase 2: Budget (Sprint 3-4)
-1. ✅ Budget initial V0
-2. ✅ Révisions budgétaires
-3. ✅ Ventilation analytique
-4. ✅ Contrôles plafond
+**Architecture Plan Analytique Dynamique**
+- Migration complète vers JSONB pour imputation multidimensionnelle
+- Remplacement du système rigide Projet+Axe par dimensions configurables
+- Support dimensions illimitées (Budget, Projet, Secteur, Département, Phase, etc.)
+- Reporting avec filtres dynamiques et graphiques interactifs
 
-### Phase 3: Marchés & Décomptes (Sprint 5-6)
-1. ✅ Marchés complets
-2. ✅ Décomptes avec retenues
-3. ✅ Ordres de paiement
-4. ✅ Paiements effectifs
+**Système Marchés Complet**
+- Gestion lignes de marché avec imputation analytique par ligne
+- Système d'avenants avec suivi impact financier/délais
+- Interface frontend complète (création, édition, lignes dynamiques)
+- Calculs automatiques HT/TVA/TTC
+- Relations : Marché ↔ Convention, Marché ↔ Fournisseur
 
-### Phase 4: Commission & Reporting (Sprint 7-8)
-1. ✅ Calcul CI avancé
-2. ✅ Génération factures
-3. ✅ Exports Excel/PDF
-4. ✅ Dashboards analytiques
+**Infrastructure Backend**
+- Mise à jour Spring Boot 3.3.5 + Kotlin 2.0.21
+- Migration Flyway → Hibernate DDL auto-update (100% Spring)
+- Correction erreurs de build frontend TypeScript
+- Entités complètes : Decompte, OrdrePaiement, Paiement avec JSONB
+
+**Documentation**
+- README.md mis à jour avec état actuel
+- BACKLOG.md créé avec spécifications complètes
+- Roadmap et métriques de succès
+
+### 🚀 Prochaines Étapes Prioritaires
+
+**T1 2025 - Décomptes MVP**
+- Interface frontend complète (formulaire, validation, workflow)
+- Import lignes depuis marché
+- Calcul automatique retenues (garantie, RAS, pénalités)
+- Workflow validation multi-niveaux
+
+**T2 2025 - Ordres de Paiement**
+- Interface frontend complète
+- Création OP depuis décompte validé
+- Calcul retenue de garantie
+- Export format comptable
+- Vérification disponibilité budgétaire
+
+**T3 2025 - Paiements & Rapprochement**
+- Enregistrement paiements effectifs
+- Rapprochement bancaire (semi-)automatique
+- Journal paiements et prévisions trésorerie
+- Dashboard suivi RÉEL vs BUDGET
+
+**T4 2025 - Optimisations & Avancé**
+- Gestion documentaire (upload PDF, versioning)
+- Notifications et alertes
+- Permissions avancées par module
+- Tests E2E et couverture > 80%
+- Performance optimisation
 
 ---
 

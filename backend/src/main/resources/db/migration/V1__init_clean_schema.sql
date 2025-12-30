@@ -232,6 +232,7 @@ CREATE TABLE marche_lignes (
     montant_tva DECIMAL(15,2) DEFAULT 0,
     montant_ttc DECIMAL(15,2) DEFAULT 0,
     imputation_analytique JSONB,
+    actif BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(marche_id, numero_ligne)
@@ -258,6 +259,7 @@ CREATE TABLE avenant_marches (
     delai_initial_mois INTEGER,
     delai_supplementaire_mois INTEGER,
     delai_apres_mois INTEGER,
+    actif BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(marche_id, numero_avenant)
@@ -287,6 +289,7 @@ CREATE TABLE decomptes (
     date_validation DATE,
     valide_par VARCHAR(100),
     observations TEXT,
+    actif BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(marche_id, numero_decompte)
@@ -301,7 +304,9 @@ CREATE TABLE decompte_imputations (
     decompte_id BIGINT NOT NULL REFERENCES decomptes(id) ON DELETE CASCADE,
     montant DECIMAL(15,2) NOT NULL,
     dimensions_valeurs JSONB NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    actif BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_decompte_imputations_decompte ON decompte_imputations(decompte_id);
@@ -324,6 +329,7 @@ CREATE TABLE ordres_paiement (
     date_visa DATE,
     date_ordonnancement DATE,
     observations TEXT,
+    actif BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -337,7 +343,9 @@ CREATE TABLE op_imputations (
     ordre_paiement_id BIGINT NOT NULL REFERENCES ordres_paiement(id) ON DELETE CASCADE,
     montant DECIMAL(15,2) NOT NULL,
     dimensions_valeurs JSONB NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    actif BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_op_imputations_op ON op_imputations(ordre_paiement_id);
@@ -356,6 +364,7 @@ CREATE TABLE paiements (
     mode_paiement VARCHAR(20),
     reference_bancaire VARCHAR(100),
     observations TEXT,
+    actif BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -368,7 +377,9 @@ CREATE TABLE paiement_imputations (
     paiement_id BIGINT NOT NULL REFERENCES paiements(id) ON DELETE CASCADE,
     montant DECIMAL(15,2) NOT NULL,
     dimensions_valeurs JSONB NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    actif BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_paiement_imputations_paiement ON paiement_imputations(paiement_id);
@@ -387,6 +398,7 @@ CREATE TABLE commissions (
     montant_commission DECIMAL(15,2) NOT NULL,
     statut VARCHAR(20) DEFAULT 'CALCULEE',
     date_calcul DATE DEFAULT CURRENT_DATE,
+    actif BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -409,6 +421,7 @@ CREATE TABLE depenses_investissement (
     date_depense DATE,
     fournisseur_id BIGINT REFERENCES fournisseurs(id),
     statut VARCHAR(20) DEFAULT 'EN_COURS',
+    actif BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -305,7 +305,7 @@ export default function UsersPage() {
                         </button>
                         <button
                           onClick={() => handleDelete(user.id)}
-                          className="text-danger hover:text-xcompta-red transition-colors"
+                          className="text-danger hover:text-red-700 transition-colors"
                         >
                           <FaTrash className="w-4 h-4" />
                         </button>

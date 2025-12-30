@@ -1,14 +1,45 @@
-target/
-.git/
+# Git
+.git
 .gitignore
-*.md
-.env
-.env.*
-*.log
-.DS_Store
-.idea/
-.vscode/
+.github
+
+# IDE
+.idea
+.vscode
 *.iml
-mvnw
-mvnw.cmd
-.mvn/
+*.code-workspace
+
+# Build
+build
+.gradle
+out
+target
+
+# Documentation
+docs
+README.md
+CONTRIBUTING.md
+LICENSE
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env*
+.env.local
+
+# Miscellaneous
+.classpath
+.project
+.settings
+.c9
+
+# Node (if integrated)
+node_modules
+package-lock.json
+yarn.lock

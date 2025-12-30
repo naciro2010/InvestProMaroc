@@ -6,14 +6,10 @@ import java.time.LocalDate
 // DTO pour statistiques des commissions
 data class CommissionStats(
     val periode: String? = null,
-    val projetId: Long? = null,
-    val projetNom: String? = null,
     val fournisseurId: Long? = null,
     val fournisseurNom: String? = null,
     val conventionId: Long? = null,
     val conventionLibelle: String? = null,
-    val axeAnalytiqueId: Long? = null,
-    val axeAnalytiqueLibelle: String? = null,
     val nombreCommissions: Long = 0,
     val totalCommissionHt: BigDecimal = BigDecimal.ZERO,
     val totalTvaCommission: BigDecimal = BigDecimal.ZERO,
@@ -23,12 +19,8 @@ data class CommissionStats(
 // DTO pour statistiques des dépenses
 data class DepenseStats(
     val periode: String? = null,
-    val projetId: Long? = null,
-    val projetNom: String? = null,
     val fournisseurId: Long? = null,
     val fournisseurNom: String? = null,
-    val axeAnalytiqueId: Long? = null,
-    val axeAnalytiqueLibelle: String? = null,
     val compteBancaireId: Long? = null,
     val compteBancaireNom: String? = null,
     val nombreDepenses: Long = 0,
@@ -55,7 +47,6 @@ data class DashboardStats(
     val depenses: DepenseGlobalStats,
     val commissions: CommissionGlobalStats,
     val paiements: PaiementStats,
-    val topProjets: List<TopProjetStats>,
     val topFournisseurs: List<TopFournisseurStats>
 )
 
@@ -75,13 +66,6 @@ data class CommissionGlobalStats(
     val moisEnCours: BigDecimal = BigDecimal.ZERO
 )
 
-data class TopProjetStats(
-    val projetId: Long,
-    val projetNom: String,
-    val montantTotal: BigDecimal,
-    val nombreDepenses: Long
-)
-
 data class TopFournisseurStats(
     val fournisseurId: Long,
     val fournisseurNom: String,
@@ -94,9 +78,7 @@ data class DepenseSearchCriteria(
     val dateDebut: LocalDate? = null,
     val dateFin: LocalDate? = null,
     val fournisseurId: Long? = null,
-    val projetId: Long? = null,
     val conventionId: Long? = null,
-    val axeAnalytiqueId: Long? = null,
     val compteBancaireId: Long? = null,
     val paye: Boolean? = null,
     val annee: Int? = null,
@@ -107,7 +89,6 @@ data class CommissionSearchCriteria(
     val dateDebut: LocalDate? = null,
     val dateFin: LocalDate? = null,
     val conventionId: Long? = null,
-    val projetId: Long? = null,
     val fournisseurId: Long? = null,
     val annee: Int? = null,
     val mois: Int? = null

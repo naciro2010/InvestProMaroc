@@ -37,9 +37,6 @@ class ImputationAnalytique(
     @Column(name = "dimensions_valeurs", nullable = false, columnDefinition = "jsonb")
     var dimensionsValeurs: Map<String, String> = mutableMapOf(),
 
-    @Column(name = "created_at", nullable = false)
-    var createdAt: LocalDateTime = LocalDateTime.now(),
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
     var createdBy: User? = null

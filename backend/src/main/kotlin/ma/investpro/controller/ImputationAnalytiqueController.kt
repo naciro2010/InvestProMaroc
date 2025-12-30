@@ -1,5 +1,7 @@
 package ma.investpro.controller
 
+import ma.investpro.dto.ImputationStatistiques
+import ma.investpro.dto.ValidationImputationResult
 import ma.investpro.entity.ImputationAnalytique
 import ma.investpro.entity.TypeImputation
 import ma.investpro.service.ImputationAnalytiqueService
@@ -81,16 +83,16 @@ class ImputationAnalytiqueController(
         @RequestParam type: TypeImputation,
         @RequestParam referenceId: Long,
         @RequestParam montantAttendu: BigDecimal
-    ): ResponseEntity<Map<String, Any>> {
+    ): ResponseEntity<ValidationImputationResult> {
         val isValid = imputationService.validateTotal(type, referenceId, montantAttendu)
         val totalImpute = imputationService.getTotalImpute(type, referenceId)
 
         return ResponseEntity.ok(
-            mapOf(
-                "isValid" to isValid,
-                "montantAttendu" to montantAttendu,
-                "totalImpute" to totalImpute,
-                "difference" to (montantAttendu - totalImpute)
+            ValidationImputationResult(
+                isValid = isValid,
+                montantAttendu = montantAttendu,
+                totalImpute = totalImpute,
+                difference = montantAttendu - totalImpute
             )
         )
     }
@@ -99,9 +101,9 @@ class ImputationAnalytiqueController(
     fun getTotal(
         @RequestParam type: TypeImputation,
         @RequestParam referenceId: Long
-    ): ResponseEntity<Map<String, BigDecimal>> {
+    ): ResponseEntity<BigDecimal> {
         val total = imputationService.getTotalImpute(type, referenceId)
-        return ResponseEntity.ok(mapOf("total" to total))
+        return ResponseEntity.ok(total)
     }
 
     // ========== Reporting et Agrégations ==========
@@ -144,7 +146,7 @@ class ImputationAnalytiqueController(
     // ========== Statistiques ==========
 
     @GetMapping("/statistiques")
-    fun getStatistiques(): ResponseEntity<Map<String, Any>> {
+    fun getStatistiques(): ResponseEntity<ImputationStatistiques> {
         return ResponseEntity.ok(imputationService.getStatistiques())
     }
 }

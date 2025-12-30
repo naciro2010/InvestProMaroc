@@ -1,12 +1,9 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     id("org.springframework.boot") version "3.3.5"
     id("io.spring.dependency-management") version "1.1.6"
     kotlin("jvm") version "2.0.21"
     kotlin("plugin.spring") version "2.0.21"
     kotlin("plugin.jpa") version "2.0.21"
-    kotlin("kapt") version "2.0.21"
 }
 
 group = "ma.investpro"
@@ -18,9 +15,6 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://repo.spring.io/release") }
-    maven { url = uri("https://repo.spring.io/milestone") }
-    google()
 }
 
 dependencies {
@@ -33,14 +27,16 @@ dependencies {
 
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
-    // Database
+    // Database - Production
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
+
+    // Database - Testing
+    testImplementation("com.h2database:h2")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
@@ -53,10 +49,6 @@ dependencies {
     // OpenAPI/Swagger
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
-    // Coroutines (optional but recommended for async operations)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.9.0")
-
     // Development
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
@@ -68,35 +60,16 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.14")
     testImplementation("com.ninja-squad:springmockk:4.0.2")
 
-    // Testcontainers
-    testImplementation("org.testcontainers:testcontainers:1.20.4")
-    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
-    testImplementation("org.testcontainers:postgresql:1.20.4")
+    // Testing Framework
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
     testImplementation("io.kotest:kotest-assertions-core:5.9.1")
     testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs += "-Xjsr305=strict"
-        jvmTarget = "21"
-    }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// Kotlin JPA plugin configuration
-allOpen {
-    annotation("jakarta.persistence.Entity")
-    annotation("jakarta.persistence.MappedSuperclass")
-    annotation("jakarta.persistence.Embeddable")
-}
-
-noArg {
-    annotation("jakarta.persistence.Entity")
-    annotation("jakarta.persistence.MappedSuperclass")
-    annotation("jakarta.persistence.Embeddable")
+tasks.withType<org.gradle.api.tasks.bundling.Jar> {
+    isReproducibleFileOrder = true
 }

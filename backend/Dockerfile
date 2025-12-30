@@ -1,44 +1,47 @@
-# Multi-stage build pour optimiser la taille de l'image
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
+# Multi-stage Docker build for optimized image size
 
-WORKDIR /app
+# Stage 1: Builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
-# Copier les fichiers de configuration Maven
-COPY pom.xml .
-# Télécharger les dépendances (mise en cache si pom.xml n'a pas changé)
-RUN mvn dependency:go-offline -B
+WORKDIR /build
 
-# Copier le code source
-COPY src ./src
+# Copy Gradle wrapper and build files
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle.kts .
+COPY settings.gradle.kts .
 
-# Build l'application
-RUN mvn clean package -DskipTests -B
+# Copy source code
+COPY src src
 
-# Stage de production - image légère
+# Build JAR (skip tests for faster build)
+RUN chmod +x gradlew && \
+    ./gradlew clean bootJar -x test --no-daemon
+
+# Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Installer curl pour les health checks
+# Install curl for health checks
 RUN apk add --no-cache curl
 
-# Créer un utilisateur non-root pour la sécurité
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
+# Copy JAR from builder stage
+COPY --from=builder /build/build/libs/investpro-backend-1.0.0.jar app.jar
 
-# Copier le JAR depuis le stage de build
-COPY --from=build /app/target/*.jar app.jar
+# Non-root user for security
+RUN addgroup -g 1001 appuser && \
+    adduser -u 1001 -G appuser -s /bin/false appuser && \
+    chown -R appuser:appuser /app
 
-# Exposer le port
+USER appuser
+
+# Expose port
 EXPOSE 8080
 
-# Variables d'environnement par défaut
-ENV JAVA_OPTS="-Xmx512m -Xms256m" \
-    SPRING_PROFILES_ACTIVE=prod
-
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# Lancer l'application
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar app.jar"]
+# Run application
+ENTRYPOINT ["java", "-Xmx512m", "-Xms256m", "-jar", "app.jar"]

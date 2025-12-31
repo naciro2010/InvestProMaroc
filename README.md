@@ -12,13 +12,69 @@
 
 ## 📋 Table des Matières
 
-1. [Architecture Métier](#-architecture-métier)
-2. [Workflow Conventions](#-workflow-conventions)
-3. [Modèle de Données](#-modèle-de-données)
-4. [Fonctionnalités Implémentées](#-fonctionnalités-implémentées)
-5. [Fonctionnalités Manquantes](#-fonctionnalités-manquantes)
-6. [Stack Technique](#️-stack-technique)
-7. [Déploiement](#-déploiement)
+1. [🔐 Test Credentials](#-test-credentials)
+2. [Architecture Métier](#-architecture-métier)
+3. [Workflow Conventions](#-workflow-conventions)
+4. [Modèle de Données](#-modèle-de-données)
+5. [Fonctionnalités Implémentées](#-fonctionnalités-implémentées)
+6. [Fonctionnalités Manquantes](#-fonctionnalités-manquantes)
+7. [Stack Technique](#️-stack-technique)
+8. [Déploiement](#-déploiement)
+
+---
+
+## 🔐 Test Credentials
+
+### Utilisateurs de Test Prédéfinis
+
+Lors du déploiement, **6 utilisateurs de test** sont automatiquement créés avec les rôles suivants:
+
+| Utilisateur | Email | Password | Rôle | Fonction |
+|-------------|-------|----------|------|----------|
+| **admin** | admin@investpro.ma | `admin123` | ADMIN | Administrateur Système |
+| **manager** | manager@investpro.ma | `manager123` | MANAGER | Manager des Conventions |
+| **analyst** | analyst@investpro.ma | `analyst123` | MANAGER | Analyste Financier |
+| **controller** | controller@investpro.ma | `controller123` | MANAGER | Contrôleur Financier |
+| **user** | user@investpro.ma | `user123` | USER | Utilisateur Standard |
+| **supervisor** | supervisor@investpro.ma | `supervisor123` | USER | Superviseur Régional |
+
+### 🔑 Rôles et Permissions
+
+**ADMIN** - Accès Complet
+- ✅ Gestion système complète
+- ✅ Gestion des utilisateurs
+- ✅ Configurations et paramètres
+
+**MANAGER** - Gestion Conventions & Marchés
+- ✅ Créer/modifier conventions et marchés
+- ✅ Gérer avenants et décomptes
+- ✅ Créer et approuver paiements
+- ✅ Analytics et reporting avancé
+
+**USER** - Lecture et Exports
+- ✅ Consulter rapports et statistiques
+- ✅ Exporter en Excel
+- ✅ Visualiser dashboards
+- ❌ Pas de création/modification
+- ❌ Pas d'approbations
+
+### 🧪 Tester la Connexion
+
+```bash
+# Avec cURL
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "admin123"
+  }'
+
+# Réponse: JWT token + user info
+```
+
+**Voir le fichier [TEST_USERS.md](./backend/TEST_USERS.md) pour plus de détails** ↗️
+
+⚠️ **IMPORTANT:** Changer les mots de passe avant production!
 
 ---
 

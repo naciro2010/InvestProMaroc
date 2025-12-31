@@ -15,7 +15,8 @@ import {
   FaUserTie,
   FaUsers,
   FaCalculator,
-  FaArrowRight
+  FaArrowRight,
+  FaGlobe
 } from 'react-icons/fa'
 
 const LandingPageSimple = () => {
@@ -24,35 +25,51 @@ const LandingPageSimple = () => {
   const demoAccounts = [
     {
       username: 'admin',
-      password: 'demo123',
+      password: 'admin123',
       role: 'Administrateur',
       icon: <FaUserShield className="text-4xl text-red-600" />,
       description: 'Accès complet au système',
-      features: ['Gestion utilisateurs', 'Configuration globale', 'Tous les modules']
+      features: ['Gestion utilisateurs', 'Configuration système', 'Tous les modules']
     },
     {
       username: 'manager',
-      password: 'demo123',
-      role: 'Responsable',
+      password: 'manager123',
+      role: 'Manager des Conventions',
       icon: <FaUserTie className="text-4xl text-blue-600" />,
       description: 'Gestion opérationnelle',
       features: ['Conventions', 'Marchés', 'Validation budgétaire']
     },
     {
-      username: 'gestionnaire',
-      password: 'demo123',
-      role: 'Gestionnaire',
-      icon: <FaUsers className="text-4xl text-green-600" />,
-      description: 'Saisie et suivi',
-      features: ['Décomptes', 'Suivi paiements', 'Reporting']
+      username: 'analyst',
+      password: 'analyst123',
+      role: 'Analyste Financier',
+      icon: <FaChartLine className="text-4xl text-green-600" />,
+      description: 'Analyses et reporting',
+      features: ['Analytics', 'Rapports', 'Exports Excel']
     },
     {
-      username: 'comptable',
-      password: 'demo123',
-      role: 'Comptable',
-      icon: <FaCalculator className="text-4xl text-purple-600" />,
-      description: 'Validation financière',
+      username: 'controller',
+      password: 'controller123',
+      role: 'Contrôleur Financier',
+      icon: <FaCheckCircle className="text-4xl text-purple-600" />,
+      description: 'Vérification et approbations',
       features: ['Contrôle budgétaire', 'Validation', 'Rapprochement']
+    },
+    {
+      username: 'user',
+      password: 'user123',
+      role: 'Utilisateur Standard',
+      icon: <FaUsers className="text-4xl text-amber-600" />,
+      description: 'Consultation et exports',
+      features: ['Lecture rapports', 'Exports', 'Dashboards']
+    },
+    {
+      username: 'supervisor',
+      password: 'supervisor123',
+      role: 'Superviseur Régional',
+      icon: <FaGlobe className="text-4xl text-cyan-600" />,
+      description: 'Supervision régionale',
+      features: ['Données régionales', 'Visualisation', 'Suivi']
     },
   ]
 

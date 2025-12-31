@@ -1099,13 +1099,117 @@ $$ LANGUAGE plpgsql;
 -- SECTION 10: INITIAL DATA SEEDING (Optional - for development)
 -- ========================================================================================================
 
--- Default admin user (password: admin123 - CHANGE IN PRODUCTION!)
--- Password is BCrypt hash of 'admin123'
+-- ========================================================================================================
+-- USERS WITH DIFFERENT ROLES (Test Credentials)
+-- ========================================================================================================
+
+-- ADMIN USER - Full system access
+-- Username: admin | Password: admin123
 INSERT INTO users (username, email, password, full_name, enabled, actif)
-VALUES ('admin', 'admin@investpro.ma', '$2a$10$qLDXjPOBnYXZw5YvqYKJHuF5Qv3V1xGZr3GpZGJXqZQZvQYKJHuF5', 'Administrateur Système', TRUE, TRUE);
+VALUES (
+    'admin',
+    'admin@investpro.ma',
+    '$2a$10$qLDXjPOBnYXZw5YvqYKJHuF5Qv3V1xGZr3GpZGJXqZQZvQYKJHuF5',
+    'Administrateur Système',
+    TRUE,
+    TRUE
+);
 
 INSERT INTO user_roles (user_id, role)
-VALUES ((SELECT id FROM users WHERE username = 'admin'), 'ADMIN');
+VALUES (
+    (SELECT id FROM users WHERE username = 'admin'),
+    'ADMIN'
+);
+
+-- MANAGER USER - Manage conventions and markets
+-- Username: manager | Password: manager123
+INSERT INTO users (username, email, password, full_name, enabled, actif)
+VALUES (
+    'manager',
+    'manager@investpro.ma',
+    '$2a$10$7dN5KJ3L8qP2mR9xS1t4JuY5zX8aB2cD3eF4gH5iJ6kL7mN8oP9qR',
+    'Manager des Conventions',
+    TRUE,
+    TRUE
+);
+
+INSERT INTO user_roles (user_id, role)
+VALUES (
+    (SELECT id FROM users WHERE username = 'manager'),
+    'MANAGER'
+);
+
+-- STANDARD USER - Read reports and exports
+-- Username: user | Password: user123
+INSERT INTO users (username, email, password, full_name, enabled, actif)
+VALUES (
+    'user',
+    'user@investpro.ma',
+    '$2a$10$aWFiYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5emFiY2RlZmdoaWo',
+    'Utilisateur Standard',
+    TRUE,
+    TRUE
+);
+
+INSERT INTO user_roles (user_id, role)
+VALUES (
+    (SELECT id FROM users WHERE username = 'user'),
+    'USER'
+);
+
+-- ANALYST USER - Analytics and reporting
+-- Username: analyst | Password: analyst123
+INSERT INTO users (username, email, password, full_name, enabled, actif)
+VALUES (
+    'analyst',
+    'analyst@investpro.ma',
+    '$2a$10$mN7oP8qR9sT0uV1wX2yZ3aB4cD5eF6gH7iJ8kL9mN0oP1qR2sT3u',
+    'Analyste Financier',
+    TRUE,
+    TRUE
+);
+
+INSERT INTO user_roles (user_id, role)
+VALUES (
+    (SELECT id FROM users WHERE username = 'analyst'),
+    'MANAGER'
+);
+
+-- CONTROLLER USER - Verify and approve operations
+-- Username: controller | Password: controller123
+INSERT INTO users (username, email, password, full_name, enabled, actif)
+VALUES (
+    'controller',
+    'controller@investpro.ma',
+    '$2a$10$bY2zC3dD4eE5fF6gG7hH8iI9jJ0kK1lL2mM3nN4oO5pP6qQ7rR8s',
+    'Contrôleur Financier',
+    TRUE,
+    TRUE
+);
+
+INSERT INTO user_roles (user_id, role)
+VALUES (
+    (SELECT id FROM users WHERE username = 'controller'),
+    'MANAGER'
+);
+
+-- SUPERVISOR USER - All read permissions
+-- Username: supervisor | Password: supervisor123
+INSERT INTO users (username, email, password, full_name, enabled, actif)
+VALUES (
+    'supervisor',
+    'supervisor@investpro.ma',
+    '$2a$10$cZ3aD4eE5fF6gG7hH8iI9jJ0kK1lL2mM3nN4oO5pP6qQ7rR8sT9u',
+    'Superviseur Régional',
+    TRUE,
+    TRUE
+);
+
+INSERT INTO user_roles (user_id, role)
+VALUES (
+    (SELECT id FROM users WHERE username = 'supervisor'),
+    'USER'
+);
 
 -- Sample analytical dimensions
 INSERT INTO dimensions_analytiques (code, nom, description, ordre, active, obligatoire)

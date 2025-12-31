@@ -196,7 +196,7 @@ export default function MarcheDetailPage() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-sm font-medium text-gray-500">N° Appel d'Offres</dt>
-                <dd className="text-sm text-gray-900">{marche.numAo || '-'}</dd>
+                <dd className="text-sm text-gray-900">{marche.numAO || '-'}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-sm font-medium text-gray-500">Date Marché</dt>
@@ -205,7 +205,7 @@ export default function MarcheDetailPage() {
               <div className="flex justify-between">
                 <dt className="text-sm font-medium text-gray-500">Statut</dt>
                 <dd className="text-sm">
-                  <StatusBadge status={marche.statut === 'VALIDE' ? 'VALIDEE' : 'EN_COURS'} />
+                  <StatusBadge status={marche.statut === 'VALIDE' ? 'VALIDEE' : marche.statut === 'TERMINE' ? 'ACHEVE' : 'EN_COURS'} />
                 </dd>
               </div>
               <div className="flex justify-between">
@@ -248,7 +248,7 @@ export default function MarcheDetailPage() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-sm font-medium text-gray-500">Retenue de Garantie</dt>
-                <dd className="text-sm text-gray-900">{formatCurrency(marche.retenueGarantie)}</dd>
+                <dd className="text-sm text-gray-900">{formatCurrency(marche.retenueGarantie ?? 0)}</dd>
               </div>
             </dl>
           </Card>
@@ -363,18 +363,18 @@ export default function MarcheDetailPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="text-sm font-bold text-info">
-                        {formatCurrency(decompte.cumulActuel)}
+                        {formatCurrency(decompte.cumulActuel ?? 0)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
                         <div className="text-sm font-semibold text-gray-900">
-                          {decompte.tauxAvancement.toFixed(1)}%
+                          {(decompte.tauxAvancement ?? 0).toFixed(1)}%
                         </div>
                         <div className="w-20 bg-gray-200 rounded-full h-2">
                           <div
                             className="bg-success h-2 rounded-full"
-                            style={{ width: `${Math.min(decompte.tauxAvancement, 100)}%` }}
+                            style={{ width: `${Math.min(decompte.tauxAvancement ?? 0, 100)}%` }}
                           ></div>
                         </div>
                       </div>
@@ -382,7 +382,7 @@ export default function MarcheDetailPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge
                         status={
-                          decompte.statut === 'PAYE'
+                          decompte.statut === 'PAYE_TOTAL' || decompte.statut === 'PAYE_PARTIEL'
                             ? 'VALIDEE'
                             : decompte.statut === 'VALIDE'
                             ? 'ACHEVE'

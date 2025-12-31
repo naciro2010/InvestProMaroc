@@ -65,9 +65,9 @@ export default function MarchesPage() {
     if (searchTerm) {
       filtered = filtered.filter(m =>
         m.numeroMarche.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.objet.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.fournisseur?.raisonSociale.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.convention?.libelle.toLowerCase().includes(searchTerm.toLowerCase())
+        (m.objet?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+        (m.fournisseur?.raisonSociale?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+        (m.convention?.libelle?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
       )
     }
 
@@ -256,7 +256,7 @@ export default function MarchesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">
-                      {marche.numAo || '-'}
+                      {marche.numAO || '-'}
                     </div>
                   </td>
                   <td className="px-6 py-4">

@@ -77,7 +77,7 @@ export default function MarcheFormPage() {
       const marche = res.data
 
       setNumeroMarche(marche.numeroMarche)
-      setNumAo(marche.numAo || '')
+      setNumAo(marche.numAO || '')
       setDateMarche(marche.dateMarche)
       setConventionId(marche.convention?.id || null)
       setFournisseurId(marche.fournisseur?.id || null)
@@ -544,7 +544,7 @@ export default function MarcheFormPage() {
                       {dimensions.map(dim => (
                         <div key={dim.code}>
                           <label className="block text-xs font-medium text-gray-600 mb-1">
-                            {dim.nom} {dim.obligatoire && <span className="text-red-500">*</span>}
+                            {dim.libelle} {dim.obligatoire && <span className="text-red-500">*</span>}
                           </label>
                           <select
                             required={dim.obligatoire}

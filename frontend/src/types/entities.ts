@@ -128,6 +128,7 @@ export interface Decompte {
   // Cumul
   cumulPrecedent?: number
   cumulActuel?: number
+  tauxAvancement?: number
 
   observations?: string
   dateValidation?: string
@@ -245,7 +246,7 @@ export interface EcheanceSubvention {
 // MARCHÉS & AVENANTS
 // =====================================================
 
-export type StatutMarche = 'EN_COURS' | 'TERMINE' | 'RESILIE' | 'SUSPENDU'
+export type StatutMarche = 'EN_COURS' | 'VALIDE' | 'TERMINE' | 'SUSPENDU' | 'ANNULE' | 'EN_ATTENTE'
 
 export interface Marche {
   id: number
@@ -271,8 +272,8 @@ export interface Marche {
 }
 
 export interface MarcheLigne {
-  id: number
-  marcheId: number
+  id?: number
+  marcheId?: number
   numeroLigne: number
   designation: string
   unite?: string
@@ -284,7 +285,7 @@ export interface MarcheLigne {
   montantTTC: number
   imputationAnalytique?: any // JSONB
   remarques?: string
-  actif: boolean
+  actif?: boolean
   createdAt?: string
   updatedAt?: string
 }

@@ -9,6 +9,9 @@ import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
 import ConventionFormPage from './pages/conventions/ConventionFormPage'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
+import BudgetsPage from './pages/budgets/BudgetsPage'
+import DecomptesPage from './pages/decomptes/DecomptesPage'
+import PaiementsPage from './pages/paiements/PaiementsPage'
 import ProfilePage from './pages/ProfilePage'
 import PlanAnalytiquePage from './pages/parametrage/PlanAnalytiquePage'
 import ReportingAnalytiquePage from './pages/reporting/ReportingAnalytiquePage'
@@ -136,6 +139,36 @@ function App() {
             element={
               <ProtectedRoute>
                 <MarcheDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Budgets */}
+          <Route
+            path="/budgets"
+            element={
+              <ProtectedRoute>
+                <BudgetsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Décomptes */}
+          <Route
+            path="/decomptes"
+            element={
+              <ProtectedRoute>
+                <DecomptesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Paiements */}
+          <Route
+            path="/paiements"
+            element={
+              <ProtectedRoute>
+                <PaiementsPage />
               </ProtectedRoute>
             }
           />

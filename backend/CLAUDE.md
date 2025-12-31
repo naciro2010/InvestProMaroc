@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**InvestPro Maroc** is a Spring Boot REST API backend for managing investment expenses and commission calculations. It's a modern Kotlin/Spring Boot 3.2.5 application with PostgreSQL, JWT authentication, and comprehensive REST endpoints.
+**InvestPro Maroc** is a Spring Boot REST API backend for managing investment expenses and commission calculations. It's a modern Kotlin/Spring Boot 3.3.5 application with PostgreSQL, JWT authentication, and comprehensive REST endpoints.
 
-**Tech Stack:** Kotlin 1.9.23, Spring Boot 3.2.5, PostgreSQL 16, Gradle 8.7, Java 21
+**Tech Stack:** Kotlin 2.0.21, Spring Boot 3.3.5, PostgreSQL 16, Gradle 8.7, Java 21
 
 ## Common Commands
 
@@ -34,10 +34,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Run specific test method
 ./gradlew test --tests "ma.investpro.integration.AuthIntegrationTest.testLogin"
 
+# Skip tests (faster builds)
+./gradlew build -x test
+
 # Generate code coverage report (Jacoco)
 ./gradlew test jacocoTestReport
 # Report location: build/reports/jacoco/test/html/index.html
 ```
+
+### Testing Notes
+- Tests use **Kotest** framework with JUnit5
+- Integration tests use **Testcontainers** with real PostgreSQL (requires Docker)
+- Use `mockk` for mocking (MockK is more Kotlin-idiomatic than Mockito)
+- `springmockk` integrates MockK with Spring Boot test context
 
 ### Run Application
 ```bash
@@ -126,24 +135,44 @@ PostgreSQL Database
 
 ## Database Schema
 
-8 main entities with relationships:
+Core entities with relationships:
 
+### Main Business Entities
 | Entity | Purpose | Key Fields |
 |--------|---------|-----------|
-| **User** | Authentication & authorization | email (unique), password (hashed), roles |
-| **Convention** | Commission calculation rules | code, tauxCommission, montantMinimal |
-| **Projet** | Investment projects | code, designation, montantInvesti |
-| **Fournisseur** | Suppliers with Moroccan tax IDs | code, ice (15-digit), if (numeric) |
+| **Convention** | Commission calculation & partnership rules | code, designation, tauxCommission, montantMinimal, status |
+| **ConventionPartenaire** | Sub-conventions for partners | convention_id, partenaire_id, tauxCommission |
+| **Partenaire** | Partner entities managing projects | code, designation, roles |
+| **Marche** | Procurement/supply contracts | code, designation, montant, dateMarche, fournisseur_id |
+| **MarcheLigne** | Contract line items | marche_id, designation, montant, quantite |
+| **Avenant** | Contract amendments | code, marche_id, montant, dateAvenant |
+| **AvenantMarche** | Avenant to market association | avenant_id, marche_id |
 | **DepenseInvestissement** | Investment expenses | montant, dateDepense, projet_id, fournisseur_id |
 | **Commission** | Calculated commissions | montant, dateCalcul, convention_id, depense_id |
+| **Fournisseur** | Suppliers with Moroccan tax IDs | code, ice (15-digit), if (numeric) |
+
+### Financial & Accounting
+| Entity | Purpose | Key Fields |
+|--------|---------|-----------|
+| **Decompte** | Billing statements | code, montant, dateDecompte, marche_id |
+| **OrdrePaiement** | Payment orders | code, montant, dateOrdre, decompte_id |
+| **Paiement** | Payment records | montant, datePaiement, ordrepaiement_id |
+| **Budget** | Budget allocations | code, designation, montant |
 | **CompteBancaire** | Bank accounts with RIB | rib (unique), designation, solde |
-| **AxeAnalytique** | Cost center/analytical axes | code, designation, pourcentage |
+
+### Analytical/Cost Center System
+| Entity | Purpose | Key Fields |
+|--------|---------|-----------|
+| **DimensionAnalytique** | Cost center hierarchies | code, designation, type |
+| **ValeurDimension** | Cost center values | dimensionanalytique_id, code, designation |
+| **ImputationAnalytique** | Cost allocations | marche_id, dimensionanalytique_id, valeur, pourcentage |
+| **Subvention** | Subsidies & grants | code, designation, montant, status |
 
 All entities inherit from `BaseEntity` with `id`, `createdAt`, `updatedAt` audit fields.
 
 Database constraints:
-- Unique constraints on CODE fields (CONVENTION_CODE, PROJET_CODE, etc.)
-- Check constraints on percentages (0-100) and dates (logical constraints)
+- Unique constraints on CODE fields
+- Check constraints on percentages (0-100%) and numeric validation
 - Foreign key relationships with appropriate cascading
 - RIB format validation (Moroccan bank account standard)
 
@@ -154,36 +183,71 @@ src/main/kotlin/ma/investpro/
 ├── InvestProApplication.kt          # Main entry point
 ├── config/                           # Spring configuration
 │   ├── SecurityConfig.kt            # JWT, CORS, security rules
-│   └── OpenApiConfig.kt             # Swagger/OpenAPI setup
+│   ├── OpenApiConfig.kt             # Swagger/OpenAPI setup
+│   └── RequestLoggingFilter.kt      # HTTP request/response logging
 ├── controller/                       # REST endpoints
-│   ├── AuthController.kt
-│   ├── BusinessControllers.kt
-│   ├── ExcelExportController.kt
-│   └── ReportingController.kt
+│   ├── AuthController.kt            # Authentication & JWT
+│   ├── ConventionController.kt      # Convention management
+│   ├── MarcheController.kt          # Procurement contracts
+│   ├── AvenantController.kt         # Contract amendments
+│   ├── DecompteController.kt        # Billing statements
+│   ├── DimensionAnalytiqueController.kt  # Cost centers
+│   ├── ImputationAnalytiqueController.kt # Cost allocations
+│   ├── ExcelExportController.kt     # Excel export endpoints
+│   └── ReportingController.kt       # Reporting & analytics
 ├── service/                          # Business logic
-│   ├── GenericCrudService.kt        # Base CRUD operations
-│   ├── AuthService.kt
-│   ├── BusinessServices.kt
-│   ├── ExcelExportService.kt        # Excel generation
-│   └── ReportingService.kt
-├── repository/                       # Data access
+│   ├── GenericCrudService.kt        # Base CRUD operations (all services extend this)
+│   ├── AuthService.kt               # Authentication logic
+│   ├── ConventionService.kt         # Convention calculations
+│   ├── MarcheService.kt             # Marche (market) operations
+│   ├── AvenantService.kt            # Amendment operations
+│   ├── DecompteService.kt           # Billing operations
+│   ├── DimensionAnalytiqueService.kt # Cost center management
+│   ├── ImputationAnalytiqueService.kt # Cost allocation logic
+│   ├── ExcelExportService.kt        # Excel generation (Apache POI)
+│   ├── ReportingService.kt          # Business reporting & stats
+│   └── UserDetailsServiceImpl.kt     # Spring Security integration
+├── repository/                       # Spring Data JPA interfaces
+│   ├── UserRepository.kt
+│   ├── ConventionRepository.kt
+│   ├── MarcheRepository.kt
+│   ├── DimensionAnalytiqueRepository.kt
+│   └── [Other entity repositories...]
 ├── entity/                           # JPA entities
+│   ├── BaseEntity.kt                # Abstract base with audit fields
+│   ├── User.kt
+│   ├── Convention.kt, ConventionPartenaire.kt
+│   ├── Marche.kt, MarcheLigne.kt, Avenant.kt
+│   ├── Decompte.kt, OrdrePaiement.kt, Paiement.kt
+│   ├── DimensionAnalytique.kt, ValeurDimension.kt, ImputationAnalytique.kt
+│   └── [Other business entities...]
 ├── dto/                              # Data Transfer Objects
-└── security/                         # JWT utilities
-    ├── JwtService.kt
-    └── JwtAuthenticationFilter.kt
+│   ├── AuthDTOs.kt                  # Auth request/response DTOs
+│   ├── BusinessDTOs.kt              # Business entity DTOs
+│   └── ReportingDTOs.kt             # Report response DTOs
+├── security/                         # JWT & authentication
+│   ├── JwtService.kt                # Token generation & validation
+│   └── JwtAuthenticationFilter.kt    # JWT extraction from requests
+└── util/                             # Utilities (if present)
+    └── ApiResponse.kt               # Consistent response wrapper
 
 src/main/resources/
-├── application.properties            # Dev configuration
-├── application-prod.properties       # Prod configuration
-└── db/migration/                     # Flyway SQL migrations
+├── application.properties            # Dev configuration (PostgreSQL local)
+├── application-prod.properties       # Prod configuration (env vars)
+└── db/migration/                     # Flyway SQL migrations (V1-V23+)
 
 src/test/kotlin/ma/investpro/
-└── integration/
-    ├── BaseIntegrationTest.kt       # Base for all integration tests
+└── integration/                      # Integration tests (use Testcontainers)
+    ├── BaseIntegrationTest.kt       # Base class with database setup
     ├── AuthIntegrationTest.kt
-    └── DatabaseConnectionTest.kt
+    └── [Other integration tests...]
 ```
+
+Key architectural files:
+- **GenericCrudService.kt** - Base class reducing boilerplate (all entity services extend this)
+- **JwtService.kt** - Token generation, validation, claims extraction
+- **ExcelExportService.kt** - Uses Apache POI for Excel generation
+- **SecurityConfig.kt** - Defines security filter chain, CORS, and method-level security
 
 ## Working with Database Migrations
 
@@ -251,12 +315,46 @@ SPRING_PROFILES_ACTIVE    # Set to 'prod' for production
 
 See `.env.example` for template.
 
-## Recent Changes & Migration Notes
+## Recent Updates & Architecture Notes
 
-- **Java → Kotlin Migration:** Project was recently migrated from Java/Maven to Kotlin/Gradle, reducing boilerplate by ~40%
-- **Gradle Build:** Uses Kotlin DSL (`build.gradle.kts`) instead of Groovy
-- **Docker:** Dockerfile uses multi-stage build (may need updating from Maven references)
-- **Testing:** Integration tests use Testcontainers with real PostgreSQL instances
+- **Spring Boot 3.3.5:** Latest stable version with native compilation support via GraalVM
+- **Kotlin 2.0.21:** Latest Kotlin with improved performance and null safety
+- **Java → Kotlin Migration:** Project completed migration from Java/Maven to Kotlin/Gradle, reducing boilerplate by ~40%
+- **Gradle Build:** Uses Kotlin DSL (`build.gradle.kts`) instead of Groovy for type-safe configuration
+- **Docker:** Multi-stage build for optimized image size (see Dockerfile)
+- **Testing:** Integration tests use Testcontainers with real PostgreSQL instances and Kotest framework
+- **Analytics System:** Integrated analytical/cost center system (Dimension, ValeurDimension, ImputationAnalytique) for financial tracking
+- **Reporting:** Advanced reporting capabilities with Excel export via Apache POI
+
+## Specialized Services & Features
+
+### ExcelExportService
+Generates Excel reports with formatting:
+- Uses Apache POI (`poi-ooxml`) for .xlsx generation
+- Used by `/api/v1/exports/*` endpoints
+- Supports styled headers, merged cells, data formatting
+
+### ReportingService
+Provides business analytics:
+- Convention statistics and KPIs
+- Marche aggregations and summaries
+- Commission tracking and reporting
+- Cost allocation analysis via analytical dimensions
+
+### DimensionAnalytiqueService
+Manages cost center hierarchies:
+- Create/update/delete analytical dimensions
+- Link to procurement contracts via ImputationAnalytique
+- Support percentage-based cost allocation
+- Multi-level hierarchy support
+
+### Authentication Flow
+1. User logs in via `POST /api/auth/login` with email/password
+2. AuthService validates credentials and returns JWT token
+3. JwtService generates token with claims (userId, roles, email)
+4. Token stored on client and sent in `Authorization: Bearer <token>` header
+5. JwtAuthenticationFilter extracts and validates token on each request
+6. SecurityFilterChain enforces role-based access control via `@PreAuthorize`
 
 ## Important Notes for Development
 

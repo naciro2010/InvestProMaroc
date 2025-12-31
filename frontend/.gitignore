@@ -26,4 +26,4 @@ dist-ssr
 # Environment
 .env
 .env.local
-.env.production
+# .env.production is NOT ignored - we need it for deployment

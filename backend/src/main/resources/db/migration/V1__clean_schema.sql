@@ -9,6 +9,93 @@
 -- ========================================================================================================
 
 -- ========================================================================================================
+-- SECTION 0: CLEANUP - DROP ALL EXISTING OBJECTS (Idempotent migration)
+-- ========================================================================================================
+
+-- Drop all triggers (to avoid constraint violations when dropping tables)
+DO $$
+DECLARE
+    trigger_record RECORD;
+BEGIN
+    FOR trigger_record IN
+        SELECT trigger_name, event_object_table
+        FROM information_schema.triggers
+        WHERE trigger_schema = 'public'
+    LOOP
+        EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I CASCADE',
+            trigger_record.trigger_name,
+            trigger_record.event_object_table);
+    END LOOP;
+END $$;
+
+-- Drop all trigger functions
+DO $$
+DECLARE
+    func_record RECORD;
+BEGIN
+    FOR func_record IN
+        SELECT routine_name, routine_schema
+        FROM information_schema.routines
+        WHERE routine_schema = 'public'
+        AND routine_name LIKE 'trigger_%'
+    LOOP
+        EXECUTE format('DROP FUNCTION IF EXISTS %I() CASCADE', func_record.routine_name);
+    END LOOP;
+END $$;
+
+-- Drop all functions
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+
+-- Drop all tables (in reverse order of foreign keys)
+DROP TABLE IF EXISTS paiement_imputations CASCADE;
+DROP TABLE IF EXISTS paiements CASCADE;
+DROP TABLE IF EXISTS op_imputations CASCADE;
+DROP TABLE IF EXISTS ordres_paiement CASCADE;
+DROP TABLE IF EXISTS decompte_imputations CASCADE;
+DROP TABLE IF EXISTS decompte_retenues CASCADE;
+DROP TABLE IF EXISTS decomptes CASCADE;
+DROP TABLE IF EXISTS bons_commande CASCADE;
+DROP TABLE IF EXISTS avenant_marches CASCADE;
+DROP TABLE IF EXISTS marche_lignes CASCADE;
+DROP TABLE IF EXISTS marches CASCADE;
+DROP TABLE IF EXISTS commissions CASCADE;
+DROP TABLE IF EXISTS depenses_investissement CASCADE;
+DROP TABLE IF EXISTS imputations_analytiques CASCADE;
+DROP TABLE IF EXISTS imputations_previsionnelles CASCADE;
+DROP TABLE IF EXISTS versements_previsionnels CASCADE;
+DROP TABLE IF EXISTS echeances_subvention CASCADE;
+DROP TABLE IF EXISTS subventions CASCADE;
+DROP TABLE IF EXISTS lignes_budget CASCADE;
+DROP TABLE IF EXISTS budgets CASCADE;
+DROP TABLE IF EXISTS avenants CASCADE;
+DROP TABLE IF EXISTS convention_partenaires CASCADE;
+DROP TABLE IF EXISTS conventions CASCADE;
+DROP TABLE IF EXISTS valeurs_dimensions CASCADE;
+DROP TABLE IF EXISTS dimensions_analytiques CASCADE;
+DROP TABLE IF EXISTS comptes_bancaires CASCADE;
+DROP TABLE IF EXISTS fournisseurs CASCADE;
+DROP TABLE IF EXISTS partenaires CASCADE;
+DROP TABLE IF EXISTS user_roles CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- Drop all ENUM types
+DROP TYPE IF EXISTS type_convention CASCADE;
+DROP TYPE IF EXISTS statut_convention CASCADE;
+DROP TYPE IF EXISTS statut_marche CASCADE;
+DROP TYPE IF EXISTS statut_avenant CASCADE;
+DROP TYPE IF EXISTS type_depense CASCADE;
+DROP TYPE IF EXISTS statut_depense CASCADE;
+DROP TYPE IF EXISTS base_calcul CASCADE;
+DROP TYPE IF EXISTS statut_bon_commande CASCADE;
+DROP TYPE IF EXISTS statut_decompte CASCADE;
+DROP TYPE IF EXISTS type_retenue CASCADE;
+DROP TYPE IF EXISTS statut_budget CASCADE;
+DROP TYPE IF EXISTS mode_paiement CASCADE;
+DROP TYPE IF EXISTS statut_op CASCADE;
+DROP TYPE IF EXISTS statut_echeance CASCADE;
+DROP TYPE IF EXISTS type_imputation CASCADE;
+
+-- ========================================================================================================
 -- SECTION 1: ENUMERATIONS (Custom PostgreSQL ENUM Types)
 -- ========================================================================================================
 

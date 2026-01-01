@@ -41,9 +41,12 @@ class PaiementService(
     fun create(paiement: Paiement): Paiement {
         require(paiement.id == null) { "Cannot create paiement with existing ID" }
 
+        val ordrePaiementId = paiement.ordrePaiement.id
+            ?: throw IllegalArgumentException("L'ID de l'ordre de paiement est requis")
+
         // Vérifier que l'ordre de paiement existe
-        val ordrePaiement = ordrePaiementRepository.findByIdOrNull(paiement.ordrePaiement.id!!)
-            ?: throw IllegalArgumentException("Ordre de paiement avec ID ${paiement.ordrePaiement.id} non trouvé")
+        val ordrePaiement = ordrePaiementRepository.findByIdOrNull(ordrePaiementId)
+            ?: throw IllegalArgumentException("Ordre de paiement avec ID $ordrePaiementId non trouvé")
 
         // Vérifier que la référence n'existe pas déjà
         if (paiementRepository.existsByReferencePaiement(paiement.referencePaiement)) {

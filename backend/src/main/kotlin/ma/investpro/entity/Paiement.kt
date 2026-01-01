@@ -101,8 +101,8 @@ class PaiementImputation(
      * Calcule l'écart RÉEL vs BUDGET
      */
     fun calculerEcart() {
-        if (montantBudgete != null) {
-            ecart = montantReel - montantBudgete!!
+        montantBudgete?.let { budgete ->
+            ecart = montantReel - budgete
         }
     }
 

@@ -290,13 +290,15 @@ class ReportingService(
         val topFournisseurs = allDepenses
             .groupBy { it.fournisseur }
             .mapNotNull { (fournisseur, depenses) ->
-                fournisseur?.let {
-                    TopFournisseurStats(
-                        fournisseurId = it.id!!,
-                        fournisseurNom = it.raisonSociale,
-                        montantTotal = depenses.sumOf { dep -> dep.montantTtc },
-                        nombreDepenses = depenses.size.toLong()
-                    )
+                fournisseur?.let { f ->
+                    f.id?.let { id ->
+                        TopFournisseurStats(
+                            fournisseurId = id,
+                            fournisseurNom = f.raisonSociale,
+                            montantTotal = depenses.sumOf { dep -> dep.montantTtc },
+                            nombreDepenses = depenses.size.toLong()
+                        )
+                    }
                 }
             }
             .sortedByDescending { it.montantTotal }

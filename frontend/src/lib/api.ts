@@ -65,8 +65,19 @@ api.interceptors.response.use(
 
     // Si erreur 403 (Forbidden) - Pas de permission
     if (error.response?.status === 403) {
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const roles = user?.roles?.join(', ') || 'Aucun rôle'
+      const endpoint = error.config?.url || 'inconnu'
+
+      console.error('Erreur 403 - Accès refusé:', {
+        endpoint,
+        userRoles: roles,
+        user: user?.username,
+        errorMessage: error.response?.data?.message
+      })
+
       dispatchToastEvent(
-        '❌ Vous n\'avez pas les droits nécessaires pour effectuer cette action. Seuls les administrateurs peuvent modifier ou supprimer cet élément.',
+        `❌ Accès refusé à ${endpoint}. Vos rôles actuels: ${roles}. ${error.response?.data?.message || 'Permissions insuffisantes.'}`,
         'error'
       )
     }

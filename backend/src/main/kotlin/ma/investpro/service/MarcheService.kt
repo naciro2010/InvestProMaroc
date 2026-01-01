@@ -19,150 +19,65 @@ class MarcheService(
 ) {
 
     fun findAll(): List<Marche> {
-        logger.info {
-            """
-            📋 LISTE MARCHÉS - DÉBUT
-            ═══════════════════════════════════════════════════════════════════
-            """.trimIndent()
+        logger.debug { "Fetching all marches" }
+        return marcheRepository.findAll().also { marches ->
+            logger.info { "Found ${marches.size} marches" }
         }
-
-        val marches = marcheRepository.findAll()
-
-        logger.info {
-            """
-            ✅ LISTE MARCHÉS RÉCUPÉRÉE
-            ───────────────────────────────────────────────────────────────────
-            📊 Nombre total   : ${marches.size}
-            🟢 EN_COURS       : ${marches.count { it.statut == StatutMarche.EN_COURS }}
-            ✅ VALIDE         : ${marches.count { it.statut == StatutMarche.VALIDE }}
-            🏁 TERMINE        : ${marches.count { it.statut == StatutMarche.TERMINE }}
-            ❌ ANNULE         : ${marches.count { it.statut == StatutMarche.ANNULE }}
-            ═══════════════════════════════════════════════════════════════════
-            """.trimIndent()
-        }
-
-        return marches
     }
 
     fun findById(id: Long): Marche {
-        logger.info {
-            """
-            🔍 RECHERCHE MARCHÉ PAR ID
-            ───────────────────────────────────────────────────────────────────
-            🆔 ID             : $id
-            """.trimIndent()
-        }
-
-        val marche = marcheRepository.findById(id)
+        logger.debug { "Fetching marche by ID: $id" }
+        return marcheRepository.findById(id)
             .orElseThrow {
-                logger.error { "❌ MARCHÉ NON TROUVÉ - ID: $id" }
-                IllegalArgumentException("Marché avec ID $id non trouvé")
+                logger.warn { "Marche not found - ID: $id" }
+                IllegalArgumentException("Marche avec ID $id non trouve")
             }
-
-        logger.info {
-            """
-            ✅ MARCHÉ TROUVÉ
-            ───────────────────────────────────────────────────────────────────
-            🆔 ID             : ${marche.id}
-            📄 N° Marché      : ${marche.numeroMarche}
-            📋 Objet          : ${marche.objet.take(50)}...
-            🏢 Fournisseur    : ${marche.fournisseur?.raisonSociale ?: "N/A"}
-            💰 Montant TTC    : ${marche.montantTtc} MAD
-            📈 Statut         : ${marche.statut}
-            ═══════════════════════════════════════════════════════════════════
-            """.trimIndent()
-        }
-
-        return marche
     }
 
     fun create(marche: Marche): Marche {
-        logger.info {
-            """
-            ➕ CRÉATION MARCHÉ - DÉBUT
-            ═══════════════════════════════════════════════════════════════════
-            📄 N° Marché      : ${marche.numeroMarche}
-            📋 N° AO          : ${marche.numAo ?: "N/A"}
-            📅 Date           : ${marche.dateMarche}
-            🏢 Fournisseur ID : ${marche.fournisseur?.id}
-            💰 Montant HT     : ${marche.montantHt} MAD
-            💰 Montant TTC    : ${marche.montantTtc} MAD
-            📈 Statut         : ${marche.statut}
-            """.trimIndent()
-        }
+        logger.info { "Creating marche: ${marche.numeroMarche}" }
 
         // Validation
         if (marcheRepository.existsByNumeroMarche(marche.numeroMarche)) {
-            logger.warn {
-                """
-                ⚠️  CRÉATION MARCHÉ ÉCHOUÉE - Numéro déjà existant
-                ───────────────────────────────────────────────────────────────────
-                📄 N° Marché      : ${marche.numeroMarche}
-                """.trimIndent()
-            }
-            throw IllegalArgumentException("Un marché avec le numéro ${marche.numeroMarche} existe déjà")
+            logger.warn { "Marche creation failed - numero already exists: ${marche.numeroMarche}" }
+            throw IllegalArgumentException("Un marche avec le numero ${marche.numeroMarche} existe deja")
         }
 
-        // Vérifier que le fournisseur existe
-        if (marche.fournisseur?.id != null) {
-            val fournisseurExists = fournisseurRepository.existsById(marche.fournisseur!!.id!!)
-            if (!fournisseurExists) {
-                logger.error { "❌ FOURNISSEUR NON TROUVÉ - ID: ${marche.fournisseur!!.id}" }
-                throw IllegalArgumentException("Fournisseur avec ID ${marche.fournisseur!!.id} non trouvé")
+        // Verifier que le fournisseur existe
+        marche.fournisseur?.id?.let { fournisseurId ->
+            if (!fournisseurRepository.existsById(fournisseurId)) {
+                logger.warn { "Fournisseur not found - ID: $fournisseurId" }
+                throw IllegalArgumentException("Fournisseur avec ID $fournisseurId non trouve")
             }
         }
 
-        // Calculer les montants si nécessaire
+        // Calculer les montants si necessaire
         if (marche.montantTva == BigDecimal.ZERO && marche.montantHt > BigDecimal.ZERO) {
             marche.montantTva = marche.montantHt.multiply(marche.tauxTva).divide(BigDecimal(100))
             marche.montantTtc = marche.montantHt.add(marche.montantTva)
-            logger.debug { "💵 Calcul automatique - TVA: ${marche.montantTva}, TTC: ${marche.montantTtc}" }
+            logger.debug { "Auto-calculated TVA: ${marche.montantTva}, TTC: ${marche.montantTtc}" }
         }
 
-        val savedMarche = marcheRepository.save(marche)
-
-        logger.info {
-            """
-            ✅ MARCHÉ CRÉÉ AVEC SUCCÈS
-            ───────────────────────────────────────────────────────────────────
-            🆔 ID             : ${savedMarche.id}
-            📄 N° Marché      : ${savedMarche.numeroMarche}
-            🏢 Fournisseur    : ${savedMarche.fournisseur?.raisonSociale ?: "N/A"}
-            💰 Montant TTC    : ${savedMarche.montantTtc} MAD
-            📈 Statut         : ${savedMarche.statut}
-            ═══════════════════════════════════════════════════════════════════
-            """.trimIndent()
+        return marcheRepository.save(marche).also { saved ->
+            logger.info { "Marche created - ID: ${saved.id}, numero: ${saved.numeroMarche}" }
         }
-
-        return savedMarche
     }
 
     fun update(id: Long, marche: Marche): Marche {
-        logger.info {
-            """
-            🔄 MISE À JOUR MARCHÉ - DÉBUT
-            ═══════════════════════════════════════════════════════════════════
-            🆔 ID             : $id
-            📄 N° Marché      : ${marche.numeroMarche}
-            📈 Nouveau statut : ${marche.statut}
-            """.trimIndent()
-        }
+        logger.info { "Updating marche ID: $id" }
 
         val existingMarche = marcheRepository.findById(id)
             .orElseThrow {
-                logger.error { "❌ MARCHÉ NON TROUVÉ - ID: $id" }
-                IllegalArgumentException("Marché avec ID $id non trouvé")
+                logger.warn { "Marche not found for update - ID: $id" }
+                IllegalArgumentException("Marche avec ID $id non trouve")
             }
 
-        // Log des changements
+        // Log significant changes
         if (existingMarche.statut != marche.statut) {
-            logger.info { "📈 Changement statut: ${existingMarche.statut} → ${marche.statut}" }
-        }
-        if (existingMarche.montantTtc != marche.montantTtc) {
-            logger.info { "💰 Changement montant: ${existingMarche.montantTtc} → ${marche.montantTtc} MAD" }
+            logger.info { "Marche $id status change: ${existingMarche.statut} -> ${marche.statut}" }
         }
 
-        // Mise à jour des champs
+        // Mise a jour des champs
         existingMarche.apply {
             numeroMarche = marche.numeroMarche
             numAo = marche.numAo
@@ -181,95 +96,46 @@ class MarcheService(
             remarques = marche.remarques
         }
 
-        val updatedMarche = marcheRepository.save(existingMarche)
-
-        logger.info {
-            """
-            ✅ MARCHÉ MIS À JOUR
-            ───────────────────────────────────────────────────────────────────
-            🆔 ID             : ${updatedMarche.id}
-            📄 N° Marché      : ${updatedMarche.numeroMarche}
-            📈 Statut         : ${updatedMarche.statut}
-            💰 Montant TTC    : ${updatedMarche.montantTtc} MAD
-            ═══════════════════════════════════════════════════════════════════
-            """.trimIndent()
+        return marcheRepository.save(existingMarche).also { updated ->
+            logger.info { "Marche updated - ID: ${updated.id}" }
         }
-
-        return updatedMarche
     }
 
     fun delete(id: Long) {
-        logger.info {
-            """
-            🗑️  SUPPRESSION MARCHÉ - DÉBUT
-            ═══════════════════════════════════════════════════════════════════
-            🆔 ID             : $id
-            """.trimIndent()
-        }
+        logger.info { "Deleting marche ID: $id" }
 
         val marche = marcheRepository.findById(id)
             .orElseThrow {
-                logger.error { "❌ MARCHÉ NON TROUVÉ - ID: $id" }
-                IllegalArgumentException("Marché avec ID $id non trouvé")
+                logger.warn { "Marche not found for deletion - ID: $id" }
+                IllegalArgumentException("Marche avec ID $id non trouve")
             }
 
-        // Vérifier s'il y a des bons de commande ou décomptes
+        // Log cascade warning
         val hasRelations = marche.bonsCommande.isNotEmpty() || marche.decomptes.isNotEmpty()
-
         if (hasRelations) {
-            logger.warn {
-                """
-                ⚠️  SUPPRESSION AVEC CASCADE
-                ───────────────────────────────────────────────────────────────────
-                📄 N° Marché      : ${marche.numeroMarche}
-                📦 Bons commande  : ${marche.bonsCommande.size}
-                📊 Décomptes      : ${marche.decomptes.size}
-                ⚠️  Ces éléments seront aussi supprimés (CASCADE)
-                """.trimIndent()
-            }
+            logger.warn { "Cascade delete: marche ${marche.numeroMarche} has ${marche.bonsCommande.size} bons and ${marche.decomptes.size} decomptes" }
         }
 
         marcheRepository.delete(marche)
-
-        logger.info {
-            """
-            ✅ MARCHÉ SUPPRIMÉ
-            ───────────────────────────────────────────────────────────────────
-            🆔 ID             : $id
-            📄 N° Marché      : ${marche.numeroMarche}
-            ═══════════════════════════════════════════════════════════════════
-            """.trimIndent()
-        }
+        logger.info { "Marche deleted - ID: $id, numero: ${marche.numeroMarche}" }
     }
 
     fun findByFournisseur(fournisseurId: Long): List<Marche> {
-        logger.info { "🔍 Recherche marchés pour fournisseur ID: $fournisseurId" }
-        val marches = marcheRepository.findByFournisseurId(fournisseurId)
-        logger.info { "✅ ${marches.size} marché(s) trouvé(s) pour le fournisseur $fournisseurId" }
-        return marches
+        logger.debug { "Fetching marches for fournisseur ID: $fournisseurId" }
+        return marcheRepository.findByFournisseurId(fournisseurId)
     }
 
     fun findMarchesEnRetard(): List<Marche> {
-        logger.info { "⏰ Recherche des marchés en retard..." }
-        val marches = marcheRepository.findMarchesEnRetard()
-
-        logger.warn {
-            """
-            ⚠️  MARCHÉS EN RETARD DÉTECTÉS
-            ───────────────────────────────────────────────────────────────────
-            📊 Nombre         : ${marches.size}
-            ${marches.joinToString("\n") { "   - ${it.numeroMarche}: ${it.dateFinPrevue}" }}
-            ═══════════════════════════════════════════════════════════════════
-            """.trimIndent()
+        logger.debug { "Fetching overdue marches" }
+        return marcheRepository.findMarchesEnRetard().also { marches ->
+            if (marches.isNotEmpty()) {
+                logger.warn { "Found ${marches.size} overdue marches" }
+            }
         }
-
-        return marches
     }
 
     fun findByStatut(statut: StatutMarche): List<Marche> {
-        logger.info { "🔍 Recherche marchés avec statut: $statut" }
-        val marches = marcheRepository.findByStatut(statut)
-        logger.info { "✅ ${marches.size} marché(s) avec statut $statut" }
-        return marches
+        logger.debug { "Fetching marches with status: $statut" }
+        return marcheRepository.findByStatut(statut)
     }
 }

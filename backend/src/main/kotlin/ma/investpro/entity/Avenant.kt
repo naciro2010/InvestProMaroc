@@ -99,9 +99,9 @@ class Avenant(
      * Calcule l'impact sur le montant
      */
     fun calculerImpactMontant() {
-        if (montantAvant != null && montantApres != null) {
-            impactMontant = montantApres!! - montantAvant!!
-        }
+        val avant = montantAvant ?: return
+        val apres = montantApres ?: return
+        impactMontant = apres - avant
     }
 
     /**

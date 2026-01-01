@@ -131,8 +131,9 @@ class Convention(
      * Retourne le taux de commission effectif (avec héritage si sous-convention)
      */
     fun getTauxCommissionEffectif(): BigDecimal {
-        return if (heriteParametres && parentConvention != null) {
-            surchargeTauxCommission ?: parentConvention!!.getTauxCommissionEffectif()
+        val parent = parentConvention
+        return if (heriteParametres && parent != null) {
+            surchargeTauxCommission ?: parent.getTauxCommissionEffectif()
         } else {
             tauxCommission
         }
@@ -142,8 +143,9 @@ class Convention(
      * Retourne la base de calcul effective (avec héritage si sous-convention)
      */
     fun getBaseCalculEffective(): String {
-        return if (heriteParametres && parentConvention != null) {
-            surchargeBaseCalcul ?: parentConvention!!.getBaseCalculEffective()
+        val parent = parentConvention
+        return if (heriteParametres && parent != null) {
+            surchargeBaseCalcul ?: parent.getBaseCalculEffective()
         } else {
             baseCalcul
         }

@@ -35,9 +35,12 @@ class DecompteService(
     fun create(decompte: Decompte): Decompte {
         require(decompte.id == null) { "Cannot create decompte with existing ID" }
 
+        val marcheId = decompte.marche.id
+            ?: throw IllegalArgumentException("L'ID du marché est requis")
+
         // Vérifier que le marché existe
-        val marche = marcheRepository.findByIdOrNull(decompte.marche.id!!)
-            ?: throw IllegalArgumentException("Marché avec ID ${decompte.marche.id} non trouvé")
+        marcheRepository.findByIdOrNull(marcheId)
+            ?: throw IllegalArgumentException("Marché avec ID $marcheId non trouvé")
 
         // Calculer les montants via les méthodes de l'entité
         decompte.calculerMontantTTC()
@@ -46,7 +49,7 @@ class DecompteService(
 
         // Calculer le cumul
         val decomptesPrecedents = decompteRepository.findByMarcheIdAndStatutIn(
-            marche.id!!,
+            marcheId,
             listOf(StatutDecompte.VALIDE, StatutDecompte.PAYE_TOTAL)
         )
         decompte.cumulPrecedent = decomptesPrecedents.sumOf { it.montantTTC }

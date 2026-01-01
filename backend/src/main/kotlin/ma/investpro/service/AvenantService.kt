@@ -43,9 +43,12 @@ class AvenantService(
             "Avenant avec numéro ${avenant.numeroAvenant} existe déjà"
         }
 
+        val conventionId = convention.id
+            ?: throw IllegalArgumentException("L'ID de la convention est requis")
+
         // Calculer automatiquement la version résultante
         val nbAvenantsValides = avenantRepository.countByConventionIdAndStatut(
-            convention.id!!,
+            conventionId,
             StatutAvenant.VALIDE
         )
         avenant.versionResultante = "V${nbAvenantsValides + 1}"

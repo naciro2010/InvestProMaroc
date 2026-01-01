@@ -109,8 +109,10 @@ class AvenantMarche(
      * Calcule le pourcentage de variation financière
      */
     fun calculerPourcentageVariation() {
-        if (montantInitialHT != null && montantInitialHT!! > BigDecimal.ZERO && montantAvenantHT != null) {
-            pourcentageVariation = (montantAvenantHT!! * BigDecimal(100)).divide(montantInitialHT!!, 2, java.math.RoundingMode.HALF_UP)
+        val initial = montantInitialHT ?: return
+        val avenant = montantAvenantHT ?: return
+        if (initial > BigDecimal.ZERO) {
+            pourcentageVariation = (avenant * BigDecimal(100)).divide(initial, 2, java.math.RoundingMode.HALF_UP)
         }
     }
 
@@ -118,18 +120,18 @@ class AvenantMarche(
      * Calcule le montant après avenant
      */
     fun calculerMontantApres() {
-        if (montantInitialHT != null && montantAvenantHT != null) {
-            montantApresHT = montantInitialHT!! + montantAvenantHT!!
-        }
+        val initial = montantInitialHT ?: return
+        val avenant = montantAvenantHT ?: return
+        montantApresHT = initial + avenant
     }
 
     /**
      * Calcule le délai après avenant
      */
     fun calculerDelaiApres() {
-        if (delaiInitialMois != null && delaiSupplementaireMois != null) {
-            delaiApresMois = delaiInitialMois!! + delaiSupplementaireMois!!
-        }
+        val initial = delaiInitialMois ?: return
+        val supplementaire = delaiSupplementaireMois ?: return
+        delaiApresMois = initial + supplementaire
     }
 
     /**

@@ -35,12 +35,15 @@ class BudgetService(
     fun create(budget: Budget): Budget {
         require(budget.id == null) { "Cannot create budget with existing ID" }
 
+        val conventionId = budget.convention.id
+            ?: throw IllegalArgumentException("L'ID de la convention est requis")
+
         // Vérifier que la convention existe
-        val convention = conventionRepository.findByIdOrNull(budget.convention.id!!)
-            ?: throw IllegalArgumentException("Convention avec ID ${budget.convention.id} non trouvée")
+        val convention = conventionRepository.findByIdOrNull(conventionId)
+            ?: throw IllegalArgumentException("Convention avec ID $conventionId non trouvée")
 
         // Vérifier que la version n'existe pas déjà pour cette convention
-        if (budgetRepository.existsByConventionIdAndVersion(convention.id!!, budget.version)) {
+        if (budgetRepository.existsByConventionIdAndVersion(conventionId, budget.version)) {
             throw IllegalArgumentException("Un budget avec la version ${budget.version} existe déjà pour cette convention")
         }
 
@@ -56,10 +59,11 @@ class BudgetService(
         }
 
         // Si c'est une révision (V1, V2, etc.), calculer le delta
-        if (budget.version != "V0" && budget.budgetPrecedentId != null) {
-            val budgetPrecedent = findById(budget.budgetPrecedentId!!)
-            if (budgetPrecedent != null) {
-                budget.calculerDelta(budgetPrecedent.totalBudget)
+        if (budget.version != "V0") {
+            budget.budgetPrecedentId?.let { precedentId ->
+                findById(precedentId)?.let { budgetPrecedent ->
+                    budget.calculerDelta(budgetPrecedent.totalBudget)
+                }
             }
         }
 

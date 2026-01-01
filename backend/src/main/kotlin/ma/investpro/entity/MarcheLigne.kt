@@ -80,11 +80,7 @@ class MarcheLigne(
      * Calcule le montant HT à partir de la quantité et du prix unitaire
      */
     fun calculerMontantHT() {
-        montantHT = if (quantite != null) {
-            quantite!! * prixUnitaireHT
-        } else {
-            prixUnitaireHT // Forfait
-        }
+        montantHT = quantite?.multiply(prixUnitaireHT) ?: prixUnitaireHT // Forfait si pas de quantité
     }
 
     /**

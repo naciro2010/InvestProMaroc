@@ -41,9 +41,12 @@ class OrdrePaiementService(
     fun create(ordrePaiement: OrdrePaiement): OrdrePaiement {
         require(ordrePaiement.id == null) { "Cannot create ordre de paiement with existing ID" }
 
+        val decompteId = ordrePaiement.decompte.id
+            ?: throw IllegalArgumentException("L'ID du décompte est requis")
+
         // Vérifier que le décompte existe
-        val decompte = decompteRepository.findByIdOrNull(ordrePaiement.decompte.id!!)
-            ?: throw IllegalArgumentException("Décompte avec ID ${ordrePaiement.decompte.id} non trouvé")
+        val decompte = decompteRepository.findByIdOrNull(decompteId)
+            ?: throw IllegalArgumentException("Décompte avec ID $decompteId non trouvé")
 
         // Vérifier que le numéro OP n'existe pas déjà
         if (ordrePaiementRepository.existsByNumeroOP(ordrePaiement.numeroOP)) {

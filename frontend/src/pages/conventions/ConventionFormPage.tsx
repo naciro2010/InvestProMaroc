@@ -10,7 +10,7 @@ interface ConventionFormData {
   code: string
   libelle: string
   typeConvention: 'CADRE' | 'NON_CADRE' | 'SPECIFIQUE' | 'AVENANT'
-  statut: 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
+  statut?: 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
   dateConvention: string
   budget: number
   tauxCommission: number
@@ -29,7 +29,7 @@ export default function ConventionFormPage() {
     code: '',
     libelle: '',
     typeConvention: 'CADRE',
-    statut: 'EN_COURS',
+    statut: 'BROUILLON', // Toujours créer en BROUILLON selon le workflow
     dateConvention: new Date().toISOString().split('T')[0],
     budget: 0,
     tauxCommission: 2.5,
@@ -64,17 +64,39 @@ export default function ConventionFormPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    console.log('=== Soumission du formulaire ===')
+    console.log('Mode:', isEdit ? 'Édition' : 'Création')
+    console.log('Données du formulaire:', formData)
+
     try {
       setLoading(true)
+
+      let response
       if (isEdit) {
-        await api.put(`/api/conventions/${id}`, formData)
+        console.log(`Mise à jour de la convention ${id}...`)
+        response = await api.put(`/api/conventions/${id}`, formData)
       } else {
-        await api.post('/api/conventions', formData)
+        console.log('Création d\'une nouvelle convention...')
+        response = await api.post('/api/conventions', formData)
       }
+
+      console.log('Réponse du serveur:', response.data)
+      alert(isEdit ? 'Convention mise à jour avec succès!' : 'Convention créée avec succès!')
       navigate('/conventions')
     } catch (error: any) {
       console.error('Erreur lors de la sauvegarde:', error)
-      alert(error.response?.data?.message || 'Erreur lors de la sauvegarde')
+      console.error('Détails de l\'erreur:', {
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        data: error.response?.data
+      })
+
+      const errorMessage = error.response?.data?.message ||
+                          error.response?.data?.error ||
+                          error.message ||
+                          'Erreur lors de la sauvegarde'
+      alert(`Erreur: ${errorMessage}`)
     } finally {
       setLoading(false)
     }
@@ -186,31 +208,30 @@ export default function ConventionFormPage() {
                     onChange={handleChange}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gitlab-orange focus:border-transparent"
                   >
-                    <option value="CADRE">Cadre</option>
-                    <option value="NON_CADRE">Non-Cadre</option>
-                    <option value="SPECIFIQUE">Spécifique</option>
+                    <option value="CADRE">Convention Cadre</option>
+                    <option value="NON_CADRE">Convention Non-Cadre</option>
+                    <option value="SPECIFIQUE">Convention Spécifique</option>
                     <option value="AVENANT">Avenant</option>
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Statut <span className="text-danger-500">*</span>
-                  </label>
-                  <select
-                    name="statut"
-                    required
-                    value={formData.statut}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gitlab-orange focus:border-transparent"
-                  >
-                    <option value="EN_COURS">En cours</option>
-                    <option value="VALIDEE">Validée</option>
-                    <option value="ACHEVE">Achevé</option>
-                    <option value="EN_RETARD">En retard</option>
-                    <option value="ANNULE">Annulé</option>
-                  </select>
-                </div>
+                {/* Afficher le statut uniquement en mode édition et il n'est pas modifiable - géré par le workflow */}
+                {isEdit && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Statut
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.statut || 'BROUILLON'}
+                      disabled
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Le statut est géré par le workflow (Soumettre → Valider)
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Row 4 */}

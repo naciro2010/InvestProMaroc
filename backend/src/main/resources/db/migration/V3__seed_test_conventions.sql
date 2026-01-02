@@ -120,10 +120,11 @@ INSERT INTO partenaires (code, raison_sociale, type_partenaire, actif) VALUES
 ('PART-004', 'Entreprise BTP Moderne SARL', 'ENTREPRISE_PRIVEE', true)
 ON CONFLICT (code) DO NOTHING;
 
--- Link partenaires to conventions
-INSERT INTO convention_partenaires (convention_id, partenaire_id, role_partenaire) VALUES
-(1, 1, 'BENEFICIAIRE'),
-(1, 2, 'COFINANCEUR'),
-(2, 2, 'BENEFICIAIRE'),
-(3, 3, 'BENEFICIAIRE'),
-(4, 4, 'COFINANCEUR');
+-- Link partenaires to conventions (using actual schema columns)
+INSERT INTO convention_partenaires (convention_id, partenaire_id, budget_alloue, pourcentage, est_maitre_oeuvre) VALUES
+(1, 1, 25000000.00, 50.00, true),
+(1, 2, 25000000.00, 50.00, false),
+(2, 2, 25000000.00, 100.00, true),
+(3, 3, 15000000.00, 100.00, true),
+(4, 4, 35000000.00, 100.00, false)
+ON CONFLICT (convention_id, partenaire_id) DO NOTHING;

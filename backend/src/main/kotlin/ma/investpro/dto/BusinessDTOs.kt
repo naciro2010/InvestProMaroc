@@ -184,3 +184,33 @@ data class ApiResponse<T>(
     val message: String,
     val data: T? = null
 )
+
+// Budget Statistics DTO
+data class BudgetStatistiques(
+    val total: Int,
+    val brouillon: Int,
+    val soumis: Int,
+    val valides: Int,
+    val rejetes: Int,
+    val archives: Int,
+    val montantTotal: BigDecimal
+)
+
+// Ordre Paiement Statistics DTO
+data class OrdrePaiementStatistiques(
+    val total: Int,
+    val brouillon: Int,
+    val valides: Int,
+    val executes: Int,
+    val rejetes: Int,
+    val annules: Int,
+    val montantTotal: BigDecimal
+)
+
+// Paiement Statistics DTO
+data class PaiementStatistiques(
+    val total: Int,
+    val montantTotal: BigDecimal,
+    val paiementsPartiels: Int,
+    val parMode: Map<String, BigDecimal>
+)

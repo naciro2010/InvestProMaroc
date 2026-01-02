@@ -1,5 +1,7 @@
 package ma.investpro.controller
 
+import ma.investpro.dto.ApiResponse
+import ma.investpro.dto.OrdrePaiementStatistiques
 import ma.investpro.entity.OrdrePaiement
 import ma.investpro.service.OrdrePaiementService
 import mu.KotlinLogging
@@ -16,187 +18,187 @@ private val logger = KotlinLogging.logger {}
 class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementService) {
 
     @GetMapping
-    fun getAllOrdresPaiement(): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: GET /api/ordres-paiement" }
+    fun getAllOrdresPaiement(): ResponseEntity<ApiResponse<List<OrdrePaiement>>> {
+        logger.info { "GET /api/ordres-paiement" }
         val ordresPaiement = ordrePaiementService.findAll()
-        return ResponseEntity.ok(mapOf(
-            "success" to true,
-            "data" to ordresPaiement,
-            "message" to "Ordres de paiement récupérés avec succès"
+        return ResponseEntity.ok(ApiResponse(
+            success = true,
+            data = ordresPaiement,
+            message = "Ordres de paiement recuperes avec succes"
         ))
     }
 
     @GetMapping("/{id}")
-    fun getOrdrePaiementById(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: GET /api/ordres-paiement/$id" }
+    fun getOrdrePaiementById(@PathVariable id: Long): ResponseEntity<ApiResponse<OrdrePaiement>> {
+        logger.info { "GET /api/ordres-paiement/$id" }
         return try {
             val ordrePaiement = ordrePaiementService.findById(id)
             if (ordrePaiement != null) {
-                ResponseEntity.ok(mapOf(
-                    "success" to true,
-                    "data" to ordrePaiement,
-                    "message" to "Ordre de paiement récupéré avec succès"
+                ResponseEntity.ok(ApiResponse(
+                    success = true,
+                    data = ordrePaiement,
+                    message = "Ordre de paiement recupere avec succes"
                 ))
             } else {
-                ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf(
-                    "success" to false,
-                    "message" to "Ordre de paiement $id introuvable"
+                ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse(
+                    success = false,
+                    message = "Ordre de paiement $id introuvable"
                 ))
             }
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la récupération de l'ordre de paiement: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la recuperation de l'ordre de paiement: ${e.message}"
             ))
         }
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun createOrdrePaiement(@RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: POST /api/ordres-paiement - Création OP ${ordrePaiement.numeroOP}" }
+    fun createOrdrePaiement(@RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<ApiResponse<OrdrePaiement>> {
+        logger.info { "POST /api/ordres-paiement - Creation OP ${ordrePaiement.numeroOP}" }
         return try {
             val createdOrdrePaiement = ordrePaiementService.create(ordrePaiement)
-            ResponseEntity.status(HttpStatus.CREATED).body(mapOf(
-                "success" to true,
-                "data" to createdOrdrePaiement,
-                "message" to "Ordre de paiement créé avec succès"
+            ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(
+                success = true,
+                data = createdOrdrePaiement,
+                message = "Ordre de paiement cree avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la création de l'ordre de paiement: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la creation de l'ordre de paiement: ${e.message}"
             ))
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun updateOrdrePaiement(@PathVariable id: Long, @RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: PUT /api/ordres-paiement/$id" }
+    fun updateOrdrePaiement(@PathVariable id: Long, @RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<ApiResponse<OrdrePaiement>> {
+        logger.info { "PUT /api/ordres-paiement/$id" }
         return try {
             val updatedOrdrePaiement = ordrePaiementService.update(id, ordrePaiement)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "data" to updatedOrdrePaiement,
-                "message" to "Ordre de paiement mis à jour avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                data = updatedOrdrePaiement,
+                message = "Ordre de paiement mis a jour avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la mise à jour de l'ordre de paiement: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la mise a jour de l'ordre de paiement: ${e.message}"
             ))
         }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    fun deleteOrdrePaiement(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: DELETE /api/ordres-paiement/$id" }
+    fun deleteOrdrePaiement(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
+        logger.info { "DELETE /api/ordres-paiement/$id" }
         return try {
             ordrePaiementService.delete(id)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "message" to "Ordre de paiement supprimé avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                message = "Ordre de paiement supprime avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la suppression de l'ordre de paiement: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la suppression de l'ordre de paiement: ${e.message}"
             ))
         }
     }
 
     @PostMapping("/{id}/valider")
     @PreAuthorize("hasRole('ADMIN')")
-    fun validerOrdrePaiement(@PathVariable id: Long, @RequestBody body: Map<String, Long>): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: POST /api/ordres-paiement/$id/valider" }
+    fun validerOrdrePaiement(@PathVariable id: Long, @RequestBody body: Map<String, Long>): ResponseEntity<ApiResponse<OrdrePaiement>> {
+        logger.info { "POST /api/ordres-paiement/$id/valider" }
         return try {
             val valideParId = body["valideParId"] ?: throw IllegalArgumentException("valideParId requis")
             val ordrePaiement = ordrePaiementService.valider(id, valideParId)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "data" to ordrePaiement,
-                "message" to "Ordre de paiement validé avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                data = ordrePaiement,
+                message = "Ordre de paiement valide avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la validation de l'ordre de paiement: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la validation de l'ordre de paiement: ${e.message}"
             ))
         }
     }
 
     @PostMapping("/{id}/executer")
     @PreAuthorize("hasRole('ADMIN')")
-    fun executerOrdrePaiement(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: POST /api/ordres-paiement/$id/executer" }
+    fun executerOrdrePaiement(@PathVariable id: Long): ResponseEntity<ApiResponse<OrdrePaiement>> {
+        logger.info { "POST /api/ordres-paiement/$id/executer" }
         return try {
             val ordrePaiement = ordrePaiementService.executer(id)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "data" to ordrePaiement,
-                "message" to "Ordre de paiement exécuté avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                data = ordrePaiement,
+                message = "Ordre de paiement execute avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de l'exécution de l'ordre de paiement: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de l'execution de l'ordre de paiement: ${e.message}"
             ))
         }
     }
 
     @GetMapping("/statistiques")
-    fun getStatistiques(): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: GET /api/ordres-paiement/statistiques" }
+    fun getStatistiques(): ResponseEntity<ApiResponse<OrdrePaiementStatistiques>> {
+        logger.info { "GET /api/ordres-paiement/statistiques" }
         return try {
             val stats = ordrePaiementService.getStatistiques()
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "data" to stats,
-                "message" to "Statistiques récupérées avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                data = stats,
+                message = "Statistiques recuperees avec succes"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la récupération des statistiques: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la recuperation des statistiques: ${e.message}"
             ))
         }
     }

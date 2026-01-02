@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.BudgetStatistiques
 import ma.investpro.entity.Budget
 import ma.investpro.entity.StatutBudget
 import ma.investpro.repository.BudgetRepository
@@ -47,8 +48,8 @@ class BudgetService(
             throw IllegalArgumentException("Un budget avec la version ${budget.version} existe déjà pour cette convention")
         }
 
-        // Récupérer le plafond de la convention
-        budget.plafondConvention = convention.plafondMontant ?: BigDecimal.ZERO
+        // Récupérer le plafond de la convention (le budget de la convention sert de plafond)
+        budget.plafondConvention = convention.budget
 
         // Calculer le total du budget
         budget.calculerTotal()
@@ -163,16 +164,16 @@ class BudgetService(
 
     // ========== Statistiques ==========
 
-    fun getStatistiques(): Map<String, Any> {
+    fun getStatistiques(): BudgetStatistiques {
         val all = budgetRepository.findAll()
-        return mapOf(
-            "total" to all.size,
-            "brouillon" to all.count { it.statut == StatutBudget.BROUILLON },
-            "soumis" to all.count { it.statut == StatutBudget.SOUMIS },
-            "valides" to all.count { it.statut == StatutBudget.VALIDE },
-            "rejetes" to all.count { it.statut == StatutBudget.REJETE },
-            "archives" to all.count { it.statut == StatutBudget.ARCHIVE },
-            "montantTotal" to all.filter { it.statut == StatutBudget.VALIDE }.sumOf { it.totalBudget }
+        return BudgetStatistiques(
+            total = all.size,
+            brouillon = all.count { it.statut == StatutBudget.BROUILLON },
+            soumis = all.count { it.statut == StatutBudget.SOUMIS },
+            valides = all.count { it.statut == StatutBudget.VALIDE },
+            rejetes = all.count { it.statut == StatutBudget.REJETE },
+            archives = all.count { it.statut == StatutBudget.ARCHIVE },
+            montantTotal = all.filter { it.statut == StatutBudget.VALIDE }.sumOf { it.totalBudget }
         )
     }
 }

@@ -6,7 +6,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardSimple from './pages/DashboardSimple'
 import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
-import ConventionFormPage from './pages/conventions/ConventionFormPage'
+import ConventionWizard from './pages/conventions/ConventionWizard'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
 import BudgetsPage from './pages/budgets/BudgetsPage'
@@ -112,7 +112,7 @@ function App() {
             path="/conventions/nouvelle"
             element={
               <ProtectedRoute>
-                <ConventionFormPage />
+                <ConventionWizard />
               </ProtectedRoute>
             }
           />
@@ -120,7 +120,7 @@ function App() {
             path="/conventions/:id/edit"
             element={
               <ProtectedRoute>
-                <ConventionFormPage />
+                <ConventionWizard />
               </ProtectedRoute>
             }
           />

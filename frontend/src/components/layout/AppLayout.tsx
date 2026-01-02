@@ -85,7 +85,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         {/* Logo */}
         <div className="p-4 border-b border-gray-800">
           <Link to="/dashboard" className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gitlab-orange rounded flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 bg-primary-600 rounded flex items-center justify-center flex-shrink-0">
               <Briefcase className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -122,7 +122,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="w-full flex items-center space-x-3 px-3 py-2 rounded hover:bg-gray-800 transition-colors"
             >
-              <div className="w-8 h-8 bg-gitlab-orange rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+              <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                 {user?.fullName?.charAt(0).toUpperCase() || 'U'}
               </div>
               <div className="flex-1 text-left min-w-0">
@@ -195,7 +195,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 })}
               </span>
               {/* Mobile: Show only icon */}
-              <div className="lg:hidden w-8 h-8 bg-gitlab-orange rounded-full flex items-center justify-center text-white font-semibold text-sm">
+              <div className="lg:hidden w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                 {user?.fullName?.charAt(0).toUpperCase() || 'U'}
               </div>
             </div>

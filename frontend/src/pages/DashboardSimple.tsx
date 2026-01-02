@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Box,
   Container,
@@ -17,6 +18,7 @@ import {
   Payment,
 } from '@mui/icons-material'
 import { conventionsAPI, budgetsAPI, decomptesAPI, paiementsAPI } from '../lib/api'
+import AppLayout from '../components/layout/AppLayout'
 
 interface Stats {
   conventions: number
@@ -29,6 +31,7 @@ interface Stats {
 }
 
 const DashboardSimple = () => {
+  const navigate = useNavigate()
   const [stats, setStats] = useState<Stats>({
     conventions: 0,
     budgets: 0,
@@ -148,14 +151,17 @@ const DashboardSimple = () => {
 
   if (loading) {
     return (
-      <Box sx={{ width: '100%', mt: 2 }}>
-        <LinearProgress />
-      </Box>
+      <AppLayout>
+        <Box sx={{ width: '100%', mt: 2 }}>
+          <LinearProgress />
+        </Box>
+      </AppLayout>
     )
   }
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
+    <AppLayout>
+      <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="xl">
         {/* Header */}
         <Box mb={4}>
@@ -349,6 +355,7 @@ const DashboardSimple = () => {
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mt={2}>
               <Paper
+                onClick={() => navigate('/conventions/nouvelle')}
                 sx={{
                   p: 2,
                   flex: 1,
@@ -368,6 +375,7 @@ const DashboardSimple = () => {
               </Paper>
 
               <Paper
+                onClick={() => navigate('/conventions')}
                 sx={{
                   p: 2,
                   flex: 1,
@@ -381,12 +389,13 @@ const DashboardSimple = () => {
                 }}
               >
                 <Typography variant="body1" fontWeight={600}>
-                  Nouveau Budget
+                  Voir Conventions
                 </Typography>
-                <Typography variant="caption">Créer un budget</Typography>
+                <Typography variant="caption">Liste des conventions</Typography>
               </Paper>
 
               <Paper
+                onClick={() => navigate('/reporting/analytique')}
                 sx={{
                   p: 2,
                   flex: 1,
@@ -409,6 +418,7 @@ const DashboardSimple = () => {
         </Card>
       </Container>
     </Box>
+    </AppLayout>
   )
 }
 

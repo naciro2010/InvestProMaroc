@@ -69,8 +69,14 @@ const ConventionsPageMUI = () => {
   const fetchConventions = async () => {
     try {
       const response = await conventionsAPI.getAll()
+      console.log('🔍 Response complète:', response)
+      console.log('🔍 Response.data:', response.data)
+      console.log('🔍 Type de response.data:', Array.isArray(response.data) ? 'Array' : typeof response.data)
+
       // Gérer le format de réponse API - peut être un tableau ou un objet avec data
       const data = Array.isArray(response.data) ? response.data : (response.data?.data || [])
+      console.log('🔍 Data finale:', data)
+      console.log('🔍 Nombre de conventions:', data.length)
       setConventions(data)
     } catch (error) {
       console.error('Erreur chargement conventions:', error)

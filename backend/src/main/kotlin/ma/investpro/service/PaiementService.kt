@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.PaiementStatistiques
 import ma.investpro.entity.ModePaiement
 import ma.investpro.entity.Paiement
 import ma.investpro.repository.OrdrePaiementRepository
@@ -105,14 +106,14 @@ class PaiementService(
             .sumOf { it.montantPaye }
     }
 
-    fun getStatistiques(): Map<String, Any> {
+    fun getStatistiques(): PaiementStatistiques {
         val all = paiementRepository.findAll()
-        return mapOf(
-            "total" to all.size,
-            "montantTotal" to all.sumOf { it.montantPaye },
-            "paiementsPartiels" to all.count { it.estPaiementPartiel },
-            "parMode" to ModePaiement.entries.associateWith { mode ->
-                all.filter { it.modePaiement == mode }.sumOf { it.montantPaye }
+        return PaiementStatistiques(
+            total = all.size,
+            montantTotal = all.sumOf { it.montantPaye },
+            paiementsPartiels = all.count { it.estPaiementPartiel },
+            parMode = ModePaiement.entries.associate { mode ->
+                mode.name to all.filter { it.modePaiement == mode }.sumOf { it.montantPaye }
             }
         )
     }

@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.OrdrePaiementStatistiques
 import ma.investpro.entity.OrdrePaiement
 import ma.investpro.entity.StatutOP
 import ma.investpro.repository.DecompteRepository
@@ -158,16 +159,16 @@ class OrdrePaiementService(
             .sumOf { it.montantAPayer }
     }
 
-    fun getStatistiques(): Map<String, Any> {
+    fun getStatistiques(): OrdrePaiementStatistiques {
         val all = ordrePaiementRepository.findAll()
-        return mapOf(
-            "total" to all.size,
-            "brouillon" to all.count { it.statut == StatutOP.BROUILLON },
-            "valides" to all.count { it.statut == StatutOP.VALIDE },
-            "executes" to all.count { it.statut == StatutOP.EXECUTE },
-            "rejetes" to all.count { it.statut == StatutOP.REJETE },
-            "annules" to all.count { it.statut == StatutOP.ANNULE },
-            "montantTotal" to all.filter { it.statut == StatutOP.EXECUTE }.sumOf { it.montantAPayer }
+        return OrdrePaiementStatistiques(
+            total = all.size,
+            brouillon = all.count { it.statut == StatutOP.BROUILLON },
+            valides = all.count { it.statut == StatutOP.VALIDE },
+            executes = all.count { it.statut == StatutOP.EXECUTE },
+            rejetes = all.count { it.statut == StatutOP.REJETE },
+            annules = all.count { it.statut == StatutOP.ANNULE },
+            montantTotal = all.filter { it.statut == StatutOP.EXECUTE }.sumOf { it.montantAPayer }
         )
     }
 }

@@ -1,5 +1,7 @@
 package ma.investpro.controller
 
+import ma.investpro.dto.ApiResponse
+import ma.investpro.dto.BudgetStatistiques
 import ma.investpro.entity.Budget
 import ma.investpro.service.BudgetService
 import mu.KotlinLogging
@@ -16,187 +18,187 @@ private val logger = KotlinLogging.logger {}
 class BudgetController(private val budgetService: BudgetService) {
 
     @GetMapping
-    fun getAllBudgets(): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: GET /api/budgets" }
+    fun getAllBudgets(): ResponseEntity<ApiResponse<List<Budget>>> {
+        logger.info { "GET /api/budgets" }
         val budgets = budgetService.findAll()
-        return ResponseEntity.ok(mapOf(
-            "success" to true,
-            "data" to budgets,
-            "message" to "Budgets récupérés avec succès"
+        return ResponseEntity.ok(ApiResponse(
+            success = true,
+            data = budgets,
+            message = "Budgets recuperes avec succes"
         ))
     }
 
     @GetMapping("/{id}")
-    fun getBudgetById(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: GET /api/budgets/$id" }
+    fun getBudgetById(@PathVariable id: Long): ResponseEntity<ApiResponse<Budget>> {
+        logger.info { "GET /api/budgets/$id" }
         return try {
             val budget = budgetService.findById(id)
             if (budget != null) {
-                ResponseEntity.ok(mapOf(
-                    "success" to true,
-                    "data" to budget,
-                    "message" to "Budget récupéré avec succès"
+                ResponseEntity.ok(ApiResponse(
+                    success = true,
+                    data = budget,
+                    message = "Budget recupere avec succes"
                 ))
             } else {
-                ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf(
-                    "success" to false,
-                    "message" to "Budget $id introuvable"
+                ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse(
+                    success = false,
+                    message = "Budget $id introuvable"
                 ))
             }
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la récupération du budget: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la recuperation du budget: ${e.message}"
             ))
         }
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun createBudget(@RequestBody budget: Budget): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: POST /api/budgets - Création budget ${budget.version}" }
+    fun createBudget(@RequestBody budget: Budget): ResponseEntity<ApiResponse<Budget>> {
+        logger.info { "POST /api/budgets - Creation budget ${budget.version}" }
         return try {
             val createdBudget = budgetService.create(budget)
-            ResponseEntity.status(HttpStatus.CREATED).body(mapOf(
-                "success" to true,
-                "data" to createdBudget,
-                "message" to "Budget créé avec succès"
+            ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse(
+                success = true,
+                data = createdBudget,
+                message = "Budget cree avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la création du budget: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la creation du budget: ${e.message}"
             ))
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun updateBudget(@PathVariable id: Long, @RequestBody budget: Budget): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: PUT /api/budgets/$id" }
+    fun updateBudget(@PathVariable id: Long, @RequestBody budget: Budget): ResponseEntity<ApiResponse<Budget>> {
+        logger.info { "PUT /api/budgets/$id" }
         return try {
             val updatedBudget = budgetService.update(id, budget)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "data" to updatedBudget,
-                "message" to "Budget mis à jour avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                data = updatedBudget,
+                message = "Budget mis a jour avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la mise à jour du budget: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la mise a jour du budget: ${e.message}"
             ))
         }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    fun deleteBudget(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: DELETE /api/budgets/$id" }
+    fun deleteBudget(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
+        logger.info { "DELETE /api/budgets/$id" }
         return try {
             budgetService.delete(id)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "message" to "Budget supprimé avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                message = "Budget supprime avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la suppression du budget: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la suppression du budget: ${e.message}"
             ))
         }
     }
 
     @PostMapping("/{id}/soumettre")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun soumettreBudget(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: POST /api/budgets/$id/soumettre" }
+    fun soumettreBudget(@PathVariable id: Long): ResponseEntity<ApiResponse<Budget>> {
+        logger.info { "POST /api/budgets/$id/soumettre" }
         return try {
             val budget = budgetService.soumettre(id)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "data" to budget,
-                "message" to "Budget soumis avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                data = budget,
+                message = "Budget soumis avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la soumission du budget: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la soumission du budget: ${e.message}"
             ))
         }
     }
 
     @PostMapping("/{id}/valider")
     @PreAuthorize("hasRole('ADMIN')")
-    fun validerBudget(@PathVariable id: Long, @RequestBody body: Map<String, Long>): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: POST /api/budgets/$id/valider" }
+    fun validerBudget(@PathVariable id: Long, @RequestBody body: Map<String, Long>): ResponseEntity<ApiResponse<Budget>> {
+        logger.info { "POST /api/budgets/$id/valider" }
         return try {
             val valideParId = body["valideParId"] ?: throw IllegalArgumentException("valideParId requis")
             val budget = budgetService.valider(id, valideParId)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "data" to budget,
-                "message" to "Budget validé avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                data = budget,
+                message = "Budget valide avec succes"
             ))
         } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(mapOf(
-                "success" to false,
-                "message" to e.message
+            logger.warn { "Validation error: ${e.message}" }
+            ResponseEntity.badRequest().body(ApiResponse(
+                success = false,
+                message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la validation du budget: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la validation du budget: ${e.message}"
             ))
         }
     }
 
     @GetMapping("/statistiques")
-    fun getStatistiques(): ResponseEntity<Map<String, Any>> {
-        logger.info { "🌐 API: GET /api/budgets/statistiques" }
+    fun getStatistiques(): ResponseEntity<ApiResponse<BudgetStatistiques>> {
+        logger.info { "GET /api/budgets/statistiques" }
         return try {
             val stats = budgetService.getStatistiques()
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "data" to stats,
-                "message" to "Statistiques récupérées avec succès"
+            ResponseEntity.ok(ApiResponse(
+                success = true,
+                data = stats,
+                message = "Statistiques recuperees avec succes"
             ))
         } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la récupération des statistiques: ${e.message}"
+            logger.error { "Error: ${e.message}" }
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
+                success = false,
+                message = "Erreur lors de la recuperation des statistiques: ${e.message}"
             ))
         }
     }

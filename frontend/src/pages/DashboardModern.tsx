@@ -66,12 +66,13 @@ const DashboardModern = () => {
       setLoading(true)
       // Fetch multiple endpoints in parallel
       const [depensesRes, conventionsRes, projetsRes] = await Promise.all([
-        api.get('/api/depenses').catch(() => ({ data: [] })),
-        api.get('/api/conventions').catch(() => ({ data: [] })),
-        api.get('/api/projets').catch(() => ({ data: [] })),
+        api.get('/depenses').catch(() => ({ data: [] })),
+        api.get('/conventions').catch(() => ({ data: [] })),
+        api.get('/projets').catch(() => ({ data: [] })),
       ])
 
-      const depenses = depensesRes.data || []
+      // Gérer le format de réponse API - peut être un tableau ou un objet avec data
+      const depenses = Array.isArray(depensesRes.data) ? depensesRes.data : (depensesRes.data?.data || [])
 
       // Calculate stats from real data
       const totalDepenses = depenses.reduce((sum: number, d: any) => sum + (d.montantTTC || 0), 0)

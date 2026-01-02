@@ -74,11 +74,15 @@ export default function PlanAnalytiquePage() {
 
   const fetchDimensions = async () => {
     try {
-      const { data } = await dimensionsAPI.getAll()
+      const response = await dimensionsAPI.getAll()
+      // Gérer le format de réponse API
+      const dimensionsData = Array.isArray(response.data) ? response.data : (response.data?.data || [])
+
       // Charger les valeurs pour chaque dimension
       const dimensionsWithValeurs = await Promise.all(
-        data.map(async (dim: Dimension) => {
-          const { data: valeurs } = await dimensionsAPI.getValeurs(dim.id)
+        dimensionsData.map(async (dim: Dimension) => {
+          const valeursResponse = await dimensionsAPI.getValeurs(dim.id)
+          const valeurs = Array.isArray(valeursResponse.data) ? valeursResponse.data : (valeursResponse.data?.data || [])
           return { ...dim, valeurs }
         })
       )

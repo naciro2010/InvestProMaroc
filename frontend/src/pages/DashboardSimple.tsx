@@ -50,25 +50,26 @@ const DashboardSimple = () => {
           paiementsAPI.getAll(),
         ])
 
-        const conventions = conventionsRes.data
-        const budgets = budgetsRes.data
-        const decomptes = decomptesRes.data
-        const paiements = paiementsRes.data
+        // Gérer le format de réponse API - peut être un tableau ou un objet avec data
+        const conventions = Array.isArray(conventionsRes.data) ? conventionsRes.data : (conventionsRes.data?.data || [])
+        const budgets = Array.isArray(budgetsRes.data) ? budgetsRes.data : (budgetsRes.data?.data || [])
+        const decomptes = Array.isArray(decomptesRes.data) ? decomptesRes.data : (decomptesRes.data?.data || [])
+        const paiements = Array.isArray(paiementsRes.data) ? paiementsRes.data : (paiementsRes.data?.data || [])
 
-        const montantTotalConventions = conventions.reduce(
+        const montantTotalConventions = Array.isArray(conventions) ? conventions.reduce(
           (sum: number, c: any) => sum + (c.montantGlobal || 0),
           0
-        )
+        ) : 0
 
-        const montantTotalBudgets = budgets.reduce(
+        const montantTotalBudgets = Array.isArray(budgets) ? budgets.reduce(
           (sum: number, b: any) => sum + (b.totalBudget || 0),
           0
-        )
+        ) : 0
 
-        const montantTotalPaiements = paiements.reduce(
+        const montantTotalPaiements = Array.isArray(paiements) ? paiements.reduce(
           (sum: number, p: any) => sum + (p.montantPaye || 0),
           0
-        )
+        ) : 0
 
         setStats({
           conventions: conventions.length,

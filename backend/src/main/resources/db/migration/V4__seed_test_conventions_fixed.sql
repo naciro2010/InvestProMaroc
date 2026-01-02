@@ -1,6 +1,6 @@
 -- ========================================================================================================
--- V3__seed_test_conventions.sql
--- InvestPro Maroc - Seed Test Data for Conventions
+-- V4__seed_test_conventions_fixed.sql
+-- InvestPro Maroc - Seed Test Data for Conventions (Fixed version)
 -- ========================================================================================================
 
 -- Insert test conventions
@@ -110,9 +110,10 @@ INSERT INTO conventions (
     '2024-01-31',
     'Programme achevé de rénovation des infrastructures urbaines',
     true
-);
+)
+ON CONFLICT (code) DO NOTHING;
 
--- Insert test partenaires for conventions
+-- Insert test partenaires for conventions (using correct column name: raison_sociale)
 INSERT INTO partenaires (code, raison_sociale, type_partenaire, actif) VALUES
 ('PART-001', 'Ministère de l''Intérieur', 'INSTITUTION_PUBLIQUE', true),
 ('PART-002', 'Conseil Régional Casablanca-Settat', 'COLLECTIVITE_LOCALE', true),
@@ -121,9 +122,32 @@ INSERT INTO partenaires (code, raison_sociale, type_partenaire, actif) VALUES
 ON CONFLICT (code) DO NOTHING;
 
 -- Link partenaires to conventions
-INSERT INTO convention_partenaires (convention_id, partenaire_id, role_partenaire) VALUES
-(1, 1, 'BENEFICIAIRE'),
-(1, 2, 'COFINANCEUR'),
-(2, 2, 'BENEFICIAIRE'),
-(3, 3, 'BENEFICIAIRE'),
-(4, 4, 'COFINANCEUR');
+INSERT INTO convention_partenaires (convention_id, partenaire_id, role_partenaire)
+SELECT c.id, p.id, 'BENEFICIAIRE'
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-001' AND p.code = 'PART-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO convention_partenaires (convention_id, partenaire_id, role_partenaire)
+SELECT c.id, p.id, 'COFINANCEUR'
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-001' AND p.code = 'PART-002'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO convention_partenaires (convention_id, partenaire_id, role_partenaire)
+SELECT c.id, p.id, 'BENEFICIAIRE'
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-002' AND p.code = 'PART-002'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO convention_partenaires (convention_id, partenaire_id, role_partenaire)
+SELECT c.id, p.id, 'BENEFICIAIRE'
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-003' AND p.code = 'PART-003'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO convention_partenaires (convention_id, partenaire_id, role_partenaire)
+SELECT c.id, p.id, 'COFINANCEUR'
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-004' AND p.code = 'PART-004'
+ON CONFLICT DO NOTHING;

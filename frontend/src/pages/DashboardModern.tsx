@@ -175,7 +175,7 @@ const DashboardModern = () => {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gitlab-orange"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
         </div>
       </AppLayout>
     )
@@ -199,14 +199,14 @@ const DashboardModern = () => {
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value as any)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gitlab-orange"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-600"
             >
               <option value="month">Ce mois</option>
               <option value="quarter">3 derniers mois</option>
               <option value="year">12 derniers mois</option>
             </select>
 
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-gitlab-orange hover:bg-gitlab-orange-dark text-white rounded-lg transition-colors">
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-600-dark text-white rounded-lg transition-colors">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Exporter</span>
             </button>
@@ -220,7 +220,7 @@ const DashboardModern = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-gitlab-orange to-orange-600 rounded-xl shadow-lg p-6 text-white"
+            className="bg-gradient-to-br from-primary-600 to-orange-600 rounded-xl shadow-lg p-6 text-white"
           >
             <div className="flex items-center justify-between mb-4">
               <div className="bg-white/20 rounded-lg p-3">

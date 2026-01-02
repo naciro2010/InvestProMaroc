@@ -7,11 +7,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Palette GitLab - Simple et Épurée
-        gitlab: {
-          orange: '#FC6D26',          // Orange principal GitLab
-          'orange-dark': '#E24329',   // Orange foncé
-          'orange-light': '#FCA326',  // Orange clair
+        // Palette Moderne - Bleu Professionnel
+        modern: {
+          blue: '#3b82f6',          // Bleu principal moderne
+          'blue-dark': '#1e3a8a',   // Bleu foncé profond
+          'blue-light': '#60a5fa',  // Bleu clair
         },
         // Gris GitLab (très important pour le look épuré)
         gray: {
@@ -54,11 +54,16 @@ export default {
         },
         // Alias pour compatibilité
         primary: {
-          50: '#FFF5F0',
-          100: '#FFE8DC',
-          500: '#FC6D26',
-          600: '#E24329',
-          700: '#C72A1C',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
         },
       },
       fontFamily: {

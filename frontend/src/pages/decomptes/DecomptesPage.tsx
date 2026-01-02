@@ -16,7 +16,7 @@ export default function DecomptesPage() {
   const fetchDecomptes = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/api/decomptes')
+      const response = await api.get('/decomptes')
       setDecomptes(response.data)
     } catch (error) {
       console.error('Erreur chargement décomptes:', error)

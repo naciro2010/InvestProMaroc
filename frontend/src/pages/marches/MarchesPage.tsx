@@ -48,7 +48,7 @@ export default function MarchesPage() {
   const fetchMarches = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/api/marches')
+      const response = await api.get('/marches')
       setMarches(response.data)
       setFilteredMarches(response.data)
     } catch (error) {

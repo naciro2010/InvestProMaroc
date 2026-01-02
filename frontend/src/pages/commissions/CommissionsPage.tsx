@@ -49,7 +49,7 @@ export default function CommissionsPage() {
   const fetchCommissions = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/api/commissions', {
+      const response = await api.get('/commissions', {
         params: { year: yearFilter },
       })
       const data = response.data

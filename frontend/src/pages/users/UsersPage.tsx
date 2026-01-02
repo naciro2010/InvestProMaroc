@@ -47,7 +47,7 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/api/users')
+      const response = await api.get('/users')
       const data = response.data
       setUsers(data)
 
@@ -124,9 +124,9 @@ export default function UsersPage() {
     e.preventDefault()
     try {
       if (editingUser) {
-        await api.put(`/api/users/${editingUser.id}`, formData)
+        await api.put(`/users/${editingUser.id}`, formData)
       } else {
-        await api.post('/api/users', formData)
+        await api.post('/users', formData)
       }
       fetchUsers()
       setShowModal(false)

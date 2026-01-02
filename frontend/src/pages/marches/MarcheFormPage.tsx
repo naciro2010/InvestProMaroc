@@ -58,9 +58,9 @@ export default function MarcheFormPage() {
   const fetchData = async () => {
     try {
       const [convRes, fournRes, dimRes] = await Promise.all([
-        api.get('/api/conventions'),
-        api.get('/api/fournisseurs'),
-        api.get('/api/dimensions')
+        api.get('/conventions'),
+        api.get('/fournisseurs'),
+        api.get('/dimensions')
       ])
       setConventions(convRes.data)
       setFournisseurs(fournRes.data)
@@ -186,9 +186,9 @@ export default function MarcheFormPage() {
       }
 
       if (isEdit) {
-        await api.put(`/api/marches/${id}`, data)
+        await api.put(`/marches/${id}`, data)
       } else {
-        await api.post('/api/marches', data)
+        await api.post('/marches', data)
       }
 
       navigate('/marches')

@@ -51,7 +51,7 @@ export default function ConventionsPage() {
   const fetchConventions = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/api/conventions')
+      const response = await api.get('/conventions')
       const data = response.data
       setConventions(data)
 

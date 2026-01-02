@@ -88,7 +88,7 @@ export default function ProfilePage() {
     try {
       setLoading(true)
       // TODO: Implement password change endpoint in backend
-      await api.put('/api/auth/change-password', {
+      await api.put('/auth/change-password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       })

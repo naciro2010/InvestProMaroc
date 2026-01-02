@@ -46,7 +46,7 @@ export default function ConventionFormPage() {
   const fetchConvention = async () => {
     try {
       setLoading(true)
-      const response = await api.get(`/api/conventions/${id}`)
+      const response = await api.get(`/conventions/${id}`)
       const data = response.data
       setFormData({
         ...data,
@@ -75,10 +75,10 @@ export default function ConventionFormPage() {
       let response
       if (isEdit) {
         console.log(`Mise à jour de la convention ${id}...`)
-        response = await api.put(`/api/conventions/${id}`, formData)
+        response = await api.put(`/conventions/${id}`, formData)
       } else {
         console.log('Création d\'une nouvelle convention...')
-        response = await api.post('/api/conventions', formData)
+        response = await api.post('/conventions', formData)
       }
 
       console.log('Réponse du serveur:', response.data)

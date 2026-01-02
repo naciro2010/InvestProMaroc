@@ -31,7 +31,4 @@ interface BudgetRepository : JpaRepository<Budget, Long> {
 
     // Vérifier si une version existe pour une convention
     fun existsByConventionIdAndVersion(conventionId: Long, version: String): Boolean
-
-    // Recherche budget précédent
-    fun findByIdOrNull(id: Long?): Budget?
 }

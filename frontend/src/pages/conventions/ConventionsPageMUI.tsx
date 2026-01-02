@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
+import AppLayout from '../../components/layout/AppLayout'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
 
@@ -172,11 +173,16 @@ const ConventionsPageMUI = () => {
   }
 
   if (loading) {
-    return <Box sx={{ width: '100%', mt: 2 }}><LinearProgress /></Box>
+    return (
+      <AppLayout>
+        <Box sx={{ width: '100%', mt: 2 }}><LinearProgress /></Box>
+      </AppLayout>
+    )
   }
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
+    <AppLayout>
+      <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
       <Container maxWidth="xl">
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
@@ -376,6 +382,7 @@ const ConventionsPageMUI = () => {
         </Dialog>
       </Container>
     </Box>
+    </AppLayout>
   )
 }
 

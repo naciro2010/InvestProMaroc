@@ -557,13 +557,39 @@ const ConventionWizardComplete = () => {
     }
   }
 
+  // Helper component for step headers
+  const StepHeader = ({ title, subtitle }: { title: string; subtitle?: string }) => (
+    <Box sx={{ mb: { xs: 2, md: 3 } }}>
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 700,
+          background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          mb: subtitle ? 0.5 : 0,
+          fontSize: { xs: '1.25rem', md: '1.5rem' }
+        }}
+      >
+        {title}
+      </Typography>
+      {subtitle && (
+        <Typography variant="body2" sx={{ color: '#64748b' }}>
+          {subtitle}
+        </Typography>
+      )}
+      <Divider sx={{ mt: 2, borderColor: '#e2e8f0' }} />
+    </Box>
+  )
+
   // Étape 1: Informations
   const renderStep1_Informations = () => (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h6" gutterBottom sx={{ color: '#1e40af', fontWeight: 600 }}>
-        Informations de base
-      </Typography>
-      <Grid container spacing={3} sx={{ mt: 1 }}>
+    <Box>
+      <StepHeader
+        title="Informations de base"
+        subtitle="Définissez les informations principales de la convention"
+      />
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
@@ -1476,27 +1502,84 @@ const ConventionWizardComplete = () => {
 
   return (
     <AppLayout>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 2, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
           <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-            <IconButton onClick={() => navigate('/conventions')} sx={{ color: '#3b82f6' }}>
+            <IconButton
+              onClick={() => navigate('/conventions')}
+              sx={{
+                color: '#3b82f6',
+                bgcolor: '#eff6ff',
+                '&:hover': {
+                  bgcolor: '#dbeafe',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s'
+              }}
+            >
               <ArrowBack />
             </IconButton>
-            <Box>
-              <Typography variant="h4" fontWeight={700} sx={{ color: '#1e3a8a' }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                sx={{
+                  background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' },
+                  mb: 0.5
+                }}
+              >
                 Nouvelle Convention
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Wizard complet avec dimensions analytiques dynamiques
+              <Typography
+                variant="body2"
+                sx={{
+                  color: '#64748b',
+                  display: { xs: 'none', sm: 'block' },
+                  fontSize: { sm: '0.875rem', md: '1rem' }
+                }}
+              >
+                Création simplifiée en 8 étapes
               </Typography>
             </Box>
           </Stack>
         </Box>
 
         {/* Stepper */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Stepper activeStep={activeStep}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 1.5, sm: 2, md: 3 },
+            mb: 3,
+            border: '1px solid',
+            borderColor: '#e2e8f0',
+            borderRadius: 3,
+            background: 'linear-gradient(to bottom, #ffffff, #f8fafc)',
+            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+            overflow: 'auto'
+          }}
+        >
+          <Stepper
+            activeStep={activeStep}
+            sx={{
+              '& .MuiStepLabel-label': {
+                fontSize: { xs: '0.625rem', sm: '0.75rem', md: '0.875rem' },
+                fontWeight: 500
+              },
+              '& .MuiStepIcon-root': {
+                fontSize: { xs: '1.25rem', md: '1.5rem' }
+              },
+              '& .MuiStepIcon-root.Mui-active': {
+                color: '#3b82f6'
+              },
+              '& .MuiStepIcon-root.Mui-completed': {
+                color: '#10b981'
+              }
+            }}
+          >
             {steps.map((label) => (
               <Step key={label}>
                 <StepLabel>{label}</StepLabel>
@@ -1507,37 +1590,103 @@ const ConventionWizardComplete = () => {
 
         {/* Errors */}
         {errors.length > 0 && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight={600}>Veuillez corriger:</Typography>
-            <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
+          <Alert
+            severity="error"
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              border: '1px solid #fecaca',
+              boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+            }}
+          >
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Veuillez corriger les erreurs suivantes:
+            </Typography>
+            <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
               {errors.map((error, index) => (
-                <li key={index}>{error}</li>
+                <li key={index} style={{ marginBottom: '4px' }}>{error}</li>
               ))}
             </ul>
           </Alert>
         )}
 
         {/* Content */}
-        <Paper sx={{ p: 4, minHeight: 400 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2, sm: 3, md: 4 },
+            minHeight: { xs: 300, md: 400 },
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: '#e2e8f0',
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+          }}
+        >
           {renderStepContent(activeStep)}
         </Paper>
 
         {/* Navigation */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mt: { xs: 2, md: 3 },
+            gap: 2,
+            flexDirection: { xs: 'column', sm: 'row' }
+          }}
+        >
           <Button
             disabled={activeStep === 0}
             onClick={handleBack}
             startIcon={<ArrowBack />}
-            sx={{ color: '#3b82f6' }}
+            sx={{
+              color: '#3b82f6',
+              fontWeight: 500,
+              px: 3,
+              py: 1,
+              '&:hover': {
+                bgcolor: '#eff6ff',
+                transform: 'translateX(-2px)'
+              },
+              '&:disabled': {
+                color: '#cbd5e1'
+              },
+              transition: 'all 0.2s',
+              order: { xs: 2, sm: 1 },
+              width: { xs: '100%', sm: 'auto' }
+            }}
           >
             Retour
           </Button>
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              order: { xs: 1, sm: 2 },
+              width: { xs: '100%', sm: 'auto' },
+              flexDirection: { xs: 'column', sm: 'row' }
+            }}
+          >
             <Button
               variant="outlined"
               onClick={() => navigate('/conventions')}
-              sx={{ borderColor: '#94a3b8', color: '#64748b' }}
+              sx={{
+                borderColor: '#cbd5e1',
+                color: '#64748b',
+                fontWeight: 500,
+                px: 3,
+                py: 1,
+                borderRadius: 2,
+                '&:hover': {
+                  borderColor: '#94a3b8',
+                  bgcolor: '#f8fafc',
+                  transform: 'translateY(-1px)'
+                },
+                transition: 'all 0.2s',
+                width: { xs: '100%', sm: 'auto' }
+              }}
             >
               Annuler
             </Button>
@@ -1548,7 +1697,25 @@ const ConventionWizardComplete = () => {
                 onClick={handleSubmit}
                 disabled={loading}
                 startIcon={loading ? null : <CheckCircle />}
-                sx={{ bgcolor: '#059669', '&:hover': { bgcolor: '#047857' } }}
+                sx={{
+                  bgcolor: '#10b981',
+                  color: 'white',
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 6px -1px rgb(16 185 129 / 0.3)',
+                  '&:hover': {
+                    bgcolor: '#059669',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 10px 15px -3px rgb(16 185 129 / 0.4)'
+                  },
+                  '&:disabled': {
+                    bgcolor: '#cbd5e1'
+                  },
+                  transition: 'all 0.2s',
+                  width: { xs: '100%', sm: 'auto' }
+                }}
               >
                 {loading ? 'Création...' : 'Créer en Brouillon'}
               </Button>
@@ -1557,7 +1724,22 @@ const ConventionWizardComplete = () => {
                 variant="contained"
                 onClick={handleNext}
                 endIcon={<ArrowForward />}
-                sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }}
+                sx={{
+                  bgcolor: '#3b82f6',
+                  color: 'white',
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 6px -1px rgb(59 130 246 / 0.3)',
+                  '&:hover': {
+                    bgcolor: '#2563eb',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 10px 15px -3px rgb(59 130 246 / 0.4)'
+                  },
+                  transition: 'all 0.2s',
+                  width: { xs: '100%', sm: 'auto' }
+                }}
               >
                 Suivant
               </Button>

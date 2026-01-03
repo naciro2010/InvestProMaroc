@@ -195,7 +195,7 @@ INSERT INTO decomptes (
 )
 SELECT
     m.id, 'DEC-001-03', '2024-10-31', '2024-08-01', '2024-10-31',
-    'EN_COURS', 7000000.00, 1400000.00, 8400000.00,
+    'PAYE_PARTIEL', 7000000.00, 1400000.00, 8400000.00,
     15600000.00, 24000000.00, true
 FROM marches m WHERE m.numero_marche = 'MAR-2024-001'
 ON CONFLICT DO NOTHING;
@@ -285,7 +285,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-001', '2024-05-05', 'PAYE',
+    d.id, 'OP-2024-001', '2024-05-05', 'EXECUTE',
     6000000.00, 'VIREMENT', '2024-05-15', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-001-01'
 ON CONFLICT DO NOTHING;
@@ -296,7 +296,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-002', '2024-08-05', 'PAYE',
+    d.id, 'OP-2024-002', '2024-08-05', 'EXECUTE',
     9600000.00, 'VIREMENT', '2024-08-15', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-001-02'
 ON CONFLICT DO NOTHING;
@@ -307,7 +307,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-003', '2024-11-05', 'EN_COURS',
+    d.id, 'OP-2024-003', '2024-11-05', 'VALIDE',
     8400000.00, 'VIREMENT', '2024-11-20', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-001-03'
 ON CONFLICT DO NOTHING;
@@ -318,7 +318,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-004', '2024-07-05', 'PAYE',
+    d.id, 'OP-2024-004', '2024-07-05', 'EXECUTE',
     3600000.00, 'VIREMENT', '2024-07-15', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-002-01'
 ON CONFLICT DO NOTHING;
@@ -329,7 +329,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-005', '2024-10-05', 'PAYE',
+    d.id, 'OP-2024-005', '2024-10-05', 'EXECUTE',
     3000000.00, 'VIREMENT', '2024-10-15', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-002-02'
 ON CONFLICT DO NOTHING;
@@ -340,7 +340,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-006', '2024-08-05', 'PAYE',
+    d.id, 'OP-2024-006', '2024-08-05', 'EXECUTE',
     4800000.00, 'VIREMENT', '2024-08-20', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-003-01'
 ON CONFLICT DO NOTHING;
@@ -351,7 +351,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-007', '2024-11-05', 'PAYE',
+    d.id, 'OP-2024-007', '2024-11-05', 'EXECUTE',
     6000000.00, 'VIREMENT', '2024-11-20', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-003-02'
 ON CONFLICT DO NOTHING;
@@ -362,7 +362,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-008', '2024-07-10', 'PAYE',
+    d.id, 'OP-2024-008', '2024-07-10', 'EXECUTE',
     9600000.00, 'VIREMENT', '2024-07-25', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-004-01'
 ON CONFLICT DO NOTHING;
@@ -373,7 +373,7 @@ INSERT INTO ordres_paiement (
     montant_a_payer, mode_paiement, date_prevue_paiement, actif
 )
 SELECT
-    d.id, 'OP-2024-009', '2024-10-10', 'PAYE',
+    d.id, 'OP-2024-009', '2024-10-10', 'EXECUTE',
     12000000.00, 'VIREMENT', '2024-10-25', true
 FROM decomptes d WHERE d.numero_decompte = 'DEC-004-02'
 ON CONFLICT DO NOTHING;

@@ -110,7 +110,8 @@ INSERT INTO conventions (
     '2024-01-31',
     'Programme achevé de rénovation des infrastructures urbaines',
     true
-);
+)
+ON CONFLICT (code) DO NOTHING;
 
 -- Insert test partenaires for conventions
 INSERT INTO partenaires (code, raison_sociale, type_partenaire, actif) VALUES
@@ -120,11 +121,33 @@ INSERT INTO partenaires (code, raison_sociale, type_partenaire, actif) VALUES
 ('PART-004', 'Entreprise BTP Moderne SARL', 'ENTREPRISE_PRIVEE', true)
 ON CONFLICT (code) DO NOTHING;
 
--- Link partenaires to conventions (using actual schema columns)
-INSERT INTO convention_partenaires (convention_id, partenaire_id, budget_alloue, pourcentage, est_maitre_oeuvre) VALUES
-(1, 1, 25000000.00, 50.00, true),
-(1, 2, 25000000.00, 50.00, false),
-(2, 2, 25000000.00, 100.00, true),
-(3, 3, 15000000.00, 100.00, true),
-(4, 4, 35000000.00, 100.00, false)
+-- Link partenaires to conventions (using INSERT SELECT to avoid hardcoded IDs)
+INSERT INTO convention_partenaires (convention_id, partenaire_id, budget_alloue, pourcentage, est_maitre_oeuvre)
+SELECT c.id, p.id, 25000000.00, 50.00, true
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-001' AND p.code = 'PART-001'
+ON CONFLICT (convention_id, partenaire_id) DO NOTHING;
+
+INSERT INTO convention_partenaires (convention_id, partenaire_id, budget_alloue, pourcentage, est_maitre_oeuvre)
+SELECT c.id, p.id, 25000000.00, 50.00, false
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-001' AND p.code = 'PART-002'
+ON CONFLICT (convention_id, partenaire_id) DO NOTHING;
+
+INSERT INTO convention_partenaires (convention_id, partenaire_id, budget_alloue, pourcentage, est_maitre_oeuvre)
+SELECT c.id, p.id, 25000000.00, 100.00, true
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-002' AND p.code = 'PART-002'
+ON CONFLICT (convention_id, partenaire_id) DO NOTHING;
+
+INSERT INTO convention_partenaires (convention_id, partenaire_id, budget_alloue, pourcentage, est_maitre_oeuvre)
+SELECT c.id, p.id, 15000000.00, 100.00, true
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-003' AND p.code = 'PART-003'
+ON CONFLICT (convention_id, partenaire_id) DO NOTHING;
+
+INSERT INTO convention_partenaires (convention_id, partenaire_id, budget_alloue, pourcentage, est_maitre_oeuvre)
+SELECT c.id, p.id, 35000000.00, 100.00, false
+FROM conventions c, partenaires p
+WHERE c.code = 'CONV-2024-004' AND p.code = 'PART-004'
 ON CONFLICT (convention_id, partenaire_id) DO NOTHING;

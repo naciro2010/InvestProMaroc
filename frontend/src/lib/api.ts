@@ -9,19 +9,7 @@ export const api = axios.create({
   },
 })
 
-// Request interceptor pour ajouter le token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
+// ==================== UTILITY FUNCTIONS ====================
 
 // Event pour envoyer les notifications d'erreur
 const dispatchToastEvent = (message: string, type: 'error' | 'success' | 'warning' | 'info') => {
@@ -31,6 +19,61 @@ const dispatchToastEvent = (message: string, type: 'error' | 'success' | 'warnin
     })
   )
 }
+
+// Fonction pour déconnecter l'utilisateur
+const logoutUser = () => {
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('refreshToken')
+  localStorage.removeItem('user')
+
+  // Afficher un message de déconnexion
+  dispatchToastEvent('🔒 Session expirée. Veuillez vous reconnecter.', 'warning')
+
+  // Rediriger vers la page de connexion après un court délai
+  setTimeout(() => {
+    window.location.href = '/login'
+  }, 500)
+}
+
+// Fonction pour vérifier si un token JWT est expiré
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const expirationTime = payload.exp * 1000 // Convertir en millisecondes
+    const now = Date.now()
+
+    // Considérer le token comme expiré s'il reste moins de 30 secondes
+    return expirationTime < (now + 30000)
+  } catch (error) {
+    console.error('Erreur lors du décodage du token:', error)
+    return true // Si on ne peut pas décoder, considérer comme expiré
+  }
+}
+
+// ==================== INTERCEPTORS ====================
+
+// Request interceptor pour ajouter le token et vérifier son expiration
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken')
+
+    if (token) {
+      // Vérifier si le token est expiré avant d'envoyer la requête
+      if (isTokenExpired(token)) {
+        console.warn('🔒 Token expiré détecté avant la requête. Déconnexion...')
+        logoutUser()
+        return Promise.reject(new Error('Token expiré'))
+      }
+
+      config.headers.Authorization = `Bearer ${token}`
+    }
+
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
 
 // Response interceptor pour gérer les erreurs
 api.interceptors.response.use(
@@ -42,24 +85,37 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
-      try {
-        const refreshToken = localStorage.getItem('refreshToken')
-        if (refreshToken) {
-          const { data } = await axios.post(`${API_URL}/auth/refresh`, null, {
-            params: { refreshToken }
-          })
+      const refreshToken = localStorage.getItem('refreshToken')
 
+      // Si pas de refreshToken, déconnecter immédiatement
+      if (!refreshToken) {
+        console.warn('🔒 Token expiré et aucun refreshToken disponible. Déconnexion...')
+        logoutUser()
+        return Promise.reject(error)
+      }
+
+      try {
+        const { data } = await axios.post(`${API_URL}/auth/refresh`, null, {
+          params: { refreshToken }
+        })
+
+        // Vérifier que la réponse contient bien un nouveau token
+        if (data?.data?.accessToken) {
           localStorage.setItem('accessToken', data.data.accessToken)
           originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
 
+          console.log('✅ Token rafraîchi avec succès')
           return api(originalRequest)
+        } else {
+          console.error('❌ Réponse de refresh invalide')
+          logoutUser()
+          return Promise.reject(error)
         }
       } catch (refreshError) {
         // Si le refresh échoue, déconnecter l'utilisateur
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
+        console.error('❌ Échec du refresh token:', refreshError)
+        logoutUser()
+        return Promise.reject(refreshError)
       }
     }
 

@@ -272,13 +272,35 @@ const ConventionWizardComplete = () => {
       }
 
       const response = await conventionsAPI.create(payload)
-      console.log('Convention créée:', response.data)
 
-      alert('Convention créée avec succès en BROUILLON !')
-      navigate('/conventions')
+      // Vérifier le statut HTTP réel
+      if (response.status === 201 || response.status === 200) {
+        console.log('✅ Convention créée avec succès:', response.data)
+        alert('Convention créée avec succès en BROUILLON !')
+        navigate('/conventions')
+      } else {
+        throw new Error(`Statut inattendu: ${response.status}`)
+      }
     } catch (error: any) {
-      console.error('Erreur lors de la création:', error)
-      setErrors([error.response?.data?.message || 'Erreur lors de la création'])
+      console.error('❌ Erreur lors de la création:', error)
+
+      // Gérer les différents types d'erreurs
+      let errorMessage = 'Erreur lors de la création de la convention'
+
+      if (error.response?.status === 403) {
+        errorMessage = '🔒 Accès refusé. Vous n\'avez pas la permission de créer une convention. Rôle requis: ADMIN ou MANAGER.'
+      } else if (error.response?.status === 401) {
+        errorMessage = '🔐 Session expirée. Veuillez vous reconnecter.'
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || '⚠️ Données invalides. Vérifiez le formulaire.'
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
+      setErrors([errorMessage])
+      alert(`❌ ${errorMessage}`)
     } finally {
       setLoading(false)
     }

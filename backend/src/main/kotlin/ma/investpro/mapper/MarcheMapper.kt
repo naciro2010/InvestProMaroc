@@ -24,7 +24,7 @@ class MarcheMapper {
             tauxTva = entity.tauxTva,
             montantTva = entity.montantTva,
             montantTtc = entity.montantTtc,
-            statut = entity.statut,
+            statut = entity.statut.name,
             dateDebut = entity.dateDebut,
             dateFinPrevue = entity.dateFinPrevue,
             delaiExecutionMois = entity.delaiExecutionMois,
@@ -46,7 +46,7 @@ class MarcheMapper {
             dateMarche = entity.dateMarche,
             fournisseurNom = entity.fournisseur?.raisonSociale ?: "",
             montantTtc = entity.montantTtc,
-            statut = entity.statut,
+            statut = entity.statut.name,
             actif = entity.actif
         )
     }
@@ -94,7 +94,7 @@ class MarcheMapper {
             id = entity.id,
             numeroDecompte = entity.numeroDecompte,
             dateDecompte = entity.dateDecompte,
-            statut = entity.statut,
+            statut = entity.statut.name,
             netAPayer = entity.netAPayer,
             montantPaye = entity.montantPaye,
             estSolde = entity.estSolde,

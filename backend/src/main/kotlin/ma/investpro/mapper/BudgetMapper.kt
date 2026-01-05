@@ -18,7 +18,7 @@ class BudgetMapper {
             conventionLibelle = entity.convention.libelle,
             version = entity.version,
             dateBudget = entity.dateBudget,
-            statut = entity.statut,
+            statut = entity.statut.name,
             plafondConvention = entity.plafondConvention,
             totalBudget = entity.totalBudget,
             budgetPrecedentId = entity.budgetPrecedentId,
@@ -39,7 +39,7 @@ class BudgetMapper {
             id = entity.id,
             version = entity.version,
             dateBudget = entity.dateBudget,
-            statut = entity.statut,
+            statut = entity.statut.name,
             totalBudget = entity.totalBudget,
             actif = entity.actif
         )

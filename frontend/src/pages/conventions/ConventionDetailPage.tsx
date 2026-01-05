@@ -9,7 +9,6 @@ import {
   CardContent,
   Chip,
   Stack,
-  Grid,
   Divider,
   IconButton,
   Paper,
@@ -237,79 +236,78 @@ const ConventionDetailPage = () => {
           </Stack>
 
           {/* KPI Cards */}
-          <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'primary.light', color: 'primary.dark' }}>
-                      <AccountBalance />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">Budget Total</Typography>
-                      <Typography variant="h6" fontWeight={600}>
-                        {formatCurrency(convention.budget)}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+              gap: 3,
+              mb: 4,
+            }}
+          >
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'primary.light', color: 'primary.dark' }}>
+                    <AccountBalance />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Budget Total</Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      {formatCurrency(convention.budget)}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
 
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'success.light', color: 'success.dark' }}>
-                      <TrendingUp />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">Taux Commission</Typography>
-                      <Typography variant="h6" fontWeight={600}>
-                        {convention.tauxCommission}%
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'success.light', color: 'success.dark' }}>
+                    <TrendingUp />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Taux Commission</Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      {convention.tauxCommission}%
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
 
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'info.light', color: 'info.dark' }}>
-                      <People />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">Partenaires</Typography>
-                      <Typography variant="h6" fontWeight={600}>
-                        {convention.partenaires.length}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'info.light', color: 'info.dark' }}>
+                    <People />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Partenaires</Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      {convention.partenaires.length}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
 
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'warning.light', color: 'warning.dark' }}>
-                      <Description />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">Sous-Conventions</Typography>
-                      <Typography variant="h6" fontWeight={600}>
-                        {convention.sousConventions.length}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'warning.light', color: 'warning.dark' }}>
+                    <Description />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Sous-Conventions</Typography>
+                    <Typography variant="h6" fontWeight={600}>
+                      {convention.sousConventions.length}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Box>
 
           {/* Tabs */}
           <Card>
@@ -323,8 +321,14 @@ const ConventionDetailPage = () => {
             <CardContent sx={{ p: 3 }}>
               {/* Tab 0: Informations Générales */}
               {activeTab === 0 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                    gap: 3,
+                  }}
+                >
+                  <Box>
                     <Paper sx={{ p: 3 }}>
                       <Typography variant="h6" fontWeight={600} gutterBottom>
                         Informations Principales
@@ -363,9 +367,9 @@ const ConventionDetailPage = () => {
                         )}
                       </Stack>
                     </Paper>
-                  </Grid>
+                  </Box>
 
-                  <Grid item xs={12} md={6}>
+                  <Box>
                     <Paper sx={{ p: 3 }}>
                       <Typography variant="h6" fontWeight={600} gutterBottom>
                         Paramètres Financiers
@@ -416,10 +420,10 @@ const ConventionDetailPage = () => {
                         />
                       </Paper>
                     )}
-                  </Grid>
+                  </Box>
 
                   {convention.dateValidation && (
-                    <Grid item xs={12}>
+                    <Box sx={{ gridColumn: '1 / -1' }}>
                       <Paper sx={{ p: 3, bgcolor: 'success.lighter' }}>
                         <Stack direction="row" spacing={2} alignItems="center">
                           <CheckCircle color="success" />
@@ -431,9 +435,9 @@ const ConventionDetailPage = () => {
                           </Box>
                         </Stack>
                       </Paper>
-                    </Grid>
+                    </Box>
                   )}
-                </Grid>
+                </Box>
               )}
 
               {/* Tab 1: Partenaires */}
@@ -457,7 +461,7 @@ const ConventionDetailPage = () => {
                           <TableCell>{partenaire.partenaireCode}</TableCell>
                           <TableCell>{partenaire.partenaireNom}</TableCell>
                           <TableCell>{partenaire.partenaireSigle || '-'}</TableCell>
-                          <TableCell align="right" fontWeight={600}>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>
                             {formatCurrency(partenaire.budgetAlloue)}
                           </TableCell>
                           <TableCell align="right">{partenaire.pourcentage}%</TableCell>
@@ -501,7 +505,7 @@ const ConventionDetailPage = () => {
                         <TableRow key={sc.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(`/conventions/${sc.id}`)}>
                           <TableCell>{sc.code}</TableCell>
                           <TableCell>{sc.numero}</TableCell>
-                          <TableCell fontWeight={500}>{sc.libelle}</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{sc.libelle}</TableCell>
                           <TableCell>
                             <Chip label={sc.statut} size="small" color="info" />
                           </TableCell>
@@ -526,8 +530,8 @@ const ConventionDetailPage = () => {
 
               {/* Tab 3: Imputations & Versements */}
               {activeTab === 3 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
+                <Stack spacing={3}>
+                  <Box>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Imputations Prévisionnelles
                     </Typography>
@@ -564,9 +568,9 @@ const ConventionDetailPage = () => {
                         </TableBody>
                       </Table>
                     </TableContainer>
-                  </Grid>
+                  </Box>
 
-                  <Grid item xs={12}>
+                  <Box>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       Versements Prévisionnels
                     </Typography>
@@ -587,7 +591,7 @@ const ConventionDetailPage = () => {
                             <TableRow key={vers.id}>
                               <TableCell>{vers.volet || '-'}</TableCell>
                               <TableCell>{formatDate(vers.dateVersement)}</TableCell>
-                              <TableCell align="right" fontWeight={600}>
+                              <TableCell align="right" sx={{ fontWeight: 600 }}>
                                 {formatCurrency(vers.montant)}
                               </TableCell>
                               <TableCell>{vers.partenaireNom || '-'}</TableCell>
@@ -607,8 +611,8 @@ const ConventionDetailPage = () => {
                         </TableBody>
                       </Table>
                     </TableContainer>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Stack>
               )}
             </CardContent>
           </Card>

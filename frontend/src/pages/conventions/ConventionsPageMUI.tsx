@@ -30,6 +30,7 @@ import {
   Delete,
   Send,
   Visibility,
+  PlayArrow,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -137,6 +138,19 @@ const ConventionsPageMUI = () => {
       handleMenuClose()
     } catch (error) {
       console.error('Erreur rejet:', error)
+    }
+  }
+
+  const handleMettreEnCours = async () => {
+    if (!selectedConvention) return
+    try {
+      await conventionsAPI.mettreEnCours(selectedConvention.id)
+      fetchConventions()
+      handleMenuClose()
+    } catch (error: any) {
+      console.error('Erreur mise en cours:', error)
+      const message = error.response?.data?.message || 'La date de début n\'est pas encore atteinte'
+      alert(message)
     }
   }
 
@@ -377,6 +391,11 @@ const ConventionsPageMUI = () => {
                 <Cancel fontSize="small" sx={{ mr: 1 }} /> Rejeter
               </MenuItem>
             </>
+          )}
+          {selectedConvention?.statut === 'VALIDEE' && (
+            <MenuItem onClick={handleMettreEnCours}>
+              <PlayArrow fontSize="small" sx={{ mr: 1 }} /> Mettre en Cours
+            </MenuItem>
           )}
           {selectedConvention?.statut === 'BROUILLON' && !selectedConvention?.isLocked && (
             <>

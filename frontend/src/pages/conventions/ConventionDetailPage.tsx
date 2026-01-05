@@ -35,6 +35,7 @@ import {
   Description,
   People,
   AttachMoney,
+  PlayArrow,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
@@ -141,6 +142,19 @@ const ConventionDetailPage = () => {
     }
   }
 
+  const handleMettreEnCours = async () => {
+    if (!convention) return
+    if (!window.confirm('Êtes-vous sûr de vouloir mettre cette convention en cours ?')) return
+    try {
+      await conventionsAPI.mettreEnCours(convention.id)
+      fetchConvention(convention.id)
+    } catch (error: any) {
+      console.error('Erreur mise en cours:', error)
+      const message = error.response?.data?.message || 'La date de début n\'est pas encore atteinte'
+      alert(message)
+    }
+  }
+
   const getStatutBadge = (statut: StatutConvention) => {
     const config: Record<StatutConvention, { color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'; icon: JSX.Element }> = {
       BROUILLON: { color: 'default', icon: <Edit fontSize="small" /> },
@@ -222,6 +236,16 @@ const ConventionDetailPage = () => {
               )}
               {convention.isLocked && (
                 <Chip icon={<Lock fontSize="small" />} label="Verrouillée" size="small" />
+              )}
+              {convention.statut === 'VALIDEE' && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<PlayArrow />}
+                  onClick={handleMettreEnCours}
+                >
+                  Mettre en Cours
+                </Button>
               )}
               {convention.statut === 'BROUILLON' && !convention.isLocked && (
                 <Button

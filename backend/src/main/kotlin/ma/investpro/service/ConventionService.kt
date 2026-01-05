@@ -166,6 +166,30 @@ class ConventionService(
     }
 
     /**
+     * Mettre une convention en cours d'exécution
+     * Transition: VALIDEE → EN_COURS
+     * Nécessite que la date de début soit atteinte
+     */
+    fun mettreEnCours(id: Long): Convention {
+        val convention = findById(id)
+            ?: throw IllegalArgumentException("Convention $id introuvable")
+
+        require(convention.statut == StatutConvention.VALIDEE) {
+            "Seules les conventions VALIDEES peuvent être mises en cours"
+        }
+
+        // Vérifier que la date de début est atteinte
+        val aujourdhui = LocalDate.now()
+        require(!convention.dateDebut.isAfter(aujourdhui)) {
+            "La date de début (${convention.dateDebut}) n'est pas encore atteinte. Date actuelle: $aujourdhui"
+        }
+
+        convention.statut = StatutConvention.EN_COURS
+
+        return conventionRepository.save(convention)
+    }
+
+    /**
      * Annuler une convention
      */
     fun annuler(id: Long, motif: String): Convention {

@@ -104,21 +104,53 @@ data class VersementPrevisionnelDTO(
 // Fournisseur DTOs
 data class FournisseurDTO(
     val id: Long?,
-    @field:NotBlank val code: String,
-    @field:NotBlank val raisonSociale: String,
+    val code: String,
+    val raisonSociale: String,
     val identifiantFiscal: String?,
     val ice: String?,
     val adresse: String?,
     val ville: String?,
     val telephone: String?,
     val fax: String?,
-    @field:Email val email: String?,
+    val email: String?,
     val contact: String?,
     val nonResident: Boolean,
     val remarques: String?,
     val actif: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
+)
+
+data class FournisseurSimpleDTO(
+    val id: Long?,
+    val code: String,
+    val raisonSociale: String,
+    val ice: String?,
+    val actif: Boolean
+)
+
+// Partenaire DTOs
+data class PartenaireDTO(
+    val id: Long?,
+    val code: String,
+    val raisonSociale: String,
+    val sigle: String?,
+    val typePartenaire: String?,
+    val email: String?,
+    val telephone: String?,
+    val adresse: String?,
+    val description: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class PartenaireSimpleDTO(
+    val id: Long?,
+    val code: String,
+    val raisonSociale: String,
+    val sigle: String?,
+    val actif: Boolean
 )
 
 // CompteBancaire DTOs
@@ -323,4 +355,188 @@ data class PaiementStatistiques(
     val montantTotal: BigDecimal,
     val paiementsPartiels: Int,
     val parMode: Map<String, BigDecimal>
+)
+
+// Budget DTOs
+data class BudgetDTO(
+    val id: Long?,
+    val conventionId: Long,
+    val conventionNumero: String?,
+    val conventionLibelle: String?,
+    val version: String,
+    val dateBudget: LocalDate,
+    val statut: String,
+    val plafondConvention: BigDecimal,
+    val totalBudget: BigDecimal,
+    val budgetPrecedentId: Long?,
+    val deltaMontant: BigDecimal?,
+    val justification: String?,
+    val observations: String?,
+    val dateValidation: LocalDate?,
+    val valideParId: Long?,
+    val lignes: List<LigneBudgetDTO>,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class BudgetSimpleDTO(
+    val id: Long?,
+    val version: String,
+    val dateBudget: LocalDate,
+    val statut: String,
+    val totalBudget: BigDecimal,
+    val actif: Boolean
+)
+
+data class LigneBudgetDTO(
+    val id: Long?,
+    val budgetId: Long,
+    val code: String,
+    val libelle: String,
+    val montant: BigDecimal,
+    val ordreAffichage: Int,
+    val description: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+// Marché DTOs
+data class MarcheDTO(
+    val id: Long?,
+    val numeroMarche: String,
+    val numAo: String?,
+    val dateMarche: LocalDate,
+    val fournisseurId: Long,
+    val fournisseurCode: String,
+    val fournisseurNom: String,
+    val fournisseurIce: String?,
+    val conventionId: Long?,
+    val conventionNumero: String?,
+    val objet: String,
+    val montantHt: BigDecimal,
+    val tauxTva: BigDecimal,
+    val montantTva: BigDecimal,
+    val montantTtc: BigDecimal,
+    val statut: String,
+    val dateDebut: LocalDate?,
+    val dateFinPrevue: LocalDate?,
+    val delaiExecutionMois: Int?,
+    val retenueGarantie: BigDecimal,
+    val remarques: String?,
+    val lignes: List<MarcheLigneDTO>,
+    val avenants: List<AvenantMarcheDTO>,
+    val decomptes: List<DecompteSimpleDTO>,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class MarcheSimpleDTO(
+    val id: Long?,
+    val numeroMarche: String,
+    val dateMarche: LocalDate,
+    val fournisseurNom: String,
+    val montantTtc: BigDecimal,
+    val statut: String,
+    val actif: Boolean
+)
+
+data class MarcheLigneDTO(
+    val id: Long?,
+    val marcheId: Long,
+    val numeroLigne: Int,
+    val designation: String,
+    val unite: String?,
+    val quantite: BigDecimal?,
+    val prixUnitaireHT: BigDecimal,
+    val montantHT: BigDecimal,
+    val tauxTVA: BigDecimal,
+    val montantTVA: BigDecimal,
+    val montantTTC: BigDecimal,
+    val imputationAnalytique: Map<String, String>?,
+    val remarques: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class AvenantMarcheDTO(
+    val id: Long?,
+    val marcheId: Long,
+    val numeroAvenant: String,
+    val dateAvenant: LocalDate,
+    val objet: String,
+    val montantAvant: BigDecimal?,
+    val montantApres: BigDecimal?,
+    val impact: BigDecimal?,
+    val statut: String,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+// Décompte DTOs
+data class DecompteDTO(
+    val id: Long?,
+    val marcheId: Long,
+    val marcheNumero: String?,
+    val marcheFournisseur: String?,
+    val numeroDecompte: String,
+    val dateDecompte: LocalDate,
+    val periodeDebut: LocalDate,
+    val periodeFin: LocalDate,
+    val statut: String,
+    val montantBrutHT: BigDecimal,
+    val montantTVA: BigDecimal,
+    val montantTTC: BigDecimal,
+    val totalRetenues: BigDecimal,
+    val netAPayer: BigDecimal,
+    val cumulPrecedent: BigDecimal?,
+    val cumulActuel: BigDecimal?,
+    val observations: String?,
+    val dateValidation: LocalDate?,
+    val valideParId: Long?,
+    val montantPaye: BigDecimal,
+    val estSolde: Boolean,
+    val retenues: List<DecompteRetenueDTO>,
+    val imputations: List<DecompteImputationDTO>,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class DecompteSimpleDTO(
+    val id: Long?,
+    val numeroDecompte: String,
+    val dateDecompte: LocalDate,
+    val statut: String,
+    val netAPayer: BigDecimal,
+    val montantPaye: BigDecimal,
+    val estSolde: Boolean,
+    val actif: Boolean
+)
+
+data class DecompteRetenueDTO(
+    val id: Long?,
+    val decompteId: Long,
+    val typeRetenue: String,
+    val montant: BigDecimal,
+    val tauxPourcent: BigDecimal?,
+    val libelle: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class DecompteImputationDTO(
+    val id: Long?,
+    val decompteId: Long,
+    val montant: BigDecimal,
+    val dimensionsValeurs: Map<String, String>,
+    val remarques: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
 )

@@ -5,6 +5,8 @@ import ma.investpro.dto.VersionHistoryEntry
 import ma.investpro.entity.Avenant
 import ma.investpro.entity.StatutAvenant
 import ma.investpro.entity.StatutConvention
+import ma.investpro.mapper.AvenantMapper
+import ma.investpro.mapper.ConventionMapper
 import ma.investpro.repository.AvenantRepository
 import ma.investpro.repository.ConventionRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -16,7 +18,9 @@ import java.time.LocalDate
 @Transactional
 class AvenantService(
     private val avenantRepository: AvenantRepository,
-    private val conventionRepository: ConventionRepository
+    private val conventionRepository: ConventionRepository,
+    private val conventionMapper: ConventionMapper,
+    private val avenantMapper: AvenantMapper
 ) {
 
     // ========== CRUD Operations ==========
@@ -211,9 +215,9 @@ class AvenantService(
         val avenantsValides = findAvenantsValidesOrdonnes(conventionId)
 
         return ConsolidatedVersionResponse(
-            convention = convention,
+            convention = conventionMapper.toDTO(convention),
             versionActuelle = convention.version ?: "V0",
-            avenants = avenantsValides,
+            avenants = avenantMapper.toDTOList(avenantsValides),
             nombreAvenants = avenantsValides.size,
             montantActuel = convention.budget,
             tauxCommissionActuel = convention.tauxCommission,

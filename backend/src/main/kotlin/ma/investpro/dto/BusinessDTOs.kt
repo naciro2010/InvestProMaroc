@@ -8,14 +8,94 @@ import java.time.LocalDateTime
 // Convention DTOs
 data class ConventionDTO(
     val id: Long?,
-    @field:NotBlank val code: String,
-    @field:NotBlank val libelle: String,
-    @field:DecimalMin("0.00") @field:DecimalMax("100.00") val tauxCommission: BigDecimal,
-    @field:NotBlank val baseCalcul: String,
-    @field:DecimalMin("0.00") val tauxTva: BigDecimal,
-    @field:NotNull val dateDebut: LocalDate,
+    val code: String,
+    val numero: String,
+    val dateConvention: LocalDate,
+    val typeConvention: String,
+    val statut: String,
+    val libelle: String,
+    val objet: String?,
+    val tauxCommission: BigDecimal,
+    val budget: BigDecimal,
+    val baseCalcul: String,
+    val tauxTva: BigDecimal,
+    val dateDebut: LocalDate,
     val dateFin: LocalDate?,
     val description: String?,
+    val dateSoumission: LocalDate?,
+    val dateValidation: LocalDate?,
+    val valideParId: Long?,
+    val version: String?,
+    val isLocked: Boolean,
+    val motifVerrouillage: String?,
+    val parentConventionId: Long?,
+    val parentConventionNumero: String?,
+    val heriteParametres: Boolean,
+    val surchargeTauxCommission: BigDecimal?,
+    val surchargeBaseCalcul: String?,
+    val partenaires: List<ConventionPartenaireDTO>,
+    val sousConventions: List<ConventionSimpleDTO>,
+    val imputationsPrevisionnelles: List<ImputationPrevisionnelleDTO>,
+    val versementsPrevisionnels: List<VersementPrevisionnelDTO>,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class ConventionSimpleDTO(
+    val id: Long?,
+    val code: String,
+    val numero: String,
+    val libelle: String,
+    val statut: String,
+    val budget: BigDecimal,
+    val dateDebut: LocalDate,
+    val dateFin: LocalDate?,
+    val actif: Boolean
+)
+
+data class ConventionPartenaireDTO(
+    val id: Long?,
+    val conventionId: Long,
+    val partenaireId: Long,
+    val partenaireCode: String,
+    val partenaireNom: String,
+    val partenaireSigle: String?,
+    val budgetAlloue: BigDecimal,
+    val pourcentage: BigDecimal,
+    val commissionIntervention: BigDecimal?,
+    val estMaitreOeuvre: Boolean,
+    val estMaitreOeuvreDelegue: Boolean,
+    val remarques: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class ImputationPrevisionnelleDTO(
+    val id: Long?,
+    val conventionId: Long,
+    val volet: String?,
+    val dateDemarrage: LocalDate,
+    val delaiMois: Int,
+    val dateFinPrevue: LocalDate?,
+    val remarques: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class VersementPrevisionnelDTO(
+    val id: Long?,
+    val conventionId: Long,
+    val volet: String?,
+    val dateVersement: LocalDate,
+    val montant: BigDecimal,
+    val partenaireId: Long,
+    val partenaireNom: String?,
+    val maitreOeuvreDelegueId: Long?,
+    val maitreOeuvreDelegueNom: String?,
+    val remarques: String?,
     val actif: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
@@ -148,13 +228,43 @@ data class ImputationStatistiques(
 
 // Avenant DTOs
 data class ConsolidatedVersionResponse(
-    val convention: Any,
+    val convention: ConventionDTO,
     val versionActuelle: String,
-    val avenants: List<Any>,
+    val avenants: List<AvenantDTO>,
     val nombreAvenants: Int,
     val montantActuel: BigDecimal,
     val tauxCommissionActuel: BigDecimal,
     val dateFinActuelle: LocalDate?
+)
+
+data class AvenantDTO(
+    val id: Long?,
+    val conventionId: Long,
+    val conventionNumero: String?,
+    val conventionLibelle: String?,
+    val numeroAvenant: String,
+    val dateAvenant: LocalDate,
+    val dateSignature: LocalDate?,
+    val statut: String,
+    val versionResultante: String,
+    val objet: String,
+    val montantAvant: BigDecimal?,
+    val tauxCommissionAvant: BigDecimal?,
+    val dateFinAvant: LocalDate?,
+    val montantApres: BigDecimal?,
+    val tauxCommissionApres: BigDecimal?,
+    val dateFinApres: LocalDate?,
+    val impactMontant: BigDecimal?,
+    val impactCommission: BigDecimal?,
+    val impactDelaiJours: Int?,
+    val justification: String?,
+    val details: String?,
+    val dateValidation: LocalDate?,
+    val valideParId: Long?,
+    val isLocked: Boolean,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
 )
 
 data class VersionHistoryEntry(

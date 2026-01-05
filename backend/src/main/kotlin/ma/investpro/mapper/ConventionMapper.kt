@@ -21,8 +21,8 @@ class ConventionMapper {
             code = entity.code,
             numero = entity.numero,
             dateConvention = entity.dateConvention,
-            typeConvention = entity.typeConvention,
-            statut = entity.statut,
+            typeConvention = entity.typeConvention.name,
+            statut = entity.statut.name,
             libelle = entity.libelle,
             objet = entity.objet,
 
@@ -57,8 +57,6 @@ class ConventionMapper {
 
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
-            createdBy = entity.createdBy,
-            updatedBy = entity.updatedBy,
             actif = entity.actif
         )
     }
@@ -73,7 +71,7 @@ class ConventionMapper {
             code = entity.code,
             numero = entity.numero,
             libelle = entity.libelle,
-            statut = entity.statut,
+            statut = entity.statut.name,
             budget = entity.budget,
             dateDebut = entity.dateDebut,
             dateFin = entity.dateFin,

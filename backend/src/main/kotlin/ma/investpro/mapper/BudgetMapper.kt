@@ -30,8 +30,6 @@ class BudgetMapper {
             lignes = entity.lignes.map { toLigneDTO(it) },
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
-            createdBy = entity.createdBy,
-            updatedBy = entity.updatedBy,
             actif = entity.actif
         )
     }

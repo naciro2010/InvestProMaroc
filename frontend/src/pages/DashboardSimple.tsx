@@ -28,6 +28,13 @@ interface Stats {
   montantTotalConventions: number
   montantTotalBudgets: number
   montantTotalPaiements: number
+  conventionsParStatut: {
+    brouillon: number
+    soumis: number
+    validees: number
+    enCours: number
+    achevees: number
+  }
 }
 
 const DashboardSimple = () => {
@@ -40,6 +47,13 @@ const DashboardSimple = () => {
     montantTotalConventions: 0,
     montantTotalBudgets: 0,
     montantTotalPaiements: 0,
+    conventionsParStatut: {
+      brouillon: 0,
+      soumis: 0,
+      validees: 0,
+      enCours: 0,
+      achevees: 0,
+    },
   })
   const [loading, setLoading] = useState(true)
 
@@ -74,6 +88,21 @@ const DashboardSimple = () => {
           0
         ) : 0
 
+        // Calculate conventions by status
+        const conventionsParStatut = Array.isArray(conventions) ? {
+          brouillon: conventions.filter((c: any) => c.statut === 'BROUILLON').length,
+          soumis: conventions.filter((c: any) => c.statut === 'SOUMIS').length,
+          validees: conventions.filter((c: any) => c.statut === 'VALIDEE').length,
+          enCours: conventions.filter((c: any) => c.statut === 'EN_COURS').length,
+          achevees: conventions.filter((c: any) => c.statut === 'ACHEVE').length,
+        } : {
+          brouillon: 0,
+          soumis: 0,
+          validees: 0,
+          enCours: 0,
+          achevees: 0,
+        }
+
         setStats({
           conventions: conventions.length,
           budgets: budgets.length,
@@ -82,6 +111,7 @@ const DashboardSimple = () => {
           montantTotalConventions,
           montantTotalBudgets,
           montantTotalPaiements,
+          conventionsParStatut,
         })
       } catch (error) {
         console.error('Erreur lors du chargement des statistiques:', error)
@@ -114,9 +144,11 @@ const DashboardSimple = () => {
       title: 'Conventions',
       value: stats.conventions,
       subtitle: formatLargeCurrency(stats.montantTotalConventions),
+      details: `${stats.conventionsParStatut.validees} validées • ${stats.conventionsParStatut.enCours} en cours`,
       icon: <AccountBalance sx={{ fontSize: 40 }} />,
       color: '#1976d2',
       trend: '+12%',
+      onClick: () => navigate('/conventions'),
     },
     {
       title: 'Budgets',
@@ -125,6 +157,7 @@ const DashboardSimple = () => {
       icon: <TrendingUp sx={{ fontSize: 40 }} />,
       color: '#2e7d32',
       trend: '+8%',
+      onClick: () => navigate('/budgets'),
     },
     {
       title: 'Décomptes',
@@ -133,6 +166,7 @@ const DashboardSimple = () => {
       icon: <Description sx={{ fontSize: 40 }} />,
       color: '#ed6c02',
       trend: '+15%',
+      onClick: () => navigate('/decomptes'),
     },
     {
       title: 'Paiements',
@@ -141,6 +175,7 @@ const DashboardSimple = () => {
       icon: <Payment sx={{ fontSize: 40 }} />,
       color: '#9c27b0',
       trend: '+20%',
+      onClick: () => navigate('/paiements'),
     },
   ]
 
@@ -185,10 +220,17 @@ const DashboardSimple = () => {
           {kpis.map((kpi, index) => (
             <Card
               key={index}
+              onClick={kpi.onClick}
               sx={{
                 height: '100%',
                 position: 'relative',
                 overflow: 'visible',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4,
+                },
               }}
             >
               <CardContent sx={{ p: 3 }}>
@@ -226,6 +268,11 @@ const DashboardSimple = () => {
                     <Typography variant="body2" color="text.secondary" mt={0.5}>
                       {kpi.subtitle}
                     </Typography>
+                    {kpi.details && (
+                      <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+                        {kpi.details}
+                      </Typography>
+                    )}
                   </Box>
                 </Stack>
               </CardContent>

@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardSimple from './pages/DashboardSimple'
 import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
 import ConventionWizard from './pages/conventions/ConventionWizardComplete'
+import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
 import BudgetsPage from './pages/budgets/BudgetsPage'
@@ -121,6 +122,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ConventionWizard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/conventions/:id"
+            element={
+              <ProtectedRoute>
+                <ConventionDetailPage />
               </ProtectedRoute>
             }
           />

@@ -29,6 +29,7 @@ import {
   Edit,
   Delete,
   Send,
+  Visibility,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -337,6 +338,9 @@ const ConventionsPageMUI = () => {
 
         {/* Context Menu */}
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <MenuItem onClick={() => { navigate(`/conventions/${selectedConvention?.id}`); handleMenuClose(); }}>
+            <Visibility fontSize="small" sx={{ mr: 1 }} /> Voir Détails
+          </MenuItem>
           {selectedConvention?.statut === 'BROUILLON' && (
             <MenuItem onClick={handleSoumettre}>
               <Send fontSize="small" sx={{ mr: 1 }} /> Soumettre

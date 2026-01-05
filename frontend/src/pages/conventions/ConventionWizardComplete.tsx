@@ -105,7 +105,7 @@ interface ConventionFormData {
   lignesBudget: LigneBudget[]
 
   // Étape 3: Commission
-  baseCommission: 'HT' | 'TTC' | 'AUTRE'
+  baseCommission: 'HT' | 'TTC'
   modeCommission: 'TAUX_FIXE' | 'TRANCHES' | 'MIXTE'
   tauxCommission: number
   plafondCommission?: number
@@ -131,8 +131,6 @@ const steps = [
   'Commission',
   'Partenaires',
   'Subventions',
-  'Imputations',
-  'Versements',
   'Récapitulatif',
 ]
 
@@ -547,10 +545,6 @@ const ConventionWizardComplete = () => {
       case 4:
         return renderStep5_Subventions()
       case 5:
-        return renderStep6_Imputations()
-      case 6:
-        return renderStep7_Versements()
-      case 7:
         return renderStep8_Recapitulatif()
       default:
         return null
@@ -581,6 +575,87 @@ const ConventionWizardComplete = () => {
       <Divider sx={{ mt: 2, borderColor: '#e2e8f0' }} />
     </Box>
   )
+
+  // Helper component for summary bar at bottom of each step
+  const SummaryBar = () => {
+    const commissionEstimee = (formData.budgetGlobal * formData.tauxCommission) / 100
+    const totalPartenaires = formData.partenaires.reduce((sum, p) => sum + p.budgetAlloue, 0)
+    const totalPourcentage = formData.partenaires.reduce((sum, p) => sum + p.pourcentage, 0)
+
+    return (
+      <Box
+        sx={{
+          mt: 4,
+          p: 3,
+          bgcolor: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+          borderRadius: 2,
+          border: '2px solid #3b82f6',
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ color: '#1e40af', fontWeight: 700, mb: 2 }}>
+          📊 Résumé de la Convention
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+              Budget Global
+            </Typography>
+            <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700 }}>
+              {formData.budgetGlobal.toLocaleString('fr-MA', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })} DH
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+              Taux Commission
+            </Typography>
+            <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700 }}>
+              {formData.tauxCommission}%
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+              Commission Estimée
+            </Typography>
+            <Typography variant="h6" sx={{ color: '#059669', fontWeight: 700 }}>
+              {commissionEstimee.toLocaleString('fr-MA', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })} DH
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+              Partenaires
+            </Typography>
+            <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700 }}>
+              {formData.partenaires.length} ({totalPourcentage.toFixed(1)}%)
+            </Typography>
+          </Grid>
+        </Grid>
+        {formData.partenaires.length > 0 && totalPourcentage !== 100 && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            ⚠️ Le total des pourcentages des partenaires n'est pas égal à 100% (actuellement {totalPourcentage.toFixed(1)}%)
+          </Alert>
+        )}
+        {formData.lignesBudget.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" sx={{ color: '#64748b' }}>
+              Lignes de budget : {formData.lignesBudget.length} ligne(s) | Total : {
+                formData.lignesBudget.reduce((sum, l) => sum + l.montantTTC, 0).toLocaleString('fr-MA', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })
+              } DH
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    )
+  }
 
   // Étape 1: Informations
   const renderStep1_Informations = () => (
@@ -680,6 +755,7 @@ const ConventionWizardComplete = () => {
           />
         </Grid>
       </Grid>
+      <SummaryBar />
     </Box>
   )
 
@@ -788,6 +864,7 @@ const ConventionWizardComplete = () => {
           )}
         </Grid>
       </Grid>
+      <SummaryBar />
     </Box>
   )
 
@@ -809,7 +886,6 @@ const ConventionWizardComplete = () => {
           >
             <MenuItem value="HT">HT (Hors Taxes)</MenuItem>
             <MenuItem value="TTC">TTC (Toutes Taxes Comprises)</MenuItem>
-            <MenuItem value="AUTRE">Autre</MenuItem>
           </TextField>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
@@ -888,6 +964,7 @@ const ConventionWizardComplete = () => {
           </Card>
         </Grid>
       </Grid>
+      <SummaryBar />
     </Box>
   )
 
@@ -1014,6 +1091,7 @@ const ConventionWizardComplete = () => {
           </Stack>
         </Box>
       )}
+      <SummaryBar />
     </Box>
   )
 
@@ -1113,6 +1191,7 @@ const ConventionWizardComplete = () => {
           </CardContent>
         </Card>
       ))}
+      <SummaryBar />
     </Box>
   )
 

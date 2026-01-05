@@ -21,8 +21,6 @@ class PartenaireMapper {
             description = entity.description,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
-            createdBy = entity.createdBy,
-            updatedBy = entity.updatedBy,
             actif = entity.actif
         )
     }

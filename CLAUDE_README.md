@@ -4,6 +4,8 @@
 
 **Dernière mise à jour:** 2026-01-05
 
+**Version:** 2.0 - Ajout modules Projets et Marchés
+
 ---
 
 ## 📁 Structure du Projet
@@ -467,12 +469,16 @@ Le dossier `legacy/Xcompta-main/` contient l'ancien système avec:
 
 ## 🔮 Prochaines Étapes
 
-### À Implémenter (Priorités)
+### Implémenté
 1. ✅ Intégration des subventions dans le wizard de création
-2. ⏳ Interface d'ajout d'imputations prévisionnelles (après création)
-3. ⏳ Interface d'ajout de versements prévisionnels (après création)
-4. ⏳ Module Projets
-5. ⏳ Module Marchés
+2. ✅ Module Projets (complet avec workflow)
+3. ✅ Module Marchés (complet avec détails)
+
+### À Implémenter (Priorités)
+1. ⏳ Interface d'ajout d'imputations prévisionnelles (après création convention)
+2. ⏳ Interface d'ajout de versements prévisionnels (après création convention)
+3. ⏳ Page de détail complète pour les projets
+4. ⏳ Liaison projets ↔ marchés ↔ conventions
 
 ### Améliorations Futures
 - Dashboard analytique
@@ -510,3 +516,235 @@ Le dossier `legacy/Xcompta-main/` contient l'ancien système avec:
 **Fin du README Claude - Version 1.0**
 
 > 💡 Ce document est vivant et doit être mis à jour à chaque changement majeur de l'architecture ou de la logique métier.
+
+---
+
+## 📁 Module PROJETS
+
+### Backend - Entité Projet
+
+**Fichier:** `backend/src/main/kotlin/ma/investpro/entity/Projet.kt`
+
+#### Champs Principaux
+- `code` (String, unique): Code unique du projet (ex: PRJ-2024-001)
+- `nom` (String): Nom/titre du projet
+- `description` (Text): Description détaillée du projet
+- `budgetTotal` (BigDecimal): Budget total alloué en DH
+- `dateDebut` (LocalDate): Date de démarrage
+- `dateFinPrevue` (LocalDate): Date de fin prévue (auto-calculée si dureeMois fournie)
+- `dateFinReelle` (LocalDate): Date de fin réelle
+- `dureeMois` (Int): Durée estimée en mois
+
+#### Workflow et Suivi
+- `statut` (Enum): EN_PREPARATION, EN_COURS, SUSPENDU, TERMINE, ANNULE
+- `pourcentageAvancement` (BigDecimal): Avancement du projet (0-100%)
+- `chefProjet` (ManyToOne → Partenaire): Responsable du projet
+- `convention` (ManyToOne → Convention): Convention de rattachement (optionnel)
+
+#### Informations Complémentaires
+- `localisation` (String): Localisation géographique
+- `objectifs` (Text): Objectifs du projet
+- `remarques` (Text): Notes diverses
+
+#### Méthodes Métier
+- `calculerDateFinPrevue()`: Calcule dateFinPrevue = dateDebut + dureeMois
+- `estEnRetard()`: Vérifie si aujourd'hui > dateFinPrevue ET statut actif
+- `estActif()`: Vérifie si statut = EN_PREPARATION ou EN_COURS
+
+---
+
+### Service Projet
+
+**Fichier:** `backend/src/main/kotlin/ma/investpro/service/ProjetService.kt`
+
+#### CRUD Operations
+- `findAll()`, `findById()`, `findByCode()`
+- `findByStatut()`, `findByConventionId()`, `findByChefProjetId()`
+- `findProjetsActifs()`, `findProjetsEnRetard()`
+- `create()`, `update()`, `delete()`
+
+#### Workflow Operations
+- `demarrer(id)`: EN_PREPARATION → EN_COURS
+- `suspendre(id, motif)`: EN_COURS → SUSPENDU
+- `reprendre(id)`: SUSPENDU → EN_COURS
+- `terminer(id)`: EN_COURS/SUSPENDU → TERMINE (auto 100%)
+- `annuler(id, motif)`: Any (sauf TERMINE) → ANNULE
+- `mettreAJourAvancement(id, %)`: Met à jour l'avancement (auto-termine si 100%)
+
+#### Statistiques
+- `getStatistiques()`: Retourne compteurs par statut + projets en retard
+
+---
+
+### API REST Projets
+
+**Base URL:** `/api/projets`
+
+#### Endpoints CRUD
+- `GET /api/projets` → Liste tous les projets
+- `GET /api/projets/{id}` → Détail d'un projet
+- `GET /api/projets/code/{code}` → Recherche par code
+- `GET /api/projets/statut/{statut}` → Filtrage par statut
+- `GET /api/projets/actifs` → Projets actifs uniquement
+- `GET /api/projets/en-retard` → Projets en retard
+- `GET /api/projets/convention/{id}` → Projets d'une convention
+- `GET /api/projets/chef-projet/{id}` → Projets d'un chef de projet
+- `GET /api/projets/periode?debut=&fin=` → Projets par période
+- `GET /api/projets/search?q=` → Recherche textuelle
+- `POST /api/projets` → Créer un projet (ADMIN/MANAGER)
+- `PUT /api/projets/{id}` → Modifier un projet (ADMIN/MANAGER)
+- `DELETE /api/projets/{id}` → Supprimer un projet (ADMIN only)
+
+#### Endpoints Workflow
+- `POST /api/projets/{id}/demarrer` → Démarrer le projet
+- `POST /api/projets/{id}/suspendre?motif=` → Suspendre avec motif
+- `POST /api/projets/{id}/reprendre` → Reprendre un projet suspendu
+- `POST /api/projets/{id}/terminer` → Clôturer le projet
+- `POST /api/projets/{id}/annuler?motif=` → Annuler avec motif
+- `PUT /api/projets/{id}/avancement?pourcentage=` → Mettre à jour l'avancement
+
+#### Statistiques
+- `GET /api/projets/statistiques` → Statistiques par statut
+
+---
+
+### Frontend Projets
+
+**Fichiers:**
+- Liste: `/home/user/InvestProMaroc/frontend/src/pages/projets/ProjetsPage.tsx`
+- Formulaire: `/home/user/InvestProMaroc/frontend/src/pages/projets/ProjetFormPage.tsx`
+- API Client: `/home/user/InvestProMaroc/frontend/src/lib/projetsAPI.ts`
+
+#### Fonctionnalités de la Page Liste
+- **Cartes de statistiques:** Total, En préparation, En cours, Suspendus, En retard
+- **Affichage par cartes:** Code, nom, statut, avancement (%), budget
+- **Menu contextuel par projet:**
+  - Détails
+  - Démarrer (si EN_PREPARATION)
+  - Suspendre (si EN_COURS)
+  - Reprendre (si SUSPENDU)
+  - Terminer (si EN_COURS)
+  - Annuler (si non TERMINE)
+  - Modifier
+  - Supprimer (ADMIN)
+
+#### Formulaire de Création/Modification
+Champs principaux:
+- Code, Nom, Description
+- Budget total, Durée (mois)
+- Date de début
+- Statut
+- Localisation
+- Objectifs
+- Remarques
+
+---
+
+### Base de Données - Table Projets
+
+**Fichier migration:** `V5__create_projets_table.sql`
+
+**Table:** `projets`
+
+```sql
+CREATE TABLE projets (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    nom VARCHAR(200) NOT NULL,
+    description TEXT,
+    convention_id BIGINT,
+    budget_total DECIMAL(15,2) DEFAULT 0,
+    date_debut DATE,
+    date_fin_prevue DATE,
+    date_fin_reelle DATE,
+    duree_mois INT,
+    chef_projet_id BIGINT,
+    statut statut_projet DEFAULT 'EN_PREPARATION',
+    pourcentage_avancement DECIMAL(5,2) DEFAULT 0,
+    localisation VARCHAR(200),
+    objectifs TEXT,
+    remarques TEXT,
+    actif BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    
+    FOREIGN KEY (convention_id) REFERENCES conventions(id),
+    FOREIGN KEY (chef_projet_id) REFERENCES partenaires(id)
+);
+```
+
+**ENUM:** `statut_projet` → EN_PREPARATION, EN_COURS, SUSPENDU, TERMINE, ANNULE
+
+**Index:**
+- idx_projets_code (UNIQUE)
+- idx_projets_convention
+- idx_projets_statut
+- idx_projets_dates
+- idx_projets_avancement
+
+---
+
+## 🏗️ Module MARCHÉS (Existant)
+
+### Backend - Entité Marché
+
+**Fichier:** `backend/src/main/kotlin/ma/investpro/entity/Marche.kt`
+
+Le module Marchés était déjà complet dans le système :
+- Gestion des marchés publics / contrats de procurement
+- Liaison avec Convention et Fournisseur
+- Support des lignes de marché (MarcheLigne)
+- Avenants (AvenantMarche)
+- Bons de commande (BonCommande)
+- Décomptes (Decompte)
+
+**Statuts:** EN_COURS, VALIDE, TERMINE, SUSPENDU, ANNULE, EN_ATTENTE
+
+---
+
+## 🔗 Relations entre Modules
+
+### Convention ↔ Projet
+- Une convention peut avoir plusieurs projets (One-to-Many implicite via foreign key)
+- Un projet peut être rattaché à une convention (Many-to-One optionnel)
+
+### Convention ↔ Marché
+- Une convention peut avoir plusieurs marchés (One-to-Many)
+- Un marché doit être rattaché à une convention (Many-to-One)
+
+### Projet ↔ Marché
+- Pas de relation directe dans le modèle actuel
+- Liaison possible via la convention commune
+
+### Convention ↔ Partenaire
+- Relation N-N via ConventionPartenaire
+- Chaque partenaire a un rôle (MOA, MOD, BAILLEUR) et un budget alloué
+
+### Projet ↔ Partenaire
+- Un projet peut avoir un chef de projet (Many-to-One vers Partenaire)
+
+---
+
+## 📊 Workflow Comparatif
+
+### Convention
+```
+BROUILLON → SOUMIS → VALIDEE (V0) → EN_COURS → ACHEVE/ANNULE
+                ↓ rejeter
+            BROUILLON
+```
+
+### Projet
+```
+EN_PREPARATION → EN_COURS → TERMINE/ANNULE
+                     ↓ suspendre
+                 SUSPENDU → EN_COURS (reprendre)
+```
+
+### Marché
+```
+EN_ATTENTE → VALIDE → EN_COURS → TERMINE/ANNULE
+                          ↓
+                      SUSPENDU
+```
+

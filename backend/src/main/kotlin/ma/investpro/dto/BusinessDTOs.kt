@@ -559,3 +559,43 @@ data class DecompteImputationDTO(
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
 )
+
+// Projet DTOs
+data class ProjetDTO(
+    val id: Long?,
+    val code: String,
+    val nom: String,
+    val description: String?,
+    val conventionId: Long?,
+    val conventionNumero: String?,
+    val conventionLibelle: String?,
+    val budgetTotal: BigDecimal,
+    val dateDebut: LocalDate?,
+    val dateFinPrevue: LocalDate?,
+    val dateFinReelle: LocalDate?,
+    val dureeMois: Int?,
+    val chefProjetId: Long?,
+    val chefProjetNom: String?,
+    val statut: String,
+    val pourcentageAvancement: BigDecimal,
+    val localisation: String?,
+    val objectifs: String?,
+    val remarques: String?,
+    val estEnRetard: Boolean,
+    val estActif: Boolean,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class ProjetSimpleDTO(
+    val id: Long?,
+    val code: String,
+    val nom: String,
+    val statut: String,
+    val budgetTotal: BigDecimal,
+    val dateDebut: LocalDate?,
+    val dateFinPrevue: LocalDate?,
+    val pourcentageAvancement: BigDecimal,
+    val actif: Boolean
+)

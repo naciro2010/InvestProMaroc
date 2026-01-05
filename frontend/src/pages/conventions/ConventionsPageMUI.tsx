@@ -50,6 +50,8 @@ interface Convention {
   dateDebut: string
   dateFin?: string
   isLocked: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 const ConventionsPageMUI = () => {
@@ -78,7 +80,15 @@ const ConventionsPageMUI = () => {
       const data = Array.isArray(response.data) ? response.data : (response.data?.data || [])
       console.log('🔍 Data finale:', data)
       console.log('🔍 Nombre de conventions:', data.length)
-      setConventions(data)
+
+      // Trier par date de modification/création (les plus récentes en premier)
+      const sortedData = [...data].sort((a: Convention, b: Convention) => {
+        const dateA = new Date(a.updatedAt || a.createdAt || a.dateConvention).getTime()
+        const dateB = new Date(b.updatedAt || b.createdAt || b.dateConvention).getTime()
+        return dateB - dateA // Ordre décroissant (plus récent en premier)
+      })
+
+      setConventions(sortedData)
     } catch (error) {
       console.error('Erreur chargement conventions:', error)
     } finally {
@@ -177,6 +187,7 @@ const ConventionsPageMUI = () => {
     soumis: conventions.filter(c => c.statut === 'SOUMIS').length,
     validees: conventions.filter(c => c.statut === 'VALIDEE').length,
     enCours: conventions.filter(c => c.statut === 'EN_COURS').length,
+    annulees: conventions.filter(c => c.statut === 'ANNULE').length,
   }
 
   if (loading) {
@@ -215,7 +226,7 @@ const ConventionsPageMUI = () => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr 1fr' },
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
             gap: 2,
             mb: 4,
           }}
@@ -250,6 +261,12 @@ const ConventionsPageMUI = () => {
               <Typography variant="h4" fontWeight={700} color="info.main">{stats.enCours}</Typography>
             </CardContent>
           </Card>
+          <Card sx={{ cursor: 'pointer' }} onClick={() => setFilter('ANNULE')}>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary">Rejetées</Typography>
+              <Typography variant="h4" fontWeight={700} color="error.main">{stats.annulees}</Typography>
+            </CardContent>
+          </Card>
         </Box>
 
         {/* Filter Chips */}
@@ -273,6 +290,11 @@ const ConventionsPageMUI = () => {
             label="Validées"
             onClick={() => setFilter('VALIDEE')}
             color={filter === 'VALIDEE' ? 'primary' : 'default'}
+          />
+          <Chip
+            label="Rejetées"
+            onClick={() => setFilter('ANNULE')}
+            color={filter === 'ANNULE' ? 'primary' : 'default'}
           />
         </Stack>
 

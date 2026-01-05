@@ -91,7 +91,7 @@ interface VersementPrevisionnel {
 
 interface ConventionFormData {
   // Étape 1: Informations de base
-  typeConvention: 'CADRE' | 'NON_CADRE' | 'SPECIFIQUE' | 'AVENANT'
+  typeConvention: 'CADRE' | 'NON_CADRE'
   numero: string
   code: string
   libelle: string

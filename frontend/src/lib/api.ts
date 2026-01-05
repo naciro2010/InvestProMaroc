@@ -188,6 +188,7 @@ export const conventionsAPI = {
   soumettre: (id: number) => api.post(`/conventions/${id}/soumettre`),
   valider: (id: number, valideParId: number) => api.post(`/conventions/${id}/valider`, { valideParId }),
   rejeter: (id: number, motif: string) => api.post(`/conventions/${id}/rejeter`, { motif }),
+  mettreEnCours: (id: number) => api.post(`/conventions/${id}/mettre-en-cours`),
   annuler: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
 }
 

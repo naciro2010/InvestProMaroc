@@ -165,6 +165,18 @@ class ConventionController(
         }
     }
 
+    @PostMapping("/{id}/mettre-en-cours")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun mettreEnCours(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
+        return try {
+            val convention = conventionService.mettreEnCours(id)
+            val dto = conventionMapper.toDTO(convention)
+            ResponseEntity.ok(dto)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().build()
+        }
+    }
+
     @PostMapping("/{id}/annuler")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun annuler(

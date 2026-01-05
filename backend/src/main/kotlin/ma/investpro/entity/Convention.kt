@@ -123,7 +123,10 @@ class Convention(
     var imputationsPrevisionnelles: MutableList<ImputationPrevisionnelle> = mutableListOf(),
 
     @OneToMany(mappedBy = "convention", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
-    var versementsPrevisionnels: MutableList<VersementPrevisionnel> = mutableListOf()
+    var versementsPrevisionnels: MutableList<VersementPrevisionnel> = mutableListOf(),
+
+    @OneToMany(mappedBy = "convention", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    var subventions: MutableList<Subvention> = mutableListOf()
 
 ) : BaseEntity() {
 

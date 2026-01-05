@@ -54,6 +54,7 @@ class ConventionMapper {
             sousConventions = entity.sousConventions.map { toSimpleDTO(it) },
             imputationsPrevisionnelles = entity.imputationsPrevisionnelles.map { toImputationDTO(it) },
             versementsPrevisionnels = entity.versementsPrevisionnels.map { toVersementDTO(it) },
+            subventions = entity.subventions.map { toSubventionDTO(it) },
 
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
@@ -135,6 +136,29 @@ class ConventionMapper {
             maitreOeuvreDelegueId = entity.maitreOeuvreDelegue?.id,
             maitreOeuvreDelegueNom = entity.maitreOeuvreDelegue?.raisonSociale,
             remarques = entity.remarques,
+            createdAt = entity.createdAt,
+            updatedAt = entity.updatedAt,
+            actif = entity.actif
+        )
+    }
+
+    /**
+     * Convertit Subvention en DTO
+     */
+    private fun toSubventionDTO(entity: Subvention): SubventionDTO {
+        return SubventionDTO(
+            id = entity.id,
+            conventionId = entity.convention.id ?: 0,
+            organismeBailleur = entity.organismeBailleur,
+            typeSubvention = entity.typeSubvention,
+            montantTotal = entity.montantTotal,
+            devise = entity.devise,
+            tauxChange = entity.tauxChange,
+            dateSignature = entity.dateSignature,
+            dateDebutValidite = entity.dateDebutValidite,
+            dateFinValidite = entity.dateFinValidite,
+            conditions = entity.conditions,
+            observations = entity.observations,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
             actif = entity.actif

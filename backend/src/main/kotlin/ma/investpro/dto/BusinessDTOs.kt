@@ -37,6 +37,7 @@ data class ConventionDTO(
     val sousConventions: List<ConventionSimpleDTO>,
     val imputationsPrevisionnelles: List<ImputationPrevisionnelleDTO>,
     val versementsPrevisionnels: List<VersementPrevisionnelDTO>,
+    val subventions: List<SubventionDTO>,
     val actif: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
@@ -96,6 +97,24 @@ data class VersementPrevisionnelDTO(
     val maitreOeuvreDelegueId: Long?,
     val maitreOeuvreDelegueNom: String?,
     val remarques: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class SubventionDTO(
+    val id: Long?,
+    val conventionId: Long,
+    val organismeBailleur: String,
+    val typeSubvention: String?,
+    val montantTotal: BigDecimal,
+    val devise: String,
+    val tauxChange: BigDecimal?,
+    val dateSignature: LocalDate?,
+    val dateDebutValidite: LocalDate?,
+    val dateFinValidite: LocalDate?,
+    val conditions: String?,
+    val observations: String?,
     val actif: Boolean,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?

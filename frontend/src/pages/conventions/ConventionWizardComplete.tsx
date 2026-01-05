@@ -258,17 +258,31 @@ const ConventionWizardComplete = () => {
       setLoading(true)
       setErrors([])
 
+      // Mapper les subventions au format backend
+      const subventions = formData.subventions.map(sub => ({
+        organismeBailleur: sub.organisme,
+        typeSubvention: sub.type,
+        montantTotal: sub.montant,
+        devise: 'MAD',
+        dateFinValidite: sub.dateEcheance,
+        conditions: sub.conditions || null,
+      }))
+
       const payload = {
         numero: formData.numero,
         code: formData.code,
         libelle: formData.libelle,
+        objet: formData.objet,
         typeConvention: formData.typeConvention,
         statut: 'BROUILLON',
         dateConvention: formData.dateConvention,
         budget: formData.budgetGlobal,
         tauxCommission: formData.tauxCommission,
+        baseCalcul: formData.baseCommission === 'HT' ? 'DECAISSEMENTS_HT' : 'DECAISSEMENTS_TTC',
+        tauxTva: 20.00,
         dateDebut: formData.dateDebut,
         dateFin: formData.dateFin || null,
+        subventions: subventions,
       }
 
       const response = await conventionsAPI.create(payload)

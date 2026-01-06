@@ -6,8 +6,8 @@ import {
   DialogActions,
   Button,
   TextField,
-  Grid,
   Alert,
+  Grid,
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
 
@@ -69,8 +69,8 @@ const AddImputationDialog = ({ open, onClose, onAdd }: AddImputationDialogProps)
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Volet / Composante"
@@ -79,7 +79,7 @@ const AddImputationDialog = ({ open, onClose, onAdd }: AddImputationDialogProps)
               placeholder="Ex: Volet 1 - Infrastructure"
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               required
@@ -90,7 +90,7 @@ const AddImputationDialog = ({ open, onClose, onAdd }: AddImputationDialogProps)
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               required
@@ -101,7 +101,7 @@ const AddImputationDialog = ({ open, onClose, onAdd }: AddImputationDialogProps)
               inputProps={{ min: 1 }}
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               multiline

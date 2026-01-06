@@ -94,8 +94,8 @@ const ProjetFormPage = () => {
 
           <Paper sx={{ p: 3 }}>
             <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+              <Grid container spacing={2}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     required
@@ -106,7 +106,7 @@ const ProjetFormPage = () => {
                     placeholder="PRJ-2024-001"
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     required
@@ -115,7 +115,7 @@ const ProjetFormPage = () => {
                     onChange={(e) => handleChange('nom', e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     multiline
@@ -125,7 +125,7 @@ const ProjetFormPage = () => {
                     onChange={(e) => handleChange('description', e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     required
@@ -136,7 +136,7 @@ const ProjetFormPage = () => {
                     inputProps={{ min: 0, step: 0.01 }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     select
@@ -151,7 +151,7 @@ const ProjetFormPage = () => {
                     <MenuItem value="ANNULE">Annulé</MenuItem>
                   </TextField>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     type="date"
@@ -161,7 +161,7 @@ const ProjetFormPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     type="number"
@@ -171,7 +171,7 @@ const ProjetFormPage = () => {
                     inputProps={{ min: 1 }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     label="Localisation"
@@ -179,7 +179,7 @@ const ProjetFormPage = () => {
                     onChange={(e) => handleChange('localisation', e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     multiline
@@ -189,7 +189,7 @@ const ProjetFormPage = () => {
                     onChange={(e) => handleChange('objectifs', e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid container spacing={2}>
                   <TextField
                     fullWidth
                     multiline
@@ -199,7 +199,7 @@ const ProjetFormPage = () => {
                     onChange={(e) => handleChange('remarques', e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid container spacing={2}>
                   <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                     <Button
                       variant="outlined"

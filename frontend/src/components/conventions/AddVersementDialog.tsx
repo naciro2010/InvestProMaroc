@@ -88,8 +88,8 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Volet / Composante"
@@ -98,7 +98,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
               placeholder="Ex: Volet 1 - Infrastructure"
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               required
@@ -109,7 +109,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               required
@@ -120,7 +120,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
               inputProps={{ min: 0, step: 0.01 }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12 }}>
             <FormControl fullWidth>
               <InputLabel>Partenaire Bénéficiaire</InputLabel>
               <Select
@@ -139,7 +139,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12 }}>
             <FormControl fullWidth>
               <InputLabel>MOD Responsable</InputLabel>
               <Select
@@ -158,7 +158,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               multiline

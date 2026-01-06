@@ -40,36 +40,29 @@ import {
   Done,
   AttachMoney,
 } from '@mui/icons-material'
-import { projetsAPI, conventionsAPI } from '../../lib/api'
+import { projetsAPI, Projet as ProjetAPI } from '../../lib/projetsAPI'
+import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 type StatutProjet = 'EN_PREPARATION' | 'EN_COURS' | 'SUSPENDU' | 'TERMINE' | 'ANNULE'
 
-interface Projet {
-  id: number
-  code: string
-  nom: string
-  description?: string
-  budgetTotal: number
-  budgetConsomme: number
-  statut: StatutProjet
-  pourcentageAvancement: number
-  dateDebut?: string
+// Extend Projet from projetsAPI with additional fields
+// Making required fields non-optional for this component
+type Projet = Omit<ProjetAPI, 'dateDebut'> & {
+  dateDebut: string
   dateFin?: string
-  dateDebutReel?: string
-  dateFinReelle?: string
-  estEnRetard: boolean
-  estActif: boolean
-  dateCreation: string
-  dateModification?: string
-  conventionId?: number
-  conventionNumero?: string
-  responsableId?: number
-  responsableNom?: string
   motifSuspension?: string
   motifAnnulation?: string
   observations?: string
+  dateModification?: string
+  dateCreation: string
+  dateDebutReel?: string
+  dateFinReelle?: string
+  budgetConsomme: number
+  responsableId?: number
+  responsableNom?: string
+  conventionNumero?: string
 }
 
 interface Convention {
@@ -100,7 +93,7 @@ const ProjetDetailPage = () => {
   const fetchProjet = async (projetId: number) => {
     try {
       const response = await projetsAPI.getById(projetId)
-      const data = response.data?.data || response.data
+      const data = response.data as Projet
       setProjet(data)
 
       // Fetch conventions related to this project
@@ -116,7 +109,7 @@ const ProjetDetailPage = () => {
   }
 
   const handleDemarrer = async () => {
-    if (!projet) return
+    if (!projet?.id) return
     if (!window.confirm('Êtes-vous sûr de vouloir démarrer ce projet ?')) return
     try {
       await projetsAPI.demarrer(projet.id)
@@ -127,7 +120,7 @@ const ProjetDetailPage = () => {
   }
 
   const handleSuspendre = async () => {
-    if (!projet) return
+    if (!projet?.id) return
     const motif = window.prompt('Motif de suspension :')
     if (!motif) return
     try {
@@ -139,7 +132,7 @@ const ProjetDetailPage = () => {
   }
 
   const handleReprendre = async () => {
-    if (!projet) return
+    if (!projet?.id) return
     if (!window.confirm('Êtes-vous sûr de vouloir reprendre ce projet ?')) return
     try {
       await projetsAPI.reprendre(projet.id)
@@ -150,7 +143,7 @@ const ProjetDetailPage = () => {
   }
 
   const handleTerminer = async () => {
-    if (!projet) return
+    if (!projet?.id) return
     if (!window.confirm('Êtes-vous sûr de vouloir terminer ce projet ?')) return
     try {
       await projetsAPI.terminer(projet.id)
@@ -253,7 +246,7 @@ const ProjetDetailPage = () => {
               </Typography>
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
-              {getStatutBadge(projet.statut)}
+              {getStatutBadge(projet.statut as StatutProjet)}
               {projet.estEnRetard && (
                 <Chip icon={<Warning fontSize="small" />} label="En retard" color="error" size="small" />
               )}
@@ -312,8 +305,8 @@ const ProjetDetailPage = () => {
           </Stack>
 
           {/* KPI Cards */}
-          <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={6} md={3}>
+          <Grid container spacing={2}>
+            <Grid container spacing={2}>
               <Card>
                 <CardContent>
                   <Stack direction="row" alignItems="center" spacing={2}>
@@ -331,7 +324,7 @@ const ProjetDetailPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid container spacing={2}>
               <Card>
                 <CardContent>
                   <Stack direction="row" alignItems="center" spacing={2}>
@@ -349,7 +342,7 @@ const ProjetDetailPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid container spacing={2}>
               <Card>
                 <CardContent>
                   <Stack direction="row" alignItems="center" spacing={2}>
@@ -367,7 +360,7 @@ const ProjetDetailPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid container spacing={2}>
               <Card>
                 <CardContent>
                   <Stack direction="row" alignItems="center" spacing={2}>
@@ -417,8 +410,8 @@ const ProjetDetailPage = () => {
             <CardContent sx={{ p: 3 }}>
               {/* Tab 0: Informations Générales */}
               {activeTab === 0 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                <Grid container spacing={2}>
+                  <Grid container spacing={2}>
                     <Paper sx={{ p: 3 }}>
                       <Typography variant="h6" fontWeight={600} gutterBottom>
                         Informations Principales
@@ -449,7 +442,7 @@ const ProjetDetailPage = () => {
                     </Paper>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid container spacing={2}>
                     <Paper sx={{ p: 3 }}>
                       <Typography variant="h6" fontWeight={600} gutterBottom>
                         Dates
@@ -488,14 +481,14 @@ const ProjetDetailPage = () => {
                     </Paper>
                   </Grid>
 
-                  <Grid item xs={12}>
+                  <Grid container spacing={2}>
                     <Paper sx={{ p: 3 }}>
                       <Typography variant="h6" fontWeight={600} gutterBottom>
                         Budget
                       </Typography>
                       <Divider sx={{ mb: 2 }} />
                       <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid container spacing={2}>
                           <Box>
                             <Typography variant="caption" color="text.secondary">Budget Total</Typography>
                             <Typography variant="h6" color="primary.main" fontWeight={600}>
@@ -503,7 +496,7 @@ const ProjetDetailPage = () => {
                             </Typography>
                           </Box>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid container spacing={2}>
                           <Box>
                             <Typography variant="caption" color="text.secondary">Budget Consommé</Typography>
                             <Typography variant="h6" color="warning.main" fontWeight={600}>
@@ -511,11 +504,11 @@ const ProjetDetailPage = () => {
                             </Typography>
                           </Box>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid container spacing={2}>
                           <Box>
                             <Typography variant="caption" color="text.secondary">Budget Restant</Typography>
                             <Typography variant="h6" color="success.main" fontWeight={600}>
-                              {formatCurrency(projet.budgetTotal - projet.budgetConsomme)}
+                              {formatCurrency(projet.budgetTotal - (projet.budgetConsomme || 0))}
                             </Typography>
                           </Box>
                         </Grid>
@@ -524,7 +517,7 @@ const ProjetDetailPage = () => {
                   </Grid>
 
                   {(projet.motifSuspension || projet.motifAnnulation || projet.observations) && (
-                    <Grid item xs={12}>
+                    <Grid container spacing={2}>
                       <Paper sx={{ p: 3, bgcolor: 'warning.lighter' }}>
                         <Typography variant="h6" fontWeight={600} gutterBottom>
                           Observations
@@ -642,7 +635,7 @@ const ProjetDetailPage = () => {
                             Projet créé
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {formatDate(projet.dateCreation)}
+                            {projet.dateCreation ? formatDate(projet.dateCreation) : 'N/A'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary" mt={1}>
                             Statut initial: EN_PREPARATION

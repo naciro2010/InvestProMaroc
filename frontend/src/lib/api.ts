@@ -211,6 +211,12 @@ export const projetsAPI = {
   create: (data: any) => api.post('/projets', data),
   update: (id: number, data: any) => api.put(`/projets/${id}`, data),
   delete: (id: number) => api.delete(`/projets/${id}`),
+
+  // Workflow methods
+  demarrer: (id: number) => api.post(`/projets/${id}/demarrer`),
+  suspendre: (id: number) => api.post(`/projets/${id}/suspendre`),
+  reprendre: (id: number) => api.post(`/projets/${id}/reprendre`),
+  terminer: (id: number) => api.post(`/projets/${id}/terminer`),
 }
 
 // Fournisseurs API

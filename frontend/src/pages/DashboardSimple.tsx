@@ -463,9 +463,9 @@ const DashboardSimple = () => {
         </Box>
 
         {/* Charts Section */}
-        <Grid container spacing={3} mb={4}>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
           {/* Conventions by Status Chart */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -507,7 +507,7 @@ const DashboardSimple = () => {
           </Grid>
 
           {/* Projets by Status Chart */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Card>
               <CardContent sx={{ p: 3 }}>
                 <Typography variant="h6" fontWeight={600} gutterBottom>

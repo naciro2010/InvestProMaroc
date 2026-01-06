@@ -214,8 +214,8 @@ const ProjetsPage = () => {
           </Box>
 
           {/* Statistiques */}
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={2.4}>
+          <Grid container spacing={2}>
+            <Grid container spacing={2}>
               <Card sx={{ bgcolor: '#f0f9ff', borderLeft: '4px solid #3b82f6' }}>
                 <CardContent>
                   <Typography variant="body2" color="textSecondary">Total</Typography>
@@ -225,7 +225,7 @@ const ProjetsPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={2.4}>
+            <Grid container spacing={2}>
               <Card sx={{ bgcolor: '#eff6ff', borderLeft: '4px solid #60a5fa' }}>
                 <CardContent>
                   <Typography variant="body2" color="textSecondary">En préparation</Typography>
@@ -235,7 +235,7 @@ const ProjetsPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={2.4}>
+            <Grid container spacing={2}>
               <Card sx={{ bgcolor: '#ecfdf5', borderLeft: '4px solid #10b981' }}>
                 <CardContent>
                   <Typography variant="body2" color="textSecondary">En cours</Typography>
@@ -245,7 +245,7 @@ const ProjetsPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={2.4}>
+            <Grid container spacing={2}>
               <Card sx={{ bgcolor: '#fef3c7', borderLeft: '4px solid #f59e0b' }}>
                 <CardContent>
                   <Typography variant="body2" color="textSecondary">Suspendus</Typography>
@@ -255,7 +255,7 @@ const ProjetsPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={2.4}>
+            <Grid container spacing={2}>
               <Card sx={{ bgcolor: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
                 <CardContent>
                   <Typography variant="body2" color="textSecondary">En retard</Typography>
@@ -271,9 +271,9 @@ const ProjetsPage = () => {
           {loading && <LinearProgress sx={{ mb: 2 }} />}
 
           {/* Liste des projets */}
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {projets.map((projet) => (
-              <Grid item xs={12} md={6} lg={4} key={projet.id}>
+              <Grid container spacing={2}>
                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>

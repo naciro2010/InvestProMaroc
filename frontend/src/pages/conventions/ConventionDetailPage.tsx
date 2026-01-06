@@ -37,6 +37,7 @@ import {
   AttachMoney,
   PlayArrow,
   Add,
+  Delete,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
@@ -180,10 +181,34 @@ const ConventionDetailPage = () => {
     fetchConvention(convention.id)
   }
 
+  const handleSupprimerImputation = async (imputationId: number) => {
+    if (!convention) return
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette imputation ?')) return
+    try {
+      await conventionsAPI.supprimerImputation(convention.id, imputationId)
+      fetchConvention(convention.id)
+    } catch (error: any) {
+      console.error('Erreur suppression imputation:', error)
+      alert(error.response?.data?.message || 'Erreur lors de la suppression')
+    }
+  }
+
   const handleAjouterVersement = async (versement: any) => {
     if (!convention) return
     await conventionsAPI.ajouterVersement(convention.id, versement)
     fetchConvention(convention.id)
+  }
+
+  const handleSupprimerVersement = async (versementId: number) => {
+    if (!convention) return
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce versement ?')) return
+    try {
+      await conventionsAPI.supprimerVersement(convention.id, versementId)
+      fetchConvention(convention.id)
+    } catch (error: any) {
+      console.error('Erreur suppression versement:', error)
+      alert(error.response?.data?.message || 'Erreur lors de la suppression')
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -596,6 +621,7 @@ const ConventionDetailPage = () => {
                             <TableCell>Délai (mois)</TableCell>
                             <TableCell>Date Fin Prévue</TableCell>
                             <TableCell>Remarques</TableCell>
+                            <TableCell align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -606,11 +632,21 @@ const ConventionDetailPage = () => {
                               <TableCell>{imp.delaiMois}</TableCell>
                               <TableCell>{imp.dateFinPrevue ? formatDate(imp.dateFinPrevue) : '-'}</TableCell>
                               <TableCell>{imp.remarques || '-'}</TableCell>
+                              <TableCell align="center">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleSupprimerImputation(imp.id)}
+                                  title="Supprimer"
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </TableCell>
                             </TableRow>
                           ))}
                           {convention.imputationsPrevisionnelles.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={5} align="center">
+                              <TableCell colSpan={6} align="center">
                                 <Typography variant="body2" color="text.secondary">
                                   Aucune imputation prévisionnelle
                                 </Typography>
@@ -647,6 +683,7 @@ const ConventionDetailPage = () => {
                             <TableCell>Partenaire</TableCell>
                             <TableCell>MOD</TableCell>
                             <TableCell>Remarques</TableCell>
+                            <TableCell align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -660,11 +697,21 @@ const ConventionDetailPage = () => {
                               <TableCell>{vers.partenaireNom || '-'}</TableCell>
                               <TableCell>{vers.maitreOeuvreDelegueNom || '-'}</TableCell>
                               <TableCell>{vers.remarques || '-'}</TableCell>
+                              <TableCell align="center">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleSupprimerVersement(vers.id)}
+                                  title="Supprimer"
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </TableCell>
                             </TableRow>
                           ))}
                           {convention.versementsPrevisionnels.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={6} align="center">
+                              <TableCell colSpan={7} align="center">
                                 <Typography variant="body2" color="text.secondary">
                                   Aucun versement prévisionnel
                                 </Typography>

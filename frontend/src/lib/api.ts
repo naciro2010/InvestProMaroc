@@ -190,6 +190,16 @@ export const conventionsAPI = {
   rejeter: (id: number, motif: string) => api.post(`/conventions/${id}/rejeter`, { motif }),
   mettreEnCours: (id: number) => api.post(`/conventions/${id}/mettre-en-cours`),
   annuler: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
+
+  // Imputations et Versements
+  ajouterImputation: (conventionId: number, imputation: any) =>
+    api.post(`/conventions/${conventionId}/imputations`, imputation),
+  supprimerImputation: (conventionId: number, imputationId: number) =>
+    api.delete(`/conventions/${conventionId}/imputations/${imputationId}`),
+  ajouterVersement: (conventionId: number, versement: any) =>
+    api.post(`/conventions/${conventionId}/versements`, versement),
+  supprimerVersement: (conventionId: number, versementId: number) =>
+    api.delete(`/conventions/${conventionId}/versements/${versementId}`),
 }
 
 // Projets API

@@ -10,30 +10,54 @@ import {
   Chip,
   Paper,
   LinearProgress,
+  Grid,
 } from '@mui/material'
 import {
   AccountBalance,
   TrendingUp,
   Description,
   Payment,
+  FolderOpen,
 } from '@mui/icons-material'
-import { conventionsAPI, budgetsAPI, decomptesAPI, paiementsAPI } from '../lib/api'
+import { conventionsAPI, budgetsAPI, decomptesAPI, paiementsAPI, projetsAPI } from '../lib/api'
 import AppLayout from '../components/layout/AppLayout'
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
 
 interface Stats {
   conventions: number
   budgets: number
   decomptes: number
   paiements: number
+  projets: number
   montantTotalConventions: number
   montantTotalBudgets: number
   montantTotalPaiements: number
+  montantTotalProjets: number
   conventionsParStatut: {
     brouillon: number
     soumis: number
     validees: number
     enCours: number
     achevees: number
+  }
+  projetsParStatut: {
+    enPreparation: number
+    enCours: number
+    suspendu: number
+    termine: number
+    annule: number
   }
 }
 
@@ -44,9 +68,11 @@ const DashboardSimple = () => {
     budgets: 0,
     decomptes: 0,
     paiements: 0,
+    projets: 0,
     montantTotalConventions: 0,
     montantTotalBudgets: 0,
     montantTotalPaiements: 0,
+    montantTotalProjets: 0,
     conventionsParStatut: {
       brouillon: 0,
       soumis: 0,
@@ -54,17 +80,25 @@ const DashboardSimple = () => {
       enCours: 0,
       achevees: 0,
     },
+    projetsParStatut: {
+      enPreparation: 0,
+      enCours: 0,
+      suspendu: 0,
+      termine: 0,
+      annule: 0,
+    },
   })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [conventionsRes, budgetsRes, decomptesRes, paiementsRes] = await Promise.all([
+        const [conventionsRes, budgetsRes, decomptesRes, paiementsRes, projetsRes] = await Promise.all([
           conventionsAPI.getAll(),
           budgetsAPI.getAll(),
           decomptesAPI.getAll(),
           paiementsAPI.getAll(),
+          projetsAPI.getAll(),
         ])
 
         // Gérer le format de réponse API - peut être un tableau ou un objet avec data
@@ -72,6 +106,7 @@ const DashboardSimple = () => {
         const budgets = Array.isArray(budgetsRes.data) ? budgetsRes.data : (budgetsRes.data?.data || [])
         const decomptes = Array.isArray(decomptesRes.data) ? decomptesRes.data : (decomptesRes.data?.data || [])
         const paiements = Array.isArray(paiementsRes.data) ? paiementsRes.data : (paiementsRes.data?.data || [])
+        const projets = Array.isArray(projetsRes.data) ? projetsRes.data : (projetsRes.data?.data || [])
 
         const montantTotalConventions = Array.isArray(conventions) ? conventions.reduce(
           (sum: number, c: any) => sum + (c.montantGlobal || 0),
@@ -85,6 +120,11 @@ const DashboardSimple = () => {
 
         const montantTotalPaiements = Array.isArray(paiements) ? paiements.reduce(
           (sum: number, p: any) => sum + (p.montantPaye || 0),
+          0
+        ) : 0
+
+        const montantTotalProjets = Array.isArray(projets) ? projets.reduce(
+          (sum: number, p: any) => sum + (p.budgetTotal || 0),
           0
         ) : 0
 
@@ -103,15 +143,33 @@ const DashboardSimple = () => {
           achevees: 0,
         }
 
+        // Calculate projets by status
+        const projetsParStatut = Array.isArray(projets) ? {
+          enPreparation: projets.filter((p: any) => p.statut === 'EN_PREPARATION').length,
+          enCours: projets.filter((p: any) => p.statut === 'EN_COURS').length,
+          suspendu: projets.filter((p: any) => p.statut === 'SUSPENDU').length,
+          termine: projets.filter((p: any) => p.statut === 'TERMINE').length,
+          annule: projets.filter((p: any) => p.statut === 'ANNULE').length,
+        } : {
+          enPreparation: 0,
+          enCours: 0,
+          suspendu: 0,
+          termine: 0,
+          annule: 0,
+        }
+
         setStats({
           conventions: conventions.length,
           budgets: budgets.length,
           decomptes: decomptes.length,
           paiements: paiements.length,
+          projets: projets.length,
           montantTotalConventions,
           montantTotalBudgets,
           montantTotalPaiements,
+          montantTotalProjets,
           conventionsParStatut,
+          projetsParStatut,
         })
       } catch (error) {
         console.error('Erreur lors du chargement des statistiques:', error)
@@ -149,6 +207,16 @@ const DashboardSimple = () => {
       color: '#1976d2',
       trend: '+12%',
       onClick: () => navigate('/conventions'),
+    },
+    {
+      title: 'Projets',
+      value: stats.projets,
+      subtitle: formatLargeCurrency(stats.montantTotalProjets),
+      details: `${stats.projetsParStatut.enCours} en cours • ${stats.projetsParStatut.termine} terminés`,
+      icon: <FolderOpen sx={{ fontSize: 40 }} />,
+      color: '#0288d1',
+      trend: '+10%',
+      onClick: () => navigate('/projets'),
     },
     {
       title: 'Budgets',
@@ -212,7 +280,7 @@ const DashboardSimple = () => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(5, 1fr)' },
             gap: 3,
             mb: 4,
           }}
@@ -393,6 +461,80 @@ const DashboardSimple = () => {
             </CardContent>
           </Card>
         </Box>
+
+        {/* Charts Section */}
+        <Grid container spacing={3} mb={4}>
+          {/* Conventions by Status Chart */}
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Conventions par Statut
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Brouillon', value: stats.conventionsParStatut.brouillon, color: '#94a3b8' },
+                        { name: 'Soumis', value: stats.conventionsParStatut.soumis, color: '#f59e0b' },
+                        { name: 'Validées', value: stats.conventionsParStatut.validees, color: '#10b981' },
+                        { name: 'En cours', value: stats.conventionsParStatut.enCours, color: '#3b82f6' },
+                        { name: 'Achevées', value: stats.conventionsParStatut.achevees, color: '#22c55e' },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry) => `${entry.name}: ${entry.value}`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {[
+                        { name: 'Brouillon', value: stats.conventionsParStatut.brouillon, color: '#94a3b8' },
+                        { name: 'Soumis', value: stats.conventionsParStatut.soumis, color: '#f59e0b' },
+                        { name: 'Validées', value: stats.conventionsParStatut.validees, color: '#10b981' },
+                        { name: 'En cours', value: stats.conventionsParStatut.enCours, color: '#3b82f6' },
+                        { name: 'Achevées', value: stats.conventionsParStatut.achevees, color: '#22c55e' },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Projets by Status Chart */}
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  Projets par Statut
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={[
+                      { name: 'En Préparation', value: stats.projetsParStatut.enPreparation },
+                      { name: 'En Cours', value: stats.projetsParStatut.enCours },
+                      { name: 'Suspendu', value: stats.projetsParStatut.suspendu },
+                      { name: 'Terminé', value: stats.projetsParStatut.termine },
+                      { name: 'Annulé', value: stats.projetsParStatut.annule },
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" angle={-15} textAnchor="end" height={80} />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="value" name="Nombre de Projets" fill="#1e40af" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
 
         {/* Quick Actions */}
         <Card>

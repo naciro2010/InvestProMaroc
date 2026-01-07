@@ -258,17 +258,31 @@ const ConventionWizardComplete = () => {
       setLoading(true)
       setErrors([])
 
+      // Mapper les subventions au format backend
+      const subventions = formData.subventions.map(sub => ({
+        organismeBailleur: sub.organisme,
+        typeSubvention: sub.type,
+        montantTotal: sub.montant,
+        devise: 'MAD',
+        dateFinValidite: sub.dateEcheance,
+        conditions: sub.conditions || null,
+      }))
+
       const payload = {
         numero: formData.numero,
         code: formData.code,
         libelle: formData.libelle,
+        objet: formData.objet,
         typeConvention: formData.typeConvention,
         statut: 'BROUILLON',
         dateConvention: formData.dateConvention,
         budget: formData.budgetGlobal,
         tauxCommission: formData.tauxCommission,
+        baseCalcul: formData.baseCommission === 'HT' ? 'DECAISSEMENTS_HT' : 'DECAISSEMENTS_TTC',
+        tauxTva: 20.00,
         dateDebut: formData.dateDebut,
         dateFin: formData.dateFin || null,
+        subventions: subventions,
       }
 
       const response = await conventionsAPI.create(payload)
@@ -686,8 +700,8 @@ const ConventionWizardComplete = () => {
         title="Informations de base"
         subtitle="Définissez les informations principales de la convention"
       />
-      <Grid container spacing={{ xs: 2, md: 3 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
+      <Grid container spacing={2}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -702,7 +716,7 @@ const ConventionWizardComplete = () => {
             <MenuItem value="AVENANT">Avenant</MenuItem>
           </TextField>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -712,7 +726,7 @@ const ConventionWizardComplete = () => {
             placeholder="CONV-2024-001"
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -722,7 +736,7 @@ const ConventionWizardComplete = () => {
             placeholder="CONV001"
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -733,7 +747,7 @@ const ConventionWizardComplete = () => {
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
-        <Grid size={{ xs: 12 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -743,7 +757,7 @@ const ConventionWizardComplete = () => {
             placeholder="Convention d'intervention pour..."
           />
         </Grid>
-        <Grid size={{ xs: 12 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -755,7 +769,7 @@ const ConventionWizardComplete = () => {
             placeholder="Description détaillée..."
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -766,7 +780,7 @@ const ConventionWizardComplete = () => {
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             label="Date de Fin"
@@ -787,8 +801,8 @@ const ConventionWizardComplete = () => {
       <Typography variant="h6" gutterBottom sx={{ color: '#1e40af', fontWeight: 600 }}>
         Budget & Montants
       </Typography>
-      <Grid container spacing={3} sx={{ mt: 1 }}>
-        <Grid size={{ xs: 12 }}>
+      <Grid container spacing={2}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -800,7 +814,7 @@ const ConventionWizardComplete = () => {
           />
         </Grid>
 
-        <Grid size={{ xs: 12 }}>
+        <Grid container spacing={2}>
           <Divider sx={{ my: 2 }} />
           <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="subtitle1" fontWeight={600}>
@@ -820,8 +834,8 @@ const ConventionWizardComplete = () => {
           {formData.lignesBudget.map((ligne) => (
             <Card key={ligne.id} sx={{ mb: 2, bgcolor: '#f8fafc' }}>
               <CardContent>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid size={{ xs: 12, md: 4 }}>
+                <Grid container spacing={2}>
+                  <Grid container spacing={2}>
                     <TextField
                       fullWidth
                       size="small"
@@ -830,7 +844,7 @@ const ConventionWizardComplete = () => {
                       onChange={(e) => updateLigneBudget(ligne.id!, 'designation', e.target.value)}
                     />
                   </Grid>
-                  <Grid size={{ xs: 6, md: 2 }}>
+                  <Grid container spacing={2}>
                     <TextField
                       fullWidth
                       size="small"
@@ -841,7 +855,7 @@ const ConventionWizardComplete = () => {
                       inputProps={{ min: 0, step: 0.01 }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 6, md: 2 }}>
+                  <Grid container spacing={2}>
                     <TextField
                       fullWidth
                       size="small"
@@ -852,7 +866,7 @@ const ConventionWizardComplete = () => {
                       inputProps={{ min: 0, max: 100 }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 10, md: 3 }}>
+                  <Grid container spacing={2}>
                     <TextField
                       fullWidth
                       size="small"
@@ -863,7 +877,7 @@ const ConventionWizardComplete = () => {
                       sx={{ bgcolor: '#e0f2fe' }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 2, md: 1 }}>
+                  <Grid container spacing={2}>
                     <IconButton
                       color="error"
                       size="small"
@@ -896,8 +910,8 @@ const ConventionWizardComplete = () => {
       <Typography variant="h6" gutterBottom sx={{ color: '#1e40af', fontWeight: 600 }}>
         Commission d'Intervention
       </Typography>
-      <Grid container spacing={3} sx={{ mt: 1 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
+      <Grid container spacing={2}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -910,7 +924,7 @@ const ConventionWizardComplete = () => {
             <MenuItem value="TTC">TTC (Toutes Taxes Comprises)</MenuItem>
           </TextField>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -924,7 +938,7 @@ const ConventionWizardComplete = () => {
             <MenuItem value="MIXTE">Mixte</MenuItem>
           </TextField>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             required
@@ -935,7 +949,7 @@ const ConventionWizardComplete = () => {
             inputProps={{ min: 0, max: 100, step: 0.01 }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             type="number"
@@ -945,7 +959,7 @@ const ConventionWizardComplete = () => {
             inputProps={{ min: 0, step: 0.01 }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             type="number"
@@ -955,7 +969,7 @@ const ConventionWizardComplete = () => {
             inputProps={{ min: 0, step: 0.01 }}
           />
         </Grid>
-        <Grid size={{ xs: 12 }}>
+        <Grid container spacing={2}>
           <TextField
             fullWidth
             multiline
@@ -968,7 +982,7 @@ const ConventionWizardComplete = () => {
         </Grid>
 
         {/* Aperçu calcul */}
-        <Grid size={{ xs: 12 }}>
+        <Grid container spacing={2}>
           <Card sx={{ bgcolor: '#dbeafe', border: '1px solid #3b82f6' }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600} color="#1e40af" gutterBottom>
@@ -1019,7 +1033,7 @@ const ConventionWizardComplete = () => {
         <Card key={partenaire.id} sx={{ mb: 2 }}>
           <CardContent>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1034,7 +1048,7 @@ const ConventionWizardComplete = () => {
                   <MenuItem value="BAILLEUR">Bailleur de Fonds</MenuItem>
                 </TextField>
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1044,7 +1058,7 @@ const ConventionWizardComplete = () => {
                   onChange={(e) => updatePartenaire(partenaire.id!, 'nom', e.target.value)}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   size="small"
@@ -1055,7 +1069,7 @@ const ConventionWizardComplete = () => {
                   inputProps={{ min: 0, step: 0.01 }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   size="small"
@@ -1066,7 +1080,7 @@ const ConventionWizardComplete = () => {
                   inputProps={{ min: 0, max: 100, step: 0.01 }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 1 }}>
+              <Grid container spacing={2}>
                 <IconButton
                   color="error"
                   onClick={() => removePartenaire(partenaire.id!)}
@@ -1074,7 +1088,7 @@ const ConventionWizardComplete = () => {
                   <Delete />
                 </IconButton>
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid container spacing={2}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -1085,7 +1099,7 @@ const ConventionWizardComplete = () => {
                   label="Est Maître d'Œuvre (MO)"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid container spacing={2}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -1146,7 +1160,7 @@ const ConventionWizardComplete = () => {
         <Card key={subvention.id} sx={{ mb: 2, bgcolor: '#f8fafc' }}>
           <CardContent>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1157,7 +1171,7 @@ const ConventionWizardComplete = () => {
                   placeholder="Ex: Banque Mondiale"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   size="small"
@@ -1167,7 +1181,7 @@ const ConventionWizardComplete = () => {
                   placeholder="Don, Prêt..."
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1179,7 +1193,7 @@ const ConventionWizardComplete = () => {
                   inputProps={{ min: 0, step: 0.01 }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1191,7 +1205,7 @@ const ConventionWizardComplete = () => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 1 }}>
+              <Grid container spacing={2}>
                 <IconButton
                   color="error"
                   onClick={() => removeSubvention(subvention.id!)}
@@ -1199,7 +1213,7 @@ const ConventionWizardComplete = () => {
                   <Delete />
                 </IconButton>
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   size="small"
@@ -1267,7 +1281,7 @@ const ConventionWizardComplete = () => {
             <Grid container spacing={2}>
               {/* Dimensions dynamiques */}
               {dimensions.map((dimension) => (
-                <Grid size={{ xs: 12, md: 4 }} key={dimension.id}>
+                <Grid container spacing={2}>
                   <FormControl fullWidth size="small">
                     <InputLabel>{dimension.nom} {dimension.obligatoire && '*'}</InputLabel>
                     <Select
@@ -1288,7 +1302,7 @@ const ConventionWizardComplete = () => {
                 </Grid>
               ))}
 
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   size="small"
@@ -1298,7 +1312,7 @@ const ConventionWizardComplete = () => {
                   placeholder="Ex: Volet 1"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1310,7 +1324,7 @@ const ConventionWizardComplete = () => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1322,7 +1336,7 @@ const ConventionWizardComplete = () => {
                   inputProps={{ min: 1 }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   size="small"
@@ -1383,7 +1397,7 @@ const ConventionWizardComplete = () => {
             </Stack>
 
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1395,7 +1409,7 @@ const ConventionWizardComplete = () => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -1407,7 +1421,7 @@ const ConventionWizardComplete = () => {
                   inputProps={{ min: 0, step: 0.01 }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid container spacing={2}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Partenaire Bénéficiaire</InputLabel>
                   <Select
@@ -1426,7 +1440,7 @@ const ConventionWizardComplete = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid container spacing={2}>
                 <FormControl fullWidth size="small">
                   <InputLabel>MOD Responsable</InputLabel>
                   <Select
@@ -1448,7 +1462,7 @@ const ConventionWizardComplete = () => {
 
               {/* Dimensions analytiques */}
               {dimensions.map((dimension) => (
-                <Grid size={{ xs: 12, md: 4 }} key={dimension.id}>
+                <Grid container spacing={2}>
                   <FormControl fullWidth size="small">
                     <InputLabel>{dimension.nom}</InputLabel>
                     <Select
@@ -1469,7 +1483,7 @@ const ConventionWizardComplete = () => {
                 </Grid>
               ))}
 
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid container spacing={2}>
                 <TextField
                   fullWidth
                   size="small"
@@ -1507,25 +1521,25 @@ const ConventionWizardComplete = () => {
             Informations de base
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid container spacing={2}>
               <Typography variant="caption" color="text.secondary">Type</Typography>
               <Typography variant="body1" fontWeight={600}>{formData.typeConvention}</Typography>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid container spacing={2}>
               <Typography variant="caption" color="text.secondary">Numéro</Typography>
               <Typography variant="body1" fontWeight={600}>{formData.numero}</Typography>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid container spacing={2}>
               <Typography variant="caption" color="text.secondary">Code</Typography>
               <Typography variant="body1" fontWeight={600}>{formData.code}</Typography>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid container spacing={2}>
               <Typography variant="caption" color="text.secondary">Date</Typography>
               <Typography variant="body1" fontWeight={600}>
                 {new Date(formData.dateConvention).toLocaleDateString('fr-FR')}
               </Typography>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid container spacing={2}>
               <Typography variant="caption" color="text.secondary">Libellé</Typography>
               <Typography variant="body1">{formData.libelle}</Typography>
             </Grid>

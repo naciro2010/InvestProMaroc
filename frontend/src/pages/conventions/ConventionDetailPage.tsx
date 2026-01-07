@@ -36,9 +36,13 @@ import {
   People,
   AttachMoney,
   PlayArrow,
+  Add,
+  Delete,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
+import AddImputationDialog from '../../components/conventions/AddImputationDialog'
+import AddVersementDialog from '../../components/conventions/AddVersementDialog'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
 
@@ -123,6 +127,8 @@ const ConventionDetailPage = () => {
   const [convention, setConvention] = useState<Convention | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(0)
+  const [imputationDialogOpen, setImputationDialogOpen] = useState(false)
+  const [versementDialogOpen, setVersementDialogOpen] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -167,6 +173,42 @@ const ConventionDetailPage = () => {
     }
     const { color, icon } = config[statut]
     return <Chip icon={icon} label={statut} color={color} size="medium" />
+  }
+
+  const handleAjouterImputation = async (imputation: any) => {
+    if (!convention) return
+    await conventionsAPI.ajouterImputation(convention.id, imputation)
+    fetchConvention(convention.id)
+  }
+
+  const handleSupprimerImputation = async (imputationId: number) => {
+    if (!convention) return
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette imputation ?')) return
+    try {
+      await conventionsAPI.supprimerImputation(convention.id, imputationId)
+      fetchConvention(convention.id)
+    } catch (error: any) {
+      console.error('Erreur suppression imputation:', error)
+      alert(error.response?.data?.message || 'Erreur lors de la suppression')
+    }
+  }
+
+  const handleAjouterVersement = async (versement: any) => {
+    if (!convention) return
+    await conventionsAPI.ajouterVersement(convention.id, versement)
+    fetchConvention(convention.id)
+  }
+
+  const handleSupprimerVersement = async (versementId: number) => {
+    if (!convention) return
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce versement ?')) return
+    try {
+      await conventionsAPI.supprimerVersement(convention.id, versementId)
+      fetchConvention(convention.id)
+    } catch (error: any) {
+      console.error('Erreur suppression versement:', error)
+      alert(error.response?.data?.message || 'Erreur lors de la suppression')
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -556,9 +598,20 @@ const ConventionDetailPage = () => {
               {activeTab === 3 && (
                 <Stack spacing={3}>
                   <Box>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
-                      Imputations Prévisionnelles
-                    </Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Typography variant="h6" fontWeight={600}>
+                        Imputations Prévisionnelles
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<Add />}
+                        onClick={() => setImputationDialogOpen(true)}
+                        sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
+                      >
+                        Ajouter
+                      </Button>
+                    </Stack>
                     <TableContainer component={Paper} variant="outlined">
                       <Table size="small">
                         <TableHead>
@@ -568,6 +621,7 @@ const ConventionDetailPage = () => {
                             <TableCell>Délai (mois)</TableCell>
                             <TableCell>Date Fin Prévue</TableCell>
                             <TableCell>Remarques</TableCell>
+                            <TableCell align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -578,11 +632,21 @@ const ConventionDetailPage = () => {
                               <TableCell>{imp.delaiMois}</TableCell>
                               <TableCell>{imp.dateFinPrevue ? formatDate(imp.dateFinPrevue) : '-'}</TableCell>
                               <TableCell>{imp.remarques || '-'}</TableCell>
+                              <TableCell align="center">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleSupprimerImputation(imp.id)}
+                                  title="Supprimer"
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </TableCell>
                             </TableRow>
                           ))}
                           {convention.imputationsPrevisionnelles.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={5} align="center">
+                              <TableCell colSpan={6} align="center">
                                 <Typography variant="body2" color="text.secondary">
                                   Aucune imputation prévisionnelle
                                 </Typography>
@@ -595,9 +659,20 @@ const ConventionDetailPage = () => {
                   </Box>
 
                   <Box>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
-                      Versements Prévisionnels
-                    </Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Typography variant="h6" fontWeight={600}>
+                        Versements Prévisionnels
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<Add />}
+                        onClick={() => setVersementDialogOpen(true)}
+                        sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
+                      >
+                        Ajouter
+                      </Button>
+                    </Stack>
                     <TableContainer component={Paper} variant="outlined">
                       <Table size="small">
                         <TableHead>
@@ -608,6 +683,7 @@ const ConventionDetailPage = () => {
                             <TableCell>Partenaire</TableCell>
                             <TableCell>MOD</TableCell>
                             <TableCell>Remarques</TableCell>
+                            <TableCell align="center">Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -621,11 +697,21 @@ const ConventionDetailPage = () => {
                               <TableCell>{vers.partenaireNom || '-'}</TableCell>
                               <TableCell>{vers.maitreOeuvreDelegueNom || '-'}</TableCell>
                               <TableCell>{vers.remarques || '-'}</TableCell>
+                              <TableCell align="center">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleSupprimerVersement(vers.id)}
+                                  title="Supprimer"
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </TableCell>
                             </TableRow>
                           ))}
                           {convention.versementsPrevisionnels.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={6} align="center">
+                              <TableCell colSpan={7} align="center">
                                 <Typography variant="body2" color="text.secondary">
                                   Aucun versement prévisionnel
                                 </Typography>
@@ -642,6 +728,23 @@ const ConventionDetailPage = () => {
           </Card>
         </Container>
       </Box>
+
+      {/* Dialogs */}
+      <AddImputationDialog
+        open={imputationDialogOpen}
+        onClose={() => setImputationDialogOpen(false)}
+        onAdd={handleAjouterImputation}
+      />
+      <AddVersementDialog
+        open={versementDialogOpen}
+        onClose={() => setVersementDialogOpen(false)}
+        onAdd={handleAjouterVersement}
+        partenaires={convention?.partenaires.map(p => ({
+          id: p.id,
+          nom: p.partenaireNom,
+          estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue
+        })) || []}
+      />
     </AppLayout>
   )
 }

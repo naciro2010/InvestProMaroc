@@ -54,7 +54,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import * as XLSX from 'xlsx'
+import * as ExcelJS from 'exceljs'
 import { dimensionsAPI, imputationsAPI } from '../../lib/api'
 
 interface Dimension {
@@ -185,50 +185,93 @@ export default function ReportingAnalytiquePage() {
     localStorage.setItem('reporting_saved_views', JSON.stringify(updated))
   }
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Reporting')
+
     if (viewMode === 'simple') {
       // Export 1D
       const data = Object.entries(aggregation1D).map(([valeur, montant]) => ({
-        [getDimensionName(selectedDim1)]: valeur,
-        'Montant (MAD)': montant,
-        '% du Total': ((montant / getTotal()) * 100).toFixed(2) + '%',
+        dimension: valeur,
+        montant: montant,
+        pourcentage: ((montant / getTotal()) * 100).toFixed(2) + '%',
       }))
       data.push({
-        [getDimensionName(selectedDim1)]: 'TOTAL',
-        'Montant (MAD)': getTotal(),
-        '% du Total': '100%',
+        dimension: 'TOTAL',
+        montant: getTotal(),
+        pourcentage: '100%',
       })
 
-      const ws = XLSX.utils.json_to_sheet(data)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Reporting')
-      XLSX.writeFile(wb, `reporting_${selectedType}_${selectedDim1}_${Date.now()}.xlsx`)
+      worksheet.columns = [
+        { header: getDimensionName(selectedDim1), key: 'dimension' },
+        { header: 'Montant (MAD)', key: 'montant' },
+        { header: '% du Total', key: 'pourcentage' }
+      ]
+
+      data.forEach(row => worksheet.addRow(row))
+
+      worksheet.getRow(1).font = { bold: true }
+      worksheet.getRow(data.length).font = { bold: true }
+      worksheet.getRow(data.length).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'F0F0F0' }
+      }
+
+      const fileName = `reporting_${selectedType}_${selectedDim1}_${Date.now()}.xlsx`
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = fileName
+      link.click()
     } else {
       // Export 2D (tableau croisé)
       const { rows, cols, data } = createCrossTable()
-      const excelData = rows.map((row) => {
+
+      // Créer les en-têtes de colonnes
+      const headers = [getDimensionName(selectedDim1), ...cols, 'Total']
+      worksheet.columns = headers.map(header => ({ header, key: header }))
+
+      // Ajouter les données
+      rows.forEach(row => {
         const rowData: any = { [getDimensionName(selectedDim1)]: row }
-        cols.forEach((col) => {
+        cols.forEach(col => {
           rowData[col] = data[row][col] || 0
         })
         const rowTotal = Object.values(data[row]).reduce((sum: number, val) => sum + (val as number), 0)
         rowData['Total'] = rowTotal
-        return rowData
+        worksheet.addRow(rowData)
       })
 
-      // Ligne totaux
+      // Ligne des totaux
       const totalRow: any = { [getDimensionName(selectedDim1)]: 'Total' }
-      cols.forEach((col) => {
+      cols.forEach(col => {
         const colTotal = rows.reduce((sum, row) => sum + (data[row][col] || 0), 0)
         totalRow[col] = colTotal
       })
       totalRow['Total'] = getTotal()
-      excelData.push(totalRow)
+      worksheet.addRow(totalRow)
 
-      const ws = XLSX.utils.json_to_sheet(excelData)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Tableau Croisé')
-      XLSX.writeFile(wb, `reporting_croise_${selectedDim1}_${selectedDim2}_${Date.now()}.xlsx`)
+      // Mise en forme
+      worksheet.getRow(1).font = { bold: true }
+      const lastRow = worksheet.lastRow
+      if (lastRow) {
+        lastRow.font = { bold: true }
+        lastRow.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'F0F0F0' }
+        }
+      }
+
+      const fileName = `reporting_croise_${selectedDim1}_${selectedDim2}_${Date.now()}.xlsx`
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = fileName
+      link.click()
     }
   }
 

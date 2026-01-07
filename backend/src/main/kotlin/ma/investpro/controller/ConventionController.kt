@@ -2,10 +2,17 @@ package ma.investpro.controller
 
 import ma.investpro.dto.ConventionDTO
 import ma.investpro.dto.ConventionSimpleDTO
+import ma.investpro.dto.ImputationPrevisionnelleDTO
+import ma.investpro.dto.VersementPrevisionnelDTO
 import ma.investpro.entity.Convention
 import ma.investpro.entity.StatutConvention
+import ma.investpro.entity.ImputationPrevisionnelle
+import ma.investpro.entity.VersementPrevisionnel
 import ma.investpro.mapper.ConventionMapper
 import ma.investpro.service.ConventionService
+import ma.investpro.repository.ImputationPrevisionnelleRepository
+import ma.investpro.repository.VersementPrevisionnelRepository
+import ma.investpro.repository.PartenaireRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -16,7 +23,10 @@ import org.springframework.web.bind.annotation.*
 @CrossOrigin(origins = ["http://localhost:5173", "http://localhost:3000", "https://naciro2010.github.io"])
 class ConventionController(
     private val conventionService: ConventionService,
-    private val conventionMapper: ConventionMapper
+    private val conventionMapper: ConventionMapper,
+    private val imputationRepository: ImputationPrevisionnelleRepository,
+    private val versementRepository: VersementPrevisionnelRepository,
+    private val partenaireRepository: PartenaireRepository
 ) {
 
     // ========== CRUD Endpoints ==========
@@ -240,5 +250,127 @@ class ConventionController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getStatistiques(): ResponseEntity<Map<String, Long>> {
         return ResponseEntity.ok(conventionService.getStatistiques())
+    }
+
+    // ========== Imputations Prévisionnelles ==========
+
+    @PostMapping("/{conventionId}/imputations")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun ajouterImputation(
+        @PathVariable conventionId: Long,
+        @RequestBody imputation: ImputationPrevisionnelle
+    ): ResponseEntity<ImputationPrevisionnelleDTO> {
+        return try {
+            val convention = conventionService.findById(conventionId)
+                ?: return ResponseEntity.notFound().build()
+
+            imputation.convention = convention
+
+            // Calculer la date de fin si nécessaire
+            if (imputation.dateFinPrevue == null && imputation.dateDemarrage != null && imputation.delaiMois > 0) {
+                imputation.dateFinPrevue = imputation.dateDemarrage.plusMonths(imputation.delaiMois.toLong())
+            }
+
+            val saved = imputationRepository.save(imputation)
+
+            val dto = ImputationPrevisionnelleDTO(
+                id = saved.id,
+                conventionId = saved.convention?.id ?: 0,
+                volet = saved.volet,
+                dateDemarrage = saved.dateDemarrage,
+                delaiMois = saved.delaiMois,
+                dateFinPrevue = saved.dateFinPrevue,
+                remarques = saved.remarques,
+                actif = saved.actif,
+                createdAt = saved.createdAt,
+                updatedAt = saved.updatedAt
+            )
+
+            ResponseEntity.status(HttpStatus.CREATED).body(dto)
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().build()
+        }
+    }
+
+    @DeleteMapping("/{conventionId}/imputations/{imputationId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun supprimerImputation(
+        @PathVariable conventionId: Long,
+        @PathVariable imputationId: Long
+    ): ResponseEntity<Void> {
+        return try {
+            imputationRepository.deleteById(imputationId)
+            ResponseEntity.noContent().build()
+        } catch (e: Exception) {
+            ResponseEntity.notFound().build()
+        }
+    }
+
+    // ========== Versements Prévisionnels ==========
+
+    @PostMapping("/{conventionId}/versements")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun ajouterVersement(
+        @PathVariable conventionId: Long,
+        @RequestBody request: Map<String, Any?>
+    ): ResponseEntity<VersementPrevisionnelDTO> {
+        return try {
+            val convention = conventionService.findById(conventionId)
+                ?: return ResponseEntity.notFound().build()
+
+            val versement = VersementPrevisionnel().apply {
+                this.convention = convention
+                volet = request["volet"] as? String
+                dateVersement = java.time.LocalDate.parse(request["dateVersement"] as String)
+                montant = (request["montant"] as? Number)?.let { java.math.BigDecimal(it.toString()) } ?: java.math.BigDecimal.ZERO
+                remarques = request["remarques"] as? String
+
+                // Partenaire bénéficiaire
+                (request["partenaireId"] as? Number)?.toLong()?.let { pid ->
+                    partenaire = partenaireRepository.findById(pid).orElse(null)
+                }
+
+                // MOD responsable
+                (request["modId"] as? Number)?.toLong()?.let { modId ->
+                    maitreOeuvreDelegue = partenaireRepository.findById(modId).orElse(null)
+                }
+            }
+
+            val saved = versementRepository.save(versement)
+
+            val dto = VersementPrevisionnelDTO(
+                id = saved.id,
+                conventionId = saved.convention?.id ?: 0,
+                volet = saved.volet,
+                dateVersement = saved.dateVersement,
+                montant = saved.montant,
+                partenaireId = saved.partenaire?.id ?: 0,
+                partenaireNom = saved.partenaire?.raisonSociale,
+                maitreOeuvreDelegueId = saved.maitreOeuvreDelegue?.id,
+                maitreOeuvreDelegueNom = saved.maitreOeuvreDelegue?.raisonSociale,
+                remarques = saved.remarques,
+                actif = saved.actif,
+                createdAt = saved.createdAt,
+                updatedAt = saved.updatedAt
+            )
+
+            ResponseEntity.status(HttpStatus.CREATED).body(dto)
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().build()
+        }
+    }
+
+    @DeleteMapping("/{conventionId}/versements/{versementId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun supprimerVersement(
+        @PathVariable conventionId: Long,
+        @PathVariable versementId: Long
+    ): ResponseEntity<Void> {
+        return try {
+            versementRepository.deleteById(versementId)
+            ResponseEntity.noContent().build()
+        } catch (e: Exception) {
+            ResponseEntity.notFound().build()
+        }
     }
 }

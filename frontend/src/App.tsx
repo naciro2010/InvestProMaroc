@@ -10,6 +10,9 @@ import ConventionWizard from './pages/conventions/ConventionWizardComplete'
 import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
+import ProjetsPage from './pages/projets/ProjetsPage'
+import ProjetFormPage from './pages/projets/ProjetFormPage'
+import ProjetDetailPage from './pages/projets/ProjetDetailPage'
 import BudgetsPage from './pages/budgets/BudgetsPage'
 import DecomptesPage from './pages/decomptes/DecomptesPage'
 import PaiementsPage from './pages/paiements/PaiementsPage'
@@ -148,6 +151,40 @@ function App() {
             element={
               <ProtectedRoute>
                 <MarcheDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Projets */}
+          <Route
+            path="/projets"
+            element={
+              <ProtectedRoute>
+                <ProjetsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projets/nouveau"
+            element={
+              <ProtectedRoute>
+                <ProjetFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projets/:id/modifier"
+            element={
+              <ProtectedRoute>
+                <ProjetFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projets/:id"
+            element={
+              <ProtectedRoute>
+                <ProjetDetailPage />
               </ProtectedRoute>
             }
           />

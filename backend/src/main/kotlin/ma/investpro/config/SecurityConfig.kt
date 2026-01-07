@@ -53,14 +53,18 @@ class SecurityConfig(
     fun corsConfigurationSource(): CorsConfigurationSource =
         UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/**", CorsConfiguration().apply {
+                // Support local development and production origins
                 allowedOrigins = listOf(
-                    "http://localhost:5173",
-                    "http://localhost:3000",
-                    "https://naciro2010.github.io"
+                    "http://localhost:5173",          // Vite dev server
+                    "http://localhost:3000",          // React dev server
+                    "http://localhost:4200",          // Angular dev server
+                    "https://naciro2010.github.io",   // GitHub Pages
                 )
                 allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 allowedHeaders = listOf("*")
+                exposedHeaders = listOf("Authorization", "X-Total-Count")
                 allowCredentials = true
+                maxAge = 3600  // 1 hour
             })
         }
 

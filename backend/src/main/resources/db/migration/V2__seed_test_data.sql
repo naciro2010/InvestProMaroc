@@ -32,10 +32,10 @@ VALUES
 ON CONFLICT (code) DO NOTHING;
 
 -- Conventions (using valid enum values: CADRE, NON_CADRE, SPECIFIQUE, AVENANT)
-INSERT INTO conventions (code, numero, designation, libelle, date_convention, type_convention, statut, date_debut, budget, taux_commission, base_calcul, taux_tva, actif)
+INSERT INTO conventions (code, numero, libelle, date_convention, type_convention, statut, date_debut, budget, taux_commission, base_calcul, taux_tva, actif)
 VALUES
-    ('CONV-2024-001', 'CONV/2024/001', 'Convention Principale 2024', 'Convention de partenariat 2024', '2024-01-15', 'CADRE', 'VALIDEE', '2024-01-15', 10000000.00, 2.50, 'DECAISSEMENTS_TTC', 20.00, TRUE),
-    ('CONV-2024-002', 'CONV/2024/002', 'Convention Travaux 2024', 'Convention pour travaux et services', '2024-03-01', 'SPECIFIQUE', 'VALIDEE', '2024-03-01', 5000000.00, 3.00, 'DECAISSEMENTS_TTC', 20.00, TRUE)
+    ('CONV-2024-001', 'CONV/2024/001', 'Convention de partenariat 2024', '2024-01-15', 'CADRE', 'VALIDEE', '2024-01-15', 10000000.00, 2.50, 'DECAISSEMENTS_TTC', 20.00, TRUE),
+    ('CONV-2024-002', 'CONV/2024/002', 'Convention pour travaux et services', '2024-03-01', 'SPECIFIQUE', 'VALIDEE', '2024-03-01', 5000000.00, 3.00, 'DECAISSEMENTS_TTC', 20.00, TRUE)
 ON CONFLICT (code) DO NOTHING;
 
 -- Projets

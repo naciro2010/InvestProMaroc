@@ -1,6 +1,9 @@
--- V5__create_projets_table.sql
+-- V10__recreate_projets_table_clean.sql
+-- Solution simple: supprimer et recréer la table projets proprement
 
-CREATE TABLE IF NOT EXISTS projets (
+DROP TABLE IF EXISTS projets CASCADE;
+
+CREATE TABLE projets (
     id                       BIGSERIAL PRIMARY KEY,
     code                     VARCHAR(50) NOT NULL UNIQUE,
     nom                      VARCHAR(200) NOT NULL,
@@ -31,10 +34,16 @@ CREATE TABLE IF NOT EXISTS projets (
     CONSTRAINT fk_projets_chef_projet FOREIGN KEY (chef_projet_id) REFERENCES partenaires(id) ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_projets_code ON projets(code);
-CREATE INDEX IF NOT EXISTS idx_projets_convention ON projets(convention_id);
-CREATE INDEX IF NOT EXISTS idx_projets_chef_projet ON projets(chef_projet_id);
-CREATE INDEX IF NOT EXISTS idx_projets_statut ON projets(statut);
-CREATE INDEX IF NOT EXISTS idx_projets_dates ON projets(date_debut, date_fin_prevue);
-CREATE INDEX IF NOT EXISTS idx_projets_actif ON projets(actif);
-CREATE INDEX IF NOT EXISTS idx_projets_avancement ON projets(pourcentage_avancement);
+CREATE INDEX idx_projets_code ON projets(code);
+CREATE INDEX idx_projets_convention ON projets(convention_id);
+CREATE INDEX idx_projets_chef_projet ON projets(chef_projet_id);
+CREATE INDEX idx_projets_statut ON projets(statut);
+CREATE INDEX idx_projets_dates ON projets(date_debut, date_fin_prevue);
+CREATE INDEX idx_projets_actif ON projets(actif);
+CREATE INDEX idx_projets_avancement ON projets(pourcentage_avancement);
+
+INSERT INTO projets (code, nom, description, budget_total, statut, date_debut, date_fin_prevue, duree_mois, pourcentage_avancement)
+VALUES
+    ('PRJ-2024-001', 'Projet pilote infrastructure', 'Modernisation des infrastructures de base', 5000000.00, 'EN_COURS', '2024-01-15', '2025-01-15', 12, 45.00),
+    ('PRJ-2024-002', 'Formation professionnelle', 'Programme de formation et renforcement des capacités', 2000000.00, 'EN_PREPARATION', '2024-06-01', '2025-06-01', 12, 0.00),
+    ('PRJ-2024-003', 'Développement rural', 'Amélioration des conditions de vie en zones rurales', 8000000.00, 'EN_COURS', '2024-03-01', '2026-03-01', 24, 60.00);

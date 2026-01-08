@@ -10,7 +10,7 @@
 -- --------------------------------------------------------------------------------------------------------
 -- TABLE: projets - Gestion des projets d'investissement
 -- --------------------------------------------------------------------------------------------------------
-CREATE TABLE projets (
+CREATE TABLE IF NOT EXISTS projets (
     id                       BIGSERIAL PRIMARY KEY,
     code                     VARCHAR(50) NOT NULL UNIQUE,
     nom                      VARCHAR(200) NOT NULL,
@@ -45,14 +45,14 @@ CREATE TABLE projets (
     CONSTRAINT fk_projets_chef_projet FOREIGN KEY (chef_projet_id) REFERENCES partenaires(id) ON DELETE SET NULL
 );
 
--- Index pour optimiser les requêtes
-CREATE INDEX idx_projets_code ON projets(code);
-CREATE INDEX idx_projets_convention ON projets(convention_id);
-CREATE INDEX idx_projets_chef_projet ON projets(chef_projet_id);
-CREATE INDEX idx_projets_statut ON projets(statut);
-CREATE INDEX idx_projets_dates ON projets(date_debut, date_fin_prevue);
-CREATE INDEX idx_projets_actif ON projets(actif);
-CREATE INDEX idx_projets_avancement ON projets(pourcentage_avancement);
+-- Index pour optimiser les requêtes (IF NOT EXISTS disponible en PostgreSQL 15+)
+CREATE INDEX IF NOT EXISTS idx_projets_code ON projets(code);
+CREATE INDEX IF NOT EXISTS idx_projets_convention ON projets(convention_id);
+CREATE INDEX IF NOT EXISTS idx_projets_chef_projet ON projets(chef_projet_id);
+CREATE INDEX IF NOT EXISTS idx_projets_statut ON projets(statut);
+CREATE INDEX IF NOT EXISTS idx_projets_dates ON projets(date_debut, date_fin_prevue);
+CREATE INDEX IF NOT EXISTS idx_projets_actif ON projets(actif);
+CREATE INDEX IF NOT EXISTS idx_projets_avancement ON projets(pourcentage_avancement);
 
 -- Commentaires
 COMMENT ON TABLE projets IS 'Gestion des projets d''investissement liés aux conventions';

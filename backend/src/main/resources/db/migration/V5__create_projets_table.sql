@@ -7,15 +7,6 @@
 -- Created: 2026-01-05
 -- ========================================================================================================
 
--- Création de l'ENUM pour le statut des projets
-CREATE TYPE statut_projet AS ENUM (
-    'EN_PREPARATION',
-    'EN_COURS',
-    'SUSPENDU',
-    'TERMINE',
-    'ANNULE'
-);
-
 -- --------------------------------------------------------------------------------------------------------
 -- TABLE: projets - Gestion des projets d'investissement
 -- --------------------------------------------------------------------------------------------------------
@@ -31,7 +22,7 @@ CREATE TABLE projets (
     date_fin_reelle          DATE,
     duree_mois               INT,
     chef_projet_id           BIGINT,
-    statut                   statut_projet NOT NULL DEFAULT 'EN_PREPARATION',
+    statut                   VARCHAR(20) NOT NULL DEFAULT 'EN_PREPARATION',
     pourcentage_avancement   DECIMAL(5, 2) NOT NULL DEFAULT 0.00,
     localisation             VARCHAR(200),
     objectifs                TEXT,

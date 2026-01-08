@@ -19,8 +19,6 @@ import {
   Alert,
   Stack,
   Chip,
-  Checkbox,
-  FormControlLabel,
   Select,
   FormControl,
   InputLabel,
@@ -36,17 +34,16 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import { conventionsAPI } from '../../lib/api'
 import { dimensionsAPI, DimensionAnalytique, ValeurDimension } from '../../lib/dimensionsAPI'
+import RichTextEditor from '../../components/ui/RichTextEditor'
 
 // ==================== TYPES ====================
 
 interface Partenaire {
   id?: string
-  role: 'MOA' | 'MOD' | 'BAILLEUR'
+  role: 'MOA' | 'BAILLEUR'
   nom: string
   budgetAlloue: number
   pourcentage: number
-  estMaitreOeuvre: boolean
-  estMaitreOeuvreDelegue: boolean
   ice?: string
   rc?: string
   ifiscale?: string
@@ -89,6 +86,13 @@ interface VersementPrevisionnel {
   volet?: string
 }
 
+interface TrancheCommission {
+  id?: string
+  montantDebut: number
+  montantFin: number
+  taux: number
+}
+
 interface ConventionFormData {
   // Étape 1: Informations de base
   typeConvention: 'CADRE' | 'NON_CADRE'
@@ -108,6 +112,7 @@ interface ConventionFormData {
   baseCommission: 'HT' | 'TTC'
   modeCommission: 'TAUX_FIXE' | 'TRANCHES' | 'MIXTE'
   tauxCommission: number
+  tranchesCommission: TrancheCommission[]
   plafondCommission?: number
   minimumCommission?: number
   exclusions?: string
@@ -160,6 +165,7 @@ const ConventionWizardComplete = () => {
     baseCommission: 'TTC',
     modeCommission: 'TAUX_FIXE',
     tauxCommission: 2.5,
+    tranchesCommission: [],
     partenaires: [],
     subventions: [],
     imputationsPrevisionnelles: [],
@@ -333,8 +339,6 @@ const ConventionWizardComplete = () => {
           nom: '',
           budgetAlloue: 0,
           pourcentage: 0,
-          estMaitreOeuvre: false,
-          estMaitreOeuvreDelegue: false,
         },
       ],
     })
@@ -532,6 +536,72 @@ const ConventionWizardComplete = () => {
     })
   }
 
+  // ==================== HANDLERS TRANCHES COMMISSION ====================
+
+  const addTrancheCommission = () => {
+    const derniereTranche = formData.tranchesCommission[formData.tranchesCommission.length - 1]
+    const nouveauMontantDebut = derniereTranche ? derniereTranche.montantFin : 0
+
+    setFormData({
+      ...formData,
+      tranchesCommission: [
+        ...formData.tranchesCommission,
+        {
+          id: crypto.randomUUID(),
+          montantDebut: nouveauMontantDebut,
+          montantFin: nouveauMontantDebut + 100000,
+          taux: 0,
+        },
+      ],
+    })
+  }
+
+  const removeTrancheCommission = (id: string) => {
+    setFormData({
+      ...formData,
+      tranchesCommission: formData.tranchesCommission.filter((t) => t.id !== id),
+    })
+  }
+
+  const updateTrancheCommission = (id: string, field: string, value: any) => {
+    setFormData({
+      ...formData,
+      tranchesCommission: formData.tranchesCommission.map((tranche) =>
+        tranche.id === id ? { ...tranche, [field]: value } : tranche
+      ),
+    })
+  }
+
+  // Calculer la commission totale avec tranches
+  const calculateCommissionAvecTranches = (budget: number): number => {
+    if (formData.modeCommission === 'TAUX_FIXE') {
+      return (budget * formData.tauxCommission) / 100
+    }
+
+    if (formData.modeCommission === 'TRANCHES' && formData.tranchesCommission.length > 0) {
+      let commissionTotale = 0
+      let budgetRestant = budget
+
+      for (const tranche of formData.tranchesCommission) {
+        if (budgetRestant <= 0) break
+
+        const montantTranche = Math.min(
+          budgetRestant,
+          tranche.montantFin - tranche.montantDebut
+        )
+
+        if (montantTranche > 0) {
+          commissionTotale += (montantTranche * tranche.taux) / 100
+          budgetRestant -= montantTranche
+        }
+      }
+
+      return commissionTotale
+    }
+
+    return (budget * formData.tauxCommission) / 100
+  }
+
   // ==================== HANDLERS SUBVENTIONS ====================
 
   const addSubvention = () => {
@@ -569,22 +639,32 @@ const ConventionWizardComplete = () => {
   // ==================== RENDER STEPS ====================
 
   const renderStepContent = (step: number) => {
-    switch (step) {
-      case 0:
-        return renderStep1_Informations()
-      case 1:
-        return renderStep2_Budget()
-      case 2:
-        return renderStep3_Commission()
-      case 3:
-        return renderStep4_Partenaires()
-      case 4:
-        return renderStep5_Subventions()
-      case 5:
-        return renderStep8_Recapitulatif()
-      default:
-        return null
-    }
+    const stepContent = (() => {
+      switch (step) {
+        case 0:
+          return renderStep1_Informations()
+        case 1:
+          return renderStep2_Budget()
+        case 2:
+          return renderStep3_Commission()
+        case 3:
+          return renderStep4_Partenaires()
+        case 4:
+          return renderStep5_Subventions()
+        case 5:
+          return renderStep8_Recapitulatif()
+        default:
+          return null
+      }
+    })()
+
+    // Show SummaryBar for steps >= 2 (Commission, Partenaires, Subventions, Récap)
+    return (
+      <>
+        {stepContent}
+        {step >= 2 && <SummaryBar />}
+      </>
+    )
   }
 
   // Helper component for step headers
@@ -612,9 +692,9 @@ const ConventionWizardComplete = () => {
     </Box>
   )
 
-  // Helper component for summary bar at bottom of each step
+  // Helper component for summary bar at bottom of each step (hidden for steps 0 and 1)
   const SummaryBar = () => {
-    const commissionEstimee = (formData.budgetGlobal * formData.tauxCommission) / 100
+    const commissionEstimee = calculateCommissionAvecTranches(formData.budgetGlobal)
     const totalPartenaires = formData.partenaires.reduce((sum, p) => sum + p.budgetAlloue, 0)
     const totalPourcentage = formData.partenaires.reduce((sum, p) => sum + p.pourcentage, 0)
 
@@ -700,8 +780,8 @@ const ConventionWizardComplete = () => {
         title="Informations de base"
         subtitle="Définissez les informations principales de la convention"
       />
-      <Grid container spacing={2}>
-        <Grid container spacing={2}>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             required
@@ -716,7 +796,7 @@ const ConventionWizardComplete = () => {
             <MenuItem value="AVENANT">Avenant</MenuItem>
           </TextField>
         </Grid>
-        <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             required
@@ -726,7 +806,7 @@ const ConventionWizardComplete = () => {
             placeholder="CONV-2024-001"
           />
         </Grid>
-        <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             required
@@ -736,7 +816,7 @@ const ConventionWizardComplete = () => {
             placeholder="CONV001"
           />
         </Grid>
-        <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             required
@@ -747,7 +827,7 @@ const ConventionWizardComplete = () => {
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
-        <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
           <TextField
             fullWidth
             required
@@ -757,19 +837,20 @@ const ConventionWizardComplete = () => {
             placeholder="Convention d'intervention pour..."
           />
         </Grid>
-        <Grid container spacing={2}>
-          <TextField
-            fullWidth
-            required
-            multiline
-            rows={4}
-            label="Objet de la Convention"
-            value={formData.objet}
-            onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
-            placeholder="Description détaillée..."
-          />
+        <Grid size={{ xs: 12 }}>
+          <Box>
+            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+              Objet de la Convention *
+            </Typography>
+            <RichTextEditor
+              value={formData.objet}
+              onChange={(value) => setFormData({ ...formData, objet: value })}
+              placeholder="Décrivez l'objet de la convention de manière détaillée..."
+              minHeight={250}
+            />
+          </Box>
         </Grid>
-        <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             required
@@ -780,7 +861,7 @@ const ConventionWizardComplete = () => {
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
-        <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             label="Date de Fin"
@@ -791,445 +872,628 @@ const ConventionWizardComplete = () => {
           />
         </Grid>
       </Grid>
-      <SummaryBar />
     </Box>
   )
 
   // Étape 2: Budget
-  const renderStep2_Budget = () => (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h6" gutterBottom sx={{ color: '#1e40af', fontWeight: 600 }}>
-        Budget & Montants
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid container spacing={2}>
-          <TextField
-            fullWidth
-            required
-            type="number"
-            label="Budget Global (MAD)"
-            value={formData.budgetGlobal}
-            onChange={(e) => setFormData({ ...formData, budgetGlobal: parseFloat(e.target.value) || 0 })}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
-        </Grid>
+  const renderStep2_Budget = () => {
+    const totalLignes = formData.lignesBudget.reduce((sum, l) => sum + l.montantTTC, 0)
+    const difference = formData.budgetGlobal - totalLignes
 
-        <Grid container spacing={2}>
-          <Divider sx={{ my: 2 }} />
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Détail par Lignes (Optionnel)
-            </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Add />}
-              onClick={addLigneBudget}
-              sx={{ borderColor: '#3b82f6', color: '#3b82f6' }}
-            >
-              Ajouter une ligne
-            </Button>
-          </Stack>
+    return (
+      <Box>
+        <StepHeader
+          title="Budget & Montants"
+          subtitle="Définissez le budget global et son détail par lignes"
+        />
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              fullWidth
+              required
+              type="number"
+              label="Budget Global (MAD)"
+              value={formData.budgetGlobal}
+              onChange={(e) => setFormData({ ...formData, budgetGlobal: parseFloat(e.target.value) || 0 })}
+              inputProps={{ min: 0, step: 0.01 }}
+            />
+          </Grid>
 
-          {formData.lignesBudget.map((ligne) => (
-            <Card key={ligne.id} sx={{ mb: 2, bgcolor: '#f8fafc' }}>
-              <CardContent>
+          <Grid size={{ xs: 12 }}>
+            <Divider sx={{ my: 2 }} />
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                Détail par Lignes (Optionnel)
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Add />}
+                onClick={addLigneBudget}
+                sx={{ borderColor: '#3b82f6', color: '#3b82f6' }}
+              >
+                Ajouter une ligne
+              </Button>
+            </Stack>
+
+            {formData.lignesBudget.map((ligne) => (
+              <Card key={ligne.id} sx={{ mb: 2, bgcolor: '#f8fafc' }}>
+                <CardContent>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Désignation"
+                        value={ligne.designation}
+                        onChange={(e) => updateLigneBudget(ligne.id!, 'designation', e.target.value)}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        label="Montant HT"
+                        value={ligne.montantHT}
+                        onChange={(e) => updateLigneBudget(ligne.id!, 'montantHT', parseFloat(e.target.value) || 0)}
+                        inputProps={{ min: 0, step: 0.01 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 3 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        label="TVA (%)"
+                        value={ligne.tauxTVA}
+                        onChange={(e) => updateLigneBudget(ligne.id!, 'tauxTVA', parseFloat(e.target.value) || 0)}
+                        inputProps={{ min: 0, max: 100 }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        label="Montant TTC"
+                        value={ligne.montantTTC.toFixed(2)}
+                        InputProps={{ readOnly: true }}
+                        sx={{ bgcolor: '#e0f2fe' }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 1 }}>
+                      <IconButton
+                        color="error"
+                        size="small"
+                        onClick={() => removeLigneBudget(ligne.id!)}
+                      >
+                        <Delete />
+                      </IconButton>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            ))}
+
+            {formData.lignesBudget.length > 0 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: '#dbeafe', borderRadius: 1 }}>
                 <Grid container spacing={2}>
-                  <Grid container spacing={2}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Désignation"
-                      value={ligne.designation}
-                      onChange={(e) => updateLigneBudget(ligne.id!, 'designation', e.target.value)}
-                    />
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                      Budget Global
+                    </Typography>
+                    <Typography variant="h6" fontWeight={600} color="#1e40af">
+                      {formData.budgetGlobal.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                    </Typography>
                   </Grid>
-                  <Grid container spacing={2}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      label="Montant HT"
-                      value={ligne.montantHT}
-                      onChange={(e) => updateLigneBudget(ligne.id!, 'montantHT', parseFloat(e.target.value) || 0)}
-                      inputProps={{ min: 0, step: 0.01 }}
-                    />
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                      Total des Lignes
+                    </Typography>
+                    <Typography variant="h6" fontWeight={600} color="#1e40af">
+                      {totalLignes.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                    </Typography>
                   </Grid>
-                  <Grid container spacing={2}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      label="TVA (%)"
-                      value={ligne.tauxTVA}
-                      onChange={(e) => updateLigneBudget(ligne.id!, 'tauxTVA', parseFloat(e.target.value) || 0)}
-                      inputProps={{ min: 0, max: 100 }}
-                    />
-                  </Grid>
-                  <Grid container spacing={2}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="number"
-                      label="Montant TTC"
-                      value={ligne.montantTTC.toFixed(2)}
-                      InputProps={{ readOnly: true }}
-                      sx={{ bgcolor: '#e0f2fe' }}
-                    />
-                  </Grid>
-                  <Grid container spacing={2}>
-                    <IconButton
-                      color="error"
-                      size="small"
-                      onClick={() => removeLigneBudget(ligne.id!)}
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                      Différence
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      fontWeight={600}
+                      color={Math.abs(difference) < 0.01 ? '#059669' : difference > 0 ? '#dc2626' : '#f59e0b'}
                     >
-                      <Delete />
-                    </IconButton>
+                      {difference.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                    </Typography>
                   </Grid>
                 </Grid>
-              </CardContent>
-            </Card>
-          ))}
-
-          {formData.lignesBudget.length > 0 && (
-            <Box sx={{ mt: 2, p: 2, bgcolor: '#dbeafe', borderRadius: 1 }}>
-              <Typography variant="subtitle1" fontWeight={600} color="#1e40af">
-                Total des lignes: {formData.lignesBudget.reduce((sum, l) => sum + l.montantTTC, 0).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
-              </Typography>
-            </Box>
-          )}
+                {Math.abs(difference) >= 0.01 && (
+                  <Alert severity={difference > 0 ? 'warning' : 'info'} sx={{ mt: 2 }}>
+                    {difference > 0
+                      ? `⚠️ Il reste ${difference.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })} à allouer`
+                      : `ℹ️ Les lignes dépassent le budget global de ${Math.abs(difference).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}`
+                    }
+                  </Alert>
+                )}
+              </Box>
+            )}
+          </Grid>
         </Grid>
-      </Grid>
-      <SummaryBar />
-    </Box>
-  )
+      </Box>
+    )
+  }
 
   // Étape 3: Commission
-  const renderStep3_Commission = () => (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h6" gutterBottom sx={{ color: '#1e40af', fontWeight: 600 }}>
-        Commission d'Intervention
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid container spacing={2}>
-          <TextField
-            fullWidth
-            required
-            label="Base de Calcul"
-            select
-            value={formData.baseCommission}
-            onChange={(e) => setFormData({ ...formData, baseCommission: e.target.value as any })}
-          >
-            <MenuItem value="HT">HT (Hors Taxes)</MenuItem>
-            <MenuItem value="TTC">TTC (Toutes Taxes Comprises)</MenuItem>
-          </TextField>
-        </Grid>
-        <Grid container spacing={2}>
-          <TextField
-            fullWidth
-            required
-            label="Mode de Calcul"
-            select
-            value={formData.modeCommission}
-            onChange={(e) => setFormData({ ...formData, modeCommission: e.target.value as any })}
-          >
-            <MenuItem value="TAUX_FIXE">Taux Fixe</MenuItem>
-            <MenuItem value="TRANCHES">Par Tranches</MenuItem>
-            <MenuItem value="MIXTE">Mixte</MenuItem>
-          </TextField>
-        </Grid>
-        <Grid container spacing={2}>
-          <TextField
-            fullWidth
-            required
-            type="number"
-            label="Taux de Commission (%)"
-            value={formData.tauxCommission}
-            onChange={(e) => setFormData({ ...formData, tauxCommission: parseFloat(e.target.value) || 0 })}
-            inputProps={{ min: 0, max: 100, step: 0.01 }}
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <TextField
-            fullWidth
-            type="number"
-            label="Plafond Commission (MAD)"
-            value={formData.plafondCommission || ''}
-            onChange={(e) => setFormData({ ...formData, plafondCommission: parseFloat(e.target.value) || undefined })}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <TextField
-            fullWidth
-            type="number"
-            label="Minimum Commission (MAD)"
-            value={formData.minimumCommission || ''}
-            onChange={(e) => setFormData({ ...formData, minimumCommission: parseFloat(e.target.value) || undefined })}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Exclusions / Conditions Particulières"
-            value={formData.exclusions || ''}
-            onChange={(e) => setFormData({ ...formData, exclusions: e.target.value })}
-            placeholder="Ex: Exclusion de la TVA, des frais de mission..."
-          />
-        </Grid>
+  const renderStep3_Commission = () => {
+    const commissionEstimee = calculateCommissionAvecTranches(formData.budgetGlobal)
 
-        {/* Aperçu calcul */}
-        <Grid container spacing={2}>
-          <Card sx={{ bgcolor: '#dbeafe', border: '1px solid #3b82f6' }}>
+    return (
+      <Box>
+        <StepHeader
+          title="Commission d'Intervention"
+          subtitle="Paramètres de calcul de la commission"
+        />
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              required
+              label="Base de Calcul"
+              select
+              value={formData.baseCommission}
+              onChange={(e) => setFormData({ ...formData, baseCommission: e.target.value as any })}
+            >
+              <MenuItem value="HT">HT (Hors Taxes)</MenuItem>
+              <MenuItem value="TTC">TTC (Toutes Taxes Comprises)</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              required
+              label="Mode de Calcul"
+              select
+              value={formData.modeCommission}
+              onChange={(e) => setFormData({ ...formData, modeCommission: e.target.value as any })}
+            >
+              <MenuItem value="TAUX_FIXE">Taux Fixe</MenuItem>
+              <MenuItem value="TRANCHES">Par Tranches</MenuItem>
+              <MenuItem value="MIXTE">Mixte</MenuItem>
+            </TextField>
+          </Grid>
+
+          {/* Taux Fixe OU Tranches selon le mode */}
+          {formData.modeCommission === 'TAUX_FIXE' || formData.modeCommission === 'MIXTE' ? (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                required
+                type="number"
+                label="Taux de Commission (%)"
+                value={formData.tauxCommission}
+                onChange={(e) => setFormData({ ...formData, tauxCommission: parseFloat(e.target.value) || 0 })}
+                inputProps={{ min: 0, max: 100, step: 0.01 }}
+              />
+            </Grid>
+          ) : null}
+
+          {formData.modeCommission === 'TRANCHES' && (
+            <Grid size={{ xs: 12 }}>
+              <Divider sx={{ my: 2 }} />
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Tranches de Commission (Base: {formData.baseCommission})
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Add />}
+                  onClick={addTrancheCommission}
+                  sx={{ borderColor: '#3b82f6', color: '#3b82f6' }}
+                >
+                  Ajouter une tranche
+                </Button>
+              </Stack>
+
+              {formData.tranchesCommission.length === 0 && (
+                <Alert severity="info">Aucune tranche définie. Ajoutez au moins une tranche de commission.</Alert>
+              )}
+
+              {formData.tranchesCommission.map((tranche, index) => (
+                <Card key={tranche.id} sx={{ mb: 2, bgcolor: '#f8fafc' }}>
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="caption" fontWeight={600} color="primary">
+                          Tranche {index + 1}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          type="number"
+                          label={`Montant Début (${formData.baseCommission})`}
+                          value={tranche.montantDebut}
+                          onChange={(e) => updateTrancheCommission(tranche.id!, 'montantDebut', parseFloat(e.target.value) || 0)}
+                          inputProps={{ min: 0, step: 0.01 }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          type="number"
+                          label={`Montant Fin (${formData.baseCommission})`}
+                          value={tranche.montantFin}
+                          onChange={(e) => updateTrancheCommission(tranche.id!, 'montantFin', parseFloat(e.target.value) || 0)}
+                          inputProps={{ min: 0, step: 0.01 }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 3 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          type="number"
+                          label="Taux (%)"
+                          value={tranche.taux}
+                          onChange={(e) => updateTrancheCommission(tranche.id!, 'taux', parseFloat(e.target.value) || 0)}
+                          inputProps={{ min: 0, max: 100, step: 0.01 }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 1 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <IconButton
+                          color="error"
+                          size="small"
+                          onClick={() => removeTrancheCommission(tranche.id!)}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <Box sx={{ p: 1.5, bgcolor: '#e0f2fe', borderRadius: 1 }}>
+                          <Typography variant="caption" sx={{ color: '#64748b' }}>
+                            Commission sur cette tranche: {((tranche.montantFin - tranche.montantDebut) * tranche.taux / 100).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              ))}
+            </Grid>
+          )}
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Plafond Commission (MAD)"
+              value={formData.plafondCommission || ''}
+              onChange={(e) => setFormData({ ...formData, plafondCommission: parseFloat(e.target.value) || undefined })}
+              inputProps={{ min: 0, step: 0.01 }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Minimum Commission (MAD)"
+              value={formData.minimumCommission || ''}
+              onChange={(e) => setFormData({ ...formData, minimumCommission: parseFloat(e.target.value) || undefined })}
+              inputProps={{ min: 0, step: 0.01 }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="Exclusions / Conditions Particulières"
+              value={formData.exclusions || ''}
+              onChange={(e) => setFormData({ ...formData, exclusions: e.target.value })}
+              placeholder="Ex: Exclusion de la TVA, des frais de mission..."
+            />
+          </Grid>
+
+          {/* Aperçu calcul */}
+          <Grid size={{ xs: 12 }}>
+            <Card sx={{ bgcolor: '#dbeafe', border: '1px solid #3b82f6' }}>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={600} color="#1e40af" gutterBottom>
+                  Aperçu du Calcul de Commission
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                      Base de Calcul
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formData.baseCommission}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                      Mode de Calcul
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formData.modeCommission === 'TAUX_FIXE' ? 'Taux Fixe' :
+                       formData.modeCommission === 'TRANCHES' ? 'Par Tranches' : 'Mixte'}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                      Taux Appliqué
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formData.tauxCommission}%
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700 }}>
+                  Commission estimée: {commissionEstimee.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                </Typography>
+                {formData.plafondCommission && commissionEstimee > formData.plafondCommission && (
+                  <Alert severity="warning" sx={{ mt: 2 }}>
+                    ⚠️ La commission dépasse le plafond fixé ({formData.plafondCommission.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })})
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+    )
+  }
+
+  // Étape 4: Partenaires
+  const renderStep4_Partenaires = () => {
+    const totalAlloue = formData.partenaires.reduce((sum, p) => sum + p.budgetAlloue, 0)
+    const totalPourcentage = formData.partenaires.reduce((sum, p) => sum + p.pourcentage, 0)
+
+    return (
+      <Box>
+        <StepHeader
+          title="Partenaires & Allocation Budgétaire"
+          subtitle="Définissez les partenaires et leur allocation budgétaire"
+        />
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="body2" color="text.secondary">
+            Budget total: {formData.budgetGlobal.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+          </Typography>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<Add />}
+            onClick={addPartenaire}
+            sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }}
+          >
+            Ajouter un partenaire
+          </Button>
+        </Stack>
+
+        {formData.partenaires.length === 0 && (
+          <Alert severity="info">Aucun partenaire ajouté. Veuillez ajouter au moins un partenaire.</Alert>
+        )}
+
+        {formData.partenaires.map((partenaire) => (
+          <Card key={partenaire.id} sx={{ mb: 2, bgcolor: '#fafafa' }}>
             <CardContent>
-              <Typography variant="subtitle1" fontWeight={600} color="#1e40af" gutterBottom>
-                Aperçu du Calcul de Commission
-              </Typography>
-              <Typography variant="body2">
-                Base: <strong>{formData.baseCommission}</strong> |
-                Mode: <strong>{formData.modeCommission}</strong> |
-                Taux: <strong>{formData.tauxCommission}%</strong>
-              </Typography>
-              <Typography variant="h6" sx={{ mt: 2, color: '#1e40af' }}>
-                Commission estimée: {(formData.budgetGlobal * formData.tauxCommission / 100).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
-              </Typography>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    fullWidth
+                    required
+                    size="small"
+                    label="Rôle"
+                    select
+                    value={partenaire.role}
+                    onChange={(e) => updatePartenaire(partenaire.id!, 'role', e.target.value)}
+                  >
+                    <MenuItem value="MOA">MOA (Maître d'Ouvrage)</MenuItem>
+                    <MenuItem value="BAILLEUR">Bailleur de Fonds</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    fullWidth
+                    required
+                    size="small"
+                    label="Nom"
+                    value={partenaire.nom}
+                    onChange={(e) => updatePartenaire(partenaire.id!, 'nom', e.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Budget Alloué (MAD)"
+                    value={partenaire.budgetAlloue}
+                    onChange={(e) => updatePartenaire(partenaire.id!, 'budgetAlloue', parseFloat(e.target.value) || 0)}
+                    inputProps={{ min: 0, step: 0.01 }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 5, md: 2 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Pourcentage (%)"
+                    value={partenaire.pourcentage.toFixed(2)}
+                    onChange={(e) => updatePartenaire(partenaire.id!, 'pourcentage', parseFloat(e.target.value) || 0)}
+                    inputProps={{ min: 0, max: 100, step: 0.01 }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 1, md: 1 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconButton
+                    color="error"
+                    onClick={() => removePartenaire(partenaire.id!)}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-      <SummaryBar />
-    </Box>
-  )
+        ))}
 
-  // Étape 4: Partenaires ENRICHIS
-  const renderStep4_Partenaires = () => (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h6" gutterBottom sx={{ color: '#1e40af', fontWeight: 600 }}>
-        Partenaires & Allocation Budgétaire
-      </Typography>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="body2" color="text.secondary">
-          Budget total: {formData.budgetGlobal.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
-        </Typography>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<Add />}
-          onClick={addPartenaire}
-          sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }}
-        >
-          Ajouter un partenaire
-        </Button>
-      </Stack>
-
-      {formData.partenaires.length === 0 && (
-        <Alert severity="info">Aucun partenaire ajouté. Veuillez ajouter au moins un partenaire.</Alert>
-      )}
-
-      {formData.partenaires.map((partenaire) => (
-        <Card key={partenaire.id} sx={{ mb: 2 }}>
-          <CardContent>
+        {formData.partenaires.length > 0 && (
+          <Box sx={{ mt: 2, p: 2, bgcolor: '#dbeafe', borderRadius: 1 }}>
             <Grid container spacing={2}>
-              <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  size="small"
-                  label="Rôle"
-                  select
-                  value={partenaire.role}
-                  onChange={(e) => updatePartenaire(partenaire.id!, 'role', e.target.value)}
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                  Total Alloué
+                </Typography>
+                <Typography variant="h6" fontWeight={600} color="#1e40af">
+                  {totalAlloue.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                  Total Pourcentage
+                </Typography>
+                <Typography
+                  variant="h6"
+                  fontWeight={600}
+                  color={Math.abs(totalPourcentage - 100) < 0.01 ? '#059669' : '#dc2626'}
                 >
-                  <MenuItem value="MOA">MOA (Maître d'Ouvrage)</MenuItem>
-                  <MenuItem value="MOD">MOD (Maître d'Ouvrage Délégué)</MenuItem>
-                  <MenuItem value="BAILLEUR">Bailleur de Fonds</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  size="small"
-                  label="Nom"
-                  value={partenaire.nom}
-                  onChange={(e) => updatePartenaire(partenaire.id!, 'nom', e.target.value)}
-                />
-              </Grid>
-              <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Budget Alloué (MAD)"
-                  value={partenaire.budgetAlloue}
-                  onChange={(e) => updatePartenaire(partenaire.id!, 'budgetAlloue', parseFloat(e.target.value) || 0)}
-                  inputProps={{ min: 0, step: 0.01 }}
-                />
-              </Grid>
-              <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Pourcentage (%)"
-                  value={partenaire.pourcentage.toFixed(2)}
-                  onChange={(e) => updatePartenaire(partenaire.id!, 'pourcentage', parseFloat(e.target.value) || 0)}
-                  inputProps={{ min: 0, max: 100, step: 0.01 }}
-                />
-              </Grid>
-              <Grid container spacing={2}>
-                <IconButton
-                  color="error"
-                  onClick={() => removePartenaire(partenaire.id!)}
-                >
-                  <Delete />
-                </IconButton>
-              </Grid>
-              <Grid container spacing={2}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={partenaire.estMaitreOeuvre}
-                      onChange={(e) => updatePartenaire(partenaire.id!, 'estMaitreOeuvre', e.target.checked)}
-                    />
-                  }
-                  label="Est Maître d'Œuvre (MO)"
-                />
-              </Grid>
-              <Grid container spacing={2}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={partenaire.estMaitreOeuvreDelegue}
-                      onChange={(e) => updatePartenaire(partenaire.id!, 'estMaitreOeuvreDelegue', e.target.checked)}
-                    />
-                  }
-                  label="Est Maître d'Œuvre Délégué (MOD)"
-                />
+                  {totalPourcentage.toFixed(2)}%
+                </Typography>
               </Grid>
             </Grid>
-          </CardContent>
-        </Card>
-      ))}
-
-      {formData.partenaires.length > 0 && (
-        <Box sx={{ mt: 2, p: 2, bgcolor: '#dbeafe', borderRadius: 1 }}>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography variant="subtitle1" fontWeight={600} color="#1e40af">
-              Total alloué: {formData.partenaires.reduce((sum, p) => sum + p.budgetAlloue, 0).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
-            </Typography>
-            <Typography variant="subtitle1" fontWeight={600} color="#1e40af">
-              Total %: {formData.partenaires.reduce((sum, p) => sum + p.pourcentage, 0).toFixed(2)}%
-            </Typography>
-          </Stack>
-        </Box>
-      )}
-      <SummaryBar />
-    </Box>
-  )
+            {Math.abs(totalPourcentage - 100) >= 0.01 && (
+              <Alert severity="warning" sx={{ mt: 2 }}>
+                ⚠️ Le total des pourcentages doit être égal à 100% (actuellement {totalPourcentage.toFixed(2)}%)
+              </Alert>
+            )}
+          </Box>
+        )}
+      </Box>
+    )
+  }
 
   // Étape 5: Subventions
-  const renderStep5_Subventions = () => (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h6" gutterBottom sx={{ color: '#1e40af', fontWeight: 600 }}>
-        Subventions (Optionnel)
-      </Typography>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="body2" color="text.secondary">
-          Ajoutez les subventions et bailleurs de fonds
-        </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<Add />}
-          onClick={addSubvention}
-          sx={{ borderColor: '#3b82f6', color: '#3b82f6' }}
-        >
-          Ajouter une subvention
-        </Button>
-      </Stack>
+  const renderStep5_Subventions = () => {
+    const totalSubventions = formData.subventions.reduce((sum, s) => sum + s.montant, 0)
 
-      {formData.subventions.length === 0 && (
-        <Alert severity="info">Aucune subvention ajoutée (optionnel).</Alert>
-      )}
+    return (
+      <Box>
+        <StepHeader
+          title="Subventions (Optionnel)"
+          subtitle="Ajoutez les subventions et bailleurs de fonds"
+        />
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="body2" color="text.secondary">
+            {formData.subventions.length > 0
+              ? `${formData.subventions.length} subvention(s) ajoutée(s)`
+              : 'Aucune subvention'}
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Add />}
+            onClick={addSubvention}
+            sx={{ borderColor: '#3b82f6', color: '#3b82f6' }}
+          >
+            Ajouter une subvention
+          </Button>
+        </Stack>
 
-      {formData.subventions.map((subvention) => (
-        <Card key={subvention.id} sx={{ mb: 2, bgcolor: '#f8fafc' }}>
-          <CardContent>
-            <Grid container spacing={2}>
+        {formData.subventions.length === 0 && (
+          <Alert severity="info">Aucune subvention ajoutée (optionnel).</Alert>
+        )}
+
+        {formData.subventions.map((subvention) => (
+          <Card key={subvention.id} sx={{ mb: 2, bgcolor: '#f8fafc' }}>
+            <CardContent>
               <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  size="small"
-                  label="Organisme"
-                  value={subvention.organisme}
-                  onChange={(e) => updateSubvention(subvention.id!, 'organisme', e.target.value)}
-                  placeholder="Ex: Banque Mondiale"
-                />
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    required
+                    size="small"
+                    label="Organisme"
+                    value={subvention.organisme}
+                    onChange={(e) => updateSubvention(subvention.id!, 'organisme', e.target.value)}
+                    placeholder="Ex: Banque Mondiale"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Type"
+                    value={subvention.type}
+                    onChange={(e) => updateSubvention(subvention.id!, 'type', e.target.value)}
+                    placeholder="Don, Prêt..."
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 5 }}>
+                  <TextField
+                    fullWidth
+                    required
+                    size="small"
+                    type="number"
+                    label="Montant (MAD)"
+                    value={subvention.montant}
+                    onChange={(e) => updateSubvention(subvention.id!, 'montant', parseFloat(e.target.value) || 0)}
+                    inputProps={{ min: 0, step: 0.01 }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <TextField
+                    fullWidth
+                    required
+                    size="small"
+                    type="date"
+                    label="Date Échéance"
+                    value={subvention.dateEcheance}
+                    onChange={(e) => updateSubvention(subvention.id!, 'dateEcheance', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <IconButton
+                    color="error"
+                    onClick={() => removeSubvention(subvention.id!)}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    multiline
+                    rows={2}
+                    label="Conditions"
+                    value={subvention.conditions || ''}
+                    onChange={(e) => updateSubvention(subvention.id!, 'conditions', e.target.value)}
+                    placeholder="Conditions de déblocage..."
+                  />
+                </Grid>
               </Grid>
-              <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Type"
-                  value={subvention.type}
-                  onChange={(e) => updateSubvention(subvention.id!, 'type', e.target.value)}
-                  placeholder="Don, Prêt..."
-                />
-              </Grid>
-              <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  size="small"
-                  type="number"
-                  label="Montant (MAD)"
-                  value={subvention.montant}
-                  onChange={(e) => updateSubvention(subvention.id!, 'montant', parseFloat(e.target.value) || 0)}
-                  inputProps={{ min: 0, step: 0.01 }}
-                />
-              </Grid>
-              <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  size="small"
-                  type="date"
-                  label="Date Échéance"
-                  value={subvention.dateEcheance}
-                  onChange={(e) => updateSubvention(subvention.id!, 'dateEcheance', e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid container spacing={2}>
-                <IconButton
-                  color="error"
-                  onClick={() => removeSubvention(subvention.id!)}
-                >
-                  <Delete />
-                </IconButton>
-              </Grid>
-              <Grid container spacing={2}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Conditions"
-                  value={subvention.conditions || ''}
-                  onChange={(e) => updateSubvention(subvention.id!, 'conditions', e.target.value)}
-                  placeholder="Conditions de déblocage..."
-                />
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      ))}
-      <SummaryBar />
-    </Box>
-  )
+            </CardContent>
+          </Card>
+        ))}
+
+        {formData.subventions.length > 0 && (
+          <Box sx={{ mt: 2, p: 2, bgcolor: '#dbeafe', borderRadius: 1 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+              Total des Subventions
+            </Typography>
+            <Typography variant="h6" fontWeight={600} color="#1e40af">
+              {totalSubventions.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    )
+  }
 
   // Étape 6: Imputations Prévisionnelles DYNAMIQUES ⭐
   const renderStep6_Imputations = () => (
@@ -1440,25 +1704,6 @@ const ConventionWizardComplete = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid container spacing={2}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>MOD Responsable</InputLabel>
-                  <Select
-                    value={versement.modId || ''}
-                    label="MOD Responsable"
-                    onChange={(e) => updateVersement(versement.id!, 'modId', e.target.value)}
-                  >
-                    <MenuItem value="">
-                      <em>-- Aucun --</em>
-                    </MenuItem>
-                    {formData.partenaires.filter(p => p.estMaitreOeuvreDelegue).map((p) => (
-                      <MenuItem key={p.id} value={p.id}>
-                        {p.nom}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
 
               {/* Dimensions analytiques */}
               {dimensions.map((dimension) => (
@@ -1508,110 +1753,342 @@ const ConventionWizardComplete = () => {
   )
 
   // Étape 8: Récapitulatif
-  const renderStep8_Recapitulatif = () => (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h5" gutterBottom sx={{ color: '#1e40af', fontWeight: 700, mb: 3 }}>
-        Récapitulatif
-      </Typography>
+  const renderStep8_Recapitulatif = () => {
+    const commissionEstimee = calculateCommissionAvecTranches(formData.budgetGlobal)
+    const totalLignesBudget = formData.lignesBudget.reduce((sum, l) => sum + l.montantTTC, 0)
+    const totalPartenaires = formData.partenaires.reduce((sum, p) => sum + p.budgetAlloue, 0)
+    const totalPourcentage = formData.partenaires.reduce((sum, p) => sum + p.pourcentage, 0)
+    const totalSubventions = formData.subventions.reduce((sum, s) => sum + s.montant, 0)
 
-      {/* Informations de base */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="h6" color="primary" gutterBottom>
-            Informations de base
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid container spacing={2}>
-              <Typography variant="caption" color="text.secondary">Type</Typography>
-              <Typography variant="body1" fontWeight={600}>{formData.typeConvention}</Typography>
-            </Grid>
-            <Grid container spacing={2}>
-              <Typography variant="caption" color="text.secondary">Numéro</Typography>
-              <Typography variant="body1" fontWeight={600}>{formData.numero}</Typography>
-            </Grid>
-            <Grid container spacing={2}>
-              <Typography variant="caption" color="text.secondary">Code</Typography>
-              <Typography variant="body1" fontWeight={600}>{formData.code}</Typography>
-            </Grid>
-            <Grid container spacing={2}>
-              <Typography variant="caption" color="text.secondary">Date</Typography>
-              <Typography variant="body1" fontWeight={600}>
-                {new Date(formData.dateConvention).toLocaleDateString('fr-FR')}
-              </Typography>
-            </Grid>
-            <Grid container spacing={2}>
-              <Typography variant="caption" color="text.secondary">Libellé</Typography>
-              <Typography variant="body1">{formData.libelle}</Typography>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+    return (
+      <Box>
+        <StepHeader
+          title="Récapitulatif Final"
+          subtitle="Vérifiez toutes les informations avant de soumettre"
+        />
 
-      {/* Budget */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="h6" color="primary" gutterBottom>
-            Budget
-          </Typography>
-          <Typography variant="h4" sx={{ color: '#1e40af', fontWeight: 700 }}>
-            {formData.budgetGlobal.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
-          </Typography>
-        </CardContent>
-      </Card>
-
-      {/* Partenaires */}
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="h6" color="primary" gutterBottom>
-            Partenaires ({formData.partenaires.length})
-          </Typography>
-          {formData.partenaires.map((p) => (
-            <Chip
-              key={p.id}
-              label={`${p.role}: ${p.nom} (${p.pourcentage.toFixed(1)}%)`}
-              sx={{ mr: 1, mb: 1 }}
-              color={p.role === 'MOA' ? 'primary' : p.role === 'MOD' ? 'secondary' : 'default'}
-            />
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Imputations */}
-      {formData.imputationsPrevisionnelles.length > 0 && (
-        <Card sx={{ mb: 2 }}>
+        {/* Informations de base */}
+        <Card sx={{ mb: 3, boxShadow: 3 }}>
           <CardContent>
-            <Typography variant="h6" color="primary" gutterBottom>
-              Imputations Prévisionnelles ({formData.imputationsPrevisionnelles.length})
+            <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700, mb: 2 }}>
+              📋 Informations de base
             </Typography>
-            {formData.imputationsPrevisionnelles.map((imp, index) => (
-              <Typography key={imp.id} variant="body2" color="text.secondary">
-                #{index + 1}: Démarrage {new Date(imp.dateDemarrage).toLocaleDateString('fr-FR')} | Délai: {imp.delaiMois} mois
-              </Typography>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Type</Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {formData.typeConvention === 'CADRE' ? 'Convention Cadre' :
+                   formData.typeConvention === 'NON_CADRE' ? 'Convention Non-Cadre' :
+                   formData.typeConvention === 'SPECIFIQUE' ? 'Convention Spécifique' : 'Avenant'}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Numéro</Typography>
+                <Typography variant="body1" fontWeight={600}>{formData.numero}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Code</Typography>
+                <Typography variant="body1" fontWeight={600}>{formData.code}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Date</Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {new Date(formData.dateConvention).toLocaleDateString('fr-FR')}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Libellé</Typography>
+                <Typography variant="body1">{formData.libelle}</Typography>
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 1 }}>Objet</Typography>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: '#f8fafc',
+                    borderRadius: 1,
+                    border: '1px solid #e2e8f0',
+                    '& p': { margin: 0 },
+                    '& ul, & ol': { marginTop: 0.5, marginBottom: 0.5 }
+                  }}
+                  dangerouslySetInnerHTML={{ __html: formData.objet }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Date de Début</Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {new Date(formData.dateDebut).toLocaleDateString('fr-FR')}
+                </Typography>
+              </Grid>
+              {formData.dateFin && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Date de Fin</Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {new Date(formData.dateFin).toLocaleDateString('fr-FR')}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Budget */}
+        <Card sx={{ mb: 3, boxShadow: 3 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700, mb: 2 }}>
+              💰 Budget Global
+            </Typography>
+            <Typography variant="h4" sx={{ color: '#1e40af', fontWeight: 700, mb: 2 }}>
+              {formData.budgetGlobal.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+            </Typography>
+            {formData.lignesBudget.length > 0 && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Détail des Lignes ({formData.lignesBudget.length})
+                </Typography>
+                <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                  {formData.lignesBudget.map((ligne, index) => (
+                    <Box key={ligne.id} sx={{ mb: 1, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1 }}>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {index + 1}. {ligne.designation}
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, sm: 3 }}>
+                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>HT</Typography>
+                          <Typography variant="body2">{ligne.montantHT.toLocaleString('fr-MA')} DH</Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, sm: 3 }}>
+                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>TTC</Typography>
+                          <Typography variant="body2" fontWeight={600}>{ligne.montantTTC.toLocaleString('fr-MA')} DH</Typography>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  ))}
+                </Box>
+                <Box sx={{ mt: 2, p: 2, bgcolor: '#dbeafe', borderRadius: 1 }}>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Total Lignes</Typography>
+                      <Typography variant="h6" fontWeight={600} color="#1e40af">
+                        {totalLignesBudget.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Différence</Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight={600}
+                        color={Math.abs(formData.budgetGlobal - totalLignesBudget) < 0.01 ? '#059669' : '#dc2626'}
+                      >
+                        {(formData.budgetGlobal - totalLignesBudget).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Commission */}
+        <Card sx={{ mb: 3, boxShadow: 3 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700, mb: 2 }}>
+              📊 Commission d'Intervention
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Base</Typography>
+                <Typography variant="body1" fontWeight={600}>{formData.baseCommission}</Typography>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Mode</Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {formData.modeCommission === 'TAUX_FIXE' ? 'Taux Fixe' :
+                   formData.modeCommission === 'TRANCHES' ? 'Par Tranches' : 'Mixte'}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Taux</Typography>
+                <Typography variant="body1" fontWeight={600}>{formData.tauxCommission}%</Typography>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Commission Estimée</Typography>
+                <Typography variant="h6" fontWeight={700} color="#059669">
+                  {commissionEstimee.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                </Typography>
+              </Grid>
+              {formData.plafondCommission && (
+                <Grid size={{ xs: 6, sm: 4 }}>
+                  <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Plafond</Typography>
+                  <Typography variant="body1">{formData.plafondCommission.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}</Typography>
+                </Grid>
+              )}
+              {formData.minimumCommission && (
+                <Grid size={{ xs: 6, sm: 4 }}>
+                  <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Minimum</Typography>
+                  <Typography variant="body1">{formData.minimumCommission.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}</Typography>
+                </Grid>
+              )}
+            </Grid>
+            {formData.exclusions && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Exclusions / Conditions</Typography>
+                <Typography variant="body2">{formData.exclusions}</Typography>
+              </>
+            )}
+            {formData.modeCommission === 'TRANCHES' && formData.tranchesCommission.length > 0 && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Détail des Tranches
+                </Typography>
+                <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                  {formData.tranchesCommission.map((tranche, index) => (
+                    <Box key={tranche.id} sx={{ mb: 1.5, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1 }}>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                            Tranche {index + 1}
+                          </Typography>
+                          <Typography variant="body2" fontWeight={600}>
+                            {tranche.montantDebut.toLocaleString('fr-MA')} - {tranche.montantFin.toLocaleString('fr-MA')} DH ({formData.baseCommission})
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, sm: 4 }}>
+                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Taux</Typography>
+                          <Typography variant="body2" fontWeight={600}>{tranche.taux}%</Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, sm: 4 }}>
+                          <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Commission</Typography>
+                          <Typography variant="body2" fontWeight={600}>
+                            {((tranche.montantFin - tranche.montantDebut) * tranche.taux / 100).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  ))}
+                </Box>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Partenaires */}
+        <Card sx={{ mb: 3, boxShadow: 3 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700, mb: 2 }}>
+              🤝 Partenaires ({formData.partenaires.length})
+            </Typography>
+            {formData.partenaires.map((p) => (
+              <Box key={p.id} sx={{ mb: 2, p: 2, bgcolor: '#f8fafc', borderRadius: 1 }}>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Nom</Typography>
+                    <Typography variant="body1" fontWeight={600}>{p.nom}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6, sm: 2 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Rôle</Typography>
+                    <Chip
+                      label={p.role}
+                      size="small"
+                      color={p.role === 'MOA' ? 'primary' : 'default'}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 6, sm: 3 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Budget Alloué</Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {p.budgetAlloue.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 6, sm: 3 }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Pourcentage</Typography>
+                    <Typography variant="body1" fontWeight={600}>{p.pourcentage.toFixed(2)}%</Typography>
+                  </Grid>
+                </Grid>
+              </Box>
             ))}
+            <Box sx={{ mt: 2, p: 2, bgcolor: '#dbeafe', borderRadius: 1 }}>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Total Alloué</Typography>
+                  <Typography variant="h6" fontWeight={600} color="#1e40af">
+                    {totalPartenaires.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Total Pourcentage</Typography>
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    color={Math.abs(totalPourcentage - 100) < 0.01 ? '#059669' : '#dc2626'}
+                  >
+                    {totalPourcentage.toFixed(2)}%
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Box>
           </CardContent>
         </Card>
-      )}
 
-      {/* Versements */}
-      {formData.versementsPrevisionnels.length > 0 && (
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Typography variant="h6" color="primary" gutterBottom>
-              Versements Prévisionnels ({formData.versementsPrevisionnels.length})
-            </Typography>
-            <Typography variant="h6" sx={{ color: '#059669', fontWeight: 700 }}>
-              Total: {formData.versementsPrevisionnels.reduce((sum, v) => sum + v.montant, 0).toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
+        {/* Subventions */}
+        {formData.subventions.length > 0 && (
+          <Card sx={{ mb: 3, boxShadow: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700, mb: 2 }}>
+                🏦 Subventions ({formData.subventions.length})
+              </Typography>
+              {formData.subventions.map((s) => (
+                <Box key={s.id} sx={{ mb: 1.5, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1 }}>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <Typography variant="body2" fontWeight={600}>{s.organisme}</Typography>
+                      {s.type && <Typography variant="caption" color="text.secondary">{s.type}</Typography>}
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 4 }}>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Montant</Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {s.montant.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 6, sm: 4 }}>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Échéance</Typography>
+                      <Typography variant="body2">{new Date(s.dateEcheance).toLocaleDateString('fr-FR')}</Typography>
+                    </Grid>
+                    {s.conditions && (
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="caption" color="text.secondary">{s.conditions}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              ))}
+              <Box sx={{ mt: 2, p: 2, bgcolor: '#dbeafe', borderRadius: 1 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Total Subventions</Typography>
+                <Typography variant="h6" fontWeight={600} color="#1e40af">
+                  {totalSubventions.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
 
-      <Alert severity="info" sx={{ mt: 3 }}>
-        <strong>Important:</strong> La convention sera créée avec le statut <strong>BROUILLON</strong>.
-        Vous pourrez la soumettre à validation après vérification.
-      </Alert>
-    </Box>
-  )
+        <Alert severity="info" icon={false} sx={{ boxShadow: 2 }}>
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+            📝 Important
+          </Typography>
+          <Typography variant="body2">
+            La convention sera créée avec le statut <strong>BROUILLON</strong>.
+            Vous pourrez la soumettre à validation après vérification.
+          </Typography>
+        </Alert>
+      </Box>
+    )
+  }
 
   // ==================== RENDER ====================
 

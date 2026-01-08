@@ -55,10 +55,13 @@ class SecurityConfig(
             registerCorsConfiguration("/**", CorsConfiguration().apply {
                 // Support local development and production origins
                 allowedOrigins = listOf(
-                    "http://localhost:5173",          // Vite dev server
-                    "http://localhost:3000",          // React dev server
-                    "http://localhost:4200",          // Angular dev server
-                    "https://naciro2010.github.io",   // GitHub Pages
+                    "http://localhost:5173",                                    // Vite dev server
+                    "http://localhost:3000",                                    // React dev server
+                    "http://localhost:4200",                                    // Angular dev server
+                    "https://naciro2010.github.io",                             // GitHub Pages
+                    "https://investpromaroc-production.up.railway.app",         // Railway production
+                    "https://investpromaroc.com",                               // Production domain
+                    "https://www.investpromaroc.com"                            // Production domain (www)
                 )
                 allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 allowedHeaders = listOf("*")

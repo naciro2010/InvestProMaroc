@@ -70,6 +70,7 @@ DROP TABLE IF EXISTS budgets CASCADE;
 DROP TABLE IF EXISTS avenants CASCADE;
 DROP TABLE IF EXISTS convention_partenaires CASCADE;
 DROP TABLE IF EXISTS conventions CASCADE;
+DROP TABLE IF EXISTS projets CASCADE;
 DROP TABLE IF EXISTS valeurs_dimensions CASCADE;
 DROP TABLE IF EXISTS dimensions_analytiques CASCADE;
 DROP TABLE IF EXISTS comptes_bancaires CASCADE;
@@ -1237,7 +1238,7 @@ VALUES
 -- SECTION: PROJECTS (Projets)
 -- ========================================================================================================
 
-CREATE TABLE projets (
+CREATE TABLE IF NOT EXISTS projets (
     id                       BIGSERIAL PRIMARY KEY,
     code                     VARCHAR(50) NOT NULL UNIQUE,
     nom                      VARCHAR(200) NOT NULL,
@@ -1269,11 +1270,11 @@ CREATE TABLE projets (
     CONSTRAINT fk_projets_chef_projet FOREIGN KEY (chef_projet_id) REFERENCES partenaires(id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_projets_code ON projets(code);
-CREATE INDEX idx_projets_convention ON projets(convention_id);
-CREATE INDEX idx_projets_chef_projet ON projets(chef_projet_id);
-CREATE INDEX idx_projets_statut ON projets(statut);
-CREATE INDEX idx_projets_actif ON projets(actif);
+CREATE INDEX IF NOT EXISTS idx_projets_code ON projets(code);
+CREATE INDEX IF NOT EXISTS idx_projets_convention ON projets(convention_id);
+CREATE INDEX IF NOT EXISTS idx_projets_chef_projet ON projets(chef_projet_id);
+CREATE INDEX IF NOT EXISTS idx_projets_statut ON projets(statut);
+CREATE INDEX IF NOT EXISTS idx_projets_actif ON projets(actif);
 
 COMMENT ON TABLE projets IS 'Investment projects linked to conventions';
 COMMENT ON COLUMN projets.convention_id IS 'Reference to parent convention';

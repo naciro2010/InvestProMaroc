@@ -308,8 +308,8 @@ When creating a new CRUD entity:
 5. **Service**: Create in `service/` extending `GenericCrudService<Entity, Long>`
 6. **Controller**: Create in `controller/` with standard REST endpoints
 7. **Migration**: Add Flyway migration in `db/migration/V{next_number}__description.sql`
-   - Check existing migrations: V1-V10 already exist
-   - Next migration should be V11
+   - Check existing migrations: V1-V11 already exist
+   - Next migration should be V12
    - Use `CREATE TABLE IF NOT EXISTS` for safety
    - Add indexes for foreign keys and frequently queried columns
 8. **Tests**: Add integration tests in `src/test/kotlin/ma/investpro/integration/`
@@ -325,7 +325,7 @@ See `CRUD_TEMPLATE.md` for detailed template.
   - Development: `spring.jpa.hibernate.ddl-auto=none` + `spring.flyway.enabled=true`
   - Production: `spring.jpa.hibernate.ddl-auto=validate` + `spring.flyway.enabled=true`
 
-- **Current Migrations (V1-V10):**
+- **Current Migrations (V1-V11):**
   - **V1:** Clean schema with all tables and constraints (59KB comprehensive schema)
   - **V2:** Update user passwords (bcrypt hashing)
   - **V3-V4:** Seed test conventions data
@@ -333,7 +333,8 @@ See `CRUD_TEMPLATE.md` for detailed template.
   - **V7:** Rich test data (conventions, projets, fournisseurs)
   - **V8:** Seed budgets, marchés, décomptes, paiements (17KB test data)
   - **V9:** Fix enum types to VARCHAR
-  - **V10:** Create projets table (latest migration - Jan 2026)
+  - **V10:** Create projets table
+  - **V11:** Add convention workflow fields (created_by_id, motif_rejet) and update status enum (Jan 2026)
 
 - **Flyway Settings:**
   - `baseline-on-migrate=true` - Create baseline for existing databases
@@ -441,6 +442,15 @@ Use `PrivateRoute` wrapper for authenticated pages:
 
 10. **Error Handling:** Backend uses `@ControllerAdvice` for global exception handling. Frontend shows toast notifications via `ToastContext`.
 
+11. **Convention Workflow:** Improved workflow with rejection handling:
+    - BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE
+    - SOUMIS → REJETE (with motif) → BROUILLON (correction)
+    - Status EN_COURS renamed to EN_EXECUTION for clarity
+    - CreatedBy field tracks convention creator automatically
+    - Rejection motif stored and displayed in UI
+
+12. **Number Formatting:** Frontend forms use French number formatting (1 000 000,00) with automatic parsing for clean UX.
+
 ## Deployment
 
 ### Railway Deployment (Production)
@@ -518,10 +528,11 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 
 - **Plan Analytique Dynamique:** Migrated from rigid Projet+Axe to flexible JSONB dimensions (December 2024)
 - **Marchés System:** Complete implementation with line items, amendments, and analytical imputation per line
-- **Flyway Migrations Active:** Using Flyway for database versioning (10 migrations as of Jan 2026)
+- **Flyway Migrations Active:** Using Flyway for database versioning (11 migrations as of Jan 2026)
 - **ExcelJS Integration:** Frontend now uses ExcelJS instead of XLSX for better spreadsheet generation
-- **Convention Workflow:** Added workflow states (BROUILLON, SOUMIS, VALIDEE) with submission/validation endpoints
+- **Convention Workflow Amélioré:** New workflow with REJETE status, createdBy tracking, and improved rejection handling (January 2026)
 - **Railway Deployment:** Frontend configured for Railway with SPA routing fix (`serve -s`) (January 2026)
+- **Simple Convention Form:** Replaced complex wizard with clean, focused form for CADRE conventions
 
 ## Current Implementation Status
 

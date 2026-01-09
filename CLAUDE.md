@@ -48,6 +48,7 @@ npm run dev                          # Run Vite dev server (http://localhost:517
 # Build and preview
 npm run build                        # TypeScript compile + Vite production build
 npm run preview                      # Preview production build
+npm start                            # Production server with serve (for Railway deployment)
 
 # Linting
 npm run lint                         # ESLint check (TypeScript + React)
@@ -408,6 +409,44 @@ Use `PrivateRoute` wrapper for authenticated pages:
 
 10. **Error Handling:** Backend uses `@ControllerAdvice` for global exception handling. Frontend shows toast notifications via `ToastContext`.
 
+## Deployment
+
+### Railway Deployment (Production)
+
+InvestPro Maroc is deployed on Railway:
+- **Backend:** https://investpromaroc-production.up.railway.app
+- **Frontend:** Deployed via Railway with static serving
+
+#### Frontend Deployment to Railway
+
+The frontend is configured for Railway deployment with proper SPA routing:
+
+```bash
+cd frontend
+
+# Build for production
+npm run build
+
+# Test production build locally
+npm start  # Runs serve -s dist -l 3000
+
+# Deploy to Railway (automatic via Git push)
+git push origin main  # Railway auto-deploys from GitHub
+```
+
+**Key Configuration:**
+- Uses `serve` package with `-s` flag for SPA routing (fixes 404 on refresh)
+- `railway.json` configures build and deploy commands
+- `.env.production` contains production API URL
+- `vite.config.ts` uses `base: '/'` for Railway (not `/InvestProMaroc/` like GitHub Pages)
+
+**Why `serve -s` fixes the 404 problem:**
+- Without `-s`: Server looks for `/dashboard/index.html` → 404 error
+- With `-s` (single-page mode): All routes fallback to `/index.html` → React Router handles routing
+- This is the standard, clean solution for deploying Vite/React SPAs
+
+See `frontend/RAILWAY_DEPLOYMENT.md` for complete deployment guide.
+
 ## Environment Variables
 
 ### Backend (application.properties / application-prod.properties)
@@ -417,14 +456,18 @@ DATABASE_URL                # PostgreSQL connection string
 JWT_SECRET                  # Base64-encoded secret (256-bit minimum)
 JWT_EXPIRATION_MS           # Access token TTL (default: 86400000 = 24h)
 JWT_REFRESH_EXPIRATION_MS   # Refresh token TTL (default: 604800000 = 7d)
-CORS_ALLOWED_ORIGINS        # Comma-separated origins (e.g., http://localhost:5173)
+CORS_ALLOWED_ORIGINS        # Comma-separated origins (Railway frontend URL)
 PORT                        # Server port (default: 8080)
 ```
 
 ### Frontend (.env)
 
 ```bash
-VITE_API_URL               # Backend API URL (default: http://localhost:8080/api)
+# Development
+VITE_API_URL=http://localhost:8080/api
+
+# Production (Railway)
+VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 ```
 
 ## Recent Architecture Changes
@@ -456,6 +499,69 @@ VITE_API_URL               # Backend API URL (default: http://localhost:8080/api
 
 See `README.md` for detailed feature matrix and roadmap.
 
+## Development Best Practices & Code Quality Standards
+
+When working on this project, **ALWAYS follow these principles:**
+
+### 1. Use Validated, Production-Ready Technologies
+
+- **NO workarounds or hacks** - Always use proper, documented solutions
+- **NO experimental or unstable packages** - Stick to well-maintained, widely-adopted libraries
+- **NO quick fixes that compromise quality** - Take time to implement clean, maintainable solutions
+
+### 2. Dependency Management
+
+- Only use dependencies from official package registries (npm, Maven Central)
+- Verify package:
+  - Has active maintenance (recent commits/releases)
+  - Has good documentation
+  - Has reasonable download stats / community adoption
+  - No known security vulnerabilities
+- Prefer official plugins and extensions over third-party alternatives
+
+### 3. Architecture Patterns
+
+- Follow existing architectural patterns in the codebase:
+  - Backend: `GenericCrudService`, `BaseEntity`, DTO pattern
+  - Frontend: Context API, Axios interceptors, React Router
+- Don't introduce new patterns without strong justification
+- Keep solutions simple and aligned with project architecture
+
+### 4. Problem-Solving Approach
+
+**ALWAYS prefer:**
+1. **Official documentation solutions** - Check framework/library docs first
+2. **Established patterns in the codebase** - Follow what already exists
+3. **Clean, standard approaches** - Use industry best practices
+4. **Maintainable code** - Code that future developers can understand
+
+**NEVER:**
+- Copy-paste code without understanding
+- Use deprecated packages or methods
+- Implement complex solutions when simple ones exist
+- Skip error handling or validation
+- Leave commented-out code or TODOs without addressing them
+
+### 5. Code Quality Checklist
+
+Before committing code, verify:
+- [ ] No TypeScript/Kotlin compiler errors
+- [ ] No linting warnings (ESLint/Detekt)
+- [ ] Proper error handling implemented
+- [ ] No hardcoded values (use environment variables/configuration)
+- [ ] No console.log / println left in production code
+- [ ] Code follows existing naming conventions
+- [ ] Changes are tested (manually at minimum)
+- [ ] No security vulnerabilities introduced (OWASP Top 10)
+
+### 6. Railway Deployment Standards
+
+- Use `serve` with `-s` flag for SPA routing (not custom server implementations)
+- Configure via `railway.json` (not package.json engines field)
+- Use environment variables for all environment-specific configuration
+- Build command should include dependency installation: `npm ci && npm run build`
+- Never commit `.env` files (use `.env.example` as template)
+
 ## Key Documentation Files
 
 - **README.md** - Project overview, setup, architecture, feature matrix
@@ -465,3 +571,4 @@ See `README.md` for detailed feature matrix and roadmap.
 - **backend/CLAUDE.md** - Backend-specific guidance (Kotlin/Spring Boot details)
 - **DEVELOPMENT.md** - Development workflow and guidelines
 - **MIGRATION_GUIDE.md** - Flyway to Hibernate DDL migration notes
+- **frontend/RAILWAY_DEPLOYMENT.md** - Complete Railway deployment guide with SPA routing fix

@@ -7,7 +7,7 @@ import {
   MenuItem,
   Paper,
   Typography,
-  Grid,
+  Stack,
   InputAdornment,
 } from '@mui/material'
 import { ArrowBack, Save } from '@mui/icons-material'
@@ -118,8 +118,8 @@ const SimpleConventionForm = () => {
 
         <Paper sx={{ p: 4 }}>
           <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+            <Stack spacing={3}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -128,9 +128,6 @@ const SimpleConventionForm = () => {
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   placeholder="CONV-2026-001"
                 />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   required
@@ -139,32 +136,28 @@ const SimpleConventionForm = () => {
                   onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
                   placeholder="N°2026/001"
                 />
-              </Grid>
+              </Stack>
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Libellé"
-                  value={formData.libelle}
-                  onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
-                  placeholder="Convention de financement..."
-                />
-              </Grid>
+              <TextField
+                fullWidth
+                required
+                label="Libellé"
+                value={formData.libelle}
+                onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
+                placeholder="Convention de financement..."
+              />
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  label="Objet"
-                  value={formData.objet}
-                  onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
-                  placeholder="Description détaillée de la convention..."
-                />
-              </Grid>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Objet"
+                value={formData.objet}
+                onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
+                placeholder="Description détaillée de la convention..."
+              />
 
-              <Grid item xs={12} md={6}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -176,9 +169,7 @@ const SimpleConventionForm = () => {
                   <MenuItem value="CADRE">Convention Cadre</MenuItem>
                   <MenuItem value="NON_CADRE">Convention Non-Cadre</MenuItem>
                 </TextField>
-              </Grid>
 
-              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   required
@@ -191,9 +182,9 @@ const SimpleConventionForm = () => {
                     endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
                   }}
                 />
-              </Grid>
+              </Stack>
 
-              <Grid item xs={12} md={4}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -203,9 +194,7 @@ const SimpleConventionForm = () => {
                   onChange={(e) => setFormData({ ...formData, dateConvention: e.target.value })}
                   InputLabelProps={{ shrink: true }}
                 />
-              </Grid>
 
-              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
                   required
@@ -215,9 +204,7 @@ const SimpleConventionForm = () => {
                   onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
                   InputLabelProps={{ shrink: true }}
                 />
-              </Grid>
 
-              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
                   type="date"
@@ -226,9 +213,9 @@ const SimpleConventionForm = () => {
                   onChange={(e) => setFormData({ ...formData, dateFin: e.target.value })}
                   InputLabelProps={{ shrink: true }}
                 />
-              </Grid>
+              </Stack>
 
-              <Grid item xs={12} md={6}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -240,9 +227,7 @@ const SimpleConventionForm = () => {
                     endAdornment: <InputAdornment position="end">%</InputAdornment>,
                   }}
                 />
-              </Grid>
 
-              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   required
@@ -254,27 +239,25 @@ const SimpleConventionForm = () => {
                   <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC</MenuItem>
                   <MenuItem value="DECAISSEMENTS_HT">Décaissements HT</MenuItem>
                 </TextField>
-              </Grid>
+              </Stack>
 
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate('/conventions')}
-                  >
-                    Annuler
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    startIcon={<Save />}
-                    disabled={loading}
-                  >
-                    {loading ? 'Enregistrement...' : 'Enregistrer'}
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/conventions')}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  startIcon={<Save />}
+                  disabled={loading}
+                >
+                  {loading ? 'Enregistrement...' : 'Enregistrer'}
+                </Button>
+              </Box>
+            </Stack>
           </form>
         </Paper>
       </Box>

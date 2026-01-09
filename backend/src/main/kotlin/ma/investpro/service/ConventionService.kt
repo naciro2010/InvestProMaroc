@@ -274,8 +274,8 @@ class ConventionService(
         val parent = findById(parentId)
             ?: throw IllegalArgumentException("Convention parente $parentId introuvable")
 
-        require(parent.statut == StatutConvention.VALIDEE || parent.statut == StatutConvention.EN_COURS) {
-            "La convention parente doit être VALIDÉE ou EN_COURS"
+        require(parent.statut == StatutConvention.VALIDEE || parent.statut == StatutConvention.EN_EXECUTION) {
+            "La convention parente doit être VALIDÉE ou EN_EXECUTION"
         }
 
         sousConvention.apply {
@@ -321,7 +321,8 @@ class ConventionService(
             "brouillon" to conventionRepository.countByStatut(StatutConvention.BROUILLON),
             "soumis" to conventionRepository.countByStatut(StatutConvention.SOUMIS),
             "validees" to conventionRepository.countByStatut(StatutConvention.VALIDEE),
-            "enCours" to conventionRepository.countByStatut(StatutConvention.EN_COURS),
+            "enExecution" to conventionRepository.countByStatut(StatutConvention.EN_EXECUTION),
+            "rejetees" to conventionRepository.countByStatut(StatutConvention.REJETE),
             "achevees" to conventionRepository.countByStatut(StatutConvention.ACHEVE),
             "annulees" to conventionRepository.countByStatut(StatutConvention.ANNULE)
         )

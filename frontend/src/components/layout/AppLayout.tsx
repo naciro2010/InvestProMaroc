@@ -1,9 +1,8 @@
 import { ReactNode, useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
-  Receipt, DollarSign, LogOut, User, Settings,
-  Briefcase, ChevronDown, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote
+  LayoutDashboard, FileText, Building2, DollarSign, LogOut, User, Settings,
+  Briefcase, ChevronDown, ShoppingCart, Menu, X, Wallet, FileCheck, Banknote
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -48,17 +47,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const menuItems = [
     { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard' },
     { icon: <FileText className="w-5 h-5" />, label: 'Conventions', path: '/conventions' },
+    { icon: <Building2 className="w-5 h-5" />, label: 'Projets', path: '/projets' },
     { icon: <Wallet className="w-5 h-5" />, label: 'Budgets', path: '/budgets' },
     { icon: <ShoppingCart className="w-5 h-5" />, label: 'Marchés', path: '/marches' },
     { icon: <FileCheck className="w-5 h-5" />, label: 'Décomptes', path: '/decomptes' },
     { icon: <Banknote className="w-5 h-5" />, label: 'Paiements', path: '/paiements' },
-    { icon: <Building2 className="w-5 h-5" />, label: 'Projets', path: '/projets' },
-    { icon: <Users className="w-5 h-5" />, label: 'Fournisseurs', path: '/fournisseurs' },
-    { icon: <Map className="w-5 h-5" />, label: 'Axes Analytiques', path: '/axes-analytiques' },
-    { icon: <CreditCard className="w-5 h-5" />, label: 'Comptes Bancaires', path: '/comptes-bancaires' },
-    { icon: <Receipt className="w-5 h-5" />, label: 'Dépenses', path: '/depenses' },
     { icon: <DollarSign className="w-5 h-5" />, label: 'Commissions', path: '/commissions' },
-    { icon: <UserCog className="w-5 h-5" />, label: 'Utilisateurs', path: '/users' },
   ]
 
   const handleLogout = () => {

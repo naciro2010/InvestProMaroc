@@ -376,4 +376,26 @@ export const imputationsAPI = {
   getStatistiques: () => api.get('/imputations/statistiques'),
 }
 
+// Avenants Conventions API
+export const avenantConventionsAPI = {
+  // CRUD
+  getAll: () => api.get('/avenants-conventions'),
+  getById: (id: number) => api.get(`/avenants-conventions/${id}`),
+  getByConvention: (conventionId: number) => api.get(`/avenants-conventions/convention/${conventionId}`),
+  create: (data: any) => api.post('/avenants-conventions', data),
+  update: (id: number, data: any) => api.put(`/avenants-conventions/${id}`, data),
+  delete: (id: number) => api.delete(`/avenants-conventions/${id}`),
+
+  // Workflow
+  soumettre: (id: number) => api.post(`/avenants-conventions/${id}/soumettre`),
+  valider: (data: { avenantId: number; remarques?: string; dateEffet?: string }) =>
+    api.post('/avenants-conventions/valider', data),
+  rejeter: (data: { avenantId: number; motifRejet: string }) =>
+    api.post('/avenants-conventions/rejeter', data),
+
+  // Statistiques
+  getPending: () => api.get('/avenants-conventions/pending'),
+  getStatistics: (conventionId: number) => api.get(`/avenants-conventions/convention/${conventionId}/statistics`),
+}
+
 export default api

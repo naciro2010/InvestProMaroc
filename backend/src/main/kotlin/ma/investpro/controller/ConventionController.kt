@@ -18,7 +18,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
-import ma.investpro.security.JwtUserDetails
+import ma.investpro.entity.User
 
 @RestController
 @RequestMapping("/api/conventions")
@@ -97,8 +97,8 @@ class ConventionController(
         return try {
             // Capturer l'utilisateur créateur depuis le contexte de sécurité
             val authentication = SecurityContextHolder.getContext().authentication
-            val userDetails = authentication.principal as? JwtUserDetails
-            convention.createdById = userDetails?.id
+            val user = authentication.principal as? User
+            convention.createdById = user?.id
 
             val created = conventionService.create(convention)
             val dto = conventionMapper.toDTO(created)

@@ -39,8 +39,8 @@ class AvenantService(
         require(avenant.id == null) { "Cannot create avenant with existing ID" }
 
         val convention = avenant.convention
-        require(convention.statut == StatutConvention.VALIDEE || convention.statut == StatutConvention.EN_COURS) {
-            "Les avenants ne peuvent être créés que pour des conventions VALIDÉES ou EN_COURS"
+        require(convention.statut == StatutConvention.VALIDEE || convention.statut == StatutConvention.EN_EXECUTION) {
+            "Les avenants ne peuvent être créés que pour des conventions VALIDÉES ou EN_EXECUTION"
         }
 
         require(!avenantRepository.existsByNumeroAvenant(avenant.numeroAvenant)) {

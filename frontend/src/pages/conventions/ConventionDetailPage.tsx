@@ -43,6 +43,7 @@ import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
 import AddImputationDialog from '../../components/conventions/AddImputationDialog'
 import AddVersementDialog from '../../components/conventions/AddVersementDialog'
+import AvenantConventionList from './AvenantConventionList'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
 
@@ -404,6 +405,7 @@ const ConventionDetailPage = () => {
               <Tab label={`Partenaires (${convention.partenaires.length})`} />
               <Tab label={`Sous-Conventions (${convention.sousConventions.length})`} />
               <Tab label="Imputations & Versements" />
+              <Tab label="Avenants" />
             </Tabs>
 
             <CardContent sx={{ p: 3 }}>
@@ -745,6 +747,18 @@ const ConventionDetailPage = () => {
                     </TableContainer>
                   </Box>
                 </Stack>
+              )}
+
+              {/* Tab 4: Avenants */}
+              {activeTab === 4 && (
+                <Box>
+                  <AvenantConventionList
+                    conventionId={convention.id}
+                    conventionData={convention}
+                    canEdit={convention.statut !== 'ANNULE'}
+                    canValidate={true}
+                  />
+                </Box>
               )}
             </CardContent>
           </Card>

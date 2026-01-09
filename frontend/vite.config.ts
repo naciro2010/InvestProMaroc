@@ -1,16 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import connect from 'connect'
-import history from 'connect-history-api-fallback'
 
-// https://vitejs.dev/config/
+// Déterminer dynamiquement la base path
+const getBasePath = () => {
+  // Pour GitHub Pages
+  if (process.env.GITHUB_ACTIONS) {
+    return '/InvestProMaroc/';
+  }
+  // Pour Railway et développement local
+  return process.env.VITE_BASE_PATH || '/';
+};
+
 export default defineConfig({
   plugins: [react()],
-  // Dynamic base path:
-  // - GitHub Pages: /InvestProMaroc/
-  // - Railway/Local: /
-  base: process.env.VITE_BASE_PATH || '/',
+  base: getBasePath(),
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -24,18 +28,11 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
-    // Support SPA routing with connect-history-api-fallback
-    middleware: () => [
-      history({
-        disableDotRule: true, // Important for handling files with dots
-        rewrites: [
-          { from: /\/api/, to: '/api' }, // Preserve API routes
-          { from: /./, to: '/index.html' } // Fallback to index.html
-        ]
-      })
-    ]
+    historyApiFallback: {
+      index: '/',
+      disableDotRule: true
+    }
   },
-  // Add build configuration to support SPA routing
   build: {
     rollupOptions: {
       output: {

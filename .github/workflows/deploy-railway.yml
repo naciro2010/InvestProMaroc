@@ -1,0 +1,48 @@
+name: Deploy Frontend to Railway
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-railway.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install Railway CLI
+      run: npm install -g @railway/cli
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install Dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Build Frontend
+      working-directory: ./frontend
+      run: npm run build
+      env:
+        NODE_ENV: production
+        VITE_API_URL: ${{ vars.VITE_API_URL || 'https://investpromaroc-production.up.railway.app/api' }}
+        VITE_BASE_PATH: /
+
+    - name: Deploy to Railway
+      working-directory: ./frontend
+      run: |
+        railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+        railway up --service frontend
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

@@ -1,12 +1,23 @@
 {
-  "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "npm ci && npm run build"
-  },
-  "deploy": {
-    "startCommand": "npm start",
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
-  }
+    "$schema": "https://railway.app/railway.schema.json",
+    "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "npm ci && npm run build",
+        "environment": [
+            "NODE_ENV=production",
+            "VITE_API_URL=https://investpromaroc-production.up.railway.app/api",
+            "VITE_BASE_PATH=/"
+        ]
+    },
+    "deploy": {
+        "startCommand": "serve -s dist -l 3000",
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 10
+    },
+    "env": {
+        "PORT": "3000",
+        "NODE_ENV": "production",
+        "VITE_API_URL": "https://investpromaroc-production.up.railway.app/api",
+        "VITE_BASE_PATH": "/"
+    }
 }

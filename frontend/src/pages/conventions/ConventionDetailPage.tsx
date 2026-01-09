@@ -139,10 +139,32 @@ const ConventionDetailPage = () => {
   const fetchConvention = async (conventionId: number) => {
     try {
       const response = await conventionsAPI.getById(conventionId)
-      const data = response.data?.data || response.data
-      setConvention(data)
-    } catch (error) {
+      const conventionData = response.data
+
+      // Vérification complète de la réponse
+      if (conventionData && conventionData.success && conventionData.data) {
+        setConvention(conventionData.data)
+      } else {
+        console.error('Réponse de convention invalide', response)
+        throw new Error(conventionData?.message || 'Impossible de récupérer les données de la convention')
+      }
+    } catch (error: any) {
       console.error('Erreur chargement convention:', error)
+
+      // Afficher un message d'erreur à l'utilisateur
+      const errorMessage = error.response?.data?.message ||
+                           error.message ||
+                           'Erreur lors du chargement de la convention'
+
+      // Utiliser un toast ou une notification
+      window.dispatchEvent(
+        new CustomEvent('showToast', {
+          detail: {
+            message: errorMessage,
+            type: 'error'
+          }
+        })
+      )
     } finally {
       setLoading(false)
     }

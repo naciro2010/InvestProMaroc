@@ -117,7 +117,7 @@ function App() {
             path="/conventions/nouvelle"
             element={
               <ProtectedRoute>
-                <SimpleConventionForm />
+                <ConventionWizard />
               </ProtectedRoute>
             }
           />

@@ -43,11 +43,15 @@ class ConventionController(
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getById(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
+    fun getById(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
         val convention = conventionService.findById(id)
             ?: return ResponseEntity.notFound().build()
         val dto = conventionMapper.toDTO(convention)
-        return ResponseEntity.ok(dto)
+        return ResponseEntity.ok(mapOf(
+            "success" to true,
+            "message" to "Convention récupérée avec succès",
+            "data" to dto
+        ))
     }
 
     @GetMapping("/code/{code}")

@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import connect from 'connect'
+import history from 'connect-history-api-fallback'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -22,5 +24,27 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    // Support SPA routing with connect-history-api-fallback
+    middleware: () => [
+      history({
+        disableDotRule: true, // Important for handling files with dots
+        rewrites: [
+          { from: /\/api/, to: '/api' }, // Preserve API routes
+          { from: /./, to: '/index.html' } // Fallback to index.html
+        ]
+      })
+    ]
   },
+  // Add build configuration to support SPA routing
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 })

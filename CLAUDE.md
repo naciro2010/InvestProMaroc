@@ -307,17 +307,49 @@ When creating a new CRUD entity:
 4. **Mapper**: Create entity ↔ DTO mapper in `mapper/`
 5. **Service**: Create in `service/` extending `GenericCrudService<Entity, Long>`
 6. **Controller**: Create in `controller/` with standard REST endpoints
-7. **Migration**: Add Flyway migration in `db/migration/V{n}__description.sql`
+7. **Migration**: Add Flyway migration in `db/migration/V{next_number}__description.sql`
+   - Check existing migrations: V1-V10 already exist
+   - Next migration should be V11
+   - Use `CREATE TABLE IF NOT EXISTS` for safety
+   - Add indexes for foreign keys and frequently queried columns
 8. **Tests**: Add integration tests in `src/test/kotlin/ma/investpro/integration/`
 
 See `CRUD_TEMPLATE.md` for detailed template.
 
 ### Database Migrations
 
-- **Tool:** Flyway (automatic on startup)
+- **Tool:** Flyway (automatic on startup, enabled in production)
 - **Location:** `backend/src/main/resources/db/migration/`
-- **Naming:** `V{n}__description.sql` (e.g., `V1__init_schema.sql`)
-- **Note:** Recent migration from Flyway to Hibernate DDL auto-update - check `application.properties`
+- **Naming:** `V{n}__description.sql` (e.g., `V1__clean_schema.sql`)
+- **Configuration:**
+  - Development: `spring.jpa.hibernate.ddl-auto=none` + `spring.flyway.enabled=true`
+  - Production: `spring.jpa.hibernate.ddl-auto=validate` + `spring.flyway.enabled=true`
+
+- **Current Migrations (V1-V10):**
+  - **V1:** Clean schema with all tables and constraints (59KB comprehensive schema)
+  - **V2:** Update user passwords (bcrypt hashing)
+  - **V3-V4:** Seed test conventions data
+  - **V6:** Seed dimensions analytiques (analytical dimensions)
+  - **V7:** Rich test data (conventions, projets, fournisseurs)
+  - **V8:** Seed budgets, marchés, décomptes, paiements (17KB test data)
+  - **V9:** Fix enum types to VARCHAR
+  - **V10:** Create projets table (latest migration - Jan 2026)
+
+- **Flyway Settings:**
+  - `baseline-on-migrate=true` - Create baseline for existing databases
+  - `validate-on-migrate=false` (dev) / `true` (prod) - Validation control
+  - `out-of-order=true` - Allow out-of-order migrations (dev only)
+  - `clean-disabled=true` - Prevent accidental data loss
+
+- **Best Practices:**
+  - ✅ Always use `CREATE TABLE IF NOT EXISTS` for safety
+  - ✅ Add `CHECK` constraints for data validation (e.g., budget >= 0)
+  - ✅ Add indexes for foreign keys and frequently queried columns
+  - ✅ Add `COMMENT ON TABLE/COLUMN` for documentation
+  - ✅ Use `ON DELETE SET NULL` or `ON DELETE CASCADE` appropriately
+  - ✅ Test migrations on clean database before committing
+  - ❌ Never modify existing migrations after they're deployed
+  - ❌ Never use `spring.flyway.clean-on-validation-error=true` in production
 
 ### Testing
 
@@ -452,12 +484,24 @@ See `frontend/RAILWAY_DEPLOYMENT.md` for complete deployment guide.
 ### Backend (application.properties / application-prod.properties)
 
 ```bash
-DATABASE_URL                # PostgreSQL connection string
+# Database
+DATABASE_URL                # PostgreSQL connection string (Railway provides this)
+PGDATABASE                  # Database name (Railway)
+PGHOST                      # Database host (Railway)
+PGPASSWORD                  # Database password (Railway)
+PGPORT                      # Database port (Railway)
+PGUSER                      # Database user (Railway)
+
+# JWT Authentication
 JWT_SECRET                  # Base64-encoded secret (256-bit minimum)
 JWT_EXPIRATION_MS           # Access token TTL (default: 86400000 = 24h)
 JWT_REFRESH_EXPIRATION_MS   # Refresh token TTL (default: 604800000 = 7d)
-CORS_ALLOWED_ORIGINS        # Comma-separated origins (Railway frontend URL)
-PORT                        # Server port (default: 8080)
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS        # Comma-separated origins (e.g., https://your-frontend.railway.app)
+
+# Server
+PORT                        # Server port (default: 8080, Railway may override)
 ```
 
 ### Frontend (.env)
@@ -474,9 +518,10 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 
 - **Plan Analytique Dynamique:** Migrated from rigid Projet+Axe to flexible JSONB dimensions (December 2024)
 - **Marchés System:** Complete implementation with line items, amendments, and analytical imputation per line
-- **Flyway to Hibernate DDL:** Migration from Flyway to `spring.jpa.hibernate.ddl-auto=update`
+- **Flyway Migrations Active:** Using Flyway for database versioning (10 migrations as of Jan 2026)
 - **ExcelJS Integration:** Frontend now uses ExcelJS instead of XLSX for better spreadsheet generation
 - **Convention Workflow:** Added workflow states (BROUILLON, SOUMIS, VALIDEE) with submission/validation endpoints
+- **Railway Deployment:** Frontend configured for Railway with SPA routing fix (`serve -s`) (January 2026)
 
 ## Current Implementation Status
 
@@ -570,5 +615,46 @@ Before committing code, verify:
 - **CRUD_TEMPLATE.md** - Template for adding new entities
 - **backend/CLAUDE.md** - Backend-specific guidance (Kotlin/Spring Boot details)
 - **DEVELOPMENT.md** - Development workflow and guidelines
-- **MIGRATION_GUIDE.md** - Flyway to Hibernate DDL migration notes
 - **frontend/RAILWAY_DEPLOYMENT.md** - Complete Railway deployment guide with SPA routing fix
+
+## Troubleshooting
+
+### Flyway Migration Issues
+
+If you encounter Flyway migration errors:
+
+```bash
+# 1. Check current Flyway state
+./gradlew flywayInfo
+
+# 2. Validate migrations
+./gradlew flywayValidate
+
+# 3. If needed, repair Flyway schema history (use with caution)
+./gradlew flywayRepair
+
+# 4. For development: baseline existing database
+./gradlew flywayBaseline
+```
+
+**Common Issues:**
+- **"Found non-empty schema without metadata table"**: Run `flywayBaseline`
+- **"Migration checksum mismatch"**: Never modify existing migrations; create new ones
+- **"Out of order migration detected"**: Allowed in dev (`out-of-order=true`), fix order in prod
+
+### Railway Deployment Issues
+
+**Backend not connecting to database:**
+- Verify Railway PostgreSQL plugin is added
+- Check environment variables: `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
+- Railway provides `DATABASE_URL` but Spring Boot needs individual variables
+
+**CORS errors in production:**
+- Update `CORS_ALLOWED_ORIGINS` in Railway dashboard
+- Add your Railway frontend URL: `https://your-frontend.railway.app`
+- Redeploy backend after updating CORS settings
+
+**Frontend 404 on refresh:**
+- Verify `serve -s` is being used (check `package.json` start script)
+- Ensure `railway.json` has correct start command: `npm start`
+- Check build output includes all routes

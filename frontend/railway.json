@@ -2,7 +2,12 @@
     "$schema": "https://railway.app/railway.schema.json",
     "build": {
         "builder": "NIXPACKS",
-        "buildCommand": "npm ci && npm run build",
+        "nixpacks": {
+            "versions": {
+                "node": "20.x"
+            }
+        },
+        "buildCommand": "npm ci --omit=dev && npm run build",
         "environment": [
             "NODE_ENV=production",
             "VITE_API_URL=https://investpromaroc-production.up.railway.app/api",

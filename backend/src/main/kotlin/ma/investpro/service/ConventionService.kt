@@ -146,7 +146,8 @@ class ConventionService(
 
     /**
      * Rejeter une convention soumise
-     * Transition: SOUMIS → BROUILLON
+     * Transition: SOUMIS → REJETE (avec motif)
+     * Le créateur peut ensuite remettre en BROUILLON pour corriger
      */
     fun rejeter(id: Long, motif: String): Convention {
         val convention = findById(id)
@@ -156,10 +157,14 @@ class ConventionService(
             "Seules les conventions SOUMISES peuvent être rejetées"
         }
 
+        require(motif.isNotBlank()) {
+            "Un motif de rejet est obligatoire"
+        }
+
         convention.apply {
-            statut = StatutConvention.BROUILLON
-            dateSoumission = null
-            motifVerrouillage = "Rejetée: $motif"
+            statut = StatutConvention.REJETE
+            motifRejet = motif
+            dateSoumission = null // Réinitialiser la date de soumission
         }
 
         return conventionRepository.save(convention)
@@ -167,7 +172,7 @@ class ConventionService(
 
     /**
      * Mettre une convention en cours d'exécution
-     * Transition: VALIDEE → EN_COURS
+     * Transition: VALIDEE → EN_EXECUTION
      * Nécessite que la date de début soit atteinte
      */
     fun mettreEnCours(id: Long): Convention {
@@ -184,7 +189,7 @@ class ConventionService(
             "La date de début (${convention.dateDebut}) n'est pas encore atteinte. Date actuelle: $aujourdhui"
         }
 
-        convention.statut = StatutConvention.EN_COURS
+        convention.statut = StatutConvention.EN_EXECUTION
 
         return conventionRepository.save(convention)
     }
@@ -207,7 +212,7 @@ class ConventionService(
 
     /**
      * Démarrer l'exécution d'une convention validée
-     * Transition: VALIDEE → EN_COURS
+     * Transition: VALIDEE → EN_EXECUTION
      */
     fun demarrer(id: Long): Convention {
         val convention = findById(id)
@@ -217,24 +222,45 @@ class ConventionService(
             "Seules les conventions VALIDÉES peuvent être démarrées"
         }
 
-        convention.statut = StatutConvention.EN_COURS
+        convention.statut = StatutConvention.EN_EXECUTION
 
         return conventionRepository.save(convention)
     }
 
     /**
      * Marquer une convention comme achevée
-     * Transition: EN_COURS → ACHEVE
+     * Transition: EN_EXECUTION → ACHEVE
      */
     fun achever(id: Long): Convention {
         val convention = findById(id)
             ?: throw IllegalArgumentException("Convention $id introuvable")
 
-        require(convention.statut == StatutConvention.EN_COURS) {
-            "Seules les conventions EN_COURS peuvent être achevées"
+        require(convention.statut == StatutConvention.EN_EXECUTION) {
+            "Seules les conventions EN_EXECUTION peuvent être achevées"
         }
 
         convention.statut = StatutConvention.ACHEVE
+
+        return conventionRepository.save(convention)
+    }
+
+    /**
+     * Remettre une convention rejetée en brouillon pour correction
+     * Transition: REJETE → BROUILLON
+     * Permet au créateur de corriger et re-soumettre
+     */
+    fun remettreEnBrouillon(id: Long): Convention {
+        val convention = findById(id)
+            ?: throw IllegalArgumentException("Convention $id introuvable")
+
+        require(convention.statut == StatutConvention.REJETE) {
+            "Seules les conventions REJETEES peuvent être remises en brouillon"
+        }
+
+        convention.apply {
+            statut = StatutConvention.BROUILLON
+            // On garde le motif de rejet pour historique/référence
+        }
 
         return conventionRepository.save(convention)
     }

@@ -31,12 +31,17 @@ import {
   Send,
   Visibility,
   PlayArrow,
+  Undo,
+  Search,
+  Person,
+  CalendarToday,
+  Warning,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLayout from '../../components/layout/AppLayout'
 
-type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
+type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
 
 interface Convention {
   id: number
@@ -53,6 +58,9 @@ interface Convention {
   isLocked: boolean
   createdAt?: string
   updatedAt?: string
+  createdByNom?: string
+  motifRejet?: string
+  valideParNom?: string
 }
 
 const ConventionsPageMUI = () => {
@@ -61,6 +69,7 @@ const ConventionsPageMUI = () => {
   const [conventions, setConventions] = useState<Convention[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<StatutConvention | 'ALL'>('ALL')
+  const [searchQuery, setSearchQuery] = useState('')
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedConvention, setSelectedConvention] = useState<Convention | null>(null)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
@@ -154,6 +163,18 @@ const ConventionsPageMUI = () => {
     }
   }
 
+  const handleRemettreEnBrouillon = async () => {
+    if (!selectedConvention) return
+    try {
+      await conventionsAPI.remettreEnBrouillon(selectedConvention.id)
+      fetchConventions()
+      handleMenuClose()
+    } catch (error: any) {
+      console.error('Erreur remise en brouillon:', error)
+      alert(error.response?.data?.message || 'Erreur lors de la remise en brouillon')
+    }
+  }
+
   const handleDelete = async () => {
     if (!selectedConvention) return
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette convention ?')) return
@@ -171,13 +192,13 @@ const ConventionsPageMUI = () => {
       BROUILLON: { color: 'default', icon: <Edit fontSize="small" /> },
       SOUMIS: { color: 'warning', icon: <Send fontSize="small" /> },
       VALIDEE: { color: 'success', icon: <CheckCircle fontSize="small" /> },
-      EN_COURS: { color: 'info', icon: <Pending fontSize="small" /> },
+      REJETE: { color: 'error', icon: <Cancel fontSize="small" /> },
+      EN_EXECUTION: { color: 'info', icon: <Pending fontSize="small" /> },
       ACHEVE: { color: 'success', icon: <CheckCircle fontSize="small" /> },
-      EN_RETARD: { color: 'error', icon: <Cancel fontSize="small" /> },
       ANNULE: { color: 'error', icon: <Cancel fontSize="small" /> },
     }
     const { color, icon } = config[statut]
-    return <Chip icon={icon} label={statut} color={color} size="small" />
+    return <Chip icon={icon} label={statut.replace('_', ' ')} color={color} size="small" />
   }
 
   const formatCurrency = (amount: number) => {
@@ -191,16 +212,26 @@ const ConventionsPageMUI = () => {
     }).format(amount)
   }
 
-  const filteredConventions = filter === 'ALL'
-    ? conventions
-    : conventions.filter(c => c.statut === filter)
+  const filteredConventions = conventions
+    .filter(c => filter === 'ALL' || c.statut === filter)
+    .filter(c => {
+      if (!searchQuery) return true
+      const query = searchQuery.toLowerCase()
+      return (
+        c.libelle?.toLowerCase().includes(query) ||
+        c.code?.toLowerCase().includes(query) ||
+        c.numero?.toLowerCase().includes(query) ||
+        c.createdByNom?.toLowerCase().includes(query)
+      )
+    })
 
   const stats = {
     total: conventions.length,
     brouillon: conventions.filter(c => c.statut === 'BROUILLON').length,
     soumis: conventions.filter(c => c.statut === 'SOUMIS').length,
     validees: conventions.filter(c => c.statut === 'VALIDEE').length,
-    enCours: conventions.filter(c => c.statut === 'EN_COURS').length,
+    rejetees: conventions.filter(c => c.statut === 'REJETE').length,
+    enExecution: conventions.filter(c => c.statut === 'EN_EXECUTION').length,
     annulees: conventions.filter(c => c.statut === 'ANNULE').length,
   }
 
@@ -240,82 +271,113 @@ const ConventionsPageMUI = () => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(7, 1fr)' },
             gap: 2,
             mb: 4,
           }}
         >
-          <Card sx={{ cursor: 'pointer' }} onClick={() => setFilter('ALL')}>
+          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('ALL')}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">Total</Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>Total</Typography>
               <Typography variant="h4" fontWeight={700}>{stats.total}</Typography>
             </CardContent>
           </Card>
-          <Card sx={{ cursor: 'pointer' }} onClick={() => setFilter('BROUILLON')}>
+          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('BROUILLON')}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">Brouillon</Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>Brouillon</Typography>
               <Typography variant="h4" fontWeight={700} color="text.secondary">{stats.brouillon}</Typography>
             </CardContent>
           </Card>
-          <Card sx={{ cursor: 'pointer' }} onClick={() => setFilter('SOUMIS')}>
+          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('SOUMIS')}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">Soumis</Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>Soumis</Typography>
               <Typography variant="h4" fontWeight={700} color="warning.main">{stats.soumis}</Typography>
             </CardContent>
           </Card>
-          <Card sx={{ cursor: 'pointer' }} onClick={() => setFilter('VALIDEE')}>
+          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('VALIDEE')}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">Validées</Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>Validées</Typography>
               <Typography variant="h4" fontWeight={700} color="success.main">{stats.validees}</Typography>
             </CardContent>
           </Card>
-          <Card sx={{ cursor: 'pointer' }} onClick={() => setFilter('EN_COURS')}>
+          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('REJETE')}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">En Cours</Typography>
-              <Typography variant="h4" fontWeight={700} color="info.main">{stats.enCours}</Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>Rejetées</Typography>
+              <Typography variant="h4" fontWeight={700} color="error.main">{stats.rejetees}</Typography>
             </CardContent>
           </Card>
-          <Card sx={{ cursor: 'pointer' }} onClick={() => setFilter('ANNULE')}>
+          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('EN_EXECUTION')}>
             <CardContent>
-              <Typography variant="body2" color="text.secondary">Rejetées</Typography>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>En Exécution</Typography>
+              <Typography variant="h4" fontWeight={700} color="info.main">{stats.enExecution}</Typography>
+            </CardContent>
+          </Card>
+          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('ANNULE')}>
+            <CardContent>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>Annulées</Typography>
               <Typography variant="h4" fontWeight={700} color="error.main">{stats.annulees}</Typography>
             </CardContent>
           </Card>
         </Box>
 
-        {/* Filter Chips */}
-        <Stack direction="row" spacing={1} mb={3}>
-          <Chip
-            label="Toutes"
-            onClick={() => setFilter('ALL')}
-            color={filter === 'ALL' ? 'primary' : 'default'}
+        {/* Search and Filter */}
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            placeholder="Rechercher par nom, code, numéro ou créateur..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />,
+            }}
+            sx={{ mb: 2 }}
           />
-          <Chip
-            label="Brouillon"
-            onClick={() => setFilter('BROUILLON')}
-            color={filter === 'BROUILLON' ? 'primary' : 'default'}
-          />
-          <Chip
-            label="Soumis"
-            onClick={() => setFilter('SOUMIS')}
-            color={filter === 'SOUMIS' ? 'primary' : 'default'}
-          />
-          <Chip
-            label="Validées"
-            onClick={() => setFilter('VALIDEE')}
-            color={filter === 'VALIDEE' ? 'primary' : 'default'}
-          />
-          <Chip
-            label="Rejetées"
-            onClick={() => setFilter('ANNULE')}
-            color={filter === 'ANNULE' ? 'primary' : 'default'}
-          />
-        </Stack>
+          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+            <Chip
+              label="Toutes"
+              onClick={() => setFilter('ALL')}
+              color={filter === 'ALL' ? 'primary' : 'default'}
+            />
+            <Chip
+              label="Brouillon"
+              onClick={() => setFilter('BROUILLON')}
+              color={filter === 'BROUILLON' ? 'primary' : 'default'}
+            />
+            <Chip
+              label="Soumis"
+              onClick={() => setFilter('SOUMIS')}
+              color={filter === 'SOUMIS' ? 'primary' : 'default'}
+            />
+            <Chip
+              label="Validées"
+              onClick={() => setFilter('VALIDEE')}
+              color={filter === 'VALIDEE' ? 'primary' : 'default'}
+            />
+            <Chip
+              label="Rejetées"
+              onClick={() => setFilter('REJETE')}
+              color={filter === 'REJETE' ? 'primary' : 'default'}
+            />
+            <Chip
+              label="En Exécution"
+              onClick={() => setFilter('EN_EXECUTION')}
+              color={filter === 'EN_EXECUTION' ? 'primary' : 'default'}
+            />
+          </Stack>
+        </Box>
 
         {/* Conventions List */}
         <Stack spacing={2}>
           {filteredConventions.map((convention) => (
-            <Card key={convention.id}>
+            <Card
+              key={convention.id}
+              sx={{
+                transition: 'all 0.2s',
+                '&:hover': { boxShadow: 4 },
+                border: convention.statut === 'REJETE' ? '2px solid' : 'none',
+                borderColor: convention.statut === 'REJETE' ? 'error.main' : 'transparent',
+              }}
+            >
               <CardContent>
                 <Stack direction="row" justifyContent="space-between" alignItems="start">
                   <Box flex={1}>
@@ -334,9 +396,37 @@ const ConventionsPageMUI = () => {
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       {convention.numero} • Code: {convention.code}
                     </Typography>
-                    <Stack direction="row" spacing={3} mt={2}>
+
+                    {/* Motif de rejet */}
+                    {convention.statut === 'REJETE' && convention.motifRejet && (
+                      <Box
+                        sx={{
+                          mt: 1,
+                          p: 1.5,
+                          bgcolor: 'error.light',
+                          borderRadius: 1,
+                          display: 'flex',
+                          alignItems: 'start',
+                          gap: 1
+                        }}
+                      >
+                        <Warning fontSize="small" sx={{ color: 'error.dark', mt: 0.3 }} />
+                        <Box>
+                          <Typography variant="caption" fontWeight={600} color="error.dark">
+                            Motif du rejet:
+                          </Typography>
+                          <Typography variant="body2" color="error.dark">
+                            {convention.motifRejet}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+
+                    <Stack direction="row" spacing={3} mt={2} flexWrap="wrap">
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Budget</Typography>
+                        <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
+                          Budget
+                        </Typography>
                         <Typography variant="body1" fontWeight={600}>
                           {formatCurrency(convention.budget)}
                         </Typography>
@@ -358,6 +448,27 @@ const ConventionsPageMUI = () => {
                           <Typography variant="caption" color="text.secondary">Fin</Typography>
                           <Typography variant="body1">
                             {new Date(convention.dateFin).toLocaleDateString('fr-FR')}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+
+                    {/* Informations de création */}
+                    <Stack direction="row" spacing={3} mt={2} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                      {convention.createdByNom && (
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          <Person fontSize="small" color="action" />
+                          <Typography variant="caption" color="text.secondary">
+                            Créé par: <strong>{convention.createdByNom}</strong>
+                          </Typography>
+                        </Box>
+                      )}
+                      {convention.createdAt && (
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          <CalendarToday fontSize="small" color="action" />
+                          <Typography variant="caption" color="text.secondary">
+                            Le {new Date(convention.createdAt).toLocaleDateString('fr-FR')} à{' '}
+                            {new Date(convention.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </Typography>
                         </Box>
                       )}
@@ -392,9 +503,14 @@ const ConventionsPageMUI = () => {
               </MenuItem>
             </>
           )}
+          {selectedConvention?.statut === 'REJETE' && (
+            <MenuItem onClick={handleRemettreEnBrouillon}>
+              <Undo fontSize="small" sx={{ mr: 1 }} /> Remettre en Brouillon
+            </MenuItem>
+          )}
           {selectedConvention?.statut === 'VALIDEE' && (
             <MenuItem onClick={handleMettreEnCours}>
-              <PlayArrow fontSize="small" sx={{ mr: 1 }} /> Mettre en Cours
+              <PlayArrow fontSize="small" sx={{ mr: 1 }} /> Mettre en Exécution
             </MenuItem>
           )}
           {selectedConvention?.statut === 'BROUILLON' && !selectedConvention?.isLocked && (

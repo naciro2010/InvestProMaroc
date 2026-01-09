@@ -48,6 +48,7 @@ npm run dev                          # Run Vite dev server (http://localhost:517
 # Build and preview
 npm run build                        # TypeScript compile + Vite production build
 npm run preview                      # Preview production build
+npm start                            # Production server with serve (for Railway deployment)
 
 # Linting
 npm run lint                         # ESLint check (TypeScript + React)
@@ -306,17 +307,50 @@ When creating a new CRUD entity:
 4. **Mapper**: Create entity ↔ DTO mapper in `mapper/`
 5. **Service**: Create in `service/` extending `GenericCrudService<Entity, Long>`
 6. **Controller**: Create in `controller/` with standard REST endpoints
-7. **Migration**: Add Flyway migration in `db/migration/V{n}__description.sql`
+7. **Migration**: Add Flyway migration in `db/migration/V{next_number}__description.sql`
+   - Check existing migrations: V1-V11 already exist
+   - Next migration should be V12
+   - Use `CREATE TABLE IF NOT EXISTS` for safety
+   - Add indexes for foreign keys and frequently queried columns
 8. **Tests**: Add integration tests in `src/test/kotlin/ma/investpro/integration/`
 
 See `CRUD_TEMPLATE.md` for detailed template.
 
 ### Database Migrations
 
-- **Tool:** Flyway (automatic on startup)
+- **Tool:** Flyway (automatic on startup, enabled in production)
 - **Location:** `backend/src/main/resources/db/migration/`
-- **Naming:** `V{n}__description.sql` (e.g., `V1__init_schema.sql`)
-- **Note:** Recent migration from Flyway to Hibernate DDL auto-update - check `application.properties`
+- **Naming:** `V{n}__description.sql` (e.g., `V1__clean_schema.sql`)
+- **Configuration:**
+  - Development: `spring.jpa.hibernate.ddl-auto=none` + `spring.flyway.enabled=true`
+  - Production: `spring.jpa.hibernate.ddl-auto=validate` + `spring.flyway.enabled=true`
+
+- **Current Migrations (V1-V11):**
+  - **V1:** Clean schema with all tables and constraints (59KB comprehensive schema)
+  - **V2:** Update user passwords (bcrypt hashing)
+  - **V3-V4:** Seed test conventions data
+  - **V6:** Seed dimensions analytiques (analytical dimensions)
+  - **V7:** Rich test data (conventions, projets, fournisseurs)
+  - **V8:** Seed budgets, marchés, décomptes, paiements (17KB test data)
+  - **V9:** Fix enum types to VARCHAR
+  - **V10:** Create projets table
+  - **V11:** Add convention workflow fields (created_by_id, motif_rejet) and update status enum (Jan 2026)
+
+- **Flyway Settings:**
+  - `baseline-on-migrate=true` - Create baseline for existing databases
+  - `validate-on-migrate=false` (dev) / `true` (prod) - Validation control
+  - `out-of-order=true` - Allow out-of-order migrations (dev only)
+  - `clean-disabled=true` - Prevent accidental data loss
+
+- **Best Practices:**
+  - ✅ Always use `CREATE TABLE IF NOT EXISTS` for safety
+  - ✅ Add `CHECK` constraints for data validation (e.g., budget >= 0)
+  - ✅ Add indexes for foreign keys and frequently queried columns
+  - ✅ Add `COMMENT ON TABLE/COLUMN` for documentation
+  - ✅ Use `ON DELETE SET NULL` or `ON DELETE CASCADE` appropriately
+  - ✅ Test migrations on clean database before committing
+  - ❌ Never modify existing migrations after they're deployed
+  - ❌ Never use `spring.flyway.clean-on-validation-error=true` in production
 
 ### Testing
 
@@ -408,32 +442,97 @@ Use `PrivateRoute` wrapper for authenticated pages:
 
 10. **Error Handling:** Backend uses `@ControllerAdvice` for global exception handling. Frontend shows toast notifications via `ToastContext`.
 
+11. **Convention Workflow:** Improved workflow with rejection handling:
+    - BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE
+    - SOUMIS → REJETE (with motif) → BROUILLON (correction)
+    - Status EN_COURS renamed to EN_EXECUTION for clarity
+    - CreatedBy field tracks convention creator automatically
+    - Rejection motif stored and displayed in UI
+
+12. **Number Formatting:** Frontend forms use French number formatting (1 000 000,00) with automatic parsing for clean UX.
+
+## Deployment
+
+### Railway Deployment (Production)
+
+InvestPro Maroc is deployed on Railway:
+- **Backend:** https://investpromaroc-production.up.railway.app
+- **Frontend:** Deployed via Railway with static serving
+
+#### Frontend Deployment to Railway
+
+The frontend is configured for Railway deployment with proper SPA routing:
+
+```bash
+cd frontend
+
+# Build for production
+npm run build
+
+# Test production build locally
+npm start  # Runs serve -s dist -l 3000
+
+# Deploy to Railway (automatic via Git push)
+git push origin main  # Railway auto-deploys from GitHub
+```
+
+**Key Configuration:**
+- Uses `serve` package with `-s` flag for SPA routing (fixes 404 on refresh)
+- `railway.json` configures build and deploy commands
+- `.env.production` contains production API URL
+- `vite.config.ts` uses `base: '/'` for Railway (not `/InvestProMaroc/` like GitHub Pages)
+
+**Why `serve -s` fixes the 404 problem:**
+- Without `-s`: Server looks for `/dashboard/index.html` → 404 error
+- With `-s` (single-page mode): All routes fallback to `/index.html` → React Router handles routing
+- This is the standard, clean solution for deploying Vite/React SPAs
+
+See `frontend/RAILWAY_DEPLOYMENT.md` for complete deployment guide.
+
 ## Environment Variables
 
 ### Backend (application.properties / application-prod.properties)
 
 ```bash
-DATABASE_URL                # PostgreSQL connection string
+# Database
+DATABASE_URL                # PostgreSQL connection string (Railway provides this)
+PGDATABASE                  # Database name (Railway)
+PGHOST                      # Database host (Railway)
+PGPASSWORD                  # Database password (Railway)
+PGPORT                      # Database port (Railway)
+PGUSER                      # Database user (Railway)
+
+# JWT Authentication
 JWT_SECRET                  # Base64-encoded secret (256-bit minimum)
 JWT_EXPIRATION_MS           # Access token TTL (default: 86400000 = 24h)
 JWT_REFRESH_EXPIRATION_MS   # Refresh token TTL (default: 604800000 = 7d)
-CORS_ALLOWED_ORIGINS        # Comma-separated origins (e.g., http://localhost:5173)
-PORT                        # Server port (default: 8080)
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS        # Comma-separated origins (e.g., https://your-frontend.railway.app)
+
+# Server
+PORT                        # Server port (default: 8080, Railway may override)
 ```
 
 ### Frontend (.env)
 
 ```bash
-VITE_API_URL               # Backend API URL (default: http://localhost:8080/api)
+# Development
+VITE_API_URL=http://localhost:8080/api
+
+# Production (Railway)
+VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 ```
 
 ## Recent Architecture Changes
 
 - **Plan Analytique Dynamique:** Migrated from rigid Projet+Axe to flexible JSONB dimensions (December 2024)
 - **Marchés System:** Complete implementation with line items, amendments, and analytical imputation per line
-- **Flyway to Hibernate DDL:** Migration from Flyway to `spring.jpa.hibernate.ddl-auto=update`
+- **Flyway Migrations Active:** Using Flyway for database versioning (11 migrations as of Jan 2026)
 - **ExcelJS Integration:** Frontend now uses ExcelJS instead of XLSX for better spreadsheet generation
-- **Convention Workflow:** Added workflow states (BROUILLON, SOUMIS, VALIDEE) with submission/validation endpoints
+- **Convention Workflow Amélioré:** New workflow with REJETE status, createdBy tracking, and improved rejection handling (January 2026)
+- **Railway Deployment:** Frontend configured for Railway with SPA routing fix (`serve -s`) (January 2026)
+- **Simple Convention Form:** Replaced complex wizard with clean, focused form for CADRE conventions
 
 ## Current Implementation Status
 
@@ -456,12 +555,134 @@ VITE_API_URL               # Backend API URL (default: http://localhost:8080/api
 
 See `README.md` for detailed feature matrix and roadmap.
 
+## Development Best Practices & Code Quality Standards
+
+⚠️ **IMPORTANT:** All developers must follow the standards in **[DEVELOPMENT_GUIDELINES.md](DEVELOPMENT_GUIDELINES.md)**
+
+This file contains:
+- ✅ Mandatory code quality standards
+- ✅ Testing requirements (backend & frontend)
+- ✅ Commit message conventions
+- ✅ Security standards
+- ✅ Deployment checklist
+- ✅ Code review checklist
+- ✅ Troubleshooting common issues
+
+### Quick Reference:
+
+**Before committing:**
+```bash
+# Backend
+cd backend
+./gradlew test              # Run all tests
+./gradlew build -x test     # Quick build check
+
+# Frontend
+cd frontend
+npm run lint                # Check linting
+npm run build               # TypeScript check
+npm install                 # Update lock file if package.json changed
+```
+
+**Key Principles:**
+
+### 1. Use Validated, Production-Ready Technologies
+
+- **NO workarounds or hacks** - Always use proper, documented solutions
+- **NO experimental or unstable packages** - Stick to well-maintained, widely-adopted libraries
+- **NO quick fixes that compromise quality** - Take time to implement clean, maintainable solutions
+
+### 2. Dependency Management
+
+- Only use dependencies from official package registries (npm, Maven Central)
+- Verify package:
+  - Has active maintenance (recent commits/releases)
+  - Has good documentation
+  - Has reasonable download stats / community adoption
+  - No known security vulnerabilities
+- Prefer official plugins and extensions over third-party alternatives
+
+### 3. Architecture Patterns
+
+- Follow existing architectural patterns in the codebase:
+  - Backend: `GenericCrudService`, `BaseEntity`, DTO pattern
+  - Frontend: Context API, Axios interceptors, React Router
+- Don't introduce new patterns without strong justification
+- Keep solutions simple and aligned with project architecture
+
+### 4. Problem-Solving Approach
+
+**ALWAYS prefer:**
+1. **Official documentation solutions** - Check framework/library docs first
+2. **Established patterns in the codebase** - Follow what already exists
+3. **Clean, standard approaches** - Use industry best practices
+4. **Maintainable code** - Code that future developers can understand
+
+- ✅ Use ONLY validated, production-ready technologies
+- ✅ Follow existing architecture patterns
+- ✅ Test before committing (see DEVELOPMENT_GUIDELINES.md)
+- ❌ No workarounds or hacks
+- ❌ No experimental packages
+- ❌ No quick fixes that compromise quality
+
+**After modifying package.json:**
+```bash
+npm install                 # Regenerate package-lock.json
+git add package.json package-lock.json
+git commit -m "fix: Update dependencies and lock file"
+```
+
+See **[DEVELOPMENT_GUIDELINES.md](DEVELOPMENT_GUIDELINES.md)** for complete documentation.
+
 ## Key Documentation Files
 
 - **README.md** - Project overview, setup, architecture, feature matrix
+- **CLAUDE.md** - AI assistant instructions and project overview (this file)
+- **DEVELOPMENT_GUIDELINES.md** - **⭐ Mandatory standards, testing requirements, and quality checklist**
 - **ANALYSE_CAHIER_DES_CHARGES.md** - Requirements analysis
 - **BACKLOG.md** - Feature backlog and specifications
 - **CRUD_TEMPLATE.md** - Template for adding new entities
 - **backend/CLAUDE.md** - Backend-specific guidance (Kotlin/Spring Boot details)
-- **DEVELOPMENT.md** - Development workflow and guidelines
-- **MIGRATION_GUIDE.md** - Flyway to Hibernate DDL migration notes
+- **frontend/RAILWAY_DEPLOYMENT.md** - Complete Railway deployment guide with SPA routing fix
+
+## Troubleshooting
+
+### Flyway Migration Issues
+
+If you encounter Flyway migration errors:
+
+```bash
+# 1. Check current Flyway state
+./gradlew flywayInfo
+
+# 2. Validate migrations
+./gradlew flywayValidate
+
+# 3. If needed, repair Flyway schema history (use with caution)
+./gradlew flywayRepair
+
+# 4. For development: baseline existing database
+./gradlew flywayBaseline
+```
+
+**Common Issues:**
+- **"Found non-empty schema without metadata table"**: Run `flywayBaseline`
+- **"Migration checksum mismatch"**: Never modify existing migrations; create new ones
+- **"Out of order migration detected"**: Allowed in dev (`out-of-order=true`), fix order in prod
+
+### Railway Deployment Issues
+
+**Backend not connecting to database:**
+- Verify Railway PostgreSQL plugin is added
+- Check environment variables: `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
+- Railway provides `DATABASE_URL` but Spring Boot needs individual variables
+
+**CORS errors in production:**
+- Update `CORS_ALLOWED_ORIGINS` in Railway dashboard
+- Add your Railway frontend URL: `https://your-frontend.railway.app`
+- Redeploy backend after updating CORS settings
+
+**Frontend 404 on refresh:**
+- Verify `serve -s` is being used (check `package.json` start script)
+- Ensure `railway.json` has correct start command: `npm start`
+- Check build output includes all routes

@@ -2,6 +2,7 @@ package ma.investpro.mapper
 
 import ma.investpro.dto.*
 import ma.investpro.entity.*
+import ma.investpro.repository.UserRepository
 import org.springframework.stereotype.Component
 
 /**
@@ -9,13 +10,25 @@ import org.springframework.stereotype.Component
  * Élimine les références circulaires en ne chargeant que les données nécessaires
  */
 @Component
-class ConventionMapper {
+class ConventionMapper(
+    private val userRepository: UserRepository
+) {
 
     /**
      * Convertit une entité Convention en DTO complet
      * Charge les relations enfants SANS référence back au parent
      */
     fun toDTO(entity: Convention): ConventionDTO {
+        // Récupérer le nom du créateur si disponible
+        val createdByNom = entity.createdById?.let {
+            userRepository.findById(it).map { user -> user.fullName }.orElse(null)
+        }
+
+        // Récupérer le nom du validateur si disponible
+        val valideParNom = entity.valideParId?.let {
+            userRepository.findById(it).map { user -> user.fullName }.orElse(null)
+        }
+
         return ConventionDTO(
             id = entity.id,
             code = entity.code,
@@ -38,9 +51,13 @@ class ConventionMapper {
             dateSoumission = entity.dateSoumission,
             dateValidation = entity.dateValidation,
             valideParId = entity.valideParId,
+            valideParNom = valideParNom,
             version = entity.version,
             isLocked = entity.isLocked,
             motifVerrouillage = entity.motifVerrouillage,
+            motifRejet = entity.motifRejet,
+            createdById = entity.createdById,
+            createdByNom = createdByNom,
 
             // Parent : ID seulement (pas d'objet complet pour éviter cycle)
             parentConventionId = entity.parentConvention?.id,
@@ -67,6 +84,11 @@ class ConventionMapper {
      * Utilisé pour les listes et les sous-conventions
      */
     fun toSimpleDTO(entity: Convention): ConventionSimpleDTO {
+        // Récupérer le nom du créateur si disponible
+        val createdByNom = entity.createdById?.let {
+            userRepository.findById(it).map { user -> user.fullName }.orElse(null)
+        }
+
         return ConventionSimpleDTO(
             id = entity.id,
             code = entity.code,
@@ -76,6 +98,8 @@ class ConventionMapper {
             budget = entity.budget,
             dateDebut = entity.dateDebut,
             dateFin = entity.dateFin,
+            createdByNom = createdByNom,
+            createdAt = entity.createdAt,
             actif = entity.actif
         )
     }

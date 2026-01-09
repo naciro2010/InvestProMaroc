@@ -16,7 +16,9 @@ import ma.investpro.repository.PartenaireRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.JwtUserDetails
 
 @RestController
 @RequestMapping("/api/conventions")
@@ -93,6 +95,11 @@ class ConventionController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun create(@RequestBody convention: Convention): ResponseEntity<ConventionDTO> {
         return try {
+            // Capturer l'utilisateur créateur depuis le contexte de sécurité
+            val authentication = SecurityContextHolder.getContext().authentication
+            val userDetails = authentication.principal as? JwtUserDetails
+            convention.createdById = userDetails?.id
+
             val created = conventionService.create(convention)
             val dto = conventionMapper.toDTO(created)
             ResponseEntity.status(HttpStatus.CREATED).body(dto)
@@ -220,6 +227,18 @@ class ConventionController(
     fun achever(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
         return try {
             val convention = conventionService.achever(id)
+            val dto = conventionMapper.toDTO(convention)
+            ResponseEntity.ok(dto)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().build()
+        }
+    }
+
+    @PostMapping("/{id}/remettre-en-brouillon")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun remettreEnBrouillon(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
+        return try {
+            val convention = conventionService.remettreEnBrouillon(id)
             val dto = conventionMapper.toDTO(convention)
             ResponseEntity.ok(dto)
         } catch (e: IllegalArgumentException) {

@@ -25,9 +25,13 @@ data class ConventionDTO(
     val dateSoumission: LocalDate?,
     val dateValidation: LocalDate?,
     val valideParId: Long?,
+    val valideParNom: String?, // Nom du validateur
     val version: String?,
     val isLocked: Boolean,
     val motifVerrouillage: String?,
+    val motifRejet: String?, // Raison du rejet si statut = REJETE
+    val createdById: Long?, // ID de l'utilisateur créateur
+    val createdByNom: String?, // Nom de l'utilisateur créateur
     val parentConventionId: Long?,
     val parentConventionNumero: String?,
     val heriteParametres: Boolean,
@@ -52,6 +56,8 @@ data class ConventionSimpleDTO(
     val budget: BigDecimal,
     val dateDebut: LocalDate,
     val dateFin: LocalDate?,
+    val createdByNom: String?, // Nom de l'utilisateur créateur
+    val createdAt: LocalDateTime?,
     val actif: Boolean
 )
 

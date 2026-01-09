@@ -98,6 +98,12 @@ class Convention(
     @Column(name = "motif_verrouillage", columnDefinition = "TEXT")
     var motifVerrouillage: String? = null, // Raison du verrouillage
 
+    @Column(name = "motif_rejet", columnDefinition = "TEXT")
+    var motifRejet: String? = null, // Raison du rejet (si statut = REJETE)
+
+    @Column(name = "created_by_id")
+    var createdById: Long? = null, // ID de l'utilisateur qui a créé la convention
+
     // Sous-convention fields (self-referencing parent-child)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_convention_id")
@@ -176,14 +182,14 @@ enum class TypeConvention {
 }
 
 /**
- * Statut de la convention avec workflow complet
+ * Statut de la convention avec workflow amélioré
  */
 enum class StatutConvention {
     BROUILLON,      // Brouillon en cours de saisie (éditable)
     SOUMIS,         // Soumis pour validation (non éditable)
     VALIDEE,        // Convention validée avec V0 créée (verrouillée)
-    EN_COURS,       // En cours d'exécution
+    REJETE,         // Rejetée par le validateur avec motif (peut retourner à BROUILLON)
+    EN_EXECUTION,   // En cours d'exécution (après démarrage explicite)
     ACHEVE,         // Achevée/Terminée
-    EN_RETARD,      // En retard par rapport au planning
-    ANNULE          // Annulée
+    ANNULE          // Annulée avec motif
 }

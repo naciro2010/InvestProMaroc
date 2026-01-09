@@ -557,7 +557,34 @@ See `README.md` for detailed feature matrix and roadmap.
 
 ## Development Best Practices & Code Quality Standards
 
-When working on this project, **ALWAYS follow these principles:**
+⚠️ **IMPORTANT:** All developers must follow the standards in **[DEVELOPMENT_GUIDELINES.md](DEVELOPMENT_GUIDELINES.md)**
+
+This file contains:
+- ✅ Mandatory code quality standards
+- ✅ Testing requirements (backend & frontend)
+- ✅ Commit message conventions
+- ✅ Security standards
+- ✅ Deployment checklist
+- ✅ Code review checklist
+- ✅ Troubleshooting common issues
+
+### Quick Reference:
+
+**Before committing:**
+```bash
+# Backend
+cd backend
+./gradlew test              # Run all tests
+./gradlew build -x test     # Quick build check
+
+# Frontend
+cd frontend
+npm run lint                # Check linting
+npm run build               # TypeScript check
+npm install                 # Update lock file if package.json changed
+```
+
+**Key Principles:**
 
 ### 1. Use Validated, Production-Ready Technologies
 
@@ -591,41 +618,31 @@ When working on this project, **ALWAYS follow these principles:**
 3. **Clean, standard approaches** - Use industry best practices
 4. **Maintainable code** - Code that future developers can understand
 
-**NEVER:**
-- Copy-paste code without understanding
-- Use deprecated packages or methods
-- Implement complex solutions when simple ones exist
-- Skip error handling or validation
-- Leave commented-out code or TODOs without addressing them
+- ✅ Use ONLY validated, production-ready technologies
+- ✅ Follow existing architecture patterns
+- ✅ Test before committing (see DEVELOPMENT_GUIDELINES.md)
+- ❌ No workarounds or hacks
+- ❌ No experimental packages
+- ❌ No quick fixes that compromise quality
 
-### 5. Code Quality Checklist
+**After modifying package.json:**
+```bash
+npm install                 # Regenerate package-lock.json
+git add package.json package-lock.json
+git commit -m "fix: Update dependencies and lock file"
+```
 
-Before committing code, verify:
-- [ ] No TypeScript/Kotlin compiler errors
-- [ ] No linting warnings (ESLint/Detekt)
-- [ ] Proper error handling implemented
-- [ ] No hardcoded values (use environment variables/configuration)
-- [ ] No console.log / println left in production code
-- [ ] Code follows existing naming conventions
-- [ ] Changes are tested (manually at minimum)
-- [ ] No security vulnerabilities introduced (OWASP Top 10)
-
-### 6. Railway Deployment Standards
-
-- Use `serve` with `-s` flag for SPA routing (not custom server implementations)
-- Configure via `railway.json` (not package.json engines field)
-- Use environment variables for all environment-specific configuration
-- Build command should include dependency installation: `npm ci && npm run build`
-- Never commit `.env` files (use `.env.example` as template)
+See **[DEVELOPMENT_GUIDELINES.md](DEVELOPMENT_GUIDELINES.md)** for complete documentation.
 
 ## Key Documentation Files
 
 - **README.md** - Project overview, setup, architecture, feature matrix
+- **CLAUDE.md** - AI assistant instructions and project overview (this file)
+- **DEVELOPMENT_GUIDELINES.md** - **⭐ Mandatory standards, testing requirements, and quality checklist**
 - **ANALYSE_CAHIER_DES_CHARGES.md** - Requirements analysis
 - **BACKLOG.md** - Feature backlog and specifications
 - **CRUD_TEMPLATE.md** - Template for adding new entities
 - **backend/CLAUDE.md** - Backend-specific guidance (Kotlin/Spring Boot details)
-- **DEVELOPMENT.md** - Development workflow and guidelines
 - **frontend/RAILWAY_DEPLOYMENT.md** - Complete Railway deployment guide with SPA routing fix
 
 ## Troubleshooting

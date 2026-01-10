@@ -586,13 +586,56 @@ npm install                 # Update lock file if package.json changed
 
 **Key Principles:**
 
-### 1. Use Validated, Production-Ready Technologies
+### 1. Strong Typing - MANDATORY
+
+⚠️ **CRITICAL RULE:** **NEVER use `Any` type (Kotlin) or `any` type (TypeScript)** ⚠️
+
+**Backend (Kotlin):**
+- ❌ **FORBIDDEN:** `Map<String, Any>`, `List<Any>`, `ResponseEntity<Map<String, Any>>`
+- ✅ **REQUIRED:** Always use strongly typed DTOs and data classes
+- ✅ Use `ApiResponse<T>` generic wrapper for API responses
+- ✅ Create specific DTOs for each use case (e.g., `AvenantStatistics`, `AvenantConventionResponse`)
+
+**Frontend (TypeScript):**
+- ❌ **FORBIDDEN:** `any`, `object`, `unknown` without proper type guards
+- ✅ **REQUIRED:** Define interfaces/types for all data structures
+- ✅ Use generic types `<T>` when appropriate
+- ✅ Enable strict TypeScript mode
+
+**Examples:**
+
+❌ **BAD - Using Any:**
+```kotlin
+fun getData(): Map<String, Any> {
+    return mapOf("data" to myData, "count" to 5)
+}
+```
+
+✅ **GOOD - Strongly Typed:**
+```kotlin
+data class DataResponse(
+    val data: MyData,
+    val count: Int
+)
+
+fun getData(): DataResponse {
+    return DataResponse(data = myData, count = 5)
+}
+```
+
+**Why this matters:**
+- Type safety catches errors at compile time, not runtime
+- Better IDE autocomplete and refactoring support
+- Self-documenting code
+- Prevents runtime type errors in production
+
+### 2. Use Validated, Production-Ready Technologies
 
 - **NO workarounds or hacks** - Always use proper, documented solutions
 - **NO experimental or unstable packages** - Stick to well-maintained, widely-adopted libraries
 - **NO quick fixes that compromise quality** - Take time to implement clean, maintainable solutions
 
-### 2. Dependency Management
+### 3. Dependency Management
 
 - Only use dependencies from official package registries (npm, Maven Central)
 - Verify package:
@@ -602,15 +645,16 @@ npm install                 # Update lock file if package.json changed
   - No known security vulnerabilities
 - Prefer official plugins and extensions over third-party alternatives
 
-### 3. Architecture Patterns
+### 4. Architecture Patterns
 
 - Follow existing architectural patterns in the codebase:
-  - Backend: `GenericCrudService`, `BaseEntity`, DTO pattern
+  - Backend: `GenericCrudService`, `BaseEntity`, DTO pattern, `ApiResponse<T>` wrapper
   - Frontend: Context API, Axios interceptors, React Router
 - Don't introduce new patterns without strong justification
 - Keep solutions simple and aligned with project architecture
+- **Always create DTOs for API responses** - Never return raw entities or Maps
 
-### 4. Problem-Solving Approach
+### 5. Problem-Solving Approach
 
 **ALWAYS prefer:**
 1. **Official documentation solutions** - Check framework/library docs first
@@ -618,12 +662,17 @@ npm install                 # Update lock file if package.json changed
 3. **Clean, standard approaches** - Use industry best practices
 4. **Maintainable code** - Code that future developers can understand
 
+**Summary of Critical Rules:**
+- ✅ **ALWAYS use strong typing** - Never use `Any` or `any` types
+- ✅ **Create specific DTOs** for all API responses and data structures
 - ✅ Use ONLY validated, production-ready technologies
-- ✅ Follow existing architecture patterns
+- ✅ Follow existing architecture patterns (`ApiResponse<T>`, DTOs, etc.)
 - ✅ Test before committing (see DEVELOPMENT_GUIDELINES.md)
+- ❌ **NEVER use `Any`/`any`** - Always create proper types
 - ❌ No workarounds or hacks
 - ❌ No experimental packages
 - ❌ No quick fixes that compromise quality
+- ❌ No `Map<String, Any>` or similar untyped structures
 
 **After modifying package.json:**
 ```bash

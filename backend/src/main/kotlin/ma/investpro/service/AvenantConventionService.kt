@@ -182,15 +182,25 @@ class AvenantConventionService(
     /**
      * Récupère les statistiques des avenants d'une convention
      */
-    fun getStatistics(conventionId: Long): Map<String, Any> {
+    fun getStatistics(conventionId: Long): AvenantStatistics {
         val stats = avenantRepository.getStatistiquesByConvention(conventionId)
-        return stats ?: mapOf(
-            "totalAvenants" to 0,
-            "brouillons" to 0,
-            "soumis" to 0,
-            "valides" to 0,
-            "totalDeltaBudget" to 0
-        )
+        return if (stats != null) {
+            AvenantStatistics(
+                totalAvenants = (stats["totalAvenants"] as? Number)?.toInt() ?: 0,
+                brouillons = (stats["brouillons"] as? Number)?.toInt() ?: 0,
+                soumis = (stats["soumis"] as? Number)?.toInt() ?: 0,
+                valides = (stats["valides"] as? Number)?.toInt() ?: 0,
+                totalDeltaBudget = (stats["totalDeltaBudget"] as? Number)?.toDouble() ?: 0.0
+            )
+        } else {
+            AvenantStatistics(
+                totalAvenants = 0,
+                brouillons = 0,
+                soumis = 0,
+                valides = 0,
+                totalDeltaBudget = 0.0
+            )
+        }
     }
 
     /**

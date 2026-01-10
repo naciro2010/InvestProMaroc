@@ -61,8 +61,8 @@ class AvenantConventionMapper(
 
             ordreApplication = entity.ordreApplication,
 
-            createdAt = entity.createdAt,
-            updatedAt = entity.updatedAt,
+            createdAt = entity.createdAt ?: throw IllegalStateException("createdAt cannot be null"),
+            updatedAt = entity.updatedAt ?: throw IllegalStateException("updatedAt cannot be null"),
 
             isEditable = entity.isEditable(),
             canSoumettre = entity.canSoumettre(),
@@ -86,7 +86,7 @@ class AvenantConventionMapper(
             deltaBudget = entity.deltaBudget,
             createdByName = entity.createdById?.let { getUserName(it) },
             ordreApplication = entity.ordreApplication,
-            createdAt = entity.createdAt
+            createdAt = entity.createdAt ?: throw IllegalStateException("createdAt cannot be null")
         )
     }
 
@@ -155,7 +155,7 @@ class AvenantConventionMapper(
     private fun getUserName(userId: Long): String? {
         return try {
             userRepository.findById(userId)
-                .map { "${it.prenom} ${it.nom}" }
+                .map { it.fullName }
                 .orElse(null)
         } catch (e: Exception) {
             null

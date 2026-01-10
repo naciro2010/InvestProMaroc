@@ -85,3 +85,14 @@ data class AvenantConventionSummary(
     val ordreApplication: Int?,
     val createdAt: LocalDateTime
 )
+
+/**
+ * DTO pour les statistiques des avenants
+ */
+data class AvenantStatistics(
+    val totalAvenants: Int,
+    val brouillons: Int,
+    val soumis: Int,
+    val valides: Int,
+    val totalDeltaBudget: Double
+)

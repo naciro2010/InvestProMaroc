@@ -25,13 +25,15 @@ class AvenantConventionController(
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getAll(): ResponseEntity<Map<String, Any>> {
+    fun getAll(): ResponseEntity<ApiResponse<List<AvenantConventionSummary>>> {
         val avenants = avenantService.getAll()
-        return ResponseEntity.ok(mapOf(
-            "success" to true,
-            "message" to "Avenants récupérés avec succès",
-            "data" to avenants
-        ))
+        return ResponseEntity.ok(
+            ApiResponse(
+                success = true,
+                message = "Avenants récupérés avec succès",
+                data = avenants
+            )
+        )
     }
 
     /**
@@ -39,20 +41,24 @@ class AvenantConventionController(
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getById(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
+    fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val avenant = avenantService.getById(id)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "message" to "Avenant récupéré avec succès",
-                "data" to avenant
-            ))
+            ResponseEntity.ok(
+                ApiResponse(
+                    success = true,
+                    message = "Avenant récupéré avec succès",
+                    data = avenant
+                )
+            )
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "Avenant non trouvé",
+                    data = null
+                )
+            )
         }
     }
 
@@ -61,13 +67,15 @@ class AvenantConventionController(
      */
     @GetMapping("/convention/{conventionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getByConvention(@PathVariable conventionId: Long): ResponseEntity<Map<String, Any>> {
+    fun getByConvention(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<List<AvenantConventionResponse>>> {
         val avenants = avenantService.getAllByConvention(conventionId)
-        return ResponseEntity.ok(mapOf(
-            "success" to true,
-            "message" to "Avenants de la convention récupérés avec succès",
-            "data" to avenants
-        ))
+        return ResponseEntity.ok(
+            ApiResponse(
+                success = true,
+                message = "Avenants de la convention récupérés avec succès",
+                data = avenants
+            )
+        )
     }
 
     /**
@@ -75,13 +83,15 @@ class AvenantConventionController(
      */
     @GetMapping("/pending")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun getPendingValidation(): ResponseEntity<Map<String, Any>> {
+    fun getPendingValidation(): ResponseEntity<ApiResponse<List<AvenantConventionSummary>>> {
         val avenants = avenantService.getPendingValidation()
-        return ResponseEntity.ok(mapOf(
-            "success" to true,
-            "message" to "Avenants en attente récupérés avec succès",
-            "data" to avenants
-        ))
+        return ResponseEntity.ok(
+            ApiResponse(
+                success = true,
+                message = "Avenants en attente récupérés avec succès",
+                data = avenants
+            )
+        )
     }
 
     /**
@@ -89,13 +99,15 @@ class AvenantConventionController(
      */
     @GetMapping("/convention/{conventionId}/statistics")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getStatistics(@PathVariable conventionId: Long): ResponseEntity<Map<String, Any>> {
+    fun getStatistics(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<AvenantStatistics>> {
         val stats = avenantService.getStatistics(conventionId)
-        return ResponseEntity.ok(mapOf(
-            "success" to true,
-            "message" to "Statistiques récupérées avec succès",
-            "data" to stats
-        ))
+        return ResponseEntity.ok(
+            ApiResponse(
+                success = true,
+                message = "Statistiques récupérées avec succès",
+                data = stats
+            )
+        )
     }
 
     /**
@@ -103,27 +115,33 @@ class AvenantConventionController(
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun create(@Valid @RequestBody request: AvenantConventionRequest): ResponseEntity<Map<String, Any>> {
+    fun create(@Valid @RequestBody request: AvenantConventionRequest): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val userId = getCurrentUserId()
             val avenant = avenantService.create(request, userId)
-            ResponseEntity.status(HttpStatus.CREATED).body(mapOf(
-                "success" to true,
-                "message" to "Avenant créé avec succès",
-                "data" to avenant
-            ))
+            ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse(
+                    success = true,
+                    message = "Avenant créé avec succès",
+                    data = avenant
+                )
+            )
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "Erreur de validation",
+                    data = null
+                )
+            )
         } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la création de l'avenant: ${e.message}",
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    success = false,
+                    message = "Erreur lors de la création de l'avenant: ${e.message}",
+                    data = null
+                )
+            )
         }
     }
 
@@ -135,32 +153,40 @@ class AvenantConventionController(
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody request: AvenantConventionRequest
-    ): ResponseEntity<Map<String, Any>> {
+    ): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val avenant = avenantService.update(id, request)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "message" to "Avenant mis à jour avec succès",
-                "data" to avenant
-            ))
+            ResponseEntity.ok(
+                ApiResponse(
+                    success = true,
+                    message = "Avenant mis à jour avec succès",
+                    data = avenant
+                )
+            )
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "Avenant non trouvé",
+                    data = null
+                )
+            )
         } catch (e: IllegalStateException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "État invalide",
+                    data = null
+                )
+            )
         } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la mise à jour de l'avenant: ${e.message}",
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    success = false,
+                    message = "Erreur lors de la mise à jour de l'avenant: ${e.message}",
+                    data = null
+                )
+            )
         }
     }
 
@@ -169,27 +195,33 @@ class AvenantConventionController(
      */
     @PostMapping("/{id}/soumettre")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun soumettre(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
+    fun soumettre(@PathVariable id: Long): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val userId = getCurrentUserId()
             val avenant = avenantService.soumettre(id, userId)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "message" to "Avenant soumis pour validation avec succès",
-                "data" to avenant
-            ))
+            ResponseEntity.ok(
+                ApiResponse(
+                    success = true,
+                    message = "Avenant soumis pour validation avec succès",
+                    data = avenant
+                )
+            )
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "Avenant non trouvé",
+                    data = null
+                )
+            )
         } catch (e: IllegalStateException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "État invalide",
+                    data = null
+                )
+            )
         }
     }
 
@@ -198,33 +230,41 @@ class AvenantConventionController(
      */
     @PostMapping("/valider")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun valider(@Valid @RequestBody request: ValiderAvenantRequest): ResponseEntity<Map<String, Any>> {
+    fun valider(@Valid @RequestBody request: ValiderAvenantRequest): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val userId = getCurrentUserId()
             val avenant = avenantService.valider(request, userId)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "message" to "Avenant validé et appliqué à la convention avec succès",
-                "data" to avenant
-            ))
+            ResponseEntity.ok(
+                ApiResponse(
+                    success = true,
+                    message = "Avenant validé et appliqué à la convention avec succès",
+                    data = avenant
+                )
+            )
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "Avenant non trouvé",
+                    data = null
+                )
+            )
         } catch (e: IllegalStateException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "État invalide",
+                    data = null
+                )
+            )
         } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf(
-                "success" to false,
-                "message" to "Erreur lors de la validation de l'avenant: ${e.message}",
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ApiResponse(
+                    success = false,
+                    message = "Erreur lors de la validation de l'avenant: ${e.message}",
+                    data = null
+                )
+            )
         }
     }
 
@@ -233,26 +273,32 @@ class AvenantConventionController(
      */
     @PostMapping("/rejeter")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun rejeter(@Valid @RequestBody request: RejeterAvenantRequest): ResponseEntity<Map<String, Any>> {
+    fun rejeter(@Valid @RequestBody request: RejeterAvenantRequest): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val avenant = avenantService.rejeter(request)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "message" to "Avenant rejeté avec succès",
-                "data" to avenant
-            ))
+            ResponseEntity.ok(
+                ApiResponse(
+                    success = true,
+                    message = "Avenant rejeté avec succès",
+                    data = avenant
+                )
+            )
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "Avenant non trouvé",
+                    data = null
+                )
+            )
         } catch (e: IllegalStateException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "État invalide",
+                    data = null
+                )
+            )
         }
     }
 
@@ -261,26 +307,32 @@ class AvenantConventionController(
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun delete(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
+    fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<String>> {
         return try {
             avenantService.delete(id)
-            ResponseEntity.ok(mapOf(
-                "success" to true,
-                "message" to "Avenant supprimé avec succès",
-                "data" to null
-            ))
+            ResponseEntity.ok(
+                ApiResponse(
+                    success = true,
+                    message = "Avenant supprimé avec succès",
+                    data = null
+                )
+            )
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "Avenant non trouvé",
+                    data = null
+                )
+            )
         } catch (e: IllegalStateException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf(
-                "success" to false,
-                "message" to e.message,
-                "data" to null
-            ))
+            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ApiResponse(
+                    success = false,
+                    message = e.message ?: "État invalide",
+                    data = null
+                )
+            )
         }
     }
 

@@ -42,6 +42,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
             } else {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse(
                     success = false,
+                    data = null,
                     message = "Ordre de paiement $id introuvable"
                 ))
             }
@@ -49,6 +50,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la recuperation de l'ordre de paiement: ${e.message}"
             ))
         }
@@ -69,12 +71,14 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la creation de l'ordre de paiement: ${e.message}"
             ))
         }
@@ -95,12 +99,14 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la mise a jour de l'ordre de paiement: ${e.message}"
             ))
         }
@@ -120,12 +126,14 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la suppression de l'ordre de paiement: ${e.message}"
             ))
         }
@@ -147,12 +155,14 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la validation de l'ordre de paiement: ${e.message}"
             ))
         }
@@ -173,12 +183,14 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de l'execution de l'ordre de paiement: ${e.message}"
             ))
         }
@@ -198,6 +210,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la recuperation des statistiques: ${e.message}"
             ))
         }

@@ -42,6 +42,7 @@ class PaiementController(private val paiementService: PaiementService) {
             } else {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse(
                     success = false,
+                    data = null,
                     message = "Paiement $id introuvable"
                 ))
             }
@@ -49,6 +50,7 @@ class PaiementController(private val paiementService: PaiementService) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la recuperation du paiement: ${e.message}"
             ))
         }
@@ -69,12 +71,14 @@ class PaiementController(private val paiementService: PaiementService) {
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la creation du paiement: ${e.message}"
             ))
         }
@@ -95,12 +99,14 @@ class PaiementController(private val paiementService: PaiementService) {
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la mise a jour du paiement: ${e.message}"
             ))
         }
@@ -120,12 +126,14 @@ class PaiementController(private val paiementService: PaiementService) {
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la suppression du paiement: ${e.message}"
             ))
         }
@@ -145,6 +153,7 @@ class PaiementController(private val paiementService: PaiementService) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la recuperation des statistiques: ${e.message}"
             ))
         }

@@ -120,6 +120,7 @@ class PaiementController(private val paiementService: PaiementService) {
             paiementService.delete(id)
             ResponseEntity.ok(ApiResponse(
                 success = true,
+                data = null,
                 message = "Paiement supprime avec succes"
             ))
         } catch (e: IllegalArgumentException) {

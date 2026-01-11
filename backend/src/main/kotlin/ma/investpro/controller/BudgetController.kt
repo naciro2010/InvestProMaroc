@@ -120,6 +120,7 @@ class BudgetController(private val budgetService: BudgetService) {
             budgetService.delete(id)
             ResponseEntity.ok(ApiResponse(
                 success = true,
+                data = null,
                 message = "Budget supprime avec succes"
             ))
         } catch (e: IllegalArgumentException) {

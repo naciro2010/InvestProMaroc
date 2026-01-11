@@ -42,6 +42,7 @@ class BudgetController(private val budgetService: BudgetService) {
             } else {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse(
                     success = false,
+                    data = null,
                     message = "Budget $id introuvable"
                 ))
             }
@@ -49,6 +50,7 @@ class BudgetController(private val budgetService: BudgetService) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la recuperation du budget: ${e.message}"
             ))
         }
@@ -69,12 +71,14 @@ class BudgetController(private val budgetService: BudgetService) {
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la creation du budget: ${e.message}"
             ))
         }
@@ -95,12 +99,14 @@ class BudgetController(private val budgetService: BudgetService) {
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la mise a jour du budget: ${e.message}"
             ))
         }
@@ -120,12 +126,14 @@ class BudgetController(private val budgetService: BudgetService) {
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la suppression du budget: ${e.message}"
             ))
         }
@@ -146,12 +154,14 @@ class BudgetController(private val budgetService: BudgetService) {
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la soumission du budget: ${e.message}"
             ))
         }
@@ -173,12 +183,14 @@ class BudgetController(private val budgetService: BudgetService) {
             logger.warn { "Validation error: ${e.message}" }
             ResponseEntity.badRequest().body(ApiResponse(
                 success = false,
+                data = null,
                 message = e.message ?: "Erreur de validation"
             ))
         } catch (e: Exception) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la validation du budget: ${e.message}"
             ))
         }
@@ -198,6 +210,7 @@ class BudgetController(private val budgetService: BudgetService) {
             logger.error { "Error: ${e.message}" }
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse(
                 success = false,
+                data = null,
                 message = "Erreur lors de la recuperation des statistiques: ${e.message}"
             ))
         }

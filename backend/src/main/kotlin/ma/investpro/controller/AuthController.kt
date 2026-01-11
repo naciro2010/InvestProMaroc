@@ -35,7 +35,8 @@ class AuthController(
             ResponseEntity.badRequest().body(
                 ApiResponse(
                     success = false,
-                    message = e.message ?: "Erreur lors de l'inscription"
+                    message = e.message ?: "Erreur lors de l'inscription",
+                    data = null
                 )
             )
         }
@@ -57,7 +58,8 @@ class AuthController(
             ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ApiResponse(
                     success = false,
-                    message = "Identifiants invalides"
+                    message = "Identifiants invalides",
+                    data = null
                 )
             )
         }
@@ -79,7 +81,8 @@ class AuthController(
             ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ApiResponse(
                     success = false,
-                    message = "Token de rafraîchissement invalide"
+                    message = "Token de rafraîchissement invalide",
+                    data = null
                 )
             )
         }

@@ -37,6 +37,9 @@ dependencies {
 
     // Database - Testing
     testImplementation("com.h2database:h2")
+    testImplementation("org.testcontainers:testcontainers:1.19.3")
+    testImplementation("org.testcontainers:postgresql:1.19.3")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.3")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")

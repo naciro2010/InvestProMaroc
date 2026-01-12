@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS avenant_conventions (
     -- Audit fields (from BaseEntity)
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN NOT NULL DEFAULT TRUE,
 
     -- Foreign keys
     CONSTRAINT fk_avenant_conventions_convention

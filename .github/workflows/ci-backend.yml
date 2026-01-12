@@ -17,6 +17,21 @@ jobs:
     name: Build and Test Backend
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: investpro_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,18 +47,24 @@ jobs:
         working-directory: ./backend
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      - name: Build and test with Gradle
         working-directory: ./backend
-        run: ./gradlew clean build -x test
+        run: ./gradlew clean build --info
         env:
           GRADLE_OPTS: '-Dorg.gradle.daemon=false'
+          CI: 'true'
+          SPRING_PROFILES_ACTIVE: 'ci'
+          SPRING_DATASOURCE_URL: 'jdbc:postgresql://localhost:5432/investpro_test'
+          SPRING_DATASOURCE_USERNAME: 'test'
+          SPRING_DATASOURCE_PASSWORD: 'test'
 
-      - name: Run tests
-        working-directory: ./backend
-        run: ./gradlew test
-        continue-on-error: true
-        env:
-          GRADLE_OPTS: '-Dorg.gradle.daemon=false'
+      - name: Publish test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: backend/build/reports/tests/test/
+          retention-days: 7
 
       - name: Check build artifacts
         working-directory: ./backend

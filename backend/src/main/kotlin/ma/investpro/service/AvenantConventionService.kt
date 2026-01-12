@@ -52,6 +52,11 @@ class AvenantConventionService(
             avenant.calculerDeltaBudget()
         }
 
+        // Génère automatiquement les modifications si elles ne sont pas fournies
+        if (avenant.modifications == null) {
+            avenant.modifications = generateModificationsFromRequest(request, convention)
+        }
+
         // Sauvegarde
         val saved = avenantRepository.save(avenant)
 
@@ -250,6 +255,28 @@ class AvenantConventionService(
 
         // Sauvegarde la convention modifiée
         conventionRepository.save(convention)
+    }
+
+    /**
+     * Génère les modifications à appliquer à partir du request
+     */
+    private fun generateModificationsFromRequest(
+        request: AvenantConventionRequest,
+        convention: Convention
+    ): Map<String, Any?> {
+        val modifications = mutableMapOf<String, Any?>()
+
+        // Budget
+        if (request.nouveauBudget != null && request.nouveauBudget != convention.budget) {
+            modifications["budget"] = request.nouveauBudget
+        }
+
+        // Taux de commission
+        if (request.nouveauTauxCommission != null && request.nouveauTauxCommission != convention.tauxCommission) {
+            modifications["tauxCommission"] = request.nouveauTauxCommission
+        }
+
+        return modifications
     }
 
     /**

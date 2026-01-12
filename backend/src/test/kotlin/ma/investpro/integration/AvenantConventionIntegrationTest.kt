@@ -62,7 +62,7 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
                 password = passwordEncoder.encode("test123"),
                 email = "test_avenant@investpro.ma",
                 fullName = "Test Avenant User",
-                role = "ADMIN"
+                roles = mutableSetOf("ADMIN")
             )
         )
 
@@ -85,11 +85,14 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
         testConvention = conventionRepository.save(
             Convention(
                 code = "CONV-TEST-AVE",
-                objet = "Convention de test pour avenants",
-                type = TypeConvention.CADRE,
-                dateSignature = LocalDate.now().minusDays(30),
-                montant = BigDecimal("1000000.00"),
+                numero = "CONV-2024-TEST-AVE",
+                dateConvention = LocalDate.now().minusDays(30),
+                typeConvention = TypeConvention.CADRE,
+                libelle = "Convention de test pour avenants",
+                objet = "Test des avenants avec workflow complet",
+                budget = BigDecimal("1000000.00"),
                 tauxCommission = BigDecimal("2.50"),
+                dateDebut = LocalDate.now().minusDays(30),
                 statut = StatutConvention.VALIDEE
             )
         )
@@ -191,7 +194,7 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
 
         // Step 4: Verify convention was updated
         val updatedConvention = conventionRepository.findById(testConvention.id!!).get()
-        updatedConvention.montant shouldBe BigDecimal("1500000.00")
+        updatedConvention.budget shouldBe BigDecimal("1500000.00")
     }
 
     @Test

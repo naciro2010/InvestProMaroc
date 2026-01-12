@@ -47,7 +47,8 @@ class FlywayMigrationIntegrationTest : PostgresIntegrationTest() {
 
         // Filter out baseline migration (has null version)
         val versionedMigrations = appliedMigrations.filter { it.version != null }
-        versionedMigrations.size shouldBe 12 // V1 through V12
+        // Note: V5 is missing in the migration sequence (V1,V2,V3,V4,V6,V7,V8,V9,V10,V11,V12)
+        versionedMigrations.size shouldBe 11
 
         // Verify latest migration is V12 (avenant_conventions)
         val latestMigration = versionedMigrations.last()

@@ -8,8 +8,10 @@ import ma.investpro.entity.Convention
 import ma.investpro.entity.StatutConvention
 import ma.investpro.entity.TypeConvention
 import ma.investpro.entity.User
+import ma.investpro.repository.AvenantConventionRepository
 import ma.investpro.repository.ConventionRepository
 import ma.investpro.repository.UserRepository
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,6 +24,7 @@ import org.springframework.http.MediaType
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 /**
  * Integration test for AvenantConvention API
@@ -47,20 +50,24 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
     private lateinit var userRepository: UserRepository
 
     @Autowired
+    private lateinit var avenantRepository: AvenantConventionRepository
+
+    @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
 
     private lateinit var authToken: String
     private lateinit var testConvention: Convention
     private lateinit var testUser: User
+    private val testUsername = "test_avenant_${UUID.randomUUID().toString().substring(0, 8)}"
 
     @BeforeEach
     fun setup() {
-        // Create test user
+        // Create test user with unique username
         testUser = userRepository.save(
             User(
-                username = "test_avenant",
+                username = testUsername,
                 password = passwordEncoder.encode("test123"),
-                email = "test_avenant@investpro.ma",
+                email = "${testUsername}@investpro.ma",
                 fullName = "Test Avenant User",
                 roles = mutableSetOf("ADMIN")
             )
@@ -68,7 +75,7 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
 
         // Authenticate and get token
         val loginRequest = mapOf(
-            "username" to "test_avenant",
+            "username" to testUsername,
             "password" to "test123"
         )
 
@@ -96,6 +103,22 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
                 statut = StatutConvention.VALIDEE
             )
         )
+    }
+
+    @AfterEach
+    fun cleanup() {
+        // Clean up test data to avoid conflicts between tests
+        try {
+            if (::testConvention.isInitialized) {
+                avenantRepository.deleteAll(avenantRepository.findByConventionIdOrderByOrdreApplicationAsc(testConvention.id!!))
+                conventionRepository.delete(testConvention)
+            }
+            if (::testUser.isInitialized) {
+                userRepository.delete(testUser)
+            }
+        } catch (e: Exception) {
+            // Ignore cleanup errors
+        }
     }
 
     @Test

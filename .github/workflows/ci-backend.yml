@@ -47,15 +47,9 @@ jobs:
         working-directory: ./backend
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      - name: Build and test with Gradle
         working-directory: ./backend
-        run: ./gradlew clean build -x test
-        env:
-          GRADLE_OPTS: '-Dorg.gradle.daemon=false'
-
-      - name: Run tests
-        working-directory: ./backend
-        run: ./gradlew test --info
+        run: ./gradlew clean build --info
         env:
           GRADLE_OPTS: '-Dorg.gradle.daemon=false'
           CI: 'true'

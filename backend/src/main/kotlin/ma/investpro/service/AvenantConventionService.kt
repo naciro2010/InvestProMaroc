@@ -175,7 +175,7 @@ class AvenantConventionService(
      * Récupère les avenants en attente de validation
      */
     fun getPendingValidation(): List<AvenantConventionSummary> {
-        val avenants = avenantRepository.findAllPendingValidation()
+        val avenants = avenantRepository.findByStatutOrderByDateSoumissionAsc(StatutAvenantConvention.SOUMIS)
         return mapper.toSummaryList(avenants)
     }
 
@@ -183,24 +183,28 @@ class AvenantConventionService(
      * Récupère les statistiques des avenants d'une convention
      */
     fun getStatistics(conventionId: Long): AvenantStatistics {
-        val stats = avenantRepository.getStatistiquesByConvention(conventionId)
-        return if (stats != null) {
-            AvenantStatistics(
-                totalAvenants = (stats["totalAvenants"] as? Number)?.toInt() ?: 0,
-                brouillons = (stats["brouillons"] as? Number)?.toInt() ?: 0,
-                soumis = (stats["soumis"] as? Number)?.toInt() ?: 0,
-                valides = (stats["valides"] as? Number)?.toInt() ?: 0,
-                totalDeltaBudget = (stats["totalDeltaBudget"] as? Number)?.toDouble() ?: 0.0
-            )
-        } else {
-            AvenantStatistics(
-                totalAvenants = 0,
-                brouillons = 0,
-                soumis = 0,
-                valides = 0,
-                totalDeltaBudget = 0.0
-            )
-        }
+        val totalAvenants = avenantRepository.countByConventionId(conventionId).toInt()
+        val brouillons = avenantRepository.countByConventionIdAndStatut(
+            conventionId,
+            StatutAvenantConvention.BROUILLON
+        ).toInt()
+        val soumis = avenantRepository.countByConventionIdAndStatut(
+            conventionId,
+            StatutAvenantConvention.SOUMIS
+        ).toInt()
+        val valides = avenantRepository.countByConventionIdAndStatut(
+            conventionId,
+            StatutAvenantConvention.VALIDE
+        ).toInt()
+        val totalDeltaBudget = avenantRepository.sumDeltaBudgetByConvention(conventionId)?.toDouble() ?: 0.0
+
+        return AvenantStatistics(
+            totalAvenants = totalAvenants,
+            brouillons = brouillons,
+            soumis = soumis,
+            valides = valides,
+            totalDeltaBudget = totalDeltaBudget
+        )
     }
 
     /**

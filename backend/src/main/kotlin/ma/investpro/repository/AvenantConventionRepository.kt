@@ -46,15 +46,10 @@ interface AvenantConventionRepository : JpaRepository<AvenantConvention, Long> {
     /**
      * Trouve le dernier avenant validé d'une convention
      */
-    @Query(
-        """
-        SELECT a FROM AvenantConvention a
-        WHERE a.convention.id = :conventionId
-        AND a.statut = 'VALIDE'
-        ORDER BY a.ordreApplication DESC, a.dateValidation DESC
-        """
-    )
-    fun findLastValidatedAvenant(@Param("conventionId") conventionId: Long): AvenantConvention?
+    fun findFirstByConventionIdAndStatutOrderByOrdreApplicationDescDateValidationDesc(
+        conventionId: Long,
+        statut: StatutAvenantConvention = StatutAvenantConvention.VALIDE
+    ): AvenantConvention?
 
     /**
      * Trouve le prochain ordre d'application pour une convention
@@ -86,31 +81,17 @@ interface AvenantConventionRepository : JpaRepository<AvenantConvention, Long> {
     /**
      * Trouve tous les avenants en attente de validation
      */
-    @Query(
-        """
-        SELECT a FROM AvenantConvention a
-        WHERE a.statut = 'SOUMIS'
-        ORDER BY a.dateSoumission ASC
-        """
-    )
-    fun findAllPendingValidation(): List<AvenantConvention>
+    fun findByStatutOrderByDateSoumissionAsc(statut: StatutAvenantConvention = StatutAvenantConvention.SOUMIS): List<AvenantConvention>
 
     /**
-     * Trouve les statistiques des avenants par convention
+     * Somme des deltas budget pour une convention
      */
     @Query(
         """
-        SELECT
-            a.convention.id as conventionId,
-            COUNT(a) as totalAvenants,
-            SUM(CASE WHEN a.statut = 'BROUILLON' THEN 1 ELSE 0 END) as brouillons,
-            SUM(CASE WHEN a.statut = 'SOUMIS' THEN 1 ELSE 0 END) as soumis,
-            SUM(CASE WHEN a.statut = 'VALIDE' THEN 1 ELSE 0 END) as valides,
-            SUM(COALESCE(a.deltaBudget, 0)) as totalDeltaBudget
+        SELECT SUM(COALESCE(a.deltaBudget, 0))
         FROM AvenantConvention a
         WHERE a.convention.id = :conventionId
-        GROUP BY a.convention.id
         """
     )
-    fun getStatistiquesByConvention(@Param("conventionId") conventionId: Long): Map<String, Any>?
+    fun sumDeltaBudgetByConvention(@Param("conventionId") conventionId: Long): java.math.BigDecimal?
 }

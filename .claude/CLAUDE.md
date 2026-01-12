@@ -169,6 +169,7 @@ InvestPro Maroc manages the financial lifecycle of public investment projects in
 | Entity | Purpose | Key Fields |
 |--------|---------|-----------|
 | **Convention** | Legal framework defining commission calculation rules | code, objet, tauxCommission, montant, status |
+| **AvenantConvention** | Convention amendment with full history and workflow | numeroAvenant, objet, dateAvenant, donneesAvant (JSONB), modifications (JSONB), statut |
 | **Projet** | Investment program with budget and analytical axes | code, designation, budgetTotal, status |
 | **Marché** | Procurement contract (travaux, fournitures, services) | code, montantHT, montantTTC, fournisseur, convention |
 | **MarcheLigne** | Contract line items with analytical imputation | designation, quantite, montantUnitaire, dimensionsValeurs (JSONB) |
@@ -206,6 +207,34 @@ The system uses **PostgreSQL JSONB** for flexible multi-dimensional cost allocat
 
 This replaces the old rigid Projet+Axe system with unlimited configurable dimensions.
 
+### Convention Amendments (Avenants)
+
+The system supports **full amendment tracking** for conventions with JSONB-based history:
+
+**Workflow States:**
+- **BROUILLON** (Draft): Amendment being prepared, can be edited
+- **SOUMIS** (Submitted): Submitted for validation, locked for editing
+- **VALIDE** (Validated): Approved, convention data updated automatically
+
+**Key Features:**
+- **Snapshot Before:** `donneesAvant` JSONB field stores complete convention state before amendment
+- **Modifications:** `modifications` JSONB field stores all changes made by amendment
+- **Full History:** All amendments preserved with dates, users, and workflow state
+- **Automatic Update:** Only VALIDE amendments update the parent convention
+- **Latest Effect:** Convention always reflects the last validated amendment
+
+**State Machine:**
+```kotlin
+BROUILLON.soumettre() → SOUMIS
+SOUMIS.valider(userId) → VALIDE (updates convention)
+SOUMIS.rejeter(motif) → BROUILLON
+```
+
+**Database:**
+- Table: `avenant_conventions` with JSONB columns and GIN indexes
+- Migration: `V12__create_avenant_conventions.sql`
+- Endpoint: `/api/avenants-conventions`
+
 ## Authentication & Security
 
 ### JWT Authentication Flow
@@ -241,18 +270,19 @@ Test accounts available in `README.md` (admin/admin123, manager/manager123, user
 All endpoints follow REST conventions with French naming:
 
 ```
-/api/conventions     - Convention management
-/api/projets         - Project management
-/api/marches         - Procurement contracts (note: endpoint is "marches")
-/api/marches/:id/lignes  - Contract line items
-/api/marches/:id/avenants - Contract amendments
-/api/decomptes       - Billing statements
-/api/ordres-paiement - Payment orders
-/api/paiements       - Payments
-/api/fournisseurs    - Suppliers
-/api/dimensions      - Analytical dimensions
-/api/imputations     - Analytical imputations
-/api/users           - User management
+/api/conventions             - Convention management
+/api/avenants-conventions    - Convention amendments (history, workflow)
+/api/projets                 - Project management
+/api/marches                 - Procurement contracts (note: endpoint is "marches")
+/api/marches/:id/lignes      - Contract line items
+/api/marches/:id/avenants    - Contract amendments
+/api/decomptes               - Billing statements
+/api/ordres-paiement         - Payment orders
+/api/paiements               - Payments
+/api/fournisseurs            - Suppliers
+/api/dimensions              - Analytical dimensions
+/api/imputations             - Analytical imputations
+/api/users                   - User management
 ```
 
 ### Response Format
@@ -308,8 +338,8 @@ When creating a new CRUD entity:
 5. **Service**: Create in `service/` extending `GenericCrudService<Entity, Long>`
 6. **Controller**: Create in `controller/` with standard REST endpoints
 7. **Migration**: Add Flyway migration in `db/migration/V{next_number}__description.sql`
-   - Check existing migrations: V1-V11 already exist
-   - Next migration should be V12
+   - Check existing migrations: V1-V12 already exist
+   - Next migration should be V13
    - Use `CREATE TABLE IF NOT EXISTS` for safety
    - Add indexes for foreign keys and frequently queried columns
 8. **Tests**: Add integration tests in `src/test/kotlin/ma/investpro/integration/`
@@ -325,7 +355,7 @@ See `CRUD_TEMPLATE.md` for detailed template.
   - Development: `spring.jpa.hibernate.ddl-auto=none` + `spring.flyway.enabled=true`
   - Production: `spring.jpa.hibernate.ddl-auto=validate` + `spring.flyway.enabled=true`
 
-- **Current Migrations (V1-V11):**
+- **Current Migrations (V1-V12):**
   - **V1:** Clean schema with all tables and constraints (59KB comprehensive schema)
   - **V2:** Update user passwords (bcrypt hashing)
   - **V3-V4:** Seed test conventions data
@@ -335,6 +365,7 @@ See `CRUD_TEMPLATE.md` for detailed template.
   - **V9:** Fix enum types to VARCHAR
   - **V10:** Create projets table
   - **V11:** Add convention workflow fields (created_by_id, motif_rejet) and update status enum (Jan 2026)
+  - **V12:** Create avenant_conventions table with JSONB storage and GIN indexes for amendment tracking (Jan 2026)
 
 - **Flyway Settings:**
   - `baseline-on-migrate=true` - Create baseline for existing databases
@@ -528,11 +559,13 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 
 - **Plan Analytique Dynamique:** Migrated from rigid Projet+Axe to flexible JSONB dimensions (December 2024)
 - **Marchés System:** Complete implementation with line items, amendments, and analytical imputation per line
-- **Flyway Migrations Active:** Using Flyway for database versioning (11 migrations as of Jan 2026)
+- **Flyway Migrations Active:** Using Flyway for database versioning (12 migrations as of Jan 2026)
 - **ExcelJS Integration:** Frontend now uses ExcelJS instead of XLSX for better spreadsheet generation
 - **Convention Workflow Amélioré:** New workflow with REJETE status, createdBy tracking, and improved rejection handling (January 2026)
 - **Railway Deployment:** Frontend configured for Railway with SPA routing fix (`serve -s`) (January 2026)
 - **Simple Convention Form:** Replaced complex wizard with clean, focused form for CADRE conventions
+- **Convention Amendments System:** Full amendment (avenant) system with JSONB storage for flexible data snapshots and workflow (BROUILLON → SOUMIS → VALIDE) (January 2026)
+- **Backend CI/CD:** GitHub Actions workflow for automatic compilation verification on every push (January 2026)
 
 ## Current Implementation Status
 

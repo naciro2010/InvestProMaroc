@@ -107,6 +107,10 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
 
     @AfterEach
     fun cleanup() {
+        cleanupTestData()
+    }
+
+    private fun cleanupTestData() {
         // Clean up test data to avoid conflicts between tests
         try {
             if (::testConvention.isInitialized) {
@@ -179,15 +183,11 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
         val avenantId = createData.get("id").asLong()
 
         // Step 2: Submit avenant (BROUILLON → SOUMIS)
-        val submitRequest = mapOf(
-            "avenantId" to avenantId,
-            "userId" to testUser.id
-        )
-
+        // No body needed - userId is extracted from JWT
         val submitResponse = restTemplate.exchange(
-            "/api/avenants-conventions/soumettre",
+            "/api/avenants-conventions/$avenantId/soumettre",
             HttpMethod.POST,
-            createHttpEntity(submitRequest),
+            createHttpEntity(null),
             String::class.java
         )
 
@@ -198,9 +198,9 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
         submitData.get("canValider").asBoolean() shouldBe true
 
         // Step 3: Validate avenant (SOUMIS → VALIDE)
+        // Only avenantId needed - userId is extracted from JWT
         val validateRequest = mapOf(
             "avenantId" to avenantId,
-            "userId" to testUser.id,
             "remarques" to "Avenant validé après vérification"
         )
 
@@ -358,23 +358,19 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
     }
 
     private fun soumettreAvenant(avenantId: Long) {
-        val request = mapOf(
-            "avenantId" to avenantId,
-            "userId" to testUser.id
-        )
-
+        // No body needed - userId is extracted from JWT
         restTemplate.exchange(
-            "/api/avenants-conventions/soumettre",
+            "/api/avenants-conventions/$avenantId/soumettre",
             HttpMethod.POST,
-            createHttpEntity(request),
+            createHttpEntity(null),
             String::class.java
         )
     }
 
     private fun validerAvenant(avenantId: Long) {
+        // Only avenantId needed - userId is extracted from JWT
         val request = mapOf(
-            "avenantId" to avenantId,
-            "userId" to testUser.id
+            "avenantId" to avenantId
         )
 
         restTemplate.exchange(

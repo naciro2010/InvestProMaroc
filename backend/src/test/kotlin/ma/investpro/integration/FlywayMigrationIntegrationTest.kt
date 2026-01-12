@@ -44,10 +44,13 @@ class FlywayMigrationIntegrationTest : PostgresIntegrationTest() {
         // Then: All migrations should be applied
         val appliedMigrations = info.applied()
         appliedMigrations shouldNotBe null
-        appliedMigrations.size shouldBe 12 // V1 through V12
+
+        // Filter out baseline migration (has null version)
+        val versionedMigrations = appliedMigrations.filter { it.version != null }
+        versionedMigrations.size shouldBe 12 // V1 through V12
 
         // Verify latest migration is V12 (avenant_conventions)
-        val latestMigration = appliedMigrations.last()
+        val latestMigration = versionedMigrations.last()
         latestMigration.version.version shouldBe "12"
         latestMigration.description shouldBe "create avenant conventions"
     }

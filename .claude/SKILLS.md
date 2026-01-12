@@ -91,6 +91,64 @@ interface Response { data: DataResponse }
    npm run build              # Compilation check
    ```
 
+## CI/CD and Automated Verification
+
+### GitHub Actions Workflows
+
+The project uses automated CI/CD to catch errors early:
+
+#### Backend CI (`ci-backend.yml`)
+- **Triggers:** Push to `main` or `claude/**` branches with backend changes
+- **Runs:** `./gradlew clean build -x test` to verify compilation
+- **Detects:** Type safety issues, compilation errors, missing imports
+- **Java Version:** 21 with Temurin distribution
+- **Caching:** Gradle dependencies cached for faster builds
+
+#### Frontend CI (`ci-frontend.yml`)
+- **Triggers:** Push to `main` or `claude/**` branches with frontend changes
+- **Runs:** `npm ci`, `npm run lint`, `npm run build`
+- **Detects:** ESLint violations, TypeScript errors, build failures
+- **Node Version:** 20 with npm dependency caching
+
+### Why CI/CD Matters
+
+✅ **Catches compilation errors before merge**
+✅ **Enforces type safety automatically**
+✅ **Prevents broken builds reaching production**
+✅ **Provides fast feedback on pull requests**
+✅ **Documents build status with badges**
+
+### Common CI/CD Errors to Fix
+
+1. **Missing `data` parameter in `ApiResponse`**
+   - Error: `No value passed for parameter 'data'`
+   - Fix: Always include `data = null` in error responses
+
+2. **Duplicate type declarations**
+   - Error: `Redeclaration: data class ApiResponse<T>`
+   - Fix: Keep only one declaration (in `dto/ApiResponse.kt`)
+
+3. **TypeScript compilation errors**
+   - Error: Property 'X' does not exist on type 'Y'
+   - Fix: Add proper type definitions or interfaces
+
+### Best Practice: Test Locally Before Pushing
+
+Always run the same commands locally that CI will run:
+
+```bash
+# Backend (before git push)
+cd backend
+./gradlew clean build -x test
+
+# Frontend (before git push)
+cd frontend
+npm run lint
+npm run build
+```
+
+This catches CI errors before they appear in GitHub Actions.
+
 ## Commit Message Standards
 
 ### Format
@@ -207,6 +265,58 @@ refactor: Simplify API endpoint routing
            api.get(`/items/${id}`)
    }
    ```
+
+### Domain-Specific Patterns
+
+#### Convention Amendment System (Avenants)
+
+The project implements a comprehensive amendment tracking system using JSONB:
+
+**Key Components:**
+```kotlin
+// Entity with JSONB fields
+@Entity
+class AvenantConvention(
+    var numeroAvenant: String,
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    var donneesAvant: Map<String, Any?>?,  // Snapshot before
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    var modifications: Map<String, Any?>?, // Changes made
+
+    @Enumerated(EnumType.STRING)
+    var statut: StatutAvenantConvention
+)
+```
+
+**Workflow State Machine:**
+```kotlin
+enum class StatutAvenantConvention {
+    BROUILLON,  // Editable draft
+    SOUMIS,     // Submitted for approval
+    VALIDE      // Approved, updates convention
+}
+
+// State transitions
+fun soumettre() { statut = SOUMIS }
+fun valider(userId: Long) {
+    statut = VALIDE
+    // Updates parent convention automatically
+}
+fun rejeter(motif: String) { statut = BROUILLON }
+```
+
+**Database:**
+- Migration: `V12__create_avenant_conventions.sql`
+- JSONB columns with GIN indexes
+- Foreign key to conventions with CASCADE
+
+**API:** `/api/avenants-conventions` (create, submit, validate, reject)
+
+**Frontend:** Integrated in Convention detail page as "Avenants" tab
 
 ## Solution Design Principles
 

@@ -5,14 +5,13 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.utility.DockerImageName
 
 /**
  * Base class for integration tests using real PostgreSQL
  *
  * **Environment Detection:**
- * - CI environment (SPRING_PROFILES_ACTIVE=ci): Uses GitHub Actions PostgreSQL service
+ * - CI environment (CI=true): Uses GitHub Actions PostgreSQL service
  * - Local development: Uses Testcontainers with Docker
  *
  * This ensures:
@@ -23,34 +22,35 @@ import org.testcontainers.junit.jupiter.Testcontainers
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test", "ci")
-@Testcontainers(disabledWithoutDocker = true)
 abstract class PostgresIntegrationTest {
 
     companion object {
-        private val isCI = System.getenv("CI") == "true" ||
-                          System.getProperty("spring.profiles.active")?.contains("ci") == true
+        private val isCI = System.getenv("CI") == "true"
 
-        @Container
-        @JvmStatic
-        val postgresContainer: PostgreSQLContainer<Nothing>? = if (!isCI) {
-            PostgreSQLContainer<Nothing>("postgres:16-alpine").apply {
-                withDatabaseName("investpro_test")
-                withUsername("test")
-                withPassword("test")
-                withReuse(false)
+        private val postgresContainer: PostgreSQLContainer<*>? by lazy {
+            if (!isCI) {
+                PostgreSQLContainer(DockerImageName.parse("postgres:16-alpine")).apply {
+                    withDatabaseName("investpro_test")
+                    withUsername("test")
+                    withPassword("test")
+                    withReuse(false)
+                    start()
+                }
+            } else {
+                null
             }
-        } else {
-            null // Use GitHub Actions service in CI
         }
 
         @DynamicPropertySource
         @JvmStatic
         fun configureProperties(registry: DynamicPropertyRegistry) {
-            if (!isCI && postgresContainer != null) {
+            if (!isCI) {
                 // Local development with Testcontainers
-                registry.add("spring.datasource.url", postgresContainer::getJdbcUrl)
-                registry.add("spring.datasource.username", postgresContainer::getUsername)
-                registry.add("spring.datasource.password", postgresContainer::getPassword)
+                postgresContainer?.let { container ->
+                    registry.add("spring.datasource.url") { container.jdbcUrl }
+                    registry.add("spring.datasource.username") { container.username }
+                    registry.add("spring.datasource.password") { container.password }
+                }
             }
             // In CI, use environment variables from application-ci.properties
 

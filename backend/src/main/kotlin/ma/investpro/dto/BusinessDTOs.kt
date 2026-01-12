@@ -345,13 +345,6 @@ data class DecompteStatistiques(
     val montantTotal: BigDecimal
 )
 
-// Response wrapper
-data class ApiResponse<T>(
-    val success: Boolean,
-    val message: String,
-    val data: T? = null
-)
-
 // Budget Statistics DTO
 data class BudgetStatistiques(
     val total: Int,

@@ -17,6 +17,9 @@ repositories {
     mavenCentral()
 }
 
+// Flyway version override to support PostgreSQL 17
+ext["flyway.version"] = "10.20.1"
+
 dependencies {
     // Spring Boot Starters
     implementation("org.springframework.boot:spring-boot-starter-web")

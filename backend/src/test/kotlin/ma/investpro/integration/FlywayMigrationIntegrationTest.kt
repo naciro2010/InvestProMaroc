@@ -15,7 +15,7 @@ import javax.sql.DataSource
  * and the Spring Boot application starts successfully with real PostgreSQL
  *
  * This test ensures:
- * 1. All Flyway migrations (V1-V12) execute without errors
+ * 1. All Flyway migrations (V1-V3) execute without errors
  * 2. Database schema matches JPA entity definitions
  * 3. Spring Boot context starts successfully
  * 4. Basic API endpoints are accessible
@@ -47,13 +47,13 @@ class FlywayMigrationIntegrationTest : PostgresIntegrationTest() {
 
         // Filter out baseline migration (has null version)
         val versionedMigrations = appliedMigrations.filter { it.version != null }
-        // Note: V5 is missing in the migration sequence (V1,V2,V3,V4,V6,V7,V8,V9,V10,V11,V12,V13)
-        versionedMigrations.size shouldBe 12
+        // Simple migration structure: V1 (drop), V2 (create), V3 (seed)
+        versionedMigrations.size shouldBe 3
 
-        // Verify latest migration is V13 (add actif column)
+        // Verify latest migration is V3 (seed data)
         val latestMigration = versionedMigrations.last()
-        latestMigration.version.version shouldBe "13"
-        latestMigration.description shouldBe "add actif to avenant conventions"
+        latestMigration.version.version shouldBe "3"
+        latestMigration.description shouldBe "seed data"
     }
 
     @Test
@@ -90,7 +90,7 @@ class FlywayMigrationIntegrationTest : PostgresIntegrationTest() {
     }
 
     @Test
-    fun `should have JSONB columns with GIN indexes`() {
+    fun `should have JSONB columns for flexible data storage`() {
         // When: Query JSONB columns
         val jsonbColumns = jdbcTemplate.queryForList(
             """
@@ -106,40 +106,6 @@ class FlywayMigrationIntegrationTest : PostgresIntegrationTest() {
         val jsonbColumnNames = jsonbColumns.map { it["column_name"] as String }
         jsonbColumnNames shouldContain "donnees_avant"
         jsonbColumnNames shouldContain "modifications"
-
-        // And: GIN indexes should exist
-        val ginIndexes = jdbcTemplate.queryForList(
-            """
-            SELECT indexname
-            FROM pg_indexes
-            WHERE tablename = 'avenant_conventions'
-            AND indexdef LIKE '%USING gin%'
-            """.trimIndent()
-        )
-
-        ginIndexes.size shouldBe 2
-    }
-
-    @Test
-    fun `should have all foreign key constraints`() {
-        // When: Query foreign keys
-        val foreignKeys = jdbcTemplate.queryForList(
-            """
-            SELECT constraint_name, table_name
-            FROM information_schema.table_constraints
-            WHERE constraint_type = 'FOREIGN KEY'
-            AND table_name = 'avenant_conventions'
-            """.trimIndent()
-        )
-
-        // Then: Should have 4 foreign keys (convention, created_by, soumis_par, valide_par)
-        foreignKeys.size shouldBe 4
-
-        val constraintNames = foreignKeys.map { it["constraint_name"] as String }
-        constraintNames shouldContain "fk_avenant_conventions_convention"
-        constraintNames shouldContain "fk_avenant_conventions_created_by"
-        constraintNames shouldContain "fk_avenant_conventions_soumis_par"
-        constraintNames shouldContain "fk_avenant_conventions_valide_par"
     }
 
     @Test

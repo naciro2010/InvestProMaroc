@@ -47,13 +47,13 @@ class FlywayMigrationIntegrationTest : PostgresIntegrationTest() {
 
         // Filter out baseline migration (has null version)
         val versionedMigrations = appliedMigrations.filter { it.version != null }
-        // Note: V5 is missing in the migration sequence (V1,V2,V3,V4,V6,V7,V8,V9,V10,V11,V12)
-        versionedMigrations.size shouldBe 11
+        // Note: V5 is missing in the migration sequence (V1,V2,V3,V4,V6,V7,V8,V9,V10,V11,V12,V13)
+        versionedMigrations.size shouldBe 12
 
-        // Verify latest migration is V12 (avenant_conventions)
+        // Verify latest migration is V13 (add actif column)
         val latestMigration = versionedMigrations.last()
-        latestMigration.version.version shouldBe "12"
-        latestMigration.description shouldBe "create avenant conventions"
+        latestMigration.version.version shouldBe "13"
+        latestMigration.description shouldBe "add actif to avenant conventions"
     }
 
     @Test

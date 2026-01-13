@@ -7,9 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **InvestPro Maroc** is a comprehensive financial management platform for managing investment expenses and commission calculations in Morocco. It consists of a Kotlin/Spring Boot backend and a React/TypeScript frontend for tracking conventions, projects, markets (marchés), payments, and analytical cost allocations.
 
 **Tech Stack:**
-- **Backend:** Kotlin 2.0.21, Spring Boot 3.3.5, PostgreSQL 16, JWT Auth, Spring Security
+- **Backend:** Kotlin 2.0.21, Spring Boot 3.4.1, PostgreSQL 16/17, JWT Auth, Spring Security
 - **Frontend:** React 18, TypeScript 5.x, Vite, TailwindCSS, Material-UI, Recharts
-- **Database:** PostgreSQL with JSONB for analytical dimensions
+- **Database:** PostgreSQL 16/17 with JSONB for analytical dimensions
 
 ## Common Commands
 

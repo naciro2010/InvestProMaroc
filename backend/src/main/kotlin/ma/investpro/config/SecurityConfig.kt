@@ -26,7 +26,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableMethodSecurity
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
-    private val userDetailsService: UserDetailsService
+    private val userDetailsService: UserDetailsService,
+    private val corsProperties: CorsProperties
 ) {
 
     @Bean
@@ -53,20 +54,12 @@ class SecurityConfig(
     fun corsConfigurationSource(): CorsConfigurationSource =
         UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/**", CorsConfiguration().apply {
-                // Support local development and production origins
-                allowedOrigins = listOf(
-                    "http://localhost:5173",                                    // Vite dev server
-                    "http://localhost:3000",                                    // React dev server
-                    "http://localhost:4200",                                    // Angular dev server
-                    "https://naciro2010.github.io",                             // GitHub Pages
-                    "https://investpromaroc-production.up.railway.app",         // Railway production
-                    "https://investpromaroc.com",                               // Production domain
-                    "https://www.investpromaroc.com"                            // Production domain (www)
-                )
-                allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-                allowedHeaders = listOf("*")
+                // Load CORS configuration from properties (not hardcoded)
+                allowedOrigins = corsProperties.allowedOrigins.split(",").map { it.trim() }
+                allowedMethods = corsProperties.allowedMethods.split(",").map { it.trim() }
+                allowedHeaders = corsProperties.allowedHeaders.split(",").map { it.trim() }
                 exposedHeaders = listOf("Authorization", "X-Total-Count")
-                allowCredentials = true
+                allowCredentials = corsProperties.allowCredentials
                 maxAge = 3600  // 1 hour
             })
         }

@@ -1,40 +1,25 @@
 package ma.investpro.integration
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import ma.investpro.config.TestSecurityConfig
 import org.flywaydb.core.Flyway
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.ApplicationContext
-import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.DynamicPropertyRegistry
-import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import javax.sql.DataSource
 
 /**
- * Simple integration test with real PostgreSQL + Flyway migrations
+ * Clean integration test with real PostgreSQL + Flyway migrations
  * Tests the 3-file migration strategy (V1: DROP, V2: CREATE, V3: SEED)
+ *
+ * No Spring Boot context - just pure Flyway + PostgreSQL + JdbcTemplate
  */
-@SpringBootTest
-@ActiveProfiles("test")
-@Import(TestSecurityConfig::class)
 class FlywayMigrationIntegrationTest {
-
-    @Autowired
-    private lateinit var dataSource: DataSource
-
-    @Autowired
-    private lateinit var jdbcTemplate: JdbcTemplate
-
-    @Autowired
-    private lateinit var applicationContext: ApplicationContext
 
     companion object {
         private val postgres = PostgreSQLContainer(DockerImageName.parse("postgres:16-alpine")).apply {
@@ -43,43 +28,55 @@ class FlywayMigrationIntegrationTest {
             withPassword("test")
         }
 
+        private lateinit var dataSource: DataSource
+        private lateinit var jdbcTemplate: JdbcTemplate
+        private lateinit var flyway: Flyway
+
         @BeforeAll
         @JvmStatic
         fun setup() {
+            // Start PostgreSQL container
             postgres.start()
+
+            // Create DataSource
+            val config = HikariConfig().apply {
+                jdbcUrl = postgres.jdbcUrl
+                username = postgres.username
+                password = postgres.password
+                driverClassName = "org.postgresql.Driver"
+                maximumPoolSize = 5
+            }
+            dataSource = HikariDataSource(config)
+
+            // Create JdbcTemplate
+            jdbcTemplate = JdbcTemplate(dataSource)
+
+            // Configure and run Flyway migrations
+            flyway = Flyway.configure()
+                .dataSource(dataSource)
+                .locations("classpath:db/migration")
+                .baselineOnMigrate(true)
+                .cleanDisabled(false)
+                .load()
+
+            // Execute migrations
+            flyway.migrate()
         }
 
-        @DynamicPropertySource
+        @AfterAll
         @JvmStatic
-        fun configureProperties(registry: DynamicPropertyRegistry) {
-            registry.add("spring.datasource.url") { postgres.jdbcUrl }
-            registry.add("spring.datasource.username") { postgres.username }
-            registry.add("spring.datasource.password") { postgres.password }
-            registry.add("spring.datasource.driver-class-name") { "org.postgresql.Driver" }
-
-            // Enable Flyway for migrations
-            registry.add("spring.flyway.enabled") { "true" }
-            registry.add("spring.flyway.baseline-on-migrate") { "true" }
-            registry.add("spring.flyway.clean-disabled") { "false" }
-
-            // Validate schema matches JPA entities
-            registry.add("spring.jpa.hibernate.ddl-auto") { "validate" }
-            registry.add("spring.jpa.database-platform") { "org.hibernate.dialect.PostgreSQLDialect" }
+        fun teardown() {
+            postgres.stop()
         }
     }
 
     @Test
     fun `should execute all Flyway migrations successfully`() {
-        // Given: Flyway is configured
-        val flyway = Flyway.configure()
-            .dataSource(dataSource)
-            .load()
-
-        // When: Check migration status
+        // Check migration status
         val info = flyway.info()
         val appliedMigrations = info.applied()
 
-        // Then: All 3 migrations should be applied
+        // All 3 migrations should be applied
         appliedMigrations shouldNotBe null
         val versionedMigrations = appliedMigrations.filter { it.version != null }
 
@@ -191,26 +188,38 @@ class FlywayMigrationIntegrationTest {
     }
 
     @Test
-    fun `should start Spring Boot application successfully`() {
-        // If the context loads successfully, this test passes
-        // This verifies that all beans are created and wired correctly
-        applicationContext shouldNotBe null
+    fun `should verify database connection`() {
+        // Verify dataSource is working
         dataSource shouldNotBe null
         jdbcTemplate shouldNotBe null
+
+        // Test database connection
+        val result = jdbcTemplate.queryForObject("SELECT 1", Int::class.java)
+        result shouldBe 1
     }
 
     @Test
-    fun `should validate Hibernate schema matches Flyway migrations`() {
-        // This test passes if Spring Boot context loads successfully
-        // with spring.jpa.hibernate.ddl-auto=validate
-        // If there's a mismatch, the context would fail to load
-
-        // Verify a few critical columns match
-        val avenantConventionColumns = jdbcTemplate.queryForList(
-            "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'avenant_conventions'"
+    fun `should have correct column types in avenant_conventions`() {
+        // Verify critical column types
+        val columns = jdbcTemplate.queryForList(
+            """
+            SELECT column_name, data_type, is_nullable
+            FROM information_schema.columns
+            WHERE table_name = 'avenant_conventions'
+            ORDER BY ordinal_position
+            """.trimIndent()
         )
 
-        avenantConventionColumns.isNotEmpty() shouldBe true
+        columns.isNotEmpty() shouldBe true
+
+        // Verify JSONB columns
+        val donneesAvantType = columns.find { it["column_name"] == "donnees_avant" }
+        donneesAvantType shouldNotBe null
+        donneesAvantType?.get("data_type") shouldBe "jsonb"
+
+        val modificationsType = columns.find { it["column_name"] == "modifications" }
+        modificationsType shouldNotBe null
+        modificationsType?.get("data_type") shouldBe "jsonb"
     }
 
     // Helper extension

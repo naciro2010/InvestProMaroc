@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { Box, FormHelperText } from '@mui/material'
@@ -20,7 +20,7 @@ const RichTextEditor = ({
   helperText,
   minHeight = 200
 }: RichTextEditorProps) => {
-  const quillRef = useRef<ReactQuill>(null)
+  const quillRef = useRef<ReactQuill | null>(null)
 
   const modules = {
     toolbar: [

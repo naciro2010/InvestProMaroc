@@ -1,8 +1,17 @@
 # Testing Strategy
 
-## FlywayMigrationIntegrationTest
+## Overview
 
-### Approach: Pure Integration Test (No Spring Boot Context)
+InvestPro Maroc uses two types of integration tests:
+
+1. **Database Migration Tests** - Test Flyway migrations without Spring Boot context
+2. **API Integration Tests** - Test REST endpoints with full Spring Boot context
+
+## 1. Database Migration Tests
+
+### FlywayMigrationIntegrationTest
+
+#### Approach: Pure Integration Test (No Spring Boot Context)
 
 This test uses a **clean, production-like approach** without Spring Boot context overhead:
 
@@ -127,14 +136,233 @@ This test is designed to work in **GitHub Actions** and **Railway** CI/CD pipeli
 
 **No special configuration needed** - just standard `./gradlew test` command.
 
-## Other Integration Tests
+## 2. API Integration Tests
 
-For tests that need full Spring Boot context (e.g., REST API endpoints, security):
-- Use `@SpringBootTest` with `@AutoConfigureMockMvc`
-- Use `@WithMockUser` for authenticated endpoints
-- Keep those tests separate from migration tests
+### PostgresIntegrationTest Base Class
 
-This ensures:
-- Fast migration testing (no Spring Boot)
-- Comprehensive API testing (with Spring Boot)
-- Clear separation of concerns
+#### Approach: Full Spring Boot Context with Real PostgreSQL
+
+API integration tests (like `AvenantConventionIntegrationTest`) test REST endpoints with:
+- Full Spring Boot application context
+- Real PostgreSQL database (Testcontainers or CI service)
+- JWT authentication
+- Spring Security
+- All application beans
+
+```
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+        ↓
+Testcontainers PostgreSQL (local) or CI PostgreSQL service
+        ↓
+Flyway migrations executed
+        ↓
+Full application context loaded
+        ↓
+TestRestTemplate for HTTP requests
+        ↓
+JWT authentication + REST API tests
+```
+
+### Base Class Configuration
+
+All API tests inherit from `PostgresIntegrationTest`:
+
+```kotlin
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@ActiveProfiles("test")
+abstract class PostgresIntegrationTest {
+
+    companion object {
+        private val isCI = System.getenv("CI") == "true"
+
+        // Local: Testcontainers PostgreSQL
+        // CI: GitHub Actions PostgreSQL service
+        private val postgresContainer: PostgreSQLContainer<*>? by lazy {
+            if (!isCI) {
+                PostgreSQLContainer(...).apply { start() }
+            } else null
+        }
+
+        @DynamicPropertySource
+        fun configureProperties(registry: DynamicPropertyRegistry) {
+            // Inject database URL, username, password
+            // Enable Flyway, configure JPA
+        }
+    }
+}
+```
+
+### Test Structure Example
+
+```kotlin
+class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
+
+    @Autowired
+    private lateinit var restTemplate: TestRestTemplate
+
+    @Autowired
+    private lateinit var conventionRepository: ConventionRepository
+
+    private lateinit var authToken: String
+
+    @BeforeEach
+    fun setup() {
+        // 1. Create test user
+        userRepository.save(User(...))
+
+        // 2. Authenticate and get JWT token
+        val loginResponse = restTemplate.postForEntity("/api/auth/login", ...)
+        authToken = extractToken(loginResponse)
+
+        // 3. Create test data
+        testConvention = conventionRepository.save(Convention(...))
+    }
+
+    @Test
+    fun `should create avenant via REST API`() {
+        // Given: Request body
+        val request = mapOf(
+            "conventionId" to testConvention.id,
+            "numeroAvenant" to "AVE-001"
+        )
+
+        // When: POST with JWT authentication
+        val response = restTemplate.exchange(
+            "/api/avenants-conventions",
+            HttpMethod.POST,
+            createHttpEntity(request),  // Adds Bearer token
+            String::class.java
+        )
+
+        // Then: Verify response
+        response.statusCode shouldBe HttpStatus.CREATED
+    }
+
+    private fun createHttpEntity(body: Any?): HttpEntity<Any> {
+        val headers = HttpHeaders()
+        headers.set("Authorization", "Bearer $authToken")
+        return HttpEntity(body, headers)
+    }
+}
+```
+
+### Configuration Files
+
+**application-test.properties:**
+```properties
+spring.application.name=InvestPro Backend Test
+
+# JWT (required for authentication)
+app.jwt.secret=test_secret_base64_encoded
+app.jwt.expiration-ms=86400000
+
+# Server (RANDOM_PORT set by @SpringBootTest)
+server.port=0
+
+# Logging
+logging.level.root=WARN
+logging.level.ma.investpro=INFO
+```
+
+**Database configuration is injected dynamically:**
+- Local: Testcontainers PostgreSQL URL/credentials
+- CI: GitHub Actions PostgreSQL service URL/credentials
+
+### Environment Detection
+
+```kotlin
+private val isCI = System.getenv("CI") == "true"
+
+if (!isCI) {
+    // Local: Start Testcontainers
+    postgresContainer?.start()
+} else {
+    // CI: Use environment variables
+    System.getenv("SPRING_DATASOURCE_URL")
+}
+```
+
+### Why This Approach is Clean
+
+**✅ No Workarounds:**
+- Uses real Spring Boot application context (production-like)
+- Uses real PostgreSQL (not H2 mock)
+- Uses real JWT authentication (not @WithMockUser)
+- Uses real Flyway migrations (same as production)
+
+**✅ Environment Flexibility:**
+- Local: Testcontainers automatically managed
+- CI: GitHub Actions PostgreSQL service
+- No code changes needed between environments
+
+**✅ Complete Coverage:**
+- Tests REST endpoints
+- Tests authentication/authorization
+- Tests business logic
+- Tests database interactions
+- Tests Flyway migrations
+
+### Running API Tests
+
+```bash
+cd backend
+
+# Run single test class
+./gradlew test --tests "ma.investpro.integration.AvenantConventionIntegrationTest"
+
+# Run all integration tests
+./gradlew test --tests "ma.investpro.integration.*"
+
+# Local environment
+# - Requires: Docker running (for Testcontainers)
+
+# CI environment
+# - Requires: PostgreSQL service configured in GitHub Actions
+# - Set: CI=true environment variable
+```
+
+### CI/CD Configuration
+
+**GitHub Actions workflow:**
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: investpro_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Run tests
+        env:
+          CI: true
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/investpro_test
+          SPRING_DATASOURCE_USERNAME: test
+          SPRING_DATASOURCE_PASSWORD: test
+        run: ./gradlew test
+```
+
+## Test Comparison
+
+| Feature | FlywayMigrationIntegrationTest | AvenantConventionIntegrationTest |
+|---------|-------------------------------|----------------------------------|
+| Spring Boot | ❌ No | ✅ Yes (full context) |
+| Database | ✅ Testcontainers PostgreSQL | ✅ Testcontainers or CI PostgreSQL |
+| Speed | 🚀 5-10s | 🐢 30-60s (context load) |
+| Tests | Flyway migrations | REST API endpoints |
+| Authentication | ❌ No | ✅ JWT authentication |
+| Purpose | Verify database schema | Verify API behavior |
+
+## Summary
+
+- **FlywayMigrationIntegrationTest**: Fast, focused tests for database migrations only
+- **API Integration Tests**: Comprehensive tests for REST endpoints with full application context
+- **Both approaches are clean** - No workarounds, no mocks, production-like testing

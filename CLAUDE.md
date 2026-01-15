@@ -1012,16 +1012,18 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - Add visual hierarchy with larger headers and subtle shadows
 
 ### 3. Project-Convention Association
-**Status:** Planning
+**Status:** In Progress - Migration Complete ✓ (January 2026)
 
 **Goal:** Allow projects to be linked to one or multiple conventions
 
-**Database Changes:**
-- Create junction table: `projet_conventions` with:
-  - `projet_id` (FK to projets)
-  - `convention_id` (FK to conventions)
-  - `ordre` (sequence)
-  - `created_at`, `updated_at`
+**Database Changes:** ✅ DONE (Migration V5)
+- Created junction table: `projet_conventions` with:
+  - `projet_id` (FK to projets) - ON DELETE CASCADE
+  - `convention_id` (FK to conventions) - ON DELETE CASCADE
+  - `ordre` (sequence for display order) - DEFAULT 0
+  - `created_at`, `updated_at` timestamps
+  - UNIQUE constraint on (projet_id, convention_id)
+  - Indexes on both foreign keys and ordre field
 
 **Backend API Changes:**
 - Update ProjetDTO to include `conventions: List<ConventionDTO>`

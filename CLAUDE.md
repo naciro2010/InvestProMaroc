@@ -903,6 +903,19 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 
 ## Recent Architecture Changes
 
+- **Project-Convention Association System:** Complete backend implementation with REST API and frontend component (January 2026)
+  - ProjetConvention entity with junction table `projet_conventions` in V2 migration
+  - ProjetConventionService with validation and cascade operations
+  - 8 REST endpoints for full CRUD and relationship management
+  - ConventionMultiSelect React component with strong typing
+  - 100% type-safe frontend API client with all endpoints
+
+- **Strong Typing Enforcement:** Critical mandatory requirement added to all project guidelines (January 2026)
+  - NEVER use `any` type in TypeScript or `Any` in Kotlin
+  - All code without proper types will be rejected
+  - Proper error handling with `error: unknown` and type guards
+  - Updated CLAUDE.md and .skills with prominent warnings
+
 - **Progressive Web App (PWA):** Full PWA support with offline capabilities (January 2026)
   - `vite-plugin-pwa` for service worker generation
   - App installable on desktop and mobile
@@ -1055,12 +1068,12 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - Add visual hierarchy with larger headers and subtle shadows
 
 ### 3. Project-Convention Association
-**Status:** ✅ Part 1 COMPLETE (Database) - Backend/Frontend In Progress (January 2026)
+**Status:** ✅ Backend COMPLETE - Frontend Component Ready (January 2026)
 
 **Goal:** Allow projects to be linked to one or multiple conventions
 
-**Database Changes:** ✅ DONE (Migration V5)
-- ✅ Created junction table: `projet_conventions` with:
+**Database Changes:** ✅ DONE
+- ✅ Created junction table: `projet_conventions` in V2__create_schema.sql with:
   - `projet_id` (FK to projets) - ON DELETE CASCADE
   - `convention_id` (FK to conventions) - ON DELETE CASCADE
   - `ordre` (sequence for display order) - DEFAULT 0
@@ -1070,32 +1083,56 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - ✅ Comments/documentation on table and columns
 - ✅ Cascade delete for data integrity
 
-**Remaining Work (Next Steps):**
+**Backend Implementation:** ✅ COMPLETE
+- ✅ ProjetConvention Entity with @ManyToOne relationships
+- ✅ ProjetConventionRepository with CRUD + custom queries:
+  - `findByProjetIdOrderByOrdre()` - Get conventions by project
+  - `findByConventionIdOrderByOrdre()` - Get projects by convention
+  - `existsByProjetIdAndConventionId()` - Check if association exists
+  - Batch delete operations for cascade cleanup
+- ✅ ProjetConventionService extending GenericCrudService
+  - `createAssociation()` with validation
+  - `deleteAssociation()` with integrity checks
+  - `reorderConventions()` for custom ordering
+  - Lazy loading to prevent N+1 queries
+- ✅ ProjetConventionMapper for proper DTO conversion
+- ✅ ProjetConventionController with REST endpoints:
+  - `POST /api/projet-conventions` (create association)
+  - `GET /api/projet-conventions/projet/{id}` (get conventions for project)
+  - `GET /api/projet-conventions/convention/{id}` (get projects for convention)
+  - `DELETE /api/projet-conventions/{id}` (delete association)
+  - `PUT /api/projet-conventions/{id}/reorder` (reorder conventions)
+- ✅ ProjetDTO updated with `conventions: List<ConventionSimpleDTO>` field
+- ✅ ProjetConventionDTO and request/response DTOs with strong typing
+- ✅ Complete OpenAPI/Swagger documentation in controller
 
-Backend API Changes:
-- [ ] Create Entity class: ProjetConvention
-- [ ] Create Repository: ProjetConventionRepository
-- [ ] Update ProjetDTO to include `conventions: List<ConventionDTO>`
-- [ ] Add Service methods for association management
-- [ ] Add endpoints:
-  - `POST /api/projets/{id}/conventions` (add convention)
-  - `DELETE /api/projets/{id}/conventions/{conventionId}` (remove)
-  - Update `GET /api/projets/{id}` to include linked conventions
+**Frontend Implementation:** ✅ COMPONENT READY
+- ✅ ConventionMultiSelect component for convention selection
+  - Checkbox-based multi-select with filtered convention list
+  - Displays convention number, name, code, and status
+  - Filters to only active conventions (BROUILLON, SOUMIS, VALIDEE)
+  - Shows selected count with visual indicator
+  - Fully typed with strong TypeScript
+- ✅ projetConventionsAPI with all endpoints:
+  - `getAll()`, `getById()` - CRUD operations
+  - `getByProjet()`, `getByConvention()` - Relationship queries
+  - `create()`, `updateOrdre()`, `delete()` - Entity management
+  - `reorderConventions()` - Bulk ordering
+- ✅ 100% strong typing throughout (no `any` types)
+- ✅ Error handling with proper type guards
 
-Frontend Changes:
-- [ ] Update ProjetFormPage with same styling as SimpleConventionForm
-- [ ] Add multi-select field for conventions
-  - Checkbox list or select dropdown with convention list
-  - Display selected conventions as chips/tags
-  - Ability to add/remove conventions from project
+**Remaining Integration Work:**
+- [ ] Integrate ConventionMultiSelect into ProjetFormPage
+- [ ] Update ProjetFormPage styling to match SimpleConventionForm design
 - [ ] Update ProjetDetailPage to display associated conventions
 - [ ] Update ProjetsPage to show convention count for each project
+- [ ] Add integration tests for ProjetConvention endpoints
 
-Implementation Order:
-1. ✅ Create migration for `projet_conventions` table (DONE)
-2. [ ] Add backend Entity, Repository, Service, API endpoints
-3. [ ] Update frontend forms with convention selector
-4. [ ] Update detail/list views
+Integration Order:
+1. ✅ Create database schema (DONE)
+2. ✅ Implement backend layer (DONE)
+3. ✅ Create frontend component (DONE)
+4. [ ] Integrate into forms and detail pages (NEXT)
 
 ---
 

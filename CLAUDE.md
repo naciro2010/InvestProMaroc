@@ -492,10 +492,12 @@ InvestPro Maroc uses GitHub Actions for Continuous Integration and Continuous De
 
 | Workflow | Trigger | Purpose | Status |
 |----------|---------|---------|--------|
-| **Backend CI** (ci-backend.yml) | Push to main/claude/*, PR | Build & test backend with Gradle, run integration tests with Testcontainers | ✅ Active |
-| **Frontend CI** (ci-frontend.yml) | Push to main/claude/*, PR | Build & test frontend with Vite, TypeScript check, linting | ✅ Active |
-| **Railway Deploy** (deploy-railway.yml) | Push to main | Automatic deployment to Railway after successful CI | ✅ Active |
+| **Backend CI** (ci-backend.yml) | Pull Request | Build & test backend with Gradle, run integration tests with Testcontainers | ✅ Active |
+| **Frontend CI** (ci-frontend.yml) | Pull Request | Build & test frontend with Vite, TypeScript check, linting | ✅ Active |
+| **Railway Deploy** (deploy-railway.yml) | Push to main | Automatic deployment to Railway after PR merge | ✅ Active |
 | **Demo Deploy** (deploy-demo.yml) | Manual trigger | Deploy to demo environment | ✅ Active |
+
+**CI Strategy:** Run tests and builds **only on Pull Requests** to avoid duplicate runs and save GitHub Actions minutes. Once PR is approved and merged to main, the deployment pipeline runs automatically.
 
 ### Backend CI Pipeline
 

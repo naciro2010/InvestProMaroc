@@ -13,6 +13,7 @@ import {
 import { ArrowBack, Save } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
+import RichTextEditor from '../../components/ui/RichTextEditor'
 
 // Helper pour formater les nombres en affichage
 const formatNumber = (value: number | string): string => {
@@ -147,14 +148,12 @@ const SimpleConventionForm = () => {
                 placeholder="Convention de financement..."
               />
 
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Objet"
+              <RichTextEditor
+                label="Objet de la Convention"
                 value={formData.objet}
-                onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
-                placeholder="Description détaillée de la convention..."
+                onChange={(content) => setFormData({ ...formData, objet: content })}
+                placeholder="Description détaillée de la convention avec options de formatage..."
+                minHeight="250px"
               />
 
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>

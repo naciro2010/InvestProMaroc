@@ -47,9 +47,65 @@ INSERT INTO projets (code, nom, budget_total, statut, date_debut) VALUES
 ('PROJ-003', 'Amenagement Urbain Tanger', 4500000.00, 'EN_PREPARATION', '2024-03-01');
 
 -- Conventions
-INSERT INTO conventions (code, numero, libelle, objet, type_convention, date_convention, budget, taux_commission, statut) VALUES
-('CONV-001', 'CONV/2024/001', 'Convention Cadre Infrastructure', 'Gestion projets infrastructure routiere et urbaine', 'CADRE', '2024-01-15', 10000000.00, 2.5, 'VALIDEE'),
-('CONV-002', 'CONV/2024/002', 'Convention Equipement Public', 'Acquisition equipements collectifs', 'CADRE', '2024-02-01', 5000000.00, 3.0, 'VALIDEE');
+INSERT INTO conventions (code, numero, libelle, objet, type_convention, date_convention, budget, taux_commission, statut, date_debut, date_fin, created_by_id, valide_par_id, date_validation, version, is_locked) VALUES
+('CONV-001', 'CONV/2024/001', 'Convention Cadre Infrastructure', 'Gestion projets infrastructure routiere et urbaine', 'CADRE', '2024-01-15', 10000000.00, 2.5, 'VALIDEE', '2024-01-15', '2026-01-15', 1, 2, '2024-01-16', 'V0', true),
+('CONV-002', 'CONV/2024/002', 'Convention Equipement Public', 'Acquisition equipements collectifs', 'CADRE', '2024-02-01', 5000000.00, 3.0, 'VALIDEE', '2024-02-01', '2026-02-01', 1, 2, '2024-02-02', 'V0', true);
+
+-- Sous-Conventions (SPECIFIQUE type, inheriting from parent CADRE conventions)
+INSERT INTO conventions (
+    code, numero, libelle, objet, type_convention,
+    date_convention, budget, taux_commission, base_calcul, taux_tva,
+    statut, date_debut, date_fin,
+    parent_convention_id, herite_parametres,
+    created_by_id, created_at
+) VALUES
+-- Sous-conventions pour CONV-001 (Infrastructure)
+(
+    'SC-001', 'SC/2024/001', 'Sous-Convention Voirie Urbaine Casablanca',
+    'Travaux de voirie et amenagement urbain dans la region de Casablanca',
+    'SPECIFIQUE',
+    '2024-02-01', 3500000.00, 2.5, 'DECAISSEMENTS_TTC', 20.00,
+    'VALIDEE', '2024-02-15', '2025-02-15',
+    1, true,  -- parent_convention_id = 1 (CONV-001), herite_parametres = true
+    2, CURRENT_TIMESTAMP
+),
+(
+    'SC-002', 'SC/2024/002', 'Sous-Convention Routes Nationales',
+    'Rehabilitation et entretien des routes nationales',
+    'SPECIFIQUE',
+    '2024-03-01', 4000000.00, 2.5, 'DECAISSEMENTS_TTC', 20.00,
+    'EN_EXECUTION', '2024-03-15', '2025-09-15',
+    1, true,  -- parent_convention_id = 1 (CONV-001)
+    2, CURRENT_TIMESTAMP
+),
+(
+    'SC-003', 'SC/2024/003', 'Sous-Convention Ponts et Ouvrages',
+    'Construction et maintenance des ponts et ouvrages d''art',
+    'SPECIFIQUE',
+    '2024-04-01', 2500000.00, 3.0, 'DECAISSEMENTS_TTC', 20.00,
+    'BROUILLON', '2024-05-01', '2025-11-01',
+    1, false,  -- parent_convention_id = 1, herite_parametres = false (custom rate: 3.0%)
+    2, CURRENT_TIMESTAMP
+),
+-- Sous-conventions pour CONV-002 (Equipement Public)
+(
+    'SC-004', 'SC/2024/004', 'Sous-Convention Equipement Scolaire',
+    'Fourniture et installation equipements scolaires',
+    'SPECIFIQUE',
+    '2024-03-10', 2000000.00, 3.0, 'DECAISSEMENTS_TTC', 20.00,
+    'VALIDEE', '2024-04-01', '2025-04-01',
+    2, true,  -- parent_convention_id = 2 (CONV-002)
+    2, CURRENT_TIMESTAMP
+),
+(
+    'SC-005', 'SC/2024/005', 'Sous-Convention Equipement Sanitaire',
+    'Equipement des centres de sante et hopitaux',
+    'SPECIFIQUE',
+    '2024-04-15', 3000000.00, 3.0, 'DECAISSEMENTS_TTC', 20.00,
+    'EN_EXECUTION', '2024-05-01', '2025-10-31',
+    2, true,  -- parent_convention_id = 2 (CONV-002)
+    2, CURRENT_TIMESTAMP
+);
 
 -- Marchés avec géolocalisation
 INSERT INTO marches (

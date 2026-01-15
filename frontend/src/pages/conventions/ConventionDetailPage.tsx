@@ -44,6 +44,7 @@ import AppLayout from '../../components/layout/AppLayout'
 import AddImputationDialog from '../../components/conventions/AddImputationDialog'
 import AddVersementDialog from '../../components/conventions/AddVersementDialog'
 import AvenantConventionList from './AvenantConventionList'
+import SousConventionForm from './SousConventionForm'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
 
@@ -130,6 +131,8 @@ const ConventionDetailPage = () => {
   const [activeTab, setActiveTab] = useState(0)
   const [imputationDialogOpen, setImputationDialogOpen] = useState(false)
   const [versementDialogOpen, setVersementDialogOpen] = useState(false)
+  const [sousConventionDialogOpen, setSousConventionDialogOpen] = useState(false)
+  const [editingSousConvention, setEditingSousConvention] = useState<any>(null)
 
   useEffect(() => {
     if (id) {
@@ -232,6 +235,22 @@ const ConventionDetailPage = () => {
       console.error('Erreur suppression versement:', error)
       alert(error.response?.data?.message || 'Erreur lors de la suppression')
     }
+  }
+
+  const handleSousConventionSuccess = () => {
+    if (!convention) return
+    fetchConvention(convention.id)
+    setEditingSousConvention(null)
+    window.dispatchEvent(
+      new CustomEvent('showToast', {
+        detail: {
+          message: editingSousConvention
+            ? 'Sous-convention modifiée avec succès'
+            : 'Sous-convention créée avec succès',
+          type: 'success'
+        }
+      })
+    )
   }
 
   const formatCurrency = (amount: number) => {
@@ -577,45 +596,74 @@ const ConventionDetailPage = () => {
 
               {/* Tab 2: Sous-Conventions */}
               {activeTab === 2 && (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Code</TableCell>
-                        <TableCell>Numéro</TableCell>
-                        <TableCell>Libellé</TableCell>
-                        <TableCell>Statut</TableCell>
-                        <TableCell align="right">Budget</TableCell>
-                        <TableCell>Date Début</TableCell>
-                        <TableCell>Date Fin</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {convention.sousConventions.map((sc) => (
-                        <TableRow key={sc.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(`/conventions/${sc.id}`)}>
-                          <TableCell>{sc.code}</TableCell>
-                          <TableCell>{sc.numero}</TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>{sc.libelle}</TableCell>
-                          <TableCell>
-                            <Chip label={sc.statut} size="small" color="info" />
-                          </TableCell>
-                          <TableCell align="right">{formatCurrency(sc.budget)}</TableCell>
-                          <TableCell>{formatDate(sc.dateDebut)}</TableCell>
-                          <TableCell>{sc.dateFin ? formatDate(sc.dateFin) : '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                      {convention.sousConventions.length === 0 && (
+                <Box>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h6" fontWeight={600}>
+                      Sous-Conventions
+                    </Typography>
+                    {convention.typeConvention === 'CADRE' && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<Add />}
+                        onClick={() => {
+                          setEditingSousConvention(null)
+                          setSousConventionDialogOpen(true)
+                        }}
+                        sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
+                      >
+                        Ajouter Sous-Convention
+                      </Button>
+                    )}
+                  </Stack>
+
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
                         <TableRow>
-                          <TableCell colSpan={7} align="center">
-                            <Typography variant="body2" color="text.secondary">
-                              Aucune sous-convention
-                            </Typography>
-                          </TableCell>
+                          <TableCell>Code</TableCell>
+                          <TableCell>Numéro</TableCell>
+                          <TableCell>Libellé</TableCell>
+                          <TableCell>Statut</TableCell>
+                          <TableCell align="right">Budget</TableCell>
+                          <TableCell>Date Début</TableCell>
+                          <TableCell>Date Fin</TableCell>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                      </TableHead>
+                      <TableBody>
+                        {convention.sousConventions.map((sc) => (
+                          <TableRow key={sc.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(`/conventions/${sc.id}`)}>
+                            <TableCell>{sc.code}</TableCell>
+                            <TableCell>{sc.numero}</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>{sc.libelle}</TableCell>
+                            <TableCell>
+                              <Chip label={sc.statut} size="small" color="info" />
+                            </TableCell>
+                            <TableCell align="right">{formatCurrency(sc.budget)}</TableCell>
+                            <TableCell>{formatDate(sc.dateDebut)}</TableCell>
+                            <TableCell>{sc.dateFin ? formatDate(sc.dateFin) : '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                        {convention.sousConventions.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={7} align="center">
+                              <Box sx={{ py: 4 }}>
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                  Aucune sous-convention
+                                </Typography>
+                                {convention.typeConvention === 'CADRE' && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    Cliquez sur "Ajouter Sous-Convention" pour créer une nouvelle sous-convention
+                                  </Typography>
+                                )}
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
               )}
 
               {/* Tab 3: Imputations & Versements */}
@@ -781,6 +829,25 @@ const ConventionDetailPage = () => {
           estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue
         })) || []}
       />
+      {convention && convention.typeConvention === 'CADRE' && (
+        <SousConventionForm
+          open={sousConventionDialogOpen}
+          onClose={() => {
+            setSousConventionDialogOpen(false)
+            setEditingSousConvention(null)
+          }}
+          onSuccess={handleSousConventionSuccess}
+          parentConvention={{
+            id: convention.id,
+            numero: convention.numero,
+            libelle: convention.libelle,
+            tauxCommission: convention.tauxCommission,
+            baseCalcul: convention.baseCalcul,
+            tauxTva: convention.tauxTva,
+          }}
+          editingSousConvention={editingSousConvention}
+        />
+      )}
     </AppLayout>
   )
 }

@@ -235,6 +235,75 @@ SOUMIS.rejeter(motif) → BROUILLON
 - Migration: `V12__create_avenant_conventions.sql`
 - Endpoint: `/api/avenants-conventions`
 
+### Sous-Conventions (Sub-Conventions)
+
+The system supports **hierarchical conventions** where CADRE (framework) conventions can have **sous-conventions** (sub-conventions or specific conventions):
+
+**Key Features:**
+- **Parent-Child Relationship:** Sous-conventions reference a parent convention (CADRE type only)
+- **Parameter Inheritance:** Sous-conventions can inherit `tauxCommission`, `baseCalcul`, and `tauxTva` from parent
+- **Selective Override:** `heriteParametres` flag enables inheritance; can override with `surchargeTauxCommission` and `surchargeBaseCalcul`
+- **Same Workflow:** Sous-conventions follow the same workflow as regular conventions (BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE)
+- **Independent Lifecycle:** Each sous-convention has its own status, budget, dates, and workflow state
+- **Nested Display:** Sous-conventions appear in a dedicated tab within the parent convention's detail page
+
+**Implementation:**
+```kotlin
+// Backend Entity (Convention.kt)
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "parent_convention_id")
+var parentConvention: Convention? = null
+
+@Column(name = "herite_parametres", nullable = false)
+var heriteParametres: Boolean = false
+
+fun getTauxCommissionEffectif(): BigDecimal {
+    val parent = parentConvention
+    return if (heriteParametres && parent != null) {
+        surchargeTauxCommission ?: parent.getTauxCommissionEffectif()
+    } else {
+        tauxCommission
+    }
+}
+```
+
+**API Endpoints:**
+- `GET /api/conventions/{parentId}/sous-conventions` - List sous-conventions
+- `POST /api/conventions/{parentId}/sous-conventions` - Create sous-convention
+- `PUT /api/conventions/{sousConventionId}` - Update sous-convention (standard endpoint)
+- `DELETE /api/conventions/{sousConventionId}` - Delete sous-convention (standard endpoint)
+- Workflow endpoints: same as regular conventions (`/soumettre`, `/valider`, `/rejeter`, etc.)
+
+**Frontend:**
+- **Form:** `SousConventionForm.tsx` - Modal dialog with parent info display and inheritance toggle
+- **Display:** Dedicated tab in `ConventionDetailPage.tsx` showing table of all sous-conventions
+- **Navigation:** Clicking a sous-convention navigates to its detail page (same as regular convention)
+- **Add Button:** Only visible when viewing a CADRE convention
+
+**Database:**
+- Same table: `conventions` (self-referencing with `parent_convention_id`)
+- Migration: `V2__create_schema.sql` (already includes parent-child fields)
+- Seed Data: `V3__seed_data.sql` contains 5 example sous-conventions (SC-001 to SC-005)
+
+**Business Rules:**
+- Only CADRE conventions can have sous-conventions
+- Sous-conventions have type `SPECIFIQUE`
+- Parent convention must be VALIDEE or EN_EXECUTION to create sous-conventions
+- Full search and filtering capability within parent convention
+- Complete audit trail (createdBy, createdAt, updatedAt)
+
+**Example Hierarchy:**
+```
+CONV-001 (CADRE) "Convention Infrastructure"
+  ├─ SC-001 (SPECIFIQUE) "Sous-Convention Voirie Urbaine" [inherits parameters]
+  ├─ SC-002 (SPECIFIQUE) "Sous-Convention Routes Nationales" [inherits parameters]
+  └─ SC-003 (SPECIFIQUE) "Sous-Convention Ponts" [custom rate: 3.0%]
+
+CONV-002 (CADRE) "Convention Equipement Public"
+  ├─ SC-004 (SPECIFIQUE) "Sous-Convention Equipement Scolaire"
+  └─ SC-005 (SPECIFIQUE) "Sous-Convention Equipement Sanitaire"
+```
+
 ## Authentication & Security
 
 ### JWT Authentication Flow
@@ -759,6 +828,12 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
   - All test accounts use hash: `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6`
   - Fixes "Bad credentials" authentication errors
 
+- **Sous-Conventions System:** Full hierarchical convention support with parent-child relationships (January 2026)
+  - CADRE conventions can have multiple sous-conventions (type SPECIFIQUE)
+  - Parameter inheritance with selective override (tauxCommission, baseCalcul, tauxTva)
+  - Same workflow as regular conventions (BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE)
+  - Dedicated UI tab in convention detail page with create/edit modal
+  - 5 example sous-conventions in seed data (SC-001 to SC-005)
 - **Marchés Geolocation:** Full geolocation support for marchés with interactive map view using Leaflet/OpenStreetMap (January 2026)
   - Address search with Nominatim geocoding API
   - Map-based location picker with click-to-place marker
@@ -778,8 +853,8 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 ## Current Implementation Status
 
 ### Fully Implemented (90%+)
-- Backend: Conventions, Projets, Marchés, Fournisseurs, Analytical Dimensions
-- Frontend: Dashboards, Conventions, Marchés, Projets, Analytical Reporting, User Profile
+- Backend: Conventions, Sous-Conventions, Projets, Marchés, Fournisseurs, Analytical Dimensions
+- Frontend: Dashboards, Conventions, Sous-Conventions, Marchés, Projets, Analytical Reporting, User Profile
 
 ### Partial Implementation (60-75%)
 - Décomptes: Backend ready, frontend basic list page only

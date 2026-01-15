@@ -201,6 +201,20 @@ export const conventionsAPI = {
     api.post(`/conventions/${conventionId}/versements`, versement),
   supprimerVersement: (conventionId: number, versementId: number) =>
     api.delete(`/conventions/${conventionId}/versements/${versementId}`),
+
+  // Sous-Conventions (nested CRUD)
+  getSousConventions: (parentId: number) => api.get(`/conventions/${parentId}/sous-conventions`),
+  createSousConvention: (parentId: number, data: any) => api.post(`/conventions/${parentId}/sous-conventions`, data),
+  updateSousConvention: (sousConventionId: number, data: any) => api.put(`/conventions/${sousConventionId}`, data),
+  deleteSousConvention: (sousConventionId: number) => api.delete(`/conventions/${sousConventionId}`),
+
+  // Workflow pour sous-conventions (identique aux conventions)
+  soumettreSousConvention: (id: number) => api.post(`/conventions/${id}/soumettre`),
+  validerSousConvention: (id: number, valideParId: number) => api.post(`/conventions/${id}/valider`, { valideParId }),
+  rejeterSousConvention: (id: number, motif: string) => api.post(`/conventions/${id}/rejeter`, { motif }),
+  remettreEnBrouillonSousConvention: (id: number) => api.post(`/conventions/${id}/remettre-en-brouillon`),
+  mettreEnCoursSousConvention: (id: number) => api.post(`/conventions/${id}/mettre-en-cours`),
+  annulerSousConvention: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
 }
 
 // Projets API

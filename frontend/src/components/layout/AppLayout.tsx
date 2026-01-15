@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings,
-  Briefcase, ChevronDown, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote
+  Briefcase, ChevronDown, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -46,19 +46,19 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   }, [location.pathname, isMobile])
 
   const menuItems = [
-    { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard' },
-    { icon: <FileText className="w-5 h-5" />, label: 'Conventions', path: '/conventions' },
-    { icon: <Wallet className="w-5 h-5" />, label: 'Budgets', path: '/budgets' },
-    { icon: <ShoppingCart className="w-5 h-5" />, label: 'Marchés', path: '/marches' },
-    { icon: <FileCheck className="w-5 h-5" />, label: 'Décomptes', path: '/decomptes' },
-    { icon: <Banknote className="w-5 h-5" />, label: 'Paiements', path: '/paiements' },
-    { icon: <Building2 className="w-5 h-5" />, label: 'Projets', path: '/projets' },
-    { icon: <Users className="w-5 h-5" />, label: 'Fournisseurs', path: '/fournisseurs' },
-    { icon: <Map className="w-5 h-5" />, label: 'Axes Analytiques', path: '/axes-analytiques' },
-    { icon: <CreditCard className="w-5 h-5" />, label: 'Comptes Bancaires', path: '/comptes-bancaires' },
-    { icon: <Receipt className="w-5 h-5" />, label: 'Dépenses', path: '/depenses' },
-    { icon: <DollarSign className="w-5 h-5" />, label: 'Commissions', path: '/commissions' },
-    { icon: <UserCog className="w-5 h-5" />, label: 'Utilisateurs', path: '/users' },
+    { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard', implemented: true },
+    { icon: <FileText className="w-5 h-5" />, label: 'Conventions', path: '/conventions', implemented: true },
+    { icon: <Wallet className="w-5 h-5" />, label: 'Budgets', path: '/budgets', implemented: true },
+    { icon: <ShoppingCart className="w-5 h-5" />, label: 'Marchés', path: '/marches', implemented: true },
+    { icon: <FileCheck className="w-5 h-5" />, label: 'Décomptes', path: '/decomptes', implemented: true },
+    { icon: <Banknote className="w-5 h-5" />, label: 'Paiements', path: '/paiements', implemented: true },
+    { icon: <Building2 className="w-5 h-5" />, label: 'Projets', path: '/projets', implemented: true },
+    { icon: <Users className="w-5 h-5" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: false },
+    { icon: <Map className="w-5 h-5" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
+    { icon: <CreditCard className="w-5 h-5" />, label: 'Comptes Bancaires', path: '/comptes-bancaires', implemented: false },
+    { icon: <Receipt className="w-5 h-5" />, label: 'Dépenses', path: '/depenses', implemented: false },
+    { icon: <DollarSign className="w-5 h-5" />, label: 'Commissions', path: '/commissions', implemented: false },
+    { icon: <UserCog className="w-5 h-5" />, label: 'Utilisateurs', path: '/users', implemented: true },
   ]
 
   const handleLogout = () => {
@@ -102,14 +102,22 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <Link
                 key={index}
                 to={item.path}
-                className={`flex items-center space-x-3 px-4 py-2.5 mx-2 rounded transition-colors ${
+                className={`flex items-center justify-between px-4 py-2.5 mx-2 rounded transition-colors ${
                   isActive
                     ? 'bg-gray-800 text-white'
                     : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                 }`}
               >
-                {item.icon}
-                <span className="text-sm font-medium">{item.label}</span>
+                <div className="flex items-center space-x-3">
+                  {item.icon}
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+                {!item.implemented && (
+                  <span className="flex items-center gap-1 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-500/30">
+                    <Sparkles className="w-3 h-3" />
+                    Bientôt
+                  </span>
+                )}
               </Link>
             )
           })}

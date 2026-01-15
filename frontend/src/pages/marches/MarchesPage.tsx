@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { FaPlus, FaEdit, FaTrash, FaEye, FaFileExcel, FaSearch } from 'react-icons/fa'
+import { FaPlus, FaEdit, FaTrash, FaEye, FaFileExcel, FaSearch, FaList, FaMap } from 'react-icons/fa'
 import { Card, Button, StatusBadge } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
+import MarchesMapView from '../../components/ui/MarchesMapView'
 import api from '../../lib/api'
 import { Marche as MarcheType, Fournisseur } from '../../types/entities'
 
@@ -36,6 +37,7 @@ export default function MarchesPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatut, setSelectedStatut] = useState<string>('ALL')
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
 
   useEffect(() => {
     fetchMarches()
@@ -202,14 +204,48 @@ export default function MarchesPage() {
             </div>
           </div>
 
-          {/* Résultats filtrés */}
-          <div className="text-sm text-gray-600">
-            Affichage de <span className="font-semibold">{filteredMarches.length}</span> sur{' '}
-            <span className="font-semibold">{marches.length}</span> marché(s)
+          {/* Résultats filtrés et toggle vue */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Affichage de <span className="font-semibold">{filteredMarches.length}</span> sur{' '}
+              <span className="font-semibold">{marches.length}</span> marché(s)
+            </div>
+
+            {/* Toggle Vue Liste / Carte */}
+            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-white text-primary-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <FaList className="w-4 h-4" />
+                Liste
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'map'
+                    ? 'bg-white text-primary-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <FaMap className="w-4 h-4" />
+                Carte
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Vue Carte */}
+        {viewMode === 'map' && (
+          <MarchesMapView marches={filteredMarches} />
+        )}
+
         {/* Table responsive */}
+        {viewMode === 'list' && (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -326,6 +362,7 @@ export default function MarchesPage() {
             </div>
           )}
         </div>
+        )}
       </Card>
       </div>
     </AppLayout>

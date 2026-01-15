@@ -91,6 +91,19 @@ class Marche(
     @Column(columnDefinition = "TEXT")
     var remarques: String? = null,
 
+    // Géolocalisation
+    @Column(name = "adresse", columnDefinition = "TEXT")
+    var adresse: String? = null,
+
+    @Column(name = "latitude")
+    var latitude: Double? = null,
+
+    @Column(name = "longitude")
+    var longitude: Double? = null,
+
+    @Column(name = "zone_geographique", length = 100)
+    var zoneGeographique: String? = null, // Ex: "Casablanca", "Rabat-Salé-Kénitra"
+
     // Relations inverses
     @OneToMany(mappedBy = "marche", cascade = [CascadeType.ALL], orphanRemoval = true)
     var lignes: MutableList<MarcheLigne> = mutableListOf(),

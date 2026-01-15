@@ -266,6 +266,13 @@ export interface Marche {
   retenueGarantie?: number
   statut: StatutMarche
   remarques?: string
+
+  // Géolocalisation
+  adresse?: string
+  latitude?: number
+  longitude?: number
+  zoneGeographique?: string
+
   actif: boolean
   createdAt?: string
   updatedAt?: string

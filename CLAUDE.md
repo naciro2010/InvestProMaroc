@@ -255,13 +255,42 @@ SOUMIS.rejeter(motif) → BROUILLON
 | **USER** | Read-only access | Reporting, exports |
 
 **Test Accounts** (seeded in `V3__seed_data.sql`):
-| Username | Password | Role | Email |
-|----------|----------|------|-------|
-| admin | admin123 | ADMIN | admin@investpro.ma |
-| manager | manager123 | MANAGER | manager@investpro.ma |
-| user | user123 | USER | user@investpro.ma |
+| Username | Password | Role | Email | BCrypt Hash |
+|----------|----------|------|-------|------------|
+| admin | admin123 | ADMIN | admin@investpro.ma | `$2a$10$G9mprAUozHWOs.VLmMh.3e...` |
+| manager | manager123 | MANAGER | manager@investpro.ma | `$2a$10$xsgYxT6trAjwUqt5x32.zu...` |
+| user | user123 | USER | user@investpro.ma | `$2a$10$djjqMLHRZzaFgANySgMkqu...` |
 
-**⚠️ IMPORTANT:** Passwords are BCrypt hashed in database with cost 10. The hash `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6` is used for all test users - **ensure this hash matches your test password before changing it**.
+**⚠️ CRITICAL: Password Hashing**
+
+InvestPro uses **Spring Security BCryptPasswordEncoder** with cost 10:
+
+1. **Backend Password Encoding** (SecurityConfig.kt):
+   ```kotlin
+   @Bean
+   fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+   ```
+
+2. **Each Password Has Unique Hash:**
+   - `admin123` → Different hash than `manager123`
+   - `manager123` → Different hash than `user123`
+   - BCrypt includes random salt, so same password = different hash each time
+
+3. **How Passwords Are Verified:**
+   - Backend stores BCrypt hash in database
+   - User login sends plain password (`admin123`)
+   - Spring Security: `passwordEncoder.matches(plainPassword, storedHash)`
+   - Returns true if password matches, false otherwise
+
+4. **DO NOT** share or reuse the same hash for different passwords
+   - Each test user must have their own correct hash in V3__seed_data.sql
+   - Use the GenerateBCryptHashesTest to generate correct hashes if passwords change
+
+5. **Password Reset in SQL (if needed):**
+   ```sql
+   -- Generate new hash via GenerateBCryptHashesTest first
+   UPDATE users SET password = '<new-bcrypt-hash>' WHERE username = 'admin';
+   ```
 
 ### Security Configuration
 

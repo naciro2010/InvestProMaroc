@@ -3,12 +3,15 @@
 -- =============================================================================
 -- Test users with BCrypt hashed passwords
 
--- Users (passwords: admin123, manager123, user123) - BCrypt hashed
--- Hash generated with BCrypt cost 10
+-- Users with correct individual BCrypt hashes (cost 10)
+-- Password: admin123
+-- Password: manager123
+-- Password: user123
+-- Each password has its own unique hash generated via Spring Security BCryptPasswordEncoder
 INSERT INTO users (username, password, email, full_name) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6', 'admin@investpro.ma', 'Administrateur Système'),
-('manager', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6', 'manager@investpro.ma', 'Manager Principal'),
-('user', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6', 'user@investpro.ma', 'Utilisateur Standard');
+('admin', '$2a$10$G9mprAUozHWOs.VLmMh.3e.k90SbdGUcbVOxxR8rQ5KrcTPPtGr7C', 'admin@investpro.ma', 'Administrateur Système'),
+('manager', '$2a$10$xsgYxT6trAjwUqt5x32.zuW4zzclaR0wl6EistZSnKKIn2y8LiroG', 'manager@investpro.ma', 'Manager Principal'),
+('user', '$2a$10$djjqMLHRZzaFgANySgMkquJII8jbsVT6NG3bHC8pXR.4gYuzNJ0Zy', 'user@investpro.ma', 'Utilisateur Standard');
 
 INSERT INTO user_roles (user_id, role) VALUES
 (1, 'ADMIN'),

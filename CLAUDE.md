@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL: STRONG TYPING IS MANDATORY
+
+**❌ NEVER use `any` type (TypeScript) or `Any` type (Kotlin) in this project.**
+
+This is NON-NEGOTIABLE. Every value must have an explicit, strong type. This applies to:
+- Function parameters and return types
+- Variable declarations
+- API response data structures
+- Component props
+- Error handling (use `error: unknown` then `instanceof Error` guard)
+
+**All code without proper types will be rejected.**
+
 ## Project Overview
 
 **InvestPro Maroc** is a comprehensive financial management platform for managing investment expenses and commission calculations in Morocco. It consists of a Kotlin/Spring Boot backend and a React/TypeScript frontend for tracking conventions, projects, markets (marchés), payments, and analytical cost allocations.
@@ -500,12 +513,22 @@ See `CRUD_TEMPLATE.md` for detailed template.
   - Development: `spring.jpa.hibernate.ddl-auto=none` + `spring.flyway.enabled=true`
   - Production: `spring.jpa.hibernate.ddl-auto=validate` + `spring.flyway.enabled=true`
 
-- **Current Migrations (V1-V3):**
+- **Current Migrations (V1-V3 ONLY):**
   - **V1:** Drop all existing tables (clean slate)
   - **V2:** Complete schema creation with all tables, constraints, and indexes
-    - Includes geolocation fields for `marches` table (adresse, latitude, longitude, zone_geographique)
+    - Includes geolocation fields for `marches` table
+    - JSONB fields for rich text descriptions
+    - project_conventions junction table for many-to-many associations
     - All entities with proper relationships and indexes
+    - All GIN indexes for JSONB searching
   - **V3:** Seed test data (users, dimensions, fournisseurs, conventions, marchés, décomptes)
+
+⚠️ **CRITICAL RULE: Only Use V1, V2, V3**
+- ❌ **NEVER create new migration files** (V4, V5, etc.)
+- ✅ **ALWAYS add new schema/tables to V2__create_schema.sql**
+- ✅ **ALWAYS add new seed data to V3__seed_data.sql**
+- ✅ Keep V1 drop-all at the start for clean development resets
+- **Why:** Flyway expects a linear, continuous migration history. New files break this chain.
 
 - **Flyway Settings:**
   - `baseline-on-migrate=true` - Create baseline for existing databases
@@ -959,7 +982,7 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - ✅ React Quill v2.0.0 added to dependencies
 - ✅ RichTextEditor component created (frontend/src/components/ui/RichTextEditor.tsx)
 - ✅ Integrated into SimpleConventionForm for 'objet' field
-- ✅ Database migration V4 created for JSONB description fields
+- ✅ JSONB description fields added to V2__create_schema.sql
 - ✅ Backwards compatible with existing plain text fields
 
 **Components Affected:**

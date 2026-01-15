@@ -791,6 +791,40 @@ CREATE INDEX IF NOT EXISTS idx_donnees_avant_gin ON avenant_conventions USING GI
 CREATE INDEX IF NOT EXISTS idx_modifications_gin ON avenant_conventions USING GIN(modifications);
 
 -- ============================================================================
+-- SECTION 12: RICH TEXT DESCRIPTIONS (JSONB FIELDS)
+-- ============================================================================
+-- Support for rich text formatting with Quill Delta format
+-- Each entity can have formatted descriptions stored as JSONB
+
+ALTER TABLE conventions ADD COLUMN IF NOT EXISTS objet_rich JSONB COMMENT 'Rich text description with formatting (Quill Delta)';
+CREATE INDEX IF NOT EXISTS idx_conventions_objet_rich ON conventions USING GIN(objet_rich);
+
+ALTER TABLE projets ADD COLUMN IF NOT EXISTS description_rich JSONB COMMENT 'Rich text project description with formatting';
+CREATE INDEX IF NOT EXISTS idx_projets_description_rich ON projets USING GIN(description_rich);
+
+ALTER TABLE marches ADD COLUMN IF NOT EXISTS description_rich JSONB COMMENT 'Rich text market description with formatting';
+CREATE INDEX IF NOT EXISTS idx_marches_description_rich ON marches USING GIN(description_rich);
+
+-- ============================================================================
+-- SECTION 13: PROJECT-CONVENTION ASSOCIATION
+-- ============================================================================
+-- Junction table for many-to-many relationship between projects and conventions
+
+CREATE TABLE IF NOT EXISTS projet_conventions (
+    id BIGSERIAL PRIMARY KEY,
+    projet_id BIGINT NOT NULL REFERENCES projets(id) ON DELETE CASCADE,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    ordre INTEGER DEFAULT 0 COMMENT 'Sequence order for multiple conventions',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(projet_id, convention_id)
+) COMMENT 'Many-to-many association between projects and conventions';
+
+CREATE INDEX IF NOT EXISTS idx_projet_conventions_projet_id ON projet_conventions(projet_id);
+CREATE INDEX IF NOT EXISTS idx_projet_conventions_convention_id ON projet_conventions(convention_id);
+CREATE INDEX IF NOT EXISTS idx_projet_conventions_ordre ON projet_conventions(projet_id, ordre);
+
+-- ============================================================================
 -- END OF SCHEMA DEFINITION
 -- ============================================================================
 -- Total Tables: 40+

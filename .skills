@@ -1,5 +1,20 @@
 # InvestPro Maroc - Claude Code Skills Configuration
 
+## ⚠️ CRITICAL: STRONG TYPING IS MANDATORY
+
+**❌ NEVER use `any` type (TypeScript) or `Any` type (Kotlin) in this project.**
+
+This is NON-NEGOTIABLE. Every value must have an explicit, strong type. This applies to:
+- Function parameters and return types
+- Variable declarations
+- API response data structures
+- Component props
+- Error handling (use `error: unknown` then `instanceof Error` guard)
+
+**All code without proper types will be rejected.**
+
+---
+
 ## ⚠️ MANDATORY INSTRUCTION: Always Update CLAUDE.md
 
 **Every time you make changes to the project, you MUST update CLAUDE.md to reflect those changes.**
@@ -94,6 +109,25 @@ When creating a new CRUD entity:
   - manager/manager123: MANAGER role
   - user/user123: USER role
 ```
+
+## ⚠️ CRITICAL DATABASE MIGRATION RULE
+
+**ONLY USE 3 MIGRATION FILES: V1, V2, V3**
+
+❌ **NEVER** create new migration files (V4, V5, etc.)
+✅ **ALWAYS** add new schema to `V2__create_schema.sql`
+✅ **ALWAYS** add new seed data to `V3__seed_data.sql`
+
+**How to Add Migrations:**
+```
+New table or column? → Add to V2__create_schema.sql
+New test data? → Add to V3__seed_data.sql
+Schema changes? → Modify V2 (use ALTER TABLE if needed)
+```
+
+**Why?** Flyway tracks migration history sequentially. New files break this chain and cause deployment issues.
+
+---
 
 ## Current Planned Features (Active Branch)
 

@@ -549,7 +549,7 @@ Steps:
 **Environment:**
 - Node.js 18 (compatible with package.json >=18.0.0)
 - npm 9+ (from Node 18)
-- Vite 5.4.11 (pinned for compatibility)
+- Vite 5.4.21 (pinned exact version for package-lock.json sync)
 
 **Build Artifacts:**
 - dist/ folder with optimized bundle
@@ -595,9 +595,11 @@ Steps:
 - Prevention: Always clear cache in CI environments
 
 **Vite Version Compatibility Issues**
-- Vite 5.4.11 is pinned for Node.js 18+ compatibility
-- Do NOT upgrade Vite without verifying Node version support
-- Error: "Unsupported engine" means Vite version too new for current Node
+- Vite 5.4.21 is pinned to match package-lock.json exactly
+- Do NOT use `npm install` (updates lock file) - use `npm ci` instead
+- If package.json version doesn't match package-lock.json, `npm ci` will fail
+- Error: "Invalid: lock file's vite@X does not satisfy vite@Y" means mismatch
+- Solution: Keep package.json and package-lock.json in sync
 
 **Backend CI Timeout**
 - Integration tests with Testcontainers can take 2-5 minutes
@@ -692,10 +694,11 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
   - npm cache cleanup to fix EBUSY errors on Railway
   - Node.js 18 compatibility across all workflows
 
-- **Frontend Dependencies Pinned:** Vite locked to 5.4.11 for Node.js 18 compatibility (January 2026)
-  - Changed from `^5.4.11` to `5.4.11` (exact version)
+- **Frontend Dependencies Pinned:** Vite locked to 5.4.21 for Node.js 18 compatibility (January 2026)
+  - Pinned to exact version matching package-lock.json
   - Prevents automatic upgrades to Vite 7.x which requires Node 20.19+
   - Ensures Railway deployment stability with Node v22.11.0
+  - `npm ci` now syncs package.json and package-lock.json exactly
 
 - **Test Credentials Fixed:** BCrypt password hashes corrected for admin/manager/user accounts (January 2026)
   - All test accounts use hash: `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6`

@@ -34,7 +34,6 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import { conventionsAPI } from '../../lib/api'
 import { dimensionsAPI, DimensionAnalytique, ValeurDimension } from '../../lib/dimensionsAPI'
-import RichTextEditor from '../../components/ui/RichTextEditor'
 
 // ==================== TYPES ====================
 
@@ -838,17 +837,17 @@ const ConventionWizardComplete = () => {
           />
         </Grid>
         <Grid size={{ xs: 12 }}>
-          <Box>
-            <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
-              Objet de la Convention *
-            </Typography>
-            <RichTextEditor
-              value={formData.objet}
-              onChange={(value) => setFormData({ ...formData, objet: value })}
-              placeholder="Décrivez l'objet de la convention de manière détaillée..."
-              minHeight={250}
-            />
-          </Box>
+          <TextField
+            fullWidth
+            required
+            label="Objet de la Convention"
+            value={formData.objet}
+            onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
+            placeholder="Décrivez l'objet de la convention de manière détaillée..."
+            multiline
+            rows={8}
+            variant="outlined"
+          />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField

@@ -484,6 +484,132 @@ Use `PrivateRoute` wrapper for authenticated pages:
 
 12. **Number Formatting:** Frontend forms use French number formatting (1 000 000,00) with automatic parsing for clean UX.
 
+## CI/CD Pipeline
+
+InvestPro Maroc uses GitHub Actions for Continuous Integration and Continuous Deployment:
+
+### Workflows Overview
+
+| Workflow | Trigger | Purpose | Status |
+|----------|---------|---------|--------|
+| **Backend CI** (ci-backend.yml) | Push to main/claude/*, PR | Build & test backend with Gradle, run integration tests with Testcontainers | ✅ Active |
+| **Frontend CI** (ci-frontend.yml) | Push to main/claude/*, PR | Build & test frontend with Vite, TypeScript check, linting | ✅ Active |
+| **Railway Deploy** (deploy-railway.yml) | Push to main | Automatic deployment to Railway after successful CI | ✅ Active |
+| **Demo Deploy** (deploy-demo.yml) | Manual trigger | Deploy to demo environment | ✅ Active |
+
+### Backend CI Pipeline
+
+**Location:** `.github/workflows/ci-backend.yml`
+
+```yaml
+Triggers on:
+- Push to main, claude/* branches
+- Pull requests
+- Changes to backend/** or workflow file
+
+Steps:
+1. Checkout code
+2. Setup Java 21 with Gradle caching
+3. Make gradlew executable
+4. Run ./gradlew clean build --info
+5. Upload test reports on failure
+6. Check for build artifacts
+```
+
+**Environment:**
+- Java 21 (Temurin)
+- PostgreSQL 16-alpine (Testcontainers)
+- Gradle caching enabled
+
+**Key Tests:**
+- FlywayMigrationIntegrationTest (schema validation)
+- AvenantConventionIntegrationTest (workflow)
+- All other integration tests with real database
+
+### Frontend CI Pipeline
+
+**Location:** `.github/workflows/ci-frontend.yml`
+
+```yaml
+Triggers on:
+- Push to main, claude/* branches
+- Pull requests
+- Changes to frontend/** or workflow file
+
+Steps:
+1. Checkout code
+2. Setup Node.js 18 with npm caching
+3. Clear npm cache to prevent EBUSY errors
+4. npm ci --omit=dev (install dependencies)
+5. npm run lint (optional, continue on error)
+6. npm run build (TypeScript + Vite build)
+7. Check build size and verify dist/assets output
+```
+
+**Environment:**
+- Node.js 18 (compatible with package.json >=18.0.0)
+- npm 9+ (from Node 18)
+- Vite 5.4.11 (pinned for compatibility)
+
+**Build Artifacts:**
+- dist/ folder with optimized bundle
+- Includes vendor.js and main.js
+- Source maps excluded from production build
+
+### Railway Deployment
+
+**Location:** `.github/workflows/deploy-railway.yml`
+
+```yaml
+Triggers on:
+- Push to main with frontend/** changes
+- Manual workflow_dispatch
+
+Environment Variables:
+- NODE_ENV: production
+- VITE_API_URL: https://investpromaroc-production.up.railway.app/api
+- VITE_BASE_PATH: /
+- RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+- RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+
+Steps:
+1. Checkout code
+2. Setup Node.js 18
+3. Clear npm cache
+4. Install Railway CLI globally
+5. npm ci --omit=dev
+6. npm run build (TypeScript + Vite)
+7. railway up (deploy to Railway)
+```
+
+**Configuration:**
+- Uses Railway CLI for deployment
+- Requires RAILWAY_TOKEN and RAILWAY_PROJECT_ID secrets
+- Automatic build happens on Railway (see railway.json)
+
+### Troubleshooting CI/CD
+
+**Frontend Build Fails with "npm error EBUSY"**
+- Solution: Pipeline includes `npm cache clean --force` before install
+- Cause: Concurrent file access during npm package installation
+- Prevention: Always clear cache in CI environments
+
+**Vite Version Compatibility Issues**
+- Vite 5.4.11 is pinned for Node.js 18+ compatibility
+- Do NOT upgrade Vite without verifying Node version support
+- Error: "Unsupported engine" means Vite version too new for current Node
+
+**Backend CI Timeout**
+- Integration tests with Testcontainers can take 2-5 minutes
+- PostgreSQL container startup adds 30-60 seconds
+- Docker must be available in CI runner
+
+**Railway Deployment Fails**
+- Verify RAILWAY_TOKEN is valid and not expired
+- Check RAILWAY_PROJECT_ID matches actual project ID
+- Review Railway logs: `railway logs --service frontend`
+- Common issue: Frontend build succeeds locally but fails on Railway (check Node version)
+
 ## Deployment
 
 ### Railway Deployment (Production)
@@ -558,6 +684,22 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 ```
 
 ## Recent Architecture Changes
+
+- **CI/CD Pipeline Enhancements:** Complete GitHub Actions pipeline with frontend build checks (January 2026)
+  - Backend CI: Gradle build + integration tests with Testcontainers
+  - Frontend CI: Vite build + TypeScript checking + linting
+  - Railway Deployment: Automatic frontend deployment on push to main
+  - npm cache cleanup to fix EBUSY errors on Railway
+  - Node.js 18 compatibility across all workflows
+
+- **Frontend Dependencies Pinned:** Vite locked to 5.4.11 for Node.js 18 compatibility (January 2026)
+  - Changed from `^5.4.11` to `5.4.11` (exact version)
+  - Prevents automatic upgrades to Vite 7.x which requires Node 20.19+
+  - Ensures Railway deployment stability with Node v22.11.0
+
+- **Test Credentials Fixed:** BCrypt password hashes corrected for admin/manager/user accounts (January 2026)
+  - All test accounts use hash: `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6`
+  - Fixes "Bad credentials" authentication errors
 
 - **Marchés Geolocation:** Full geolocation support for marchés with interactive map view using Leaflet/OpenStreetMap (January 2026)
   - Address search with Nominatim geocoding API

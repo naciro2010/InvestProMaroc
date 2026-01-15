@@ -254,7 +254,14 @@ SOUMIS.rejeter(motif) → BROUILLON
 | **MANAGER** | CRUD conventions, marchés, décomptes, paiements | Business operations |
 | **USER** | Read-only access | Reporting, exports |
 
-Test accounts available in `README.md` (admin/admin123, manager/manager123, user/user123).
+**Test Accounts** (seeded in `V3__seed_data.sql`):
+| Username | Password | Role | Email |
+|----------|----------|------|-------|
+| admin | admin123 | ADMIN | admin@investpro.ma |
+| manager | manager123 | MANAGER | manager@investpro.ma |
+| user | user123 | USER | user@investpro.ma |
+
+**⚠️ IMPORTANT:** Passwords are BCrypt hashed in database with cost 10. The hash `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6` is used for all test users - **ensure this hash matches your test password before changing it**.
 
 ### Security Configuration
 
@@ -462,7 +469,7 @@ Use `PrivateRoute` wrapper for authenticated pages:
 
 7. **Material-UI + Tailwind:** Frontend uses both MUI components and Tailwind utility classes. Prefer Tailwind for layout/spacing, MUI for complex components.
 
-8. **Test Credentials:** Use `admin/admin123` for testing (see README.md for full list). Change passwords before production.
+8. **Test Credentials:** Use test accounts `admin/admin123`, `manager/manager123`, `user/user123` (seeded in V3__seed_data.sql). Passwords are BCrypt hashed. **CRITICAL:** Only change passwords after verifying new BCrypt hashes in database - do not change in seed data without updating hash.
 
 9. **Reporting:** The `ReportingAnalytiquePage` demonstrates dynamic JSONB queries with filters. Use this pattern for new analytical features.
 

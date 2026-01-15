@@ -1,0 +1,106 @@
+# InvestPro Maroc - Claude Code Skills Configuration
+
+## ⚠️ MANDATORY INSTRUCTION: Always Update CLAUDE.md
+
+**Every time you make changes to the project, you MUST update CLAUDE.md to reflect those changes.**
+
+This includes but is not limited to:
+- ✅ New features or major refactoring
+- ✅ Changes to database schema or migrations
+- ✅ Changes to API endpoints or structure
+- ✅ Changes to authentication or security
+- ✅ Changes to test credentials or configuration
+- ✅ Changes to dependencies or build process
+- ✅ Changes to deployment process or environment variables
+- ✅ Changes to entity models or data structures
+
+### How to Update CLAUDE.md
+
+1. **Find the relevant section** in CLAUDE.md that relates to your changes
+2. **Update or add** documentation about the changes
+3. **Include examples** if the change affects code structure or usage
+4. **Update Recent Architecture Changes section** if it's a significant change
+5. **Add line references** using `filename:line_number` format when referencing code
+
+### Example Changes to Document
+
+**Adding a new entity:**
+```markdown
+## Working with the Backend
+
+### Adding a New Entity
+
+When creating a new CRUD entity:
+
+1. **Entity**: Create in `entity/` extending `BaseEntity`
+2. **Repository**: Create in `repository/` extending Spring Data JPA
+3. **DTO**: Create request/response DTOs in `dto/`
+4. **Mapper**: Create entity ↔ DTO mapper in `mapper/`
+5. **Service**: Create in `service/` extending `GenericCrudService<Entity, Long>`
+6. **Controller**: Create in `controller/` with standard REST endpoints
+7. **Migration**: Add Flyway migration in `db/migration/V{next_number}__description.sql`
+8. **Tests**: Add integration tests in `src/test/kotlin/ma/investpro/integration/`
+
+**Update CLAUDE.md** to document any new patterns or field names.
+```
+
+**Updating test credentials:**
+```markdown
+## Important Notes for Development
+
+8. **Test Credentials:** Use test accounts `admin/admin123`, `manager/manager123`, `user/user123`.
+   - Passwords are BCrypt hashed with cost 10
+   - Hash: `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6`
+   - **CRITICAL:** If changing passwords, update BOTH the seed data AND the hash
+   - Seeded in: `V3__seed_data.sql`
+```
+
+## Section-by-Section Guide
+
+| Section | When to Update | What to Add |
+|---------|----------------|------------|
+| **Common Commands** | When build/test commands change | New commands, removed commands, changed flags |
+| **High-Level Architecture** | When structure changes | New tables, new layers, removed components |
+| **Database Schema** | When migrations added | New migrations, schema changes, breaking changes |
+| **Code Organization** | When packages reorganized | New packages, moved files, renamed classes |
+| **Recent Architecture Changes** | On any significant change | Date, what changed, why, impact on development |
+| **Current Implementation Status** | When features added/removed | New tables, APIs, pages |
+| **Important Development Notes** | When patterns change | New patterns, security changes, best practices |
+| **Troubleshooting** | When new issues discovered | Common errors, solutions, prevention |
+
+## Critical Sections to Keep Updated
+
+🔴 **ALWAYS update these sections on any change:**
+- Recent Architecture Changes (add date and what changed)
+- Current Implementation Status (feature matrix)
+- Important Development Notes (if any patterns/best practices changed)
+
+🟡 **Update when relevant:**
+- Common Commands (if build process changes)
+- High-Level Architecture (if structure changes)
+- Database Schema (if migrations added)
+- Working with Backend/Frontend (if adding new entity/component)
+
+## Example: Recent Changes Section
+
+```markdown
+## Recent Architecture Changes
+
+- **Plan Analytique Dynamique:** Migrated from rigid Projet+Axe to flexible JSONB dimensions (December 2024)
+- **Flyway Migrations:** Using Flyway for database versioning (12+ migrations as of Jan 2026)
+- **Convention Amendments:** Full amendment (avenant) system with JSONB storage (January 2026)
+- **Fixed Test Credentials:** Updated V3__seed_data.sql with correct BCrypt hashes (January 2026)
+  - admin/admin123: ADMIN role
+  - manager/manager123: MANAGER role
+  - user/user123: USER role
+```
+
+## Remember
+
+❌ **Never forget to update CLAUDE.md**
+✅ **Always document what you changed and why**
+✅ **Include code references with filename:line_number**
+✅ **Keep examples current and working**
+✅ **Update Recent Architecture Changes section**
+
+This ensures every future developer (including AI assistants) knows exactly what's in the codebase and how to work with it.

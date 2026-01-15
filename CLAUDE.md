@@ -235,6 +235,75 @@ SOUMIS.rejeter(motif) → BROUILLON
 - Migration: `V12__create_avenant_conventions.sql`
 - Endpoint: `/api/avenants-conventions`
 
+### Sous-Conventions (Sub-Conventions)
+
+The system supports **hierarchical conventions** where CADRE (framework) conventions can have **sous-conventions** (sub-conventions or specific conventions):
+
+**Key Features:**
+- **Parent-Child Relationship:** Sous-conventions reference a parent convention (CADRE type only)
+- **Parameter Inheritance:** Sous-conventions can inherit `tauxCommission`, `baseCalcul`, and `tauxTva` from parent
+- **Selective Override:** `heriteParametres` flag enables inheritance; can override with `surchargeTauxCommission` and `surchargeBaseCalcul`
+- **Same Workflow:** Sous-conventions follow the same workflow as regular conventions (BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE)
+- **Independent Lifecycle:** Each sous-convention has its own status, budget, dates, and workflow state
+- **Nested Display:** Sous-conventions appear in a dedicated tab within the parent convention's detail page
+
+**Implementation:**
+```kotlin
+// Backend Entity (Convention.kt)
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "parent_convention_id")
+var parentConvention: Convention? = null
+
+@Column(name = "herite_parametres", nullable = false)
+var heriteParametres: Boolean = false
+
+fun getTauxCommissionEffectif(): BigDecimal {
+    val parent = parentConvention
+    return if (heriteParametres && parent != null) {
+        surchargeTauxCommission ?: parent.getTauxCommissionEffectif()
+    } else {
+        tauxCommission
+    }
+}
+```
+
+**API Endpoints:**
+- `GET /api/conventions/{parentId}/sous-conventions` - List sous-conventions
+- `POST /api/conventions/{parentId}/sous-conventions` - Create sous-convention
+- `PUT /api/conventions/{sousConventionId}` - Update sous-convention (standard endpoint)
+- `DELETE /api/conventions/{sousConventionId}` - Delete sous-convention (standard endpoint)
+- Workflow endpoints: same as regular conventions (`/soumettre`, `/valider`, `/rejeter`, etc.)
+
+**Frontend:**
+- **Form:** `SousConventionForm.tsx` - Modal dialog with parent info display and inheritance toggle
+- **Display:** Dedicated tab in `ConventionDetailPage.tsx` showing table of all sous-conventions
+- **Navigation:** Clicking a sous-convention navigates to its detail page (same as regular convention)
+- **Add Button:** Only visible when viewing a CADRE convention
+
+**Database:**
+- Same table: `conventions` (self-referencing with `parent_convention_id`)
+- Migration: `V2__create_schema.sql` (already includes parent-child fields)
+- Seed Data: `V3__seed_data.sql` contains 5 example sous-conventions (SC-001 to SC-005)
+
+**Business Rules:**
+- Only CADRE conventions can have sous-conventions
+- Sous-conventions have type `SPECIFIQUE`
+- Parent convention must be VALIDEE or EN_EXECUTION to create sous-conventions
+- Full search and filtering capability within parent convention
+- Complete audit trail (createdBy, createdAt, updatedAt)
+
+**Example Hierarchy:**
+```
+CONV-001 (CADRE) "Convention Infrastructure"
+  ├─ SC-001 (SPECIFIQUE) "Sous-Convention Voirie Urbaine" [inherits parameters]
+  ├─ SC-002 (SPECIFIQUE) "Sous-Convention Routes Nationales" [inherits parameters]
+  └─ SC-003 (SPECIFIQUE) "Sous-Convention Ponts" [custom rate: 3.0%]
+
+CONV-002 (CADRE) "Convention Equipement Public"
+  ├─ SC-004 (SPECIFIQUE) "Sous-Convention Equipement Scolaire"
+  └─ SC-005 (SPECIFIQUE) "Sous-Convention Equipement Sanitaire"
+```
+
 ## Authentication & Security
 
 ### JWT Authentication Flow
@@ -298,6 +367,46 @@ InvestPro uses **Spring Security BCryptPasswordEncoder** with cost 10:
 - **Frontend:** `PrivateRoute` wrapper checks `isAuthenticated` from `AuthContext`
 - **CORS:** Configured in `SecurityConfig.kt` (dev: localhost, prod: GitHub Pages)
 - **Tokens:** Access token (24h), refresh token (7d)
+
+### Security Best Practices (January 2026)
+
+**Frontend Security:**
+- ✅ **No sensitive data in localStorage** - Only JWT tokens (encrypted in transit via HTTPS)
+- ✅ **XSS Protection** - React escapes all user input by default
+- ✅ **CSRF Protection** - JWT in Authorization header (not cookies)
+- ✅ **Content Security Policy** - Vite build includes secure headers
+- ✅ **Dependencies** - Regular security audits via `npm audit`
+- ✅ **Production builds** - Console.log removed, source maps disabled
+- ✅ **HTTPS Only** - Enforced in production (Railway, GitHub Pages)
+
+**Backend Security:**
+- ✅ **Password Hashing** - BCrypt with salt rounds = 10
+- ✅ **JWT Signing** - HMAC SHA-256 with strong secret (256+ bits)
+- ✅ **SQL Injection** - Prevented via Spring Data JPA parameterized queries
+- ✅ **Rate Limiting** - Should be implemented at reverse proxy level (TODO)
+- ✅ **Input Validation** - `@Valid` annotations on all DTOs
+- ✅ **CORS Whitelist** - Only allowed origins in production
+- ✅ **Secure Headers** - Spring Security default headers (X-Frame-Options, X-Content-Type-Options, etc.)
+
+**PWA Security:**
+- ✅ **Service Worker** - Only registers on HTTPS (fails gracefully on HTTP)
+- ✅ **Cache Strategy** - NetworkFirst for API (always fresh data when online)
+- ✅ **No sensitive caching** - API responses cached max 5 minutes
+- ✅ **Auto-update** - Service worker updates automatically on new deployments
+
+**Data Security:**
+- ✅ **Audit Trail** - All entities track createdBy, createdAt, updatedAt
+- ✅ **Soft Deletes** - Entities have `actif` flag instead of hard deletes
+- ✅ **Data Validation** - CHECK constraints in database (e.g., budget >= 0)
+- ✅ **Transaction Isolation** - PostgreSQL READ COMMITTED by default
+
+**Recommended for Production:**
+- ⚠️ **Add Rate Limiting** - Use nginx rate limiting or Spring Rate Limiter
+- ⚠️ **Enable 2FA** - For admin accounts
+- ⚠️ **Database Encryption** - Enable PostgreSQL encryption at rest
+- ⚠️ **Secrets Management** - Use env variables, never commit secrets
+- ⚠️ **Regular Backups** - Automated daily backups with point-in-time recovery
+- ⚠️ **Security Scanning** - GitHub Dependabot, Snyk, or OWASP Dependency-Check
 
 ## API Structure
 
@@ -771,6 +880,31 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 
 ## Recent Architecture Changes
 
+- **Progressive Web App (PWA):** Full PWA support with offline capabilities (January 2026)
+  - `vite-plugin-pwa` for service worker generation
+  - App installable on desktop and mobile
+  - Offline caching with Workbox
+  - NetworkFirst strategy for API calls
+  - StaleWhileRevalidate for static resources
+  - Auto-update on new versions
+  - Manifest with icons and theme colors
+
+- **Modern Landing Page:** Redesigned with framer-motion animations (January 2026)
+  - Smooth fade-in and stagger animations
+  - Scale-on-hover effects for cards
+  - Clean, modern design with gradient backgrounds
+  - Optimized performance with lazy loading
+  - Responsive design for all screen sizes
+  - Clear feature showcase with real app statistics
+
+- **Code Simplification & Optimization:** Major refactor for better maintainability (January 2026)
+  - Simplified `SousConventionForm` → `SousConventionFormSimple` (50% less code)
+  - Removed complex formatting logic in favor of native HTML5 inputs
+  - Better build optimization with code splitting (React, MUI, Charts separated)
+  - Tree shaking enabled for smaller bundle sizes
+  - Console.log removal in production builds
+  - Optimized chunk sizes for better caching
+
 - **CI/CD Pipeline Enhancements:** Complete GitHub Actions pipeline with frontend build checks (January 2026)
   - Backend CI: Gradle build + integration tests with Testcontainers
   - Frontend CI: Vite build + TypeScript checking + linting
@@ -787,6 +921,13 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - **Test Credentials Fixed:** BCrypt password hashes corrected for admin/manager/user accounts (January 2026)
   - All test accounts use hash: `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6`
   - Fixes "Bad credentials" authentication errors
+
+- **Sous-Conventions System:** Full hierarchical convention support with parent-child relationships (January 2026)
+  - CADRE conventions can have multiple sous-conventions (type SPECIFIQUE)
+  - Parameter inheritance with selective override (tauxCommission, baseCalcul, tauxTva)
+  - Same workflow as regular conventions (BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE)
+  - Dedicated UI tab in convention detail page with simplified modal
+  - 5 example sous-conventions in seed data (SC-001 to SC-005)
 
 - **Marchés Geolocation:** Full geolocation support for marchés with interactive map view using Leaflet/OpenStreetMap (January 2026)
   - Address search with Nominatim geocoding API
@@ -807,8 +948,8 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 ## Current Implementation Status
 
 ### Fully Implemented (90%+)
-- Backend: Conventions, Projets, Marchés, Fournisseurs, Analytical Dimensions
-- Frontend: Dashboards, Conventions, Marchés, Projets, Analytical Reporting, User Profile
+- Backend: Conventions, Sous-Conventions, Projets, Marchés, Fournisseurs, Analytical Dimensions
+- Frontend: Dashboards, Conventions, Sous-Conventions, Marchés, Projets, Analytical Reporting, User Profile
 
 ### Partial Implementation (60-75%)
 - Décomptes: Backend ready, frontend basic list page only

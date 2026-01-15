@@ -20,6 +20,8 @@ import PaiementsPage from './pages/paiements/PaiementsPage'
 import ProfilePage from './pages/ProfilePage'
 import PlanAnalytiquePage from './pages/parametrage/PlanAnalytiquePage'
 import ReportingAnalytiquePage from './pages/reporting/ReportingAnalytiquePage'
+import UsersPage from './pages/users/UsersPage'
+import UnderConstruction from './pages/UnderConstruction'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -246,6 +248,62 @@ function App() {
             element={
               <ProtectedRoute>
                 <ReportingAnalytiquePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Users Management */}
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Under Construction Pages */}
+          <Route
+            path="/fournisseurs"
+            element={
+              <ProtectedRoute>
+                <UnderConstruction
+                  featureName="Gestion des Fournisseurs"
+                  description="Module complet pour gérer vos fournisseurs avec leurs informations fiscales (ICE, IF, RIB) et suivre leurs contrats et paiements."
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/comptes-bancaires"
+            element={
+              <ProtectedRoute>
+                <UnderConstruction
+                  featureName="Comptes Bancaires"
+                  description="Gérez vos comptes bancaires, suivez les soldes et les opérations de rapprochement bancaire."
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/depenses"
+            element={
+              <ProtectedRoute>
+                <UnderConstruction
+                  featureName="Gestion des Dépenses"
+                  description="Module de suivi détaillé des dépenses avec catégorisation et analyse des coûts."
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/commissions"
+            element={
+              <ProtectedRoute>
+                <UnderConstruction
+                  featureName="Calcul des Commissions"
+                  description="Calculez automatiquement les commissions selon les conventions avec gestion des tranches et exclusions."
+                />
               </ProtectedRoute>
             }
           />

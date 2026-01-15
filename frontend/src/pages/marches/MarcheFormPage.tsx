@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { FaPlus, FaTrash, FaSave, FaTimes } from 'react-icons/fa'
 import { Card, Button } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
+import LocationPicker from '../../components/ui/LocationPicker'
 import api from '../../lib/api'
 import { MarcheLigne, DimensionAnalytique } from '../../types/entities'
 
@@ -39,6 +40,12 @@ export default function MarcheFormPage() {
   const [delaiExecutionMois, setDelaiExecutionMois] = useState<number | null>(null)
   const [retenueGarantie, setRetenueGarantie] = useState(0)
   const [remarques, setRemarques] = useState('')
+
+  // État de la géolocalisation
+  const [adresse, setAdresse] = useState('')
+  const [latitude, setLatitude] = useState<number | undefined>(undefined)
+  const [longitude, setLongitude] = useState<number | undefined>(undefined)
+  const [zoneGeographique, setZoneGeographique] = useState('')
 
   // État des lignes
   const [lignes, setLignes] = useState<MarcheLigne[]>([])
@@ -92,6 +99,10 @@ export default function MarcheFormPage() {
       setDelaiExecutionMois(marche.delaiExecutionMois)
       setRetenueGarantie(marche.retenueGarantie || 0)
       setRemarques(marche.remarques || '')
+      setAdresse(marche.adresse || '')
+      setLatitude(marche.latitude)
+      setLongitude(marche.longitude)
+      setZoneGeographique(marche.zoneGeographique || '')
       setLignes(marche.lignes || [])
     } catch (error) {
       console.error('Erreur chargement marché:', error)
@@ -182,6 +193,10 @@ export default function MarcheFormPage() {
         delaiExecutionMois,
         retenueGarantie,
         remarques: remarques || null,
+        adresse: adresse || null,
+        latitude,
+        longitude,
+        zoneGeographique: zoneGeographique || null,
         lignes
       }
 
@@ -405,6 +420,38 @@ export default function MarcheFormPage() {
                 onChange={(e) => setRemarques(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
               />
+            </div>
+          </div>
+        </Card>
+
+        {/* Géolocalisation */}
+        <Card title="📍 Localisation du Marché">
+          <div className="space-y-4">
+            <LocationPicker
+              latitude={latitude}
+              longitude={longitude}
+              adresse={adresse}
+              onLocationChange={(location) => {
+                setLatitude(location.latitude)
+                setLongitude(location.longitude)
+                setAdresse(location.adresse)
+              }}
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Zone Géographique
+              </label>
+              <input
+                type="text"
+                value={zoneGeographique}
+                onChange={(e) => setZoneGeographique(e.target.value)}
+                placeholder="Ex: Casablanca, Rabat-Salé-Kénitra, Région du Nord..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Indiquez la région ou zone administrative du marché pour faciliter les recherches géographiques.
+              </p>
             </div>
           </div>
         </Card>

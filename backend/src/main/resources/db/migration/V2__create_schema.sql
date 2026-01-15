@@ -430,6 +430,10 @@ CREATE TABLE IF NOT EXISTS marches (
     delai_execution_mois INTEGER,
     retenue_garantie DECIMAL(15,2) DEFAULT 0.00,
     remarques TEXT,
+    adresse TEXT,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    zone_geographique VARCHAR(100),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actif BOOLEAN DEFAULT TRUE NOT NULL
@@ -441,6 +445,7 @@ CREATE INDEX IF NOT EXISTS idx_marches_fournisseur ON marches(fournisseur_id);
 CREATE INDEX IF NOT EXISTS idx_marches_convention ON marches(convention_id);
 CREATE INDEX IF NOT EXISTS idx_marches_statut ON marches(statut);
 CREATE INDEX IF NOT EXISTS idx_marches_date ON marches(date_marche);
+CREATE INDEX IF NOT EXISTS idx_marches_zone ON marches(zone_geographique);
 
 -- Marché lignes (line items within a market)
 CREATE TABLE IF NOT EXISTS marche_lignes (

@@ -13,6 +13,8 @@ const getBasePath = () => {
   return process.env.VITE_BASE_PATH || '/';
 };
 
+const basePath = getBasePath();
+
 export default defineConfig({
   plugins: [
     react(),
@@ -27,23 +29,23 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
+        scope: basePath,
+        start_url: basePath,
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: `${basePath}pwa-192x192.png`,
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/pwa-512x512.png',
+            src: `${basePath}pwa-512x512.png`,
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/pwa-512x512.png',
+            src: `${basePath}pwa-512x512.png`,
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
@@ -52,7 +54,7 @@ export default defineConfig({
         categories: ['finance', 'productivity', 'business'],
         screenshots: [
           {
-            src: '/screenshots/desktop-1.png',
+            src: `${basePath}screenshots/desktop-1.png`,
             sizes: '1920x1080',
             type: 'image/png',
             form_factor: 'wide'
@@ -97,7 +99,7 @@ export default defineConfig({
       }
     })
   ],
-  base: getBasePath(),
+  base: basePath,
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

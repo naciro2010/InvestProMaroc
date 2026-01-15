@@ -601,10 +601,19 @@ Steps:
 
 **Frontend Build Fails: "Could not find a declaration file for module 'react-dom/client'"**
 - Error: `error TS7016: Could not find a declaration file for module 'react-dom/client'`
-- Root Cause: Using `npm ci --omit=dev` which excludes devDependencies needed for build
-- Solution: Use `npm ci` WITHOUT `--omit=dev` in build steps (workflow already fixed)
-- Why: TypeScript compilation needs @types/react-dom and other type packages
-- `--omit=dev` should ONLY be used for production runtime deployments after build completes
+- **Real Root Cause:** Incomplete `package-lock.json` missing full package entries for devDependencies
+  - When `package-lock.json` is missing package metadata, `npm ci` cannot properly install devDependencies
+  - @types/react-dom only appeared in root devDependencies list, NOT as a full package entry
+  - TypeScript could not find the type definitions during compilation
+- **Primary Solution:** Regenerate `package-lock.json`
+  ```bash
+  cd frontend && npm install  # Regenerates lock file with complete package entries
+  git add package-lock.json && git commit
+  ```
+- **Secondary Issue (Also Fixed):** Workflows were using `npm ci --omit=dev`
+  - This was doubly wrong because build phase needs devDependencies
+  - Changed to `npm ci` WITHOUT `--omit=dev` in CI workflows
+  - `--omit=dev` should ONLY be used for production runtime (not build phase)
 
 **Frontend Build Fails with "npm error EBUSY"**
 - Solution: Pipeline includes `npm cache clean --force` before install
@@ -617,6 +626,35 @@ Steps:
 - If package.json version doesn't match package-lock.json, `npm ci` will fail
 - Error: "Invalid: lock file's vite@X does not satisfy vite@Y" means mismatch
 - Solution: Keep package.json and package-lock.json in sync
+
+**CRITICAL: Keeping package-lock.json Synchronized**
+
+⚠️ **MANDATORY:** Always regenerate `package-lock.json` when modifying `package.json`:
+
+```bash
+# After editing frontend/package.json:
+cd frontend
+npm install                    # Regenerates package-lock.json with all packages
+git add package.json package-lock.json
+git commit -m "fix: Update dependencies and regenerate lock file"
+```
+
+**Why This Matters:**
+- `package-lock.json` contains the complete dependency tree with resolved versions
+- When lock file is incomplete/corrupted, `npm ci` cannot install packages properly
+- Missing package entries prevent TypeScript from finding type definitions
+- This causes build failures like "Could not find @types/react-dom"
+- Always regenerate after ANY change to package.json
+- **BEFORE committing:** Verify both files are in sync
+
+**How to Verify Sync:**
+```bash
+# Should show no output if in sync
+diff <(npm install --dry-run 2>&1 | grep -E "add|remove|change") <(echo "")
+
+# Or simply run npm ci locally to test
+npm ci
+```
 
 **Backend CI Timeout**
 - Integration tests with Testcontainers can take 2-5 minutes

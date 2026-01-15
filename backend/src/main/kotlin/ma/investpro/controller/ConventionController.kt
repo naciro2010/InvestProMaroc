@@ -290,7 +290,7 @@ class ConventionController(
             imputation.convention = convention
 
             // Calculer la date de fin si nécessaire
-            if (imputation.dateFinPrevue == null && imputation.dateDemarrage != null && imputation.delaiMois > 0) {
+            if (imputation.dateFinPrevue == null) {
                 imputation.dateFinPrevue = imputation.dateDemarrage.plusMonths(imputation.delaiMois.toLong())
             }
 

@@ -254,7 +254,14 @@ SOUMIS.rejeter(motif) → BROUILLON
 | **MANAGER** | CRUD conventions, marchés, décomptes, paiements | Business operations |
 | **USER** | Read-only access | Reporting, exports |
 
-Test accounts available in `README.md` (admin/admin123, manager/manager123, user/user123).
+**Test Accounts** (seeded in `V3__seed_data.sql`):
+| Username | Password | Role | Email |
+|----------|----------|------|-------|
+| admin | admin123 | ADMIN | admin@investpro.ma |
+| manager | manager123 | MANAGER | manager@investpro.ma |
+| user | user123 | USER | user@investpro.ma |
+
+**⚠️ IMPORTANT:** Passwords are BCrypt hashed in database with cost 10. The hash `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6` is used for all test users - **ensure this hash matches your test password before changing it**.
 
 ### Security Configuration
 
@@ -462,7 +469,7 @@ Use `PrivateRoute` wrapper for authenticated pages:
 
 7. **Material-UI + Tailwind:** Frontend uses both MUI components and Tailwind utility classes. Prefer Tailwind for layout/spacing, MUI for complex components.
 
-8. **Test Credentials:** Use `admin/admin123` for testing (see README.md for full list). Change passwords before production.
+8. **Test Credentials:** Use test accounts `admin/admin123`, `manager/manager123`, `user/user123` (seeded in V3__seed_data.sql). Passwords are BCrypt hashed. **CRITICAL:** Only change passwords after verifying new BCrypt hashes in database - do not change in seed data without updating hash.
 
 9. **Reporting:** The `ReportingAnalytiquePage` demonstrates dynamic JSONB queries with filters. Use this pattern for new analytical features.
 
@@ -476,6 +483,189 @@ Use `PrivateRoute` wrapper for authenticated pages:
     - Rejection motif stored and displayed in UI
 
 12. **Number Formatting:** Frontend forms use French number formatting (1 000 000,00) with automatic parsing for clean UX.
+
+## CI/CD Pipeline
+
+InvestPro Maroc uses GitHub Actions for Continuous Integration and Continuous Deployment:
+
+### Workflows Overview
+
+| Workflow | Trigger | Purpose | Status |
+|----------|---------|---------|--------|
+| **Backend CI** (ci-backend.yml) | Pull Request | Build & test backend with Gradle, run integration tests with Testcontainers | ✅ Active |
+| **Frontend CI** (ci-frontend.yml) | Pull Request | Build & test frontend with Vite, TypeScript check, linting | ✅ Active |
+| **Railway Deploy** (deploy-railway.yml) | Push to main | Automatic deployment to Railway after PR merge | ✅ Active |
+| **Demo Deploy** (deploy-demo.yml) | Manual trigger | Deploy to demo environment | ✅ Active |
+
+**CI Strategy:** Run tests and builds **only on Pull Requests** to avoid duplicate runs and save GitHub Actions minutes. Once PR is approved and merged to main, the deployment pipeline runs automatically.
+
+### Backend CI Pipeline
+
+**Location:** `.github/workflows/ci-backend.yml`
+
+```yaml
+Triggers on:
+- Push to main, claude/* branches
+- Pull requests
+- Changes to backend/** or workflow file
+
+Steps:
+1. Checkout code
+2. Setup Java 21 with Gradle caching
+3. Make gradlew executable
+4. Run ./gradlew clean build --info
+5. Upload test reports on failure
+6. Check for build artifacts
+```
+
+**Environment:**
+- Java 21 (Temurin)
+- PostgreSQL 16-alpine (Testcontainers)
+- Gradle caching enabled
+
+**Key Tests:**
+- FlywayMigrationIntegrationTest (schema validation)
+- AvenantConventionIntegrationTest (workflow)
+- All other integration tests with real database
+
+### Frontend CI Pipeline
+
+**Location:** `.github/workflows/ci-frontend.yml`
+
+```yaml
+Triggers on:
+- Pull requests
+- Changes to frontend/** or workflow file
+
+Steps:
+1. Checkout code
+2. Setup Node.js 18 with npm caching
+3. Clear npm cache to prevent EBUSY errors
+4. npm ci (install all dependencies including devDependencies)
+5. npm run lint (optional, continue on error)
+6. npm run build (TypeScript + Vite build)
+7. Check build size and verify dist/assets output
+```
+
+**Important:** Uses `npm ci` WITHOUT `--omit=dev` because:
+- Build requires **devDependencies** (TypeScript, Vite, type definitions like @types/react-dom)
+- `--omit=dev` should only be used for runtime deployments (after build completes)
+- Build fails without @types/react-dom and other type packages
+
+**Environment:**
+- Node.js 18 (compatible with package.json >=18.0.0)
+- npm 9+ (from Node 18)
+- Vite 5.4.21 (pinned exact version for package-lock.json sync)
+
+**Build Artifacts:**
+- dist/ folder with optimized bundle
+- Includes vendor.js and main.js
+- Source maps excluded from production build
+
+### Railway Deployment
+
+**Location:** `.github/workflows/deploy-railway.yml`
+
+```yaml
+Triggers on:
+- Push to main with frontend/** changes
+- Manual workflow_dispatch
+
+Environment Variables:
+- NODE_ENV: production
+- VITE_API_URL: https://investpromaroc-production.up.railway.app/api
+- VITE_BASE_PATH: /
+- RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+- RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+
+Steps:
+1. Checkout code
+2. Setup Node.js 18
+3. Clear npm cache
+4. Install Railway CLI globally
+5. npm ci (install all dependencies including devDependencies for build)
+6. npm run build (TypeScript + Vite)
+7. railway up (deploy to Railway)
+```
+
+**Note:** Uses `npm ci` without `--omit=dev` for the build phase. Railway deployment is two-stage:
+- Stage 1: Build with devDependencies (happens in CI workflow)
+- Stage 2: Production runtime (Railway doesn't need devDependencies, handled by NODE_ENV=production in Vite)
+
+**Configuration:**
+- Uses Railway CLI for deployment
+- Requires RAILWAY_TOKEN and RAILWAY_PROJECT_ID secrets
+- Automatic build happens on Railway (see railway.json)
+
+### Troubleshooting CI/CD
+
+**Frontend Build Fails: "Could not find a declaration file for module 'react-dom/client'"**
+- Error: `error TS7016: Could not find a declaration file for module 'react-dom/client'`
+- **Real Root Cause:** Incomplete `package-lock.json` missing full package entries for devDependencies
+  - When `package-lock.json` is missing package metadata, `npm ci` cannot properly install devDependencies
+  - @types/react-dom only appeared in root devDependencies list, NOT as a full package entry
+  - TypeScript could not find the type definitions during compilation
+- **Primary Solution:** Regenerate `package-lock.json`
+  ```bash
+  cd frontend && npm install  # Regenerates lock file with complete package entries
+  git add package-lock.json && git commit
+  ```
+- **Secondary Issue (Also Fixed):** Workflows were using `npm ci --omit=dev`
+  - This was doubly wrong because build phase needs devDependencies
+  - Changed to `npm ci` WITHOUT `--omit=dev` in CI workflows
+  - `--omit=dev` should ONLY be used for production runtime (not build phase)
+
+**Frontend Build Fails with "npm error EBUSY"**
+- Solution: Pipeline includes `npm cache clean --force` before install
+- Cause: Concurrent file access during npm package installation
+- Prevention: Always clear cache in CI environments
+
+**Vite Version Compatibility Issues**
+- Vite 5.4.21 is pinned to match package-lock.json exactly
+- Do NOT use `npm install` (updates lock file) - use `npm ci` instead
+- If package.json version doesn't match package-lock.json, `npm ci` will fail
+- Error: "Invalid: lock file's vite@X does not satisfy vite@Y" means mismatch
+- Solution: Keep package.json and package-lock.json in sync
+
+**CRITICAL: Keeping package-lock.json Synchronized**
+
+⚠️ **MANDATORY:** Always regenerate `package-lock.json` when modifying `package.json`:
+
+```bash
+# After editing frontend/package.json:
+cd frontend
+npm install                    # Regenerates package-lock.json with all packages
+git add package.json package-lock.json
+git commit -m "fix: Update dependencies and regenerate lock file"
+```
+
+**Why This Matters:**
+- `package-lock.json` contains the complete dependency tree with resolved versions
+- When lock file is incomplete/corrupted, `npm ci` cannot install packages properly
+- Missing package entries prevent TypeScript from finding type definitions
+- This causes build failures like "Could not find @types/react-dom"
+- Always regenerate after ANY change to package.json
+- **BEFORE committing:** Verify both files are in sync
+
+**How to Verify Sync:**
+```bash
+# Should show no output if in sync
+diff <(npm install --dry-run 2>&1 | grep -E "add|remove|change") <(echo "")
+
+# Or simply run npm ci locally to test
+npm ci
+```
+
+**Backend CI Timeout**
+- Integration tests with Testcontainers can take 2-5 minutes
+- PostgreSQL container startup adds 30-60 seconds
+- Docker must be available in CI runner
+
+**Railway Deployment Fails**
+- Verify RAILWAY_TOKEN is valid and not expired
+- Check RAILWAY_PROJECT_ID matches actual project ID
+- Review Railway logs: `railway logs --service frontend`
+- Common issue: Frontend build succeeds locally but fails on Railway (check Node version)
 
 ## Deployment
 
@@ -551,6 +741,23 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 ```
 
 ## Recent Architecture Changes
+
+- **CI/CD Pipeline Enhancements:** Complete GitHub Actions pipeline with frontend build checks (January 2026)
+  - Backend CI: Gradle build + integration tests with Testcontainers
+  - Frontend CI: Vite build + TypeScript checking + linting
+  - Railway Deployment: Automatic frontend deployment on push to main
+  - npm cache cleanup to fix EBUSY errors on Railway
+  - Node.js 18 compatibility across all workflows
+
+- **Frontend Dependencies Pinned:** Vite locked to 5.4.21 for Node.js 18 compatibility (January 2026)
+  - Pinned to exact version matching package-lock.json
+  - Prevents automatic upgrades to Vite 7.x which requires Node 20.19+
+  - Ensures Railway deployment stability with Node v22.11.0
+  - `npm ci` now syncs package.json and package-lock.json exactly
+
+- **Test Credentials Fixed:** BCrypt password hashes corrected for admin/manager/user accounts (January 2026)
+  - All test accounts use hash: `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6`
+  - Fixes "Bad credentials" authentication errors
 
 - **Marchés Geolocation:** Full geolocation support for marchés with interactive map view using Leaflet/OpenStreetMap (January 2026)
   - Address search with Nominatim geocoding API

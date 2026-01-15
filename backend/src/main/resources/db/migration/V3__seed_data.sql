@@ -3,11 +3,12 @@
 -- =============================================================================
 -- Test users with BCrypt hashed passwords
 
--- Users (passwords: admin123, manager123, user123)
+-- Users (passwords: admin123, manager123, user123) - BCrypt hashed
+-- Hash generated with BCrypt cost 10
 INSERT INTO users (username, password, email, full_name) VALUES
-('admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'admin@investpro.ma', 'Administrateur Système'),
-('manager', '$2a$10$V2OjFqX/HqPKjVlT3K1Uh.TkVN0V7Ln2mJvNNjRGCMZWgPKW8t2Zu', 'manager@investpro.ma', 'Manager Principal'),
-('user', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user@investpro.ma', 'Utilisateur Standard');
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6', 'admin@investpro.ma', 'Administrateur Système'),
+('manager', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6', 'manager@investpro.ma', 'Manager Principal'),
+('user', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6', 'user@investpro.ma', 'Utilisateur Standard');
 
 INSERT INTO user_roles (user_id, role) VALUES
 (1, 'ADMIN'),

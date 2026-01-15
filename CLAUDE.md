@@ -339,6 +339,46 @@ CONV-002 (CADRE) "Convention Equipement Public"
 - **CORS:** Configured in `SecurityConfig.kt` (dev: localhost, prod: GitHub Pages)
 - **Tokens:** Access token (24h), refresh token (7d)
 
+### Security Best Practices (January 2026)
+
+**Frontend Security:**
+- ✅ **No sensitive data in localStorage** - Only JWT tokens (encrypted in transit via HTTPS)
+- ✅ **XSS Protection** - React escapes all user input by default
+- ✅ **CSRF Protection** - JWT in Authorization header (not cookies)
+- ✅ **Content Security Policy** - Vite build includes secure headers
+- ✅ **Dependencies** - Regular security audits via `npm audit`
+- ✅ **Production builds** - Console.log removed, source maps disabled
+- ✅ **HTTPS Only** - Enforced in production (Railway, GitHub Pages)
+
+**Backend Security:**
+- ✅ **Password Hashing** - BCrypt with salt rounds = 10
+- ✅ **JWT Signing** - HMAC SHA-256 with strong secret (256+ bits)
+- ✅ **SQL Injection** - Prevented via Spring Data JPA parameterized queries
+- ✅ **Rate Limiting** - Should be implemented at reverse proxy level (TODO)
+- ✅ **Input Validation** - `@Valid` annotations on all DTOs
+- ✅ **CORS Whitelist** - Only allowed origins in production
+- ✅ **Secure Headers** - Spring Security default headers (X-Frame-Options, X-Content-Type-Options, etc.)
+
+**PWA Security:**
+- ✅ **Service Worker** - Only registers on HTTPS (fails gracefully on HTTP)
+- ✅ **Cache Strategy** - NetworkFirst for API (always fresh data when online)
+- ✅ **No sensitive caching** - API responses cached max 5 minutes
+- ✅ **Auto-update** - Service worker updates automatically on new deployments
+
+**Data Security:**
+- ✅ **Audit Trail** - All entities track createdBy, createdAt, updatedAt
+- ✅ **Soft Deletes** - Entities have `actif` flag instead of hard deletes
+- ✅ **Data Validation** - CHECK constraints in database (e.g., budget >= 0)
+- ✅ **Transaction Isolation** - PostgreSQL READ COMMITTED by default
+
+**Recommended for Production:**
+- ⚠️ **Add Rate Limiting** - Use nginx rate limiting or Spring Rate Limiter
+- ⚠️ **Enable 2FA** - For admin accounts
+- ⚠️ **Database Encryption** - Enable PostgreSQL encryption at rest
+- ⚠️ **Secrets Management** - Use env variables, never commit secrets
+- ⚠️ **Regular Backups** - Automated daily backups with point-in-time recovery
+- ⚠️ **Security Scanning** - GitHub Dependabot, Snyk, or OWASP Dependency-Check
+
 ## API Structure
 
 ### Endpoint Naming Convention
@@ -811,6 +851,31 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 
 ## Recent Architecture Changes
 
+- **Progressive Web App (PWA):** Full PWA support with offline capabilities (January 2026)
+  - `vite-plugin-pwa` for service worker generation
+  - App installable on desktop and mobile
+  - Offline caching with Workbox
+  - NetworkFirst strategy for API calls
+  - StaleWhileRevalidate for static resources
+  - Auto-update on new versions
+  - Manifest with icons and theme colors
+
+- **Modern Landing Page:** Redesigned with framer-motion animations (January 2026)
+  - Smooth fade-in and stagger animations
+  - Scale-on-hover effects for cards
+  - Clean, modern design with gradient backgrounds
+  - Optimized performance with lazy loading
+  - Responsive design for all screen sizes
+  - Clear feature showcase with real app statistics
+
+- **Code Simplification & Optimization:** Major refactor for better maintainability (January 2026)
+  - Simplified `SousConventionForm` → `SousConventionFormSimple` (50% less code)
+  - Removed complex formatting logic in favor of native HTML5 inputs
+  - Better build optimization with code splitting (React, MUI, Charts separated)
+  - Tree shaking enabled for smaller bundle sizes
+  - Console.log removal in production builds
+  - Optimized chunk sizes for better caching
+
 - **CI/CD Pipeline Enhancements:** Complete GitHub Actions pipeline with frontend build checks (January 2026)
   - Backend CI: Gradle build + integration tests with Testcontainers
   - Frontend CI: Vite build + TypeScript checking + linting
@@ -832,8 +897,9 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
   - CADRE conventions can have multiple sous-conventions (type SPECIFIQUE)
   - Parameter inheritance with selective override (tauxCommission, baseCalcul, tauxTva)
   - Same workflow as regular conventions (BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE)
-  - Dedicated UI tab in convention detail page with create/edit modal
+  - Dedicated UI tab in convention detail page with simplified modal
   - 5 example sous-conventions in seed data (SC-001 to SC-005)
+
 - **Marchés Geolocation:** Full geolocation support for marchés with interactive map view using Leaflet/OpenStreetMap (January 2026)
   - Address search with Nominatim geocoding API
   - Map-based location picker with click-to-place marker

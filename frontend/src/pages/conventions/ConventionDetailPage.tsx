@@ -44,7 +44,7 @@ import AppLayout from '../../components/layout/AppLayout'
 import AddImputationDialog from '../../components/conventions/AddImputationDialog'
 import AddVersementDialog from '../../components/conventions/AddVersementDialog'
 import AvenantConventionList from './AvenantConventionList'
-import SousConventionForm from './SousConventionForm'
+import SousConventionForm from './SousConventionFormSimple'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
 

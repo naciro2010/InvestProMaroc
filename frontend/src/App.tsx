@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
-import LandingPageSimple from './pages/LandingPageSimple'
+import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardSimple from './pages/DashboardSimple'
@@ -78,7 +78,7 @@ function App() {
         <ToastProvider>
           <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<LandingPageSimple />} />
+          <Route path="/" element={<LandingPage />} />
           <Route
             path="/login"
             element={

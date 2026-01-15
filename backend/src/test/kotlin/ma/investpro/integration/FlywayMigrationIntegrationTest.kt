@@ -172,12 +172,12 @@ class FlywayMigrationIntegrationTest {
         )
         userCount shouldBe 3
 
-        // Verify conventions were created
+        // Verify conventions were created (2 conventions in seed data)
         val conventionCount = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM conventions",
             Long::class.java
         )
-        conventionCount shouldBe 1
+        conventionCount shouldBe 2
 
         // Verify admin user exists
         val adminExists = jdbcTemplate.queryForObject(

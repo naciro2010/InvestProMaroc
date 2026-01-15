@@ -945,6 +945,107 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - **Modern Under Construction Pages:** Professional "under construction" pages with roadmap for features in development (January 2026)
 - **Backend CI/CD:** GitHub Actions workflow for automatic compilation verification on every push (January 2026)
 
+## Planned Improvements (Current Sprint)
+
+### 1. Rich Text Editor for Descriptions
+**Status:** Planning / Design Phase (Branch: `feature/rich-text-editor-styling`)
+
+**Goal:** Enable formatted text with styling options for all description fields across the platform
+
+**Components Affected:**
+- Convention description/object field (currently `objet`)
+- Project description field
+- Market description field
+- All other description/comment fields
+
+**Implementation Details:**
+- **Library:** React Quill (`react-quill` v2.x) or Editor.js
+- **Features Required:**
+  - Text formatting (bold, italic, underline)
+  - Font colors and background colors
+  - Font family selection (Helvetica, Arial, Georgia, Courier, etc.)
+  - Font sizes
+  - Text alignment (left, center, right, justify)
+  - Lists (ordered, unordered)
+  - Links and images
+  - Code blocks
+  - Undo/redo
+  - Toolbar customization
+
+- **Storage:** JSONB in database (already used for analytical dimensions)
+  - Store rich text as Quill Delta format or HTML
+  - Provide migration for existing plain-text descriptions
+  - Display with proper formatting in detail views
+
+**API Changes Required:**
+- Backend: Modify description fields to accept rich text (JSONB or TEXT)
+- Frontend: Update all forms to use rich text editor instead of plain TextField
+
+### 2. Unified Form Styling with Landing Page Design System
+**Status:** Planning
+
+**Goal:** Modernize all forms to match the professional landing page design
+
+**Design System from LandingPageSimple.tsx:**
+- **Primary Color:** Blue (#2563eb / blue-600)
+- **Gradients:**
+  - Background: `from-gray-50 to-white`
+  - Accent: `from-blue-50 to-blue-100`, `from-green-50 to-green-100`
+- **Typography:** Bold headings (h2, h3), gray-900 for dark text
+- **Spacing:** Generous padding (py-16, py-20), container max-w-6xl
+- **Components:**
+  - Cards with shadow-lg and rounded-2xl
+  - Status badges (green-100 bg, green-700 text)
+  - Feature lists with checkmarks (green-500)
+  - Buttons with hover effects and transitions
+
+**Forms to Update:**
+- SimpleConventionForm → Modern layout with gradient header
+- ProjetFormPage → Match convention form style exactly
+- All other entity creation/edit forms
+
+**Style Consistency:**
+- Replace MUI default colors with blue-600 primary
+- Add background gradients to form containers
+- Implement consistent spacing and padding
+- Use TailwindCSS classes alongside MUI for modern look
+- Add visual hierarchy with larger headers and subtle shadows
+
+### 3. Project-Convention Association
+**Status:** Planning
+
+**Goal:** Allow projects to be linked to one or multiple conventions
+
+**Database Changes:**
+- Create junction table: `projet_conventions` with:
+  - `projet_id` (FK to projets)
+  - `convention_id` (FK to conventions)
+  - `ordre` (sequence)
+  - `created_at`, `updated_at`
+
+**Backend API Changes:**
+- Update ProjetDTO to include `conventions: List<ConventionDTO>`
+- Add endpoint: `POST /api/projets/{id}/conventions` (add convention)
+- Add endpoint: `DELETE /api/projets/{id}/conventions/{conventionId}` (remove)
+- Update `GET /api/projets/{id}` to include linked conventions
+
+**Frontend Changes:**
+- ProjetFormPage: Add multi-select field for conventions
+  - Show checkboxes or select dropdown with convention list
+  - Display selected conventions as chips/tags
+  - Ability to add/remove conventions from project
+- ProjetDetailPage: Display associated conventions in detail view
+- ProjetsPage: Show convention count for each project
+
+**Implementation Order:**
+1. Create migration for `projet_conventions` table
+2. Add backend API endpoints
+3. Update ProjetDTO and service
+4. Update frontend forms with convention selector
+5. Update detail/list views
+
+---
+
 ## Current Implementation Status
 
 ### Fully Implemented (90%+)

@@ -534,7 +534,6 @@ Steps:
 
 ```yaml
 Triggers on:
-- Push to main, claude/* branches
 - Pull requests
 - Changes to frontend/** or workflow file
 
@@ -542,11 +541,16 @@ Steps:
 1. Checkout code
 2. Setup Node.js 18 with npm caching
 3. Clear npm cache to prevent EBUSY errors
-4. npm ci --omit=dev (install dependencies)
+4. npm ci (install all dependencies including devDependencies)
 5. npm run lint (optional, continue on error)
 6. npm run build (TypeScript + Vite build)
 7. Check build size and verify dist/assets output
 ```
+
+**Important:** Uses `npm ci` WITHOUT `--omit=dev` because:
+- Build requires **devDependencies** (TypeScript, Vite, type definitions like @types/react-dom)
+- `--omit=dev` should only be used for runtime deployments (after build completes)
+- Build fails without @types/react-dom and other type packages
 
 **Environment:**
 - Node.js 18 (compatible with package.json >=18.0.0)
@@ -579,10 +583,14 @@ Steps:
 2. Setup Node.js 18
 3. Clear npm cache
 4. Install Railway CLI globally
-5. npm ci --omit=dev
+5. npm ci (install all dependencies including devDependencies for build)
 6. npm run build (TypeScript + Vite)
 7. railway up (deploy to Railway)
 ```
+
+**Note:** Uses `npm ci` without `--omit=dev` for the build phase. Railway deployment is two-stage:
+- Stage 1: Build with devDependencies (happens in CI workflow)
+- Stage 2: Production runtime (Railway doesn't need devDependencies, handled by NODE_ENV=production in Vite)
 
 **Configuration:**
 - Uses Railway CLI for deployment
@@ -590,6 +598,13 @@ Steps:
 - Automatic build happens on Railway (see railway.json)
 
 ### Troubleshooting CI/CD
+
+**Frontend Build Fails: "Could not find a declaration file for module 'react-dom/client'"**
+- Error: `error TS7016: Could not find a declaration file for module 'react-dom/client'`
+- Root Cause: Using `npm ci --omit=dev` which excludes devDependencies needed for build
+- Solution: Use `npm ci` WITHOUT `--omit=dev` in build steps (workflow already fixed)
+- Why: TypeScript compilation needs @types/react-dom and other type packages
+- `--omit=dev` should ONLY be used for production runtime deployments after build completes
 
 **Frontend Build Fails with "npm error EBUSY"**
 - Solution: Pipeline includes `npm cache clean --force` before install

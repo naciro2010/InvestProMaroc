@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: npm ci --omit=dev
+        run: npm ci
 
       - name: Lint code
         working-directory: ./frontend

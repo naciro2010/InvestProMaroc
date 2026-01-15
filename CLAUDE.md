@@ -1005,3 +1005,41 @@ If you encounter Flyway migration errors:
 - Verify `serve -s` is being used (check `package.json` start script)
 - Ensure `railway.json` has correct start command: `npm start`
 - Check build output includes all routes
+
+**Authentication Fails: "Bad credentials" with test accounts**
+- **Problem:** Wrong BCrypt password hashes in V3__seed_data.sql
+- **Solution:** Each password needs its own unique BCrypt hash
+  ```bash
+  # Generate correct hashes for test passwords:
+  cd backend
+  ./gradlew test --tests "ma.investpro.GenerateBCryptHashesTest" -i | grep "INSERT INTO"
+  ```
+- **Update V3__seed_data.sql** with correct hashes from output
+- **Key Point:** Cannot reuse same hash for different passwords
+  - `admin123` → Hash A
+  - `manager123` → Hash B (different from Hash A)
+  - `user123` → Hash C (different from Hash A and B)
+- **Current Test Credentials:**
+  ```bash
+  admin / admin123     # Hash: $2a$10$G9mprAUozHWOs.VLmMh...
+  manager / manager123 # Hash: $2a$10$xsgYxT6trAjwUqt5x32...
+  user / user123       # Hash: $2a$10$djjqMLHRZzaFgANySgM...
+  ```
+
+**How Password Verification Works in Spring Security**
+1. User submits login: `username=admin, password=admin123`
+2. Backend retrieves stored hash from database: `$2a$10$G9mprAUozHWOs...`
+3. BCryptPasswordEncoder compares: `encoder.matches("admin123", storedHash)`
+4. BCrypt validates password against hash (includes salt verification)
+5. Returns true if password matches, false otherwise
+6. Result: Login succeeds or "Bad credentials" error
+
+**Changing Test Passwords**
+1. Generate new BCrypt hashes:
+   ```bash
+   cd backend && ./gradlew test --tests "ma.investpro.GenerateBCryptHashesTest"
+   ```
+2. Copy new hashes from output
+3. Update `V3__seed_data.sql` with new hashes
+4. Drop and recreate database to apply migration
+5. Test login with new password

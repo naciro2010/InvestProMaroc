@@ -944,13 +944,23 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - **Convention Amendments System:** Full amendment (avenant) system with JSONB storage for flexible data snapshots and workflow (BROUILLON → SOUMIS → VALIDE) (January 2026)
 - **Modern Under Construction Pages:** Professional "under construction" pages with roadmap for features in development (January 2026)
 - **Backend CI/CD:** GitHub Actions workflow for automatic compilation verification on every push (January 2026)
+- **Rich Text Editor System:** React Quill integration for formatted text in descriptions (JSONB storage) with RichTextEditor reusable component (January 2026)
+- **Unified Form Design:** SimpleConventionForm modernized with landing page design system (blue gradients, rounded corners, organized sections) (January 2026)
+- **Project-Convention Association:** Junction table `projet_conventions` for many-to-many relationships between projects and conventions (January 2026)
 
-## Planned Improvements (Current Sprint)
+## Planned Improvements (Current Sprint - In Progress)
 
 ### 1. Rich Text Editor for Descriptions
-**Status:** Planning / Design Phase (Branch: `feature/rich-text-editor-styling`)
+**Status:** ✅ IMPLEMENTED - Ready for Integration (Branch: `feature/rich-text-editor-styling`)
 
 **Goal:** Enable formatted text with styling options for all description fields across the platform
+
+**Completed:**
+- ✅ React Quill v2.0.0 added to dependencies
+- ✅ RichTextEditor component created (frontend/src/components/ui/RichTextEditor.tsx)
+- ✅ Integrated into SimpleConventionForm for 'objet' field
+- ✅ Database migration V4 created for JSONB description fields
+- ✅ Backwards compatible with existing plain text fields
 
 **Components Affected:**
 - Convention description/object field (currently `objet`)
@@ -982,9 +992,19 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - Frontend: Update all forms to use rich text editor instead of plain TextField
 
 ### 2. Unified Form Styling with Landing Page Design System
-**Status:** Planning
+**Status:** ✅ IMPLEMENTED - SimpleConventionForm Complete (Branch: `feature/rich-text-editor-styling`)
 
 **Goal:** Modernize all forms to match the professional landing page design
+
+**Completed:**
+- ✅ SimpleConventionForm completely redesigned with landing page design system
+- ✅ Blue gradient header (#2563eb → #1d4ed8) with white text
+- ✅ 5 organized form sections with emoji icons and blue section titles
+- ✅ Light blue background (#f0f9ff) for rich text editor section
+- ✅ Rounded corners (borderRadius: 8px, 16px) and shadows throughout
+- ✅ Blue gradient buttons with shadow effects on submit
+- ✅ Responsive design for mobile/tablet/desktop
+- ✅ Emojis for visual identification (📋📝💰📅⚙️)
 
 **Design System from LandingPageSimple.tsx:**
 - **Primary Color:** Blue (#2563eb / blue-600)
@@ -1012,39 +1032,47 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - Add visual hierarchy with larger headers and subtle shadows
 
 ### 3. Project-Convention Association
-**Status:** In Progress - Migration Complete ✓ (January 2026)
+**Status:** ✅ Part 1 COMPLETE (Database) - Backend/Frontend In Progress (January 2026)
 
 **Goal:** Allow projects to be linked to one or multiple conventions
 
 **Database Changes:** ✅ DONE (Migration V5)
-- Created junction table: `projet_conventions` with:
+- ✅ Created junction table: `projet_conventions` with:
   - `projet_id` (FK to projets) - ON DELETE CASCADE
   - `convention_id` (FK to conventions) - ON DELETE CASCADE
   - `ordre` (sequence for display order) - DEFAULT 0
   - `created_at`, `updated_at` timestamps
   - UNIQUE constraint on (projet_id, convention_id)
-  - Indexes on both foreign keys and ordre field
+  - Indexes on both foreign keys and ordre field (3 indexes total)
+- ✅ Comments/documentation on table and columns
+- ✅ Cascade delete for data integrity
 
-**Backend API Changes:**
-- Update ProjetDTO to include `conventions: List<ConventionDTO>`
-- Add endpoint: `POST /api/projets/{id}/conventions` (add convention)
-- Add endpoint: `DELETE /api/projets/{id}/conventions/{conventionId}` (remove)
-- Update `GET /api/projets/{id}` to include linked conventions
+**Remaining Work (Next Steps):**
 
-**Frontend Changes:**
-- ProjetFormPage: Add multi-select field for conventions
-  - Show checkboxes or select dropdown with convention list
+Backend API Changes:
+- [ ] Create Entity class: ProjetConvention
+- [ ] Create Repository: ProjetConventionRepository
+- [ ] Update ProjetDTO to include `conventions: List<ConventionDTO>`
+- [ ] Add Service methods for association management
+- [ ] Add endpoints:
+  - `POST /api/projets/{id}/conventions` (add convention)
+  - `DELETE /api/projets/{id}/conventions/{conventionId}` (remove)
+  - Update `GET /api/projets/{id}` to include linked conventions
+
+Frontend Changes:
+- [ ] Update ProjetFormPage with same styling as SimpleConventionForm
+- [ ] Add multi-select field for conventions
+  - Checkbox list or select dropdown with convention list
   - Display selected conventions as chips/tags
   - Ability to add/remove conventions from project
-- ProjetDetailPage: Display associated conventions in detail view
-- ProjetsPage: Show convention count for each project
+- [ ] Update ProjetDetailPage to display associated conventions
+- [ ] Update ProjetsPage to show convention count for each project
 
-**Implementation Order:**
-1. Create migration for `projet_conventions` table
-2. Add backend API endpoints
-3. Update ProjetDTO and service
-4. Update frontend forms with convention selector
-5. Update detail/list views
+Implementation Order:
+1. ✅ Create migration for `projet_conventions` table (DONE)
+2. [ ] Add backend Entity, Repository, Service, API endpoints
+3. [ ] Update frontend forms with convention selector
+4. [ ] Update detail/list views
 
 ---
 

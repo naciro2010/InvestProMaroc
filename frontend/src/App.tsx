@@ -13,6 +13,7 @@ import SimpleConventionForm from './pages/conventions/SimpleConventionForm'
 import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
+import MarcheFormPage from './pages/marches/MarcheFormPage'
 import ProjetsPage from './pages/projets/ProjetsPage'
 import ProjetFormPage from './pages/projets/ProjetFormPage'
 import ProjetDetailPage from './pages/projets/ProjetDetailPage'
@@ -165,6 +166,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <MarchesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/marches/nouveau"
+            element={
+              <ProtectedRoute>
+                <MarcheFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/marches/:id/modifier"
+            element={
+              <ProtectedRoute>
+                <MarcheFormPage />
               </ProtectedRoute>
             }
           />

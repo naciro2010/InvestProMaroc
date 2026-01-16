@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings,
-  Briefcase, ChevronDown, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles
+  Briefcase, ChevronDown, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles, ClipboardCheck
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -51,6 +51,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     { icon: <Wallet className="w-5 h-5" />, label: 'Budgets', path: '/budgets', implemented: true },
     { icon: <ShoppingCart className="w-5 h-5" />, label: 'Marchés', path: '/marches', implemented: true },
     { icon: <FileCheck className="w-5 h-5" />, label: 'Décomptes', path: '/decomptes', implemented: true },
+    { icon: <ClipboardCheck className="w-5 h-5" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
     { icon: <Banknote className="w-5 h-5" />, label: 'Paiements', path: '/paiements', implemented: true },
     { icon: <Building2 className="w-5 h-5" />, label: 'Projets', path: '/projets', implemented: true },
     { icon: <Users className="w-5 h-5" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: false },

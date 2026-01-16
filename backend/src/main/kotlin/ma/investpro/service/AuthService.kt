@@ -70,8 +70,8 @@ class AuthService(
             """.trimIndent()
         }
 
-        val accessToken = jwtService.generateToken(savedUser)
-        val refreshToken = jwtService.generateRefreshToken(savedUser)
+        val accessToken = jwtService.generateToken(savedUser, savedUser.id)
+        val refreshToken = jwtService.generateRefreshToken(savedUser, savedUser.id)
 
         return AuthResponse(
             accessToken = accessToken,
@@ -101,8 +101,8 @@ class AuthService(
                     IllegalArgumentException("Utilisateur non trouvé")
                 }
 
-            val accessToken = jwtService.generateToken(user)
-            val refreshToken = jwtService.generateRefreshToken(user)
+            val accessToken = jwtService.generateToken(user, user.id)
+            val refreshToken = jwtService.generateRefreshToken(user, user.id)
 
             logger.info {
                 """
@@ -170,8 +170,8 @@ class AuthService(
                 "Token de rafraîchissement invalide"
             }
 
-            val newAccessToken = jwtService.generateToken(user)
-            val newRefreshToken = jwtService.generateRefreshToken(user)
+            val newAccessToken = jwtService.generateToken(user, user.id)
+            val newRefreshToken = jwtService.generateRefreshToken(user, user.id)
 
             logger.info {
                 """

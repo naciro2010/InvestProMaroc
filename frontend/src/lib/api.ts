@@ -442,4 +442,46 @@ export const projetConventionsAPI = {
     api.put(`/projet-conventions/projet/${projetId}/reorder`, ordres),
 }
 
+// Pièces Jointes API
+export const piecesJointesAPI = {
+  // Upload un fichier
+  upload: (file: File, typeEntite: string, entiteId: number, description?: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('typeEntite', typeEntite)
+    formData.append('entiteId', entiteId.toString())
+    if (description) {
+      formData.append('description', description)
+    }
+
+    return api.post('/pieces-jointes', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
+
+  // Récupère toutes les pièces jointes pour une entité
+  getAll: (typeEntite: string, entiteId: number) =>
+    api.get('/pieces-jointes', {
+      params: { typeEntite, entiteId }
+    }),
+
+  // Récupère une pièce jointe par ID
+  getById: (id: number) => api.get(`/pieces-jointes/${id}`),
+
+  // Télécharge un fichier
+  download: (id: number) =>
+    api.get(`/pieces-jointes/${id}/download`, {
+      responseType: 'blob',
+    }),
+
+  // Met à jour une pièce jointe
+  update: (id: number, data: { description?: string }) =>
+    api.put(`/pieces-jointes/${id}`, data),
+
+  // Supprime une pièce jointe
+  delete: (id: number) => api.delete(`/pieces-jointes/${id}`),
+}
+
 export default api

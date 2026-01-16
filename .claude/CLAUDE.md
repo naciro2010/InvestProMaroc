@@ -457,19 +457,47 @@ See `CRUD_TEMPLATE.md` for detailed template.
 
 ### Database Migrations
 
+⚠️ **RÈGLE CRITIQUE - TOUJOURS 3 FICHIERS UNIQUEMENT** ⚠️
+
+**À chaque livraison, l'historique Flyway est vidé. Il ne doit JAMAIS y avoir plus de 3 fichiers de migration:**
+
+1. **V1__drop_all_tables.sql** - Suppression de toutes les tables
+2. **V2__create_schema.sql** - Création de TOUTES les tables (schéma complet)
+3. **V3__seed_data.sql** - Données de test
+
+**❌ INTERDIT:**
+- Créer V4, V5, V6, V7, etc.
+- Ajouter de nouvelles migrations numérotées
+
+**✅ OBLIGATOIRE:**
+- Toute nouvelle table doit être ajoutée dans `V2__create_schema.sql`
+- Toute nouvelle donnée de test dans `V3__seed_data.sql`
+- Garder uniquement ces 3 fichiers
+
+---
+
 - **Tool:** Flyway (automatic on startup, enabled in production)
 - **Location:** `backend/src/main/resources/db/migration/`
-- **Naming:** `V{n}__description.sql` (e.g., `V1__clean_schema.sql`)
 - **Configuration:**
   - Development: `spring.jpa.hibernate.ddl-auto=none` + `spring.flyway.enabled=true`
   - Production: `spring.jpa.hibernate.ddl-auto=validate` + `spring.flyway.enabled=true`
 
-- **Current Migrations (V1-V3):**
-  - **V1:** Drop all existing tables (clean slate)
-  - **V2:** Complete schema creation with all tables, constraints, and indexes
-    - Includes geolocation fields for `marches` table (adresse, latitude, longitude, zone_geographique)
-    - All entities with proper relationships and indexes
-  - **V3:** Seed test data (users, dimensions, fournisseurs, conventions, marchés, décomptes)
+- **Current Migrations (TOUJOURS 3 fichiers):**
+  - **V1__drop_all_tables.sql** - Drop all existing tables (clean slate)
+  - **V2__create_schema.sql** - Complete schema creation with ALL tables:
+    - Section 1: Authentication & User Management (users, user_roles)
+    - Section 2: Organizational Partners & Suppliers (partenaires, fournisseurs)
+    - Section 3: Conventions & Sub-Conventions (conventions avec parent_convention_id)
+    - Section 4: Projects (projets)
+    - Section 5: Markets (marches avec geolocation: adresse, latitude, longitude, zone_geographique)
+    - Section 6: Market Lines (marche_lignes)
+    - Section 7: Amendments (avenant_marches, avenant_conventions avec JSONB)
+    - Section 8: Payment Cycle (decomptes, ordres_paiement, paiements)
+    - Section 9: Analytics (dimensions_analytiques, valeurs_dimension, imputations_analytiques)
+    - Section 10: Additional Entities (commissions, subventions, budgets, etc.)
+    - Section 11: GIN Indexes for JSONB
+    - **Section 12: Document Management (pieces_jointes)** ← Ajouté janvier 2026
+  - **V3__seed_data.sql** - Seed test data (users, dimensions, fournisseurs, conventions, marchés, sous-conventions)
 
 - **Flyway Settings:**
   - `baseline-on-migrate=true` - Create baseline for existing databases

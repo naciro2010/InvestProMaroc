@@ -229,18 +229,32 @@ See `CRUD_TEMPLATE.md` for detailed template.
 
 ### Database Migrations
 
+⚠️ **CRITICAL RULE: ALWAYS 3 FILES ONLY**
+
 - **Tool:** Flyway (auto-runs on startup)
 - **Location:** `backend/src/main/resources/db/migration/`
-- **Current Migrations:**
+- **Current Migrations (MUST stay at 3 files only):**
   - **V1:** Drop all tables (clean slate)
-  - **V2:** Create schema (all tables, indexes, constraints)
+  - **V2:** Create complete schema with ALL tables in one file
+    - Sections 1-13: All entities (users, conventions, projets, marchés, décomptes, pieces_jointes, etc.)
   - **V3:** Seed test data
+
+**❌ FORBIDDEN:**
+- Create V4, V5, V6, etc.
+- Create new migration files
+
+**✅ MANDATORY:**
+- Add ALL new tables to V2__create_schema.sql
+- Add ALL test data to V3__seed_data.sql
+- Keep ONLY these 3 files
 
 **Rules:**
 - ✅ Use `CREATE TABLE IF NOT EXISTS`
 - ✅ Add indexes on foreign keys and frequently queried columns
 - ✅ Add CHECK constraints for validation
+- ✅ Inherit `created_at`, `updated_at`, `actif` from BaseEntity (include in schema)
 - ❌ Never modify existing migrations after deployment
+- ❌ Never use inline COMMENT in CREATE TABLE (use separate COMMENT ON statements)
 
 ### Testing
 - **Framework:** Kotest + JUnit5

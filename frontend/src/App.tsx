@@ -6,7 +6,9 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardSimple from './pages/DashboardSimple'
 import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
-import ConventionWizard from './pages/conventions/ConventionWizardComplete'
+import ConventionWizard from './pages/conventions/ConventionWizard'
+import SousConventionWizard from './pages/conventions/SousConventionWizard'
+import AvenantForm from './pages/conventions/AvenantForm'
 import SimpleConventionForm from './pages/conventions/SimpleConventionForm'
 import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
 import MarchesPage from './pages/marches/MarchesPage'
@@ -136,6 +138,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ConventionDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/conventions/:parentId/sous-conventions/nouvelle"
+            element={
+              <ProtectedRoute>
+                <SousConventionWizard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/conventions/:conventionId/avenants/nouveau"
+            element={
+              <ProtectedRoute>
+                <AvenantForm />
               </ProtectedRoute>
             }
           />

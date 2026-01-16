@@ -4,7 +4,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material'
-import { ConventionFormData } from '../ConventionWizard'
+import { ConventionFormData } from '../types'
 
 interface Step1Props {
   formData: ConventionFormData

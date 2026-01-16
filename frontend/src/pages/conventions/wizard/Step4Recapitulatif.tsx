@@ -7,7 +7,7 @@ import {
   Stack,
 } from '@mui/material'
 import { CheckCircle } from '@mui/icons-material'
-import { ConventionFormData } from '../ConventionWizard'
+import { ConventionFormData } from '../types'
 
 interface Step4Props {
   formData: ConventionFormData

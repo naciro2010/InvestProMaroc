@@ -5,7 +5,7 @@ import {
   Typography,
   InputAdornment,
 } from '@mui/material'
-import { ConventionFormData } from '../ConventionWizard'
+import { ConventionFormData } from '../types'
 
 interface Step2Props {
   formData: ConventionFormData

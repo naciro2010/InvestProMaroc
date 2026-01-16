@@ -817,8 +817,31 @@ CREATE INDEX IF NOT EXISTS idx_projet_conventions_convention_id ON projet_conven
 CREATE INDEX IF NOT EXISTS idx_projet_conventions_ordre ON projet_conventions(projet_id, ordre);
 
 -- ============================================================================
--- END OF SCHEMA DEFINITION
+-- SECTION 13: DOCUMENT MANAGEMENT - PIÈCES JOINTES
 -- ============================================================================
+
+-- Pièces jointes (attachments/documents) for all entities
+CREATE TABLE IF NOT EXISTS pieces_jointes (
+    id BIGSERIAL PRIMARY KEY,
+    nom VARCHAR(500) NOT NULL,
+    nom_original VARCHAR(500) NOT NULL,
+    type_mime VARCHAR(200) NOT NULL,
+    taille BIGINT NOT NULL,
+    chemin_fichier VARCHAR(1000) NOT NULL,
+    description VARCHAR(500),
+    type_entite VARCHAR(50) NOT NULL CHECK (type_entite IN ('CONVENTION', 'SOUS_CONVENTION', 'AVENANT', 'MARCHE', 'DECOMPTE')),
+    entite_id BIGINT NOT NULL,
+    date_upload TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    uploaded_by_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    actif BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for fast retrieval by entity
+CREATE INDEX IF NOT EXISTS idx_pieces_jointes_entite ON pieces_jointes(type_entite, entite_id, actif);
+CREATE INDEX IF NOT EXISTS idx_pieces_jointes_date ON pieces_jointes(date_upload DESC);
+CREATE INDEX IF NOT EXISTS idx_pieces_jointes_user ON pieces_jointes(uploaded_by_id)
 
 -- ============================================================================
 -- END OF SCHEMA DEFINITION

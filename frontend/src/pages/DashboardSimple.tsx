@@ -22,6 +22,7 @@ import {
 import { conventionsAPI, budgetsAPI, decomptesAPI, paiementsAPI, projetsAPI } from '../lib/api'
 import AppLayout from '../components/layout/AppLayout'
 import { SimplePageLayout } from '../components/layout/PageLayout'
+import colors from '../theme/colors'
 import {
   PieChart,
   Pie,
@@ -205,7 +206,7 @@ const DashboardSimple = () => {
       subtitle: formatLargeCurrency(stats.montantTotalConventions),
       details: `${stats.conventionsParStatut.validees} validées • ${stats.conventionsParStatut.enCours} en cours`,
       icon: <AccountBalance sx={{ fontSize: 40 }} />,
-      color: '#1976d2',
+      color: colors.primary[600],
       trend: '+12%',
       onClick: () => navigate('/conventions'),
     },
@@ -215,7 +216,7 @@ const DashboardSimple = () => {
       subtitle: formatLargeCurrency(stats.montantTotalProjets),
       details: `${stats.projetsParStatut.enCours} en cours • ${stats.projetsParStatut.termine} terminés`,
       icon: <FolderOpen sx={{ fontSize: 40 }} />,
-      color: '#0288d1',
+      color: colors.info[500],
       trend: '+10%',
       onClick: () => navigate('/projets'),
     },
@@ -224,7 +225,7 @@ const DashboardSimple = () => {
       value: stats.budgets,
       subtitle: formatLargeCurrency(stats.montantTotalBudgets),
       icon: <TrendingUp sx={{ fontSize: 40 }} />,
-      color: '#2e7d32',
+      color: colors.success[600],
       trend: '+8%',
       onClick: () => navigate('/budgets'),
     },
@@ -233,7 +234,7 @@ const DashboardSimple = () => {
       value: stats.decomptes,
       subtitle: `${stats.decomptes} situations`,
       icon: <Description sx={{ fontSize: 40 }} />,
-      color: '#ed6c02',
+      color: colors.warning[600],
       trend: '+15%',
       onClick: () => navigate('/decomptes'),
     },
@@ -242,7 +243,7 @@ const DashboardSimple = () => {
       value: stats.paiements,
       subtitle: formatLargeCurrency(stats.montantTotalPaiements),
       icon: <Payment sx={{ fontSize: 40 }} />,
-      color: '#9c27b0',
+      color: colors.semantic.payment.completed,
       trend: '+20%',
       onClick: () => navigate('/paiements'),
     },
@@ -314,8 +315,8 @@ const DashboardSimple = () => {
                       label={kpi.trend}
                       size="small"
                       sx={{
-                        bgcolor: '#4caf5015',
-                        color: '#4caf50',
+                        bgcolor: 'rgba(16, 163, 74, 0.08)',
+                        color: colors.success[600],
                         fontWeight: 600,
                       }}
                     />
@@ -376,10 +377,10 @@ const DashboardSimple = () => {
                   sx={{
                     height: 10,
                     borderRadius: 5,
-                    bgcolor: '#e0e0e0',
+                    bgcolor: colors.gray[200],
                     '& .MuiLinearProgress-bar': {
                       borderRadius: 5,
-                      bgcolor: tauxExecution > 90 ? '#4caf50' : '#1976d2',
+                      bgcolor: tauxExecution > 90 ? colors.success[600] : colors.primary[600],
                     },
                   }}
                 />
@@ -470,11 +471,11 @@ const DashboardSimple = () => {
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Brouillon', value: stats.conventionsParStatut.brouillon, color: '#94a3b8' },
-                        { name: 'Soumis', value: stats.conventionsParStatut.soumis, color: '#f59e0b' },
-                        { name: 'Validées', value: stats.conventionsParStatut.validees, color: '#10b981' },
-                        { name: 'En cours', value: stats.conventionsParStatut.enCours, color: '#3b82f6' },
-                        { name: 'Achevées', value: stats.conventionsParStatut.achevees, color: '#22c55e' },
+                        { name: 'Brouillon', value: stats.conventionsParStatut.brouillon, color: colors.gray[400] },
+                        { name: 'Soumis', value: stats.conventionsParStatut.soumis, color: colors.warning[500] },
+                        { name: 'Validées', value: stats.conventionsParStatut.validees, color: colors.success[500] },
+                        { name: 'En cours', value: stats.conventionsParStatut.enCours, color: colors.primary[500] },
+                        { name: 'Achevées', value: stats.conventionsParStatut.achevees, color: colors.success[500] },
                       ]}
                       cx="50%"
                       cy="50%"
@@ -485,11 +486,11 @@ const DashboardSimple = () => {
                       dataKey="value"
                     >
                       {[
-                        { name: 'Brouillon', value: stats.conventionsParStatut.brouillon, color: '#94a3b8' },
-                        { name: 'Soumis', value: stats.conventionsParStatut.soumis, color: '#f59e0b' },
-                        { name: 'Validées', value: stats.conventionsParStatut.validees, color: '#10b981' },
-                        { name: 'En cours', value: stats.conventionsParStatut.enCours, color: '#3b82f6' },
-                        { name: 'Achevées', value: stats.conventionsParStatut.achevees, color: '#22c55e' },
+                        { name: 'Brouillon', value: stats.conventionsParStatut.brouillon, color: colors.gray[400] },
+                        { name: 'Soumis', value: stats.conventionsParStatut.soumis, color: colors.warning[500] },
+                        { name: 'Validées', value: stats.conventionsParStatut.validees, color: colors.success[500] },
+                        { name: 'En cours', value: stats.conventionsParStatut.enCours, color: colors.primary[500] },
+                        { name: 'Achevées', value: stats.conventionsParStatut.achevees, color: colors.success[500] },
                       ].map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -523,7 +524,7 @@ const DashboardSimple = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="value" name="Nombre de Projets" fill="#1e40af" />
+                    <Bar dataKey="value" name="Nombre de Projets" fill="colors.primary[800]" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

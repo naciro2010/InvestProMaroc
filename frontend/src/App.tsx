@@ -18,6 +18,8 @@ import ProjetsPage from './pages/projets/ProjetsPage'
 import ProjetFormPage from './pages/projets/ProjetFormPage'
 import ProjetDetailPage from './pages/projets/ProjetDetailPage'
 import BudgetsPage from './pages/budgets/BudgetsPage'
+import BudgetFormPage from './pages/budgets/BudgetFormPage'
+import BudgetDetailPage from './pages/budgets/BudgetDetailPage'
 import DecomptesPage from './pages/decomptes/DecomptesPageComplete'
 import OrdresPaiementPage from './pages/paiements/OrdresPaiementPageComplete'
 import PaiementsPage from './pages/paiements/PaiementsPageComplete'
@@ -234,6 +236,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <BudgetsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/budgets/nouveau"
+            element={
+              <ProtectedRoute>
+                <BudgetFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/budgets/:id/modifier"
+            element={
+              <ProtectedRoute>
+                <BudgetFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/budgets/:id"
+            element={
+              <ProtectedRoute>
+                <BudgetDetailPage />
               </ProtectedRoute>
             }
           />

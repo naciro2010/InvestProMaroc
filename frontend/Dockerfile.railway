@@ -13,6 +13,12 @@ RUN npm ci
 # Copier le reste des fichiers
 COPY . .
 
+# Définir les variables d'environnement pour le build Vite
+ARG VITE_API_URL
+ARG VITE_BASE_PATH
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_BASE_PATH=$VITE_BASE_PATH
+
 # Build de l'application
 RUN npm run build
 

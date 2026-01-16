@@ -7,7 +7,7 @@
                 "node": "20.x"
             }
         },
-        "buildCommand": "npm ci --omit=dev && npm run build",
+        "buildCommand": "npm ci && npm run build",
         "environment": [
             "NODE_ENV=production",
             "VITE_API_URL=https://investpromaroc-production.up.railway.app/api",

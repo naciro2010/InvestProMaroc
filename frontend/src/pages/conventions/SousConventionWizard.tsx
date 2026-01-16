@@ -18,7 +18,7 @@ import Step1Informations from './wizard/Step1Informations'
 import Step2DatesEtBudget from './wizard/Step2DatesEtBudget'
 import Step3PiecesJointes from './wizard/Step3PiecesJointes'
 import Step4Recapitulatif from './wizard/Step4Recapitulatif'
-import { ConventionFormData } from './ConventionWizard'
+import { ConventionFormData } from './types'
 
 const steps = [
   'Informations générales',

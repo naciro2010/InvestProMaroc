@@ -841,7 +841,38 @@ CREATE TABLE IF NOT EXISTS pieces_jointes (
 -- Indexes for fast retrieval by entity
 CREATE INDEX IF NOT EXISTS idx_pieces_jointes_entite ON pieces_jointes(type_entite, entite_id, actif);
 CREATE INDEX IF NOT EXISTS idx_pieces_jointes_date ON pieces_jointes(date_upload DESC);
-CREATE INDEX IF NOT EXISTS idx_pieces_jointes_user ON pieces_jointes(uploaded_by_id)
+CREATE INDEX IF NOT EXISTS idx_pieces_jointes_user ON pieces_jointes(uploaded_by_id);
+
+-- ============================================================================
+-- SECTION 14: MAITRES D'ŒUVRE (MO/MOD) - JANUARY 2026
+-- ============================================================================
+
+-- Maîtres d'Œuvre et Maîtres d'Œuvre Délégués pour les conventions
+CREATE TABLE IF NOT EXISTS maitres_oeuvre (
+    id BIGSERIAL PRIMARY KEY,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    code VARCHAR(50) NOT NULL,
+    designation VARCHAR(255) NOT NULL,
+    type_mo VARCHAR(10) NOT NULL CHECK (type_mo IN ('MO', 'MOD')),
+    email VARCHAR(100),
+    telephone VARCHAR(20),
+    adresse TEXT,
+    organisme VARCHAR(255),
+    missions TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_maitres_oeuvre_convention ON maitres_oeuvre(convention_id, actif);
+CREATE INDEX IF NOT EXISTS idx_maitres_oeuvre_type ON maitres_oeuvre(type_mo, actif);
+CREATE INDEX IF NOT EXISTS idx_maitres_oeuvre_code ON maitres_oeuvre(code, actif);
+
+-- Comments
+COMMENT ON TABLE maitres_oeuvre IS 'Maîtres d''Œuvre (MO) et Maîtres d''Œuvre Délégués (MOD) des conventions';
+COMMENT ON COLUMN maitres_oeuvre.type_mo IS 'Type: MO (Maître d''Œuvre) ou MOD (Maître d''Œuvre Délégué)';
+COMMENT ON COLUMN maitres_oeuvre.missions IS 'Description des missions confiées au MO/MOD';
 
 -- ============================================================================
 -- END OF SCHEMA DEFINITION

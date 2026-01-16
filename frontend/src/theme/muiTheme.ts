@@ -5,9 +5,9 @@ export const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#1976d2', // Bleu professionnel (style GCP)
-      light: '#42a5f5',
-      dark: '#1565c0',
+      main: '#2563eb', // Bleu moderne (blue-600)
+      light: '#60a5fa', // blue-400
+      dark: '#1d4ed8', // blue-700
       contrastText: '#fff',
     },
     secondary: {

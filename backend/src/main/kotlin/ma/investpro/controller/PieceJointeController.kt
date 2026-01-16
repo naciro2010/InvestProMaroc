@@ -39,8 +39,8 @@ class PieceJointeController(
         return try {
             // Extraire l'user ID du token
             val jwt = token.substring(7) // Remove "Bearer " prefix
-            val username = jwtService.extractUsername(jwt)
             val userId = jwtService.extractUserId(jwt)
+                ?: throw IllegalArgumentException("Impossible d'extraire l'ID utilisateur du token")
 
             val request = PieceJointeCreateRequest(
                 description = description,

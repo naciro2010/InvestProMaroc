@@ -22,12 +22,22 @@ class JwtService {
     @Value("\${app.jwt.refresh-expiration-ms}")
     private var refreshExpirationMs: Long = 0
 
-    fun generateToken(userDetails: UserDetails): String {
-        return buildToken(HashMap(), userDetails, jwtExpirationMs)
+    fun generateToken(userDetails: UserDetails, userId: Long? = null): String {
+        val claims = if (userId != null) {
+            mapOf("userId" to userId)
+        } else {
+            HashMap()
+        }
+        return buildToken(claims, userDetails, jwtExpirationMs)
     }
 
-    fun generateRefreshToken(userDetails: UserDetails): String {
-        return buildToken(HashMap(), userDetails, refreshExpirationMs)
+    fun generateRefreshToken(userDetails: UserDetails, userId: Long? = null): String {
+        val claims = if (userId != null) {
+            mapOf("userId" to userId)
+        } else {
+            HashMap()
+        }
+        return buildToken(claims, userDetails, refreshExpirationMs)
     }
 
     private fun buildToken(
@@ -59,6 +69,15 @@ class JwtService {
 
     fun extractUsername(token: String): String {
         return extractClaim(token) { it.subject }
+    }
+
+    fun extractUserId(token: String): Long? {
+        return try {
+            val claim = extractClaim(token) { it.get("userId") }
+            if (claim is Number) claim.toLong() else null
+        } catch (e: Exception) {
+            null
+        }
     }
 
     private fun <T> extractClaim(token: String, claimsResolver: (Claims) -> T): T {

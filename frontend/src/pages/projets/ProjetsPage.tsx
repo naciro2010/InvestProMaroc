@@ -274,7 +274,17 @@ const ProjetsPage = () => {
           <Grid container spacing={2}>
             {projets.map((projet) => (
               <Grid container spacing={2}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' }
+                  }}
+                  onClick={() => navigate(`/projets/${projet.id}`)}
+                >
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
                       <Box>
@@ -287,7 +297,7 @@ const ProjetsPage = () => {
                       </Box>
                       <IconButton
                         size="small"
-                        onClick={(e) => handleMenuOpen(e, projet)}
+                        onClick={(e) => { e.stopPropagation(); handleMenuOpen(e, projet); }}
                       >
                         <MoreVert />
                       </IconButton>

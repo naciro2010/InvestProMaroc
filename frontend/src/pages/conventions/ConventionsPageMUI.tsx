@@ -372,11 +372,13 @@ const ConventionsPageMUI = () => {
             <Card
               key={convention.id}
               sx={{
+                cursor: 'pointer',
                 transition: 'all 0.2s',
-                '&:hover': { boxShadow: 4 },
+                '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
                 border: convention.statut === 'REJETE' ? '2px solid' : 'none',
                 borderColor: convention.statut === 'REJETE' ? 'error.main' : 'transparent',
               }}
+              onClick={() => navigate(`/conventions/${convention.id}`)}
             >
               <CardContent>
                 <Stack direction="row" justifyContent="space-between" alignItems="start">
@@ -474,7 +476,7 @@ const ConventionsPageMUI = () => {
                       )}
                     </Stack>
                   </Box>
-                  <IconButton onClick={(e) => handleMenuOpen(e, convention)}>
+                  <IconButton onClick={(e) => { e.stopPropagation(); handleMenuOpen(e, convention); }}>
                     <MoreVert />
                   </IconButton>
                 </Stack>

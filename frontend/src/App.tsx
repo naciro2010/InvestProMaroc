@@ -13,10 +13,13 @@ import SimpleConventionForm from './pages/conventions/SimpleConventionForm'
 import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPage from './pages/marches/MarcheDetailPage'
+import MarcheFormPage from './pages/marches/MarcheFormPage'
 import ProjetsPage from './pages/projets/ProjetsPage'
 import ProjetFormPage from './pages/projets/ProjetFormPage'
 import ProjetDetailPage from './pages/projets/ProjetDetailPage'
 import BudgetsPage from './pages/budgets/BudgetsPage'
+import BudgetFormPage from './pages/budgets/BudgetFormPage'
+import BudgetDetailPage from './pages/budgets/BudgetDetailPage'
 import DecomptesPage from './pages/decomptes/DecomptesPageComplete'
 import OrdresPaiementPage from './pages/paiements/OrdresPaiementPageComplete'
 import PaiementsPage from './pages/paiements/PaiementsPageComplete'
@@ -169,6 +172,22 @@ function App() {
             }
           />
           <Route
+            path="/marches/nouveau"
+            element={
+              <ProtectedRoute>
+                <MarcheFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/marches/:id/modifier"
+            element={
+              <ProtectedRoute>
+                <MarcheFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/marches/:id"
             element={
               <ProtectedRoute>
@@ -217,6 +236,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <BudgetsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/budgets/nouveau"
+            element={
+              <ProtectedRoute>
+                <BudgetFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/budgets/:id/modifier"
+            element={
+              <ProtectedRoute>
+                <BudgetFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/budgets/:id"
+            element={
+              <ProtectedRoute>
+                <BudgetDetailPage />
               </ProtectedRoute>
             }
           />

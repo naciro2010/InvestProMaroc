@@ -156,7 +156,11 @@ export default function BudgetsPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredBudgets.map((budget) => (
-                  <tr key={budget.id} className="hover:bg-gray-50">
+                  <tr
+                    key={budget.id}
+                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => navigate(`/budgets/${budget.id}`)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <FaFileInvoiceDollar className="text-info mr-2" />
@@ -185,7 +189,7 @@ export default function BudgetsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">{getStatutBadge(budget.statut)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button
-                        onClick={() => navigate(`/budgets/${budget.id}`)}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/budgets/${budget.id}`); }}
                         className="text-info hover:text-info-dark"
                       >
                         Détails

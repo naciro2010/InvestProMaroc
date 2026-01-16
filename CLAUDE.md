@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## ⚠️ CRITICAL: STRONG TYPING IS MANDATORY
 
 **❌ NEVER use `any` type (TypeScript) or `Any` type (Kotlin) in this project.**
 
-This is NON-NEGOTIABLE. Every value must have an explicit, strong type. This applies to:
+Every value must have an explicit, strong type:
 - Function parameters and return types
 - Variable declarations
 - API response data structures
@@ -17,91 +17,51 @@ This is NON-NEGOTIABLE. Every value must have an explicit, strong type. This app
 
 ## Project Overview
 
-**InvestPro Maroc** is a comprehensive financial management platform for managing investment expenses and commission calculations in Morocco. It consists of a Kotlin/Spring Boot backend and a React/TypeScript frontend for tracking conventions, projects, markets (marchés), payments, and analytical cost allocations.
+**InvestPro Maroc** is a financial management platform for investment expenses and commission calculations in Morocco.
 
 **Tech Stack:**
-- **Backend:** Kotlin 2.0.21, Spring Boot 3.4.1, PostgreSQL 16/17, JWT Auth, Spring Security
+- **Backend:** Kotlin 2.0.21, Spring Boot 3.4.1, PostgreSQL 16/17, JWT Auth
 - **Frontend:** React 18, TypeScript 5.x, Vite, TailwindCSS, Material-UI, Recharts
-- **Database:** PostgreSQL 16/17 with JSONB for analytical dimensions
+- **Database:** PostgreSQL 16/17 with JSONB for analytical data
 
 ## Common Commands
 
-### Backend (Kotlin/Spring Boot)
-
+### Backend
 ```bash
 cd backend
-
-# Build and run
-./gradlew bootRun                    # Run development server (requires PostgreSQL)
-./gradlew clean build                # Full build with tests
-./gradlew build -x test              # Build without tests (faster)
-
-# Testing
-./gradlew test                       # Run all tests
-./gradlew test --tests "ma.investpro.integration.AuthIntegrationTest"  # Single test class
-./gradlew test jacocoTestReport      # Generate coverage report
-
-# Production build
-./gradlew clean bootJar              # Generates build/libs/investpro-backend-1.0.0.jar
-java -jar build/libs/investpro-backend-1.0.0.jar  # Run JAR
-
-# Backend runs on: http://localhost:8080
-# Swagger UI: http://localhost:8080/swagger-ui.html
+./gradlew bootRun                      # Dev server (requires PostgreSQL)
+./gradlew clean build                  # Full build with tests
+./gradlew build -x test                # Build without tests
+./gradlew test                         # Run tests
+./gradlew clean bootJar                # Production JAR
 ```
 
-### Frontend (React/TypeScript)
-
+### Frontend
 ```bash
 cd frontend
-
-# Development
-npm install                          # Install dependencies
-npm run dev                          # Run Vite dev server (http://localhost:5173)
-
-# Build and preview
-npm run build                        # TypeScript compile + Vite production build
-npm run preview                      # Preview production build
-npm start                            # Production server with serve (for Railway deployment)
-
-# Linting
-npm run lint                         # ESLint check (TypeScript + React)
+npm install                            # Install dependencies
+npm run dev                            # Dev server (http://localhost:5173)
+npm run build                          # Production build
+npm start                              # Serve production build
+npm run lint                           # ESLint check
 ```
 
-### Database Setup
-
+### Database
 ```bash
-# Start PostgreSQL in Docker
+docker-compose up -d postgres          # Start PostgreSQL
+
+# Or manual
 docker run --name investpro-postgres \
   -e POSTGRES_DB=investpro \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
   -p 5432:5432 \
   -d postgres:16-alpine
-
-# Or use docker-compose (from root)
-docker-compose up -d
 ```
 
-### Running the Full Stack
-
-```bash
-# Terminal 1: Start PostgreSQL
-docker-compose up -d postgres
-
-# Terminal 2: Start backend
-cd backend && ./gradlew bootRun
-
-# Terminal 3: Start frontend
-cd frontend && npm run dev
-
-# Access: http://localhost:5173
-# API: http://localhost:8080/api
-```
-
-## High-Level Architecture
+## Architecture
 
 ### Monorepo Structure
-
 ```
 InvestProMaroc/
 ├── backend/              # Spring Boot Kotlin API
@@ -109,503 +69,220 @@ InvestProMaroc/
 │   │   ├── controller/   # REST endpoints
 │   │   ├── service/      # Business logic (extends GenericCrudService)
 │   │   ├── repository/   # Spring Data JPA
-│   │   ├── entity/       # JPA entities with BaseEntity
+│   │   ├── entity/       # JPA entities
 │   │   ├── dto/          # Data Transfer Objects
 │   │   ├── security/     # JWT authentication
-│   │   ├── config/       # Spring configuration
-│   │   └── mapper/       # Entity ↔ DTO mappers
-│   └── src/main/resources/
-│       ├── application.properties
-│       └── db/migration/ # Flyway migrations
+│   │   └── config/       # Spring configuration
+│   └── src/main/resources/db/migration/  # Flyway migrations
 ├── frontend/             # React TypeScript SPA
 │   └── src/
-│       ├── pages/        # Route-level components (Dashboard, Conventions, Marchés, etc.)
-│       ├── components/   # Reusable UI components (layout, ui)
-│       ├── lib/          # API client (axios), utilities
-│       ├── contexts/     # React contexts (AuthContext, ToastContext)
-│       └── types/        # TypeScript type definitions
+│       ├── pages/        # Route components
+│       ├── components/   # Reusable UI components
+│       ├── lib/          # API client, utilities
+│       ├── contexts/     # React contexts (Auth, Toast)
+│       └── types/        # TypeScript types
 └── legacy/              # Old codebase (ignore)
 ```
 
-### Backend Architecture (Layered)
-
+### Backend Layered Architecture
 ```
-HTTP Request → JwtAuthenticationFilter (validates JWT)
+HTTP Request → JwtAuthenticationFilter
               ↓
-           SecurityFilterChain (checks @PreAuthorize roles)
+           SecurityFilterChain (@PreAuthorize)
               ↓
-           Controller (validates input, delegates to service)
+           Controller
               ↓
-           Service (business logic, extends GenericCrudService<Entity, Long>)
+           Service (extends GenericCrudService<Entity, Long>)
               ↓
-           Repository (Spring Data JPA interface)
+           Repository (Spring Data JPA)
               ↓
-           PostgreSQL Database
-              ↓
-           ApiResponse<T> (standardized JSON response)
+           PostgreSQL + ApiResponse<T>
 ```
 
-### Frontend Architecture (React/TypeScript)
-
+### Frontend Architecture
 ```
-App.tsx → React Router
-          ↓
-       AuthProvider (JWT token management, refresh logic)
-          ↓
-       AppLayout (sidebar, navbar, responsive)
-          ↓
-       Pages (conventions, marchés, projets, décomptes)
-          ↓
-       API Client (axios with interceptors)
-          ↓
-       Backend REST API (http://localhost:8080/api)
+App.tsx → React Router → AuthProvider → AppLayout
+         → Pages → API Client (axios) → Backend API
 ```
 
-### Key Architectural Patterns
+### Key Patterns
+| Pattern | Purpose |
+|---------|---------|
+| **GenericCrudService** | Base CRUD service for all entities |
+| **BaseEntity** | Audit fields (id, createdAt, updatedAt) |
+| **JWT Auth** | Stateless access + refresh tokens |
+| **DTO Pattern** | Decouples API from JPA entities |
+| **Axios Interceptors** | JWT injection, auto-refresh, logout on expiry |
+| **AuthContext** | Global auth state (React Context) |
+| **ApiResponse<T>** | Wrapper: `{success, message, data}` |
 
-| Pattern | Location | Purpose |
-|---------|----------|---------|
-| **GenericCrudService** | `backend/service/GenericCrudService.kt` | Base class for all entity services - reduces boilerplate |
-| **BaseEntity** | `backend/entity/BaseEntity.kt` | Shared audit fields (id, createdAt, updatedAt) |
-| **JWT Stateless Auth** | `backend/security/` | Access + refresh tokens, no server-side sessions |
-| **DTO Pattern** | `backend/dto/` | Decouples API from JPA entities |
-| **Axios Interceptors** | `frontend/src/lib/api.ts` | Auto-inject JWT, handle 401 refresh, logout on expiry |
-| **AuthContext** | `frontend/src/contexts/AuthContext.tsx` | Global auth state (React Context API) |
-| **API Response Wrapper** | Backend controllers | All responses: `{success, message, data}` |
-
-## Business Domain Concepts
-
-InvestPro Maroc manages the financial lifecycle of public investment projects in Morocco. The domain uses **French terminology** matching Moroccan administrative practices.
-
-### Core Entities
+## Core Business Entities
 
 | Entity | Purpose | Key Fields |
 |--------|---------|-----------|
-| **Convention** | Legal framework defining commission calculation rules | code, objet, tauxCommission, montant, status |
-| **AvenantConvention** | Convention amendment with full history and workflow | numeroAvenant, objet, dateAvenant, donneesAvant (JSONB), modifications (JSONB), statut |
-| **Projet** | Investment program with budget and analytical axes | code, designation, budgetTotal, status |
-| **Marché** | Procurement contract (travaux, fournitures, services) with geolocation | code, montantHT, montantTTC, fournisseur, convention, adresse, latitude, longitude, zoneGeographique |
-| **MarcheLigne** | Contract line items with analytical imputation | designation, quantite, montantUnitaire, dimensionsValeurs (JSONB) |
-| **AvenantMarche** | Contract amendment (price, scope, or delay changes) | code, motif, impactMontant, impactDelai |
-| **Decompte** | Billing statement (situation de travaux) | montant, netAPayer, retenues, imputations |
-| **OrdrePaiement** | Payment order | montant, dateEmission, dateExecution, status |
-| **Paiement** | Payment record | montant, datePaiement, modeReglement |
-| **Fournisseur** | Supplier with Moroccan tax IDs | code, ice (15-digit), if (tax ID), rib |
-| **DimensionAnalytique** | Analytical dimension (Budget, Projet, Secteur, etc.) | code, libelle, ordre, obligatoire |
-| **ValeurDimension** | Dimension value | code, libelle, dimensionId |
+| **Convention** | Commission calculation rules | code, objet, tauxCommission, montant, status |
+| **Projet** | Investment program | code, designation, budgetTotal, status |
+| **Marché** | Procurement contract (with geolocation) | code, montantHT, montantTTC, adresse, latitude, longitude |
+| **MarcheLigne** | Contract line items | designation, quantite, montantUnitaire, dimensionsValeurs (JSONB) |
+| **Decompte** | Billing statements | montant, netAPayer, retenues |
+| **Fournisseur** | Supplier with tax IDs | code, ice, if, rib |
+| **DimensionAnalytique** | Cost center dimensions | code, libelle, ordre |
 
-### Financial Workflow
-
+**Financial Workflow:**
 ```
-CONVENTION (legal framework)
-  └─ PROJET (investment program)
-      └─ MARCHÉ (contract)
-           ├─ MARCHE_LIGNE (line items with analytical imputation)
-           ├─ AVENANT_MARCHE (amendments)
-           └─ DECOMPTE (billing statement)
-                ├─ DECOMPTE_RETENUE (retentions: guarantees, RAS, penalties)
-                └─ DECOMPTE_IMPUTATION (analytical allocation)
-                     └─ ORDRE_PAIEMENT (payment order)
-                          └─ PAIEMENT (payment record)
+CONVENTION → PROJET → MARCHÉ → MARCHE_LIGNE + DECOMPTE → ORDRE_PAIEMENT → PAIEMENT
 ```
 
-### Analytical Dimensions (Plan Analytique Dynamique)
+**Sous-Conventions:** CADRE conventions can have SPECIFIQUE sub-conventions with parameter inheritance.
 
-The system uses **PostgreSQL JSONB** for flexible multi-dimensional cost allocation:
+**Analytical Dimensions:** PostgreSQL JSONB allows unlimited configurable cost allocation dimensions.
 
-- **DimensionAnalytique**: Configurable dimensions (Budget, Projet, Secteur, Département, Phase, etc.)
-- **ValeurDimension**: Values per dimension (e.g., Budget → "B001", "B002")
-- **MarcheLigne.dimensionsValeurs**: JSONB field storing `{dimensionCode: valeurCode}` per line
-- **ImputationAnalytique**: Analytical allocations for décomptes/paiements
-
-This replaces the old rigid Projet+Axe system with unlimited configurable dimensions.
-
-### Convention Amendments (Avenants)
-
-The system supports **full amendment tracking** for conventions with JSONB-based history:
-
-**Workflow States:**
-- **BROUILLON** (Draft): Amendment being prepared, can be edited
-- **SOUMIS** (Submitted): Submitted for validation, locked for editing
-- **VALIDE** (Validated): Approved, convention data updated automatically
-
-**Key Features:**
-- **Snapshot Before:** `donneesAvant` JSONB field stores complete convention state before amendment
-- **Modifications:** `modifications` JSONB field stores all changes made by amendment
-- **Full History:** All amendments preserved with dates, users, and workflow state
-- **Automatic Update:** Only VALIDE amendments update the parent convention
-- **Latest Effect:** Convention always reflects the last validated amendment
-
-**State Machine:**
-```kotlin
-BROUILLON.soumettre() → SOUMIS
-SOUMIS.valider(userId) → VALIDE (updates convention)
-SOUMIS.rejeter(motif) → BROUILLON
-```
-
-**Database:**
-- Table: `avenant_conventions` with JSONB columns and GIN indexes
-- Migration: `V12__create_avenant_conventions.sql`
-- Endpoint: `/api/avenants-conventions`
-
-### Sous-Conventions (Sub-Conventions)
-
-The system supports **hierarchical conventions** where CADRE (framework) conventions can have **sous-conventions** (sub-conventions or specific conventions):
-
-**Key Features:**
-- **Parent-Child Relationship:** Sous-conventions reference a parent convention (CADRE type only)
-- **Parameter Inheritance:** Sous-conventions can inherit `tauxCommission`, `baseCalcul`, and `tauxTva` from parent
-- **Selective Override:** `heriteParametres` flag enables inheritance; can override with `surchargeTauxCommission` and `surchargeBaseCalcul`
-- **Same Workflow:** Sous-conventions follow the same workflow as regular conventions (BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE)
-- **Independent Lifecycle:** Each sous-convention has its own status, budget, dates, and workflow state
-- **Nested Display:** Sous-conventions appear in a dedicated tab within the parent convention's detail page
-
-**Implementation:**
-```kotlin
-// Backend Entity (Convention.kt)
-@ManyToOne(fetch = FetchType.LAZY)
-@JoinColumn(name = "parent_convention_id")
-var parentConvention: Convention? = null
-
-@Column(name = "herite_parametres", nullable = false)
-var heriteParametres: Boolean = false
-
-fun getTauxCommissionEffectif(): BigDecimal {
-    val parent = parentConvention
-    return if (heriteParametres && parent != null) {
-        surchargeTauxCommission ?: parent.getTauxCommissionEffectif()
-    } else {
-        tauxCommission
-    }
-}
-```
-
-**API Endpoints:**
-- `GET /api/conventions/{parentId}/sous-conventions` - List sous-conventions
-- `POST /api/conventions/{parentId}/sous-conventions` - Create sous-convention
-- `PUT /api/conventions/{sousConventionId}` - Update sous-convention (standard endpoint)
-- `DELETE /api/conventions/{sousConventionId}` - Delete sous-convention (standard endpoint)
-- Workflow endpoints: same as regular conventions (`/soumettre`, `/valider`, `/rejeter`, etc.)
-
-**Frontend:**
-- **Form:** `SousConventionForm.tsx` - Modal dialog with parent info display and inheritance toggle
-- **Display:** Dedicated tab in `ConventionDetailPage.tsx` showing table of all sous-conventions
-- **Navigation:** Clicking a sous-convention navigates to its detail page (same as regular convention)
-- **Add Button:** Only visible when viewing a CADRE convention
-
-**Database:**
-- Same table: `conventions` (self-referencing with `parent_convention_id`)
-- Migration: `V2__create_schema.sql` (already includes parent-child fields)
-- Seed Data: `V3__seed_data.sql` contains 5 example sous-conventions (SC-001 to SC-005)
-
-**Business Rules:**
-- Only CADRE conventions can have sous-conventions
-- Sous-conventions have type `SPECIFIQUE`
-- Parent convention must be VALIDEE or EN_EXECUTION to create sous-conventions
-- Full search and filtering capability within parent convention
-- Complete audit trail (createdBy, createdAt, updatedAt)
-
-**Example Hierarchy:**
-```
-CONV-001 (CADRE) "Convention Infrastructure"
-  ├─ SC-001 (SPECIFIQUE) "Sous-Convention Voirie Urbaine" [inherits parameters]
-  ├─ SC-002 (SPECIFIQUE) "Sous-Convention Routes Nationales" [inherits parameters]
-  └─ SC-003 (SPECIFIQUE) "Sous-Convention Ponts" [custom rate: 3.0%]
-
-CONV-002 (CADRE) "Convention Equipement Public"
-  ├─ SC-004 (SPECIFIQUE) "Sous-Convention Equipement Scolaire"
-  └─ SC-005 (SPECIFIQUE) "Sous-Convention Equipement Sanitaire"
-```
+**Convention Amendments (Avenants):** JSONB-based history with states: BROUILLON → SOUMIS → VALIDE
 
 ## Authentication & Security
 
-### JWT Authentication Flow
+### JWT Flow
+1. Login via `POST /api/auth/login` with username/password
+2. Backend returns `{accessToken, refreshToken, user}`
+3. Frontend stores tokens in localStorage, sets AuthContext
+4. Axios interceptor adds `Authorization: Bearer <token>` to requests
+5. On 401, interceptor refreshes via `/api/auth/refresh`
+6. If refresh fails, user is logged out
 
-1. User logs in via `POST /api/auth/login` with username/password
-2. Backend validates credentials, returns `{accessToken, refreshToken, user}`
-3. Frontend stores tokens in `localStorage` and sets user in `AuthContext`
-4. Axios interceptor adds `Authorization: Bearer <token>` to all requests
-5. On 401 response, interceptor tries to refresh token via `/api/auth/refresh`
-6. If refresh fails or token expired, user is logged out and redirected to `/login`
+### Roles
+| Role | Permissions |
+|------|-------------|
+| **ADMIN** | Full system access |
+| **MANAGER** | CRUD conventions, marchés, décomptes, paiements |
+| **USER** | Read-only access |
 
-### Roles & Permissions
+### Test Accounts (V3__seed_data.sql)
+```
+admin / admin123      (ADMIN)
+manager / manager123  (MANAGER)
+user / user123        (USER)
+```
 
-| Role | Permissions | Notes |
-|------|-------------|-------|
-| **ADMIN** | Full system access | User management, configuration |
-| **MANAGER** | CRUD conventions, marchés, décomptes, paiements | Business operations |
-| **USER** | Read-only access | Reporting, exports |
-
-**Test Accounts** (seeded in `V3__seed_data.sql`):
-| Username | Password | Role | Email | BCrypt Hash |
-|----------|----------|------|-------|------------|
-| admin | admin123 | ADMIN | admin@investpro.ma | `$2a$10$G9mprAUozHWOs.VLmMh.3e...` |
-| manager | manager123 | MANAGER | manager@investpro.ma | `$2a$10$xsgYxT6trAjwUqt5x32.zu...` |
-| user | user123 | USER | user@investpro.ma | `$2a$10$djjqMLHRZzaFgANySgMkqu...` |
-
-**⚠️ CRITICAL: Password Hashing**
-
-InvestPro uses **Spring Security BCryptPasswordEncoder** with cost 10:
-
-1. **Backend Password Encoding** (SecurityConfig.kt):
-   ```kotlin
-   @Bean
-   fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
-   ```
-
-2. **Each Password Has Unique Hash:**
-   - `admin123` → Different hash than `manager123`
-   - `manager123` → Different hash than `user123`
-   - BCrypt includes random salt, so same password = different hash each time
-
-3. **How Passwords Are Verified:**
-   - Backend stores BCrypt hash in database
-   - User login sends plain password (`admin123`)
-   - Spring Security: `passwordEncoder.matches(plainPassword, storedHash)`
-   - Returns true if password matches, false otherwise
-
-4. **DO NOT** share or reuse the same hash for different passwords
-   - Each test user must have their own correct hash in V3__seed_data.sql
-   - Use the GenerateBCryptHashesTest to generate correct hashes if passwords change
-
-5. **Password Reset in SQL (if needed):**
-   ```sql
-   -- Generate new hash via GenerateBCryptHashesTest first
-   UPDATE users SET password = '<new-bcrypt-hash>' WHERE username = 'admin';
-   ```
-
-### Security Configuration
-
-- **Backend:** Spring Security 6.x with `@PreAuthorize` annotations
-- **Frontend:** `PrivateRoute` wrapper checks `isAuthenticated` from `AuthContext`
-- **CORS:** Configured in `SecurityConfig.kt` (dev: localhost, prod: GitHub Pages)
-- **Tokens:** Access token (24h), refresh token (7d)
-
-### Security Best Practices (January 2026)
-
-**Frontend Security:**
-- ✅ **No sensitive data in localStorage** - Only JWT tokens (encrypted in transit via HTTPS)
-- ✅ **XSS Protection** - React escapes all user input by default
-- ✅ **CSRF Protection** - JWT in Authorization header (not cookies)
-- ✅ **Content Security Policy** - Vite build includes secure headers
-- ✅ **Dependencies** - Regular security audits via `npm audit`
-- ✅ **Production builds** - Console.log removed, source maps disabled
-- ✅ **HTTPS Only** - Enforced in production (Railway, GitHub Pages)
-
-**Backend Security:**
-- ✅ **Password Hashing** - BCrypt with salt rounds = 10
-- ✅ **JWT Signing** - HMAC SHA-256 with strong secret (256+ bits)
-- ✅ **SQL Injection** - Prevented via Spring Data JPA parameterized queries
-- ✅ **Rate Limiting** - Should be implemented at reverse proxy level (TODO)
-- ✅ **Input Validation** - `@Valid` annotations on all DTOs
-- ✅ **CORS Whitelist** - Only allowed origins in production
-- ✅ **Secure Headers** - Spring Security default headers (X-Frame-Options, X-Content-Type-Options, etc.)
-
-**PWA Security:**
-- ✅ **Service Worker** - Only registers on HTTPS (fails gracefully on HTTP)
-- ✅ **Cache Strategy** - NetworkFirst for API (always fresh data when online)
-- ✅ **No sensitive caching** - API responses cached max 5 minutes
-- ✅ **Auto-update** - Service worker updates automatically on new deployments
-
-**Data Security:**
-- ✅ **Audit Trail** - All entities track createdBy, createdAt, updatedAt
-- ✅ **Soft Deletes** - Entities have `actif` flag instead of hard deletes
-- ✅ **Data Validation** - CHECK constraints in database (e.g., budget >= 0)
-- ✅ **Transaction Isolation** - PostgreSQL READ COMMITTED by default
-
-**Recommended for Production:**
-- ⚠️ **Add Rate Limiting** - Use nginx rate limiting or Spring Rate Limiter
-- ⚠️ **Enable 2FA** - For admin accounts
-- ⚠️ **Database Encryption** - Enable PostgreSQL encryption at rest
-- ⚠️ **Secrets Management** - Use env variables, never commit secrets
-- ⚠️ **Regular Backups** - Automated daily backups with point-in-time recovery
-- ⚠️ **Security Scanning** - GitHub Dependabot, Snyk, or OWASP Dependency-Check
+### Security Checklist
+- ✅ JWT + Spring Security 6.x
+- ✅ BCrypt password hashing (cost 10)
+- ✅ HMAC SHA-256 signing (256+ bit secret)
+- ✅ No sensitive data in localStorage (only tokens)
+- ✅ XSS protection (React default)
+- ✅ CSRF protection (JWT header, not cookies)
+- ✅ SQL injection prevention (parameterized JPA queries)
+- ✅ Audit trail (createdBy, createdAt, updatedAt)
+- ✅ Soft deletes (`actif` flag)
+- ✅ Service worker (HTTPS only, auto-update)
 
 ## API Structure
-
-### Endpoint Naming Convention
 
 All endpoints follow REST conventions with French naming:
 
 ```
-/api/conventions             - Convention management
-/api/avenants-conventions    - Convention amendments (history, workflow)
-/api/projets                 - Project management
-/api/marches                 - Procurement contracts (note: endpoint is "marches")
-/api/marches/:id/lignes      - Contract line items
-/api/marches/:id/avenants    - Contract amendments
-/api/decomptes               - Billing statements
-/api/ordres-paiement         - Payment orders
-/api/paiements               - Payments
-/api/fournisseurs            - Suppliers
-/api/dimensions              - Analytical dimensions
-/api/imputations             - Analytical imputations
-/api/users                   - User management
+/api/conventions          - Convention management
+/api/avenants-conventions - Convention amendments
+/api/projets              - Projects
+/api/marches              - Contracts
+/api/decomptes            - Billing
+/api/paiements            - Payments
+/api/fournisseurs         - Suppliers
+/api/dimensions           - Analytical dimensions
+/api/users                - User management
 ```
 
-### Response Format
-
-All endpoints return consistent JSON:
-
+**Response Format:**
 ```json
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": { /* payload */ }
-}
-```
-
-Error responses:
-```json
-{
-  "success": false,
-  "message": "Error description",
-  "data": null
-}
+{ "success": true, "message": "...", "data": {...} }
 ```
 
 ## Frontend Routing
 
 ```
-/                    - Landing page (public)
-/login               - Login page (public)
-/register            - Registration (public)
-/dashboard           - Main dashboard (protected)
-/conventions         - Convention list & CRUD
+/                    - Landing (public)
+/login               - Login (public)
+/dashboard           - Dashboard (protected)
+/conventions         - Convention management
 /projets             - Project management
 /marches             - Procurement contracts
-/marches/:id         - Market detail view
-/marches/new         - Create new market
+/marches/:id         - Market detail
 /decomptes           - Billing statements
 /paiements           - Payments
-/reporting           - Analytical reporting with dynamic filters
-/parametrage/plan-analytique - Dimension configuration
-/profile             - User profile & password change
+/reporting           - Analytical reporting
+/parametrage/plan-analytique - Dimension config
+/profile             - User profile
 ```
 
-## Working with the Backend
+## Working with Backend
 
-### Adding a New Entity
-
-When creating a new CRUD entity:
-
-1. **Entity**: Create in `entity/` extending `BaseEntity`
-2. **Repository**: Create in `repository/` extending Spring Data JPA
-3. **DTO**: Create request/response DTOs in `dto/`
-4. **Mapper**: Create entity ↔ DTO mapper in `mapper/`
-5. **Service**: Create in `service/` extending `GenericCrudService<Entity, Long>`
-6. **Controller**: Create in `controller/` with standard REST endpoints
-7. **Migration**: Add Flyway migration in `db/migration/V{next_number}__description.sql`
-   - Check existing migrations: V1-V3 already exist
-   - Next migration should be V4
-   - Use `CREATE TABLE IF NOT EXISTS` for safety
-   - Add indexes for foreign keys and frequently queried columns
-8. **Tests**: Add integration tests in `src/test/kotlin/ma/investpro/integration/`
+### Adding New Entity
+1. **Entity** in `entity/` extending `BaseEntity`
+2. **Repository** in `repository/` extending Spring Data JPA interface
+3. **DTO** in `dto/` for request/response
+4. **Mapper** in `mapper/` for entity ↔ DTO conversion
+5. **Service** in `service/` extending `GenericCrudService<Entity, Long>`
+6. **Controller** in `controller/` with REST endpoints
+7. **Migration** in `db/migration/` (V{n}__description.sql)
+8. **Tests** in `src/test/kotlin/ma/investpro/integration/`
 
 See `CRUD_TEMPLATE.md` for detailed template.
 
 ### Database Migrations
 
-- **Tool:** Flyway (automatic on startup, enabled in production)
+- **Tool:** Flyway (auto-runs on startup)
 - **Location:** `backend/src/main/resources/db/migration/`
-- **Naming:** `V{n}__description.sql` (e.g., `V1__clean_schema.sql`)
-- **Configuration:**
-  - Development: `spring.jpa.hibernate.ddl-auto=none` + `spring.flyway.enabled=true`
-  - Production: `spring.jpa.hibernate.ddl-auto=validate` + `spring.flyway.enabled=true`
+- **Current Migrations:**
+  - **V1:** Drop all tables (clean slate)
+  - **V2:** Create schema (all tables, indexes, constraints)
+  - **V3:** Seed test data
 
-- **Current Migrations (V1-V3 ONLY):**
-  - **V1:** Drop all existing tables (clean slate)
-  - **V2:** Complete schema creation with all tables, constraints, and indexes
-    - Includes geolocation fields for `marches` table
-    - JSONB fields for rich text descriptions
-    - project_conventions junction table for many-to-many associations
-    - All entities with proper relationships and indexes
-    - All GIN indexes for JSONB searching
-  - **V3:** Seed test data (users, dimensions, fournisseurs, conventions, marchés, décomptes)
-
-⚠️ **CRITICAL RULE: Only Use V1, V2, V3**
-- ❌ **NEVER create new migration files** (V4, V5, etc.)
-- ✅ **ALWAYS add new schema/tables to V2__create_schema.sql**
-- ✅ **ALWAYS add new seed data to V3__seed_data.sql**
-- ✅ Keep V1 drop-all at the start for clean development resets
-- **Why:** Flyway expects a linear, continuous migration history. New files break this chain.
-
-- **Flyway Settings:**
-  - `baseline-on-migrate=true` - Create baseline for existing databases
-  - `validate-on-migrate=false` (dev) / `true` (prod) - Validation control
-  - `out-of-order=true` - Allow out-of-order migrations (dev only)
-  - `clean-disabled=true` - Prevent accidental data loss
-
-- **Best Practices:**
-  - ✅ Always use `CREATE TABLE IF NOT EXISTS` for safety
-  - ✅ Add `CHECK` constraints for data validation (e.g., budget >= 0)
-  - ✅ Add indexes for foreign keys and frequently queried columns
-  - ✅ Add `COMMENT ON TABLE/COLUMN` for documentation
-  - ✅ Use `ON DELETE SET NULL` or `ON DELETE CASCADE` appropriately
-  - ✅ Test migrations on clean database before committing
-  - ❌ Never modify existing migrations after they're deployed
-  - ❌ Never use `spring.flyway.clean-on-validation-error=true` in production
+**Rules:**
+- ✅ Use `CREATE TABLE IF NOT EXISTS`
+- ✅ Add indexes on foreign keys and frequently queried columns
+- ✅ Add CHECK constraints for validation
+- ❌ Never modify existing migrations after deployment
 
 ### Testing
-
-- **Framework:** Kotest with JUnit5 runner
-- **Mocking:** MockK (Kotlin-friendly) + SpringMockK
-- **Integration Tests:** Use Testcontainers with real PostgreSQL (requires Docker)
+- **Framework:** Kotest + JUnit5
+- **Mocking:** MockK (Kotlin-idiomatic)
+- **Integration Tests:** Testcontainers with real PostgreSQL (requires Docker)
 - **Base Class:** `BaseIntegrationTest.kt` sets up test database
 
-## Working with the Frontend
+## Working with Frontend
 
 ### Key Files
-
 | File | Purpose |
 |------|---------|
-| `src/lib/api.ts` | Axios client with JWT interceptors and all API endpoints |
-| `src/contexts/AuthContext.tsx` | Global auth state (user, login, logout, register) |
-| `src/App.tsx` | Main routing with React Router |
-| `src/components/layout/AppLayout.tsx` | Responsive sidebar layout |
-| `src/components/ui/` | Reusable UI components (Button, Card, Badge, Modal, etc.) |
-| `vite.config.ts` | Vite configuration with proxy to backend |
+| `src/lib/api.ts` | Axios client with JWT interceptors + all endpoints |
+| `src/contexts/AuthContext.tsx` | Global auth state |
+| `src/App.tsx` | React Router main routing |
+| `src/components/layout/AppLayout.tsx` | Sidebar layout |
+| `src/components/ui/` | Reusable UI components |
+| `vite.config.ts` | Vite config with /api proxy |
 
 ### API Client Usage
-
 ```typescript
 import { conventionsAPI } from '@/lib/api'
 
-// GET all conventions
+// GET
 const { data } = await conventionsAPI.getAll()
-const conventions = data.data // Extract payload from ApiResponse
+const items = data.data  // Extract payload
 
-// POST create convention
-const newConvention = await conventionsAPI.create({
-  code: 'CONV-001',
-  objet: 'Convention description',
-  montant: 1000000
-})
-
-// All APIs follow same pattern: {method}API.{operation}()
+// POST
+const newItem = await conventionsAPI.create({ /* ... */ })
 ```
 
 ### Authentication in Components
-
 ```typescript
 import { useAuth } from '@/contexts/AuthContext'
 
 function MyComponent() {
   const { user, isAuthenticated, logout } = useAuth()
-
-  return (
-    <div>
-      {isAuthenticated && <p>Welcome {user?.fullName}</p>}
-      <button onClick={logout}>Logout</button>
-    </div>
-  )
+  // ...
 }
 ```
 
 ### Protected Routes
-
-Use `PrivateRoute` wrapper for authenticated pages:
-
 ```typescript
 <Route path="/dashboard" element={
   <PrivateRoute>
@@ -616,762 +293,130 @@ Use `PrivateRoute` wrapper for authenticated pages:
 
 ## Important Development Notes
 
-1. **French Domain Language:** All business entities use French names (Convention, Marché, Décompte, etc.). Keep this consistency when adding new features.
-
-2. **JSONB for Flexibility:** Analytical dimensions use PostgreSQL JSONB (`dimensionsValeurs` field). This allows unlimited configurable dimensions without schema changes.
-
-3. **Null Safety:** Backend uses Kotlin's type system - `Type?` means nullable, `Type` means non-null. Frontend uses TypeScript strict mode.
-
-4. **JWT Refresh Logic:** Frontend automatically refreshes expired tokens via interceptor in `api.ts`. Users are logged out only if refresh fails.
-
-5. **API Proxy:** Frontend Vite dev server proxies `/api` requests to `http://localhost:8080` (see `vite.config.ts`).
-
-6. **Generic CRUD Service:** All backend services extend `GenericCrudService.kt` which provides standard CRUD operations. Override only when custom logic needed.
-
-7. **Material-UI + Tailwind:** Frontend uses both MUI components and Tailwind utility classes. Prefer Tailwind for layout/spacing, MUI for complex components.
-
-8. **Test Credentials:** Use test accounts `admin/admin123`, `manager/manager123`, `user/user123` (seeded in V3__seed_data.sql). Passwords are BCrypt hashed. **CRITICAL:** Only change passwords after verifying new BCrypt hashes in database - do not change in seed data without updating hash.
-
-9. **Reporting:** The `ReportingAnalytiquePage` demonstrates dynamic JSONB queries with filters. Use this pattern for new analytical features.
-
-10. **Error Handling:** Backend uses `@ControllerAdvice` for global exception handling. Frontend shows toast notifications via `ToastContext`.
-
-11. **Convention Workflow:** Improved workflow with rejection handling:
-    - BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE
-    - SOUMIS → REJETE (with motif) → BROUILLON (correction)
-    - Status EN_COURS renamed to EN_EXECUTION for clarity
-    - CreatedBy field tracks convention creator automatically
-    - Rejection motif stored and displayed in UI
-
-12. **Number Formatting:** Frontend forms use French number formatting (1 000 000,00) with automatic parsing for clean UX.
-
-## CI/CD Pipeline
-
-InvestPro Maroc uses GitHub Actions for Continuous Integration and Continuous Deployment:
-
-### Workflows Overview
-
-| Workflow | Trigger | Purpose | Status |
-|----------|---------|---------|--------|
-| **Backend CI** (ci-backend.yml) | Pull Request | Build & test backend with Gradle, run integration tests with Testcontainers | ✅ Active |
-| **Frontend CI** (ci-frontend.yml) | Pull Request | Build & test frontend with Vite, TypeScript check, linting | ✅ Active |
-| **Railway Deploy** (deploy-railway.yml) | Push to main | Automatic deployment to Railway after PR merge | ✅ Active |
-| **Demo Deploy** (deploy-demo.yml) | Manual trigger | Deploy to demo environment | ✅ Active |
-
-**CI Strategy:** Run tests and builds **only on Pull Requests** to avoid duplicate runs and save GitHub Actions minutes. Once PR is approved and merged to main, the deployment pipeline runs automatically.
-
-### Backend CI Pipeline
-
-**Location:** `.github/workflows/ci-backend.yml`
-
-```yaml
-Triggers on:
-- Push to main, claude/* branches
-- Pull requests
-- Changes to backend/** or workflow file
-
-Steps:
-1. Checkout code
-2. Setup Java 21 with Gradle caching
-3. Make gradlew executable
-4. Run ./gradlew clean build --info
-5. Upload test reports on failure
-6. Check for build artifacts
-```
-
-**Environment:**
-- Java 21 (Temurin)
-- PostgreSQL 16-alpine (Testcontainers)
-- Gradle caching enabled
-
-**Key Tests:**
-- FlywayMigrationIntegrationTest (schema validation)
-- AvenantConventionIntegrationTest (workflow)
-- All other integration tests with real database
-
-### Frontend CI Pipeline
-
-**Location:** `.github/workflows/ci-frontend.yml`
-
-```yaml
-Triggers on:
-- Pull requests
-- Changes to frontend/** or workflow file
-
-Steps:
-1. Checkout code
-2. Setup Node.js 18 with npm caching
-3. Clear npm cache to prevent EBUSY errors
-4. npm ci (install all dependencies including devDependencies)
-5. npm run lint (optional, continue on error)
-6. npm run build (TypeScript + Vite build)
-7. Check build size and verify dist/assets output
-```
-
-**Important:** Uses `npm ci` WITHOUT `--omit=dev` because:
-- Build requires **devDependencies** (TypeScript, Vite, type definitions like @types/react-dom)
-- `--omit=dev` should only be used for runtime deployments (after build completes)
-- Build fails without @types/react-dom and other type packages
-
-**Environment:**
-- Node.js 18 (compatible with package.json >=18.0.0)
-- npm 9+ (from Node 18)
-- Vite 5.4.21 (pinned exact version for package-lock.json sync)
-
-**Build Artifacts:**
-- dist/ folder with optimized bundle
-- Includes vendor.js and main.js
-- Source maps excluded from production build
-
-### Railway Deployment
-
-**Location:** `.github/workflows/deploy-railway.yml`
-
-```yaml
-Triggers on:
-- Push to main with frontend/** changes
-- Manual workflow_dispatch
-
-Environment Variables:
-- NODE_ENV: production
-- VITE_API_URL: https://investpromaroc-production.up.railway.app/api
-- VITE_BASE_PATH: /
-- RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-- RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-
-Steps:
-1. Checkout code
-2. Setup Node.js 18
-3. Clear npm cache
-4. Install Railway CLI globally
-5. npm ci (install all dependencies including devDependencies for build)
-6. npm run build (TypeScript + Vite)
-7. railway up (deploy to Railway)
-```
-
-**Note:** Uses `npm ci` without `--omit=dev` for the build phase. Railway deployment is two-stage:
-- Stage 1: Build with devDependencies (happens in CI workflow)
-- Stage 2: Production runtime (Railway doesn't need devDependencies, handled by NODE_ENV=production in Vite)
-
-**Configuration:**
-- Uses Railway CLI for deployment
-- Requires RAILWAY_TOKEN and RAILWAY_PROJECT_ID secrets
-- Automatic build happens on Railway (see railway.json)
-
-### Troubleshooting CI/CD
-
-**Frontend Build Fails: "Could not find a declaration file for module 'react-dom/client'"**
-- Error: `error TS7016: Could not find a declaration file for module 'react-dom/client'`
-- **Real Root Cause:** Incomplete `package-lock.json` missing full package entries for devDependencies
-  - When `package-lock.json` is missing package metadata, `npm ci` cannot properly install devDependencies
-  - @types/react-dom only appeared in root devDependencies list, NOT as a full package entry
-  - TypeScript could not find the type definitions during compilation
-- **Primary Solution:** Regenerate `package-lock.json`
-  ```bash
-  cd frontend && npm install  # Regenerates lock file with complete package entries
-  git add package-lock.json && git commit
-  ```
-- **Secondary Issue (Also Fixed):** Workflows were using `npm ci --omit=dev`
-  - This was doubly wrong because build phase needs devDependencies
-  - Changed to `npm ci` WITHOUT `--omit=dev` in CI workflows
-  - `--omit=dev` should ONLY be used for production runtime (not build phase)
-
-**Frontend Build Fails with "npm error EBUSY"**
-- Solution: Pipeline includes `npm cache clean --force` before install
-- Cause: Concurrent file access during npm package installation
-- Prevention: Always clear cache in CI environments
-
-**Vite Version Compatibility Issues**
-- Vite 5.4.21 is pinned to match package-lock.json exactly
-- Do NOT use `npm install` (updates lock file) - use `npm ci` instead
-- If package.json version doesn't match package-lock.json, `npm ci` will fail
-- Error: "Invalid: lock file's vite@X does not satisfy vite@Y" means mismatch
-- Solution: Keep package.json and package-lock.json in sync
-
-**CRITICAL: Keeping package-lock.json Synchronized**
-
-⚠️ **MANDATORY:** Always regenerate `package-lock.json` when modifying `package.json`:
-
-```bash
-# After editing frontend/package.json:
-cd frontend
-npm install                    # Regenerates package-lock.json with all packages
-git add package.json package-lock.json
-git commit -m "fix: Update dependencies and regenerate lock file"
-```
-
-**Why This Matters:**
-- `package-lock.json` contains the complete dependency tree with resolved versions
-- When lock file is incomplete/corrupted, `npm ci` cannot install packages properly
-- Missing package entries prevent TypeScript from finding type definitions
-- This causes build failures like "Could not find @types/react-dom"
-- Always regenerate after ANY change to package.json
-- **BEFORE committing:** Verify both files are in sync
-
-**How to Verify Sync:**
-```bash
-# Should show no output if in sync
-diff <(npm install --dry-run 2>&1 | grep -E "add|remove|change") <(echo "")
-
-# Or simply run npm ci locally to test
-npm ci
-```
-
-**Backend CI Timeout**
-- Integration tests with Testcontainers can take 2-5 minutes
-- PostgreSQL container startup adds 30-60 seconds
-- Docker must be available in CI runner
-
-**Railway Deployment Fails**
-- Verify RAILWAY_TOKEN is valid and not expired
-- Check RAILWAY_PROJECT_ID matches actual project ID
-- Review Railway logs: `railway logs --service frontend`
-- Common issue: Frontend build succeeds locally but fails on Railway (check Node version)
+1. **French Naming:** All business entities use French names (Convention, Marché, Décompte, etc.)
+2. **JSONB Storage:** Use PostgreSQL JSONB for flexible data structures (analytical dimensions, amendments)
+3. **Null Safety:** Kotlin: `Type?` = nullable, `Type` = non-null. TypeScript strict mode enabled
+4. **JWT Refresh:** Auto-refreshed via Axios interceptor. Logout only on refresh failure
+5. **API Proxy:** Dev server proxies `/api` → `http://localhost:8080`
+6. **Generic CRUD:** All backend services extend `GenericCrudService` for boilerplate reduction
+7. **UI Framework:** MUI for complex components, Tailwind for layout/spacing
+8. **Number Formatting:** French format (1 000 000,00) with automatic parsing
+9. **Error Handling:** Backend uses `@ControllerAdvice`. Frontend shows toast via `ToastContext`
+10. **Reporting:** `ReportingAnalytiquePage` demonstrates dynamic JSONB filters
 
 ## Deployment
 
-### Railway Deployment (Production)
-
-InvestPro Maroc is deployed on Railway:
-- **Backend:** https://investpromaroc-production.up.railway.app
-- **Frontend:** Deployed via Railway with static serving
-
-#### Frontend Deployment to Railway
-
-The frontend is configured for Railway deployment with proper SPA routing:
-
+### Railway (Production)
 ```bash
 cd frontend
-
-# Build for production
-npm run build
-
-# Test production build locally
-npm start  # Runs serve -s dist -l 3000
-
-# Deploy to Railway (automatic via Git push)
-git push origin main  # Railway auto-deploys from GitHub
+npm run build           # Production build
+npm start             # Serve -s dist (SPA routing fix)
+git push origin main  # Auto-deploys from GitHub
 ```
 
-**Key Configuration:**
-- Uses `serve` package with `-s` flag for SPA routing (fixes 404 on refresh)
-- `railway.json` configures build and deploy commands
+**Configuration:**
+- Uses `serve -s` flag for SPA routing (fallback to /index.html)
+- `railway.json` configures build/deploy commands
 - `.env.production` contains production API URL
-- `vite.config.ts` uses `base: '/'` for Railway (not `/InvestProMaroc/` like GitHub Pages)
-
-**Why `serve -s` fixes the 404 problem:**
-- Without `-s`: Server looks for `/dashboard/index.html` → 404 error
-- With `-s` (single-page mode): All routes fallback to `/index.html` → React Router handles routing
-- This is the standard, clean solution for deploying Vite/React SPAs
-
-See `frontend/RAILWAY_DEPLOYMENT.md` for complete deployment guide.
+- Backend: https://investpromaroc-production.up.railway.app
+- Frontend: Deployed via Railway
 
 ## Environment Variables
 
-### Backend (application.properties / application-prod.properties)
-
-```bash
-# Database
-DATABASE_URL                # PostgreSQL connection string (Railway provides this)
-PGDATABASE                  # Database name (Railway)
-PGHOST                      # Database host (Railway)
-PGPASSWORD                  # Database password (Railway)
-PGPORT                      # Database port (Railway)
-PGUSER                      # Database user (Railway)
-
-# JWT Authentication
-JWT_SECRET                  # Base64-encoded secret (256-bit minimum)
-JWT_EXPIRATION_MS           # Access token TTL (default: 86400000 = 24h)
-JWT_REFRESH_EXPIRATION_MS   # Refresh token TTL (default: 604800000 = 7d)
-
-# CORS Configuration
-CORS_ALLOWED_ORIGINS        # Comma-separated origins (e.g., https://your-frontend.railway.app)
-
-# Server
-PORT                        # Server port (default: 8080, Railway may override)
+### Backend (application-prod.properties)
+```
+DATABASE_URL                # PostgreSQL connection string
+PGDATABASE, PGHOST, PGPORT, PGUSER, PGPASSWORD  # Railway db vars
+JWT_SECRET                  # Base64-encoded 256+ bit secret
+JWT_EXPIRATION_MS           # Default: 86400000 (24h)
+JWT_REFRESH_EXPIRATION_MS   # Default: 604800000 (7d)
+CORS_ALLOWED_ORIGINS        # Comma-separated allowed origins
+PORT                        # Server port (default: 8080)
 ```
 
 ### Frontend (.env)
-
-```bash
-# Development
-VITE_API_URL=http://localhost:8080/api
-
-# Production (Railway)
-VITE_API_URL=https://investpromaroc-production.up.railway.app/api
+```
+VITE_API_URL=http://localhost:8080/api      # Dev
+VITE_API_URL=https://.../api                # Production
 ```
 
-## Recent Architecture Changes
+## CI/CD Pipeline
 
-- **Project-Convention Association System:** Complete backend implementation with REST API and frontend component (January 2026)
-  - ProjetConvention entity with junction table `projet_conventions` in V2 migration
-  - ProjetConventionService with validation and cascade operations
-  - 8 REST endpoints for full CRUD and relationship management
-  - ConventionMultiSelect React component with strong typing
-  - 100% type-safe frontend API client with all endpoints
+**GitHub Actions workflows:**
+- `ci-backend.yml` - Gradle build + integration tests (on PR)
+- `ci-frontend.yml` - Vite build + TypeScript check + linting (on PR)
+- `deploy-railway.yml` - Auto-deploy frontend to Railway (on push to main)
 
-- **Strong Typing Enforcement:** Critical mandatory requirement added to all project guidelines (January 2026)
-  - NEVER use `any` type in TypeScript or `Any` in Kotlin
-  - All code without proper types will be rejected
-  - Proper error handling with `error: unknown` and type guards
-  - Updated CLAUDE.md and .skills with prominent warnings
+**Backend CI:**
+- Java 21, Gradle caching, Testcontainers (PostgreSQL 16-alpine)
+- Runs `./gradlew clean build --info`
 
-- **Progressive Web App (PWA):** Full PWA support with offline capabilities (January 2026)
-  - `vite-plugin-pwa` for service worker generation
-  - App installable on desktop and mobile
-  - Offline caching with Workbox
-  - NetworkFirst strategy for API calls
-  - StaleWhileRevalidate for static resources
-  - Auto-update on new versions
-  - Manifest with icons and theme colors
+**Frontend CI:**
+- Node.js 18, Vite 5.4.21 (pinned for Node 18 compatibility)
+- Runs: `npm ci` → `npm run lint` → `npm run build`
+- ⚠️ Uses `npm ci` WITHOUT `--omit=dev` (build needs devDependencies)
 
-- **Modern Landing Page:** Redesigned with framer-motion animations (January 2026)
-  - Smooth fade-in and stagger animations
-  - Scale-on-hover effects for cards
-  - Clean, modern design with gradient backgrounds
-  - Optimized performance with lazy loading
-  - Responsive design for all screen sizes
-  - Clear feature showcase with real app statistics
+## Code Quality Standards
 
-- **Code Simplification & Optimization:** Major refactor for better maintainability (January 2026)
-  - Simplified `SousConventionForm` → `SousConventionFormSimple` (50% less code)
-  - Removed complex formatting logic in favor of native HTML5 inputs
-  - Better build optimization with code splitting (React, MUI, Charts separated)
-  - Tree shaking enabled for smaller bundle sizes
-  - Console.log removal in production builds
-  - Optimized chunk sizes for better caching
+### 1. Strong Typing (MANDATORY)
+- ❌ **FORBIDDEN:** `Map<String, Any>`, `List<Any>`, `any`, `object`
+- ✅ **REQUIRED:** Strongly typed DTOs, specific types for all data
+- ✅ Use `ApiResponse<T>` generic wrapper for API responses
 
-- **CI/CD Pipeline Enhancements:** Complete GitHub Actions pipeline with frontend build checks (January 2026)
-  - Backend CI: Gradle build + integration tests with Testcontainers
-  - Frontend CI: Vite build + TypeScript checking + linting
-  - Railway Deployment: Automatic frontend deployment on push to main
-  - npm cache cleanup to fix EBUSY errors on Railway
-  - Node.js 18 compatibility across all workflows
+### 2. Use Production-Ready Technologies
+- Only from official registries (npm, Maven Central)
+- Active maintenance, good documentation, reasonable adoption
+- NO workarounds, experimental packages, or quick fixes
 
-- **Frontend Dependencies Pinned:** Vite locked to 5.4.21 for Node.js 18 compatibility (January 2026)
-  - Pinned to exact version matching package-lock.json
-  - Prevents automatic upgrades to Vite 7.x which requires Node 20.19+
-  - Ensures Railway deployment stability with Node v22.11.0
-  - `npm ci` now syncs package.json and package-lock.json exactly
+### 3. Follow Existing Patterns
+- Backend: `GenericCrudService`, `BaseEntity`, DTO pattern, `ApiResponse<T>`
+- Frontend: Context API, Axios interceptors, React Router
+- Always create DTOs for API responses
 
-- **Test Credentials Fixed:** BCrypt password hashes corrected for admin/manager/user accounts (January 2026)
-  - All test accounts use hash: `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6`
-  - Fixes "Bad credentials" authentication errors
-
-- **Sous-Conventions System:** Full hierarchical convention support with parent-child relationships (January 2026)
-  - CADRE conventions can have multiple sous-conventions (type SPECIFIQUE)
-  - Parameter inheritance with selective override (tauxCommission, baseCalcul, tauxTva)
-  - Same workflow as regular conventions (BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE)
-  - Dedicated UI tab in convention detail page with simplified modal
-  - 5 example sous-conventions in seed data (SC-001 to SC-005)
-
-- **Marchés Geolocation:** Full geolocation support for marchés with interactive map view using Leaflet/OpenStreetMap (January 2026)
-  - Address search with Nominatim geocoding API
-  - Map-based location picker with click-to-place marker
-  - Interactive map view for all geolocated marchés
-  - Geographic zone filtering capability
-- **Plan Analytique Dynamique:** Migrated from rigid Projet+Axe to flexible JSONB dimensions (December 2024)
-- **Marchés System:** Complete implementation with line items, amendments, and analytical imputation per line
-- **Flyway Migrations Simplified:** Using Flyway with simplified 3-migration structure (V1: drop, V2: create all, V3: seed) (January 2026)
-- **ExcelJS Integration:** Frontend now uses ExcelJS instead of XLSX for better spreadsheet generation
-- **Convention Workflow Amélioré:** New workflow with REJETE status, createdBy tracking, and improved rejection handling (January 2026)
-- **Railway Deployment:** Frontend configured for Railway with SPA routing fix (`serve -s`) (January 2026)
-- **Simple Convention Form:** Replaced complex wizard with clean, focused form for CADRE conventions
-- **Convention Amendments System:** Full amendment (avenant) system with JSONB storage for flexible data snapshots and workflow (BROUILLON → SOUMIS → VALIDE) (January 2026)
-- **Modern Under Construction Pages:** Professional "under construction" pages with roadmap for features in development (January 2026)
-- **Backend CI/CD:** GitHub Actions workflow for automatic compilation verification on every push (January 2026)
-- **Rich Text Editor System:** React Quill integration for formatted text in descriptions (JSONB storage) with RichTextEditor reusable component (January 2026)
-- **Unified Form Design:** SimpleConventionForm modernized with landing page design system (blue gradients, rounded corners, organized sections) (January 2026)
-- **Project-Convention Association:** Junction table `projet_conventions` for many-to-many relationships between projects and conventions (January 2026)
-
-## Planned Improvements (Current Sprint - In Progress)
-
-### 1. Rich Text Editor for Descriptions
-**Status:** ✅ IMPLEMENTED - Ready for Integration (Branch: `feature/rich-text-editor-styling`)
-
-**Goal:** Enable formatted text with styling options for all description fields across the platform
-
-**Completed:**
-- ✅ React Quill v2.0.0 added to dependencies
-- ✅ RichTextEditor component created (frontend/src/components/ui/RichTextEditor.tsx)
-- ✅ Integrated into SimpleConventionForm for 'objet' field
-- ✅ JSONB description fields added to V2__create_schema.sql
-- ✅ Backwards compatible with existing plain text fields
-
-**Components Affected:**
-- Convention description/object field (currently `objet`)
-- Project description field
-- Market description field
-- All other description/comment fields
-
-**Implementation Details:**
-- **Library:** React Quill (`react-quill` v2.x) or Editor.js
-- **Features Required:**
-  - Text formatting (bold, italic, underline)
-  - Font colors and background colors
-  - Font family selection (Helvetica, Arial, Georgia, Courier, etc.)
-  - Font sizes
-  - Text alignment (left, center, right, justify)
-  - Lists (ordered, unordered)
-  - Links and images
-  - Code blocks
-  - Undo/redo
-  - Toolbar customization
-
-- **Storage:** JSONB in database (already used for analytical dimensions)
-  - Store rich text as Quill Delta format or HTML
-  - Provide migration for existing plain-text descriptions
-  - Display with proper formatting in detail views
-
-**API Changes Required:**
-- Backend: Modify description fields to accept rich text (JSONB or TEXT)
-- Frontend: Update all forms to use rich text editor instead of plain TextField
-
-### 2. Unified Form Styling with Landing Page Design System
-**Status:** ✅ IMPLEMENTED - SimpleConventionForm Complete (Branch: `feature/rich-text-editor-styling`)
-
-**Goal:** Modernize all forms to match the professional landing page design
-
-**Completed:**
-- ✅ SimpleConventionForm completely redesigned with landing page design system
-- ✅ Blue gradient header (#2563eb → #1d4ed8) with white text
-- ✅ 5 organized form sections with emoji icons and blue section titles
-- ✅ Light blue background (#f0f9ff) for rich text editor section
-- ✅ Rounded corners (borderRadius: 8px, 16px) and shadows throughout
-- ✅ Blue gradient buttons with shadow effects on submit
-- ✅ Responsive design for mobile/tablet/desktop
-- ✅ Emojis for visual identification (📋📝💰📅⚙️)
-
-**Design System from LandingPageSimple.tsx:**
-- **Primary Color:** Blue (#2563eb / blue-600)
-- **Gradients:**
-  - Background: `from-gray-50 to-white`
-  - Accent: `from-blue-50 to-blue-100`, `from-green-50 to-green-100`
-- **Typography:** Bold headings (h2, h3), gray-900 for dark text
-- **Spacing:** Generous padding (py-16, py-20), container max-w-6xl
-- **Components:**
-  - Cards with shadow-lg and rounded-2xl
-  - Status badges (green-100 bg, green-700 text)
-  - Feature lists with checkmarks (green-500)
-  - Buttons with hover effects and transitions
-
-**Forms to Update:**
-- SimpleConventionForm → Modern layout with gradient header
-- ProjetFormPage → Match convention form style exactly
-- All other entity creation/edit forms
-
-**Style Consistency:**
-- Replace MUI default colors with blue-600 primary
-- Add background gradients to form containers
-- Implement consistent spacing and padding
-- Use TailwindCSS classes alongside MUI for modern look
-- Add visual hierarchy with larger headers and subtle shadows
-
-### 3. Project-Convention Association
-**Status:** ✅ Backend COMPLETE - Frontend Component Ready (January 2026)
-
-**Goal:** Allow projects to be linked to one or multiple conventions
-
-**Database Changes:** ✅ DONE
-- ✅ Created junction table: `projet_conventions` in V2__create_schema.sql with:
-  - `projet_id` (FK to projets) - ON DELETE CASCADE
-  - `convention_id` (FK to conventions) - ON DELETE CASCADE
-  - `ordre` (sequence for display order) - DEFAULT 0
-  - `created_at`, `updated_at` timestamps
-  - UNIQUE constraint on (projet_id, convention_id)
-  - Indexes on both foreign keys and ordre field (3 indexes total)
-- ✅ Comments/documentation on table and columns
-- ✅ Cascade delete for data integrity
-
-**Backend Implementation:** ✅ COMPLETE
-- ✅ ProjetConvention Entity with @ManyToOne relationships
-- ✅ ProjetConventionRepository with CRUD + custom queries:
-  - `findByProjetIdOrderByOrdre()` - Get conventions by project
-  - `findByConventionIdOrderByOrdre()` - Get projects by convention
-  - `existsByProjetIdAndConventionId()` - Check if association exists
-  - Batch delete operations for cascade cleanup
-- ✅ ProjetConventionService extending GenericCrudService
-  - `createAssociation()` with validation
-  - `deleteAssociation()` with integrity checks
-  - `reorderConventions()` for custom ordering
-  - Lazy loading to prevent N+1 queries
-- ✅ ProjetConventionMapper for proper DTO conversion
-- ✅ ProjetConventionController with REST endpoints:
-  - `POST /api/projet-conventions` (create association)
-  - `GET /api/projet-conventions/projet/{id}` (get conventions for project)
-  - `GET /api/projet-conventions/convention/{id}` (get projects for convention)
-  - `DELETE /api/projet-conventions/{id}` (delete association)
-  - `PUT /api/projet-conventions/{id}/reorder` (reorder conventions)
-- ✅ ProjetDTO updated with `conventions: List<ConventionSimpleDTO>` field
-- ✅ ProjetConventionDTO and request/response DTOs with strong typing
-- ✅ Complete OpenAPI/Swagger documentation in controller
-
-**Frontend Implementation:** ✅ COMPONENT READY
-- ✅ ConventionMultiSelect component for convention selection
-  - Checkbox-based multi-select with filtered convention list
-  - Displays convention number, name, code, and status
-  - Filters to only active conventions (BROUILLON, SOUMIS, VALIDEE)
-  - Shows selected count with visual indicator
-  - Fully typed with strong TypeScript
-- ✅ projetConventionsAPI with all endpoints:
-  - `getAll()`, `getById()` - CRUD operations
-  - `getByProjet()`, `getByConvention()` - Relationship queries
-  - `create()`, `updateOrdre()`, `delete()` - Entity management
-  - `reorderConventions()` - Bulk ordering
-- ✅ 100% strong typing throughout (no `any` types)
-- ✅ Error handling with proper type guards
-
-**Remaining Integration Work:**
-- [ ] Integrate ConventionMultiSelect into ProjetFormPage
-- [ ] Update ProjetFormPage styling to match SimpleConventionForm design
-- [ ] Update ProjetDetailPage to display associated conventions
-- [ ] Update ProjetsPage to show convention count for each project
-- [ ] Add integration tests for ProjetConvention endpoints
-
-Integration Order:
-1. ✅ Create database schema (DONE)
-2. ✅ Implement backend layer (DONE)
-3. ✅ Create frontend component (DONE)
-4. [ ] Integrate into forms and detail pages (NEXT)
-
----
-
-## Current Implementation Status
-
-### Fully Implemented (90%+)
-- Backend: Conventions, Sous-Conventions, Projets, Marchés, Fournisseurs, Analytical Dimensions
-- Frontend: Dashboards, Conventions, Sous-Conventions, Marchés, Projets, Analytical Reporting, User Profile
-
-### Partial Implementation (60-75%)
-- Décomptes: Backend ready, frontend basic list page only
-- Ordres de Paiement: Backend ready, frontend incomplete
-- Paiements: Backend ready, frontend incomplete
-- Budgets: Backend exists, frontend minimal
-
-### Missing Features
-- Sub-conventions (sous-conventions)
-- Budget versions and revisions
-- Document management (PDF uploads)
-- Advanced commission calculation (tranches, exclusions)
-- Rapprochement bancaire
-
-See `README.md` for detailed feature matrix and roadmap.
-
-## Development Best Practices & Code Quality Standards
-
-⚠️ **IMPORTANT:** All developers must follow the standards in **[DEVELOPMENT_GUIDELINES.md](DEVELOPMENT_GUIDELINES.md)**
-
-This file contains:
-- ✅ Mandatory code quality standards
-- ✅ Testing requirements (backend & frontend)
-- ✅ Commit message conventions
-- ✅ Security standards
-- ✅ Deployment checklist
-- ✅ Code review checklist
-- ✅ Troubleshooting common issues
-
-### Quick Reference:
-
-**Before committing:**
+### 4. Before Committing
 ```bash
 # Backend
-cd backend
-./gradlew test              # Run all tests
-./gradlew build -x test     # Quick build check
+./gradlew test
 
 # Frontend
-cd frontend
-npm run lint                # Check linting
-npm run build               # TypeScript check
-npm install                 # Update lock file if package.json changed
+npm run lint && npm run build && npm install
 ```
 
-**Key Principles:**
-
-### 1. Strong Typing - MANDATORY
-
-⚠️ **CRITICAL RULE:** **NEVER use `Any` type (Kotlin) or `any` type (TypeScript)** ⚠️
-
-**Backend (Kotlin):**
-- ❌ **FORBIDDEN:** `Map<String, Any>`, `List<Any>`, `ResponseEntity<Map<String, Any>>`
-- ✅ **REQUIRED:** Always use strongly typed DTOs and data classes
-- ✅ Use `ApiResponse<T>` generic wrapper for API responses
-- ✅ Create specific DTOs for each use case (e.g., `AvenantStatistics`, `AvenantConventionResponse`)
-
-**Frontend (TypeScript):**
-- ❌ **FORBIDDEN:** `any`, `object`, `unknown` without proper type guards
-- ✅ **REQUIRED:** Define interfaces/types for all data structures
-- ✅ Use generic types `<T>` when appropriate
-- ✅ Enable strict TypeScript mode
-
-**Examples:**
-
-❌ **BAD - Using Any:**
-```kotlin
-fun getData(): Map<String, Any> {
-    return mapOf("data" to myData, "count" to 5)
-}
-```
-
-✅ **GOOD - Strongly Typed:**
-```kotlin
-data class DataResponse(
-    val data: MyData,
-    val count: Int
-)
-
-fun getData(): DataResponse {
-    return DataResponse(data = myData, count = 5)
-}
-```
-
-**Why this matters:**
-- Type safety catches errors at compile time, not runtime
-- Better IDE autocomplete and refactoring support
-- Self-documenting code
-- Prevents runtime type errors in production
-
-### 2. Use Validated, Production-Ready Technologies
-
-- **NO workarounds or hacks** - Always use proper, documented solutions
-- **NO experimental or unstable packages** - Stick to well-maintained, widely-adopted libraries
-- **NO quick fixes that compromise quality** - Take time to implement clean, maintainable solutions
-
-### 3. Dependency Management
-
-- Only use dependencies from official package registries (npm, Maven Central)
-- Verify package:
-  - Has active maintenance (recent commits/releases)
-  - Has good documentation
-  - Has reasonable download stats / community adoption
-  - No known security vulnerabilities
-- Prefer official plugins and extensions over third-party alternatives
-
-### 4. Architecture Patterns
-
-- Follow existing architectural patterns in the codebase:
-  - Backend: `GenericCrudService`, `BaseEntity`, DTO pattern, `ApiResponse<T>` wrapper
-  - Frontend: Context API, Axios interceptors, React Router
-- Don't introduce new patterns without strong justification
-- Keep solutions simple and aligned with project architecture
-- **Always create DTOs for API responses** - Never return raw entities or Maps
-
-### 5. Problem-Solving Approach
-
-**ALWAYS prefer:**
-1. **Official documentation solutions** - Check framework/library docs first
-2. **Established patterns in the codebase** - Follow what already exists
-3. **Clean, standard approaches** - Use industry best practices
-4. **Maintainable code** - Code that future developers can understand
-
-**Summary of Critical Rules:**
-- ✅ **ALWAYS use strong typing** - Never use `Any` or `any` types
-- ✅ **Create specific DTOs** for all API responses and data structures
-- ✅ Use ONLY validated, production-ready technologies
-- ✅ Follow existing architecture patterns (`ApiResponse<T>`, DTOs, etc.)
-- ✅ Test before committing (see DEVELOPMENT_GUIDELINES.md)
-- ❌ **NEVER use `Any`/`any`** - Always create proper types
-- ❌ No workarounds or hacks
-- ❌ No experimental packages
-- ❌ No quick fixes that compromise quality
-- ❌ No `Map<String, Any>` or similar untyped structures
-
-**After modifying package.json:**
-```bash
-npm install                 # Regenerate package-lock.json
-git add package.json package-lock.json
-git commit -m "fix: Update dependencies and lock file"
-```
-
-See **[DEVELOPMENT_GUIDELINES.md](DEVELOPMENT_GUIDELINES.md)** for complete documentation.
+See **DEVELOPMENT_GUIDELINES.md** for complete standards.
 
 ## Key Documentation Files
-
-- **README.md** - Project overview, setup, architecture, feature matrix
-- **CLAUDE.md** - AI assistant instructions and project overview (this file)
-- **DEVELOPMENT_GUIDELINES.md** - **⭐ Mandatory standards, testing requirements, and quality checklist**
-- **ANALYSE_CAHIER_DES_CHARGES.md** - Requirements analysis
-- **BACKLOG.md** - Feature backlog and specifications
-- **CRUD_TEMPLATE.md** - Template for adding new entities
-- **backend/CLAUDE.md** - Backend-specific guidance (Kotlin/Spring Boot details)
-- **frontend/RAILWAY_DEPLOYMENT.md** - Complete Railway deployment guide with SPA routing fix
+- **README.md** - Project overview, setup, features
+- **CLAUDE.md** - This file
+- **DEVELOPMENT_GUIDELINES.md** - **Mandatory code quality standards**
+- **CRUD_TEMPLATE.md** - New entity template
+- **backend/CLAUDE.md** - Backend-specific guidance
+- **frontend/RAILWAY_DEPLOYMENT.md** - Railway deployment guide
 
 ## Troubleshooting
 
-### Flyway Migration Issues
-
-If you encounter Flyway migration errors:
-
+### Flyway Issues
 ```bash
-# 1. Check current Flyway state
-./gradlew flywayInfo
-
-# 2. Validate migrations
-./gradlew flywayValidate
-
-# 3. If needed, repair Flyway schema history (use with caution)
-./gradlew flywayRepair
-
-# 4. For development: baseline existing database
-./gradlew flywayBaseline
+./gradlew flywayInfo      # Check Flyway state
+./gradlew flywayValidate  # Validate migrations
+./gradlew flywayBaseline  # For existing databases
 ```
 
-**Common Issues:**
-- **"Found non-empty schema without metadata table"**: Run `flywayBaseline`
-- **"Migration checksum mismatch"**: Never modify existing migrations; create new ones
-- **"Out of order migration detected"**: Allowed in dev (`out-of-order=true`), fix order in prod
+### Railway Deployment
+- **Backend not connecting:** Check PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD environment variables
+- **CORS errors:** Update `CORS_ALLOWED_ORIGINS` and redeploy backend
+- **Frontend 404:** Verify `serve -s` is used in start script and `railway.json`
 
-### Railway Deployment Issues
-
-**Backend not connecting to database:**
-- Verify Railway PostgreSQL plugin is added
-- Check environment variables: `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
-- Railway provides `DATABASE_URL` but Spring Boot needs individual variables
-
-**CORS errors in production:**
-- Update `CORS_ALLOWED_ORIGINS` in Railway dashboard
-- Add your Railway frontend URL: `https://your-frontend.railway.app`
-- Redeploy backend after updating CORS settings
-
-**Frontend 404 on refresh:**
-- Verify `serve -s` is being used (check `package.json` start script)
-- Ensure `railway.json` has correct start command: `npm start`
-- Check build output includes all routes
-
-**Authentication Fails: "Bad credentials" with test accounts**
-- **Problem:** Wrong BCrypt password hashes in V3__seed_data.sql
-- **Solution:** Each password needs its own unique BCrypt hash
+### Authentication
+- **"Bad credentials" error:** Each test password needs unique BCrypt hash
   ```bash
-  # Generate correct hashes for test passwords:
-  cd backend
-  ./gradlew test --tests "ma.investpro.GenerateBCryptHashesTest" -i | grep "INSERT INTO"
+  cd backend && ./gradlew test --tests "ma.investpro.GenerateBCryptHashesTest" -i | grep "INSERT INTO"
   ```
-- **Update V3__seed_data.sql** with correct hashes from output
-- **Key Point:** Cannot reuse same hash for different passwords
-  - `admin123` → Hash A
-  - `manager123` → Hash B (different from Hash A)
-  - `user123` → Hash C (different from Hash A and B)
-- **Current Test Credentials:**
+  Update V3__seed_data.sql with generated hashes
+
+### npm/Package Issues
+- **TypeScript type errors:** Regenerate `package-lock.json` after package.json changes
   ```bash
-  admin / admin123     # Hash: $2a$10$G9mprAUozHWOs.VLmMh...
-  manager / manager123 # Hash: $2a$10$xsgYxT6trAjwUqt5x32...
-  user / user123       # Hash: $2a$10$djjqMLHRZzaFgANySgM...
+  cd frontend && npm install && git add package-lock.json package.json
   ```
-
-**How Password Verification Works in Spring Security**
-1. User submits login: `username=admin, password=admin123`
-2. Backend retrieves stored hash from database: `$2a$10$G9mprAUozHWOs...`
-3. BCryptPasswordEncoder compares: `encoder.matches("admin123", storedHash)`
-4. BCrypt validates password against hash (includes salt verification)
-5. Returns true if password matches, false otherwise
-6. Result: Login succeeds or "Bad credentials" error
-
-**Changing Test Passwords**
-1. Generate new BCrypt hashes:
-   ```bash
-   cd backend && ./gradlew test --tests "ma.investpro.GenerateBCryptHashesTest"
-   ```
-2. Copy new hashes from output
-3. Update `V3__seed_data.sql` with new hashes
-4. Drop and recreate database to apply migration
-5. Test login with new password
+- **EBUSY errors:** Clear npm cache: `npm cache clean --force`
+- **Vite version mismatch:** Keep package.json and package-lock.json synchronized

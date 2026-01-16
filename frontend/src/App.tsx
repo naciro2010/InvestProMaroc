@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { ThemeContextProvider } from './contexts/ThemeContext'
+import { LayoutContextProvider } from './contexts/LayoutContext'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -79,8 +81,10 @@ const ComingSoon = ({ title }: { title: string }) => {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <ToastProvider>
+      <ThemeContextProvider>
+        <LayoutContextProvider>
+          <AuthProvider>
+            <ToastProvider>
           <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -382,8 +386,10 @@ function App() {
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" />} />
           </Routes>
-        </ToastProvider>
-      </AuthProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </LayoutContextProvider>
+      </ThemeContextProvider>
     </Router>
   )
 }

@@ -583,6 +583,7 @@ data class ProjetDTO(
     val estEnRetard: Boolean,
     val estActif: Boolean,
     val actif: Boolean,
+    val conventions: List<ConventionSimpleDTO> = emptyList(), // Conventions associées
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?
 )
@@ -597,4 +598,34 @@ data class ProjetSimpleDTO(
     val dateFinPrevue: LocalDate?,
     val pourcentageAvancement: BigDecimal,
     val actif: Boolean
+)
+
+// Projet-Convention Association DTOs
+data class ProjetConventionDTO(
+    val id: Long?,
+    val projetId: Long,
+    val projetCode: String,
+    val projetNom: String,
+    val conventionId: Long,
+    val conventionCode: String,
+    val conventionNumero: String,
+    val conventionLibelle: String,
+    val conventionStatut: String,
+    val ordre: Int,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class CreateProjetConventionRequest(
+    @field:NotNull
+    val projetId: Long,
+
+    @field:NotNull
+    val conventionId: Long,
+
+    val ordre: Int = 0
+)
+
+data class UpdateProjetConventionRequest(
+    val ordre: Int
 )

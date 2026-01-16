@@ -412,4 +412,34 @@ export const avenantConventionsAPI = {
   getStatistics: (conventionId: number) => api.get(`/avenants-conventions/convention/${conventionId}/statistics`),
 }
 
+// Project-Convention Association API
+export const projetConventionsAPI = {
+  // CRUD
+  getAll: () => api.get('/projet-conventions'),
+  getById: (id: number) => api.get(`/projet-conventions/${id}`),
+
+  // Get conventions by project
+  getByProjet: (projetId: number) => api.get(`/projet-conventions/projet/${projetId}`),
+
+  // Get projects by convention
+  getByConvention: (conventionId: number) => api.get(`/projet-conventions/convention/${conventionId}`),
+
+  // Create association
+  create: (data: { projetId: number; conventionId: number; ordre?: number }) =>
+    api.post('/projet-conventions', data),
+
+  // Update order
+  updateOrdre: (id: number, ordre: number) =>
+    api.put(`/projet-conventions/${id}`, { ordre }),
+
+  // Delete association
+  delete: (id: number) => api.delete(`/projet-conventions/${id}`),
+  deleteByProjetAndConvention: (projetId: number, conventionId: number) =>
+    api.delete(`/projet-conventions/projet/${projetId}/convention/${conventionId}`),
+
+  // Reorder conventions for a project
+  reorderConventions: (projetId: number, ordres: Record<number, number>) =>
+    api.put(`/projet-conventions/projet/${projetId}/reorder`, ordres),
+}
+
 export default api

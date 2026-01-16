@@ -1,5 +1,20 @@
 # InvestPro Maroc - Claude Code Skills Configuration
 
+## ⚠️ CRITICAL: STRONG TYPING IS MANDATORY
+
+**❌ NEVER use `any` type (TypeScript) or `Any` type (Kotlin) in this project.**
+
+This is NON-NEGOTIABLE. Every value must have an explicit, strong type. This applies to:
+- Function parameters and return types
+- Variable declarations
+- API response data structures
+- Component props
+- Error handling (use `error: unknown` then `instanceof Error` guard)
+
+**All code without proper types will be rejected.**
+
+---
+
 ## ⚠️ MANDATORY INSTRUCTION: Always Update CLAUDE.md
 
 **Every time you make changes to the project, you MUST update CLAUDE.md to reflect those changes.**
@@ -95,6 +110,58 @@ When creating a new CRUD entity:
   - user/user123: USER role
 ```
 
+## ⚠️ CRITICAL DATABASE MIGRATION RULE
+
+**ONLY USE 3 MIGRATION FILES: V1, V2, V3**
+
+❌ **NEVER** create new migration files (V4, V5, etc.)
+✅ **ALWAYS** add new schema to `V2__create_schema.sql`
+✅ **ALWAYS** add new seed data to `V3__seed_data.sql`
+
+**How to Add Migrations:**
+```
+New table or column? → Add to V2__create_schema.sql
+New test data? → Add to V3__seed_data.sql
+Schema changes? → Modify V2 (use ALTER TABLE if needed)
+```
+
+**Why?** Flyway tracks migration history sequentially. New files break this chain and cause deployment issues.
+
+---
+
+## Current Planned Features (Active Branch)
+
+**Branch:** `feature/rich-text-editor-styling`
+
+**Three Major Improvements in Progress:**
+
+### 1. Rich Text Editor for Descriptions
+- Add formatted text with styling (bold, italic, colors, fonts)
+- Use React Quill for convention/project/market descriptions
+- Store as JSONB in database for flexibility
+- Display formatted text in detail views
+
+### 2. Unified Form Styling
+- Modernize all forms to match landing page design
+- Use blue-600 primary color and gradient backgrounds
+- Consistent spacing, typography, shadows
+- Make ConventionForm and ProjetForm identical in style
+- Match LandingPageSimple.tsx design system
+
+### 3. Project-Convention Association
+- Allow projects to link to multiple conventions
+- Add `projet_conventions` junction table
+- Create multi-select UI in ProjetFormPage
+- Show convention list in ProjetDetailPage
+- Add API endpoints for managing associations
+
+**When implementing these features:**
+1. Update CLAUDE.md "Planned Improvements" section with progress
+2. Add entries to "Recent Architecture Changes" section
+3. Update "Current Implementation Status" when features complete
+4. Document new API endpoints and database schema
+5. Include before/after design comparisons if UI changes significant
+
 ## Remember
 
 ❌ **Never forget to update CLAUDE.md**
@@ -102,5 +169,6 @@ When creating a new CRUD entity:
 ✅ **Include code references with filename:line_number**
 ✅ **Keep examples current and working**
 ✅ **Update Recent Architecture Changes section**
+✅ **Update Planned Improvements section as you work**
 
 This ensures every future developer (including AI assistants) knows exactly what's in the codebase and how to work with it.

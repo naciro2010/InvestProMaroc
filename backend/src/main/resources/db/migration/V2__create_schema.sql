@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS conventions (
     herite_parametres BOOLEAN DEFAULT FALSE NOT NULL,
     surcharge_taux_commission DECIMAL(5,2),
     surcharge_base_calcul VARCHAR(50),
+    objet_rich JSONB,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actif BOOLEAN DEFAULT TRUE NOT NULL
@@ -204,6 +205,7 @@ CREATE INDEX IF NOT EXISTS idx_conventions_type ON conventions(type_convention);
 CREATE INDEX IF NOT EXISTS idx_conventions_statut ON conventions(statut);
 CREATE INDEX IF NOT EXISTS idx_conventions_actif ON conventions(actif);
 CREATE INDEX IF NOT EXISTS idx_conventions_dates ON conventions(date_debut, date_fin);
+CREATE INDEX IF NOT EXISTS idx_conventions_objet_rich ON conventions USING GIN(objet_rich);
 
 -- Avenants de convention (amendments to conventions)
 CREATE TABLE IF NOT EXISTS avenant_conventions (
@@ -362,6 +364,7 @@ CREATE TABLE IF NOT EXISTS projets (
     localisation VARCHAR(200),
     objectifs TEXT,
     remarques TEXT,
+    description_rich JSONB,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actif BOOLEAN DEFAULT TRUE NOT NULL
@@ -371,6 +374,7 @@ CREATE INDEX IF NOT EXISTS idx_projets_code ON projets(code);
 CREATE INDEX IF NOT EXISTS idx_projets_convention ON projets(convention_id);
 CREATE INDEX IF NOT EXISTS idx_projets_statut ON projets(statut);
 CREATE INDEX IF NOT EXISTS idx_projets_dates ON projets(date_debut, date_fin_prevue);
+CREATE INDEX IF NOT EXISTS idx_projets_description_rich ON projets USING GIN(description_rich);
 
 -- Imputations prévisionnelles (provisional allocations to projects)
 CREATE TABLE IF NOT EXISTS imputations_previsionnelles (
@@ -434,6 +438,7 @@ CREATE TABLE IF NOT EXISTS marches (
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
     zone_geographique VARCHAR(100),
+    description_rich JSONB,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actif BOOLEAN DEFAULT TRUE NOT NULL
@@ -446,6 +451,7 @@ CREATE INDEX IF NOT EXISTS idx_marches_convention ON marches(convention_id);
 CREATE INDEX IF NOT EXISTS idx_marches_statut ON marches(statut);
 CREATE INDEX IF NOT EXISTS idx_marches_date ON marches(date_marche);
 CREATE INDEX IF NOT EXISTS idx_marches_zone ON marches(zone_geographique);
+CREATE INDEX IF NOT EXISTS idx_marches_description_rich ON marches USING GIN(description_rich);
 
 -- Marché lignes (line items within a market)
 CREATE TABLE IF NOT EXISTS marche_lignes (
@@ -789,6 +795,30 @@ CREATE INDEX IF NOT EXISTS idx_avenants_version ON avenants(version_resultante);
 
 CREATE INDEX IF NOT EXISTS idx_donnees_avant_gin ON avenant_conventions USING GIN(donnees_avant);
 CREATE INDEX IF NOT EXISTS idx_modifications_gin ON avenant_conventions USING GIN(modifications);
+
+-- ============================================================================
+-- SECTION 12: PROJECT-CONVENTION ASSOCIATION
+-- ============================================================================
+-- Junction table for many-to-many relationship between projects and conventions
+
+CREATE TABLE IF NOT EXISTS projet_conventions (
+    id BIGSERIAL PRIMARY KEY,
+    projet_id BIGINT NOT NULL REFERENCES projets(id) ON DELETE CASCADE,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    ordre INTEGER DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN DEFAULT TRUE NOT NULL,
+    UNIQUE(projet_id, convention_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_projet_conventions_projet_id ON projet_conventions(projet_id);
+CREATE INDEX IF NOT EXISTS idx_projet_conventions_convention_id ON projet_conventions(convention_id);
+CREATE INDEX IF NOT EXISTS idx_projet_conventions_ordre ON projet_conventions(projet_id, ordre);
+
+-- ============================================================================
+-- END OF SCHEMA DEFINITION
+-- ============================================================================
 
 -- ============================================================================
 -- END OF SCHEMA DEFINITION

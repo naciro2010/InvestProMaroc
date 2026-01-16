@@ -13,6 +13,7 @@ import {
 import { ArrowBack, Save } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
+import RichTextEditor from '../../components/ui/RichTextEditor'
 
 // Helper pour formater les nombres en affichage
 const formatNumber = (value: number | string): string => {
@@ -96,155 +97,251 @@ const SimpleConventionForm = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ maxWidth: 900, mx: 'auto', p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/conventions')}
-            sx={{ mr: 2 }}
+      <Box sx={{ minHeight: '100vh', background: 'linear-gradient(to bottom, #f9fafb, #ffffff)', py: 4 }}>
+        <Box sx={{ maxWidth: 1000, mx: 'auto', px: { xs: 2, sm: 3, md: 4 } }}>
+          {/* Header Section with Gradient Background */}
+          <Box
+            sx={{
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              color: 'white',
+              borderRadius: '16px 16px 0 0',
+              p: 4,
+              mb: 0,
+            }}
           >
-            Retour
-          </Button>
-          <Typography variant="h5" fontWeight="bold">
-            Nouvelle Convention
-          </Typography>
-        </Box>
+            <Button
+              startIcon={<ArrowBack />}
+              onClick={() => navigate('/conventions')}
+              sx={{
+                color: 'white',
+                mb: 2,
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                },
+              }}
+            >
+              Retour
+            </Button>
+            <Typography variant="h3" fontWeight="bold" sx={{ mb: 1 }}>
+              Nouvelle Convention
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              Créez une nouvelle convention avec les détails complets et descriptif formaté
+            </Typography>
+          </Box>
 
-        {error && (
-          <Paper sx={{ p: 2, mb: 3, bgcolor: 'error.light', color: 'error.contrastText' }}>
-            {error}
-          </Paper>
-        )}
+          {error && (
+            <Paper
+              sx={{
+                p: 2,
+                mb: 3,
+                bgcolor: '#fee2e2',
+                borderLeft: '4px solid #dc2626',
+                color: '#991b1b',
+                fontWeight: 500,
+              }}
+            >
+              {error}
+            </Paper>
+          )}
 
-        <Paper sx={{ p: 4 }}>
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={3}>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Code"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  placeholder="CONV-2026-001"
+          <Paper
+            sx={{
+              p: { xs: 3, sm: 4, md: 5 },
+              borderRadius: '0 0 16px 16px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <form onSubmit={handleSubmit}>
+            <Stack spacing={4}>
+              {/* Section 1: Informations Générales */}
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2563eb' }}>
+                  📋 Informations Générales
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Code"
+                      value={formData.code}
+                      onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                      placeholder="CONV-2026-001"
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                    />
+                    <TextField
+                      fullWidth
+                      required
+                      label="Numéro"
+                      value={formData.numero}
+                      onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                      placeholder="N°2026/001"
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                    />
+                  </Stack>
+
+                  <TextField
+                    fullWidth
+                    required
+                    label="Libellé"
+                    value={formData.libelle}
+                    onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
+                    placeholder="Convention de financement..."
+                    variant="outlined"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                  />
+                </Stack>
+              </Box>
+
+              {/* Section 2: Description */}
+              <Box sx={{ background: '#f0f9ff', borderLeft: '4px solid #2563eb', p: 3, borderRadius: '8px' }}>
+                <RichTextEditor
+                  label="📝 Objet de la Convention"
+                  value={formData.objet}
+                  onChange={(content) => setFormData({ ...formData, objet: content })}
+                  placeholder="Description détaillée de la convention avec options de formatage..."
+                  minHeight="250px"
                 />
-                <TextField
-                  fullWidth
-                  required
-                  label="Numéro"
-                  value={formData.numero}
-                  onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                  placeholder="N°2026/001"
-                />
-              </Stack>
+              </Box>
 
-              <TextField
-                fullWidth
-                required
-                label="Libellé"
-                value={formData.libelle}
-                onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
-                placeholder="Convention de financement..."
-              />
+              {/* Section 3: Type et Budget */}
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2563eb' }}>
+                  💰 Type et Budget
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      required
+                      select
+                      label="Type"
+                      value={formData.typeConvention}
+                      onChange={(e) => setFormData({ ...formData, typeConvention: e.target.value })}
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                    >
+                      <MenuItem value="CADRE">Convention Cadre</MenuItem>
+                      <MenuItem value="NON_CADRE">Convention Non-Cadre</MenuItem>
+                    </TextField>
 
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Objet"
-                value={formData.objet}
-                onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
-                placeholder="Description détaillée de la convention..."
-              />
+                    <TextField
+                      fullWidth
+                      required
+                      label="Budget (MAD)"
+                      value={formData.budget}
+                      onChange={handleNumberChange('budget')}
+                      onBlur={formatNumberOnBlur('budget')}
+                      placeholder="1 000 000,00"
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
+                      }}
+                    />
+                  </Stack>
+                </Stack>
+              </Box>
 
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  select
-                  label="Type"
-                  value={formData.typeConvention}
-                  onChange={(e) => setFormData({ ...formData, typeConvention: e.target.value })}
-                >
-                  <MenuItem value="CADRE">Convention Cadre</MenuItem>
-                  <MenuItem value="NON_CADRE">Convention Non-Cadre</MenuItem>
-                </TextField>
+              {/* Section 4: Dates */}
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2563eb' }}>
+                  📅 Dates
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      required
+                      type="date"
+                      label="Date Convention"
+                      value={formData.dateConvention}
+                      onChange={(e) => setFormData({ ...formData, dateConvention: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                    />
 
-                <TextField
-                  fullWidth
-                  required
-                  label="Budget (MAD)"
-                  value={formData.budget}
-                  onChange={handleNumberChange('budget')}
-                  onBlur={formatNumberOnBlur('budget')}
-                  placeholder="1 000 000,00"
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                  }}
-                />
-              </Stack>
+                    <TextField
+                      fullWidth
+                      required
+                      type="date"
+                      label="Date Début"
+                      value={formData.dateDebut}
+                      onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                    />
 
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  type="date"
-                  label="Date Convention"
-                  value={formData.dateConvention}
-                  onChange={(e) => setFormData({ ...formData, dateConvention: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="Date Fin (optionnel)"
+                      value={formData.dateFin}
+                      onChange={(e) => setFormData({ ...formData, dateFin: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                    />
+                  </Stack>
+                </Stack>
+              </Box>
 
-                <TextField
-                  fullWidth
-                  required
-                  type="date"
-                  label="Date Début"
-                  value={formData.dateDebut}
-                  onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
+              {/* Section 5: Commission */}
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2563eb' }}>
+                  ⚙️ Configuration Commission
+                </Typography>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="Taux Commission (%)"
+                      value={formData.tauxCommission}
+                      onChange={handleNumberChange('tauxCommission')}
+                      onBlur={formatNumberOnBlur('tauxCommission')}
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      }}
+                    />
 
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Date Fin"
-                  value={formData.dateFin}
-                  onChange={(e) => setFormData({ ...formData, dateFin: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Stack>
+                    <TextField
+                      fullWidth
+                      required
+                      select
+                      label="Base de Calcul"
+                      value={formData.baseCalcul}
+                      onChange={(e) => setFormData({ ...formData, baseCalcul: e.target.value })}
+                      variant="outlined"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                    >
+                      <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC</MenuItem>
+                      <MenuItem value="DECAISSEMENTS_HT">Décaissements HT</MenuItem>
+                    </TextField>
+                  </Stack>
+                </Stack>
+              </Box>
 
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Taux Commission (%)"
-                  value={formData.tauxCommission}
-                  onChange={handleNumberChange('tauxCommission')}
-                  onBlur={formatNumberOnBlur('tauxCommission')}
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                  }}
-                />
-
-                <TextField
-                  fullWidth
-                  required
-                  select
-                  label="Base de Calcul"
-                  value={formData.baseCalcul}
-                  onChange={(e) => setFormData({ ...formData, baseCalcul: e.target.value })}
-                >
-                  <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC</MenuItem>
-                  <MenuItem value="DECAISSEMENTS_HT">Décaissements HT</MenuItem>
-                </TextField>
-              </Stack>
-
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+              {/* Action Buttons */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e5e7eb' }}>
                 <Button
                   variant="outlined"
                   onClick={() => navigate('/conventions')}
+                  sx={{
+                    borderColor: '#d1d5db',
+                    color: '#4b5563',
+                    '&:hover': {
+                      backgroundColor: '#f3f4f6',
+                      borderColor: '#9ca3af',
+                    },
+                  }}
                 >
                   Annuler
                 </Button>
@@ -253,13 +350,24 @@ const SimpleConventionForm = () => {
                   variant="contained"
                   startIcon={<Save />}
                   disabled={loading}
+                  sx={{
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    boxShadow: '0 4px 15px rgba(37, 99, 235, 0.4)',
+                    '&:hover': {
+                      boxShadow: '0 6px 20px rgba(37, 99, 235, 0.6)',
+                    },
+                    '&:disabled': {
+                      background: '#d1d5db',
+                    },
+                  }}
                 >
-                  {loading ? 'Enregistrement...' : 'Enregistrer'}
+                  {loading ? '⏳ Enregistrement...' : '✓ Enregistrer'}
                 </Button>
               </Box>
             </Stack>
-          </form>
-        </Paper>
+            </form>
+          </Paper>
+        </Box>
       </Box>
     </AppLayout>
   )

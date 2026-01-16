@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FaPlus, FaEdit, FaTrash, FaEye, FaFileExcel, FaSearch, FaList, FaMap } from 'react-icons/fa'
 import { Card, Button, StatusBadge } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
@@ -32,6 +32,7 @@ const statutColors: Record<string, 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETAR
 }
 
 export default function MarchesPage() {
+  const navigate = useNavigate()
   const [marches, setMarches] = useState<Marche[]>([])
   const [filteredMarches, setFilteredMarches] = useState<Marche[]>([])
   const [loading, setLoading] = useState(true)
@@ -284,7 +285,11 @@ export default function MarchesPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredMarches.map((marche) => (
-                <tr key={marche.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={marche.id}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/marches/${marche.id}`)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {marche.numeroMarche}
@@ -333,18 +338,18 @@ export default function MarchesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-2">
-                      <Link to={`/marches/${marche.id}`}>
+                      <Link to={`/marches/${marche.id}`} onClick={(e) => e.stopPropagation()}>
                         <button className="text-info hover:text-cyan-700 p-2">
                           <FaEye />
                         </button>
                       </Link>
-                      <Link to={`/marches/${marche.id}/edit`}>
+                      <Link to={`/marches/${marche.id}/modifier`} onClick={(e) => e.stopPropagation()}>
                         <button className="text-warning hover:text-orange-700 p-2">
                           <FaEdit />
                         </button>
                       </Link>
                       <button
-                        onClick={() => handleDelete(marche.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }}
                         className="text-danger hover:text-red-700 p-2"
                       >
                         <FaTrash />

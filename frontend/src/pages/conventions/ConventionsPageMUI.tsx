@@ -40,6 +40,7 @@ import {
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLayout from '../../components/layout/AppLayout'
+import { SimplePageLayout } from '../../components/layout/PageLayout'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
 
@@ -245,18 +246,10 @@ const ConventionsPageMUI = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="xl">
-        {/* Header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
-          <Box>
-            <Typography variant="h4" fontWeight={600} gutterBottom>
-              Conventions
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Gestion complète des conventions avec workflow de validation
-            </Typography>
-          </Box>
+      <SimplePageLayout
+        title="Conventions"
+        subtitle="Gestion complète des conventions avec workflow de validation"
+        actions={
           <Button
             variant="contained"
             startIcon={<Add />}
@@ -265,7 +258,9 @@ const ConventionsPageMUI = () => {
           >
             Nouvelle Convention
           </Button>
-        </Stack>
+        }
+      >
+        <Container maxWidth="xl" sx={{ py: 4 }}>
 
         {/* Stats */}
         <Box
@@ -549,8 +544,8 @@ const ConventionsPageMUI = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Container>
-    </Box>
+        </Container>
+      </SimplePageLayout>
     </AppLayout>
   )
 }

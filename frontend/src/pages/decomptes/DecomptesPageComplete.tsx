@@ -31,6 +31,7 @@ import {
   Description,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
+import { SimplePageLayout } from '../../components/layout/PageLayout'
 import { decomptesAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
 
@@ -163,20 +164,20 @@ const DecomptesPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ p: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" fontWeight="bold">
-            Gestion des Décomptes
-          </Typography>
+      <SimplePageLayout
+        title="Décomptes"
+        subtitle="Gestion des décomptes et facturations"
+        actions={
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => handleOpenDialog()}
-            sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
           >
             Nouveau Décompte
           </Button>
-        </Stack>
+        }
+      >
+        <Box sx={{ p: 3 }}>
 
         <Paper sx={{ p: 3, mb: 3 }}>
           <TextField
@@ -375,7 +376,8 @@ const DecomptesPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
+        </Box>
+      </SimplePageLayout>
     </AppLayout>
   )
 }

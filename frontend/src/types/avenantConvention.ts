@@ -8,14 +8,14 @@ export enum StatutAvenantConvention {
   VALIDE = 'VALIDE'
 }
 
-export interface AvenantConventionRequest {
+export interface AvenantConventionRequest extends Record<string, unknown> {
   conventionId: number
   numeroAvenant: string
   dateAvenant: string
   objet: string
   motif?: string
-  donneesAvant?: Record<string, any>
-  modifications?: Record<string, any>
+  donneesAvant?: Record<string, unknown>
+  modifications?: Record<string, unknown>
   detailsModifications?: string
   ancienBudget?: number
   nouveauBudget?: number
@@ -37,8 +37,8 @@ export interface AvenantConventionResponse {
   objet: string
   motif?: string
   statut: StatutAvenantConvention
-  donneesAvant?: Record<string, any>
-  modifications?: Record<string, any>
+  donneesAvant?: Record<string, unknown>
+  modifications?: Record<string, unknown>
   detailsModifications?: string
   ancienBudget?: number
   nouveauBudget?: number

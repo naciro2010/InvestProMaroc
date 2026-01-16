@@ -25,21 +25,19 @@ import java.util.*
 @Transactional
 class PieceJointeService(
     private val pieceJointeRepository: PieceJointeRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    @Value("\${file.upload-dir:uploads}")
+    private val uploadDir: String
 ) {
 
-    @Value("\${file.upload-dir:uploads}")
-    private lateinit var uploadDir: String
-
-    private val uploadPath: Path
-        get() = Paths.get(uploadDir).toAbsolutePath().normalize()
-
-    init {
+    private val uploadPath: Path by lazy {
+        val path = Paths.get(uploadDir).toAbsolutePath().normalize()
         try {
-            Files.createDirectories(uploadPath)
+            Files.createDirectories(path)
         } catch (ex: IOException) {
             throw RuntimeException("Could not create upload directory!", ex)
         }
+        path
     }
 
     /**

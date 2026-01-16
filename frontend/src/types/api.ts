@@ -51,9 +51,10 @@ export interface User {
   email: string
   fullName: string
   roles: UserRole[]
-  actif: boolean
-  createdAt: Date
-  updatedAt: Date
+  actif?: boolean
+  enabled?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export interface AuthResponse {
@@ -72,7 +73,7 @@ export interface RegisterRequest {
   email: string
   password: string
   fullName: string
-  roles: UserRole[]
+  roles?: UserRole[]
 }
 
 // ============================================================================
@@ -106,20 +107,31 @@ export interface Convention {
   sousConventions?: Convention[]
 }
 
-export interface CreateConventionDTO {
+export interface CreateConventionDTO extends Record<string, unknown> {
   code: string
-  designation: string
+  designation?: string
   objet: string
   objetRich?: string
-  type: ConventionType
-  tauxCommission: number
-  montantMinimal: number
+  type?: ConventionType
+  tauxCommission?: number | null
+  montantMinimal?: number
   montantMaximal?: number
-  budgetTotal: number
-  dateDebut: Date
-  dateFin: Date
+  budgetTotal?: number
+  dateDebut: Date | string
+  dateFin?: Date | string | null
   description?: string
   descriptionRich?: string
+  // Legacy form fields
+  numero?: string
+  libelle?: string
+  dateConvention?: string
+  budget?: number
+  baseCalcul?: string | null
+  tauxTva?: number | null
+  typeConvention?: string
+  heriteParametres?: boolean
+  surchargeTauxCommission?: number | null
+  surchargeBaseCalcul?: string | null
 }
 
 export interface UpdateConventionDTO extends Partial<CreateConventionDTO> {
@@ -157,15 +169,15 @@ export interface Projet {
   updatedAt: Date
 }
 
-export interface CreateProjetDTO {
+export interface CreateProjetDTO extends Record<string, unknown> {
   code: string
-  designation: string
+  designation?: string
   description?: string
   descriptionRich?: string
-  budgetTotal: number
-  status: ProjetStatus
-  dateDebut: Date
-  dateFin?: Date
+  budgetTotal?: number
+  status?: ProjetStatus
+  dateDebut?: Date | string
+  dateFin?: Date | string
 }
 
 export interface UpdateProjetDTO extends Partial<CreateProjetDTO> {}
@@ -205,23 +217,23 @@ export interface Marche {
   updatedAt: Date
 }
 
-export interface CreateMarcheDTO {
+export interface CreateMarcheDTO extends Record<string, unknown> {
   code: string
-  designation: string
+  designation?: string
   description?: string
   descriptionRich?: string
-  type: MarcheType
-  status: MarcheStatus
-  montantHT: number
-  tauxTVA: number
-  dateMarche: Date
-  dateDebutPrevue: Date
-  dateFinPrevu: Date
+  type?: MarcheType
+  status?: MarcheStatus
+  montantHT?: number
+  tauxTVA?: number
+  dateMarche?: Date | string
+  dateDebutPrevue?: Date | string
+  dateFinPrevu?: Date | string
   adresse?: string
   latitude?: number
   longitude?: number
   zoneGeographique?: string
-  fournisseurId: number
+  fournisseurId?: number
   conventionId?: number
 }
 
@@ -244,7 +256,7 @@ export interface MarcheLigne {
   updatedAt: Date
 }
 
-export interface CreateMarcheLineDTO {
+export interface CreateMarcheLineDTO extends Record<string, unknown> {
   designation: string
   quantite: number
   montantUnitaire: number
@@ -272,14 +284,18 @@ export interface Decompte {
   updatedAt: Date
 }
 
-export interface CreateDecompteDTO {
-  code: string
+export interface CreateDecompteDTO extends Record<string, unknown> {
+  code?: string
   montant: number
   netAPayer: number
   retenues?: number
-  dateDecompte: Date
-  marcheId: number
+  montantRetenue?: number
+  dateDecompte: Date | string
+  marcheId?: number
   status?: DecompteStatus
+  // Legacy form fields
+  numero?: string
+  observation?: string
 }
 
 export interface UpdateDecompteDTO extends Partial<CreateDecompteDTO> {}
@@ -306,9 +322,9 @@ export interface Fournisseur {
   updatedAt: Date
 }
 
-export interface CreateFournisseurDTO {
+export interface CreateFournisseurDTO extends Record<string, unknown> {
   code: string
-  designation: string
+  designation?: string
   email?: string
   phone?: string
   ice: string
@@ -350,15 +366,16 @@ export interface ValeurDimension {
   updatedAt: Date
 }
 
-export interface CreateDimensionDTO {
+export interface CreateDimensionDTO extends Record<string, unknown> {
   code: string
-  libelle: string
+  libelle?: string
+  nom?: string // Legacy field name
   description?: string
-  ordre: number
-  obligatoire: boolean
+  ordre?: number
+  obligatoire?: boolean
 }
 
-export interface CreateValeurDimensionDTO {
+export interface CreateValeurDimensionDTO extends Record<string, unknown> {
   code: string
   libelle: string
   description?: string

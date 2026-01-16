@@ -1,4 +1,24 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
+import {
+  ApiResponse,
+  LoginRequest,
+  RegisterRequest,
+  CreateConventionDTO,
+  UpdateConventionDTO,
+  CreateProjetDTO,
+  UpdateProjetDTO,
+  CreateMarcheDTO,
+  UpdateMarcheDTO,
+  CreateMarcheLineDTO,
+  CreateDecompteDTO,
+  UpdateDecompteDTO,
+  CreateFournisseurDTO,
+  UpdateFournisseurDTO,
+  CreateDimensionDTO,
+  CreateValeurDimensionDTO,
+  User,
+  AuthResponse,
+} from '@/types/api'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
@@ -21,7 +41,7 @@ const dispatchToastEvent = (message: string, type: 'error' | 'success' | 'warnin
 }
 
 // Fonction pour déconnecter l'utilisateur
-const logoutUser = () => {
+const logoutUser = (): void => {
   localStorage.removeItem('accessToken')
   localStorage.removeItem('refreshToken')
   localStorage.removeItem('user')
@@ -95,7 +115,7 @@ api.interceptors.response.use(
       }
 
       try {
-        const { data } = await axios.post(`${API_URL}/auth/refresh`, null, {
+        const { data } = await axios.post<ApiResponse<{ accessToken: string }>>(`${API_URL}/auth/refresh`, null, {
           params: { refreshToken }
         })
 
@@ -104,7 +124,7 @@ api.interceptors.response.use(
           localStorage.setItem('accessToken', data.data.accessToken)
           originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
 
-          console.log('✅ Token rafraîchi avec succès')
+          console.warn('✅ Token rafraîchi avec succès')
           return api(originalRequest)
         } else {
           console.error('❌ Réponse de refresh invalide')
@@ -161,18 +181,13 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: (username: string, password: string) =>
-    api.post('/auth/login', { username, password }),
+    api.post<ApiResponse<AuthResponse>>('/auth/login', { username, password } as LoginRequest),
 
-  register: (data: {
-    username: string
-    email: string
-    password: string
-    fullName: string
-    roles?: string[]
-  }) => api.post('/auth/register', data),
+  register: (data: RegisterRequest) =>
+    api.post<ApiResponse<AuthResponse>>('/auth/register', data),
 
   refreshToken: (refreshToken: string) =>
-    api.post('/auth/refresh', null, { params: { refreshToken } }),
+    api.post<ApiResponse<AuthResponse>>('/auth/refresh', null, { params: { refreshToken } }),
 }
 
 // Conventions API
@@ -181,8 +196,8 @@ export const conventionsAPI = {
   getActive: () => api.get('/conventions/active'),
   getById: (id: number) => api.get(`/conventions/${id}`),
   search: (q: string) => api.get(`/conventions/search?q=${q}`),
-  create: (data: any) => api.post('/conventions', data),
-  update: (id: number, data: any) => api.put(`/conventions/${id}`, data),
+  create: (data: CreateConventionDTO) => api.post('/conventions', data),
+  update: (id: number, data: UpdateConventionDTO) => api.put(`/conventions/${id}`, data),
   delete: (id: number) => api.delete(`/conventions/${id}`),
   // Workflow endpoints
   soumettre: (id: number) => api.post(`/conventions/${id}/soumettre`),
@@ -193,19 +208,21 @@ export const conventionsAPI = {
   annuler: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
 
   // Imputations et Versements
-  ajouterImputation: (conventionId: number, imputation: any) =>
+  ajouterImputation: (conventionId: number, imputation: Record<string, unknown>) =>
     api.post(`/conventions/${conventionId}/imputations`, imputation),
   supprimerImputation: (conventionId: number, imputationId: number) =>
     api.delete(`/conventions/${conventionId}/imputations/${imputationId}`),
-  ajouterVersement: (conventionId: number, versement: any) =>
+  ajouterVersement: (conventionId: number, versement: Record<string, unknown>) =>
     api.post(`/conventions/${conventionId}/versements`, versement),
   supprimerVersement: (conventionId: number, versementId: number) =>
     api.delete(`/conventions/${conventionId}/versements/${versementId}`),
 
   // Sous-Conventions (nested CRUD)
   getSousConventions: (parentId: number) => api.get(`/conventions/${parentId}/sous-conventions`),
-  createSousConvention: (parentId: number, data: any) => api.post(`/conventions/${parentId}/sous-conventions`, data),
-  updateSousConvention: (sousConventionId: number, data: any) => api.put(`/conventions/${sousConventionId}`, data),
+  createSousConvention: (parentId: number, data: CreateConventionDTO) =>
+    api.post(`/conventions/${parentId}/sous-conventions`, data),
+  updateSousConvention: (sousConventionId: number, data: UpdateConventionDTO) =>
+    api.put(`/conventions/${sousConventionId}`, data),
   deleteSousConvention: (sousConventionId: number) => api.delete(`/conventions/${sousConventionId}`),
 
   // Workflow pour sous-conventions (identique aux conventions)
@@ -223,8 +240,8 @@ export const projetsAPI = {
   getActive: () => api.get('/projets/active'),
   getById: (id: number) => api.get(`/projets/${id}`),
   search: (q: string) => api.get(`/projets/search?q=${q}`),
-  create: (data: any) => api.post('/projets', data),
-  update: (id: number, data: any) => api.put(`/projets/${id}`, data),
+  create: (data: CreateProjetDTO) => api.post('/projets', data),
+  update: (id: number, data: UpdateProjetDTO) => api.put(`/projets/${id}`, data),
   delete: (id: number) => api.delete(`/projets/${id}`),
 
   // Workflow methods
@@ -240,8 +257,8 @@ export const fournisseursAPI = {
   getActive: () => api.get('/fournisseurs/active'),
   getById: (id: number) => api.get(`/fournisseurs/${id}`),
   search: (q: string) => api.get(`/fournisseurs/search?q=${q}`),
-  create: (data: any) => api.post('/fournisseurs', data),
-  update: (id: number, data: any) => api.put(`/fournisseurs/${id}`, data),
+  create: (data: CreateFournisseurDTO) => api.post('/fournisseurs', data),
+  update: (id: number, data: UpdateFournisseurDTO) => api.put(`/fournisseurs/${id}`, data),
   delete: (id: number) => api.delete(`/fournisseurs/${id}`),
 }
 
@@ -251,8 +268,8 @@ export const axesAnalytiquesAPI = {
   getActive: () => api.get('/axes-analytiques/active'),
   getById: (id: number) => api.get(`/axes-analytiques/${id}`),
   search: (q: string) => api.get(`/axes-analytiques/search?q=${q}`),
-  create: (data: any) => api.post('/axes-analytiques', data),
-  update: (id: number, data: any) => api.put(`/axes-analytiques/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/axes-analytiques', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/axes-analytiques/${id}`, data),
   delete: (id: number) => api.delete(`/axes-analytiques/${id}`),
 }
 
@@ -262,8 +279,8 @@ export const comptesBancairesAPI = {
   getActive: () => api.get('/comptes-bancaires/active'),
   getById: (id: number) => api.get(`/comptes-bancaires/${id}`),
   search: (q: string) => api.get(`/comptes-bancaires/search?q=${q}`),
-  create: (data: any) => api.post('/comptes-bancaires', data),
-  update: (id: number, data: any) => api.put(`/comptes-bancaires/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/comptes-bancaires', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/comptes-bancaires/${id}`, data),
   delete: (id: number) => api.delete(`/comptes-bancaires/${id}`),
 }
 
@@ -271,7 +288,7 @@ export const comptesBancairesAPI = {
 export const usersAPI = {
   getAll: () => api.get('/users'),
   getById: (id: number) => api.get(`/users/${id}`),
-  update: (id: number, data: any) => api.put(`/users/${id}`, data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/users/${id}`, data),
   delete: (id: number) => api.delete(`/users/${id}`),
   changePassword: (id: number, oldPassword: string, newPassword: string) =>
     api.post(`/users/${id}/change-password`, { oldPassword, newPassword }),
@@ -282,8 +299,8 @@ export const budgetsAPI = {
   getAll: () => api.get('/budgets'),
   getByConvention: (conventionId: number) => api.get(`/budgets?conventionId=${conventionId}`),
   getById: (id: number) => api.get(`/budgets/${id}`),
-  create: (data: any) => api.post('/budgets', data),
-  update: (id: number, data: any) => api.put(`/budgets/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/budgets', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/budgets/${id}`, data),
   delete: (id: number) => api.delete(`/budgets/${id}`),
   soumettre: (id: number) => api.post(`/budgets/${id}/soumettre`),
   valider: (id: number, valideParId: number) => api.post(`/budgets/${id}/valider`, { valideParId }),
@@ -294,8 +311,8 @@ export const decomptesAPI = {
   getAll: () => api.get('/decomptes'),
   getByMarche: (marcheId: number) => api.get(`/decomptes?marcheId=${marcheId}`),
   getById: (id: number) => api.get(`/decomptes/${id}`),
-  create: (data: any) => api.post('/decomptes', data),
-  update: (id: number, data: any) => api.put(`/decomptes/${id}`, data),
+  create: (data: CreateDecompteDTO) => api.post('/decomptes', data),
+  update: (id: number, data: UpdateDecompteDTO) => api.put(`/decomptes/${id}`, data),
   delete: (id: number) => api.delete(`/decomptes/${id}`),
   soumettre: (id: number) => api.post(`/decomptes/${id}/soumettre`),
   valider: (id: number, valideParId: number) => api.post(`/decomptes/${id}/valider`, { valideParId }),
@@ -306,8 +323,8 @@ export const ordresPaiementAPI = {
   getAll: () => api.get('/ordres-paiement'),
   getByDecompte: (decompteId: number) => api.get(`/ordres-paiement?decompteId=${decompteId}`),
   getById: (id: number) => api.get(`/ordres-paiement/${id}`),
-  create: (data: any) => api.post('/ordres-paiement', data),
-  update: (id: number, data: any) => api.put(`/ordres-paiement/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/ordres-paiement', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/ordres-paiement/${id}`, data),
   delete: (id: number) => api.delete(`/ordres-paiement/${id}`),
   valider: (id: number, valideParId: number) => api.post(`/ordres-paiement/${id}/valider`, { valideParId }),
   executer: (id: number) => api.post(`/ordres-paiement/${id}/executer`),
@@ -318,8 +335,8 @@ export const paiementsAPI = {
   getAll: () => api.get('/paiements'),
   getByOP: (opId: number) => api.get(`/paiements?opId=${opId}`),
   getById: (id: number) => api.get(`/paiements/${id}`),
-  create: (data: any) => api.post('/paiements', data),
-  update: (id: number, data: any) => api.put(`/paiements/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/paiements', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/paiements/${id}`, data),
   delete: (id: number) => api.delete(`/paiements/${id}`),
 }
 
@@ -328,8 +345,8 @@ export const avenantsAPI = {
   getAll: () => api.get('/avenants'),
   getByConvention: (conventionId: number) => api.get(`/avenants?conventionId=${conventionId}`),
   getById: (id: number) => api.get(`/avenants/${id}`),
-  create: (data: any) => api.post('/avenants', data),
-  update: (id: number, data: any) => api.put(`/avenants/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/avenants', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/avenants/${id}`, data),
   delete: (id: number) => api.delete(`/avenants/${id}`),
   soumettre: (id: number) => api.post(`/avenants/${id}/soumettre`),
   valider: (id: number, valideParId: number) => api.post(`/avenants/${id}/valider`, { valideParId }),
@@ -340,8 +357,8 @@ export const subventionsAPI = {
   getAll: () => api.get('/subventions'),
   getByConvention: (conventionId: number) => api.get(`/subventions?conventionId=${conventionId}`),
   getById: (id: number) => api.get(`/subventions/${id}`),
-  create: (data: any) => api.post('/subventions', data),
-  update: (id: number, data: any) => api.put(`/subventions/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/subventions', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/subventions/${id}`, data),
   delete: (id: number) => api.delete(`/subventions/${id}`),
 }
 
@@ -352,8 +369,8 @@ export const dimensionsAPI = {
   getObligatoires: () => api.get('/dimensions/obligatoires'),
   getById: (id: number) => api.get(`/dimensions/${id}`),
   getByCode: (code: string) => api.get(`/dimensions/code/${code}`),
-  create: (data: any) => api.post('/dimensions', data),
-  update: (id: number, data: any) => api.put(`/dimensions/${id}`, data),
+  create: (data: CreateDimensionDTO) => api.post('/dimensions', data),
+  update: (id: number, data: Partial<CreateDimensionDTO>) => api.put(`/dimensions/${id}`, data),
   delete: (id: number) => api.delete(`/dimensions/${id}`),
   toggleActive: (id: number) => api.post(`/dimensions/${id}/toggle-active`),
   getStatistiques: () => api.get('/dimensions/statistiques'),
@@ -361,8 +378,10 @@ export const dimensionsAPI = {
   // Valeurs
   getValeurs: (dimensionId: number) => api.get(`/dimensions/${dimensionId}/valeurs`),
   getValeursActives: (dimensionId: number) => api.get(`/dimensions/${dimensionId}/valeurs/actives`),
-  createValeur: (dimensionId: number, data: any) => api.post(`/dimensions/${dimensionId}/valeurs`, data),
-  updateValeur: (valeurId: number, data: any) => api.put(`/dimensions/valeurs/${valeurId}`, data),
+  createValeur: (dimensionId: number, data: CreateValeurDimensionDTO) =>
+    api.post(`/dimensions/${dimensionId}/valeurs`, data),
+  updateValeur: (valeurId: number, data: Partial<CreateValeurDimensionDTO>) =>
+    api.put(`/dimensions/valeurs/${valeurId}`, data),
   deleteValeur: (valeurId: number) => api.delete(`/dimensions/valeurs/${valeurId}`),
   toggleValeurActive: (valeurId: number) => api.post(`/dimensions/valeurs/${valeurId}/toggle-active`),
 }
@@ -372,8 +391,8 @@ export const imputationsAPI = {
   getAll: (params?: { type?: string; referenceId?: number }) =>
     api.get('/imputations', { params }),
   getById: (id: number) => api.get(`/imputations/${id}`),
-  create: (data: any) => api.post('/imputations', data),
-  update: (id: number, data: any) => api.put(`/imputations/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/imputations', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/imputations/${id}`, data),
   delete: (id: number) => api.delete(`/imputations/${id}`),
 
   // Validation
@@ -396,8 +415,8 @@ export const avenantConventionsAPI = {
   getAll: () => api.get('/avenants-conventions'),
   getById: (id: number) => api.get(`/avenants-conventions/${id}`),
   getByConvention: (conventionId: number) => api.get(`/avenants-conventions/convention/${conventionId}`),
-  create: (data: any) => api.post('/avenants-conventions', data),
-  update: (id: number, data: any) => api.put(`/avenants-conventions/${id}`, data),
+  create: (data: Record<string, unknown>) => api.post('/avenants-conventions', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/avenants-conventions/${id}`, data),
   delete: (id: number) => api.delete(`/avenants-conventions/${id}`),
 
   // Workflow

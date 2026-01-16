@@ -1,14 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { AxiosError } from 'axios'
 import { authAPI } from '@/lib/api'
+import { User as ApiUser } from '@/types/api'
 
-interface User {
-  id: number
-  username: string
-  email: string
-  fullName: string
-  roles: string[]
-  enabled: boolean
-  actif: boolean
+interface User extends ApiUser {
+  enabled?: boolean
 }
 
 interface AuthContextType {
@@ -63,12 +59,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         throw new Error(data.message || 'Échec de la connexion')
       }
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message ||
-        error.message ||
-        'Une erreur est survenue lors de la connexion'
-      )
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        throw new Error(
+          error.response?.data?.message ||
+          error.message ||
+          'Une erreur est survenue lors de la connexion'
+        )
+      }
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error('Une erreur est survenue lors de la connexion')
     }
   }
 
@@ -90,12 +92,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         throw new Error(response.data.message || 'Échec de l\'inscription')
       }
-    } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message ||
-        error.message ||
-        'Une erreur est survenue lors de l\'inscription'
-      )
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        throw new Error(
+          error.response?.data?.message ||
+          error.message ||
+          'Une erreur est survenue lors de l\'inscription'
+        )
+      }
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error('Une erreur est survenue lors de l\'inscription')
     }
   }
 

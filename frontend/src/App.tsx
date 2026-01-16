@@ -17,8 +17,9 @@ import ProjetsPage from './pages/projets/ProjetsPage'
 import ProjetFormPage from './pages/projets/ProjetFormPage'
 import ProjetDetailPage from './pages/projets/ProjetDetailPage'
 import BudgetsPage from './pages/budgets/BudgetsPage'
-import DecomptesPage from './pages/decomptes/DecomptesPage'
-import PaiementsPage from './pages/paiements/PaiementsPage'
+import DecomptesPage from './pages/decomptes/DecomptesPageComplete'
+import OrdresPaiementPage from './pages/paiements/OrdresPaiementPageComplete'
+import PaiementsPage from './pages/paiements/PaiementsPageComplete'
 import ProfilePage from './pages/ProfilePage'
 import PlanAnalytiquePage from './pages/parametrage/PlanAnalytiquePage'
 import ReportingAnalytiquePage from './pages/reporting/ReportingAnalytiquePage'
@@ -226,6 +227,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <DecomptesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Ordres de Paiement */}
+          <Route
+            path="/ordres-paiement"
+            element={
+              <ProtectedRoute>
+                <OrdresPaiementPage />
               </ProtectedRoute>
             }
           />

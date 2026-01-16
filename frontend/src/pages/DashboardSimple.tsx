@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material'
 import { conventionsAPI, budgetsAPI, decomptesAPI, paiementsAPI, projetsAPI } from '../lib/api'
 import AppLayout from '../components/layout/AppLayout'
+import { SimplePageLayout } from '../components/layout/PageLayout'
 import {
   PieChart,
   Pie,
@@ -264,17 +265,11 @@ const DashboardSimple = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="xl">
-        {/* Header */}
-        <Box mb={4}>
-          <Typography variant="h4" fontWeight={600} gutterBottom>
-            Tableau de Bord
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Vue d'ensemble de vos investissements
-          </Typography>
-        </Box>
+      <SimplePageLayout
+        title="Tableau de Bord"
+        subtitle="Vue d'ensemble de vos investissements et conventions"
+      >
+        <Container maxWidth="xl" sx={{ py: 4 }}>
 
         {/* KPIs */}
         <Box
@@ -605,8 +600,8 @@ const DashboardSimple = () => {
             </Stack>
           </CardContent>
         </Card>
-      </Container>
-    </Box>
+        </Container>
+      </SimplePageLayout>
     </AppLayout>
   )
 }

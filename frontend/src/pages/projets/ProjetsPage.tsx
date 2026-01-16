@@ -32,6 +32,7 @@ import {
   Visibility,
 } from '@mui/icons-material';
 import AppLayout from '../../components/layout/AppLayout';
+import { SimplePageLayout } from '../../components/layout/PageLayout';
 import { projetsAPI, Projet } from '../../lib/projetsAPI';
 
 const ProjetsPage = () => {
@@ -197,21 +198,21 @@ const ProjetsPage = () => {
 
   return (
     <AppLayout>
-      <Container maxWidth="xl">
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
-              📁 Projets
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/projets/nouveau')}
-              sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
-            >
-              Nouveau Projet
-            </Button>
-          </Box>
+      <SimplePageLayout
+        title="Projets"
+        subtitle="Gestion des projets d'investissement et programmes budgétaires"
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/projets/nouveau')}
+          >
+            Nouveau Projet
+          </Button>
+        }
+      >
+        <Container maxWidth="xl">
+          <Box sx={{ mb: 4 }}>
 
           {/* Statistiques */}
           <Grid container spacing={2}>
@@ -413,7 +414,8 @@ const ProjetsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Container>
+        </Container>
+      </SimplePageLayout>
     </AppLayout>
   );
 };

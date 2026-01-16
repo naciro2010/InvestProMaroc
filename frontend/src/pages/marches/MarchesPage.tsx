@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FaPlus, FaEdit, FaTrash, FaEye, FaFileExcel, FaSearch, FaList, FaMap } from 'react-icons/fa'
 import { Card, Button, StatusBadge } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
+import { SimplePageLayout } from '../../components/layout/PageLayout'
 import MarchesMapView from '../../components/ui/MarchesMapView'
 import api from '../../lib/api'
 import { Marche as MarcheType, Fournisseur } from '../../types/entities'
@@ -128,8 +129,19 @@ export default function MarchesPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-      {/* En-tête avec stats */}
+      <SimplePageLayout
+        title="Marchés"
+        subtitle="Gestion complète des contrats et marchés publics"
+        actions={
+          <Link to="/marches/nouveau">
+            <Button variant="success" icon={<FaPlus />}>
+              Nouveau Marché
+            </Button>
+          </Link>
+        }
+      >
+        <div className="space-y-6">
+        {/* En-tête avec stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card title="Total Marchés">
           <div className="text-3xl font-bold font-rubik text-gray-800">{stats.total}</div>
@@ -369,7 +381,8 @@ export default function MarchesPage() {
         </div>
         )}
       </Card>
-      </div>
+        </div>
+      </SimplePageLayout>
     </AppLayout>
   )
 }

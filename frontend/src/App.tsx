@@ -13,7 +13,7 @@ import SousConventionWizard from './pages/conventions/SousConventionWizard'
 import AvenantForm from './pages/conventions/AvenantForm'
 import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
 import MarchesPage from './pages/marches/MarchesPage'
-import MarcheDetailPage from './pages/marches/MarcheDetailPage'
+import MarcheDetailPageModern from './pages/marches/MarcheDetailPageModern'
 import MarcheFormPage from './pages/marches/MarcheFormPage'
 import MarcheWizard from './pages/marches/MarcheWizard'
 import ProjetsPage from './pages/projets/ProjetsPage'
@@ -197,7 +197,7 @@ function App() {
             path="/marches/:id"
             element={
               <ProtectedRoute>
-                <MarcheDetailPage />
+                <MarcheDetailPageModern />
               </ProtectedRoute>
             }
           />

@@ -13,19 +13,32 @@ import {
   MenuItem,
   Stack,
   Alert,
+  Divider,
 } from '@mui/material'
 import { ArrowBack, ArrowForward, Check } from '@mui/icons-material'
+import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
+import FileUploadZone from '../../components/common/FileUploadZone'
+import RichTextEditor from '../../components/common/RichTextEditor'
 import { conventionsAPI } from '../../lib/api'
 
-const steps = ['Informations générales', 'Paramètres financiers', 'Confirmation']
+const steps = ['Informations générales', 'Paramètres financiers', 'Pièces jointes & Confirmation']
+
+interface UploadedFile {
+  id: string
+  name: string
+  size: number
+  type: string
+  url?: string
+}
 
 interface ConventionFormData {
   code: string
   numeroConvention: string
   libelle: string
   objet: string
+  objetRich: string
   type: 'CADRE' | 'SPECIFIQUE'
   tauxCommission: number
   baseCalcul: 'MONTANT_TTC' | 'MONTANT_HT'
@@ -34,19 +47,19 @@ interface ConventionFormData {
   dateDebut: string
   dateFin: string
   tauxTva: number
+  files: UploadedFile[]
 }
 
 const ConventionWizard = () => {
   const navigate = useNavigate()
   const [activeStep, setActiveStep] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState<ConventionFormData>({
     code: '',
     numeroConvention: '',
     libelle: '',
     objet: '',
+    objetRich: '',
     type: 'CADRE',
     tauxCommission: 3.5,
     baseCalcul: 'MONTANT_TTC',
@@ -55,15 +68,43 @@ const ConventionWizard = () => {
     dateDebut: new Date().toISOString().split('T')[0],
     dateFin: '',
     tauxTva: 20,
+    files: [],
   })
 
-  const handleChange = (field: keyof ConventionFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  // React Query mutation pour la création
+  const createMutation = useMutation({
+    mutationFn: async (data: ConventionFormData) => {
+      const payload = {
+        code: data.code,
+        objet: data.objet,
+        objetRich: data.objetRich,
+        type: data.type,
+        tauxCommission: data.tauxCommission,
+        budgetTotal: data.montant,
+        dateDebut: data.dateDebut,
+        dateFin: data.dateFin,
+        tauxTva: data.tauxTva,
+        baseCalcul: data.baseCalcul,
+        numeroConvention: data.numeroConvention,
+        designation: data.libelle,
+        dateSignature: data.dateSignature,
+      }
+      return await conventionsAPI.create(payload)
+    },
+    onSuccess: () => {
+      navigate('/conventions')
+    },
+  })
+
+  const handleChange = (field: keyof ConventionFormData) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setFormData({ ...formData, [field]: e.target.value })
   }
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
-      handleSubmit()
+      createMutation.mutate(formData)
     } else {
       setActiveStep((prev) => prev + 1)
     }
@@ -73,39 +114,15 @@ const ConventionWizard = () => {
     setActiveStep((prev) => prev - 1)
   }
 
-  const handleSubmit = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const payload = {
-        code: formData.code,
-        objet: formData.objet,
-        type: formData.type,
-        tauxCommission: formData.tauxCommission,
-        budgetTotal: formData.montant,
-        dateDebut: formData.dateDebut,
-        dateFin: formData.dateFin,
-        tauxTva: formData.tauxTva,
-        baseCalcul: formData.baseCalcul,
-        numeroConvention: formData.numeroConvention,
-        designation: formData.libelle,
-        dateSignature: formData.dateSignature,
-      }
-
-      await conventionsAPI.create(payload)
-      navigate('/conventions')
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la création de la convention')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const isStepValid = () => {
     switch (activeStep) {
       case 0:
-        return formData.code && formData.numeroConvention && formData.libelle && formData.objet
+        return (
+          formData.code &&
+          formData.numeroConvention &&
+          formData.libelle &&
+          formData.objetRich
+        )
       case 1:
         return formData.montant > 0 && formData.tauxCommission > 0
       case 2:
@@ -119,28 +136,33 @@ const ConventionWizard = () => {
     switch (step) {
       case 0:
         return (
-          <Stack spacing={3}>
-            <Typography variant="h6" gutterBottom>
-              Informations de base
-            </Typography>
+          <Box sx={{ display: 'grid', gap: 3 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Informations de base
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Box>
 
-            <TextField
-              fullWidth
-              label="Code"
-              required
-              value={formData.code}
-              onChange={handleChange('code')}
-              placeholder="CONV-001"
-            />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+              <TextField
+                fullWidth
+                label="Code"
+                required
+                value={formData.code}
+                onChange={handleChange('code')}
+                placeholder="CONV-001"
+              />
 
-            <TextField
-              fullWidth
-              label="Numéro de convention"
-              required
-              value={formData.numeroConvention}
-              onChange={handleChange('numeroConvention')}
-              placeholder="N°2024/001"
-            />
+              <TextField
+                fullWidth
+                label="Numéro de convention"
+                required
+                value={formData.numeroConvention}
+                onChange={handleChange('numeroConvention')}
+                placeholder="N°2024/001"
+              />
+            </Box>
 
             <TextField
               fullWidth
@@ -151,84 +173,95 @@ const ConventionWizard = () => {
               placeholder="Convention de gestion..."
             />
 
-            <TextField
-              fullWidth
-              label="Objet"
+            <RichTextEditor
+              label="Objet de la convention"
+              value={formData.objetRich}
+              onChange={(value) => {
+                setFormData({
+                  ...formData,
+                  objetRich: value,
+                  objet: value.replace(/<[^>]*>/g, '').substring(0, 500),
+                })
+              }}
+              placeholder="Décrivez l'objet de la convention en détail..."
               required
-              multiline
-              rows={4}
-              value={formData.objet}
-              onChange={handleChange('objet')}
-              placeholder="Description détaillée de l'objet de la convention..."
+              minHeight={200}
             />
 
-            <TextField
-              fullWidth
-              select
-              label="Type"
-              value={formData.type}
-              onChange={handleChange('type')}
-            >
-              <MenuItem value="CADRE">CADRE - Convention cadre</MenuItem>
-              <MenuItem value="SPECIFIQUE">SPECIFIQUE - Convention spécifique</MenuItem>
-            </TextField>
-          </Stack>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+              <TextField
+                fullWidth
+                select
+                label="Type"
+                value={formData.type}
+                onChange={handleChange('type')}
+              >
+                <MenuItem value="CADRE">CADRE - Convention cadre</MenuItem>
+                <MenuItem value="SPECIFIQUE">
+                  SPECIFIQUE - Convention spécifique
+                </MenuItem>
+              </TextField>
+            </Box>
+          </Box>
         )
 
       case 1:
         return (
-          <Stack spacing={3}>
-            <Typography variant="h6" gutterBottom>
-              Paramètres financiers et dates
+          <Box sx={{ display: 'grid', gap: 3 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Paramètres financiers et dates
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+              <TextField
+                fullWidth
+                label="Montant (DH)"
+                type="number"
+                required
+                value={formData.montant}
+                onChange={handleChange('montant')}
+                inputProps={{ min: 0, step: 0.01 }}
+              />
+
+              <TextField
+                fullWidth
+                label="Taux de commission (%)"
+                type="number"
+                required
+                value={formData.tauxCommission}
+                onChange={handleChange('tauxCommission')}
+                inputProps={{ min: 0, max: 100, step: 0.1 }}
+              />
+
+              <TextField
+                fullWidth
+                select
+                label="Base de calcul"
+                value={formData.baseCalcul}
+                onChange={handleChange('baseCalcul')}
+              >
+                <MenuItem value="MONTANT_TTC">Montant TTC</MenuItem>
+                <MenuItem value="MONTANT_HT">Montant HT</MenuItem>
+              </TextField>
+
+              <TextField
+                fullWidth
+                label="Taux TVA (%)"
+                type="number"
+                value={formData.tauxTva}
+                onChange={handleChange('tauxTva')}
+                inputProps={{ min: 0, max: 100, step: 0.1 }}
+              />
+            </Box>
+
+            <Typography variant="subtitle2" gutterBottom fontWeight={600} sx={{ mt: 2 }}>
+              Dates
             </Typography>
 
-            <TextField
-              fullWidth
-              label="Montant (DH)"
-              type="number"
-              required
-              value={formData.montant}
-              onChange={handleChange('montant')}
-              inputProps={{ min: 0, step: 0.01 }}
-            />
-
-            <TextField
-              fullWidth
-              label="Taux de commission (%)"
-              type="number"
-              required
-              value={formData.tauxCommission}
-              onChange={handleChange('tauxCommission')}
-              inputProps={{ min: 0, max: 100, step: 0.1 }}
-            />
-
-            <TextField
-              fullWidth
-              select
-              label="Base de calcul"
-              value={formData.baseCalcul}
-              onChange={handleChange('baseCalcul')}
-            >
-              <MenuItem value="MONTANT_TTC">Montant TTC</MenuItem>
-              <MenuItem value="MONTANT_HT">Montant HT</MenuItem>
-            </TextField>
-
-            <TextField
-              fullWidth
-              label="Taux TVA (%)"
-              type="number"
-              value={formData.tauxTva}
-              onChange={handleChange('tauxTva')}
-              inputProps={{ min: 0, max: 100, step: 0.1 }}
-            />
-
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
-                gap: 2,
-              }}
-            >
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
               <TextField
                 fullWidth
                 label="Date de signature"
@@ -256,34 +289,54 @@ const ConventionWizard = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Box>
-          </Stack>
+          </Box>
         )
 
       case 2:
         return (
-          <Stack spacing={3}>
-            <Typography variant="h6" gutterBottom>
-              Récapitulatif
-            </Typography>
+          <Box sx={{ display: 'grid', gap: 3 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Pièces jointes
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Box>
+
+            <FileUploadZone
+              files={formData.files}
+              onFilesChange={(files) => setFormData({ ...formData, files })}
+              maxFiles={10}
+              maxSizeMB={10}
+              label="Documents de la convention"
+            />
+
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 3 }}>
+                Récapitulatif
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Box>
 
             <Paper sx={{ p: 3, bgcolor: 'background.default' }}>
-              <Stack spacing={2}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Code
-                  </Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    {formData.code}
-                  </Typography>
-                </Box>
+              <Box sx={{ display: 'grid', gap: 2 }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Code
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formData.code}
+                    </Typography>
+                  </Box>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Numéro de convention
-                  </Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    {formData.numeroConvention}
-                  </Typography>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Numéro de convention
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {formData.numeroConvention}
+                    </Typography>
+                  </Box>
                 </Box>
 
                 <Box>
@@ -293,41 +346,49 @@ const ConventionWizard = () => {
                   <Typography variant="body1">{formData.libelle}</Typography>
                 </Box>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Type
-                  </Typography>
-                  <Typography variant="body1">
-                    {formData.type === 'CADRE' ? 'Convention cadre' : 'Convention spécifique'}
-                  </Typography>
-                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Type
+                    </Typography>
+                    <Typography variant="body1">
+                      {formData.type === 'CADRE'
+                        ? 'Convention cadre'
+                        : 'Convention spécifique'}
+                    </Typography>
+                  </Box>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Montant
-                  </Typography>
-                  <Typography variant="h6" color="primary">
-                    {new Intl.NumberFormat('fr-MA', {
-                      style: 'currency',
-                      currency: 'MAD',
-                    }).format(formData.montant)}
-                  </Typography>
-                </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Montant
+                    </Typography>
+                    <Typography variant="h6" color="primary">
+                      {new Intl.NumberFormat('fr-MA', {
+                        style: 'currency',
+                        currency: 'MAD',
+                      }).format(formData.montant)}
+                    </Typography>
+                  </Box>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Taux de commission
-                  </Typography>
-                  <Typography variant="body1">{formData.tauxCommission}%</Typography>
-                </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Taux de commission
+                    </Typography>
+                    <Typography variant="body1">
+                      {formData.tauxCommission}%
+                    </Typography>
+                  </Box>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Base de calcul
-                  </Typography>
-                  <Typography variant="body1">
-                    {formData.baseCalcul === 'MONTANT_TTC' ? 'Montant TTC' : 'Montant HT'}
-                  </Typography>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Base de calcul
+                    </Typography>
+                    <Typography variant="body1">
+                      {formData.baseCalcul === 'MONTANT_TTC'
+                        ? 'Montant TTC'
+                        : 'Montant HT'}
+                    </Typography>
+                  </Box>
                 </Box>
 
                 <Box>
@@ -336,18 +397,31 @@ const ConventionWizard = () => {
                   </Typography>
                   <Typography variant="body1">
                     Du {new Date(formData.dateDebut).toLocaleDateString('fr-FR')}
-                    {formData.dateFin && ` au ${new Date(formData.dateFin).toLocaleDateString('fr-FR')}`}
+                    {formData.dateFin &&
+                      ` au ${new Date(formData.dateFin).toLocaleDateString(
+                        'fr-FR'
+                      )}`}
                   </Typography>
                 </Box>
-              </Stack>
+
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Pièces jointes
+                  </Typography>
+                  <Typography variant="body1">
+                    {formData.files.length} fichier(s)
+                  </Typography>
+                </Box>
+              </Box>
             </Paper>
 
-            {error && (
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
+            {createMutation.error && (
+              <Alert severity="error">
+                {(createMutation.error as any)?.response?.data?.message ||
+                  'Erreur lors de la création de la convention'}
               </Alert>
             )}
-          </Stack>
+          </Box>
         )
 
       default:
@@ -358,18 +432,22 @@ const ConventionWizard = () => {
   return (
     <AppLayout>
       <Box sx={{ minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="md">
+        <Container maxWidth="lg">
           <PageHeader
             title="Nouvelle Convention"
             subtitle="Créer une nouvelle convention en 3 étapes"
             actions={
-              <Button variant="outlined" startIcon={<ArrowBack />} onClick={() => navigate('/conventions')}>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBack />}
+                onClick={() => navigate('/conventions')}
+              >
                 Retour
               </Button>
             }
           />
 
-          <Paper sx={{ p: 4, borderRadius: '12px' }}>
+          <Paper sx={{ p: 4 }}>
             {/* Stepper */}
             <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
               {steps.map((label) => (
@@ -380,10 +458,18 @@ const ConventionWizard = () => {
             </Stepper>
 
             {/* Step Content */}
-            <Box sx={{ minHeight: 400 }}>{renderStepContent(activeStep)}</Box>
+            <Box sx={{ minHeight: 400, mb: 4 }}>{renderStepContent(activeStep)}</Box>
 
             {/* Navigation Buttons */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                pt: 3,
+                borderTop: 1,
+                borderColor: 'divider',
+              }}
+            >
               <Button
                 variant="outlined"
                 onClick={handleBack}
@@ -396,10 +482,14 @@ const ConventionWizard = () => {
               <Button
                 variant="contained"
                 onClick={handleNext}
-                disabled={!isStepValid() || loading}
+                disabled={!isStepValid() || createMutation.isPending}
                 endIcon={activeStep === steps.length - 1 ? <Check /> : <ArrowForward />}
               >
-                {activeStep === steps.length - 1 ? 'Créer la convention' : 'Suivant'}
+                {createMutation.isPending
+                  ? 'Création...'
+                  : activeStep === steps.length - 1
+                  ? 'Créer la convention'
+                  : 'Suivant'}
               </Button>
             </Box>
           </Paper>

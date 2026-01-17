@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeContextProvider } from './contexts/ThemeContext'
@@ -81,13 +82,25 @@ const ComingSoon = ({ title }: { title: string }) => {
   )
 }
 
+// Create React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
+
 function App() {
   return (
-    <Router>
-      <ThemeContextProvider>
-        <LayoutContextProvider>
-          <AuthProvider>
-            <ToastProvider>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <ThemeContextProvider>
+          <LayoutContextProvider>
+            <AuthProvider>
+              <ToastProvider>
           <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -412,6 +425,7 @@ function App() {
         </LayoutContextProvider>
       </ThemeContextProvider>
     </Router>
+    </QueryClientProvider>
   )
 }
 

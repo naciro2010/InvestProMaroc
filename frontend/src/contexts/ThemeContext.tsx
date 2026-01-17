@@ -47,31 +47,16 @@ interface ThemeContextProviderProps {
 }
 
 export function ThemeContextProvider({ children }: ThemeContextProviderProps): React.ReactElement {
-  const [mode, setMode] = useState<ThemeMode>('light')
+  // Force light mode only - dark mode disabled
+  const mode: ThemeMode = 'light'
   const [isHydrated, setIsHydrated] = useState(false)
 
-  // Initialize theme from localStorage on mount
   useEffect(() => {
-    const savedMode = localStorage.getItem('theme-mode') as ThemeMode | null
-    if (savedMode && ['light', 'dark'].includes(savedMode)) {
-      setMode(savedMode)
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setMode(prefersDark ? 'dark' : 'light')
-    }
     setIsHydrated(true)
   }, [])
 
-  // Update localStorage when mode changes
-  useEffect(() => {
-    if (isHydrated) {
-      localStorage.setItem('theme-mode', mode)
-    }
-  }, [mode, isHydrated])
-
   const toggleTheme = (): void => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'))
+    // Dark mode disabled - do nothing
   }
 
   // Create MUI theme based on mode
@@ -111,17 +96,15 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
         dark: '#0c4a6e', // sky-900
       },
       background: {
-        // Mode light: fond blanc, cards gris clair
-        // Mode dark: fond slate-900, cards slate-800 (BON CONTRASTE)
-        default: mode === 'light' ? '#f9fafb' : '#0f172a',
-        paper: mode === 'light' ? '#ffffff' : '#1e293b',
+        // GCP/GitLab style: fond gris très clair, cards blanc pur
+        default: '#f5f5f5',
+        paper: '#ffffff',
       },
       text: {
-        // Mode dark: texte clair avec bon contraste
-        primary: mode === 'light' ? '#1f2937' : '#f1f5f9',
-        secondary: mode === 'light' ? '#6b7280' : '#cbd5e1',
+        primary: '#202124',
+        secondary: '#5f6368',
       },
-      divider: mode === 'light' ? '#e5e7eb' : '#334155',
+      divider: '#e8eaed',
     },
     typography: {
       fontFamily: '"Segoe UI", "Roboto", "Helvetica Neue", sans-serif',
@@ -192,17 +175,13 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
-            border: `1px solid ${mode === 'light' ? '#e5e7eb' : '#334155'}`,
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-            boxShadow: 'none',
+            borderRadius: 8,
+            border: 'none',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)',
             transition: 'all 0.2s ease',
             '&:hover': {
-              borderColor: mode === 'light' ? '#d1d5db' : '#475569',
-              boxShadow: mode === 'light'
-                ? '0 4px 12px rgba(0, 0, 0, 0.08)'
-                : '0 4px 12px rgba(15, 23, 42, 0.5)',
-              transform: 'translateY(-2px)',
+              boxShadow: '0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15)',
             },
           },
         },
@@ -210,8 +189,8 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
       MuiPaper: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+            borderRadius: 8,
+            backgroundColor: '#ffffff',
           },
         },
       },
@@ -222,10 +201,10 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
               borderRadius: 8,
               transition: 'all 0.2s ease-in-out',
               '&:hover': {
-                boxShadow: `0 0 0 3px ${mode === 'light' ? '#dbeafe' : '#1e3a8a'}`,
+                boxShadow: `0 0 0 3px ${'#dbeafe'}`,
               },
               '&.Mui-focused': {
-                boxShadow: `0 0 0 3px ${mode === 'light' ? '#bfdbfe' : '#3b82f6'}`,
+                boxShadow: `0 0 0 3px ${'#bfdbfe'}`,
               },
             },
           },
@@ -234,18 +213,18 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
       MuiAppBar: {
         styleOverrides: {
           root: {
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-            color: mode === 'light' ? '#1f2937' : '#f1f5f9',
-            boxShadow: `0 1px 3px ${mode === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(15, 23, 42, 0.5)'}`,
-            borderBottom: `1px solid ${mode === 'light' ? '#e5e7eb' : '#334155'}`,
+            backgroundColor: '#ffffff',
+            color: '#202124',
+            boxShadow: `0 1px 3px ${'rgba(0, 0, 0, 0.1)'}`,
+            borderBottom: `1px solid ${'#e8eaed'}`,
           },
         },
       },
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-            borderRight: `1px solid ${mode === 'light' ? '#e5e7eb' : '#334155'}`,
+            backgroundColor: '#ffffff',
+            borderRight: `1px solid ${'#e8eaed'}`,
           },
         },
       },
@@ -258,7 +237,7 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
   }
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleTheme, isDark: mode === 'dark' }}>
+    <ThemeContext.Provider value={{ mode, toggleTheme, isDark: false }}>
       <ThemeProvider theme={muiTheme}>
         <CssBaseline />
         {children}

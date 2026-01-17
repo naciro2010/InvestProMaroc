@@ -262,6 +262,19 @@ export const fournisseursAPI = {
   delete: (id: number) => api.delete(`/fournisseurs/${id}`),
 }
 
+// Marchés API
+export const marchesAPI = {
+  getAll: () => api.get('/marches'),
+  getActive: () => api.get('/marches/active'),
+  getById: (id: number) => api.get(`/marches/${id}`),
+  search: (q: string) => api.get(`/marches/search?q=${q}`),
+  create: (data: Record<string, unknown>) => api.post('/marches', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/marches/${id}`, data),
+  delete: (id: number) => api.delete(`/marches/${id}`),
+  getByConvention: (conventionId: number) => api.get(`/marches/convention/${conventionId}`),
+  getLignes: (marcheId: number) => api.get(`/marches/${marcheId}/lignes`),
+}
+
 // Axes Analytiques API
 export const axesAnalytiquesAPI = {
   getAll: () => api.get('/axes-analytiques'),
@@ -501,6 +514,18 @@ export const piecesJointesAPI = {
 
   // Supprime une pièce jointe
   delete: (id: number) => api.delete(`/pieces-jointes/${id}`),
+}
+
+// Versements Prévisionnels API
+export const versementsPrevisionnelsAPI = {
+  getAll: () => api.get('/versements-previsionnels'),
+  getByConvention: (conventionId: number) => api.get(`/conventions/${conventionId}/versements-previsionnels`),
+  getById: (id: number) => api.get(`/versements-previsionnels/${id}`),
+  create: (conventionId: number, data: Record<string, unknown>) =>
+    api.post(`/conventions/${conventionId}/versements-previsionnels`, data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/versements-previsionnels/${id}`, data),
+  delete: (id: number) => api.delete(`/versements-previsionnels/${id}`),
+  getStats: () => api.get('/versements-previsionnels/stats'),
 }
 
 export default api

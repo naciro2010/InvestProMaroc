@@ -6,7 +6,7 @@ import { LayoutContextProvider } from './contexts/LayoutContext'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import DashboardSimple from './pages/DashboardSimple'
+import DashboardModern from './pages/DashboardModern'
 import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
 import SimpleConventionForm from './pages/conventions/SimpleConventionForm'
 import SousConventionWizard from './pages/conventions/SousConventionWizard'
@@ -113,7 +113,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardSimple />
+                <DashboardModern />
               </ProtectedRoute>
             }
           />

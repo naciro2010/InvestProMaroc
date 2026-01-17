@@ -152,7 +152,7 @@ export default function MarchesPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: '#fafafa', minHeight: '100vh', py: 4 }}>
+      <Box sx={{ minHeight: '100vh', py: 4 }}>
         <Container maxWidth="xl">
           <PageHeader
             title="Marchés"

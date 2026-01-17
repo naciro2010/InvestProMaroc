@@ -16,8 +16,8 @@ interface StatsCardProps {
 }
 
 /**
- * Modern stats card component following GCP/GitLab design
- * - Clean white background with subtle border
+ * Modern stats card component with dark mode support
+ * - Adapts colors based on theme mode
  * - Icon in colored circle with pastel background
  * - Large number as focal point
  * - Optional trend indicator
@@ -40,14 +40,10 @@ const StatsCard = ({
       onClick={onClick}
       sx={{
         cursor: onClick ? 'pointer' : 'default',
-        border: '1px solid',
-        borderColor: '#e5e7eb',
-        boxShadow: 'none',
         borderRadius: '12px',
         transition: 'all 0.2s ease',
         '&:hover': onClick
           ? {
-              borderColor: '#d1d5db',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
               transform: 'translateY(-2px)',
             }
@@ -101,8 +97,8 @@ const StatsCard = ({
           {/* Title */}
           <Typography
             variant="body2"
+            color="text.secondary"
             sx={{
-              color: '#6b7280',
               fontSize: '0.875rem',
               fontWeight: 500,
             }}
@@ -113,9 +109,9 @@ const StatsCard = ({
           {/* Value */}
           <Typography
             variant="h3"
+            color="text.primary"
             sx={{
               fontWeight: 700,
-              color: '#111827',
               fontSize: '2rem',
               lineHeight: 1,
             }}
@@ -127,8 +123,8 @@ const StatsCard = ({
           {subtitle && (
             <Typography
               variant="body2"
+              color="text.secondary"
               sx={{
-                color: '#9ca3af',
                 fontSize: '0.875rem',
               }}
             >
@@ -140,11 +136,12 @@ const StatsCard = ({
           {details && (
             <Typography
               variant="caption"
+              color="text.secondary"
               sx={{
-                color: '#6b7280',
                 fontSize: '0.75rem',
                 pt: 1,
-                borderTop: '1px solid #f3f4f6',
+                borderTop: 1,
+                borderColor: 'divider',
               }}
             >
               {details}

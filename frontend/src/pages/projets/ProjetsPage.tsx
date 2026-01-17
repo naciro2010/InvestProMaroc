@@ -5,9 +5,7 @@ import {
   Container,
   Typography,
   Button,
-  Card,
-  CardContent,
-  Grid,
+  Paper,
   Chip,
   IconButton,
   Menu,
@@ -30,9 +28,11 @@ import {
   Edit,
   Delete,
   Visibility,
+  FolderOpen,
 } from '@mui/icons-material';
 import AppLayout from '../../components/layout/AppLayout';
-import { SimplePageLayout } from '../../components/layout/PageLayout';
+import PageHeader from '../../components/common/PageHeader';
+import StatsCard from '../../components/common/StatsCard';
 import { projetsAPI, Projet } from '../../lib/projetsAPI';
 
 const ProjetsPage = () => {
@@ -198,95 +198,100 @@ const ProjetsPage = () => {
 
   return (
     <AppLayout>
-      <SimplePageLayout
-        title="Projets"
-        subtitle="Gestion des projets d'investissement et programmes budgétaires"
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => navigate('/projets/nouveau')}
-          >
-            Nouveau Projet
-          </Button>
-        }
-      >
+      <Box sx={{ bgcolor: '#fafafa', minHeight: '100vh', py: 4 }}>
         <Container maxWidth="xl">
-          <Box sx={{ mb: 4 }}>
+          <PageHeader
+            title="Projets"
+            subtitle="Gestion des projets d'investissement et programmes budgétaires"
+            actions={
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => navigate('/projets/nouveau')}
+              >
+                Nouveau Projet
+              </Button>
+            }
+          />
 
           {/* Statistiques */}
-          <Grid container spacing={2}>
-            <Grid container spacing={2}>
-              <Card sx={{ bgcolor: '#f0f9ff', borderLeft: '4px solid #3b82f6' }}>
-                <CardContent>
-                  <Typography variant="body2" color="textSecondary">Total</Typography>
-                  <Typography variant="h4" sx={{ color: '#3b82f6', fontWeight: 700 }}>
-                    {stats.total || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid container spacing={2}>
-              <Card sx={{ bgcolor: '#eff6ff', borderLeft: '4px solid #60a5fa' }}>
-                <CardContent>
-                  <Typography variant="body2" color="textSecondary">En préparation</Typography>
-                  <Typography variant="h4" sx={{ color: '#60a5fa', fontWeight: 700 }}>
-                    {stats.EN_PREPARATION || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid container spacing={2}>
-              <Card sx={{ bgcolor: '#ecfdf5', borderLeft: '4px solid #10b981' }}>
-                <CardContent>
-                  <Typography variant="body2" color="textSecondary">En cours</Typography>
-                  <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 700 }}>
-                    {stats.EN_COURS || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid container spacing={2}>
-              <Card sx={{ bgcolor: '#fef3c7', borderLeft: '4px solid #f59e0b' }}>
-                <CardContent>
-                  <Typography variant="body2" color="textSecondary">Suspendus</Typography>
-                  <Typography variant="h4" sx={{ color: '#f59e0b', fontWeight: 700 }}>
-                    {stats.SUSPENDU || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid container spacing={2}>
-              <Card sx={{ bgcolor: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
-                <CardContent>
-                  <Typography variant="body2" color="textSecondary">En retard</Typography>
-                  <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 700 }}>
-                    {stats.EN_RETARD || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(5, 1fr)' },
+              gap: 3,
+              mb: 4,
+            }}
+          >
+            <StatsCard
+              title="Total"
+              value={stats.total || 0}
+              icon={<FolderOpen />}
+              color="#3b82f6"
+              bgColor="#eff6ff"
+            />
+            <StatsCard
+              title="En préparation"
+              value={stats.EN_PREPARATION || 0}
+              icon={<Edit />}
+              color="#8b5cf6"
+              bgColor="#f5f3ff"
+            />
+            <StatsCard
+              title="En cours"
+              value={stats.EN_COURS || 0}
+              icon={<PlayArrow />}
+              color="#10b981"
+              bgColor="#d1fae5"
+            />
+            <StatsCard
+              title="Suspendus"
+              value={stats.SUSPENDU || 0}
+              icon={<Pause />}
+              color="#f59e0b"
+              bgColor="#fef3c7"
+            />
+            <StatsCard
+              title="En retard"
+              value={stats.EN_RETARD || 0}
+              icon={<Cancel />}
+              color="#ef4444"
+              bgColor="#fee2e2"
+            />
+          </Box>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {loading && <LinearProgress sx={{ mb: 2 }} />}
 
           {/* Liste des projets */}
-          <Grid container spacing={2}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' },
+              gap: 3,
+            }}
+          >
             {projets.map((projet) => (
-              <Grid container spacing={2}>
-                <Card
+                <Paper
+                  key={`projet-${projet.id}`}
                   sx={{
+                    p: 3,
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' }
+                    border: '1px solid #e5e7eb',
+                    boxShadow: 'none',
+                    borderRadius: '12px',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      borderColor: '#d1d5db',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                      transform: 'translateY(-2px)',
+                    },
                   }}
                   onClick={() => navigate(`/projets/${projet.id}`)}
                 >
-                  <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
                       <Box>
                         <Typography variant="caption" color="textSecondary">
@@ -342,12 +347,9 @@ const ProjetsPage = () => {
                         Début: {new Date(projet.dateDebut).toLocaleDateString('fr-FR')}
                       </Typography>
                     )}
-                  </CardContent>
-                </Card>
-              </Grid>
+                  </Paper>
             ))}
-          </Grid>
-        </Box>
+          </Box>
 
         {/* Menu contextuel */}
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
@@ -415,7 +417,7 @@ const ProjetsPage = () => {
           </DialogActions>
         </Dialog>
         </Container>
-      </SimplePageLayout>
+      </Box>
     </AppLayout>
   );
 };

@@ -5,8 +5,7 @@ import {
   Container,
   Typography,
   Button,
-  Card,
-  CardContent,
+  Paper,
   Chip,
   Stack,
   IconButton,
@@ -36,11 +35,13 @@ import {
   Person,
   CalendarToday,
   Warning,
+  Description,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLayout from '../../components/layout/AppLayout'
-import { SimplePageLayout } from '../../components/layout/PageLayout'
+import PageHeader from '../../components/common/PageHeader'
+import StatsCard from '../../components/common/StatsCard'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
 
@@ -246,77 +247,92 @@ const ConventionsPageMUI = () => {
 
   return (
     <AppLayout>
-      <SimplePageLayout
-        title="Conventions"
-        subtitle="Gestion complète des conventions avec workflow de validation"
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => navigate('/conventions/nouvelle')}
-            sx={{ px: 3 }}
-          >
-            Nouvelle Convention
-          </Button>
-        }
-      >
-        <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Box sx={{ bgcolor: '#fafafa', minHeight: '100vh', py: 4 }}>
+        <Container maxWidth="xl">
+          <PageHeader
+            title="Conventions"
+            subtitle="Gestion complète des conventions avec workflow de validation"
+            actions={
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => navigate('/conventions/nouvelle')}
+                sx={{ px: 3 }}
+              >
+                Nouvelle Convention
+              </Button>
+            }
+          />
 
         {/* Stats */}
         <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(7, 1fr)' },
-            gap: 2,
+            gap: 3,
             mb: 4,
           }}
         >
-          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('ALL')}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" fontWeight={600}>Total</Typography>
-              <Typography variant="h4" fontWeight={700}>{stats.total}</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('BROUILLON')}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" fontWeight={600}>Brouillon</Typography>
-              <Typography variant="h4" fontWeight={700} color="text.secondary">{stats.brouillon}</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('SOUMIS')}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" fontWeight={600}>Soumis</Typography>
-              <Typography variant="h4" fontWeight={700} color="warning.main">{stats.soumis}</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('VALIDEE')}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" fontWeight={600}>Validées</Typography>
-              <Typography variant="h4" fontWeight={700} color="success.main">{stats.validees}</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('REJETE')}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" fontWeight={600}>Rejetées</Typography>
-              <Typography variant="h4" fontWeight={700} color="error.main">{stats.rejetees}</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('EN_EXECUTION')}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" fontWeight={600}>En Exécution</Typography>
-              <Typography variant="h4" fontWeight={700} color="info.main">{stats.enExecution}</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ cursor: 'pointer', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: 3 } }} onClick={() => setFilter('ANNULE')}>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary" fontWeight={600}>Annulées</Typography>
-              <Typography variant="h4" fontWeight={700} color="error.main">{stats.annulees}</Typography>
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Total"
+            value={stats.total}
+            icon={<Description />}
+            color="#3b82f6"
+            bgColor="#eff6ff"
+            onClick={() => setFilter('ALL')}
+          />
+          <StatsCard
+            title="Brouillon"
+            value={stats.brouillon}
+            icon={<Edit />}
+            color="#6b7280"
+            bgColor="#f3f4f6"
+            onClick={() => setFilter('BROUILLON')}
+          />
+          <StatsCard
+            title="Soumis"
+            value={stats.soumis}
+            icon={<Send />}
+            color="#f59e0b"
+            bgColor="#fef3c7"
+            onClick={() => setFilter('SOUMIS')}
+          />
+          <StatsCard
+            title="Validées"
+            value={stats.validees}
+            icon={<CheckCircle />}
+            color="#10b981"
+            bgColor="#d1fae5"
+            onClick={() => setFilter('VALIDEE')}
+          />
+          <StatsCard
+            title="Rejetées"
+            value={stats.rejetees}
+            icon={<Cancel />}
+            color="#ef4444"
+            bgColor="#fee2e2"
+            onClick={() => setFilter('REJETE')}
+          />
+          <StatsCard
+            title="En Exécution"
+            value={stats.enExecution}
+            icon={<Pending />}
+            color="#3b82f6"
+            bgColor="#dbeafe"
+            onClick={() => setFilter('EN_EXECUTION')}
+          />
+          <StatsCard
+            title="Annulées"
+            value={stats.annulees}
+            icon={<Cancel />}
+            color="#ef4444"
+            bgColor="#fee2e2"
+            onClick={() => setFilter('ANNULE')}
+          />
         </Box>
 
         {/* Search and Filter */}
-        <Box sx={{ mb: 3 }}>
+        <Paper sx={{ p: 3, mb: 3, border: '1px solid #e5e7eb', boxShadow: 'none', borderRadius: '12px' }}>
           <TextField
             fullWidth
             placeholder="Rechercher par nom, code, numéro ou créateur..."
@@ -359,23 +375,29 @@ const ConventionsPageMUI = () => {
               color={filter === 'EN_EXECUTION' ? 'primary' : 'default'}
             />
           </Stack>
-        </Box>
+        </Paper>
 
         {/* Conventions List */}
         <Stack spacing={2}>
           {filteredConventions.map((convention) => (
-            <Card
+            <Paper
               key={convention.id}
               sx={{
+                p: 3,
                 cursor: 'pointer',
-                transition: 'all 0.2s',
-                '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
-                border: convention.statut === 'REJETE' ? '2px solid' : 'none',
-                borderColor: convention.statut === 'REJETE' ? 'error.main' : 'transparent',
+                border: '1px solid',
+                borderColor: convention.statut === 'REJETE' ? 'error.main' : '#e5e7eb',
+                boxShadow: 'none',
+                borderRadius: '12px',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: convention.statut === 'REJETE' ? 'error.main' : '#d1d5db',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                  transform: 'translateY(-2px)',
+                },
               }}
               onClick={() => navigate(`/conventions/${convention.id}`)}
             >
-              <CardContent>
                 <Stack direction="row" justifyContent="space-between" alignItems="start">
                   <Box flex={1}>
                     <Stack direction="row" spacing={2} alignItems="center" mb={1}>
@@ -475,8 +497,7 @@ const ConventionsPageMUI = () => {
                     <MoreVert />
                   </IconButton>
                 </Stack>
-              </CardContent>
-            </Card>
+              </Paper>
           ))}
         </Stack>
 
@@ -545,7 +566,7 @@ const ConventionsPageMUI = () => {
           </DialogActions>
         </Dialog>
         </Container>
-      </SimplePageLayout>
+      </Box>
     </AppLayout>
   )
 }

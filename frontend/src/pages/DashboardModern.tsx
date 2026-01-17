@@ -3,19 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import {
   Box,
   Container,
-  Card,
-  CardContent,
-  Typography,
-  Stack,
-  Chip,
   Paper,
   LinearProgress,
   IconButton,
-  Tooltip,
+  Typography,
+  Stack,
 } from '@mui/material'
 import {
-  TrendingUp,
-  ArrowUpward,
   FolderOpen,
   Receipt,
   Payments,
@@ -24,6 +18,8 @@ import {
 } from '@mui/icons-material'
 import { conventionsAPI, budgetsAPI, decomptesAPI, paiementsAPI, projetsAPI } from '../lib/api'
 import AppLayout from '../components/layout/AppLayout'
+import PageHeader from '../components/common/PageHeader'
+import StatsCard from '../components/common/StatsCard'
 
 interface Stats {
   conventions: number
@@ -224,25 +220,13 @@ const DashboardModern = () => {
     <AppLayout>
       <Box sx={{ bgcolor: '#fafafa', minHeight: '100vh', py: 4 }}>
         <Container maxWidth="xl">
-          {/* Header - Clean & Minimal */}
-          <Box sx={{ mb: 5 }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 600,
-                color: '#1f2937',
-                mb: 1,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Tableau de Bord
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#6b7280' }}>
-              Vue d'ensemble de vos investissements et conventions
-            </Typography>
-          </Box>
+          {/* Header */}
+          <PageHeader
+            title="Tableau de Bord"
+            subtitle="Vue d'ensemble de vos investissements et conventions"
+          />
 
-          {/* KPIs Grid - Modern & Spacious */}
+          {/* KPIs Grid */}
           <Box
             sx={{
               display: 'grid',
@@ -252,112 +236,7 @@ const DashboardModern = () => {
             }}
           >
             {kpis.map((kpi, index) => (
-              <Card
-                key={index}
-                onClick={kpi.onClick}
-                sx={{
-                  cursor: 'pointer',
-                  border: '1px solid',
-                  borderColor: '#e5e7eb',
-                  boxShadow: 'none',
-                  borderRadius: '12px',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    borderColor: '#d1d5db',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Stack spacing={2.5}>
-                    {/* Icon & Trend */}
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: '12px',
-                          bgcolor: kpi.bgColor,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: kpi.color,
-                        }}
-                      >
-                        {kpi.icon}
-                      </Box>
-                      <Chip
-                        icon={<ArrowUpward sx={{ fontSize: 14 }} />}
-                        label={kpi.trend}
-                        size="small"
-                        sx={{
-                          bgcolor: '#dcfce7',
-                          color: '#166534',
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                          height: 24,
-                          '& .MuiChip-icon': {
-                            color: '#166534',
-                            fontSize: 14,
-                          },
-                        }}
-                      />
-                    </Stack>
-
-                    {/* Title */}
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: '#6b7280',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {kpi.title}
-                    </Typography>
-
-                    {/* Value */}
-                    <Typography
-                      variant="h3"
-                      sx={{
-                        fontWeight: 700,
-                        color: '#111827',
-                        fontSize: '2rem',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {kpi.value}
-                    </Typography>
-
-                    {/* Subtitle */}
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: '#9ca3af',
-                        fontSize: '0.875rem',
-                      }}
-                    >
-                      {kpi.subtitle}
-                    </Typography>
-
-                    {/* Details */}
-                    {kpi.details && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: '#6b7280',
-                          fontSize: '0.75rem',
-                          pt: 1,
-                          borderTop: '1px solid #f3f4f6',
-                        }}
-                      >
-                        {kpi.details}
-                      </Typography>
-                    )}
-                  </Stack>
-                </CardContent>
-              </Card>
+              <StatsCard key={index} {...kpi} />
             ))}
           </Box>
 

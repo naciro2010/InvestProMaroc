@@ -4,10 +4,10 @@ import {
   Box,
   Container,
   Paper,
-  LinearProgress,
   IconButton,
   Typography,
   Stack,
+  Skeleton,
 } from '@mui/material'
 import {
   FolderOpen,
@@ -21,131 +21,61 @@ import AppLayout from '../components/layout/AppLayout'
 import PageHeader from '../components/common/PageHeader'
 import StatsCard from '../components/common/StatsCard'
 
-interface Stats {
-  conventions: number
-  budgets: number
-  decomptes: number
-  paiements: number
-  projets: number
-  montantTotalConventions: number
-  montantTotalBudgets: number
-  montantTotalPaiements: number
-  montantTotalProjets: number
-  conventionsParStatut: {
-    brouillon: number
-    soumis: number
-    validees: number
-    enCours: number
-    achevees: number
-  }
-  projetsParStatut: {
-    enPreparation: number
-    enCours: number
-    suspendu: number
-    termine: number
-    annule: number
-  }
+interface KPI {
+  title: string
+  value: number
+  subtitle: string
+  details?: string
+  icon: JSX.Element
+  color: string
+  bgColor: string
+  trend?: string
+  loading: boolean
 }
 
 const DashboardModern = () => {
   const navigate = useNavigate()
-  const [stats, setStats] = useState<Stats>({
-    conventions: 0,
-    budgets: 0,
-    decomptes: 0,
-    paiements: 0,
-    projets: 0,
-    montantTotalConventions: 0,
-    montantTotalBudgets: 0,
-    montantTotalPaiements: 0,
-    montantTotalProjets: 0,
-    conventionsParStatut: {
-      brouillon: 0,
-      soumis: 0,
-      validees: 0,
-      enCours: 0,
-      achevees: 0,
-    },
-    projetsParStatut: {
-      enPreparation: 0,
-      enCours: 0,
-      suspendu: 0,
-      termine: 0,
-      annule: 0,
-    },
+
+  // États séparés pour chaque KPI - chargement indépendant
+  const [conventionsKPI, setConventionsKPI] = useState<KPI>({
+    title: 'Conventions',
+    value: 0,
+    subtitle: '0 DH',
+    icon: <Description />,
+    color: '#3b82f6',
+    bgColor: '#eff6ff',
+    loading: true,
   })
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [conventionsRes, budgetsRes, decomptesRes, paiementsRes, projetsRes] = await Promise.all([
-          conventionsAPI.getAll(),
-          budgetsAPI.getAll(),
-          decomptesAPI.getAll(),
-          paiementsAPI.getAll(),
-          projetsAPI.getAll(),
-        ])
+  const [projetsKPI, setProjetsKPI] = useState<KPI>({
+    title: 'Projets',
+    value: 0,
+    subtitle: '0 DH',
+    icon: <FolderOpen />,
+    color: '#8b5cf6',
+    bgColor: '#f5f3ff',
+    loading: true,
+  })
 
-        const conventions = Array.isArray(conventionsRes.data.data)
-          ? conventionsRes.data.data
-          : conventionsRes.data.data?.data || []
-        const budgets = Array.isArray(budgetsRes.data.data)
-          ? budgetsRes.data.data
-          : budgetsRes.data.data?.data || []
-        const decomptes = Array.isArray(decomptesRes.data.data)
-          ? decomptesRes.data.data
-          : decomptesRes.data.data?.data || []
-        const paiements = Array.isArray(paiementsRes.data.data)
-          ? paiementsRes.data.data
-          : paiementsRes.data.data?.data || []
-        const projets = Array.isArray(projetsRes.data.data)
-          ? projetsRes.data.data
-          : projetsRes.data.data?.data || []
+  const [decomptesKPI, setDecomptesKPI] = useState<KPI>({
+    title: 'Décomptes',
+    value: 0,
+    subtitle: '0 situations',
+    icon: <Receipt />,
+    color: '#f59e0b',
+    bgColor: '#fef3c7',
+    loading: true,
+  })
 
-        const montantTotalConventions = conventions.reduce((sum: number, c: any) => sum + (c.montant || 0), 0)
-        const montantTotalBudgets = budgets.reduce((sum: number, b: any) => sum + (b.montant || 0), 0)
-        const montantTotalPaiements = paiements.reduce((sum: number, p: any) => sum + (p.montant || 0), 0)
-        const montantTotalProjets = projets.reduce((sum: number, p: any) => sum + (p.budgetTotal || 0), 0)
-
-        const conventionsParStatut = {
-          brouillon: conventions.filter((c: any) => c.statut === 'BROUILLON').length,
-          soumis: conventions.filter((c: any) => c.statut === 'SOUMIS').length,
-          validees: conventions.filter((c: any) => c.statut === 'VALIDEE').length,
-          enCours: conventions.filter((c: any) => c.statut === 'EN_EXECUTION').length,
-          achevees: conventions.filter((c: any) => c.statut === 'ACHEVE').length,
-        }
-
-        const projetsParStatut = {
-          enPreparation: projets.filter((p: any) => p.statut === 'EN_PREPARATION').length,
-          enCours: projets.filter((p: any) => p.statut === 'EN_COURS').length,
-          suspendu: projets.filter((p: any) => p.statut === 'SUSPENDU').length,
-          termine: projets.filter((p: any) => p.statut === 'TERMINE').length,
-          annule: projets.filter((p: any) => p.statut === 'ANNULE').length,
-        }
-
-        setStats({
-          conventions: conventions.length,
-          budgets: budgets.length,
-          decomptes: decomptes.length,
-          paiements: paiements.length,
-          projets: projets.length,
-          montantTotalConventions,
-          montantTotalBudgets,
-          montantTotalPaiements,
-          montantTotalProjets,
-          conventionsParStatut,
-          projetsParStatut,
-        })
-      } catch (error) {
-        console.error('Error fetching stats:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchStats()
-  }, [])
+  const [paiementsKPI, setPaiementsKPI] = useState<KPI>({
+    title: 'Paiements',
+    value: 0,
+    subtitle: '0 DH',
+    icon: <Payments />,
+    color: '#10b981',
+    bgColor: '#d1fae5',
+    loading: true,
+  })
 
   const formatLargeCurrency = (amount: number) => {
     if (amount >= 1000000) {
@@ -156,65 +86,119 @@ const DashboardModern = () => {
     return `${amount.toFixed(0)} DH`
   }
 
-  const kpis = [
-    {
-      title: 'Conventions',
-      value: stats.conventions,
-      subtitle: formatLargeCurrency(stats.montantTotalConventions),
-      details: `${stats.conventionsParStatut.validees} validées • ${stats.conventionsParStatut.enCours} en cours`,
-      icon: <Description />,
-      color: '#3b82f6',
-      bgColor: '#eff6ff',
-      trend: '+12%',
-      onClick: () => navigate('/conventions'),
-    },
-    {
-      title: 'Projets',
-      value: stats.projets,
-      subtitle: formatLargeCurrency(stats.montantTotalProjets),
-      details: `${stats.projetsParStatut.enCours} en cours • ${stats.projetsParStatut.termine} terminés`,
-      icon: <FolderOpen />,
-      color: '#8b5cf6',
-      bgColor: '#f5f3ff',
-      trend: '+10%',
-      onClick: () => navigate('/projets'),
-    },
-    {
-      title: 'Décomptes',
-      value: stats.decomptes,
-      subtitle: `${stats.decomptes} situations`,
-      icon: <Receipt />,
-      color: '#f59e0b',
-      bgColor: '#fef3c7',
-      trend: '+15%',
-      onClick: () => navigate('/decomptes'),
-    },
-    {
-      title: 'Paiements',
-      value: stats.paiements,
-      subtitle: formatLargeCurrency(stats.montantTotalPaiements),
-      icon: <Payments />,
-      color: '#10b981',
-      bgColor: '#d1fae5',
-      trend: '+20%',
-      onClick: () => navigate('/paiements'),
-    },
-  ]
+  // Chargement asynchrone indépendant pour Conventions
+  useEffect(() => {
+    const fetchConventions = async () => {
+      try {
+        const res = await conventionsAPI.getAll()
+        const conventions = Array.isArray(res.data.data) ? res.data.data : res.data.data?.data || []
 
-  const tauxExecution =
-    stats.montantTotalBudgets > 0
-      ? (stats.montantTotalPaiements / stats.montantTotalBudgets) * 100
-      : 0
+        const montantTotal = conventions.reduce((sum: number, c: any) => sum + (c.montant || c.budgetTotal || 0), 0)
+        const validees = conventions.filter((c: any) => c.statut === 'VALIDEE').length
+        const enCours = conventions.filter((c: any) => c.statut === 'EN_EXECUTION').length
 
-  if (loading) {
-    return (
-      <AppLayout>
-        <Box sx={{ width: '100%', mt: 2 }}>
-          <LinearProgress />
-        </Box>
-      </AppLayout>
-    )
-  }
+        setConventionsKPI({
+          title: 'Conventions',
+          value: conventions.length,
+          subtitle: formatLargeCurrency(montantTotal),
+          details: `${validees} validées • ${enCours} en cours`,
+          icon: <Description />,
+          color: '#3b82f6',
+          bgColor: '#eff6ff',
+          trend: '+12%',
+          loading: false,
+        })
+      } catch (error) {
+        console.error('Error fetching conventions:', error)
+        setConventionsKPI(prev => ({ ...prev, loading: false }))
+      }
+    }
+    fetchConventions()
+  }, [])
+
+  // Chargement asynchrone indépendant pour Projets
+  useEffect(() => {
+    const fetchProjets = async () => {
+      try {
+        const res = await projetsAPI.getAll()
+        const projets = Array.isArray(res.data.data) ? res.data.data : res.data.data?.data || []
+
+        const montantTotal = projets.reduce((sum: number, p: any) => sum + (p.budgetTotal || 0), 0)
+        const enCours = projets.filter((p: any) => p.statut === 'EN_COURS').length
+        const termine = projets.filter((p: any) => p.statut === 'TERMINE').length
+
+        setProjetsKPI({
+          title: 'Projets',
+          value: projets.length,
+          subtitle: formatLargeCurrency(montantTotal),
+          details: `${enCours} en cours • ${termine} terminés`,
+          icon: <FolderOpen />,
+          color: '#8b5cf6',
+          bgColor: '#f5f3ff',
+          trend: '+10%',
+          loading: false,
+        })
+      } catch (error) {
+        console.error('Error fetching projets:', error)
+        setProjetsKPI(prev => ({ ...prev, loading: false }))
+      }
+    }
+    fetchProjets()
+  }, [])
+
+  // Chargement asynchrone indépendant pour Décomptes
+  useEffect(() => {
+    const fetchDecomptes = async () => {
+      try {
+        const res = await decomptesAPI.getAll()
+        const decomptes = Array.isArray(res.data.data) ? res.data.data : res.data.data?.data || []
+
+        setDecomptesKPI({
+          title: 'Décomptes',
+          value: decomptes.length,
+          subtitle: `${decomptes.length} situations`,
+          icon: <Receipt />,
+          color: '#f59e0b',
+          bgColor: '#fef3c7',
+          trend: '+15%',
+          loading: false,
+        })
+      } catch (error) {
+        console.error('Error fetching decomptes:', error)
+        setDecomptesKPI(prev => ({ ...prev, loading: false }))
+      }
+    }
+    fetchDecomptes()
+  }, [])
+
+  // Chargement asynchrone indépendant pour Paiements
+  useEffect(() => {
+    const fetchPaiements = async () => {
+      try {
+        const res = await paiementsAPI.getAll()
+        const paiements = Array.isArray(res.data.data) ? res.data.data : res.data.data?.data || []
+
+        const montantTotal = paiements.reduce((sum: number, p: any) => sum + (p.montant || 0), 0)
+
+        setPaiementsKPI({
+          title: 'Paiements',
+          value: paiements.length,
+          subtitle: formatLargeCurrency(montantTotal),
+          icon: <Payments />,
+          color: '#10b981',
+          bgColor: '#d1fae5',
+          trend: '+20%',
+          loading: false,
+        })
+      } catch (error) {
+        console.error('Error fetching paiements:', error)
+        setPaiementsKPI(prev => ({ ...prev, loading: false }))
+      }
+    }
+    fetchPaiements()
+  }, [])
+
+  const kpis = [conventionsKPI, projetsKPI, decomptesKPI, paiementsKPI]
 
   return (
     <AppLayout>
@@ -226,7 +210,7 @@ const DashboardModern = () => {
             subtitle="Vue d'ensemble de vos investissements et conventions"
           />
 
-          {/* KPIs Grid */}
+          {/* KPIs Grid - Chargement progressif */}
           <Box
             sx={{
               display: 'grid',
@@ -236,7 +220,25 @@ const DashboardModern = () => {
             }}
           >
             {kpis.map((kpi, index) => (
-              <StatsCard key={index} {...kpi} />
+              kpi.loading ? (
+                <Skeleton
+                  key={index}
+                  variant="rectangular"
+                  height={180}
+                  sx={{ borderRadius: '8px' }}
+                />
+              ) : (
+                <StatsCard
+                  key={index}
+                  {...kpi}
+                  onClick={() => {
+                    if (kpi.title === 'Conventions') navigate('/conventions')
+                    if (kpi.title === 'Projets') navigate('/projets')
+                    if (kpi.title === 'Décomptes') navigate('/decomptes')
+                    if (kpi.title === 'Paiements') navigate('/paiements')
+                  }}
+                />
+              )
             ))}
           </Box>
 
@@ -248,104 +250,33 @@ const DashboardModern = () => {
               gap: 3,
             }}
           >
-            {/* Taux d'Exécution */}
-            <Paper
-              sx={{
-                p: 4,
-                border: '1px solid #e5e7eb',
-                boxShadow: 'none',
-                borderRadius: '12px',
-              }}
-            >
-              <Stack spacing={3}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        color: '#1f2937',
-                        mb: 0.5,
-                      }}
-                    >
-                      Taux d'Exécution
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                      Paiements / Budget total
-                    </Typography>
-                  </Box>
-                  <IconButton size="small">
-                    <MoreVert />
-                  </IconButton>
-                </Stack>
+            {/* Activités récentes */}
+            <Paper sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" fontWeight={600}>
+                  Activités récentes
+                </Typography>
+                <IconButton size="small">
+                  <MoreVert />
+                </IconButton>
+              </Box>
 
-                <Box>
-                  <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 1 }}>
-                    <Typography variant="h3" sx={{ fontWeight: 700, color: '#111827' }}>
-                      {tauxExecution.toFixed(1)}%
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                      {formatLargeCurrency(stats.montantTotalPaiements)} /{' '}
-                      {formatLargeCurrency(stats.montantTotalBudgets)}
-                    </Typography>
-                  </Stack>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(tauxExecution, 100)}
-                    sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      bgcolor: '#f3f4f6',
-                      '& .MuiLinearProgress-bar': {
-                        bgcolor: '#3b82f6',
-                        borderRadius: 4,
-                      },
-                    }}
-                  />
-                </Box>
+              <Stack spacing={2}>
+                <Typography variant="body2" color="text.secondary">
+                  Chargement des données en temps réel...
+                </Typography>
               </Stack>
             </Paper>
 
-            {/* Quick Stats */}
-            <Paper
-              sx={{
-                p: 4,
-                border: '1px solid #e5e7eb',
-                boxShadow: 'none',
-                borderRadius: '12px',
-              }}
-            >
-              <Stack spacing={3}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#1f2937' }}>
-                  Statistiques Rapides
+            {/* Alertes */}
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                Alertes
+              </Typography>
+              <Stack spacing={2} sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Aucune alerte pour le moment
                 </Typography>
-
-                <Stack spacing={2}>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                      Budgets
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#111827' }}>
-                      {stats.budgets}
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                      Conventions validées
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#111827' }}>
-                      {stats.conventionsParStatut.validees}
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                      Projets actifs
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#111827' }}>
-                      {stats.projetsParStatut.enCours}
-                    </Typography>
-                  </Stack>
-                </Stack>
               </Stack>
             </Paper>
           </Box>

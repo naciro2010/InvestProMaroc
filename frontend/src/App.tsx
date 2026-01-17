@@ -26,6 +26,7 @@ import DecomptesPage from './pages/decomptes/DecomptesPageComplete'
 import DecompteWizard from './pages/decomptes/DecompteWizard'
 import OrdresPaiementPage from './pages/paiements/OrdresPaiementPageComplete'
 import PaiementsPage from './pages/paiements/PaiementsPageComplete'
+import VersementsPrevisionnelsPage from './pages/versements/VersementsPrevisionnelsPage'
 import ProfilePage from './pages/ProfilePage'
 import PlanAnalytiquePage from './pages/parametrage/PlanAnalytiquePage'
 import ReportingAnalytiquePage from './pages/reporting/ReportingAnalytiquePage'
@@ -303,6 +304,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <PaiementsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Versements Prévisionnels */}
+          <Route
+            path="/versements-previsionnels"
+            element={
+              <ProtectedRoute>
+                <VersementsPrevisionnelsPage />
               </ProtectedRoute>
             }
           />

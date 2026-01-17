@@ -516,4 +516,16 @@ export const piecesJointesAPI = {
   delete: (id: number) => api.delete(`/pieces-jointes/${id}`),
 }
 
+// Versements Prévisionnels API
+export const versementsPrevisionnelsAPI = {
+  getAll: () => api.get('/versements-previsionnels'),
+  getByConvention: (conventionId: number) => api.get(`/conventions/${conventionId}/versements-previsionnels`),
+  getById: (id: number) => api.get(`/versements-previsionnels/${id}`),
+  create: (conventionId: number, data: Record<string, unknown>) =>
+    api.post(`/conventions/${conventionId}/versements-previsionnels`, data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/versements-previsionnels/${id}`, data),
+  delete: (id: number) => api.delete(`/versements-previsionnels/${id}`),
+  getStats: () => api.get('/versements-previsionnels/stats'),
+}
+
 export default api

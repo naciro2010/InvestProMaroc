@@ -99,6 +99,226 @@ HTTP Request → JwtAuthenticationFilter
            PostgreSQL + ApiResponse<T>
 ```
 
+## ⚡ CRITICAL: Micro-Frontend + Micro-Backend Architecture
+
+### ❌ PROBLEM: Monolithic Endpoints
+
+**DO NOT** create endpoints that return everything at once:
+
+```kotlin
+// ❌ BAD - Returns massive "god object"
+@GetMapping("/marches/{id}")
+fun getMarche(id: Long): MarcheResponse {
+    return MarcheResponse(
+        marche = marche,
+        lignes = lignes,           // 100+ lines
+        avenants = avenants,       // 10+ avenants
+        decomptes = decomptes,     // 50+ decomptes
+        fournisseur = fournisseur, // Nested object
+        convention = convention,   // Nested object
+        paiements = paiements,     // More nested data
+        // ... and more nested collections
+    )
+}
+```
+
+**Problems:**
+- ⚠️ **Huge payload size** (100+ KB for single request)
+- ⚠️ **Slow response time** (multiple JOINs, N+1 queries)
+- ⚠️ **Unnecessary data transfer** (loading data not displayed)
+- ⚠️ **Memory issues** on frontend (large objects in state)
+- ⚠️ **Poor UX** (long loading times, blank screens)
+
+### ✅ SOLUTION: Granular Resource Endpoints
+
+**DO** create micro-endpoints that return only what's needed:
+
+```kotlin
+// ✅ GOOD - Micro-endpoints returning focused data
+
+// 1. Basic info only (10 KB)
+@GetMapping("/marches/{id}/basic")
+fun getMarcheBasic(id: Long): MarcheBasicDTO
+
+// 2. Stats/metrics (5 KB)
+@GetMapping("/marches/{id}/stats")
+fun getMarcheStats(id: Long): MarcheStatsDTO
+
+// 3. Lignes sub-resource (lazy loaded)
+@GetMapping("/marches/{id}/lignes")
+fun getMarcheLignes(id: Long): List<LigneDTO>
+
+// 4. Décomptes sub-resource (lazy loaded)
+@GetMapping("/marches/{id}/decomptes")
+fun getMarcheDecomptes(id: Long): List<DecompteDTO>
+
+// 5. Avenants sub-resource (lazy loaded)
+@GetMapping("/marches/{id}/avenants")
+fun getMarcheAvenants(id: Long): List<AvenantDTO>
+
+// 6. Count endpoints for quick metrics
+@GetMapping("/marches/{id}/lignes/count")
+fun countLignes(id: Long): CountDTO
+
+@GetMapping("/marches/{id}/montant-paye")
+fun getMontantPaye(id: Long): MontantDTO
+```
+
+**Benefits:**
+- ✅ **Small payloads** (5-20 KB per request)
+- ✅ **Fast responses** (no complex JOINs)
+- ✅ **Lazy loading** (load only what's displayed)
+- ✅ **Better caching** (granular cache invalidation)
+- ✅ **Smooth UX** (progressive loading, no blank screens)
+
+### 🎨 Frontend: Micro-Components Pattern
+
+Each React component loads its own data independently:
+
+```tsx
+// ❌ BAD - Monolithic component loading everything
+function MarcheDetailPage() {
+  const [marcheData, setMarcheData] = useState(null) // Huge object
+
+  useEffect(() => {
+    // Single massive request
+    const data = await api.get(`/marches/${id}`) // 100+ KB
+    setMarcheData(data) // Loads everything at once
+  }, [id])
+
+  return (
+    <>
+      <MarcheHeader data={marcheData} />
+      <MarcheStats data={marcheData} />
+      <MarcheLignes data={marcheData.lignes} />
+      <MarcheDecomptes data={marcheData.decomptes} />
+    </>
+  )
+}
+
+// ✅ GOOD - Micro-components with independent data loading
+function MarcheDetailPageModern() {
+  return (
+    <>
+      {/* Each component loads its own data */}
+      <MarcheHeader marcheId={id} />      {/* GET /marches/{id}/basic */}
+      <MarcheStats marcheId={id} />       {/* GET /marches/{id}/stats */}
+      <MarcheLignes marcheId={id} />      {/* GET /marches/{id}/lignes */}
+      <MarcheDecomptes marcheId={id} />   {/* GET /marches/{id}/decomptes */}
+    </>
+  )
+}
+
+// ✅ Each micro-component manages its own state
+function MarcheLignesSection({ marcheId }: { marcheId: number }) {
+  const [lignes, setLignes] = useState<Ligne[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Focused micro-endpoint
+    marchesAPI.getLignes(marcheId).then(setLignes)
+  }, [marcheId])
+
+  return <LignesTable lignes={lignes} loading={loading} />
+}
+```
+
+### 📐 Implementation Pattern
+
+**Backend Controller:**
+
+```kotlin
+@RestController
+@RequestMapping("/api/marches")
+class MarcheController(
+    private val marcheService: MarcheService,
+    private val ligneService: MarcheLigneService,
+    private val decompteService: DecompteService
+) {
+    // Basic info endpoint
+    @GetMapping("/{id}/basic")
+    fun getBasic(@PathVariable id: Long): ResponseEntity<ApiResponse<MarcheBasicDTO>> {
+        val marche = marcheService.findById(id)
+        return ok(ApiResponse.success(marche.toBasicDTO()))
+    }
+
+    // Stats endpoint (aggregated data)
+    @GetMapping("/{id}/stats")
+    fun getStats(@PathVariable id: Long): ResponseEntity<ApiResponse<MarcheStatsDTO>> {
+        return ok(ApiResponse.success(
+            MarcheStatsDTO(
+                montantTotal = marcheService.getMontantTotal(id),
+                montantPaye = decompteService.getTotalPaye(id),
+                nombreLignes = ligneService.countByMarche(id),
+                tauxAvancement = marcheService.getTauxAvancement(id)
+            )
+        ))
+    }
+
+    // Sub-resource endpoint
+    @GetMapping("/{id}/lignes")
+    fun getLignes(@PathVariable id: Long): ResponseEntity<ApiResponse<List<LigneDTO>>> {
+        val lignes = ligneService.findByMarcheId(id)
+        return ok(ApiResponse.success(lignes.map { it.toDTO() }))
+    }
+
+    // Count endpoint (very fast)
+    @GetMapping("/{id}/lignes/count")
+    fun countLignes(@PathVariable id: Long): ResponseEntity<ApiResponse<CountDTO>> {
+        return ok(ApiResponse.success(CountDTO(ligneService.countByMarche(id))))
+    }
+}
+```
+
+**Frontend API Client:**
+
+```typescript
+export const marchesAPI = {
+  // Micro-endpoints
+  getBasic: (id: number) => api.get(`/marches/${id}/basic`),
+  getStats: (id: number) => api.get(`/marches/${id}/stats`),
+  getLignes: (id: number) => api.get(`/marches/${id}/lignes`),
+  getDecomptes: (id: number) => api.get(`/marches/${id}/decomptes`),
+  getAvenants: (id: number) => api.get(`/marches/${id}/avenants`),
+
+  // Count endpoints
+  countLignes: (id: number) => api.get(`/marches/${id}/lignes/count`),
+  getMontantPaye: (id: number) => api.get(`/marches/${id}/montant-paye`),
+}
+```
+
+### 🎯 Migration Strategy
+
+1. **Identify heavy endpoints** (>50 KB response size)
+2. **Split into micro-endpoints** following REST sub-resource pattern
+3. **Create focused DTOs** for each endpoint
+4. **Refactor frontend** to use micro-components
+5. **Add caching** at micro-endpoint level (Redis, HTTP cache)
+6. **Monitor performance** (response times, payload sizes)
+
+### 📊 Performance Comparison
+
+| Metric | Monolithic | Micro-Endpoints |
+|--------|-----------|-----------------|
+| Initial load | 150 KB, 2.5s | 15 KB, 300ms |
+| Lignes section | Included | 25 KB, 400ms (lazy) |
+| Décomptes section | Included | 30 KB, 500ms (lazy) |
+| **Total transferred** | **150 KB** | **70 KB** (progressive) |
+| **Time to interactive** | **2.5s** | **300ms** |
+| Cache efficiency | Low (all or nothing) | High (granular) |
+
+### 🔄 Apply to All Modules
+
+**This pattern must be applied to:**
+- ✅ Marchés (already migrated to MarcheDetailPageModern.tsx)
+- ⚠️ Conventions (migrate ConventionDetailPage.tsx)
+- ⚠️ Projets (migrate ProjetDetailPage.tsx)
+- ⚠️ Décomptes (migrate DecompteDetailPage.tsx)
+- ⚠️ All future detail pages
+
+**Golden Rule:**
+> **Never load data you don't immediately display. Every visible section should have its own micro-endpoint and micro-component.**
+
 ### Frontend Architecture
 ```
 App.tsx → React Router → AuthProvider → AppLayout

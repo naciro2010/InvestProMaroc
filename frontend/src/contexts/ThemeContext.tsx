@@ -111,14 +111,17 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
         dark: '#0c4a6e', // sky-900
       },
       background: {
-        default: mode === 'light' ? '#ffffff' : '#121212',
-        paper: mode === 'light' ? '#f9fafb' : '#1e1e1e',
+        // Mode light: fond blanc, cards gris clair
+        // Mode dark: fond slate-900, cards slate-800 (BON CONTRASTE)
+        default: mode === 'light' ? '#f9fafb' : '#0f172a',
+        paper: mode === 'light' ? '#ffffff' : '#1e293b',
       },
       text: {
-        primary: mode === 'light' ? '#1f2937' : '#f3f4f6',
-        secondary: mode === 'light' ? '#6b7280' : '#d1d5db',
+        // Mode dark: texte clair avec bon contraste
+        primary: mode === 'light' ? '#1f2937' : '#f1f5f9',
+        secondary: mode === 'light' ? '#6b7280' : '#cbd5e1',
       },
-      divider: mode === 'light' ? '#e5e7eb' : '#404040',
+      divider: mode === 'light' ? '#e5e7eb' : '#334155',
     },
     typography: {
       fontFamily: '"Segoe UI", "Roboto", "Helvetica Neue", sans-serif',
@@ -190,13 +193,13 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
         styleOverrides: {
           root: {
             borderRadius: 12,
-            border: `1px solid ${mode === 'light' ? '#e5e7eb' : '#404040'}`,
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e1e1e',
+            border: `1px solid ${mode === 'light' ? '#e5e7eb' : '#334155'}`,
+            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
             transition: 'all 0.3s ease-in-out',
             '&:hover': {
               boxShadow: mode === 'light'
                 ? '0 10px 25px rgba(0, 0, 0, 0.1)'
-                : '0 10px 25px rgba(0, 0, 0, 0.3)',
+                : '0 10px 25px rgba(15, 23, 42, 0.5)',
               transform: 'translateY(-4px)',
             },
           },
@@ -206,7 +209,7 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
         styleOverrides: {
           root: {
             borderRadius: 12,
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e1e1e',
+            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
           },
         },
       },
@@ -229,18 +232,18 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
       MuiAppBar: {
         styleOverrides: {
           root: {
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e1e1e',
-            color: mode === 'light' ? '#1f2937' : '#f3f4f6',
-            boxShadow: `0 1px 3px ${mode === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.3)'}`,
-            borderBottom: `1px solid ${mode === 'light' ? '#e5e7eb' : '#404040'}`,
+            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+            color: mode === 'light' ? '#1f2937' : '#f1f5f9',
+            boxShadow: `0 1px 3px ${mode === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(15, 23, 42, 0.5)'}`,
+            borderBottom: `1px solid ${mode === 'light' ? '#e5e7eb' : '#334155'}`,
           },
         },
       },
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e1e1e',
-            borderRight: `1px solid ${mode === 'light' ? '#e5e7eb' : '#404040'}`,
+            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+            borderRight: `1px solid ${mode === 'light' ? '#e5e7eb' : '#334155'}`,
           },
         },
       },

@@ -6,14 +6,14 @@ import { LayoutContextProvider } from './contexts/LayoutContext'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import DashboardSimple from './pages/DashboardSimple'
+import DashboardModern from './pages/DashboardModern'
 import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
 import SimpleConventionForm from './pages/conventions/SimpleConventionForm'
 import SousConventionWizard from './pages/conventions/SousConventionWizard'
 import AvenantForm from './pages/conventions/AvenantForm'
 import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
 import MarchesPage from './pages/marches/MarchesPage'
-import MarcheDetailPage from './pages/marches/MarcheDetailPage'
+import MarcheDetailPageModern from './pages/marches/MarcheDetailPageModern'
 import MarcheFormPage from './pages/marches/MarcheFormPage'
 import MarcheWizard from './pages/marches/MarcheWizard'
 import ProjetsPage from './pages/projets/ProjetsPage'
@@ -113,7 +113,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardSimple />
+                <DashboardModern />
               </ProtectedRoute>
             }
           />
@@ -197,7 +197,7 @@ function App() {
             path="/marches/:id"
             element={
               <ProtectedRoute>
-                <MarcheDetailPage />
+                <MarcheDetailPageModern />
               </ProtectedRoute>
             }
           />

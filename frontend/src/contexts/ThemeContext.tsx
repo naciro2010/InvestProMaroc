@@ -195,12 +195,14 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
             borderRadius: 12,
             border: `1px solid ${mode === 'light' ? '#e5e7eb' : '#334155'}`,
             backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-            transition: 'all 0.3s ease-in-out',
+            boxShadow: 'none',
+            transition: 'all 0.2s ease',
             '&:hover': {
+              borderColor: mode === 'light' ? '#d1d5db' : '#475569',
               boxShadow: mode === 'light'
-                ? '0 10px 25px rgba(0, 0, 0, 0.1)'
-                : '0 10px 25px rgba(15, 23, 42, 0.5)',
-              transform: 'translateY(-4px)',
+                ? '0 4px 12px rgba(0, 0, 0, 0.08)'
+                : '0 4px 12px rgba(15, 23, 42, 0.5)',
+              transform: 'translateY(-2px)',
             },
           },
         },

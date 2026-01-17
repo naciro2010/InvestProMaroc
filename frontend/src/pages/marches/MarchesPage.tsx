@@ -1,9 +1,32 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { FaPlus, FaEdit, FaTrash, FaEye, FaFileExcel, FaSearch, FaList, FaMap } from 'react-icons/fa'
-import { Card, Button, StatusBadge } from '../../components/ui'
+import { useNavigate } from 'react-router-dom'
+import {
+  Box,
+  Container,
+  Button,
+  Paper,
+  TextField,
+  Chip,
+  IconButton,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material'
+import {
+  Add,
+  Search,
+  ViewList,
+  Map as MapIcon,
+  Visibility,
+  Edit,
+  Delete,
+  ShoppingCart,
+  Receipt,
+  Description,
+} from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import { SimplePageLayout } from '../../components/layout/PageLayout'
+import PageHeader from '../../components/common/PageHeader'
+import StatsCard from '../../components/common/StatsCard'
 import MarchesMapView from '../../components/ui/MarchesMapView'
 import api from '../../lib/api'
 import { Marche as MarcheType, Fournisseur } from '../../types/entities'
@@ -120,269 +143,217 @@ export default function MarchesPage() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-info"></div>
-        </div>
+        <Box sx={{ width: '100%', mt: 2 }}>
+          <LinearProgress />
+        </Box>
       </AppLayout>
     )
   }
 
   return (
     <AppLayout>
-      <SimplePageLayout
-        title="Marchés"
-        subtitle="Gestion complète des contrats et marchés publics"
-        actions={
-          <Link to="/marches/nouveau">
-            <Button variant="success" icon={<FaPlus />}>
-              Nouveau Marché
-            </Button>
-          </Link>
-        }
-      >
-        <div className="space-y-6">
-        {/* En-tête avec stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card title="Total Marchés">
-          <div className="text-3xl font-bold font-rubik text-gray-800">{stats.total}</div>
-        </Card>
-
-        <Card title="En Cours">
-          <div className="text-3xl font-bold font-rubik text-warning">{stats.enCours}</div>
-        </Card>
-
-        <Card title="Validés">
-          <div className="text-3xl font-bold font-rubik text-success">{stats.valide}</div>
-        </Card>
-
-        <Card title="Terminés">
-          <div className="text-3xl font-bold font-rubik text-info">{stats.termine}</div>
-        </Card>
-
-        <Card title="Montant Total">
-          <div className="text-2xl font-bold font-rubik text-info">
-            {formatCurrency(stats.montantTotal)}
-          </div>
-        </Card>
-      </div>
-
-      {/* Carte principale */}
-      <Card
-        title="Gestion des Marchés"
-        actions={
-          <div className="flex gap-2">
-            <Link to="/marches/nouveau">
-              <Button variant="success" icon={<FaPlus />}>
+      <Box sx={{ bgcolor: '#fafafa', minHeight: '100vh', py: 4 }}>
+        <Container maxWidth="xl">
+          <PageHeader
+            title="Marchés"
+            subtitle="Gestion complète des contrats et marchés publics"
+            actions={
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => navigate('/marches/nouveau')}
+              >
                 Nouveau Marché
               </Button>
-            </Link>
-            <Button variant="secondary" icon={<FaFileExcel />}>
-              Exporter Excel
-            </Button>
-          </div>
-        }
-      >
-        {/* Filtres */}
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Recherche */}
-            <div className="flex-1">
-              <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
+            }
+          />
+
+          {/* Stats */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(5, 1fr)' },
+              gap: 3,
+              mb: 4,
+            }}
+          >
+            <StatsCard
+              title="Total Marchés"
+              value={stats.total}
+              icon={<ShoppingCart />}
+              color="#3b82f6"
+              bgColor="#eff6ff"
+            />
+            <StatsCard
+              title="En Cours"
+              value={stats.enCours}
+              icon={<Receipt />}
+              color="#f59e0b"
+              bgColor="#fef3c7"
+            />
+            <StatsCard
+              title="Validés"
+              value={stats.valide}
+              icon={<Description />}
+              color="#10b981"
+              bgColor="#d1fae5"
+            />
+            <StatsCard
+              title="Terminés"
+              value={stats.termine}
+              icon={<Description />}
+              color="#3b82f6"
+              bgColor="#dbeafe"
+            />
+            <StatsCard
+              title="Montant Total"
+              value={formatCurrency(stats.montantTotal)}
+              subtitle="DH"
+              icon={<ShoppingCart />}
+              color="#8b5cf6"
+              bgColor="#f5f3ff"
+            />
+          </Box>
+
+          {/* Main Content */}
+          <Paper sx={{ p: 3, border: '1px solid #e5e7eb', boxShadow: 'none', borderRadius: '12px' }}>
+            {/* Filters and Search */}
+            <Stack spacing={3} sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
+                <TextField
+                  fullWidth
                   placeholder="Rechercher par numéro, objet, fournisseur, convention..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info focus:border-transparent"
+                  InputProps={{
+                    startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />,
+                  }}
                 />
-              </div>
-            </div>
-
-            {/* Filtre par statut */}
-            <div className="w-full md:w-64">
-              <select
-                value={selectedStatut}
-                onChange={(e) => setSelectedStatut(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info focus:border-transparent"
-              >
-                <option value="ALL">Tous les statuts</option>
-                <option value="EN_COURS">En cours</option>
-                <option value="VALIDE">Validé</option>
-                <option value="TERMINE">Terminé</option>
-                <option value="SUSPENDU">Suspendu</option>
-                <option value="ANNULE">Annulé</option>
-                <option value="EN_ATTENTE">En attente</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Résultats filtrés et toggle vue */}
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Affichage de <span className="font-semibold">{filteredMarches.length}</span> sur{' '}
-              <span className="font-semibold">{marches.length}</span> marché(s)
-            </div>
-
-            {/* Toggle Vue Liste / Carte */}
-            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'list'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <FaList className="w-4 h-4" />
-                Liste
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'map'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <FaMap className="w-4 h-4" />
-                Carte
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Vue Carte */}
-        {viewMode === 'map' && (
-          <MarchesMapView marches={filteredMarches} />
-        )}
-
-        {/* Table responsive */}
-        {viewMode === 'list' && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  N° Marché
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  N° AO
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Objet
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fournisseur
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Convention
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Montant TTC
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Lignes
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Avenants
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Statut
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredMarches.map((marche) => (
-                <tr
-                  key={marche.id}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => navigate(`/marches/${marche.id}`)}
+                <TextField
+                  select
+                  SelectProps={{ native: true }}
+                  value={selectedStatut}
+                  onChange={(e) => setSelectedStatut(e.target.value)}
+                  sx={{ minWidth: 200 }}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {marche.numeroMarche}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {marche.numAO || '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 max-w-xs truncate">
-                      {marche.objet}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {marche.fournisseur?.raisonSociale || '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {marche.convention?.code || '-'}
-                    </div>
-                    <div className="text-xs text-gray-500 max-w-xs truncate">
-                      {marche.convention?.libelle}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {formatCurrency(marche.montantTtc)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {marche.nbLignes || 0}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                      {marche.nbAvenants || 0}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={statutColors[marche.statut]} />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end gap-2">
-                      <Link to={`/marches/${marche.id}`} onClick={(e) => e.stopPropagation()}>
-                        <button className="text-info hover:text-cyan-700 p-2">
-                          <FaEye />
-                        </button>
-                      </Link>
-                      <Link to={`/marches/${marche.id}/modifier`} onClick={(e) => e.stopPropagation()}>
-                        <button className="text-warning hover:text-orange-700 p-2">
-                          <FaEdit />
-                        </button>
-                      </Link>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }}
-                        className="text-danger hover:text-red-700 p-2"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  <option value="ALL">Tous les statuts</option>
+                  <option value="EN_COURS">En cours</option>
+                  <option value="VALIDE">Validé</option>
+                  <option value="TERMINE">Terminé</option>
+                  <option value="SUSPENDU">Suspendu</option>
+                  <option value="ANNULE">Annulé</option>
+                  <option value="EN_ATTENTE">En attente</option>
+                </TextField>
+              </Box>
 
-          {filteredMarches.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">Aucun marché trouvé</p>
-            </div>
-          )}
-        </div>
-        )}
-      </Card>
-        </div>
-      </SimplePageLayout>
+              {/* Results count and view toggle */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Affichage de <strong>{filteredMarches.length}</strong> sur{' '}
+                  <strong>{marches.length}</strong> marché(s)
+                </Typography>
+
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant={viewMode === 'list' ? 'contained' : 'outlined'}
+                    startIcon={<ViewList />}
+                    onClick={() => setViewMode('list')}
+                    size="small"
+                  >
+                    Liste
+                  </Button>
+                  <Button
+                    variant={viewMode === 'map' ? 'contained' : 'outlined'}
+                    startIcon={<MapIcon />}
+                    onClick={() => setViewMode('map')}
+                    size="small"
+                  >
+                    Carte
+                  </Button>
+                </Stack>
+              </Box>
+            </Stack>
+
+            {/* Map View */}
+            {viewMode === 'map' && (
+              <Box sx={{ mt: 2 }}>
+                <MarchesMapView marches={filteredMarches} />
+              </Box>
+            )}
+
+            {/* Table View */}
+            {viewMode === 'list' && (
+              <Box sx={{ mt: 2, overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>N° Marché</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>N° AO</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Objet</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Fournisseur</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Montant TTC</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Lignes</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Statut</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredMarches.map((marche) => (
+                      <tr
+                        key={marche.id}
+                        style={{ borderBottom: '1px solid #e5e7eb', cursor: 'pointer', transition: 'background-color 0.2s' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        onClick={() => navigate(`/marches/${marche.id}`)}
+                      >
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 500 }}>{marche.numeroMarche}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#6b7280' }}>{marche.numAO || '-'}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{marche.objet}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem' }}>{marche.fournisseur?.raisonSociale || '-'}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600 }}>{formatCurrency(marche.montantTtc)}</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <Chip label={marche.nbLignes || 0} size="small" sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 600 }} />
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <Chip
+                            label={marche.statut.replace('_', ' ')}
+                            size="small"
+                            color={
+                              marche.statut === 'VALIDE' ? 'success' :
+                              marche.statut === 'EN_COURS' ? 'warning' :
+                              marche.statut === 'TERMINE' ? 'info' :
+                              'default'
+                            }
+                          />
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}`); }}>
+                              <Visibility fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}/modifier`); }}>
+                              <Edit fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }}>
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {filteredMarches.length === 0 && (
+                  <Box sx={{ textAlign: 'center', py: 6 }}>
+                    <Typography variant="body1" color="text.secondary">Aucun marché trouvé</Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Paper>
+        </Container>
+      </Box>
     </AppLayout>
   )
 }

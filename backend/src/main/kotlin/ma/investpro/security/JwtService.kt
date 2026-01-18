@@ -23,20 +23,28 @@ class JwtService {
     private var refreshExpirationMs: Long = 0
 
     fun generateToken(userDetails: UserDetails, userId: Long? = null): String {
-        val claims = if (userId != null) {
-            mapOf("userId" to userId)
-        } else {
-            HashMap()
+        val claims = mutableMapOf<String, Any>()
+        if (userId != null) {
+            claims["userId"] = userId
         }
+        // Include user's authorities/roles in the JWT token
+        claims["authorities"] = userDetails.authorities.map { it.authority }
+        claims["roles"] = userDetails.authorities
+            .map { it.authority }
+            .map { it.removePrefix("ROLE_") }
         return buildToken(claims, userDetails, jwtExpirationMs)
     }
 
     fun generateRefreshToken(userDetails: UserDetails, userId: Long? = null): String {
-        val claims = if (userId != null) {
-            mapOf("userId" to userId)
-        } else {
-            HashMap()
+        val claims = mutableMapOf<String, Any>()
+        if (userId != null) {
+            claims["userId"] = userId
         }
+        // Include user's authorities/roles in the refresh token
+        claims["authorities"] = userDetails.authorities.map { it.authority }
+        claims["roles"] = userDetails.authorities
+            .map { it.authority }
+            .map { it.removePrefix("ROLE_") }
         return buildToken(claims, userDetails, refreshExpirationMs)
     }
 
@@ -77,6 +85,34 @@ class JwtService {
             if (claim is Number) claim.toLong() else null
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun extractRoles(token: String): List<String> {
+        return try {
+            val roles = extractClaim(token) { it.get("roles") }
+            if (roles is List<*>) {
+                @Suppress("UNCHECKED_CAST")
+                roles as List<String>
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun extractAuthorities(token: String): List<String> {
+        return try {
+            val authorities = extractClaim(token) { it.get("authorities") }
+            if (authorities is List<*>) {
+                @Suppress("UNCHECKED_CAST")
+                authorities as List<String>
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 

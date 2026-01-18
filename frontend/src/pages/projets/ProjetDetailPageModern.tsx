@@ -41,7 +41,7 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import { projetsAPI, Projet as ProjetAPI } from '../../lib/projetsAPI'
-import { conventionsAPI, marchesAPI } from '../../lib/api'
+import { api, conventionsAPI, marchesAPI } from '../../lib/api'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 interface TabPanelProps {
@@ -146,12 +146,11 @@ const ProjetDetailPageModern = () => {
 
   const loadMarches = async (projetId: number) => {
     try {
-      // TODO: Replace with actual API call for project's marchés
-      // const res = await projetsAPI.getMarches(projetId)
-      // setMarches(res.data.data || [])
-      setMarches([])
+      const res = await api.get(`/marches/projet/${projetId}`)
+      setMarches(res.data.data || res.data || [])
     } catch (err) {
       console.error('Error loading marchés:', err)
+      setMarches([])
     }
   }
 

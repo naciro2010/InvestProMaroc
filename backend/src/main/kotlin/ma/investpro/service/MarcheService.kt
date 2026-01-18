@@ -138,4 +138,11 @@ class MarcheService(
         logger.debug { "Fetching marches with status: $statut" }
         return marcheRepository.findByStatut(statut)
     }
+
+    fun findByConvention(conventionId: Long): List<Marche> {
+        logger.debug { "Fetching marches for convention ID: $conventionId" }
+        return marcheRepository.findByConventionId(conventionId).also { marches ->
+            logger.info { "Found ${marches.size} marches for convention $conventionId" }
+        }
+    }
 }

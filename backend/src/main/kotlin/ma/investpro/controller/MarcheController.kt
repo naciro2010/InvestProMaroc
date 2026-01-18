@@ -81,6 +81,13 @@ class MarcheController(private val marcheService: MarcheService) {
         return ResponseEntity.ok(marches)
     }
 
+    @GetMapping("/convention/{conventionId}")
+    fun getMarchesByConvention(@PathVariable conventionId: Long): ResponseEntity<List<Marche>> {
+        logger.info { "🌐 API: GET /api/marches/convention/$conventionId" }
+        val marches = marcheService.findByConvention(conventionId)
+        return ResponseEntity.ok(marches)
+    }
+
     @GetMapping("/statut/{statut}")
     fun getMarchesByStatut(@PathVariable statut: StatutMarche): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches/statut/$statut" }

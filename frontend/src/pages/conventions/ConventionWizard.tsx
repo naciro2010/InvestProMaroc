@@ -424,21 +424,26 @@ const ConventionWizard = () => {
   useEffect(() => {
     if (existingConvention?.data) {
       const convention = existingConvention.data
+      const formatDate = (dateStr: any) => {
+        if (!dateStr) return ''
+        return typeof dateStr === 'string' ? dateStr.split('T')[0] : new Date(dateStr).toISOString().split('T')[0]
+      }
+
       setFormData({
         code: convention.code || '',
-        numeroConvention: convention.numero || '',
+        numeroConvention: '', // Not in API
         libelle: convention.designation || '',
         objet: convention.objet || '',
         objetRich: convention.objetRich || '',
         type: convention.type || 'CADRE',
         statut: convention.status || 'BROUILLON',
         tauxCommission: convention.tauxCommission || 3.5,
-        baseCalcul: convention.baseCalcul || 'MONTANT_TTC',
+        baseCalcul: 'MONTANT_HT', // Default, not in API
         montant: convention.budgetTotal || 0,
-        dateSignature: convention.dateSignature || new Date().toISOString().split('T')[0],
-        dateDebut: convention.dateDebut ? convention.dateDebut.split('T')[0] : new Date().toISOString().split('T')[0],
-        dateFin: convention.dateFin ? convention.dateFin.split('T')[0] : '',
-        tauxTva: convention.tauxTva || 20,
+        dateSignature: new Date().toISOString().split('T')[0], // Not in API
+        dateDebut: formatDate(convention.dateDebut),
+        dateFin: formatDate(convention.dateFin),
+        tauxTva: 20, // Default, not in API
         partenaires: [],
         mo: [],
         mod: [],

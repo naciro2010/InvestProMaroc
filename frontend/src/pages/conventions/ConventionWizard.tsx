@@ -42,7 +42,7 @@ interface ConventionFormData {
   objet: string
   objetRich: string
   type: 'CADRE' | 'SPECIFIQUE'
-  statut: 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_EXECUTION' | 'ACHEVE'
+  statut: 'BROUILLON'
   tauxCommission: number
   baseCalcul: 'MONTANT_TTC' | 'MONTANT_HT'
   montant: number
@@ -148,8 +148,8 @@ const ConventionWizard = () => {
               <Divider sx={{ mb: 3 }} />
             </Box>
 
-            {/* Row 1: Code, Numéro, Statut */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+            {/* Row 1: Code, Numéro */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <TextField
                 fullWidth
                 label="Code"
@@ -168,20 +168,6 @@ const ConventionWizard = () => {
                 placeholder="N°2024/001"
                 size="small"
               />
-              <TextField
-                fullWidth
-                select
-                label="Statut"
-                value={formData.statut}
-                onChange={handleChange('statut')}
-                size="small"
-              >
-                <MenuItem value="BROUILLON">Brouillon</MenuItem>
-                <MenuItem value="SOUMIS">Soumis</MenuItem>
-                <MenuItem value="VALIDEE">Validée</MenuItem>
-                <MenuItem value="EN_EXECUTION">En exécution</MenuItem>
-                <MenuItem value="ACHEVE">Achevée</MenuItem>
-              </TextField>
             </Box>
 
             {/* Row 2: Type de convention */}
@@ -195,10 +181,17 @@ const ConventionWizard = () => {
                 onChange={handleChange('type')}
                 size="small"
               >
-                <MenuItem value="CADRE">CADRE - Convention cadre</MenuItem>
-                <MenuItem value="SPECIFIQUE">SPECIFIQUE - Convention spécifique</MenuItem>
+                <MenuItem value="CADRE">CADRE - Convention cadre (parente)</MenuItem>
+                <MenuItem value="SPECIFIQUE">SPECIFIQUE - Convention spécifique (dépendante)</MenuItem>
               </TextField>
             </Box>
+
+            {/* Info message */}
+            <Alert severity="info" sx={{ mt: 1 }}>
+              {formData.type === 'CADRE'
+                ? '📌 Une convention CADRE sert de base. Vous pourrez ajouter des sous-conventions après la création.'
+                : '⚠️ Une convention SPECIFIQUE doit être créée via une convention CADRE existante. Créez d\'abord une CADRE.'}
+            </Alert>
 
             {/* Row 3: Libellé */}
             <TextField
@@ -372,7 +365,7 @@ const ConventionWizard = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Numéro de convention
+                      Numéro
                     </Typography>
                     <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
                       {formData.numeroConvention}
@@ -383,21 +376,13 @@ const ConventionWizard = () => {
                       Type
                     </Typography>
                     <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.type === 'CADRE' ? 'Convention cadre' : 'Convention spécifique'}
+                      {formData.type === 'CADRE' ? 'Convention CADRE' : 'Convention SPECIFIQUE'}
                     </Typography>
                   </Box>
                 </Box>
 
-                {/* Row 2: Statut, Montant, Taux */}
+                {/* Row 2: Montant, Taux, Base */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Statut
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.statut}
-                    </Typography>
-                  </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary" fontWeight={600}>
                       Montant
@@ -411,32 +396,30 @@ const ConventionWizard = () => {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Taux de commission
+                      Taux commission
                     </Typography>
                     <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
                       {formData.tauxCommission}%
                     </Typography>
                   </Box>
-                </Box>
-
-                {/* Row 3: Base calcul, TVA */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Base de calcul
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.baseCalcul === 'MONTANT_TTC' ? 'Montant TTC' : 'Montant HT'}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Taux TVA
+                      TVA
                     </Typography>
                     <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
                       {formData.tauxTva}%
                     </Typography>
                   </Box>
+                </Box>
+
+                {/* Row 3: Base de calcul */}
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    Base de calcul
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                    {formData.baseCalcul === 'MONTANT_TTC' ? 'Montant TTC' : 'Montant HT'}
+                  </Typography>
                 </Box>
 
                 {/* Row 4: Libellé (full width) */}
@@ -487,7 +470,7 @@ const ConventionWizard = () => {
     <AppLayout>
       <SimplePageLayout
         title="Nouvelle Convention"
-        subtitle="Créer une nouvelle convention en 3 étapes simples"
+        subtitle="Créer une convention CADRE ou NON-CADRE en 3 étapes"
         actions={
           <Button
             variant="outlined"
@@ -558,6 +541,13 @@ const ConventionWizard = () => {
                   : 'Suivant'}
               </Button>
             </Stack>
+
+            {/* Info Alert */}
+            {activeStep === 2 && (
+              <Alert severity="info" sx={{ mt: 3 }}>
+                ℹ️ Après la création, vous pourrez ajouter des sous-conventions ou des conventions spécifiques à partir de la page de détail.
+              </Alert>
+            )}
 
             {/* Error Alert */}
             {createMutation.error && (

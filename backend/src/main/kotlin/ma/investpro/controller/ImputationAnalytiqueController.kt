@@ -7,6 +7,7 @@ import ma.investpro.entity.TypeImputation
 import ma.investpro.service.ImputationAnalytiqueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
@@ -24,6 +25,7 @@ class ImputationAnalytiqueController(
     // ========== CRUD Imputations ==========
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getAll(
         @RequestParam(required = false) type: TypeImputation?,
         @RequestParam(required = false) referenceId: Long?
@@ -37,6 +39,7 @@ class ImputationAnalytiqueController(
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getById(@PathVariable id: Long): ResponseEntity<ImputationAnalytique> {
         val imputation = imputationService.findById(id)
             ?: return ResponseEntity.notFound().build()
@@ -44,6 +47,7 @@ class ImputationAnalytiqueController(
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun create(@RequestBody imputation: ImputationAnalytique): ResponseEntity<ImputationAnalytique> {
         return try {
             val created = imputationService.create(imputation)
@@ -54,6 +58,7 @@ class ImputationAnalytiqueController(
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun update(
         @PathVariable id: Long,
         @RequestBody imputation: ImputationAnalytique
@@ -67,6 +72,7 @@ class ImputationAnalytiqueController(
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     fun delete(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
             imputationService.delete(id)
@@ -79,6 +85,7 @@ class ImputationAnalytiqueController(
     // ========== Validation ==========
 
     @GetMapping("/validate-total")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun validateTotal(
         @RequestParam type: TypeImputation,
         @RequestParam referenceId: Long,
@@ -98,6 +105,7 @@ class ImputationAnalytiqueController(
     }
 
     @GetMapping("/total")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getTotal(
         @RequestParam type: TypeImputation,
         @RequestParam referenceId: Long
@@ -109,6 +117,7 @@ class ImputationAnalytiqueController(
     // ========== Reporting et Agrégations ==========
 
     @GetMapping("/reporting/by-dimension")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun aggregateByDimension(
         @RequestParam type: TypeImputation,
         @RequestParam dimension: String
@@ -118,6 +127,7 @@ class ImputationAnalytiqueController(
     }
 
     @GetMapping("/reporting/by-two-dimensions")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun aggregateByTwoDimensions(
         @RequestParam type: TypeImputation,
         @RequestParam dimension1: String,
@@ -146,6 +156,7 @@ class ImputationAnalytiqueController(
     // ========== Statistiques ==========
 
     @GetMapping("/statistiques")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getStatistiques(): ResponseEntity<ImputationStatistiques> {
         return ResponseEntity.ok(imputationService.getStatistiques())
     }

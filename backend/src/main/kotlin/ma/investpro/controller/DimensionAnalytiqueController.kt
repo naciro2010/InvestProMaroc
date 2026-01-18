@@ -6,6 +6,7 @@ import ma.investpro.entity.ValeurDimension
 import ma.investpro.service.DimensionAnalytiqueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -22,21 +23,25 @@ class DimensionAnalytiqueController(
     // ========== CRUD Dimensions ==========
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getAll(): ResponseEntity<List<DimensionAnalytique>> {
         return ResponseEntity.ok(dimensionService.findAll())
     }
 
     @GetMapping("/actives")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getActives(): ResponseEntity<List<DimensionAnalytique>> {
         return ResponseEntity.ok(dimensionService.findActive())
     }
 
     @GetMapping("/obligatoires")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getObligatoires(): ResponseEntity<List<DimensionAnalytique>> {
         return ResponseEntity.ok(dimensionService.findObligatoires())
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getById(@PathVariable id: Long): ResponseEntity<DimensionAnalytique> {
         val dimension = dimensionService.findById(id)
             ?: return ResponseEntity.notFound().build()
@@ -44,6 +49,7 @@ class DimensionAnalytiqueController(
     }
 
     @GetMapping("/code/{code}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getByCode(@PathVariable code: String): ResponseEntity<DimensionAnalytique> {
         val dimension = dimensionService.findByCode(code)
             ?: return ResponseEntity.notFound().build()
@@ -51,6 +57,7 @@ class DimensionAnalytiqueController(
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun create(@RequestBody dimension: DimensionAnalytique): ResponseEntity<DimensionAnalytique> {
         return try {
             val created = dimensionService.create(dimension)
@@ -61,6 +68,7 @@ class DimensionAnalytiqueController(
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun update(
         @PathVariable id: Long,
         @RequestBody dimension: DimensionAnalytique
@@ -74,6 +82,7 @@ class DimensionAnalytiqueController(
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     fun delete(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
             dimensionService.delete(id)
@@ -84,6 +93,7 @@ class DimensionAnalytiqueController(
     }
 
     @PostMapping("/{id}/toggle-active")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun toggleActive(@PathVariable id: Long): ResponseEntity<DimensionAnalytique> {
         return try {
             val dimension = dimensionService.toggleActive(id)
@@ -96,16 +106,19 @@ class DimensionAnalytiqueController(
     // ========== CRUD Valeurs ==========
 
     @GetMapping("/{id}/valeurs")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getValeurs(@PathVariable id: Long): ResponseEntity<List<ValeurDimension>> {
         return ResponseEntity.ok(dimensionService.findValeursByDimension(id))
     }
 
     @GetMapping("/{id}/valeurs/actives")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getValeursActives(@PathVariable id: Long): ResponseEntity<List<ValeurDimension>> {
         return ResponseEntity.ok(dimensionService.findValeursActivesByDimension(id))
     }
 
     @PostMapping("/{id}/valeurs")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun createValeur(
         @PathVariable id: Long,
         @RequestBody valeur: ValeurDimension
@@ -119,6 +132,7 @@ class DimensionAnalytiqueController(
     }
 
     @PutMapping("/valeurs/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun updateValeur(
         @PathVariable id: Long,
         @RequestBody valeur: ValeurDimension
@@ -132,6 +146,7 @@ class DimensionAnalytiqueController(
     }
 
     @DeleteMapping("/valeurs/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     fun deleteValeur(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
             dimensionService.deleteValeur(id)
@@ -142,6 +157,7 @@ class DimensionAnalytiqueController(
     }
 
     @PostMapping("/valeurs/{id}/toggle-active")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun toggleValeurActive(@PathVariable id: Long): ResponseEntity<ValeurDimension> {
         return try {
             val valeur = dimensionService.toggleValeurActive(id)

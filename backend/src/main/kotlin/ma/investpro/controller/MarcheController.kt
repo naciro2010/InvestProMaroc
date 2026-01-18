@@ -23,6 +23,7 @@ class MarcheController(private val marcheService: MarcheService) {
      * Supports micro-frontends pattern where each component loads only what it needs
      */
     @GetMapping("/list")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarchesList(): ResponseEntity<List<MarcheListDTO>> {
         logger.info { "🌐 API: GET /api/marches/list (optimized for list view)" }
         val marches = marcheService.findAllForListView()
@@ -34,6 +35,7 @@ class MarcheController(private val marcheService: MarcheService) {
      * Returns counts and aggregations without loading full entities
      */
     @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarchesStats(): ResponseEntity<Map<String, Any>> {
         logger.info { "🌐 API: GET /api/marches/stats" }
         val stats = marcheService.getMarcheStats()
@@ -41,6 +43,7 @@ class MarcheController(private val marcheService: MarcheService) {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getAllMarches(): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches (full list with all relations)" }
         val marches = marcheService.findAll()
@@ -48,6 +51,7 @@ class MarcheController(private val marcheService: MarcheService) {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarcheById(@PathVariable id: Long): ResponseEntity<Marche> {
         logger.info { "🌐 API: GET /api/marches/$id" }
         return try {

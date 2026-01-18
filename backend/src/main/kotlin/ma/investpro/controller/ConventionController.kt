@@ -34,7 +34,7 @@ class ConventionController(
     // ========== CRUD Endpoints ==========
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")  // Read-only for all authenticated users
     fun getAll(): ResponseEntity<List<ConventionDTO>> {
         val conventions = conventionService.findAll()
         val dtos = conventionMapper.toDTOList(conventions)

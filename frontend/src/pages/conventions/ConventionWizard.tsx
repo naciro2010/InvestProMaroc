@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   Box,
   Container,
@@ -32,7 +32,7 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
 } from '@mui/icons-material'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
 import { SimplePageLayout } from '../../components/layout/PageLayout'
 import FileUploadZone from '../../components/common/FileUploadZone'
@@ -384,9 +384,11 @@ const AddVersementForm = ({ partenaires, mods, onAdd }: AddVersementFormProps) =
 
 const ConventionWizard = () => {
   const navigate = useNavigate()
+  const { id } = useParams<{ id?: string }>()
+  const isEditing = !!id
   const [activeStep, setActiveStep] = useState(0)
 
-  const [formData, setFormData] = useState<ConventionFormData>({
+  const defaultFormData: ConventionFormData = {
     code: '',
     numeroConvention: '',
     libelle: '',
@@ -407,7 +409,50 @@ const ConventionWizard = () => {
     imputations: [],
     versements: [],
     files: [],
+  }
+
+  const [formData, setFormData] = useState<ConventionFormData>(defaultFormData)
+
+  // Load existing convention when in edit mode
+  const { data: existingConvention, isLoading: isLoadingConvention } = useQuery({
+    queryKey: ['convention', id],
+    queryFn: () => id ? conventionsAPI.getById(parseInt(id)) : null,
+    enabled: isEditing,
   })
+
+  // Initialize form with loaded data
+  useEffect(() => {
+    if (existingConvention?.data) {
+      const convention = existingConvention.data
+      const formatDate = (dateStr: any) => {
+        if (!dateStr) return ''
+        return typeof dateStr === 'string' ? dateStr.split('T')[0] : new Date(dateStr).toISOString().split('T')[0]
+      }
+
+      setFormData({
+        code: convention.code || '',
+        numeroConvention: '', // Not in API
+        libelle: convention.designation || '',
+        objet: convention.objet || '',
+        objetRich: convention.objetRich || '',
+        type: convention.type || 'CADRE',
+        statut: convention.status || 'BROUILLON',
+        tauxCommission: convention.tauxCommission || 3.5,
+        baseCalcul: 'MONTANT_HT', // Default, not in API
+        montant: convention.budgetTotal || 0,
+        dateSignature: new Date().toISOString().split('T')[0], // Not in API
+        dateDebut: formatDate(convention.dateDebut),
+        dateFin: formatDate(convention.dateFin),
+        tauxTva: 20, // Default, not in API
+        partenaires: [],
+        mo: [],
+        mod: [],
+        imputations: [],
+        versements: [],
+        files: [],
+      })
+    }
+  }, [existingConvention])
 
   // React Query mutation pour la création
   const createMutation = useMutation({
@@ -434,6 +479,32 @@ const ConventionWizard = () => {
     },
   })
 
+  // React Query mutation pour la modification
+  const updateMutation = useMutation({
+    mutationFn: async (data: ConventionFormData) => {
+      const payload = {
+        code: data.code,
+        objet: data.objet,
+        objetRich: data.objetRich,
+        type: data.type,
+        tauxCommission: data.tauxCommission,
+        budgetTotal: data.montant,
+        dateDebut: data.dateDebut,
+        dateFin: data.dateFin,
+        tauxTva: data.tauxTva,
+        baseCalcul: data.baseCalcul,
+        numeroConvention: data.numeroConvention,
+        designation: data.libelle,
+        dateSignature: data.dateSignature,
+      }
+      return await conventionsAPI.update(parseInt(id!), payload)
+    },
+    onSuccess: () => {
+      // Redirect to convention detail page after update
+      navigate(`/conventions/${id}`)
+    },
+  })
+
   const handleChange = (field: keyof ConventionFormData) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -442,8 +513,12 @@ const ConventionWizard = () => {
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
-      // Create the convention with core fields only
-      createMutation.mutate(formData)
+      // Create or update the convention with core fields only
+      if (isEditing) {
+        updateMutation.mutate(formData)
+      } else {
+        createMutation.mutate(formData)
+      }
     } else {
       setActiveStep((prev) => prev + 1)
     }
@@ -1193,16 +1268,26 @@ const ConventionWizard = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
+  if (isLoadingConvention) {
+    return (
+      <AppLayout>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <Typography variant="h6">Chargement...</Typography>
+        </Box>
+      </AppLayout>
+    )
+  }
+
   return (
     <AppLayout>
       <SimplePageLayout
-        title="Nouvelle Convention"
-        subtitle="Créer une convention CADRE ou NON_CADRE en 5 étapes"
+        title={isEditing ? 'Modifier la Convention' : 'Nouvelle Convention'}
+        subtitle={isEditing ? `Modifier la convention en 5 étapes` : 'Créer une convention CADRE ou NON_CADRE en 5 étapes'}
         actions={
           <Button
             variant="outlined"
             startIcon={<ArrowBack />}
-            onClick={() => navigate('/conventions')}
+            onClick={() => isEditing ? navigate(`/conventions/${id}`) : navigate('/conventions')}
             size={isMobile ? 'small' : 'medium'}
           >
             Retour
@@ -1266,14 +1351,14 @@ const ConventionWizard = () => {
               <Button
                 variant="contained"
                 onClick={handleNext}
-                disabled={!isStepValid() || createMutation.isPending}
+                disabled={!isStepValid() || createMutation.isPending || updateMutation.isPending}
                 endIcon={activeStep === steps.length - 1 ? <Check /> : <ArrowForward />}
                 fullWidth={isMobile}
               >
-                {createMutation.isPending
-                  ? 'Création...'
+                {createMutation.isPending || updateMutation.isPending
+                  ? isEditing ? 'Modification...' : 'Création...'
                   : activeStep === steps.length - 1
-                  ? 'Créer la convention'
+                  ? isEditing ? 'Modifier la convention' : 'Créer la convention'
                   : 'Suivant'}
               </Button>
             </Stack>
@@ -1281,15 +1366,16 @@ const ConventionWizard = () => {
             {/* Info Alert */}
             {activeStep === steps.length - 1 && (
               <Alert severity="info" sx={{ mt: 3 }}>
-                ℹ️ Après la création, vous pourrez ajouter des sous-conventions, des avenants, et gérer les allocations détaillées à partir de la page de détail.
+                ℹ️ {isEditing ? 'Après la modification, vous serez redirigé vers la page de détail.' : 'Après la création, vous pourrez ajouter des sous-conventions, des avenants, et gérer les allocations détaillées à partir de la page de détail.'}
               </Alert>
             )}
 
             {/* Error Alert */}
-            {createMutation.error && (
+            {(createMutation.error || updateMutation.error) && (
               <Alert severity="error" sx={{ mt: 3 }}>
                 {(createMutation.error as any)?.response?.data?.message ||
-                  'Erreur lors de la création de la convention'}
+                  (updateMutation.error as any)?.response?.data?.message ||
+                  (isEditing ? 'Erreur lors de la modification de la convention' : 'Erreur lors de la création de la convention')}
               </Alert>
             )}
           </Paper>

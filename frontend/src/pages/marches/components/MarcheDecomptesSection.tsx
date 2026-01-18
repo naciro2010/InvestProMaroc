@@ -16,7 +16,7 @@ import {
 } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
-import { decomptesAPI } from '../../../lib/api'
+import { marchesAPI } from '../../../lib/api'
 import colors from '../../../theme/colors'
 
 interface MarcheDecomptesSectionProps {
@@ -51,12 +51,10 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
       setLoading(true)
       setError(null)
       // Micro-endpoint dédié aux décomptes d'un marché
-      // À terme: GET /marches/{id}/decomptes
-      // Pour l'instant: filtrer depuis l'endpoint global
-      const { data } = await decomptesAPI.getAll()
-      const allDecomptes = Array.isArray(data.data) ? data.data : data.data?.data || []
-      const filteredDecomptes = allDecomptes.filter((d: any) => d.marche?.id === marcheId)
-      setDecomptes(filteredDecomptes)
+      // Endpoint: GET /marches/{id}/decomptes
+      const { data } = await marchesAPI.getDecomptes(marcheId)
+      const decomptesData = Array.isArray(data.data) ? data.data : data.data?.data || []
+      setDecomptes(decomptesData)
     } catch (err) {
       console.error('Erreur chargement décomptes:', err)
       setError('Impossible de charger les décomptes')

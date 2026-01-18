@@ -19,9 +19,11 @@ import MarcheFormPage from './pages/marches/MarcheFormPage'
 import MarcheWizard from './pages/marches/MarcheWizard'
 import ProjetsPage from './pages/projets/ProjetsPage'
 import ProjetFormPage from './pages/projets/ProjetFormPage'
+import ProjetWizard from './pages/projets/ProjetWizard'
 import ProjetDetailPage from './pages/projets/ProjetDetailPage'
 import BudgetsPage from './pages/budgets/BudgetsPage'
 import BudgetFormPage from './pages/budgets/BudgetFormPage'
+import BudgetWizard from './pages/budgets/BudgetWizard'
 import BudgetDetailPage from './pages/budgets/BudgetDetailPage'
 import DecomptesPage from './pages/decomptes/DecomptesPageComplete'
 import DecompteWizard from './pages/decomptes/DecompteWizard'
@@ -228,7 +230,7 @@ function App() {
             path="/projets/nouveau"
             element={
               <ProtectedRoute>
-                <ProjetFormPage />
+                <ProjetWizard />
               </ProtectedRoute>
             }
           />
@@ -262,7 +264,7 @@ function App() {
             path="/budgets/nouveau"
             element={
               <ProtectedRoute>
-                <BudgetFormPage />
+                <BudgetWizard />
               </ProtectedRoute>
             }
           />

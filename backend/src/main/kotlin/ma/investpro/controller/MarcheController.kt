@@ -81,6 +81,25 @@ class MarcheController(private val marcheService: MarcheService) {
         return ResponseEntity.ok(marches)
     }
 
+    @GetMapping("/convention/{conventionId}")
+    fun getMarchesByConvention(@PathVariable conventionId: Long): ResponseEntity<List<Marche>> {
+        logger.info { "🌐 API: GET /api/marches/convention/$conventionId" }
+        val marches = marcheService.findByConvention(conventionId)
+        return ResponseEntity.ok(marches)
+    }
+
+    @GetMapping("/projet/{projetId}")
+    fun getMarchesByProjet(@PathVariable projetId: Long): ResponseEntity<List<Marche>> {
+        logger.info { "🌐 API: GET /api/marches/projet/$projetId" }
+        return try {
+            val marches = marcheService.findByProjet(projetId)
+            ResponseEntity.ok(marches)
+        } catch (e: IllegalArgumentException) {
+            logger.error { "❌ API ERROR: ${e.message}" }
+            ResponseEntity.notFound().build()
+        }
+    }
+
     @GetMapping("/statut/{statut}")
     fun getMarchesByStatut(@PathVariable statut: StatutMarche): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches/statut/$statut" }

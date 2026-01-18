@@ -36,7 +36,7 @@ import {
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
-import { conventionsAPI } from '../../lib/api'
+import { api, conventionsAPI, avenantConventionsAPI } from '../../lib/api'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -147,10 +147,11 @@ const ConventionDetailPageModern = () => {
 
   const loadAvenants = async (conventionId: number) => {
     try {
-      // TODO: Replace with actual API call
-      setAvenants([])
+      const res = await avenantConventionsAPI.getByConvention(conventionId)
+      setAvenants(res.data.data || res.data || [])
     } catch (err) {
       console.error('Error loading avenants:', err)
+      setAvenants([])
     }
   }
 
@@ -165,19 +166,21 @@ const ConventionDetailPageModern = () => {
 
   const loadProjets = async (conventionId: number) => {
     try {
-      // TODO: Replace with actual API call
-      setProjets([])
+      const res = await api.get(`/projets/convention/${conventionId}`)
+      setProjets(res.data.data || res.data || [])
     } catch (err) {
       console.error('Error loading projets:', err)
+      setProjets([])
     }
   }
 
   const loadMarches = async (conventionId: number) => {
     try {
-      // TODO: Replace with actual API call
-      setMarches([])
+      const res = await api.get(`/marches/convention/${conventionId}`)
+      setMarches(res.data.data || res.data || [])
     } catch (err) {
       console.error('Error loading marchés:', err)
+      setMarches([])
     }
   }
 

@@ -4,6 +4,7 @@ import ma.investpro.entity.Marche
 import ma.investpro.entity.StatutMarche
 import ma.investpro.repository.MarcheRepository
 import ma.investpro.repository.FournisseurRepository
+import ma.investpro.repository.ProjetRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,7 +16,8 @@ private val logger = KotlinLogging.logger {}
 @Transactional
 class MarcheService(
     private val marcheRepository: MarcheRepository,
-    private val fournisseurRepository: FournisseurRepository
+    private val fournisseurRepository: FournisseurRepository,
+    private val projetRepository: ProjetRepository
 ) {
 
     fun findAll(): List<Marche> {
@@ -137,5 +139,35 @@ class MarcheService(
     fun findByStatut(statut: StatutMarche): List<Marche> {
         logger.debug { "Fetching marches with status: $statut" }
         return marcheRepository.findByStatut(statut)
+    }
+
+    fun findByConvention(conventionId: Long): List<Marche> {
+        logger.debug { "Fetching marches for convention ID: $conventionId" }
+        return marcheRepository.findByConventionId(conventionId).also { marches ->
+            logger.info { "Found ${marches.size} marches for convention $conventionId" }
+        }
+    }
+
+    fun findByProjet(projetId: Long): List<Marche> {
+        logger.debug { "Fetching marches for projet ID: $projetId" }
+
+        // Récupérer le projet
+        val projet = projetRepository.findById(projetId)
+            .orElseThrow {
+                logger.warn { "Projet not found - ID: $projetId" }
+                IllegalArgumentException("Projet avec ID $projetId non trouvé")
+            }
+
+        // Si le projet a une convention, récupérer ses marchés
+        return if (projet.convention != null) {
+            val conventionId = projet.convention!!.id!!
+            logger.debug { "Projet $projetId has convention $conventionId, fetching marches" }
+            marcheRepository.findByConventionId(conventionId).also { marches ->
+                logger.info { "Found ${marches.size} marches for projet $projetId (via convention $conventionId)" }
+            }
+        } else {
+            logger.info { "Projet $projetId has no convention, returning empty list" }
+            emptyList()
+        }
     }
 }

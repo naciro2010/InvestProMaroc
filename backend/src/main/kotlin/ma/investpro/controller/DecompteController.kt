@@ -23,6 +23,7 @@ class DecompteController(private val decompteService: DecompteService) {
      * Supports micro-frontends pattern where each component loads only what it needs
      */
     @GetMapping("/list")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getDecomptesList(): ResponseEntity<List<DecompteListDTO>> {
         logger.info { "🌐 API: GET /api/decomptes/list (optimized for list view)" }
         val decomptes = decompteService.findAllForListView()
@@ -30,6 +31,7 @@ class DecompteController(private val decompteService: DecompteService) {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getAllDecomptes(): ResponseEntity<List<Decompte>> {
         logger.info { "🌐 API: GET /api/decomptes (full list with all relations)" }
         val decomptes = decompteService.findAll()
@@ -37,6 +39,7 @@ class DecompteController(private val decompteService: DecompteService) {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getDecompteById(@PathVariable id: Long): ResponseEntity<Decompte> {
         logger.info { "🌐 API: GET /api/decomptes/$id" }
         return try {
@@ -88,6 +91,7 @@ class DecompteController(private val decompteService: DecompteService) {
     }
 
     @GetMapping("/marche/{marcheId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getDecomptesByMarche(@PathVariable marcheId: Long): ResponseEntity<List<Decompte>> {
         logger.info { "🌐 API: GET /api/decomptes/marche/$marcheId" }
         val decomptes = decompteService.findByMarche(marcheId)
@@ -100,6 +104,7 @@ class DecompteController(private val decompteService: DecompteService) {
      * Part of micro-frontends architecture
      */
     @GetMapping("/{id}/retenues")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getDecompteRetenues(@PathVariable id: Long): ResponseEntity<List<Any>> {
         logger.info { "🌐 API: GET /api/decomptes/$id/retenues (granular: retentions only)" }
         return try {
@@ -117,6 +122,7 @@ class DecompteController(private val decompteService: DecompteService) {
      * Part of micro-frontends architecture
      */
     @GetMapping("/{id}/imputations")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getDecompteImputations(@PathVariable id: Long): ResponseEntity<List<Any>> {
         logger.info { "🌐 API: GET /api/decomptes/$id/imputations (granular: allocations only)" }
         return try {

@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.MarcheListDTO
 import ma.investpro.entity.Marche
 import ma.investpro.entity.StatutMarche
 import ma.investpro.repository.MarcheRepository
@@ -9,6 +10,7 @@ import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 private val logger = KotlinLogging.logger {}
 
@@ -169,5 +171,112 @@ class MarcheService(
             logger.info { "Projet $projetId has no convention, returning empty list" }
             emptyList()
         }
+    }
+
+    /**
+     * Optimized list view - returns only essential fields for efficient loading
+     * Used by frontend list page to display marches with minimal data transfer
+     */
+    fun findAllForListView(): List<MarcheListDTO> {
+        logger.debug { "Fetching all marches for list view (optimized)" }
+        return marcheRepository.findAll().map { marche ->
+            convertToListDTO(marche)
+        }.also { list ->
+            logger.info { "Found ${list.size} marches for list view" }
+        }
+    }
+
+    /**
+     * Convert Marche entity to MarcheListDTO with counts instead of full collections
+     */
+    private fun convertToListDTO(marche: Marche): MarcheListDTO {
+        return MarcheListDTO(
+            id = marche.id,
+            numeroMarche = marche.numeroMarche,
+            numAo = marche.numAo,
+            dateMarche = marche.dateMarche,
+            fournisseurId = marche.fournisseur?.id ?: 0,
+            fournisseurCode = marche.fournisseur?.code ?: "",
+            fournisseurNom = marche.fournisseur?.raisonSociale ?: "",
+            fournisseurIce = marche.fournisseur?.ice,
+            conventionId = marche.convention?.id,
+            conventionNumero = marche.convention?.numero,
+            conventionLibelle = marche.convention?.libelle,
+            objet = marche.objet,
+            montantHt = marche.montantHt,
+            tauxTva = marche.tauxTva,
+            montantTva = marche.montantTva,
+            montantTtc = marche.montantTtc,
+            statut = marche.statut.toString(),
+            dateDebut = marche.dateDebut,
+            dateFinPrevue = marche.dateFinPrevue,
+            delaiExecutionMois = marche.delaiExecutionMois,
+            adresse = marche.adresse,
+            latitude = marche.latitude,
+            longitude = marche.longitude,
+            zoneGeographique = marche.zoneGeographique,
+            nbLignes = marche.lignes.size,
+            nbAvenants = marche.avenants.size,
+            nbDecomptes = marche.decomptes.size,
+            actif = true, // Adjust based on your entity structure
+            createdAt = marche.createdAt
+        )
+    }
+
+    /**
+     * Get lignes for a specific marche
+     * Called by detail page component to load line items separately
+     */
+    fun findLignesByMarcheId(marcheId: Long): List<Any> {
+        logger.debug { "Fetching lignes for marche ID: $marcheId" }
+        val marche = marcheRepository.findById(marcheId)
+            .orElseThrow {
+                logger.warn { "Marche not found - ID: $marcheId" }
+                IllegalArgumentException("Marche avec ID $marcheId non trouve")
+            }
+        return marche.lignes.toList() as List<Any>
+    }
+
+    /**
+     * Get avenants for a specific marche
+     * Called by detail page component to load amendments separately
+     */
+    fun findAvenantsByMarcheId(marcheId: Long): List<Any> {
+        logger.debug { "Fetching avenants for marche ID: $marcheId" }
+        val marche = marcheRepository.findById(marcheId)
+            .orElseThrow {
+                logger.warn { "Marche not found - ID: $marcheId" }
+                IllegalArgumentException("Marche avec ID $marcheId non trouve")
+            }
+        return marche.avenants.toList() as List<Any>
+    }
+
+    /**
+     * Get decomptes for a specific marche
+     * Called by detail page component to load billing statements separately
+     */
+    fun findDecomptesByMarcheId(marcheId: Long): List<Any> {
+        logger.debug { "Fetching decomptes for marche ID: $marcheId" }
+        val marche = marcheRepository.findById(marcheId)
+            .orElseThrow {
+                logger.warn { "Marche not found - ID: $marcheId" }
+                IllegalArgumentException("Marche avec ID $marcheId non trouve")
+            }
+        return marche.decomptes.toList() as List<Any>
+    }
+
+    /**
+     * Get marche statistics (counts) without loading full collections
+     */
+    fun getMarcheStats(): Map<String, Any> {
+        logger.debug { "Calculating marche statistics" }
+        val allMarches = marcheRepository.findAll()
+
+        return mapOf(
+            "total" to allMarches.size,
+            "byStatus" to allMarches.groupingBy { it.statut }.eachCount(),
+            "totalAmount" to allMarches.sumOf { it.montantTtc },
+            "avgAmount" to if (allMarches.isNotEmpty()) allMarches.sumOf { it.montantTtc } / BigDecimal(allMarches.size) else BigDecimal.ZERO
+        )
     }
 }

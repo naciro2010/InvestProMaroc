@@ -75,7 +75,9 @@ export default function MarchesPage() {
   const fetchMarches = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/marches')
+      // Use optimized /list endpoint instead of full /marches endpoint
+      // This follows micro-frontends pattern: each component loads only what it needs
+      const response = await api.get('/marches/list')
       setMarches(response.data)
       setFilteredMarches(response.data)
     } catch (error) {

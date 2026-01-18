@@ -51,9 +51,10 @@ const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
       setLoading(true)
       setError(null)
       // Micro-endpoint dédié aux avenants d'un marché
-      // Pour l'instant retourne un tableau vide (à implémenter backend)
-      // Future endpoint: GET /marches/{id}/avenants
-      setAvenants([])
+      // Endpoint: GET /marches/{id}/avenants
+      const { data } = await marchesAPI.getAvenants(marcheId)
+      const avenantsData = Array.isArray(data.data) ? data.data : data.data?.data || []
+      setAvenants(avenantsData)
     } catch (err) {
       console.error('Erreur chargement avenants:', err)
       setError('Impossible de charger les avenants')

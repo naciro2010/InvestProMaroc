@@ -16,8 +16,22 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Card,
 } from '@mui/material'
-import { ArrowBack, ArrowForward, Check } from '@mui/icons-material'
+import {
+  ArrowBack,
+  ArrowForward,
+  Check,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
 import { SimplePageLayout } from '../../components/layout/PageLayout'
@@ -25,7 +39,15 @@ import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { conventionsAPI } from '../../lib/api'
 
-const steps = ['Informations générales', 'Paramètres financiers', 'Pièces jointes & Confirmation']
+const steps = [
+  'Informations générales',
+  'Paramètres financiers',
+  'Partenaires',
+  'Autorités de maîtrise',
+  'Imputations provisionnelles',
+  'Versements prévisionels',
+  'Pièces jointes & Confirmation',
+]
 
 interface UploadedFile {
   id: string
@@ -33,6 +55,41 @@ interface UploadedFile {
   size: number
   type: string
   url?: string
+}
+
+interface Partenaire {
+  id?: string
+  designation: string
+  budget: number
+  pourcentage: number
+  tauxCI: number
+}
+
+interface MO {
+  id?: string
+  designation: string
+  contact?: string
+}
+
+interface Imputation {
+  id?: string
+  axe: string
+  projet: string
+  volet: string
+  dateDebut: string
+  delai: number
+  dateFin: string
+}
+
+interface Versement {
+  id?: string
+  axe: string
+  projet: string
+  volet: string
+  date: string
+  montant: number
+  partenaire: string
+  mod: string
 }
 
 interface ConventionFormData {
@@ -50,7 +107,281 @@ interface ConventionFormData {
   dateDebut: string
   dateFin: string
   tauxTva: number
+  partenaires: Partenaire[]
+  mo: MO[]
+  mod: MO[]
+  imputations: Imputation[]
+  versements: Versement[]
   files: UploadedFile[]
+}
+
+// Helper Components for Adding Rows
+interface AddPartenaireFormProps {
+  onAdd: (partenaire: Partenaire) => void
+  maxBudget: number
+}
+
+const AddPartenaireForm = ({ onAdd, maxBudget }: AddPartenaireFormProps) => {
+  const [formData, setFormData] = useState({
+    designation: '',
+    budget: 0,
+    pourcentage: 0,
+    tauxCI: 0,
+  })
+
+  const handleSubmit = () => {
+    if (formData.designation && formData.budget > 0) {
+      onAdd({
+        designation: formData.designation,
+        budget: formData.budget,
+        pourcentage: formData.pourcentage,
+        tauxCI: formData.tauxCI,
+      })
+      setFormData({ designation: '', budget: 0, pourcentage: 0, tauxCI: 0 })
+    }
+  }
+
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr 1fr auto' }, gap: 1, alignItems: 'flex-end' }}>
+      <TextField
+        size="small"
+        placeholder="Nom du partenaire"
+        value={formData.designation}
+        onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+      />
+      <TextField
+        size="small"
+        type="number"
+        placeholder="Budget"
+        value={formData.budget}
+        onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })}
+        inputProps={{ min: 0 }}
+      />
+      <TextField
+        size="small"
+        type="number"
+        placeholder="%"
+        value={formData.pourcentage}
+        onChange={(e) => setFormData({ ...formData, pourcentage: parseFloat(e.target.value) || 0 })}
+        inputProps={{ min: 0, max: 100 }}
+      />
+      <TextField
+        size="small"
+        type="number"
+        placeholder="Taux CI %"
+        value={formData.tauxCI}
+        onChange={(e) => setFormData({ ...formData, tauxCI: parseFloat(e.target.value) || 0 })}
+        inputProps={{ min: 0 }}
+      />
+      <Button variant="contained" size="small" onClick={handleSubmit}>
+        Ajouter
+      </Button>
+    </Box>
+  )
+}
+
+interface AddMOFormProps {
+  onAdd: (mo: MO) => void
+}
+
+const AddMOForm = ({ onAdd }: AddMOFormProps) => {
+  const [formData, setFormData] = useState({ designation: '', contact: '' })
+
+  const handleSubmit = () => {
+    if (formData.designation) {
+      onAdd(formData)
+      setFormData({ designation: '', contact: '' })
+    }
+  }
+
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr auto' }, gap: 1, alignItems: 'flex-end' }}>
+      <TextField
+        fullWidth
+        size="small"
+        placeholder="Désignation"
+        value={formData.designation}
+        onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+      />
+      <TextField
+        fullWidth
+        size="small"
+        placeholder="Contact"
+        value={formData.contact}
+        onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+      />
+      <Button variant="contained" size="small" onClick={handleSubmit}>
+        Ajouter
+      </Button>
+    </Box>
+  )
+}
+
+interface AddMODFormProps {
+  onAdd: (mod: MO) => void
+}
+
+const AddMODForm = ({ onAdd }: AddMODFormProps) => {
+  const [formData, setFormData] = useState({ designation: '', contact: '' })
+
+  const handleSubmit = () => {
+    if (formData.designation) {
+      onAdd(formData)
+      setFormData({ designation: '', contact: '' })
+    }
+  }
+
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr auto' }, gap: 1, alignItems: 'flex-end' }}>
+      <TextField
+        fullWidth
+        size="small"
+        placeholder="Désignation"
+        value={formData.designation}
+        onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+      />
+      <TextField
+        fullWidth
+        size="small"
+        placeholder="Contact"
+        value={formData.contact}
+        onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+      />
+      <Button variant="contained" size="small" onClick={handleSubmit}>
+        Ajouter
+      </Button>
+    </Box>
+  )
+}
+
+interface AddImputationFormProps {
+  onAdd: (imputation: Imputation) => void
+}
+
+const AddImputationForm = ({ onAdd }: AddImputationFormProps) => {
+  const [formData, setFormData] = useState({
+    axe: '',
+    projet: '',
+    volet: '',
+    dateDebut: '',
+    delai: 0,
+    dateFin: '',
+  })
+
+  const handleSubmit = () => {
+    if (formData.axe && formData.projet && formData.volet) {
+      onAdd(formData)
+      setFormData({ axe: '', projet: '', volet: '', dateDebut: '', delai: 0, dateFin: '' })
+    }
+  }
+
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(7, 1fr)' }, gap: 1, alignItems: 'flex-end' }}>
+      <TextField size="small" placeholder="Axe" value={formData.axe} onChange={(e) => setFormData({ ...formData, axe: e.target.value })} />
+      <TextField size="small" placeholder="Projet" value={formData.projet} onChange={(e) => setFormData({ ...formData, projet: e.target.value })} />
+      <TextField size="small" placeholder="Volet" value={formData.volet} onChange={(e) => setFormData({ ...formData, volet: e.target.value })} />
+      <TextField
+        size="small"
+        type="date"
+        value={formData.dateDebut}
+        onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
+        InputLabelProps={{ shrink: true }}
+      />
+      <TextField
+        size="small"
+        type="number"
+        placeholder="Délai (j)"
+        value={formData.delai}
+        onChange={(e) => setFormData({ ...formData, delai: parseInt(e.target.value) || 0 })}
+      />
+      <TextField
+        size="small"
+        type="date"
+        value={formData.dateFin}
+        onChange={(e) => setFormData({ ...formData, dateFin: e.target.value })}
+        InputLabelProps={{ shrink: true }}
+      />
+      <Button variant="contained" size="small" onClick={handleSubmit}>
+        Ajouter
+      </Button>
+    </Box>
+  )
+}
+
+interface AddVersementFormProps {
+  partenaires: string[]
+  mods: string[]
+  onAdd: (versement: Versement) => void
+}
+
+const AddVersementForm = ({ partenaires, mods, onAdd }: AddVersementFormProps) => {
+  const [formData, setFormData] = useState({
+    axe: '',
+    projet: '',
+    volet: '',
+    date: '',
+    montant: 0,
+    partenaire: '',
+    mod: '',
+  })
+
+  const handleSubmit = () => {
+    if (formData.axe && formData.projet && formData.volet && formData.montant > 0) {
+      onAdd(formData)
+      setFormData({ axe: '', projet: '', volet: '', date: '', montant: 0, partenaire: '', mod: '' })
+    }
+  }
+
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(8, 1fr)' }, gap: 1, alignItems: 'flex-end' }}>
+      <TextField size="small" placeholder="Axe" value={formData.axe} onChange={(e) => setFormData({ ...formData, axe: e.target.value })} />
+      <TextField size="small" placeholder="Projet" value={formData.projet} onChange={(e) => setFormData({ ...formData, projet: e.target.value })} />
+      <TextField size="small" placeholder="Volet" value={formData.volet} onChange={(e) => setFormData({ ...formData, volet: e.target.value })} />
+      <TextField
+        size="small"
+        type="date"
+        value={formData.date}
+        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+        InputLabelProps={{ shrink: true }}
+      />
+      <TextField
+        size="small"
+        type="number"
+        placeholder="Montant"
+        value={formData.montant}
+        onChange={(e) => setFormData({ ...formData, montant: parseFloat(e.target.value) || 0 })}
+      />
+      <TextField
+        select
+        size="small"
+        value={formData.partenaire}
+        onChange={(e) => setFormData({ ...formData, partenaire: e.target.value })}
+      >
+        <MenuItem value="">Partenaire</MenuItem>
+        {partenaires.map((p) => (
+          <MenuItem key={p} value={p}>
+            {p}
+          </MenuItem>
+        ))}
+      </TextField>
+      <TextField
+        select
+        size="small"
+        value={formData.mod}
+        onChange={(e) => setFormData({ ...formData, mod: e.target.value })}
+      >
+        <MenuItem value="">MOD</MenuItem>
+        {mods.map((m) => (
+          <MenuItem key={m} value={m}>
+            {m}
+          </MenuItem>
+        ))}
+      </TextField>
+      <Button variant="contained" size="small" onClick={handleSubmit}>
+        Ajouter
+      </Button>
+    </Box>
+  )
 }
 
 const ConventionWizard = () => {
@@ -72,6 +403,11 @@ const ConventionWizard = () => {
     dateDebut: new Date().toISOString().split('T')[0],
     dateFin: '',
     tauxTva: 20,
+    partenaires: [],
+    mo: [],
+    mod: [],
+    imputations: [],
+    versements: [],
     files: [],
   })
 
@@ -108,6 +444,7 @@ const ConventionWizard = () => {
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {
+      // Create the convention with core fields only
       createMutation.mutate(formData)
     } else {
       setActiveStep((prev) => prev + 1)
@@ -120,25 +457,59 @@ const ConventionWizard = () => {
 
   const isStepValid = () => {
     switch (activeStep) {
-      case 0:
+      case 0: // Informations générales
         return (
           formData.code &&
           formData.numeroConvention &&
           formData.libelle &&
           formData.objetRich
         )
-      case 1:
+      case 1: // Paramètres financiers
         return formData.montant > 0 && formData.tauxCommission > 0
-      case 2:
+      case 2: // Partenaires (optional but should have at least 0)
+        return true
+      case 3: // MO/MOD (optional)
+        return true
+      case 4: // Imputations (optional)
+        return true
+      case 5: // Versements (optional)
+        return true
+      case 6: // Pièces jointes & Confirmation
         return true
       default:
         return false
     }
   }
 
+  // Calculate summary statistics for recap block
+  const calculateRecapData = () => {
+    const totalPartenairesBudget = formData.partenaires.reduce(
+      (sum, p) => sum + p.budget,
+      0
+    )
+    const remainingBudget = formData.montant - totalPartenairesBudget
+    const allocatedPercentage =
+      formData.montant > 0
+        ? ((totalPartenairesBudget / formData.montant) * 100).toFixed(2)
+        : '0'
+    const totalVersements = formData.versements.reduce(
+      (sum, v) => sum + v.montant,
+      0
+    )
+
+    return {
+      totalPartenairesBudget,
+      remainingBudget,
+      allocatedPercentage,
+      totalVersements,
+    }
+  }
+
   const renderStepContent = (step: number) => {
+    const recap = calculateRecapData()
+
     switch (step) {
-      case 0:
+      case 0: // Informations générales
         return (
           <Box sx={{ display: 'grid', gap: 3 }}>
             <Box>
@@ -226,7 +597,7 @@ const ConventionWizard = () => {
           </Box>
         )
 
-      case 1:
+      case 1: // Paramètres financiers
         return (
           <Box sx={{ display: 'grid', gap: 3 }}>
             {/* Section: Paramètres financiers */}
@@ -326,7 +697,465 @@ const ConventionWizard = () => {
           </Box>
         )
 
-      case 2:
+      case 2: // Partenaires
+        return (
+          <Box sx={{ display: 'grid', gap: 3 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Allocation aux partenaires
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Box>
+
+            <Alert severity="info">
+              💡 Ajouter les partenaires et allouer des budgets. Le total ne doit pas dépasser {new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(formData.montant)}
+            </Alert>
+
+            {/* Add Partenaire Section */}
+            <Card sx={{ p: 2 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                Ajouter un partenaire
+              </Typography>
+              <AddPartenaireForm
+                onAdd={(partenaire) => {
+                  setFormData({
+                    ...formData,
+                    partenaires: [...formData.partenaires, partenaire],
+                  })
+                }}
+                maxBudget={recap.remainingBudget}
+              />
+            </Card>
+
+            {/* Partenaires Table */}
+            {formData.partenaires.length > 0 && (
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Partenaire</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Budget</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>%</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Taux CI</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {formData.partenaires.map((p, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{p.designation}</TableCell>
+                        <TableCell align="right">
+                          {new Intl.NumberFormat('fr-MA', {
+                            style: 'currency',
+                            currency: 'MAD',
+                          }).format(p.budget)}
+                        </TableCell>
+                        <TableCell align="right">{p.pourcentage.toFixed(2)}%</TableCell>
+                        <TableCell align="right">{p.tauxCI}%</TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                partenaires: formData.partenaires.filter((_, i) => i !== idx),
+                              })
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+
+            {/* Summary */}
+            <Card sx={{ p: 2, bgcolor: '#f0f7ff' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Budget total
+                  </Typography>
+                  <Typography variant="h6">
+                    {new Intl.NumberFormat('fr-MA', {
+                      style: 'currency',
+                      currency: 'MAD',
+                    }).format(formData.montant)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total alloué
+                  </Typography>
+                  <Typography variant="h6" color="primary">
+                    {new Intl.NumberFormat('fr-MA', {
+                      style: 'currency',
+                      currency: 'MAD',
+                    }).format(recap.totalPartenairesBudget)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Restant
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    color={recap.remainingBudget >= 0 ? 'success.main' : 'error.main'}
+                  >
+                    {new Intl.NumberFormat('fr-MA', {
+                      style: 'currency',
+                      currency: 'MAD',
+                    }).format(recap.remainingBudget)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    % alloué
+                  </Typography>
+                  <Typography variant="h6">{recap.allocatedPercentage}%</Typography>
+                </Box>
+              </Box>
+            </Card>
+          </Box>
+        )
+
+      case 3: // Autorités de maîtrise (MO/MOD)
+        return (
+          <Box sx={{ display: 'grid', gap: 3 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Autorités de maîtrise d'ouvrage
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+              {/* MO Column */}
+              <Box>
+                <Card sx={{ p: 2 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Maître d'ouvrage (MO)
+                  </Typography>
+                  <AddMOForm
+                    onAdd={(mo) => {
+                      setFormData({
+                        ...formData,
+                        mo: [...formData.mo, mo],
+                      })
+                    }}
+                  />
+
+                  {formData.mo.length > 0 && (
+                    <Stack spacing={1} sx={{ mt: 2 }}>
+                      {formData.mo.map((item, idx) => (
+                        <Box
+                          key={idx}
+                          sx={{
+                            p: 1.5,
+                            bgcolor: '#f5f5f5',
+                            borderRadius: 1,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>
+                              {item.designation}
+                            </Typography>
+                            {item.contact && (
+                              <Typography variant="caption" color="text.secondary">
+                                {item.contact}
+                              </Typography>
+                            )}
+                          </Box>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                mo: formData.mo.filter((_, i) => i !== idx),
+                              })
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Stack>
+                  )}
+                </Card>
+              </Box>
+
+              {/* MOD Column */}
+              <Box>
+                <Card sx={{ p: 2 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Maître d'ouvrage Délégué (MOD)
+                  </Typography>
+                  <AddMODForm
+                    onAdd={(mod) => {
+                      setFormData({
+                        ...formData,
+                        mod: [...formData.mod, mod],
+                      })
+                    }}
+                  />
+
+                  {formData.mod.length > 0 && (
+                    <Stack spacing={1} sx={{ mt: 2 }}>
+                      {formData.mod.map((item, idx) => (
+                        <Box
+                          key={idx}
+                          sx={{
+                            p: 1.5,
+                            bgcolor: '#f5f5f5',
+                            borderRadius: 1,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>
+                              {item.designation}
+                            </Typography>
+                            {item.contact && (
+                              <Typography variant="caption" color="text.secondary">
+                                {item.contact}
+                              </Typography>
+                            )}
+                          </Box>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                mod: formData.mod.filter((_, i) => i !== idx),
+                              })
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Stack>
+                  )}
+                </Card>
+              </Box>
+            </Box>
+
+            {/* Summary */}
+            <Card sx={{ p: 2, bgcolor: '#f0f7ff' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Maîtres d'ouvrage
+                  </Typography>
+                  <Typography variant="h6">{formData.mo.length}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Maîtres d'ouvrage Délégués
+                  </Typography>
+                  <Typography variant="h6">{formData.mod.length}</Typography>
+                </Box>
+              </Box>
+            </Card>
+          </Box>
+        )
+
+      case 4: // Imputations provisionnelles
+        return (
+          <Box sx={{ display: 'grid', gap: 3 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Imputations provisionnelles
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Box>
+
+            <Card sx={{ p: 2 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                Ajouter une imputation
+              </Typography>
+              <AddImputationForm
+                onAdd={(imputation) => {
+                  setFormData({
+                    ...formData,
+                    imputations: [...formData.imputations, imputation],
+                  })
+                }}
+              />
+            </Card>
+
+            {formData.imputations.length > 0 && (
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Axe</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Projet</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Volet</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Démarrage</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Délai (j)</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Fin</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {formData.imputations.map((imp, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{imp.axe}</TableCell>
+                        <TableCell>{imp.projet}</TableCell>
+                        <TableCell>{imp.volet}</TableCell>
+                        <TableCell>{imp.dateDebut}</TableCell>
+                        <TableCell align="right">{imp.delai}</TableCell>
+                        <TableCell>{imp.dateFin}</TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                imputations: formData.imputations.filter((_, i) => i !== idx),
+                              })
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+
+            {/* Summary */}
+            <Card sx={{ p: 2, bgcolor: '#f0f7ff' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total d'imputations
+                  </Typography>
+                  <Typography variant="h6">{formData.imputations.length}</Typography>
+                </Box>
+              </Box>
+            </Card>
+          </Box>
+        )
+
+      case 5: // Versements prévisionels
+        return (
+          <Box sx={{ display: 'grid', gap: 3 }}>
+            <Box>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Versements prévisionels
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Box>
+
+            <Card sx={{ p: 2 }}>
+              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                Ajouter un versement
+              </Typography>
+              <AddVersementForm
+                partenaires={formData.partenaires.map((p) => p.designation)}
+                mods={formData.mod.map((m) => m.designation)}
+                onAdd={(versement) => {
+                  setFormData({
+                    ...formData,
+                    versements: [...formData.versements, versement],
+                  })
+                }}
+              />
+            </Card>
+
+            {formData.versements.length > 0 && (
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Axe</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Projet</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Volet</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Montant</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Partenaire</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>MOD</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {formData.versements.map((vers, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{vers.axe}</TableCell>
+                        <TableCell>{vers.projet}</TableCell>
+                        <TableCell>{vers.volet}</TableCell>
+                        <TableCell>{vers.date}</TableCell>
+                        <TableCell align="right">
+                          {new Intl.NumberFormat('fr-MA', {
+                            style: 'currency',
+                            currency: 'MAD',
+                          }).format(vers.montant)}
+                        </TableCell>
+                        <TableCell>{vers.partenaire}</TableCell>
+                        <TableCell>{vers.mod}</TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                versements: formData.versements.filter((_, i) => i !== idx),
+                              })
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+
+            {/* Summary */}
+            <Card sx={{ p: 2, bgcolor: '#f0f7ff' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Total versements prévus
+                  </Typography>
+                  <Typography variant="h6" color="primary">
+                    {new Intl.NumberFormat('fr-MA', {
+                      style: 'currency',
+                      currency: 'MAD',
+                    }).format(recap.totalVersements)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Nombre de versements
+                  </Typography>
+                  <Typography variant="h6">{formData.versements.length}</Typography>
+                </Box>
+              </Box>
+            </Card>
+          </Box>
+        )
+
+      case 6: // Pièces jointes & Confirmation
         return (
           <Box sx={{ display: 'grid', gap: 3 }}>
             <Box>
@@ -346,115 +1175,201 @@ const ConventionWizard = () => {
 
             <Box>
               <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 3 }}>
-                Récapitulatif
+                Récapitulatif complet
               </Typography>
               <Divider sx={{ mb: 3 }} />
             </Box>
 
             <Paper sx={{ p: { xs: 2, md: 3 }, bgcolor: 'background.default', borderRadius: 2 }}>
               <Box sx={{ display: 'grid', gap: { xs: 2, md: 3 } }}>
-                {/* Row 1: Code, Numéro, Type */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Code
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.code}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Numéro
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.numeroConvention}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Type
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.type === 'CADRE' ? 'Convention CADRE' : 'Convention SPECIFIQUE'}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Row 2: Montant, Taux, Base */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Montant
-                    </Typography>
-                    <Typography variant="h6" color="primary" sx={{ mt: 0.5 }}>
-                      {new Intl.NumberFormat('fr-MA', {
-                        style: 'currency',
-                        currency: 'MAD',
-                      }).format(formData.montant)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Taux commission
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.tauxCommission}%
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      TVA
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.tauxTva}%
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Row 3: Base de calcul */}
+                {/* Section 1: Identité */}
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                    Base de calcul
+                  <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 1.5 }}>
+                    📋 Identité de la convention
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                    {formData.baseCalcul === 'MONTANT_TTC' ? 'Montant TTC' : 'Montant HT'}
-                  </Typography>
-                </Box>
-
-                {/* Row 4: Libellé (full width) */}
-                <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                    Libellé
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 0.5 }}>
-                    {formData.libelle}
-                  </Typography>
-                </Box>
-
-                {/* Row 5: Période, Pièces jointes */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: { xs: 2, md: 3 } }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Période
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 0.5 }}>
-                      Du {new Date(formData.dateDebut).toLocaleDateString('fr-FR')}
-                      {formData.dateFin && ` au ${new Date(formData.dateFin).toLocaleDateString('fr-FR')}`}
-                    </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Code
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.code}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Numéro
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.numeroConvention}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Type
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.type === 'CADRE' ? '🔴 CADRE' : '🔵 SPECIFIQUE'}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      Pièces jointes
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                      {formData.files.length} fichier(s)
-                    </Typography>
+                </Box>
+
+                <Divider />
+
+                {/* Section 2: Finances */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 1.5 }}>
+                    💰 Paramètres financiers
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Montant total
+                      </Typography>
+                      <Typography variant="h6" color="primary" sx={{ mt: 0.5 }}>
+                        {new Intl.NumberFormat('fr-MA', {
+                          style: 'currency',
+                          currency: 'MAD',
+                        }).format(formData.montant)}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Taux commission
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.tauxCommission}%
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Taux TVA
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.tauxTva}%
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Divider />
+
+                {/* Section 3: Allocations */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 1.5 }}>
+                    🤝 Allocations partenaires
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Nombre de partenaires
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.partenaires.length}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Total alloué
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {new Intl.NumberFormat('fr-MA', {
+                          style: 'currency',
+                          currency: 'MAD',
+                        }).format(recap.totalPartenairesBudget)}{' '}
+                        ({recap.allocatedPercentage}%)
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Divider />
+
+                {/* Section 4: Autorités */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 1.5 }}>
+                    👨‍💼 Autorités de maîtrise
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Maîtres d'ouvrage (MO)
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.mo.length}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Maîtres d'ouvrage Délégués (MOD)
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.mod.length}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Divider />
+
+                {/* Section 5: Versements */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 1.5 }}>
+                    💵 Versements
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: { xs: 2, md: 3 } }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Total versements prévus
+                      </Typography>
+                      <Typography variant="h6" color="primary" sx={{ mt: 0.5 }}>
+                        {new Intl.NumberFormat('fr-MA', {
+                          style: 'currency',
+                          currency: 'MAD',
+                        }).format(recap.totalVersements)}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Nombre de versements
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.versements.length}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Divider />
+
+                {/* Section 6: Dates & Pièces */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 1.5 }}>
+                    📅 Période & Pièces jointes
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: { xs: 2, md: 3 } }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Période
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 0.5 }}>
+                        Du {new Date(formData.dateDebut).toLocaleDateString('fr-FR')}
+                        {formData.dateFin && ` au ${new Date(formData.dateFin).toLocaleDateString('fr-FR')}`}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                        Pièces jointes
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+                        {formData.files.length} fichier(s)
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
               </Box>
             </Paper>
-
           </Box>
         )
 
@@ -470,7 +1385,7 @@ const ConventionWizard = () => {
     <AppLayout>
       <SimplePageLayout
         title="Nouvelle Convention"
-        subtitle="Créer une convention CADRE ou NON-CADRE en 3 étapes"
+        subtitle="Créer une convention CADRE ou SPECIFIQUE en 7 étapes"
         actions={
           <Button
             variant="outlined"
@@ -543,9 +1458,9 @@ const ConventionWizard = () => {
             </Stack>
 
             {/* Info Alert */}
-            {activeStep === 2 && (
+            {activeStep === steps.length - 1 && (
               <Alert severity="info" sx={{ mt: 3 }}>
-                ℹ️ Après la création, vous pourrez ajouter des sous-conventions ou des conventions spécifiques à partir de la page de détail.
+                ℹ️ Après la création, vous pourrez ajouter des sous-conventions, des avenants, et gérer les allocations détaillées à partir de la page de détail.
               </Alert>
             )}
 

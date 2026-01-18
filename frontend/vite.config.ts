@@ -4,12 +4,16 @@ import path from 'path'
 
 // Déterminer dynamiquement la base path
 const getBasePath = () => {
-  // Pour GitHub Pages
+  // Priorité 1: Variable explicite VITE_BASE_PATH (utilisée par GitHub Pages workflow)
+  if (process.env.VITE_BASE_PATH && process.env.VITE_BASE_PATH !== '/') {
+    return process.env.VITE_BASE_PATH;
+  }
+  // Priorité 2: GitHub Pages (vérification supplémentaire)
   if (process.env.GITHUB_ACTIONS) {
     return '/InvestProMaroc/';
   }
-  // Pour Railway et développement local
-  return process.env.VITE_BASE_PATH || '/';
+  // Défaut: Railway et développement local
+  return '/';
 };
 
 export default defineConfig({

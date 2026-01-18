@@ -4,6 +4,18 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeContextProvider } from './contexts/ThemeContext'
 import { LayoutContextProvider } from './contexts/LayoutContext'
+
+/**
+ * Get the base path from Vite's BASE_URL environment variable
+ * This is automatically set by Vite based on the 'base' option in vite.config.ts
+ * - Development/Railway: '/'
+ * - GitHub Pages: '/InvestProMaroc/'
+ */
+const getBasePath = (): string => {
+  const base = import.meta.env.BASE_URL
+  // Ensure it doesn't end with a trailing slash (Router handles this internally)
+  return base.endsWith('/') ? base.slice(0, -1) : base
+}
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -99,7 +111,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
+      <Router basename={getBasePath()}>
         <ThemeContextProvider>
           <LayoutContextProvider>
             <AuthProvider>

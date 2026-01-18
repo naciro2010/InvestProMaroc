@@ -46,7 +46,7 @@ export const conventionBaseSchema = z.object({
   code: z.string().min(1, 'Le code est requis').regex(PATTERNS.CODE, 'Format de code invalide'),
   designation: z.string().min(2, 'La désignation est requise').max(500),
   objet: z.string().min(5, 'L\'objet doit contenir au moins 5 caractères').max(2000),
-  type: z.enum(['CADRE', 'SPECIFIQUE']).default('CADRE'),
+  type: z.enum(['CADRE', 'NON_CADRE']).default('CADRE'),
   tauxCommission: z
     .number()
     .min(0, 'Le taux doit être positif')

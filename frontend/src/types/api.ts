@@ -81,7 +81,7 @@ export interface RegisterRequest {
 // ============================================================================
 
 export type ConventionStatus = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_EXECUTION' | 'ACHEVE'
-export type ConventionType = 'CADRE' | 'SPECIFIQUE'
+export type ConventionType = 'CADRE' | 'NON_CADRE'
 
 export interface Convention {
   id: number

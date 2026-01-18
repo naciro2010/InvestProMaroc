@@ -184,7 +184,8 @@ const ConventionDetailPageModern = () => {
     }
   }
 
-  const getStatusColor = (statut: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
+  const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
+    if (!statut) return 'default'
     switch (statut.toUpperCase()) {
       case 'BROUILLON':
         return 'default'

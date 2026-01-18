@@ -44,8 +44,6 @@ const steps = [
   'Paramètres financiers',
   'Partenaires',
   'Autorités de maîtrise',
-  'Imputations provisionnelles',
-  'Versements prévisionels',
   'Pièces jointes & Confirmation',
 ]
 
@@ -98,7 +96,7 @@ interface ConventionFormData {
   libelle: string
   objet: string
   objetRich: string
-  type: 'CADRE' | 'SPECIFIQUE'
+  type: 'CADRE' | 'NON_CADRE'
   statut: 'BROUILLON'
   tauxCommission: number
   baseCalcul: 'MONTANT_TTC' | 'MONTANT_HT'
@@ -468,13 +466,9 @@ const ConventionWizard = () => {
         return formData.montant > 0 && formData.tauxCommission > 0
       case 2: // Partenaires (optional but should have at least 0)
         return true
-      case 3: // MO/MOD (optional)
+      case 3: // Autorités de maîtrise (optional)
         return true
-      case 4: // Imputations (optional)
-        return true
-      case 5: // Versements (optional)
-        return true
-      case 6: // Pièces jointes & Confirmation
+      case 4: // Pièces jointes & Confirmation (optional)
         return true
       default:
         return false
@@ -552,16 +546,16 @@ const ConventionWizard = () => {
                 onChange={handleChange('type')}
                 size="small"
               >
-                <MenuItem value="CADRE">CADRE - Convention cadre (parente)</MenuItem>
-                <MenuItem value="SPECIFIQUE">SPECIFIQUE - Convention spécifique (dépendante)</MenuItem>
+                <MenuItem value="CADRE">CADRE - Convention cadre</MenuItem>
+                <MenuItem value="NON_CADRE">NON_CADRE - Convention simple</MenuItem>
               </TextField>
             </Box>
 
             {/* Info message */}
             <Alert severity="info" sx={{ mt: 1 }}>
               {formData.type === 'CADRE'
-                ? '📌 Une convention CADRE sert de base. Vous pourrez ajouter des sous-conventions après la création.'
-                : '⚠️ Une convention SPECIFIQUE doit être créée via une convention CADRE existante. Créez d\'abord une CADRE.'}
+                ? '📌 Convention CADRE - Sert de base et vous pourrez ajouter des sous-conventions après création.'
+                : '📋 Convention NON_CADRE - Convention simple et directe.'}
             </Alert>
 
             {/* Row 3: Libellé */}
@@ -971,213 +965,31 @@ const ConventionWizard = () => {
           </Box>
         )
 
-      case 4: // Imputations provisionnelles
+      case 4: // Pièces jointes & Confirmation
         return (
           <Box sx={{ display: 'grid', gap: 3 }}>
             <Box>
               <Typography variant="h6" gutterBottom fontWeight={600}>
-                Imputations provisionnelles
+                📎 Pièces jointes
               </Typography>
-              <Divider sx={{ mb: 3 }} />
+              <Divider sx={{ mb: 2 }} />
             </Box>
 
-            <Card sx={{ p: 2 }}>
-              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
-                Ajouter une imputation
-              </Typography>
-              <AddImputationForm
-                onAdd={(imputation) => {
-                  setFormData({
-                    ...formData,
-                    imputations: [...formData.imputations, imputation],
-                  })
-                }}
+            <Paper sx={{ p: { xs: 2, md: 3 }, bgcolor: 'background.default', borderRadius: 2 }}>
+              <FileUploadZone
+                files={formData.files}
+                onFilesChange={(files) => setFormData({ ...formData, files })}
+                maxFiles={10}
+                maxSizeMB={10}
+                label="Documents de la convention"
               />
-            </Card>
+            </Paper>
 
-            {formData.imputations.length > 0 && (
-              <TableContainer component={Paper}>
-                <Table size="small">
-                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Axe</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Projet</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Volet</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Démarrage</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>Délai (j)</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Fin</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {formData.imputations.map((imp, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{imp.axe}</TableCell>
-                        <TableCell>{imp.projet}</TableCell>
-                        <TableCell>{imp.volet}</TableCell>
-                        <TableCell>{imp.dateDebut}</TableCell>
-                        <TableCell align="right">{imp.delai}</TableCell>
-                        <TableCell>{imp.dateFin}</TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => {
-                              setFormData({
-                                ...formData,
-                                imputations: formData.imputations.filter((_, i) => i !== idx),
-                              })
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-
-            {/* Summary */}
-            <Card sx={{ p: 2, bgcolor: '#f0f7ff' }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total d'imputations
-                  </Typography>
-                  <Typography variant="h6">{formData.imputations.length}</Typography>
-                </Box>
-              </Box>
-            </Card>
-          </Box>
-        )
-
-      case 5: // Versements prévisionels
-        return (
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Versements prévisionels
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 2 }}>
+                ✅ Récapitulatif complet
               </Typography>
-              <Divider sx={{ mb: 3 }} />
-            </Box>
-
-            <Card sx={{ p: 2 }}>
-              <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
-                Ajouter un versement
-              </Typography>
-              <AddVersementForm
-                partenaires={formData.partenaires.map((p) => p.designation)}
-                mods={formData.mod.map((m) => m.designation)}
-                onAdd={(versement) => {
-                  setFormData({
-                    ...formData,
-                    versements: [...formData.versements, versement],
-                  })
-                }}
-              />
-            </Card>
-
-            {formData.versements.length > 0 && (
-              <TableContainer component={Paper}>
-                <Table size="small">
-                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600 }}>Axe</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Projet</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Volet</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>Montant</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>Partenaire</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>MOD</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {formData.versements.map((vers, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{vers.axe}</TableCell>
-                        <TableCell>{vers.projet}</TableCell>
-                        <TableCell>{vers.volet}</TableCell>
-                        <TableCell>{vers.date}</TableCell>
-                        <TableCell align="right">
-                          {new Intl.NumberFormat('fr-MA', {
-                            style: 'currency',
-                            currency: 'MAD',
-                          }).format(vers.montant)}
-                        </TableCell>
-                        <TableCell>{vers.partenaire}</TableCell>
-                        <TableCell>{vers.mod}</TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => {
-                              setFormData({
-                                ...formData,
-                                versements: formData.versements.filter((_, i) => i !== idx),
-                              })
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-
-            {/* Summary */}
-            <Card sx={{ p: 2, bgcolor: '#f0f7ff' }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total versements prévus
-                  </Typography>
-                  <Typography variant="h6" color="primary">
-                    {new Intl.NumberFormat('fr-MA', {
-                      style: 'currency',
-                      currency: 'MAD',
-                    }).format(recap.totalVersements)}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Nombre de versements
-                  </Typography>
-                  <Typography variant="h6">{formData.versements.length}</Typography>
-                </Box>
-              </Box>
-            </Card>
-          </Box>
-        )
-
-      case 6: // Pièces jointes & Confirmation
-        return (
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Pièces jointes
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-            </Box>
-
-            <FileUploadZone
-              files={formData.files}
-              onFilesChange={(files) => setFormData({ ...formData, files })}
-              maxFiles={10}
-              maxSizeMB={10}
-              label="Documents de la convention"
-            />
-
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 3 }}>
-                Récapitulatif complet
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
+              <Divider sx={{ mb: 2 }} />
             </Box>
 
             <Paper sx={{ p: { xs: 2, md: 3 }, bgcolor: 'background.default', borderRadius: 2 }}>
@@ -1209,7 +1021,7 @@ const ConventionWizard = () => {
                         Type
                       </Typography>
                       <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                        {formData.type === 'CADRE' ? '🔴 CADRE' : '🔵 SPECIFIQUE'}
+                        {formData.type === 'CADRE' ? '🔴 CADRE' : '🔵 NON_CADRE'}
                       </Typography>
                     </Box>
                   </Box>
@@ -1385,7 +1197,7 @@ const ConventionWizard = () => {
     <AppLayout>
       <SimplePageLayout
         title="Nouvelle Convention"
-        subtitle="Créer une convention CADRE ou SPECIFIQUE en 7 étapes"
+        subtitle="Créer une convention CADRE ou NON_CADRE en 5 étapes"
         actions={
           <Button
             variant="outlined"
@@ -1397,8 +1209,17 @@ const ConventionWizard = () => {
           </Button>
         }
       >
-        <Container maxWidth="md" sx={{ py: 4 }}>
-          <Paper sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 2 }}>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Paper
+            elevation={8}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              borderRadius: 3,
+              border: '1px solid',
+              borderColor: 'divider',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%)'
+            }}
+          >
             {/* Stepper */}
             <Stepper
               activeStep={activeStep}

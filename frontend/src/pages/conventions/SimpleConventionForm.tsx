@@ -158,7 +158,7 @@ const SimpleConventionForm = () => {
                         label="Type"
                         options={[
                           { label: 'Convention Cadre', value: 'CADRE' },
-                          { label: 'Convention Spécifique', value: 'SPECIFIQUE' },
+                          { label: 'Convention Simple', value: 'NON_CADRE' },
                         ]}
                         required
                       />

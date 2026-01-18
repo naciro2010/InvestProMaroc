@@ -1,5 +1,6 @@
 package ma.investpro.controller
 
+import ma.investpro.dto.DecompteListDTO
 import ma.investpro.entity.Decompte
 import ma.investpro.service.DecompteService
 import mu.KotlinLogging
@@ -16,9 +17,21 @@ private val logger = KotlinLogging.logger {}
 @CrossOrigin(origins = ["*"])
 class DecompteController(private val decompteService: DecompteService) {
 
+    /**
+     * Optimized list endpoint for frontend list view
+     * Returns minimal fields per decompte for efficient loading
+     * Supports micro-frontends pattern where each component loads only what it needs
+     */
+    @GetMapping("/list")
+    fun getDecomptesList(): ResponseEntity<List<DecompteListDTO>> {
+        logger.info { "🌐 API: GET /api/decomptes/list (optimized for list view)" }
+        val decomptes = decompteService.findAllForListView()
+        return ResponseEntity.ok(decomptes)
+    }
+
     @GetMapping
     fun getAllDecomptes(): ResponseEntity<List<Decompte>> {
-        logger.info { "🌐 API: GET /api/decomptes" }
+        logger.info { "🌐 API: GET /api/decomptes (full list with all relations)" }
         val decomptes = decompteService.findAll()
         return ResponseEntity.ok(decomptes)
     }
@@ -79,6 +92,40 @@ class DecompteController(private val decompteService: DecompteService) {
         logger.info { "🌐 API: GET /api/decomptes/marche/$marcheId" }
         val decomptes = decompteService.findByMarche(marcheId)
         return ResponseEntity.ok(decomptes)
+    }
+
+    /**
+     * Granular endpoint: Get retentions for a specific decompte
+     * Called by detail page component to load retentions separately
+     * Part of micro-frontends architecture
+     */
+    @GetMapping("/{id}/retenues")
+    fun getDecompteRetenues(@PathVariable id: Long): ResponseEntity<List<Any>> {
+        logger.info { "🌐 API: GET /api/decomptes/$id/retenues (granular: retentions only)" }
+        return try {
+            val retenues = decompteService.findRetenuesByDecompteId(id)
+            ResponseEntity.ok(retenues)
+        } catch (e: IllegalArgumentException) {
+            logger.error { "❌ API ERROR: ${e.message}" }
+            ResponseEntity.notFound().build()
+        }
+    }
+
+    /**
+     * Granular endpoint: Get imputations for a specific decompte
+     * Called by detail page component to load allocations separately
+     * Part of micro-frontends architecture
+     */
+    @GetMapping("/{id}/imputations")
+    fun getDecompteImputations(@PathVariable id: Long): ResponseEntity<List<Any>> {
+        logger.info { "🌐 API: GET /api/decomptes/$id/imputations (granular: allocations only)" }
+        return try {
+            val imputations = decompteService.findImputationsByDecompteId(id)
+            ResponseEntity.ok(imputations)
+        } catch (e: IllegalArgumentException) {
+            logger.error { "❌ API ERROR: ${e.message}" }
+            ResponseEntity.notFound().build()
+        }
     }
 
 }

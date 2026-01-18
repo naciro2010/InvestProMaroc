@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.DecompteListDTO
 import ma.investpro.dto.DecompteStatistiques
 import ma.investpro.entity.Decompte
 import ma.investpro.entity.StatutDecompte
@@ -9,6 +10,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 /**
  * Service Decompte - Approche DDD simplifiée
@@ -157,5 +159,65 @@ class DecompteService(
             valides = all.count { it.statut == StatutDecompte.VALIDE },
             montantTotal = all.sumOf { it.montantTTC }
         )
+    }
+
+    /**
+     * Optimized list view - returns only essential fields for efficient loading
+     * Used by frontend list page to display decomptes with minimal data transfer
+     */
+    fun findAllForListView(): List<DecompteListDTO> {
+        return decompteRepository.findAll().map { decompte ->
+            convertToListDTO(decompte)
+        }
+    }
+
+    /**
+     * Convert Decompte entity to DecompteListDTO with counts instead of full collections
+     */
+    private fun convertToListDTO(decompte: Decompte): DecompteListDTO {
+        return DecompteListDTO(
+            id = decompte.id,
+            marcheId = decompte.marche.id ?: 0,
+            marcheNumero = decompte.marche.numeroMarche,
+            marcheFournisseur = decompte.marche.fournisseur?.raisonSociale,
+            numeroDecompte = decompte.numeroDecompte,
+            dateDecompte = decompte.dateDecompte,
+            periodeDebut = decompte.periodeDebut,
+            periodeFin = decompte.periodeFin,
+            statut = decompte.statut.toString(),
+            montantBrutHT = decompte.montantBrutHT,
+            montantTVA = decompte.montantTVA,
+            montantTTC = decompte.montantTTC,
+            totalRetenues = decompte.totalRetenues,
+            netAPayer = decompte.netAPayer,
+            cumulPrecedent = decompte.cumulPrecedent,
+            cumulActuel = decompte.cumulActuel,
+            montantPaye = decompte.montantPaye,
+            estSolde = decompte.estSolde,
+            nbRetenues = decompte.retenues.size,
+            nbImputations = decompte.imputations.size,
+            actif = true,
+            createdAt = decompte.createdAt
+        )
+    }
+
+    /**
+     * Get retenues for a specific decompte
+     * Called by detail page component to load retentions separately
+     */
+    fun findRetenuesByDecompteId(decompteId: Long): List<Any> {
+        val decompte = findById(decompteId)
+            ?: throw IllegalArgumentException("Décompte avec ID $decompteId non trouve")
+        return decompte.retenues.toList() as List<Any>
+    }
+
+    /**
+     * Get imputations for a specific decompte
+     * Called by detail page component to load allocations separately
+     */
+    fun findImputationsByDecompteId(decompteId: Long): List<Any> {
+        val decompte = findById(decompteId)
+            ?: throw IllegalArgumentException("Décompte avec ID $decompteId non trouve")
+        return decompte.imputations.toList() as List<Any>
     }
 }

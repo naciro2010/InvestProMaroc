@@ -461,6 +461,40 @@ data class MarcheSimpleDTO(
     val actif: Boolean
 )
 
+// Optimized list view DTO - minimal fields for micro-frontends pattern
+data class MarcheListDTO(
+    val id: Long?,
+    val numeroMarche: String,
+    val numAo: String?,
+    val dateMarche: LocalDate,
+    val fournisseurId: Long,
+    val fournisseurCode: String,
+    val fournisseurNom: String,
+    val fournisseurIce: String?,
+    val conventionId: Long?,
+    val conventionNumero: String?,
+    val conventionLibelle: String?,
+    val objet: String,
+    val montantHt: BigDecimal,
+    val tauxTva: BigDecimal,
+    val montantTva: BigDecimal,
+    val montantTtc: BigDecimal,
+    val statut: String,
+    val dateDebut: LocalDate?,
+    val dateFinPrevue: LocalDate?,
+    val delaiExecutionMois: Int?,
+    val adresse: String?,
+    val latitude: Double?,
+    val longitude: Double?,
+    val zoneGeographique: String?,
+    // Counts instead of full collections for efficiency
+    val nbLignes: Int = 0,
+    val nbAvenants: Int = 0,
+    val nbDecomptes: Int = 0,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?
+)
+
 data class MarcheLigneDTO(
     val id: Long?,
     val marcheId: Long,
@@ -534,6 +568,33 @@ data class DecompteSimpleDTO(
     val montantPaye: BigDecimal,
     val estSolde: Boolean,
     val actif: Boolean
+)
+
+// Optimized list view DTO - minimal fields for micro-frontends pattern
+data class DecompteListDTO(
+    val id: Long?,
+    val marcheId: Long,
+    val marcheNumero: String?,
+    val marcheFournisseur: String?,
+    val numeroDecompte: String,
+    val dateDecompte: LocalDate,
+    val periodeDebut: LocalDate,
+    val periodeFin: LocalDate,
+    val statut: String,
+    val montantBrutHT: BigDecimal,
+    val montantTVA: BigDecimal,
+    val montantTTC: BigDecimal,
+    val totalRetenues: BigDecimal,
+    val netAPayer: BigDecimal,
+    val cumulPrecedent: BigDecimal?,
+    val cumulActuel: BigDecimal?,
+    val montantPaye: BigDecimal,
+    val estSolde: Boolean,
+    // Counts instead of full collections
+    val nbRetenues: Int = 0,
+    val nbImputations: Int = 0,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?
 )
 
 data class DecompteRetenueDTO(

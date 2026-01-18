@@ -265,6 +265,8 @@ export const fournisseursAPI = {
 // Marchés API
 export const marchesAPI = {
   getAll: () => api.get('/marches'),
+  getList: () => api.get('/marches/list'), // Optimized list for frontend (micro-frontends pattern)
+  getStats: () => api.get('/marches/stats'),
   getActive: () => api.get('/marches/active'),
   getById: (id: number) => api.get(`/marches/${id}`),
   search: (q: string) => api.get(`/marches/search?q=${q}`),
@@ -273,6 +275,8 @@ export const marchesAPI = {
   delete: (id: number) => api.delete(`/marches/${id}`),
   getByConvention: (conventionId: number) => api.get(`/marches/convention/${conventionId}`),
   getLignes: (marcheId: number) => api.get(`/marches/${marcheId}/lignes`),
+  getAvenants: (marcheId: number) => api.get(`/marches/${marcheId}/avenants`),
+  getDecomptes: (marcheId: number) => api.get(`/marches/${marcheId}/decomptes`),
 }
 
 // Axes Analytiques API
@@ -322,6 +326,7 @@ export const budgetsAPI = {
 // Décomptes API
 export const decomptesAPI = {
   getAll: () => api.get('/decomptes'),
+  getList: () => api.get('/decomptes/list'), // Optimized list for frontend (micro-frontends pattern)
   getByMarche: (marcheId: number) => api.get(`/decomptes?marcheId=${marcheId}`),
   getById: (id: number) => api.get(`/decomptes/${id}`),
   create: (data: CreateDecompteDTO) => api.post('/decomptes', data),
@@ -329,6 +334,8 @@ export const decomptesAPI = {
   delete: (id: number) => api.delete(`/decomptes/${id}`),
   soumettre: (id: number) => api.post(`/decomptes/${id}/soumettre`),
   valider: (id: number, valideParId: number) => api.post(`/decomptes/${id}/valider`, { valideParId }),
+  getRetenues: (decompteId: number) => api.get(`/decomptes/${decompteId}/retenues`),
+  getImputations: (decompteId: number) => api.get(`/decomptes/${decompteId}/imputations`),
 }
 
 // Ordres de Paiement API

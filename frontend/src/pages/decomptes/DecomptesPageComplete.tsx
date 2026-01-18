@@ -32,7 +32,7 @@ import {
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import { SimplePageLayout } from '../../components/layout/PageLayout'
-import { decomptesAPI } from '../../lib/api'
+import api, { decomptesAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
 
 const DecomptesPage = () => {
@@ -59,8 +59,10 @@ const DecomptesPage = () => {
   const loadDecomptes = async () => {
     setLoading(true)
     try {
-      const { data } = await decomptesAPI.getAll()
-      setDecomptes(data.data || [])
+      // Use optimized /list endpoint instead of full /decomptes endpoint
+      // This follows micro-frontends pattern: each component loads only what it needs
+      const response = await api.get('/decomptes/list')
+      setDecomptes(response.data)
     } catch (error) {
       console.error('Erreur chargement décomptes:', error)
     } finally {

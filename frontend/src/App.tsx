@@ -13,6 +13,7 @@ import ConventionWizard from './pages/conventions/ConventionWizard'
 import SousConventionWizard from './pages/conventions/SousConventionWizard'
 import AvenantForm from './pages/conventions/AvenantForm'
 import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
+import ConventionDetailPageModern from './pages/conventions/ConventionDetailPageModern'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPageModern from './pages/marches/MarcheDetailPageModern'
 import MarcheFormPage from './pages/marches/MarcheFormPage'
@@ -20,11 +21,11 @@ import MarcheWizard from './pages/marches/MarcheWizard'
 import ProjetsPage from './pages/projets/ProjetsPage'
 import ProjetFormPage from './pages/projets/ProjetFormPage'
 import ProjetWizard from './pages/projets/ProjetWizard'
-import ProjetDetailPage from './pages/projets/ProjetDetailPage'
+import ProjetDetailPageModern from './pages/projets/ProjetDetailPageModern'
 import BudgetsPage from './pages/budgets/BudgetsPage'
 import BudgetFormPage from './pages/budgets/BudgetFormPage'
 import BudgetWizard from './pages/budgets/BudgetWizard'
-import BudgetDetailPage from './pages/budgets/BudgetDetailPage'
+import BudgetDetailPageModern from './pages/budgets/BudgetDetailPageModern'
 import DecomptesPage from './pages/decomptes/DecomptesPageComplete'
 import DecompteWizard from './pages/decomptes/DecompteWizard'
 import OrdresPaiementPage from './pages/paiements/OrdresPaiementPageComplete'
@@ -162,7 +163,7 @@ function App() {
             path="/conventions/:id"
             element={
               <ProtectedRoute>
-                <ConventionDetailPage />
+                <ConventionDetailPageModern />
               </ProtectedRoute>
             }
           />
@@ -246,7 +247,7 @@ function App() {
             path="/projets/:id"
             element={
               <ProtectedRoute>
-                <ProjetDetailPage />
+                <ProjetDetailPageModern />
               </ProtectedRoute>
             }
           />
@@ -280,7 +281,7 @@ function App() {
             path="/budgets/:id"
             element={
               <ProtectedRoute>
-                <BudgetDetailPage />
+                <BudgetDetailPageModern />
               </ProtectedRoute>
             }
           />

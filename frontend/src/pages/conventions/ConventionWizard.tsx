@@ -457,20 +457,21 @@ const ConventionWizard = () => {
   // React Query mutation pour la création
   const createMutation = useMutation({
     mutationFn: async (data: ConventionFormData) => {
+      // Payload qui correspond EXACTEMENT à l'entité Convention backend
       const payload = {
         code: data.code,
-        objet: data.objet,
-        objetRich: data.objetRich,
-        type: data.type,
+        numero: data.numeroConvention, // ✅ 'numero' au lieu de 'numeroConvention'
+        dateConvention: data.dateSignature, // ✅ 'dateConvention' au lieu de 'dateSignature'
+        typeConvention: data.type, // ✅ 'typeConvention' au lieu de 'type'
+        libelle: data.libelle, // ✅ 'libelle' au lieu de 'designation'
+        objet: data.objetRich || data.objet, // ✅ Utiliser objetRich (rich text) ou objet en fallback
         tauxCommission: data.tauxCommission,
-        budgetTotal: data.montant,
-        dateDebut: data.dateDebut,
-        dateFin: data.dateFin,
-        tauxTva: data.tauxTva,
+        budget: data.montant, // ✅ 'budget' au lieu de 'budgetTotal'
         baseCalcul: data.baseCalcul,
-        numeroConvention: data.numeroConvention,
-        designation: data.libelle,
-        dateSignature: data.dateSignature,
+        tauxTva: data.tauxTva,
+        dateDebut: data.dateDebut,
+        dateFin: data.dateFin || null,
+        description: null,
       }
       return await conventionsAPI.create(payload)
     },
@@ -482,20 +483,21 @@ const ConventionWizard = () => {
   // React Query mutation pour la modification
   const updateMutation = useMutation({
     mutationFn: async (data: ConventionFormData) => {
+      // Payload qui correspond EXACTEMENT à l'entité Convention backend
       const payload = {
         code: data.code,
-        objet: data.objet,
-        objetRich: data.objetRich,
-        type: data.type,
+        numero: data.numeroConvention, // ✅ 'numero' au lieu de 'numeroConvention'
+        dateConvention: data.dateSignature, // ✅ 'dateConvention' au lieu de 'dateSignature'
+        typeConvention: data.type, // ✅ 'typeConvention' au lieu de 'type'
+        libelle: data.libelle, // ✅ 'libelle' au lieu de 'designation'
+        objet: data.objetRich || data.objet, // ✅ Utiliser objetRich (rich text) ou objet en fallback
         tauxCommission: data.tauxCommission,
-        budgetTotal: data.montant,
-        dateDebut: data.dateDebut,
-        dateFin: data.dateFin,
-        tauxTva: data.tauxTva,
+        budget: data.montant, // ✅ 'budget' au lieu de 'budgetTotal'
         baseCalcul: data.baseCalcul,
-        numeroConvention: data.numeroConvention,
-        designation: data.libelle,
-        dateSignature: data.dateSignature,
+        tauxTva: data.tauxTva,
+        dateDebut: data.dateDebut,
+        dateFin: data.dateFin || null,
+        description: null,
       }
       return await conventionsAPI.update(parseInt(id!), payload)
     },

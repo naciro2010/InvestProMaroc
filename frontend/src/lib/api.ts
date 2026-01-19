@@ -103,9 +103,11 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken')
     const refreshToken = localStorage.getItem('refreshToken')
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
 
     if (!token) {
       console.warn('⚠️ Aucun token disponible. Utilisateur non authentifié.')
+      dispatchToastEvent('🔐 Vous n\'êtes pas connecté. Veuillez vous reconnecter.', 'warning')
       return config
     }
 
@@ -113,20 +115,19 @@ api.interceptors.request.use(
     if (isTokenExpired(token)) {
       console.warn('⏰ Token expiré détecté avant la requête.')
 
-      // Si on a un refreshToken, essayer de le rafraîchir avant de rejeter
-      if (refreshToken) {
-        console.log('🔄 Tentative de refresh du token...')
-        // Note: Le refresh se fera via l'interceptor response en cas d'erreur 401
-      } else {
+      if (!refreshToken) {
         console.warn('🔒 Token expiré et pas de refreshToken. Déconnexion immédiate...')
+        dispatchToastEvent('🔒 Votre session a expiré. Veuillez vous reconnecter.', 'warning')
         logoutUser()
         return Promise.reject(new Error('Token expiré - Reconnexion nécessaire'))
+      } else {
+        console.log('🔄 Token en cours d\'expiration, tentative de refresh...')
       }
     }
 
     // Ajouter le token au header
     config.headers.Authorization = `Bearer ${token}`
-    console.debug(`📤 Requête ${config.method?.toUpperCase()} vers ${config.url}`)
+    console.debug(`📤 ${config.method?.toUpperCase()} ${config.url} | User: ${user?.username} | Roles: ${user?.roles?.join(', ')}`)
 
     return config
   },
@@ -158,7 +159,10 @@ api.interceptors.response.use(
       try {
         console.log('🔄 Tentative de refresh du token JWT...')
         const { data } = await axios.post<ApiResponse<{ accessToken: string }>>(`${API_URL}/auth/refresh`, null, {
-          params: { refreshToken }
+          params: { refreshToken },
+          // Important: pas d'interceptors pour cette requête
+          transformRequest: [(d) => d],
+          transformResponse: [(d) => (typeof d === 'string' ? JSON.parse(d) : d)]
         })
 
         // Vérifier que la réponse contient bien un nouveau token
@@ -170,18 +174,20 @@ api.interceptors.response.use(
           return api(originalRequest)
         } else {
           console.error('❌ Réponse de refresh invalide:', data)
-          console.warn('🔒 Déconnexion de l\'utilisateur...')
+          dispatchToastEvent('🔒 Impossible de renouveler votre session. Veuillez vous reconnecter.', 'error')
           logoutUser()
           return Promise.reject(new Error('Impossible de rafraîchir le token'))
         }
       } catch (refreshError: any) {
         // Si le refresh échoue (400, 401, 500, etc), déconnecter l'utilisateur
-        console.error('❌ Échec du refresh token:', {
+        console.error('❌ Échec du refresh token (Erreur ' + refreshError.response?.status + '):', {
           status: refreshError.response?.status,
           message: refreshError.response?.data?.message || refreshError.message,
-          error: refreshError
         })
-        console.warn('🔒 Déconnexion de l\'utilisateur...')
+        dispatchToastEvent(
+          '🔒 Votre session a expiré et ne peut pas être renouvelée. Veuillez vous reconnecter.',
+          'error'
+        )
         logoutUser()
         return Promise.reject(refreshError)
       }
@@ -193,28 +199,45 @@ api.interceptors.response.use(
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       const roles = user?.roles?.join(', ') || 'Aucun rôle'
       const endpoint = error.config?.url || 'inconnu'
+      const method = error.config?.method?.toUpperCase() || 'REQUEST'
 
       // Vérifier si le token est expiré
       const tokenExpired = token && isTokenExpired(token)
 
       console.error('❌ Erreur 403 - Accès refusé:', {
         endpoint,
+        method,
         userRoles: roles,
         user: user?.username,
         tokenExpired,
-        errorMessage: error.response?.data?.message
+        backendMessage: error.response?.data?.message
       })
 
       // Si le token est expiré, forcer un logout
       if (tokenExpired) {
         console.warn('🔒 Token expiré détecté lors d\'une erreur 403. Déconnexion forcée...')
+        dispatchToastEvent(
+          '🔒 Votre session a expiré. Veuillez vous reconnecter.',
+          'warning'
+        )
         logoutUser()
         return Promise.reject(new Error('Token expiré - Reconnexion nécessaire'))
       }
 
       // Sinon, c'est un vrai problème de permissions
+      const errorMessage = `❌ Accès Refusé
+
+Opération: ${method} ${endpoint}
+Votre rôle: ${roles}
+
+Vous n'avez pas les permissions nécessaires pour effectuer cette action.
+${error.response?.data?.message ? `Détail: ${error.response.data.message}` : ''}
+
+Rôles requis: Généralement ADMIN ou MANAGER pour les opérations de création/modification.`
+
+      console.error(errorMessage)
       dispatchToastEvent(
-        `❌ Accès refusé à ${endpoint}. Vos rôles actuels: ${roles}. ${error.response?.data?.message || 'Permissions insuffisantes.'}`,
+        `❌ Accès refusé. Vous êtes ${user?.username} avec le rôle ${roles}. Vous devez être ADMIN ou MANAGER pour cette opération.`,
         'error'
       )
     }

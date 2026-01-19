@@ -99,7 +99,7 @@ interface ConventionFormData {
   type: 'CADRE' | 'NON_CADRE'
   statut: 'BROUILLON'
   tauxCommission: number
-  baseCalcul: 'MONTANT_TTC' | 'MONTANT_HT'
+  baseCalcul: 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT' // ✅ Correspond aux valeurs backend
   montant: number
   dateSignature: string
   dateDebut: string
@@ -397,7 +397,7 @@ const ConventionWizard = () => {
     type: 'CADRE',
     statut: 'BROUILLON',
     tauxCommission: 3.5,
-    baseCalcul: 'MONTANT_TTC',
+    baseCalcul: 'DECAISSEMENTS_TTC', // ✅ Valeur par défaut backend
     montant: 0,
     dateSignature: new Date().toISOString().split('T')[0],
     dateDebut: new Date().toISOString().split('T')[0],
@@ -438,7 +438,7 @@ const ConventionWizard = () => {
         type: convention.type || 'CADRE',
         statut: convention.status || 'BROUILLON',
         tauxCommission: convention.tauxCommission || 3.5,
-        baseCalcul: 'MONTANT_HT', // Default, not in API
+        baseCalcul: (convention.baseCalcul as 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT') || 'DECAISSEMENTS_TTC',
         montant: convention.budgetTotal || 0,
         dateSignature: new Date().toISOString().split('T')[0], // Not in API
         dateDebut: formatDate(convention.dateDebut),
@@ -722,8 +722,8 @@ const ConventionWizard = () => {
                 onChange={handleChange('baseCalcul')}
                 size="small"
               >
-                <MenuItem value="MONTANT_TTC">Montant TTC</MenuItem>
-                <MenuItem value="MONTANT_HT">Montant HT</MenuItem>
+                <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC</MenuItem>
+                <MenuItem value="DECAISSEMENTS_HT">Décaissements HT</MenuItem>
               </TextField>
             </Box>
 

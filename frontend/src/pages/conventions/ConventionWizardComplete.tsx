@@ -99,7 +99,7 @@ interface ConventionFormData {
 
   // Step 3: Commission
   tauxCommission: number
-  baseCalcul: 'MONTANT_TTC' | 'MONTANT_HT'
+  baseCalcul: 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT' // ✅ Correspond aux valeurs backend
   tauxTva: number
 
   // Step 4: Partenaires
@@ -131,7 +131,7 @@ const ConventionWizardComplete = () => {
     budgetGlobal: 0,
     lignesBudget: [],
     tauxCommission: 2.5,
-    baseCalcul: 'MONTANT_TTC',
+    baseCalcul: 'DECAISSEMENTS_TTC', // ✅ Valeur par défaut backend
     tauxTva: 20,
     partenaires: [],
     subventions: [],
@@ -171,7 +171,7 @@ const ConventionWizardComplete = () => {
         budgetGlobal: convention.budgetTotal || 0,
         lignesBudget: [],
         tauxCommission: convention.tauxCommission || 2.5,
-        baseCalcul: 'MONTANT_TTC',
+        baseCalcul: (convention.baseCalcul as 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT') || 'DECAISSEMENTS_TTC',
         tauxTva: 20,
         partenaires: [],
         subventions: [],
@@ -264,7 +264,7 @@ const ConventionWizardComplete = () => {
 
     // Calculate commission based on baseCalcul
     const baseAmount =
-      formData.baseCalcul === 'MONTANT_HT' ? totalLignesHT || formData.budgetGlobal : totalLignesTTC || formData.budgetGlobal
+      formData.baseCalcul === 'DECAISSEMENTS_HT' ? totalLignesHT || formData.budgetGlobal : totalLignesTTC || formData.budgetGlobal
     const commissionEstimee = (baseAmount * formData.tauxCommission) / 100
 
     return {
@@ -795,8 +795,8 @@ const ConventionWizardComplete = () => {
                   value={formData.baseCalcul}
                   onChange={handleChange('baseCalcul')}
                 >
-                  <MenuItem value="MONTANT_HT">Montant HT - Hors taxes</MenuItem>
-                  <MenuItem value="MONTANT_TTC">Montant TTC - Toutes taxes comprises</MenuItem>
+                  <MenuItem value="DECAISSEMENTS_HT">Décaissements HT - Hors taxes</MenuItem>
+                  <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC - Toutes taxes comprises</MenuItem>
                 </TextField>
 
                 <TextField
@@ -827,7 +827,7 @@ const ConventionWizardComplete = () => {
                     Base de calcul
                   </Typography>
                   <Typography variant="h6" sx={{ mt: 0.5 }}>
-                    {formData.baseCalcul === 'MONTANT_HT' ? 'HT' : 'TTC'}
+                    {formData.baseCalcul === 'DECAISSEMENTS_HT' ? 'Décaissements HT' : 'Décaissements TTC'}
                   </Typography>
                 </Box>
                 <Box>

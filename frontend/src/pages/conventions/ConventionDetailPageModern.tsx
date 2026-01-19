@@ -269,7 +269,7 @@ const ConventionDetailPageModern = () => {
                 <Button
                   variant="outlined"
                   startIcon={<Edit />}
-                  onClick={() => navigate(`/conventions/${id}/modifier`)}
+                  onClick={() => navigate(`/conventions/${id}/edit`)}
                 >
                   Modifier
                 </Button>
@@ -307,9 +307,15 @@ const ConventionDetailPageModern = () => {
                   <Typography variant="caption" color="text.secondary">
                     Objet de la convention
                   </Typography>
-                  <Typography variant="body1">
-                    {convention.objet}
-                  </Typography>
+                  <Box
+                    sx={{
+                      '& p': { margin: '0.5em 0' },
+                      '& ul, & ol': { marginLeft: '1.5em' },
+                      '& strong': { fontWeight: 600 },
+                      '& em': { fontStyle: 'italic' },
+                    }}
+                    dangerouslySetInnerHTML={{ __html: convention.objet || '' }}
+                  />
                 </Box>
 
                 <Box>
@@ -430,10 +436,23 @@ const ConventionDetailPageModern = () => {
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
                   {/* Partenaires Card */}
                   <Paper sx={{ p: 3, bgcolor: '#f9fafb' }}>
-                    <Typography variant="h6" gutterBottom fontWeight={600}>
-                      <People fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                      Partenaires
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6" fontWeight={600}>
+                        <People fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Partenaires
+                      </Typography>
+                      <Button
+                        size="small"
+                        startIcon={<Add />}
+                        variant="outlined"
+                        onClick={() => {
+                          // TODO: Ouvrir modal d'ajout de partenaire
+                          alert('Fonctionnalité en développement : Ajouter un partenaire')
+                        }}
+                      >
+                        Ajouter
+                      </Button>
+                    </Box>
                     <Divider sx={{ mb: 2 }} />
                     <TableContainer>
                       <Table size="small">
@@ -460,10 +479,23 @@ const ConventionDetailPageModern = () => {
 
                   {/* Maître d'œuvre Card */}
                   <Paper sx={{ p: 3, bgcolor: '#f9fafb' }}>
-                    <Typography variant="h6" gutterBottom fontWeight={600}>
-                      <Business fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                      Maître d'œuvre
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6" fontWeight={600}>
+                        <Business fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Maître d'œuvre
+                      </Typography>
+                      <Button
+                        size="small"
+                        startIcon={<Add />}
+                        variant="outlined"
+                        onClick={() => {
+                          // TODO: Ouvrir modal d'ajout de maître d'œuvre
+                          alert('Fonctionnalité en développement : Ajouter un maître d\'œuvre')
+                        }}
+                      >
+                        Ajouter
+                      </Button>
+                    </Box>
                     <Divider sx={{ mb: 2 }} />
                     <Typography variant="body2" color="text.secondary">
                       Aucun maître d'œuvre défini
@@ -472,10 +504,23 @@ const ConventionDetailPageModern = () => {
 
                   {/* Imputations prévisionnelles Card */}
                   <Paper sx={{ p: 3, bgcolor: '#f9fafb', gridColumn: { xs: '1', md: 'span 2' } }}>
-                    <Typography variant="h6" gutterBottom fontWeight={600}>
-                      <TrendingUp fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                      Imputations prévisionnelles
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6" fontWeight={600}>
+                        <TrendingUp fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Imputations prévisionnelles
+                      </Typography>
+                      <Button
+                        size="small"
+                        startIcon={<Add />}
+                        variant="outlined"
+                        onClick={() => {
+                          // TODO: Ouvrir modal d'ajout d'imputation
+                          alert('Fonctionnalité en développement : Ajouter une imputation')
+                        }}
+                      >
+                        Ajouter
+                      </Button>
+                    </Box>
                     <Divider sx={{ mb: 2 }} />
                     <TableContainer>
                       <Table size="small">
@@ -504,10 +549,23 @@ const ConventionDetailPageModern = () => {
 
                   {/* Versements prévisionnels Card */}
                   <Paper sx={{ p: 3, bgcolor: '#f9fafb', gridColumn: { xs: '1', md: 'span 2' } }}>
-                    <Typography variant="h6" gutterBottom fontWeight={600}>
-                      <AccountBalance fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                      Versements prévisionnels
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6" fontWeight={600}>
+                        <AccountBalance fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                        Versements prévisionnels
+                      </Typography>
+                      <Button
+                        size="small"
+                        startIcon={<Add />}
+                        variant="outlined"
+                        onClick={() => {
+                          // TODO: Ouvrir modal d'ajout de versement
+                          alert('Fonctionnalité en développement : Ajouter un versement')
+                        }}
+                      >
+                        Ajouter
+                      </Button>
+                    </Box>
                     <Divider sx={{ mb: 2 }} />
                     <TableContainer>
                       <Table size="small">
@@ -589,6 +647,18 @@ const ConventionDetailPageModern = () => {
             {/* Projets Tab */}
             <TabPanel value={activeTab} index={convention.typeConvention === 'CADRE' ? 2 : 1}>
               <Container maxWidth="xl">
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => {
+                      // TODO: Ouvrir modal pour lier un projet existant ou en créer un nouveau
+                      alert('Fonctionnalité en développement : Lier/Créer un projet')
+                    }}
+                  >
+                    Lier un projet
+                  </Button>
+                </Box>
                 <TableContainer>
                   <Table>
                     <TableHead>
@@ -633,6 +703,18 @@ const ConventionDetailPageModern = () => {
             {/* Marchés Tab */}
             <TabPanel value={activeTab} index={convention.typeConvention === 'CADRE' ? 3 : 2}>
               <Container maxWidth="xl">
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => {
+                      // TODO: Ouvrir modal pour lier un marché existant ou en créer un nouveau
+                      alert('Fonctionnalité en développement : Lier/Créer un marché')
+                    }}
+                  >
+                    Lier un marché
+                  </Button>
+                </Box>
                 <TableContainer>
                   <Table>
                     <TableHead>

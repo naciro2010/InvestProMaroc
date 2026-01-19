@@ -40,32 +40,58 @@ const dispatchToastEvent = (message: string, type: 'error' | 'success' | 'warnin
   )
 }
 
-// Fonction pour déconnecter l'utilisateur
+// Fonction pour déconnecter l'utilisateur (robuste)
 const logoutUser = (): void => {
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('user')
+  try {
+    console.warn('🔒 Déconnexion en cours...')
 
-  // Afficher un message de déconnexion
-  dispatchToastEvent('🔒 Session expirée. Veuillez vous reconnecter.', 'warning')
+    // Nettoyer tous les tokens et données utilisateur
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('user')
+    localStorage.removeItem('authToken') // Ancien format
+    localStorage.removeItem('token') // Alternative
 
-  // Rediriger vers la page de connexion après un court délai
-  setTimeout(() => {
+    // Afficher un message de déconnexion
+    dispatchToastEvent('🔒 Session expirée ou invalide. Veuillez vous reconnecter.', 'warning')
+
+    // Rediriger vers la page de connexion après un court délai
+    setTimeout(() => {
+      console.log('📍 Redirection vers /login')
+      window.location.href = '/login'
+    }, 800)
+  } catch (error) {
+    console.error('❌ Erreur lors du logout:', error)
+    // Force la redirection même en cas d'erreur
     window.location.href = '/login'
-  }, 500)
+  }
 }
 
 // Fonction pour vérifier si un token JWT est expiré
 const isTokenExpired = (token: string): boolean => {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
+    if (!token) return true
+    const parts = token.split('.')
+    if (parts.length !== 3) return true // Token JWT invalide
+
+    const payload = JSON.parse(atob(parts[1]))
     const expirationTime = payload.exp * 1000 // Convertir en millisecondes
     const now = Date.now()
 
-    // Considérer le token comme expiré s'il reste moins de 30 secondes
-    return expirationTime < (now + 30000)
+    // Considérer le token comme expiré s'il reste moins de 60 secondes (au lieu de 30)
+    const isExpired = expirationTime < (now + 60000)
+
+    if (isExpired) {
+      console.warn('⏰ Token expiré:', {
+        expirationTime: new Date(expirationTime),
+        now: new Date(now),
+        secondsRemaining: (expirationTime - now) / 1000
+      })
+    }
+
+    return isExpired
   } catch (error) {
-    console.error('Erreur lors du décodage du token:', error)
+    console.error('❌ Erreur lors du décodage du token:', error)
     return true // Si on ne peut pas décoder, considérer comme expiré
   }
 }
@@ -76,21 +102,36 @@ const isTokenExpired = (token: string): boolean => {
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken')
+    const refreshToken = localStorage.getItem('refreshToken')
 
-    if (token) {
-      // Vérifier si le token est expiré avant d'envoyer la requête
-      if (isTokenExpired(token)) {
-        console.warn('🔒 Token expiré détecté avant la requête. Déconnexion...')
-        logoutUser()
-        return Promise.reject(new Error('Token expiré'))
-      }
-
-      config.headers.Authorization = `Bearer ${token}`
+    if (!token) {
+      console.warn('⚠️ Aucun token disponible. Utilisateur non authentifié.')
+      return config
     }
+
+    // Vérifier si le token est expiré avant d'envoyer la requête
+    if (isTokenExpired(token)) {
+      console.warn('⏰ Token expiré détecté avant la requête.')
+
+      // Si on a un refreshToken, essayer de le rafraîchir avant de rejeter
+      if (refreshToken) {
+        console.log('🔄 Tentative de refresh du token...')
+        // Note: Le refresh se fera via l'interceptor response en cas d'erreur 401
+      } else {
+        console.warn('🔒 Token expiré et pas de refreshToken. Déconnexion immédiate...')
+        logoutUser()
+        return Promise.reject(new Error('Token expiré - Reconnexion nécessaire'))
+      }
+    }
+
+    // Ajouter le token au header
+    config.headers.Authorization = `Bearer ${token}`
+    console.debug(`📤 Requête ${config.method?.toUpperCase()} vers ${config.url}`)
 
     return config
   },
   (error) => {
+    console.error('❌ Erreur dans l\'interceptor request:', error)
     return Promise.reject(error)
   }
 )
@@ -115,6 +156,7 @@ api.interceptors.response.use(
       }
 
       try {
+        console.log('🔄 Tentative de refresh du token JWT...')
         const { data } = await axios.post<ApiResponse<{ accessToken: string }>>(`${API_URL}/auth/refresh`, null, {
           params: { refreshToken }
         })
@@ -124,34 +166,53 @@ api.interceptors.response.use(
           localStorage.setItem('accessToken', data.data.accessToken)
           originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
 
-          console.warn('✅ Token rafraîchi avec succès')
+          console.log('✅ Token rafraîchi avec succès. Renvoi de la requête originale...')
           return api(originalRequest)
         } else {
-          console.error('❌ Réponse de refresh invalide')
+          console.error('❌ Réponse de refresh invalide:', data)
+          console.warn('🔒 Déconnexion de l\'utilisateur...')
           logoutUser()
-          return Promise.reject(error)
+          return Promise.reject(new Error('Impossible de rafraîchir le token'))
         }
-      } catch (refreshError) {
-        // Si le refresh échoue, déconnecter l'utilisateur
-        console.error('❌ Échec du refresh token:', refreshError)
+      } catch (refreshError: any) {
+        // Si le refresh échoue (400, 401, 500, etc), déconnecter l'utilisateur
+        console.error('❌ Échec du refresh token:', {
+          status: refreshError.response?.status,
+          message: refreshError.response?.data?.message || refreshError.message,
+          error: refreshError
+        })
+        console.warn('🔒 Déconnexion de l\'utilisateur...')
         logoutUser()
         return Promise.reject(refreshError)
       }
     }
 
-    // Si erreur 403 (Forbidden) - Pas de permission
+    // Si erreur 403 (Forbidden) - Pas de permission OU token expiré
     if (error.response?.status === 403) {
+      const token = localStorage.getItem('accessToken')
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       const roles = user?.roles?.join(', ') || 'Aucun rôle'
       const endpoint = error.config?.url || 'inconnu'
 
-      console.error('Erreur 403 - Accès refusé:', {
+      // Vérifier si le token est expiré
+      const tokenExpired = token && isTokenExpired(token)
+
+      console.error('❌ Erreur 403 - Accès refusé:', {
         endpoint,
         userRoles: roles,
         user: user?.username,
+        tokenExpired,
         errorMessage: error.response?.data?.message
       })
 
+      // Si le token est expiré, forcer un logout
+      if (tokenExpired) {
+        console.warn('🔒 Token expiré détecté lors d\'une erreur 403. Déconnexion forcée...')
+        logoutUser()
+        return Promise.reject(new Error('Token expiré - Reconnexion nécessaire'))
+      }
+
+      // Sinon, c'est un vrai problème de permissions
       dispatchToastEvent(
         `❌ Accès refusé à ${endpoint}. Vos rôles actuels: ${roles}. ${error.response?.data?.message || 'Permissions insuffisantes.'}`,
         'error'

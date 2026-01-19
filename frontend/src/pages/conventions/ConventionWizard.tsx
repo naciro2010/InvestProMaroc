@@ -470,8 +470,8 @@ const ConventionWizard = () => {
         baseCalcul: data.baseCalcul,
         tauxTva: data.tauxTva,
         dateDebut: data.dateDebut,
-        dateFin: data.dateFin || null,
-        description: null,
+        dateFin: data.dateFin || undefined,
+        description: undefined,
       }
       return await conventionsAPI.create(payload)
     },
@@ -496,8 +496,8 @@ const ConventionWizard = () => {
         baseCalcul: data.baseCalcul,
         tauxTva: data.tauxTva,
         dateDebut: data.dateDebut,
-        dateFin: data.dateFin || null,
-        description: null,
+        dateFin: data.dateFin || undefined,
+        description: undefined,
       }
       return await conventionsAPI.update(parseInt(id!), payload)
     },

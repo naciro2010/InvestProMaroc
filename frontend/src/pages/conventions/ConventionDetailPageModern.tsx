@@ -7,7 +7,6 @@ import {
   Typography,
   Button,
   Chip,
-  Divider,
   Tabs,
   Tab,
   Table,
@@ -16,12 +15,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  CircularProgress,
   Alert,
   IconButton,
   Skeleton,
-  Collapse,
   Tooltip,
+  Divider,
 } from '@mui/material'
 import {
   ArrowBack,
@@ -33,17 +31,14 @@ import {
   Assignment,
   Business,
   TrendingUp,
-  Delete,
   Visibility,
-  ExpandMore,
-  ExpandLess,
   History,
   Lock,
-  LockOpen,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import { api, conventionsAPI, avenantConventionsAPI } from '../../lib/api'
+import { ConventionInfoCard, ConventionSousConventionsCard, ConventionAvenantsTab } from '../../components/conventions/detail'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -124,7 +119,6 @@ const ConventionDetailPageModern = () => {
   const [projets, setProjets] = useState<Projet[]>([])
   const [marches, setMarches] = useState<Marche[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [expandedDescription, setExpandedDescription] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -305,200 +299,16 @@ const ConventionDetailPageModern = () => {
             }
           />
 
-          {/* Info Section - 2 Cards */}
+          {/* Info Section - 2 Micro-Components */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
-            {/* Left Card - General Info */}
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-                Informations Générales
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-
-              <Box sx={{ display: 'grid', gap: 3 }}>
-                {/* Type & Statut - More Prominent */}
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                      Type de convention
-                    </Typography>
-                    <Chip
-                      label={convention.typeConvention}
-                      color={convention.typeConvention === 'CADRE' ? 'secondary' : 'info'}
-                      sx={{ fontWeight: 600, fontSize: '0.875rem', px: 1 }}
-                    />
-                  </Box>
-
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                      Statut
-                    </Typography>
-                    <Chip
-                      label={convention.statut}
-                      color={getStatusColor(convention.statut)}
-                      icon={canEdit ? <LockOpen /> : <Lock />}
-                      sx={{ fontWeight: 600, fontSize: '0.875rem', px: 1 }}
-                    />
-                  </Box>
-                </Box>
-
-                <Divider />
-
-                <Box>
-                  <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                    Libellé de la convention
-                  </Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    {convention.libelle}
-                  </Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                    Objet de la convention
-                  </Typography>
-                  {(() => {
-                    const objetText = convention.objet || ''
-                    const isLongText = objetText.length > 300
-                    return (
-                      <>
-                        <Box
-                          sx={{
-                            '& p': { margin: '0.5em 0' },
-                            '& ul, & ol': { marginLeft: '1.5em' },
-                            '& strong': { fontWeight: 600 },
-                            '& em': { fontStyle: 'italic' },
-                            maxHeight: expandedDescription ? 'none' : '100px',
-                            overflow: 'hidden',
-                            position: 'relative',
-                            '&::after': !expandedDescription && isLongText ? {
-                              content: '""',
-                              position: 'absolute',
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              height: '40px',
-                              background: 'linear-gradient(transparent, white)',
-                            } : {},
-                          }}
-                          dangerouslySetInnerHTML={{ __html: objetText }}
-                        />
-                        {isLongText && (
-                          <Button
-                            size="small"
-                            onClick={() => setExpandedDescription(!expandedDescription)}
-                            endIcon={expandedDescription ? <ExpandLess /> : <ExpandMore />}
-                            sx={{ mt: 1 }}
-                          >
-                            {expandedDescription ? 'Voir moins' : 'Voir plus'}
-                          </Button>
-                        )}
-                      </>
-                    )
-                  })()}
-                </Box>
-
-                <Box>
-                  <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-                    Taux de la commission d'intervention
-                  </Typography>
-                  <Typography variant="body1" fontWeight={600} color="primary">
-                    {convention.tauxCommission}% {convention.baseCalcul === 'DECAISSEMENTS_HT' ? 'HT' : 'TTC'} sur les décaissements
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Right Card - Sous-Conventions (élément central) */}
-            <Paper sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" fontWeight={600} color="primary">
-                  {convention.typeConvention === 'CADRE' ? 'Conventions Spécifiques' : 'Convention Parent'}
-                </Typography>
-                {convention.typeConvention === 'CADRE' && (
-                  <Chip
-                    label={`${sousConventions.length} Conv. spéc.`}
-                    color="secondary"
-                    size="small"
-                    sx={{ fontWeight: 600 }}
-                  />
-                )}
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-
-              {convention.typeConvention === 'CADRE' ? (
-                <>
-                  {sousConventions.length > 0 ? (
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Code</TableCell>
-                            <TableCell>Libellé</TableCell>
-                            <TableCell>Statut</TableCell>
-                            <TableCell align="right">Montant</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {sousConventions.slice(0, 4).map((sc) => (
-                            <TableRow
-                              key={sc.id}
-                              hover
-                              onClick={() => navigate(`/conventions/${sc.id}`)}
-                              sx={{ cursor: 'pointer' }}
-                            >
-                              <TableCell>
-                                <Typography variant="body2" fontWeight={600}>
-                                  {sc.code}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
-                                  {sc.libelle}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Chip label={sc.statut} size="small" color={getStatusColor(sc.statut)} />
-                              </TableCell>
-                              <TableCell align="right">
-                                <Typography variant="body2" fontWeight={600}>
-                                  {formatCurrency(sc.montant)}
-                                </Typography>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : (
-                    <Box sx={{ py: 2, textAlign: 'center' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Aucune convention spécifique rattachée
-                      </Typography>
-                    </Box>
-                  )}
-                  {sousConventions.length > 4 && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                      <Button
-                        size="small"
-                        onClick={() => setActiveTab(1)}
-                        endIcon={<Visibility />}
-                      >
-                        Voir toutes ({sousConventions.length})
-                      </Button>
-                    </Box>
-                  )}
-                </>
-              ) : (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Cette convention est de type SPÉCIFIQUE
-                  </Typography>
-                  <Alert severity="info" sx={{ mt: 1 }}>
-                    Pour voir la convention cadre parente, consultez l'onglet "Détail de la convention"
-                  </Alert>
-                </Box>
-              )}
-            </Paper>
+            <ConventionInfoCard convention={convention} canEdit={canEdit} getStatusColor={getStatusColor} />
+            <ConventionSousConventionsCard
+              typeConvention={convention.typeConvention}
+              sousConventions={sousConventions}
+              formatCurrency={formatCurrency}
+              getStatusColor={getStatusColor}
+              setActiveTab={setActiveTab}
+            />
           </Box>
 
           {/* Tabs Section */}
@@ -753,88 +563,15 @@ const ConventionDetailPageModern = () => {
               </TabPanel>
             )}
 
-            {/* Avenants & Historique Tab */}
+            {/* Avenants & Historique Tab - Micro-Component */}
             <TabPanel value={activeTab} index={convention.typeConvention === 'CADRE' ? 2 : 1}>
-              <Container maxWidth="xl">
-                <Box sx={{ mb: 3 }}>
-                  <Alert severity="info" icon={<History />}>
-                    <Typography variant="body2" fontWeight={600}>
-                      Convention initiale : {convention.numero}
-                    </Typography>
-                    <Typography variant="caption">
-                      Signée le {formatDate(convention.dateSignature)} • Montant : {formatCurrency(convention.montant)}
-                    </Typography>
-                  </Alert>
-                </Box>
-
-                {avenants.length > 0 ? (
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell width="100px">
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip label="A" size="small" color="warning" />
-                              Numéro
-                            </Box>
-                          </TableCell>
-                          <TableCell>Objet</TableCell>
-                          <TableCell>Type</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Statut</TableCell>
-                          <TableCell align="center">Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {avenants.map((avenant, index) => (
-                          <TableRow key={avenant.id} hover>
-                            <TableCell>
-                              <Typography variant="body2" fontWeight={600}>
-                                {avenant.numeroAvenant}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                Avenant #{index + 1}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2">{avenant.objet}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip label={avenant.type} size="small" variant="outlined" />
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2">{formatDate(avenant.dateAvenant)}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip label={avenant.statut} size="small" color={getStatusColor(avenant.statut)} />
-                            </TableCell>
-                            <TableCell align="center">
-                              <Tooltip title="Voir les détails">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => navigate(`/conventions/${id}/avenants/${avenant.id}`)}
-                                >
-                                  <Visibility fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Paper sx={{ p: 4, textAlign: 'center' }}>
-                    <History sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="body1" color="text.secondary" gutterBottom>
-                      Aucun avenant pour cette convention
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Les modifications futures de la convention seront enregistrées comme avenants
-                    </Typography>
-                  </Paper>
-                )}
-              </Container>
+              <ConventionAvenantsTab
+                convention={convention}
+                avenants={avenants}
+                formatCurrency={formatCurrency}
+                formatDate={formatDate}
+                getStatusColor={getStatusColor}
+              />
             </TabPanel>
 
             {/* Projets Tab */}

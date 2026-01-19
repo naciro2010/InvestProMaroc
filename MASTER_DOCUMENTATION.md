@@ -9,12 +9,19 @@
 ## 📋 Table des Matières
 
 1. [Vue d'Ensemble du Projet](#vue-densemble-du-projet)
-2. [Architecture Technique](#architecture-technique)
-3. [État d'Implémentation Actuel](#état-dimplémentation-actuel)
-4. [Backlog & Roadmap](#backlog--roadmap)
-5. [Standards de Développement](#standards-de-développement)
-6. [Guides de Déploiement](#guides-de-déploiement)
-7. [Historique des Changements](#historique-des-changements)
+2. [Accès & Comptes de Test](#accès--comptes-de-test)
+3. [Architecture Technique](#architecture-technique)
+4. [Guide Backend](#guide-backend)
+5. [Guide Frontend](#guide-frontend)
+6. [Composants de Formulaire (react-hook-form + Zod)](#composants-de-formulaire-react-hook-form--zod)
+7. [Modèle de Données - Conventions (extrait)](#modèle-de-données---conventions-extrait)
+8. [État d'Implémentation Actuel](#état-dimplémentation-actuel)
+9. [Backlog & Roadmap](#backlog--roadmap)
+10. [Standards de Développement](#standards-de-développement)
+11. [Guides de Déploiement](#guides-de-déploiement)
+12. [Historique des Changements](#historique-des-changements)
+13. [Prochaines Actions Immédiates](#prochaines-actions-immédiates)
+14. [Références](#références)
 
 ---
 
@@ -52,6 +59,28 @@ npm run lint                         # Vérifier code
 
 # Base de données
 docker-compose up -d postgres        # Démarrer PostgreSQL
+```
+
+---
+
+## 🔐 Accès & Comptes de Test
+
+Lors du déploiement initial, des utilisateurs de test sont créés automatiquement. **Changez les mots de passe en production.**
+
+| Utilisateur | Email | Mot de passe | Rôle |
+|-------------|-------|--------------|------|
+| admin | admin@investpro.ma | `admin123` | ADMIN |
+| manager | manager@investpro.ma | `manager123` | MANAGER |
+| analyst | analyst@investpro.ma | `analyst123` | MANAGER |
+| controller | controller@investpro.ma | `controller123` | MANAGER |
+| user | user@investpro.ma | `user123` | USER |
+| supervisor | supervisor@investpro.ma | `supervisor123` | USER |
+
+```bash
+# Tester la connexion (JWT)
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
 ```
 
 ---
@@ -122,6 +151,105 @@ App.tsx → React Router → AuthProvider → AppLayout
 | **Axios Interceptors** | `frontend/lib/api.ts` | Injection JWT, auto-refresh, logout |
 | **AuthContext** | `frontend/contexts/` | État global auth (React Context) |
 | **ApiResponse<T>** | Backend controllers | Wrapper: `{success, message, data}` |
+
+---
+
+## 🧩 Guide Backend
+
+### Démarrage rapide
+```bash
+cd backend
+docker-compose up -d                 # PostgreSQL local
+./gradlew clean build -x test         # Build sans tests
+./gradlew bootRun                     # API: http://localhost:8080
+```
+
+### Build & Tests
+```bash
+./gradlew clean bootJar -x test       # Build rapide
+./gradlew clean build                 # Build + tests (Testcontainers)
+./gradlew test --tests "AuthIntegrationTest"
+```
+
+### Docker
+```bash
+docker build -t investpro-backend:1.0.0 .
+docker run -d -p 8080:8080 \
+  -e DATABASE_URL=postgresql://postgres:password@db:5432/investpro \
+  -e JWT_SECRET=your_secret_key \
+  investpro-backend:1.0.0
+```
+
+### Migrations & API
+- Flyway exécute les migrations au démarrage (`src/main/resources/db/migration/`).
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Health check: `http://localhost:8080/actuator/health`
+- Base path API: `/api/v1/*`
+
+### Variables d'Environnement (extraits)
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/investpro
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+app.jwt.secret=dev_secret_key_change_in_production
+```
+
+---
+
+## 🎨 Guide Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev      # http://localhost:5173
+npm run build
+npm run lint
+```
+
+---
+
+## 🧾 Composants de Formulaire (react-hook-form + Zod)
+
+Les formulaires sont standardisés via `react-hook-form` + `Zod`. Les composants sont dans `frontend/src/components/form/`.
+
+**Composants principaux:**
+- `FormTextField` (texte, email, tel, url, multiline)
+- `FormNumberField` (min/max/step)
+- `FormDateField` (date/datetime-local/month)
+- `FormSelectField` (options, multi-sélection)
+- `FormRadioGroup` (options en ligne ou colonne)
+- `FormCheckbox` (booléen)
+- `FormErrors` (liste des erreurs)
+- `FormSection` (sections avec titre, icône, colonnes)
+
+```tsx
+<FormTextField
+  name="code"
+  control={control}
+  label="Code"
+  placeholder="CONV-2026-001"
+  required
+/>
+```
+
+---
+
+## 📚 Modèle de Données - Conventions (extrait)
+
+Fichiers de référence: `backend/src/main/kotlin/ma/investpro/entity/Convention.kt` et entités associées.
+
+**Convention (champ clés):**
+- Identité: `code`, `numero`, `libelle`, `objet`
+- Dates: `dateConvention`, `dateDebut`, `dateFin`
+- Financier: `budget`, `tauxCommission`, `baseCalcul`, `tauxTva`
+- Workflow: `statut`, `dateSoumission`, `dateValidation`, `version`, `isLocked`
+- Hiérarchie: `parentConvention`, `sousConventions`, `heriteParametres`
+
+**Relations majeures:**
+- `ConventionPartenaire` (budget alloué, %)
+- `Subvention` (financements)
+- `ImputationPrevisionnelle` (planification)
+- `VersementPrevisionnel` (échéancier)
 
 ---
 

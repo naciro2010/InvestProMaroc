@@ -91,9 +91,10 @@ const DashboardModern = () => {
     const fetchConventions = async () => {
       try {
         const res = await conventionsAPI.getAll()
-        const conventions = Array.isArray(res.data.data) ? res.data.data : res.data.data?.data || []
+        // Backend retourne directement le tableau dans res.data
+        const conventions = Array.isArray(res.data) ? res.data : []
 
-        const montantTotal = conventions.reduce((sum: number, c: any) => sum + (c.montant || c.budgetTotal || 0), 0)
+        const montantTotal = conventions.reduce((sum: number, c: any) => sum + (c.budget || 0), 0)
         const validees = conventions.filter((c: any) => c.statut === 'VALIDEE').length
         const enCours = conventions.filter((c: any) => c.statut === 'EN_EXECUTION').length
 
@@ -121,11 +122,12 @@ const DashboardModern = () => {
     const fetchProjets = async () => {
       try {
         const res = await projetsAPI.getAll()
-        const projets = Array.isArray(res.data.data) ? res.data.data : res.data.data?.data || []
+        // Backend retourne directement le tableau dans res.data
+        const projets = Array.isArray(res.data) ? res.data : []
 
         const montantTotal = projets.reduce((sum: number, p: any) => sum + (p.budgetTotal || 0), 0)
-        const enCours = projets.filter((p: any) => p.statut === 'EN_COURS').length
-        const termine = projets.filter((p: any) => p.statut === 'TERMINE').length
+        const enCours = projets.filter((p: any) => p.status === 'ACTIF').length
+        const termine = projets.filter((p: any) => p.status === 'ACHEVE').length
 
         setProjetsKPI({
           title: 'Projets',
@@ -151,7 +153,8 @@ const DashboardModern = () => {
     const fetchDecomptes = async () => {
       try {
         const res = await decomptesAPI.getAll()
-        const decomptes = Array.isArray(res.data.data) ? res.data.data : res.data.data?.data || []
+        // Backend retourne directement le tableau dans res.data
+        const decomptes = Array.isArray(res.data) ? res.data : []
 
         setDecomptesKPI({
           title: 'Décomptes',
@@ -176,7 +179,8 @@ const DashboardModern = () => {
     const fetchPaiements = async () => {
       try {
         const res = await paiementsAPI.getAll()
-        const paiements = Array.isArray(res.data.data) ? res.data.data : res.data.data?.data || []
+        // Backend retourne directement le tableau dans res.data
+        const paiements = Array.isArray(res.data) ? res.data : []
 
         const montantTotal = paiements.reduce((sum: number, p: any) => sum + (p.montant || 0), 0)
 

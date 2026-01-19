@@ -22,6 +22,7 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardModern from './pages/DashboardModern'
 import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
 import ConventionWizard from './pages/conventions/ConventionWizard'
+import ConventionWizardComplete from './pages/conventions/ConventionWizardComplete'
 import SousConventionWizard from './pages/conventions/SousConventionWizard'
 import AvenantForm from './pages/conventions/AvenantForm'
 import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
@@ -159,7 +160,7 @@ function App() {
             path="/conventions/nouvelle"
             element={
               <ProtectedRoute>
-                <ConventionWizard />
+                <ConventionWizardComplete />
               </ProtectedRoute>
             }
           />
@@ -167,7 +168,7 @@ function App() {
             path="/conventions/:id/edit"
             element={
               <ProtectedRoute>
-                <ConventionWizard />
+                <ConventionWizardComplete />
               </ProtectedRoute>
             }
           />

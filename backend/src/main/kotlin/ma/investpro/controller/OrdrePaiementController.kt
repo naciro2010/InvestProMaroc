@@ -18,6 +18,7 @@ private val logger = KotlinLogging.logger {}
 class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementService) {
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getAllOrdresPaiement(): ResponseEntity<ApiResponse<List<OrdrePaiement>>> {
         logger.info { "GET /api/ordres-paiement" }
         val ordresPaiement = ordrePaiementService.findAll()
@@ -29,6 +30,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getOrdrePaiementById(@PathVariable id: Long): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "GET /api/ordres-paiement/$id" }
         return try {
@@ -198,6 +200,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @GetMapping("/statistiques")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getStatistiques(): ResponseEntity<ApiResponse<OrdrePaiementStatistiques>> {
         logger.info { "GET /api/ordres-paiement/statistiques" }
         return try {

@@ -18,6 +18,7 @@ private val logger = KotlinLogging.logger {}
 class BudgetController(private val budgetService: BudgetService) {
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getAllBudgets(): ResponseEntity<ApiResponse<List<Budget>>> {
         logger.info { "GET /api/budgets" }
         val budgets = budgetService.findAll()
@@ -29,6 +30,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getBudgetById(@PathVariable id: Long): ResponseEntity<ApiResponse<Budget>> {
         logger.info { "GET /api/budgets/$id" }
         return try {
@@ -198,6 +200,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @GetMapping("/statistiques")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getStatistiques(): ResponseEntity<ApiResponse<BudgetStatistiques>> {
         logger.info { "GET /api/budgets/statistiques" }
         return try {

@@ -72,6 +72,7 @@ class PieceJointeController(
      * Récupère toutes les pièces jointes pour une entité
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getPiecesJointes(
         @RequestParam("typeEntite") typeEntite: String,
         @RequestParam("entiteId") entiteId: Long
@@ -102,6 +103,7 @@ class PieceJointeController(
      * Récupère une pièce jointe par ID
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getPieceJointeById(@PathVariable id: Long): ResponseEntity<ApiResponse<PieceJointeDTO>> {
         return try {
             val result = pieceJointeService.getById(id)
@@ -128,6 +130,7 @@ class PieceJointeController(
      * Télécharge une pièce jointe
      */
     @GetMapping("/{id}/download")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun downloadFile(@PathVariable id: Long): ResponseEntity<Resource> {
         return try {
             val pieceJointe = pieceJointeService.getById(id)

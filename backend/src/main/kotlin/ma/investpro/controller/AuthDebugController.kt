@@ -2,6 +2,7 @@ package ma.investpro.controller
 
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
@@ -14,9 +15,10 @@ class AuthDebugController {
 
     /**
      * Diagnostic endpoint to check current user's authentication and authorities
-     * PUBLIC endpoint - no authentication required (helps debug auth issues)
+     * ADMIN-only endpoint for debugging purposes
      */
     @GetMapping("/whoami")
+    @PreAuthorize("hasRole('ADMIN')")
     fun getCurrentUserInfo(): ResponseEntity<Map<String, Any?>> {
         val authentication = SecurityContextHolder.getContext().authentication
 
@@ -49,8 +51,10 @@ class AuthDebugController {
     /**
      * Check if current user has a specific role
      * Usage: GET /api/auth/debug/has-role/ADMIN
+     * ADMIN-only endpoint for debugging purposes
      */
     @GetMapping("/has-role/{role}")
+    @PreAuthorize("hasRole('ADMIN')")
     fun checkUserRole(@PathVariable role: String): ResponseEntity<Map<String, Any?>> {
         val authentication = SecurityContextHolder.getContext().authentication
         val result: MutableMap<String, Any?> = mutableMapOf()

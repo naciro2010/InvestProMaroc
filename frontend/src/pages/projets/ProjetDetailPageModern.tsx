@@ -42,7 +42,7 @@ import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import { projetsAPI, Projet as ProjetAPI } from '../../lib/projetsAPI'
 import { api, conventionsAPI, marchesAPI } from '../../lib/api'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { ProjetStatsCards, ProjetProgressBar, ProjetChartTab } from '../../components/projets/detail'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -377,94 +377,17 @@ const ProjetDetailPageModern = () => {
             }
           />
 
-          {/* KPI Cards */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 3, mb: 3 }}>
-            <Paper sx={{ p: 3 }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'primary.light', color: 'primary.dark' }}>
-                  <AccountBalance />
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Budget Total
-                  </Typography>
-                  <Typography variant="h6" fontWeight={600}>
-                    {formatCurrency(projet.budgetTotal)}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
+          {/* KPI Cards - Micro-Component */}
+          <ProjetStatsCards
+            budgetTotal={projet.budgetTotal}
+            pourcentageAvancement={projet.pourcentageAvancement}
+            budgetConsomme={projet.budgetConsomme}
+            estEnRetard={projet.estEnRetard}
+            formatCurrency={formatCurrency}
+          />
 
-            <Paper sx={{ p: 3 }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'success.light', color: 'success.dark' }}>
-                  <TrendingUp />
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Avancement
-                  </Typography>
-                  <Typography variant="h6" fontWeight={600}>
-                    {projet.pourcentageAvancement.toFixed(2)}%
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
-
-            <Paper sx={{ p: 3 }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'warning.light', color: 'warning.dark' }}>
-                  <AttachMoney />
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Budget Consommé
-                  </Typography>
-                  <Typography variant="h6" fontWeight={600}>
-                    {formatCurrency(projet.budgetConsomme)}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
-
-            <Paper sx={{ p: 3 }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Box sx={{
-                  p: 1.5,
-                  borderRadius: 2,
-                  bgcolor: projet.estEnRetard ? 'error.light' : 'info.light',
-                  color: projet.estEnRetard ? 'error.dark' : 'info.dark'
-                }}>
-                  <CalendarToday />
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Statut
-                  </Typography>
-                  <Typography variant="h6" fontWeight={600}>
-                    {projet.estEnRetard ? 'En retard' : 'Dans les temps'}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
-          </Box>
-
-          {/* Progress Bar */}
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" fontWeight={600}>
-                Progression Globale
-              </Typography>
-              <Typography variant="h6" color="primary.main" fontWeight={600}>
-                {projet.pourcentageAvancement.toFixed(2)}%
-              </Typography>
-            </Stack>
-            <LinearProgress
-              variant="determinate"
-              value={projet.pourcentageAvancement}
-              sx={{ height: 10, borderRadius: 5 }}
-            />
-          </Paper>
+          {/* Progress Bar - Micro-Component */}
+          <ProjetProgressBar pourcentageAvancement={projet.pourcentageAvancement} />
 
           {/* Tabs Section */}
           <Paper>
@@ -707,27 +630,9 @@ const ProjetDetailPageModern = () => {
               </Container>
             </TabPanel>
 
-            {/* Graphique d'Avancement Tab */}
+            {/* Graphique d'Avancement Tab - Micro-Component */}
             <TabPanel value={activeTab} index={3}>
-              <Container maxWidth="xl">
-                <Typography variant="h6" fontWeight={600} gutterBottom>
-                  Courbe d'Avancement du Projet
-                </Typography>
-                <Typography variant="body2" color="text.secondary" mb={3}>
-                  Comparaison entre l'avancement réel et l'avancement planifié
-                </Typography>
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={generateProgressData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="mois" />
-                    <YAxis label={{ value: 'Avancement (%)', angle: -90, position: 'insideLeft' }} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="planifie" stroke="#94a3b8" name="Planifié" strokeDasharray="5 5" />
-                    <Line type="monotone" dataKey="avancement" stroke="#1e40af" name="Réel" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Container>
+              <ProjetChartTab chartData={generateProgressData()} />
             </TabPanel>
 
             {/* Historique Tab */}

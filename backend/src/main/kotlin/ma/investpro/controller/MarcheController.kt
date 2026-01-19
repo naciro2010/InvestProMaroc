@@ -103,6 +103,7 @@ class MarcheController(private val marcheService: MarcheService) {
     }
 
     @GetMapping("/fournisseur/{fournisseurId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarchesByFournisseur(@PathVariable fournisseurId: Long): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches/fournisseur/$fournisseurId" }
         val marches = marcheService.findByFournisseur(fournisseurId)
@@ -110,6 +111,7 @@ class MarcheController(private val marcheService: MarcheService) {
     }
 
     @GetMapping("/convention/{conventionId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarchesByConvention(@PathVariable conventionId: Long): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches/convention/$conventionId" }
         val marches = marcheService.findByConvention(conventionId)
@@ -117,6 +119,7 @@ class MarcheController(private val marcheService: MarcheService) {
     }
 
     @GetMapping("/projet/{projetId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarchesByProjet(@PathVariable projetId: Long): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches/projet/$projetId" }
         return try {
@@ -129,6 +132,7 @@ class MarcheController(private val marcheService: MarcheService) {
     }
 
     @GetMapping("/statut/{statut}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarchesByStatut(@PathVariable statut: StatutMarche): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches/statut/$statut" }
         val marches = marcheService.findByStatut(statut)
@@ -136,6 +140,7 @@ class MarcheController(private val marcheService: MarcheService) {
     }
 
     @GetMapping("/retard")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarchesEnRetard(): ResponseEntity<List<Marche>> {
         logger.info { "🌐 API: GET /api/marches/retard" }
         val marches = marcheService.findMarchesEnRetard()
@@ -148,6 +153,7 @@ class MarcheController(private val marcheService: MarcheService) {
      * Part of micro-frontends architecture
      */
     @GetMapping("/{id}/lignes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarcheLignes(@PathVariable id: Long): ResponseEntity<List<Any>> {
         logger.info { "🌐 API: GET /api/marches/$id/lignes (granular: line items only)" }
         return try {
@@ -165,6 +171,7 @@ class MarcheController(private val marcheService: MarcheService) {
      * Part of micro-frontends architecture
      */
     @GetMapping("/{id}/avenants")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarcheAvenants(@PathVariable id: Long): ResponseEntity<List<Any>> {
         logger.info { "🌐 API: GET /api/marches/$id/avenants (granular: amendments only)" }
         return try {
@@ -182,6 +189,7 @@ class MarcheController(private val marcheService: MarcheService) {
      * Part of micro-frontends architecture
      */
     @GetMapping("/{id}/decomptes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
     fun getMarcheDecomptes(@PathVariable id: Long): ResponseEntity<List<Any>> {
         logger.info { "🌐 API: GET /api/marches/$id/decomptes (granular: billing statements only)" }
         return try {

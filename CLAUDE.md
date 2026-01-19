@@ -15,6 +15,53 @@ Every value must have an explicit, strong type:
 
 **All code without proper types will be rejected.**
 
+## ⚠️ CRITICAL: MICRO-FRONTEND & MODULARITY IS MANDATORY
+
+**❌ NEVER create monolithic components exceeding 300 lines of code.**
+
+Every component must follow micro-frontend principles:
+- **Single Responsibility**: Each component handles ONE specific concern
+- **Modularity**: Extract sections into separate, reusable components
+- **Component Structure**:
+  ```
+  pages/                     # Page-level components (orchestrators)
+  components/
+    └── [feature]/           # Feature-specific components
+        ├── [Feature]Card.tsx       # Individual cards/sections
+        ├── [Feature]Tab.tsx        # Tab content components
+        ├── [Feature]Modal.tsx      # Modal dialogs
+        └── index.ts                # Barrel exports
+  ```
+- **File Size Limits**:
+  - ❌ >500 lines: Immediate refactor required
+  - ⚠️ 300-500 lines: Consider splitting
+  - ✅ <300 lines: Ideal
+
+**Example: Convention Detail Page Refactoring**
+```typescript
+// ❌ BAD - Monolithic (767 lines)
+ConventionDetailPageModern.tsx (all-in-one)
+
+// ✅ GOOD - Modular (300 lines main + 3 micro-components)
+pages/conventions/ConventionDetailPageModern.tsx  // Orchestrator
+components/conventions/detail/
+  ├── ConventionInfoCard.tsx              // 130 lines
+  ├── ConventionSousConventionsCard.tsx   // 110 lines
+  ├── ConventionAvenantsTab.tsx           // 120 lines
+  └── index.ts                             // Barrel exports
+```
+
+**Benefits:**
+- ✅ Better testability (isolated components)
+- ✅ Easier debugging (smaller surface area)
+- ✅ Improved reusability (compose components)
+- ✅ Faster development (parallel work on components)
+- ✅ Better performance (lazy loading, code splitting)
+
+**Enforcement:**
+- All pull requests with files >500 lines will be rejected
+- Consider using React.lazy() for code splitting large features
+
 ## Project Overview
 
 **InvestPro Maroc** is a financial management platform for investment expenses and commission calculations in Morocco.

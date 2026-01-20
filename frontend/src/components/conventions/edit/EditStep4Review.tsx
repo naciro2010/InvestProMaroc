@@ -59,7 +59,7 @@ export default function EditStep4Review({
   };
 
   const getTypeLabel = (type: string): string => {
-    return type === 'CADRE' ? 'Convention CADRE' : 'Convention SPECIFIQUE';
+    return type === 'CADRE' ? 'Convention CADRE' : 'Convention NON CADRE';
   };
 
   const getBaseCalculLabel = (base: string | null): string => {

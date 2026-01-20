@@ -69,7 +69,7 @@ export function validateStep1(formData: ConventionFormData): StepValidation {
   }
 
   // Type (obligatoire)
-  if (!formData.typeConvention || !['CADRE', 'SPECIFIQUE'].includes(formData.typeConvention)) {
+  if (!formData.typeConvention || !['CADRE', 'NON_CADRE'].includes(formData.typeConvention)) {
     errors.typeConvention = 'Le type de convention est obligatoire';
   }
 

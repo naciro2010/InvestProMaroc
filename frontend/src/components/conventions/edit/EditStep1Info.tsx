@@ -81,7 +81,7 @@ export default function EditStep1Info({ formData, onChange, errors = {} }: EditS
               onChange={(e) => handleChange('typeConvention', e.target.value as string)}
             >
               <MenuItem value="CADRE">Convention CADRE</MenuItem>
-              <MenuItem value="SPECIFIQUE">Convention SPECIFIQUE</MenuItem>
+              <MenuItem value="NON_CADRE">Convention NON CADRE</MenuItem>
             </Select>
             {errors.typeConvention && (
               <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>

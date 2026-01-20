@@ -429,7 +429,7 @@ class ConventionController(
                 typeConvention = TypeConvention.valueOf(request.typeConvention)
                 tauxCommission = request.tauxCommission
                 budget = request.budget
-                baseCalcul = request.baseCalcul?.let { bc: String -> BaseCalculConvention.valueOf(bc) }
+                baseCalcul = request.baseCalcul ?: "DECAISSEMENTS_TTC"
                 tauxTva = request.tauxTva
                 dateDebut = request.dateDebut
                 dateFin = request.dateFin

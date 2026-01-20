@@ -3,6 +3,8 @@ package ma.investpro.service
 import ma.investpro.dto.DecompteListDTO
 import ma.investpro.dto.DecompteStatistiques
 import ma.investpro.entity.Decompte
+import ma.investpro.entity.DecompteRetenue
+import ma.investpro.entity.DecompteImputation
 import ma.investpro.entity.StatutDecompte
 import ma.investpro.repository.DecompteRepository
 import ma.investpro.repository.MarcheRepository
@@ -147,17 +149,17 @@ class DecompteService(
         return decompteRepository.findByMarcheIdAndStatutIn(
             marcheId,
             listOf(StatutDecompte.PAYE_TOTAL)
-        ).sumOf { it.montantPaye }
+        ).sumOf { decompte: Decompte -> decompte.montantPaye }
     }
 
     fun getStatistiques(): DecompteStatistiques {
-        val all = decompteRepository.findAll()
+        val all: List<Decompte> = decompteRepository.findAll()
         return DecompteStatistiques(
             total = all.size,
-            brouillon = all.count { it.statut == StatutDecompte.BROUILLON },
-            soumis = all.count { it.statut == StatutDecompte.SOUMIS },
-            valides = all.count { it.statut == StatutDecompte.VALIDE },
-            montantTotal = all.sumOf { it.montantTTC }
+            brouillon = all.count { decompte: Decompte -> decompte.statut == StatutDecompte.BROUILLON },
+            soumis = all.count { decompte: Decompte -> decompte.statut == StatutDecompte.SOUMIS },
+            valides = all.count { decompte: Decompte -> decompte.statut == StatutDecompte.VALIDE },
+            montantTotal = all.sumOf { decompte: Decompte -> decompte.montantTTC }
         )
     }
 
@@ -166,7 +168,7 @@ class DecompteService(
      * Used by frontend list page to display decomptes with minimal data transfer
      */
     fun findAllForListView(): List<DecompteListDTO> {
-        return decompteRepository.findAll().map { decompte ->
+        return decompteRepository.findAll().map { decompte: Decompte ->
             convertToListDTO(decompte)
         }
     }
@@ -202,22 +204,24 @@ class DecompteService(
     }
 
     /**
+     * ✅ FIXED: Returns strongly typed List<DecompteRetenue> instead of List<Any>
      * Get retenues for a specific decompte
      * Called by detail page component to load retentions separately
      */
-    fun findRetenuesByDecompteId(decompteId: Long): List<Any> {
+    fun findRetenuesByDecompteId(decompteId: Long): List<DecompteRetenue> {
         val decompte = findById(decompteId)
             ?: throw IllegalArgumentException("Décompte avec ID $decompteId non trouve")
-        return decompte.retenues.toList() as List<Any>
+        return decompte.retenues.toList()
     }
 
     /**
+     * ✅ FIXED: Returns strongly typed List<DecompteImputation> instead of List<Any>
      * Get imputations for a specific decompte
      * Called by detail page component to load allocations separately
      */
-    fun findImputationsByDecompteId(decompteId: Long): List<Any> {
+    fun findImputationsByDecompteId(decompteId: Long): List<DecompteImputation> {
         val decompte = findById(decompteId)
             ?: throw IllegalArgumentException("Décompte avec ID $decompteId non trouve")
-        return decompte.imputations.toList() as List<Any>
+        return decompte.imputations.toList()
     }
 }

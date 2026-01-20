@@ -104,7 +104,7 @@ class Decompte(
      * Calcule le total des retenues
      */
     fun calculerTotalRetenues() {
-        totalRetenues = retenues.filter { it.actif }.fold(BigDecimal.ZERO) { acc, retenue ->
+        totalRetenues = retenues.filter { retenue: DecompteRetenue -> retenue.actif }.fold(BigDecimal.ZERO) { acc: BigDecimal, retenue: DecompteRetenue ->
             acc + retenue.montant
         }
     }

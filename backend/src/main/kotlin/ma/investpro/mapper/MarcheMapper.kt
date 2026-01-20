@@ -30,9 +30,9 @@ class MarcheMapper {
             delaiExecutionMois = entity.delaiExecutionMois,
             retenueGarantie = entity.retenueGarantie,
             remarques = entity.remarques,
-            lignes = entity.lignes.map { toLigneDTO(it) },
-            avenants = entity.avenants.map { toAvenantDTO(it) },
-            decomptes = entity.decomptes.map { toDecompteSimpleDTO(it) },
+            lignes = entity.lignes.map { ligne: MarcheLigne -> toLigneDTO(ligne) },
+            avenants = entity.avenants.map { avenant: AvenantMarche -> toAvenantDTO(avenant) },
+            decomptes = entity.decomptes.map { decompte: Decompte -> toDecompteSimpleDTO(decompte) },
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
             actif = entity.actif
@@ -103,10 +103,22 @@ class MarcheMapper {
     }
 
     fun toDTOList(entities: List<Marche>): List<MarcheDTO> {
-        return entities.map { toDTO(it) }
+        return entities.map { marche: Marche -> toDTO(marche) }
     }
 
     fun toSimpleDTOList(entities: List<Marche>): List<MarcheSimpleDTO> {
-        return entities.map { toSimpleDTO(it) }
+        return entities.map { marche: Marche -> toSimpleDTO(marche) }
+    }
+
+    fun toLigneDTOList(entities: List<MarcheLigne>): List<MarcheLigneDTO> {
+        return entities.map { ligne: MarcheLigne -> toLigneDTO(ligne) }
+    }
+
+    fun toAvenantDTOList(entities: List<AvenantMarche>): List<AvenantMarcheDTO> {
+        return entities.map { avenant: AvenantMarche -> toAvenantDTO(avenant) }
+    }
+
+    fun toDecompteSimpleDTOList(entities: List<Decompte>): List<DecompteSimpleDTO> {
+        return entities.map { decompte: Decompte -> toDecompteSimpleDTO(decompte) }
     }
 }

@@ -2,6 +2,9 @@ package ma.investpro.service
 
 import ma.investpro.dto.MarcheListDTO
 import ma.investpro.entity.Marche
+import ma.investpro.entity.MarcheLigne
+import ma.investpro.entity.AvenantMarche
+import ma.investpro.entity.Decompte
 import ma.investpro.entity.StatutMarche
 import ma.investpro.repository.MarcheRepository
 import ma.investpro.repository.FournisseurRepository

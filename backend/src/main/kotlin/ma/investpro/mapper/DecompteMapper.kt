@@ -43,8 +43,8 @@ class DecompteMapper {
             valideParId = entity.valideParId,
             montantPaye = entity.montantPaye,
             estSolde = entity.estSolde,
-            retenues = entity.retenues.filter { it.actif }.map { toRetenueDTO(it) },
-            imputations = entity.imputations.filter { it.actif }.map { toImputationDTO(it) },
+            retenues = entity.retenues.filter { retenue: DecompteRetenue -> retenue.actif }.map { retenue: DecompteRetenue -> toRetenueDTO(retenue) },
+            imputations = entity.imputations.filter { imputation: DecompteImputation -> imputation.actif }.map { imputation: DecompteImputation -> toImputationDTO(imputation) },
             actif = entity.actif,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt
@@ -108,8 +108,8 @@ class DecompteMapper {
             cumulActuel = entity.cumulActuel,
             montantPaye = entity.montantPaye,
             estSolde = entity.estSolde,
-            nbRetenues = entity.retenues.count { it.actif },
-            nbImputations = entity.imputations.count { it.actif },
+            nbRetenues = entity.retenues.count { retenue: DecompteRetenue -> retenue.actif },
+            nbImputations = entity.imputations.count { imputation: DecompteImputation -> imputation.actif },
             actif = entity.actif,
             createdAt = entity.createdAt
         )

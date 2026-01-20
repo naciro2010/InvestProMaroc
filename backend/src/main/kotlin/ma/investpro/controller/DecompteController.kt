@@ -2,6 +2,8 @@ package ma.investpro.controller
 
 import ma.investpro.dto.*
 import ma.investpro.entity.Decompte
+import ma.investpro.entity.DecompteRetenue
+import ma.investpro.entity.DecompteImputation
 import ma.investpro.service.DecompteService
 import ma.investpro.mapper.DecompteMapper
 import mu.KotlinLogging
@@ -127,8 +129,8 @@ class DecompteController(
     fun getDecompteRetenues(@PathVariable id: Long): ResponseEntity<ApiResponse<List<DecompteRetenueDTO>>> {
         logger.info { "🌐 API: GET /api/decomptes/$id/retenues (granular: retentions only)" }
         return try {
-            val retenues = decompteService.findRetenuesByDecompteId(id)
-            val dtos = retenues.map { decompteMapper.toRetenueDTO(it) }
+            val retenues: List<DecompteRetenue> = decompteService.findRetenuesByDecompteId(id)
+            val dtos: List<DecompteRetenueDTO> = retenues.map { retenue: DecompteRetenue -> decompteMapper.toRetenueDTO(retenue) }
             ResponseEntity.ok(ApiResponse.success(dtos))
         } catch (e: IllegalArgumentException) {
             logger.error { "❌ API ERROR: ${e.message}" }
@@ -147,8 +149,8 @@ class DecompteController(
     fun getDecompteImputations(@PathVariable id: Long): ResponseEntity<ApiResponse<List<DecompteImputationDTO>>> {
         logger.info { "🌐 API: GET /api/decomptes/$id/imputations (granular: allocations only)" }
         return try {
-            val imputations = decompteService.findImputationsByDecompteId(id)
-            val dtos = imputations.map { decompteMapper.toImputationDTO(it) }
+            val imputations: List<DecompteImputation> = decompteService.findImputationsByDecompteId(id)
+            val dtos: List<DecompteImputationDTO> = imputations.map { imputation: DecompteImputation -> decompteMapper.toImputationDTO(imputation) }
             ResponseEntity.ok(ApiResponse.success(dtos))
         } catch (e: IllegalArgumentException) {
             logger.error { "❌ API ERROR: ${e.message}" }

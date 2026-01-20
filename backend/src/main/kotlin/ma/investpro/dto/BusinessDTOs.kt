@@ -690,3 +690,62 @@ data class CreateProjetConventionRequest(
 data class UpdateProjetConventionRequest(
     val ordre: Int
 )
+
+// ========== Convention Modification DTOs ==========
+
+data class ConventionModificationDTO(
+    val id: Long?,
+    val conventionId: Long,
+    val modifieParId: Long,
+    val modifieParNom: String,
+    val dateModification: LocalDateTime,
+    val motifModification: String,
+    val donneesAvant: Map<String, Any>,
+    val donneesApres: Map<String, Any>,
+    val champsModifies: List<String>,
+    val typeModification: String,
+    val createdAt: LocalDateTime
+)
+
+data class UpdateConventionWithHistoryRequest(
+    @field:NotBlank(message = "Le motif de modification est obligatoire")
+    val motifModification: String,
+
+    @field:NotNull
+    val modifieParId: Long,
+
+    @field:NotBlank(message = "Le libellé est obligatoire")
+    val libelle: String,
+
+    @field:NotBlank(message = "Le numéro est obligatoire")
+    val numero: String,
+
+    @field:NotBlank(message = "L'objet est obligatoire")
+    val objet: String,
+
+    @field:NotNull
+    val typeConvention: String,
+
+    @field:NotNull
+    @field:DecimalMin(value = "0.00", message = "Le taux de commission doit être positif")
+    @field:DecimalMax(value = "100.00", message = "Le taux de commission ne peut dépasser 100%")
+    val tauxCommission: BigDecimal,
+
+    @field:NotNull
+    @field:DecimalMin(value = "0.00", message = "Le budget doit être positif")
+    val budget: BigDecimal,
+
+    val baseCalcul: String?,
+
+    @field:NotNull
+    @field:DecimalMin(value = "0.00", message = "Le taux TVA doit être positif")
+    @field:DecimalMax(value = "20.00", message = "Le taux TVA ne peut dépasser 20%")
+    val tauxTva: BigDecimal,
+
+    @field:NotNull
+    val dateDebut: LocalDate,
+
+    val dateFin: LocalDate?,
+
+    val description: String?
+)

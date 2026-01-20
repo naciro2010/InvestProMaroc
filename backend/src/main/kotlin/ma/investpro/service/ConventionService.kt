@@ -1,19 +1,24 @@
 package ma.investpro.service
 
 import ma.investpro.entity.Convention
+import ma.investpro.entity.ConventionModification
+import ma.investpro.entity.User
 import ma.investpro.entity.StatutConvention
 import ma.investpro.entity.TypeConvention
 import ma.investpro.repository.ConventionRepository
+import ma.investpro.repository.ConventionModificationRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 @Transactional
 class ConventionService(
-    private val conventionRepository: ConventionRepository
+    private val conventionRepository: ConventionRepository,
+    private val conventionModificationRepository: ConventionModificationRepository
 ) {
 
     // ========== CRUD Operations ==========
@@ -326,5 +331,139 @@ class ConventionService(
             "achevees" to conventionRepository.countByStatut(StatutConvention.ACHEVE),
             "annulees" to conventionRepository.countByStatut(StatutConvention.ANNULE)
         )
+    }
+
+    // ========== Gestion de l'historique des modifications ==========
+
+    /**
+     * Modifier une convention avec traçabilité complète
+     * Enregistre l'état avant/après et le motif dans l'historique
+     */
+    fun updateWithHistory(
+        id: Long,
+        convention: Convention,
+        motifModification: String,
+        modifiePar: User
+    ): Convention {
+        val existing: Convention = findById(id)
+            ?: throw IllegalArgumentException("Convention $id introuvable")
+
+        // Vérifier que la convention n'est pas verrouillée
+        require(!existing.isLocked) {
+            "Convention verrouillée, impossible de modifier. ${existing.motifVerrouillage ?: ""}"
+        }
+
+        // Créer un snapshot de l'état avant modification
+        val donneesAvant: Map<String, Any> = mapOf(
+            "libelle" to (existing.libelle ?: ""),
+            "numero" to (existing.numero ?: ""),
+            "objet" to (existing.objet ?: ""),
+            "typeConvention" to existing.typeConvention.name,
+            "tauxCommission" to existing.tauxCommission.toString(),
+            "budget" to existing.budget.toString(),
+            "baseCalcul" to (existing.baseCalcul?.name ?: ""),
+            "tauxTva" to existing.tauxTva.toString(),
+            "dateDebut" to existing.dateDebut.toString(),
+            "dateFin" to (existing.dateFin?.toString() ?: ""),
+            "description" to (existing.description ?: ""),
+            "statut" to existing.statut.name
+        )
+
+        // Appliquer les modifications
+        existing.apply {
+            libelle = convention.libelle
+            numero = convention.numero
+            objet = convention.objet
+            typeConvention = convention.typeConvention
+            tauxCommission = convention.tauxCommission
+            budget = convention.budget
+            baseCalcul = convention.baseCalcul
+            tauxTva = convention.tauxTva
+            dateDebut = convention.dateDebut
+            dateFin = convention.dateFin
+            description = convention.description
+        }
+
+        // Sauvegarder la convention modifiée
+        val updated: Convention = conventionRepository.save(existing)
+
+        // Créer un snapshot de l'état après modification
+        val donneesApres: Map<String, Any> = mapOf(
+            "libelle" to (updated.libelle ?: ""),
+            "numero" to (updated.numero ?: ""),
+            "objet" to (updated.objet ?: ""),
+            "typeConvention" to updated.typeConvention.name,
+            "tauxCommission" to updated.tauxCommission.toString(),
+            "budget" to updated.budget.toString(),
+            "baseCalcul" to (updated.baseCalcul?.name ?: ""),
+            "tauxTva" to updated.tauxTva.toString(),
+            "dateDebut" to updated.dateDebut.toString(),
+            "dateFin" to (updated.dateFin?.toString() ?: ""),
+            "description" to (updated.description ?: ""),
+            "statut" to updated.statut.name
+        )
+
+        // Identifier les champs modifiés
+        val champsModifies: List<String> = donneesAvant.keys.filter { key: String ->
+            donneesAvant[key] != donneesApres[key]
+        }
+
+        // Enregistrer dans l'historique si des champs ont été modifiés
+        if (champsModifies.isNotEmpty()) {
+            val modification = ConventionModification(
+                convention = updated,
+                modifiePar = modifiePar,
+                dateModification = LocalDateTime.now(),
+                motifModification = motifModification,
+                donneesAvant = donneesAvant,
+                donneesApres = donneesApres,
+                champsModifies = champsModifies,
+                typeModification = determinerTypeModification(champsModifies)
+            )
+            conventionModificationRepository.save(modification)
+        }
+
+        return updated
+    }
+
+    /**
+     * Récupérer l'historique des modifications d'une convention
+     */
+    fun getHistoriqueModifications(conventionId: Long): List<ConventionModification> {
+        return conventionModificationRepository.findByConventionIdOrderByDateModificationDesc(conventionId)
+    }
+
+    /**
+     * Récupérer les N dernières modifications d'une convention
+     */
+    fun getDernieresModifications(conventionId: Long, limit: Int): List<ConventionModification> {
+        return conventionModificationRepository.findTopNByConventionIdOrderByDateModificationDesc(conventionId, limit)
+    }
+
+    /**
+     * Vérifier si une convention a été modifiée
+     */
+    fun aEteModifiee(conventionId: Long): Boolean {
+        return conventionModificationRepository.existsByConventionId(conventionId)
+    }
+
+    /**
+     * Obtenir la dernière modification d'une convention
+     */
+    fun getDerniereModification(conventionId: Long): ConventionModification? {
+        return conventionModificationRepository.findLastModificationByConventionId(conventionId)
+    }
+
+    /**
+     * Déterminer le type de modification basé sur les champs modifiés
+     */
+    private fun determinerTypeModification(champsModifies: List<String>): String {
+        return when {
+            champsModifies.contains("statut") -> "STATUS_CHANGE"
+            champsModifies.any { champ: String -> champ in listOf("tauxCommission", "baseCalcul", "tauxTva") } -> "FINANCIAL_PARAMS_CHANGE"
+            champsModifies.any { champ: String -> champ in listOf("dateDebut", "dateFin") } -> "DATES_CHANGE"
+            champsModifies.contains("budget") -> "BUDGET_CHANGE"
+            else -> "UPDATE"
+        }
     }
 }

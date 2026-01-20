@@ -18,16 +18,24 @@ interface ConventionFormData {
   tauxTva: number;
 }
 
+interface ValidationErrors {
+  tauxCommission?: string;
+  budget?: string;
+  baseCalcul?: string;
+  tauxTva?: string;
+}
+
 interface EditStep2FinancesProps {
   formData: ConventionFormData;
   onChange: (updates: Partial<ConventionFormData>) => void;
+  errors?: ValidationErrors;
 }
 
 /**
  * Étape 2: Paramètres financiers
  * Composant micro-frontend pour l'édition
  */
-export default function EditStep2Finances({ formData, onChange }: EditStep2FinancesProps): JSX.Element {
+export default function EditStep2Finances({ formData, onChange, errors = {} }: EditStep2FinancesProps): JSX.Element {
   const handleNumberChange = (field: keyof ConventionFormData, value: string): void => {
     const numericValue: number = parseFloat(value) || 0;
     onChange({ [field]: numericValue });
@@ -62,7 +70,8 @@ export default function EditStep2Finances({ formData, onChange }: EditStep2Finan
               min: 0,
               step: 1000,
             }}
-            helperText="Budget total de la convention"
+            error={Boolean(errors.budget)}
+            helperText={errors.budget || 'Budget total de la convention'}
           />
 
           <TextField
@@ -82,13 +91,14 @@ export default function EditStep2Finances({ formData, onChange }: EditStep2Finan
               max: 100,
               step: 0.01,
             }}
-            helperText="Taux de commission (0-100%)"
+            error={Boolean(errors.tauxCommission)}
+            helperText={errors.tauxCommission || 'Taux de commission (0-100%)'}
           />
         </Box>
 
         {/* Base de calcul et Taux TVA */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-          <FormControl fullWidth>
+          <FormControl fullWidth error={Boolean(errors.baseCalcul)}>
             <InputLabel>Base de calcul</InputLabel>
             <Select
               value={formData.baseCalcul || ''}
@@ -104,6 +114,11 @@ export default function EditStep2Finances({ formData, onChange }: EditStep2Finan
               <MenuItem value="TTC">Toutes Taxes Comprises (TTC)</MenuItem>
               <MenuItem value="TVA">TVA uniquement</MenuItem>
             </Select>
+            {errors.baseCalcul && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                {errors.baseCalcul}
+              </Typography>
+            )}
           </FormControl>
 
           <TextField
@@ -123,7 +138,8 @@ export default function EditStep2Finances({ formData, onChange }: EditStep2Finan
               max: 20,
               step: 0.1,
             }}
-            helperText="Taux de TVA applicable"
+            error={Boolean(errors.tauxTva)}
+            helperText={errors.tauxTva || 'Taux de TVA applicable'}
           />
         </Box>
       </Stack>

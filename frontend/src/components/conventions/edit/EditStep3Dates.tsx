@@ -12,16 +12,23 @@ interface ConventionFormData {
   description: string | null;
 }
 
+interface ValidationErrors {
+  dateDebut?: string;
+  dateFin?: string;
+  description?: string;
+}
+
 interface EditStep3DatesProps {
   formData: ConventionFormData;
   onChange: (updates: Partial<ConventionFormData>) => void;
+  errors?: ValidationErrors;
 }
 
 /**
  * Étape 3: Dates et description
  * Composant micro-frontend pour l'édition
  */
-export default function EditStep3Dates({ formData, onChange }: EditStep3DatesProps): JSX.Element {
+export default function EditStep3Dates({ formData, onChange, errors = {} }: EditStep3DatesProps): JSX.Element {
   const handleChange = (field: keyof ConventionFormData, value: string | null): void => {
     onChange({ [field]: value });
   };
@@ -47,7 +54,8 @@ export default function EditStep3Dates({ formData, onChange }: EditStep3DatesPro
             InputLabelProps={{
               shrink: true,
             }}
-            helperText="Date de début de la convention"
+            error={Boolean(errors.dateDebut)}
+            helperText={errors.dateDebut || 'Date de début de la convention'}
           />
 
           <TextField
@@ -61,7 +69,8 @@ export default function EditStep3Dates({ formData, onChange }: EditStep3DatesPro
             InputLabelProps={{
               shrink: true,
             }}
-            helperText="Date de fin prévue (optionnel)"
+            error={Boolean(errors.dateFin)}
+            helperText={errors.dateFin || 'Date de fin prévue (optionnel)'}
           />
         </Box>
 
@@ -75,7 +84,8 @@ export default function EditStep3Dates({ formData, onChange }: EditStep3DatesPro
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             handleChange('description', e.target.value || null)
           }
-          helperText="Description détaillée de la convention (optionnel)"
+          error={Boolean(errors.description)}
+          helperText={errors.description || 'Description détaillée de la convention (optionnel)'}
           placeholder="Décrivez en détail l'objet, les objectifs et les modalités de la convention..."
         />
       </Stack>

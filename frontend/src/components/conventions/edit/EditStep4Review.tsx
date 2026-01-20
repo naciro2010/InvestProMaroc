@@ -24,10 +24,15 @@ interface ConventionFormData {
   description: string | null;
 }
 
+interface ValidationErrors {
+  motifModification?: string;
+}
+
 interface EditStep4ReviewProps {
   formData: ConventionFormData;
   motifModification: string;
   onMotifChange: (motif: string) => void;
+  errors?: ValidationErrors;
 }
 
 /**
@@ -38,6 +43,7 @@ export default function EditStep4Review({
   formData,
   motifModification,
   onMotifChange,
+  errors = {},
 }: EditStep4ReviewProps): JSX.Element {
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('fr-MA', {
@@ -93,8 +99,8 @@ export default function EditStep4Review({
           value={motifModification}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => onMotifChange(e.target.value)}
           placeholder="Expliquez pourquoi vous modifiez cette convention..."
-          helperText="Ce motif sera enregistré dans l'historique et visible par tous"
-          error={!motifModification.trim()}
+          error={Boolean(errors.motifModification)}
+          helperText={errors.motifModification || 'Ce motif sera enregistré dans l\'historique et visible par tous'}
         />
       </Paper>
 

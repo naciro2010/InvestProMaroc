@@ -18,6 +18,16 @@ import EditStep1Info from '@/components/conventions/edit/EditStep1Info';
 import EditStep2Finances from '@/components/conventions/edit/EditStep2Finances';
 import EditStep3Dates from '@/components/conventions/edit/EditStep3Dates';
 import EditStep4Review from '@/components/conventions/edit/EditStep4Review';
+import {
+  validateStep1,
+  validateStep2,
+  validateStep3,
+  validateAllSteps,
+  validateMotif,
+  canSubmitForm,
+  type ValidationErrors,
+  type StepValidation,
+} from '@/utils/conventionValidation';
 
 interface ConventionFormData {
   libelle: string;
@@ -69,6 +79,7 @@ export default function ConventionEditPage(): JSX.Element {
   });
 
   const [motifModification, setMotifModification] = useState<string>('');
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   /**
    * Charger les données de la convention existante
@@ -120,20 +131,88 @@ export default function ConventionEditPage(): JSX.Element {
   }, [id]);
 
   /**
+   * Effet pour valider le motif de modification (étape 4)
+   */
+  useEffect(() => {
+    if (activeStep === 3) {
+      const motifValidation: StepValidation = validateMotif(motifModification);
+      setValidationErrors((prev: ValidationErrors) => ({
+        ...prev,
+        motifModification: motifValidation.errors.motifModification,
+      }));
+    }
+  }, [motifModification, activeStep]);
+
+  /**
    * Mise à jour du formulaire (appelé par les composants enfants)
+   * Valide en temps réel pour afficher les erreurs
    */
   const handleFormChange = (updates: Partial<ConventionFormData>): void => {
-    setFormData((prev: ConventionFormData) => ({ ...prev, ...updates }));
+    const newFormData: ConventionFormData = { ...formData, ...updates };
+    setFormData(newFormData);
+
+    // Valider l'étape courante pour afficher les erreurs
+    let validation: StepValidation;
+    switch (activeStep) {
+      case 0:
+        validation = validateStep1(newFormData);
+        break;
+      case 1:
+        validation = validateStep2(newFormData);
+        break;
+      case 2:
+        validation = validateStep3(newFormData);
+        break;
+      default:
+        validation = { isValid: true, errors: {} };
+    }
+
+    setValidationErrors(validation.errors);
+  };
+
+  /**
+   * Vérifie si on peut passer à l'étape suivante
+   */
+  const canGoNext = (): boolean => {
+    let validation: StepValidation;
+    switch (activeStep) {
+      case 0:
+        validation = validateStep1(formData);
+        break;
+      case 1:
+        validation = validateStep2(formData);
+        break;
+      case 2:
+        validation = validateStep3(formData);
+        break;
+      default:
+        return true;
+    }
+    return validation.isValid;
+  };
+
+  /**
+   * Vérifie si on peut soumettre le formulaire
+   */
+  const canSubmit = (): boolean => {
+    return canSubmitForm(formData, motifModification);
   };
 
   /**
    * Navigation entre les étapes
    */
   const handleNext = (): void => {
+    // Valider l'étape courante avant de passer à la suivante
+    if (!canGoNext()) {
+      setError('Veuillez corriger les erreurs avant de continuer');
+      return;
+    }
+    setError(null);
     setActiveStep((prev: number) => prev + 1);
   };
 
   const handleBack = (): void => {
+    setError(null);
     setActiveStep((prev: number) => prev - 1);
   };
 
@@ -141,8 +220,16 @@ export default function ConventionEditPage(): JSX.Element {
    * Soumission finale avec motif
    */
   const handleSubmit = async (): Promise<void> => {
-    if (!motifModification.trim()) {
-      setError('Le motif de modification est obligatoire');
+    // Valider toutes les étapes et le motif
+    if (!canSubmit()) {
+      const allValidation: StepValidation = validateAllSteps(formData);
+      const motifValidation: StepValidation = validateMotif(motifModification);
+
+      if (!motifValidation.isValid) {
+        setError(motifValidation.errors.motifModification || 'Le motif de modification est obligatoire');
+      } else if (!allValidation.isValid) {
+        setError('Veuillez corriger toutes les erreurs avant de soumettre');
+      }
       return;
     }
 
@@ -182,6 +269,7 @@ export default function ConventionEditPage(): JSX.Element {
           <EditStep1Info
             formData={formData}
             onChange={handleFormChange}
+            errors={validationErrors}
           />
         );
       case 1:
@@ -189,6 +277,7 @@ export default function ConventionEditPage(): JSX.Element {
           <EditStep2Finances
             formData={formData}
             onChange={handleFormChange}
+            errors={validationErrors}
           />
         );
       case 2:
@@ -196,6 +285,7 @@ export default function ConventionEditPage(): JSX.Element {
           <EditStep3Dates
             formData={formData}
             onChange={handleFormChange}
+            errors={validationErrors}
           />
         );
       case 3:
@@ -204,6 +294,7 @@ export default function ConventionEditPage(): JSX.Element {
             formData={formData}
             motifModification={motifModification}
             onMotifChange={setMotifModification}
+            errors={validationErrors}
           />
         );
       default:
@@ -284,6 +375,7 @@ export default function ConventionEditPage(): JSX.Element {
           {activeStep < steps.length - 1 ? (
             <Button
               onClick={handleNext}
+              disabled={!canGoNext() || submitting}
               endIcon={<ArrowForward />}
               variant="contained"
             >
@@ -292,7 +384,7 @@ export default function ConventionEditPage(): JSX.Element {
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={submitting || !motifModification.trim()}
+              disabled={!canSubmit() || submitting}
               startIcon={<Save />}
               variant="contained"
               color="primary"

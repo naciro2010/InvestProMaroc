@@ -17,16 +17,24 @@ interface ConventionFormData {
   typeConvention: string;
 }
 
+interface ValidationErrors {
+  libelle?: string;
+  numero?: string;
+  objet?: string;
+  typeConvention?: string;
+}
+
 interface EditStep1InfoProps {
   formData: ConventionFormData;
   onChange: (updates: Partial<ConventionFormData>) => void;
+  errors?: ValidationErrors;
 }
 
 /**
  * Étape 1: Informations générales de la convention
  * Composant micro-frontend pour l'édition
  */
-export default function EditStep1Info({ formData, onChange }: EditStep1InfoProps): JSX.Element {
+export default function EditStep1Info({ formData, onChange, errors = {} }: EditStep1InfoProps): JSX.Element {
   const handleChange = (field: keyof ConventionFormData, value: string): void => {
     onChange({ [field]: value });
   };
@@ -47,7 +55,8 @@ export default function EditStep1Info({ formData, onChange }: EditStep1InfoProps
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             handleChange('libelle', e.target.value)
           }
-          helperText="Nom court de la convention"
+          error={Boolean(errors.libelle)}
+          helperText={errors.libelle || 'Nom court de la convention'}
         />
 
         {/* Numéro et Type */}
@@ -60,10 +69,11 @@ export default function EditStep1Info({ formData, onChange }: EditStep1InfoProps
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               handleChange('numero', e.target.value)
             }
-            helperText="Ex: CONV-2026-001"
+            error={Boolean(errors.numero)}
+            helperText={errors.numero || 'Ex: CONV-2026-001'}
           />
 
-          <FormControl fullWidth required>
+          <FormControl fullWidth required error={Boolean(errors.typeConvention)}>
             <InputLabel>Type de convention</InputLabel>
             <Select
               value={formData.typeConvention}
@@ -73,6 +83,11 @@ export default function EditStep1Info({ formData, onChange }: EditStep1InfoProps
               <MenuItem value="CADRE">Convention CADRE</MenuItem>
               <MenuItem value="SPECIFIQUE">Convention SPECIFIQUE</MenuItem>
             </Select>
+            {errors.typeConvention && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                {errors.typeConvention}
+              </Typography>
+            )}
           </FormControl>
         </Box>
 
@@ -87,7 +102,8 @@ export default function EditStep1Info({ formData, onChange }: EditStep1InfoProps
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             handleChange('objet', e.target.value)
           }
-          helperText="Description de l'objet de la convention"
+          error={Boolean(errors.objet)}
+          helperText={errors.objet || "Description de l'objet de la convention"}
         />
       </Stack>
     </Box>

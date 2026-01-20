@@ -202,22 +202,24 @@ class DecompteService(
     }
 
     /**
+     * ✅ FIXED: Returns strongly typed List<DecompteRetenue> instead of List<Any>
      * Get retenues for a specific decompte
      * Called by detail page component to load retentions separately
      */
-    fun findRetenuesByDecompteId(decompteId: Long): List<Any> {
+    fun findRetenuesByDecompteId(decompteId: Long): List<DecompteRetenue> {
         val decompte = findById(decompteId)
             ?: throw IllegalArgumentException("Décompte avec ID $decompteId non trouve")
-        return decompte.retenues.toList() as List<Any>
+        return decompte.retenues.toList()
     }
 
     /**
+     * ✅ FIXED: Returns strongly typed List<DecompteImputation> instead of List<Any>
      * Get imputations for a specific decompte
      * Called by detail page component to load allocations separately
      */
-    fun findImputationsByDecompteId(decompteId: Long): List<Any> {
+    fun findImputationsByDecompteId(decompteId: Long): List<DecompteImputation> {
         val decompte = findById(decompteId)
             ?: throw IllegalArgumentException("Décompte avec ID $decompteId non trouve")
-        return decompte.imputations.toList() as List<Any>
+        return decompte.imputations.toList()
     }
 }

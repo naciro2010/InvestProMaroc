@@ -109,4 +109,16 @@ class MarcheMapper {
     fun toSimpleDTOList(entities: List<Marche>): List<MarcheSimpleDTO> {
         return entities.map { toSimpleDTO(it) }
     }
+
+    fun toLigneDTOList(entities: List<MarcheLigne>): List<MarcheLigneDTO> {
+        return entities.map { toLigneDTO(it) }
+    }
+
+    fun toAvenantDTOList(entities: List<AvenantMarche>): List<AvenantMarcheDTO> {
+        return entities.map { toAvenantDTO(it) }
+    }
+
+    fun toDecompteSimpleDTOList(entities: List<Decompte>): List<DecompteSimpleDTO> {
+        return entities.map { toDecompteSimpleDTO(it) }
+    }
 }

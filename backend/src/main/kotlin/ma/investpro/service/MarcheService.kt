@@ -224,45 +224,48 @@ class MarcheService(
     }
 
     /**
+     * ✅ FIXED: Returns strongly typed List<MarcheLigne> instead of List<Any>
      * Get lignes for a specific marche
      * Called by detail page component to load line items separately
      */
-    fun findLignesByMarcheId(marcheId: Long): List<Any> {
+    fun findLignesByMarcheId(marcheId: Long): List<MarcheLigne> {
         logger.debug { "Fetching lignes for marche ID: $marcheId" }
         val marche = marcheRepository.findById(marcheId)
             .orElseThrow {
                 logger.warn { "Marche not found - ID: $marcheId" }
                 IllegalArgumentException("Marche avec ID $marcheId non trouve")
             }
-        return marche.lignes.toList() as List<Any>
+        return marche.lignes.toList()
     }
 
     /**
+     * ✅ FIXED: Returns strongly typed List<AvenantMarche> instead of List<Any>
      * Get avenants for a specific marche
      * Called by detail page component to load amendments separately
      */
-    fun findAvenantsByMarcheId(marcheId: Long): List<Any> {
+    fun findAvenantsByMarcheId(marcheId: Long): List<AvenantMarche> {
         logger.debug { "Fetching avenants for marche ID: $marcheId" }
         val marche = marcheRepository.findById(marcheId)
             .orElseThrow {
                 logger.warn { "Marche not found - ID: $marcheId" }
                 IllegalArgumentException("Marche avec ID $marcheId non trouve")
             }
-        return marche.avenants.toList() as List<Any>
+        return marche.avenants.toList()
     }
 
     /**
+     * ✅ FIXED: Returns strongly typed List<Decompte> instead of List<Any>
      * Get decomptes for a specific marche
      * Called by detail page component to load billing statements separately
      */
-    fun findDecomptesByMarcheId(marcheId: Long): List<Any> {
+    fun findDecomptesByMarcheId(marcheId: Long): List<Decompte> {
         logger.debug { "Fetching decomptes for marche ID: $marcheId" }
         val marche = marcheRepository.findById(marcheId)
             .orElseThrow {
                 logger.warn { "Marche not found - ID: $marcheId" }
                 IllegalArgumentException("Marche avec ID $marcheId non trouve")
             }
-        return marche.decomptes.toList() as List<Any>
+        return marche.decomptes.toList()
     }
 
     /**

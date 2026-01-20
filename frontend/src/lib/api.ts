@@ -5,6 +5,7 @@ import {
   RegisterRequest,
   CreateConventionDTO,
   UpdateConventionDTO,
+  UpdateConventionWithHistoryRequest,
   CreateProjetDTO,
   UpdateProjetDTO,
   CreateMarcheDTO,
@@ -316,6 +317,14 @@ export const conventionsAPI = {
   remettreEnBrouillonSousConvention: (id: number) => api.post(`/conventions/${id}/remettre-en-brouillon`),
   mettreEnCoursSousConvention: (id: number) => api.post(`/conventions/${id}/mettre-en-cours`),
   annulerSousConvention: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
+
+  // Gestion de l'historique des modifications
+  updateWithHistory: (id: number, data: UpdateConventionWithHistoryRequest) =>
+    api.put(`/conventions/${id}/with-history`, data),
+  getHistorique: (id: number) => api.get(`/conventions/${id}/historique`),
+  getDernieresModifications: (id: number, limit: number) =>
+    api.get(`/conventions/${id}/historique/derniers/${limit}`),
+  aEteModifiee: (id: number) => api.get(`/conventions/${id}/a-ete-modifiee`),
 }
 
 // Projets API

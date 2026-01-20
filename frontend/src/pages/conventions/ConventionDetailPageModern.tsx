@@ -38,7 +38,12 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import { api, conventionsAPI, avenantConventionsAPI } from '../../lib/api'
-import { ConventionInfoCard, ConventionSousConventionsCard, ConventionAvenantsTab } from '../../components/conventions/detail'
+import {
+  ConventionInfoCard,
+  ConventionSousConventionsCard,
+  ConventionAvenantsTab,
+  ConventionHistoryCard,
+} from '../../components/conventions/detail'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -572,6 +577,11 @@ const ConventionDetailPageModern = () => {
                 formatDate={formatDate}
                 getStatusColor={getStatusColor}
               />
+
+              {/* Historique des modifications */}
+              <Container maxWidth="xl" sx={{ mt: 4 }}>
+                <ConventionHistoryCard conventionId={convention.id} />
+              </Container>
             </TabPanel>
 
             {/* Projets Tab */}

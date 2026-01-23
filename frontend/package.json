@@ -12,6 +12,9 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "start": "serve -s dist -l 3000",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "security:audit": "npm audit --audit-level=high"
   },
   "dependencies": {
@@ -43,21 +46,27 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/ui": "^1.0.4",
     "autoprefixer": "^10.4.17",
     "connect-history-api-fallback": "^2.0.0",
     "esbuild": "^0.27.2",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "jsdom": "^23.0.1",
     "postcss": "^8.4.35",
     "serve": "^14.2.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
-    "vite": "5.4.21"
+    "vite": "5.4.21",
+    "vitest": "^1.0.4"
   }
 }

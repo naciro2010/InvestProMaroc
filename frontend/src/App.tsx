@@ -21,11 +21,9 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardModern from './pages/DashboardModern'
 import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
-import ConventionWizard from './pages/conventions/ConventionWizard'
 import ConventionWizardComplete from './pages/conventions/ConventionWizardComplete'
 import SousConventionWizard from './pages/conventions/SousConventionWizard'
 import AvenantForm from './pages/conventions/AvenantForm'
-import ConventionDetailPage from './pages/conventions/ConventionDetailPage'
 import ConventionDetailPageModern from './pages/conventions/ConventionDetailPageModern'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPageModern from './pages/marches/MarcheDetailPageModern'
@@ -78,24 +76,6 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" />
-}
-
-// Placeholder component for pages not yet created
-const ComingSoon = ({ title }: { title: string }) => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">{title}</h1>
-        <p className="text-gray-600">Cette page sera bientôt disponible...</p>
-        <button
-          onClick={() => window.history.back()}
-          className="mt-6 btn-primary"
-        >
-          Retour
-        </button>
-      </div>
-    </div>
-  )
 }
 
 // Create React Query client

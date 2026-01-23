@@ -154,30 +154,6 @@ data class FournisseurSimpleDTO(
     val actif: Boolean
 )
 
-// Partenaire DTOs
-data class PartenaireDTO(
-    val id: Long?,
-    val code: String,
-    val raisonSociale: String,
-    val sigle: String?,
-    val typePartenaire: String?,
-    val email: String?,
-    val telephone: String?,
-    val adresse: String?,
-    val description: String?,
-    val actif: Boolean,
-    val createdAt: LocalDateTime?,
-    val updatedAt: LocalDateTime?
-)
-
-data class PartenaireSimpleDTO(
-    val id: Long?,
-    val code: String,
-    val raisonSociale: String,
-    val sigle: String?,
-    val actif: Boolean
-)
-
 // CompteBancaire DTOs
 data class CompteBancaireDTO(
     val id: Long?,

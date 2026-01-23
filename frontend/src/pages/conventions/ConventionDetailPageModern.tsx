@@ -709,7 +709,7 @@ const ConventionDetailPageModern = () => {
             onClose={() => setAddPartenaireDialogOpen(false)}
             onSuccess={() => {
               // Reload convention data to refresh partenaires
-              fetchConvention()
+              loadConvention(convention.id)
             }}
           />
 
@@ -719,8 +719,7 @@ const ConventionDetailPageModern = () => {
             onClose={() => setLinkProjetDialogOpen(false)}
             onSuccess={() => {
               // Reload projets
-              // TODO: Add API call to fetch projets for this convention
-              setLinkProjetDialogOpen(false)
+              loadProjets(convention.id)
             }}
           />
 
@@ -730,8 +729,7 @@ const ConventionDetailPageModern = () => {
             onClose={() => setLinkMarcheDialogOpen(false)}
             onSuccess={() => {
               // Reload marchés
-              // TODO: Add API call to fetch marchés for this convention
-              setLinkMarcheDialogOpen(false)
+              loadMarches(convention.id)
             }}
           />
         </>

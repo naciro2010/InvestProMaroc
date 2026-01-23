@@ -21,9 +21,10 @@ interface ConventionModificationRepository : JpaRepository<ConventionModificatio
     /**
      * Récupérer les dernières N modifications d'une convention
      */
+    @Query("SELECT cm FROM ConventionModification cm WHERE cm.convention.id = :conventionId ORDER BY cm.dateModification DESC LIMIT :limit")
     fun findTopNByConventionIdOrderByDateModificationDesc(
-        conventionId: Long,
-        limit: Int
+        @Param("conventionId") conventionId: Long,
+        @Param("limit") limit: Int
     ): List<ConventionModification>
 
     /**

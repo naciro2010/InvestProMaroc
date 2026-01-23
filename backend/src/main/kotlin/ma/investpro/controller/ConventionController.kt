@@ -6,7 +6,6 @@ import ma.investpro.entity.StatutConvention
 import ma.investpro.entity.ImputationPrevisionnelle
 import ma.investpro.entity.VersementPrevisionnel
 import ma.investpro.entity.User
-import ma.investpro.entity.BaseCalculConvention
 import ma.investpro.entity.TypeConvention
 import ma.investpro.mapper.ConventionMapper
 import ma.investpro.mapper.ConventionModificationMapper

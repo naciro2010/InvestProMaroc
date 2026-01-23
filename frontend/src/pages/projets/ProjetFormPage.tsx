@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { projetsAPI, Projet } from '../../lib/projetsAPI';
+import { getErrorMessage } from '../../lib/errors';
 
 const ProjetFormPage = () => {
   const navigate = useNavigate();
@@ -32,12 +33,12 @@ const ProjetFormPage = () => {
     try {
       const response = await projetsAPI.getById(projetId);
       setFormData(response.data);
-    } catch (err: any) {
-      setError('Erreur lors du chargement du projet');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Erreur lors du chargement du projet'));
     }
   };
 
-  const handleChange = (field: keyof Projet, value: any) => {
+  const handleChange = (field: keyof Projet, value: Projet[keyof Projet]) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -55,8 +56,8 @@ const ProjetFormPage = () => {
         alert('Projet créé avec succès !');
       }
       navigate('/projets');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Erreur lors de la sauvegarde'));
     } finally {
       setLoading(false);
     }

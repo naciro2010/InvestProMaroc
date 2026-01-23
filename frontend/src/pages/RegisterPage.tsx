@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { UserPlus, Mail, Lock, User, Briefcase, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { getErrorMessage } from '@/lib/errors'
 
 const RegisterPage = () => {
   const navigate = useNavigate()
@@ -48,8 +49,8 @@ const RegisterPage = () => {
         fullName: formData.fullName,
       })
       navigate('/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue')
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Une erreur est survenue'))
     } finally {
       setIsLoading(false)
     }

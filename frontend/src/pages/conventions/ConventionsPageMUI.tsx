@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Container,
   Typography,
   Button,
   Paper,
@@ -38,10 +37,12 @@ import {
   Description,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
+import PageLayout from '../../components/layout/PageLayout'
 import StatsCard from '../../components/common/StatsCard'
+import colors from '../../theme/colors'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
 
@@ -158,10 +159,9 @@ const ConventionsPageMUI = () => {
       await conventionsAPI.mettreEnCours(selectedConvention.id)
       fetchConventions()
       handleMenuClose()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur mise en cours:', error)
-      const message = error.response?.data?.message || 'La date de début n\'est pas encore atteinte'
-      alert(message)
+      alert(getErrorMessage(error, 'La date de début n\'est pas encore atteinte'))
     }
   }
 
@@ -171,9 +171,9 @@ const ConventionsPageMUI = () => {
       await conventionsAPI.remettreEnBrouillon(selectedConvention.id)
       fetchConventions()
       handleMenuClose()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur remise en brouillon:', error)
-      alert(error.response?.data?.message || 'Erreur lors de la remise en brouillon')
+      alert(getErrorMessage(error, 'Erreur lors de la remise en brouillon'))
     }
   }
 
@@ -247,22 +247,22 @@ const ConventionsPageMUI = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="xl">
-          <PageHeader
-            title="Conventions"
-            subtitle="Gestion complète des conventions avec workflow de validation"
-            actions={
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/conventions/nouvelle')}
-                sx={{ px: 3 }}
-              >
-                Nouvelle Convention
-              </Button>
-            }
-          />
+      <PageLayout
+        title="Conventions"
+        subtitle="Gestion complète des conventions avec workflow de validation"
+        showGradient={false}
+        maxWidth="xl"
+        actions={(
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/conventions/nouvelle')}
+            sx={{ px: 3 }}
+          >
+            Nouvelle Convention
+          </Button>
+        )}
+      >
 
         {/* Stats */}
         <Box
@@ -277,62 +277,62 @@ const ConventionsPageMUI = () => {
             title="Total"
             value={stats.total}
             icon={<Description />}
-            color="#3b82f6"
-            bgColor="#eff6ff"
+            color={colors.primary[600]}
+            bgColor={colors.primary[50]}
             onClick={() => setFilter('ALL')}
           />
           <StatsCard
             title="Brouillon"
             value={stats.brouillon}
             icon={<Edit />}
-            color="#6b7280"
-            bgColor="#f3f4f6"
+            color={colors.gray[600]}
+            bgColor={colors.gray[100]}
             onClick={() => setFilter('BROUILLON')}
           />
           <StatsCard
             title="Soumis"
             value={stats.soumis}
             icon={<Send />}
-            color="#f59e0b"
-            bgColor="#fef3c7"
+            color={colors.warning[600]}
+            bgColor={colors.warning[100]}
             onClick={() => setFilter('SOUMIS')}
           />
           <StatsCard
             title="Validées"
             value={stats.validees}
             icon={<CheckCircle />}
-            color="#10b981"
-            bgColor="#d1fae5"
+            color={colors.success[600]}
+            bgColor={colors.success[100]}
             onClick={() => setFilter('VALIDEE')}
           />
           <StatsCard
             title="Rejetées"
             value={stats.rejetees}
             icon={<Cancel />}
-            color="#ef4444"
-            bgColor="#fee2e2"
+            color={colors.danger[600]}
+            bgColor={colors.danger[100]}
             onClick={() => setFilter('REJETE')}
           />
           <StatsCard
             title="En Exécution"
             value={stats.enExecution}
             icon={<Pending />}
-            color="#3b82f6"
-            bgColor="#dbeafe"
+            color={colors.info[600]}
+            bgColor={colors.info[100]}
             onClick={() => setFilter('EN_EXECUTION')}
           />
           <StatsCard
             title="Annulées"
             value={stats.annulees}
             icon={<Cancel />}
-            color="#ef4444"
-            bgColor="#fee2e2"
+            color={colors.danger[600]}
+            bgColor={colors.danger[100]}
             onClick={() => setFilter('ANNULE')}
           />
         </Box>
 
         {/* Search and Filter */}
-        <Paper sx={{ p: 3, mb: 3, border: '1px solid #e5e7eb', boxShadow: 'none', borderRadius: '12px' }}>
+        <Paper sx={{ p: 3, mb: 3, border: `1px solid ${colors.gray[200]}`, boxShadow: 'none', borderRadius: '12px' }}>
           <TextField
             fullWidth
             placeholder="Rechercher par nom, code, numéro ou créateur..."
@@ -565,8 +565,7 @@ const ConventionsPageMUI = () => {
             </Button>
           </DialogActions>
         </Dialog>
-        </Container>
-      </Box>
+      </PageLayout>
     </AppLayout>
   )
 }

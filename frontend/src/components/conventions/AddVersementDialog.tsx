@@ -14,6 +14,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import { getErrorMessage } from '@/lib/errors';
 
 interface VersementPrevisionnelForm {
   volet?: string;
@@ -51,7 +52,10 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
 
   const mods = partenaires.filter(p => p.estMaitreOeuvreDelegue);
 
-  const handleChange = (field: keyof VersementPrevisionnelForm, value: any) => {
+  const handleChange = (
+    field: keyof VersementPrevisionnelForm,
+    value: VersementPrevisionnelForm[keyof VersementPrevisionnelForm]
+  ) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -75,8 +79,8 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
         remarques: '',
       });
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'ajout');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Erreur lors de l\'ajout'));
     } finally {
       setLoading(false);
     }

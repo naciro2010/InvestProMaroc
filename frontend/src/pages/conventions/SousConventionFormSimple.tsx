@@ -16,6 +16,23 @@ import {
 } from '@mui/material'
 import { Save, Close } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
+
+interface SousConvention {
+  id: number
+  code?: string
+  numero?: string
+  libelle?: string
+  objet?: string
+  dateConvention?: string
+  dateDebut?: string
+  dateFin?: string
+  budget?: number
+  tauxCommission?: number
+  baseCalcul?: string
+  tauxTva?: number
+  heriteParametres?: boolean
+}
 
 interface SousConventionFormProps {
   open: boolean
@@ -29,7 +46,7 @@ interface SousConventionFormProps {
     baseCalcul: string
     tauxTva: number
   }
-  editingSousConvention?: any
+  editingSousConvention?: SousConvention
 }
 
 const SousConventionFormSimple = ({
@@ -115,8 +132,8 @@ const SousConventionFormSimple = ({
 
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement')
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Erreur lors de l\'enregistrement'))
     } finally {
       setLoading(false)
     }

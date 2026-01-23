@@ -5,7 +5,8 @@ import 'leaflet/dist/leaflet.css'
 import { MapPin, Search, X } from 'lucide-react'
 
 // Fix for default marker icon
-delete (L.Icon.Default.prototype as any)._getIconUrl
+const iconPrototype = L.Icon.Default.prototype as { _getIconUrl?: () => string }
+delete iconPrototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',

@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import {
   ApiResponse,
   LoginRequest,
@@ -19,6 +19,7 @@ import {
   User,
   AuthResponse,
 } from '@/types/api'
+import { getErrorMessage, getErrorStatus } from '@/lib/errors'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
@@ -178,11 +179,12 @@ api.interceptors.response.use(
           logoutUser()
           return Promise.reject(new Error('Impossible de rafraîchir le token'))
         }
-      } catch (refreshError: any) {
+      } catch (refreshError: unknown) {
         // Si le refresh échoue (400, 401, 500, etc), déconnecter l'utilisateur
-        console.error('❌ Échec du refresh token (Erreur ' + refreshError.response?.status + '):', {
-          status: refreshError.response?.status,
-          message: refreshError.response?.data?.message || refreshError.message,
+        const status = getErrorStatus(refreshError)
+        console.error('❌ Échec du refresh token (Erreur ' + status + '):', {
+          status,
+          message: getErrorMessage(refreshError, 'Erreur lors du refresh token'),
         })
         dispatchToastEvent(
           '🔒 Votre session a expiré et ne peut pas être renouvelée. Veuillez vous reconnecter.',

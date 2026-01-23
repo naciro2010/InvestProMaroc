@@ -38,6 +38,7 @@ import { SimplePageLayout } from '../../components/layout/PageLayout'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { conventionsAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
 
 const steps = [
   'Informations générales',
@@ -424,7 +425,7 @@ const ConventionWizard = () => {
   useEffect(() => {
     if (existingConvention?.data) {
       const convention = existingConvention.data
-      const formatDate = (dateStr: any) => {
+      const formatDate = (dateStr?: string | Date | null) => {
         if (!dateStr) return ''
         return typeof dateStr === 'string' ? dateStr.split('T')[0] : new Date(dateStr).toISOString().split('T')[0]
       }
@@ -1375,9 +1376,10 @@ const ConventionWizard = () => {
             {/* Error Alert */}
             {(createMutation.error || updateMutation.error) && (
               <Alert severity="error" sx={{ mt: 3 }}>
-                {(createMutation.error as any)?.response?.data?.message ||
-                  (updateMutation.error as any)?.response?.data?.message ||
-                  (isEditing ? 'Erreur lors de la modification de la convention' : 'Erreur lors de la création de la convention')}
+                {getErrorMessage(
+                  createMutation.error ?? updateMutation.error,
+                  isEditing ? 'Erreur lors de la modification de la convention' : 'Erreur lors de la création de la convention'
+                )}
               </Alert>
             )}
           </Paper>

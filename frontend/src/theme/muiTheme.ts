@@ -1,48 +1,49 @@
 import { createTheme } from '@mui/material/styles'
+import colors from './colors'
 
 // Thème inspiré de GCP/GitLab - Design épuré et moderne
 export const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2563eb', // Bleu moderne (blue-600)
-      light: '#60a5fa', // blue-400
-      dark: '#1d4ed8', // blue-700
+      main: colors.primary[600],
+      light: colors.primary[400],
+      dark: colors.primary[700],
       contrastText: '#fff',
     },
     secondary: {
-      main: '#424242', // Gris neutre
-      light: '#6d6d6d',
-      dark: '#1b1b1b',
+      main: colors.secondary[600],
+      light: colors.secondary[400],
+      dark: colors.secondary[800],
       contrastText: '#fff',
     },
     error: {
-      main: '#d32f2f',
-      light: '#ef5350',
-      dark: '#c62828',
+      main: colors.danger[600],
+      light: colors.danger[400],
+      dark: colors.danger[700],
     },
     warning: {
-      main: '#ed6c02',
-      light: '#ff9800',
-      dark: '#e65100',
+      main: colors.warning[600],
+      light: colors.warning[500],
+      dark: colors.warning[700],
     },
     info: {
-      main: '#0288d1',
-      light: '#03a9f4',
-      dark: '#01579b',
+      main: colors.info[600],
+      light: colors.info[500],
+      dark: colors.info[700],
     },
     success: {
-      main: '#2e7d32',
-      light: '#4caf50',
-      dark: '#1b5e20',
+      main: colors.success[600],
+      light: colors.success[500],
+      dark: colors.success[700],
     },
     background: {
-      default: '#f5f5f5', // Fond gris très clair
-      paper: '#ffffff',
+      default: colors.gray[50],
+      paper: colors.ui.white,
     },
     text: {
-      primary: '#202124', // Gris foncé (style Google)
-      secondary: '#5f6368',
+      primary: colors.gray[900],
+      secondary: colors.gray[600],
     },
   },
   typography: {
@@ -167,8 +168,8 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
-          backgroundColor: '#ffffff',
-          color: '#202124',
+          backgroundColor: colors.ui.white,
+          color: colors.gray[900],
         },
       },
     },
@@ -192,11 +193,11 @@ export const theme = createTheme({
     MuiTableHead: {
       styleOverrides: {
         root: {
-          backgroundColor: '#f5f5f5',
+          backgroundColor: colors.gray[50],
           '& .MuiTableCell-head': {
             fontWeight: 600,
-            color: '#202124',
-            borderBottom: '2px solid #e0e0e0',
+            color: colors.gray[900],
+            borderBottom: `2px solid ${colors.gray[200]}`,
           },
         },
       },
@@ -204,7 +205,7 @@ export const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: `1px solid ${colors.gray[100]}`,
         },
       },
     },

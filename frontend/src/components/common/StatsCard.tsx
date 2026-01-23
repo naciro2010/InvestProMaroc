@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { Card, CardContent, Stack, Box, Typography, Chip } from '@mui/material'
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material'
+import colors from '@/theme/colors'
 
 interface StatsCardProps {
   title: string
@@ -80,13 +81,13 @@ const StatsCard = ({
                 label={trend}
                 size="small"
                 sx={{
-                  bgcolor: trendDirection === 'up' ? '#dcfce7' : '#fee2e2',
-                  color: trendDirection === 'up' ? '#166534' : '#991b1b',
+                  bgcolor: trendDirection === 'up' ? colors.success[100] : colors.danger[100],
+                  color: trendDirection === 'up' ? colors.success[700] : colors.danger[700],
                   fontWeight: 600,
                   fontSize: '0.75rem',
                   height: 24,
                   '& .MuiChip-icon': {
-                    color: trendDirection === 'up' ? '#166534' : '#991b1b',
+                    color: trendDirection === 'up' ? colors.success[700] : colors.danger[700],
                     fontSize: 14,
                   },
                 }}

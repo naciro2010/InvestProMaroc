@@ -4,6 +4,7 @@ import AppLayout from '../components/layout/AppLayout'
 import { Card, Button } from '../components/ui'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
+import { getErrorMessage } from '../lib/errors'
 
 interface UserProfile {
   id: number
@@ -69,9 +70,9 @@ export default function ProfilePage() {
         alert('Profil mis à jour (changes seront synchronisés)')
       }
       setEditMode(false)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur lors de la mise à jour:', error)
-      alert('Erreur lors de la mise à jour du profil')
+      alert(getErrorMessage(error, 'Erreur lors de la mise à jour du profil'))
     } finally {
       setLoading(false)
     }
@@ -95,9 +96,9 @@ export default function ProfilePage() {
       setPasswordMode(false)
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
       alert('Mot de passe changé avec succès')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur lors du changement de mot de passe:', error)
-      alert(error.response?.data?.message || 'Erreur lors du changement de mot de passe. Endpoint non disponible.')
+      alert(getErrorMessage(error, 'Erreur lors du changement de mot de passe. Endpoint non disponible.'))
     } finally {
       setLoading(false)
     }

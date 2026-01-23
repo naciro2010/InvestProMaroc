@@ -45,6 +45,7 @@ import AddImputationDialog from '../../components/conventions/AddImputationDialo
 import AddVersementDialog from '../../components/conventions/AddVersementDialog'
 import AvenantConventionList from './AvenantConventionList'
 import SousConventionForm from './SousConventionFormSimple'
+import { getErrorMessage } from '../../lib/errors'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
 
@@ -123,6 +124,9 @@ interface Convention {
   versementsPrevisionnels: VersementPrevisionnel[]
 }
 
+type ImputationPrevisionnelleInput = Omit<ImputationPrevisionnelle, 'id'>
+type VersementPrevisionnelInput = Omit<VersementPrevisionnel, 'id'>
+
 const ConventionDetailPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -132,7 +136,7 @@ const ConventionDetailPage = () => {
   const [imputationDialogOpen, setImputationDialogOpen] = useState(false)
   const [versementDialogOpen, setVersementDialogOpen] = useState(false)
   const [sousConventionDialogOpen, setSousConventionDialogOpen] = useState(false)
-  const [editingSousConvention, setEditingSousConvention] = useState<any>(null)
+  const [editingSousConvention, setEditingSousConvention] = useState<SousConvention | null>(null)
 
   useEffect(() => {
     if (id) {
@@ -152,13 +156,11 @@ const ConventionDetailPage = () => {
         console.error('Réponse de convention invalide', response)
         throw new Error(conventionData?.message || 'Impossible de récupérer les données de la convention')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur chargement convention:', error)
 
       // Afficher un message d'erreur à l'utilisateur
-      const errorMessage = error.response?.data?.message ||
-                           error.message ||
-                           'Erreur lors du chargement de la convention'
+      const errorMessage = getErrorMessage(error, 'Erreur lors du chargement de la convention')
 
       // Utiliser un toast ou une notification
       window.dispatchEvent(
@@ -180,10 +182,9 @@ const ConventionDetailPage = () => {
     try {
       await conventionsAPI.mettreEnCours(convention.id)
       fetchConvention(convention.id)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur mise en cours:', error)
-      const message = error.response?.data?.message || 'La date de début n\'est pas encore atteinte'
-      alert(message)
+      alert(getErrorMessage(error, 'La date de début n\'est pas encore atteinte'))
     }
   }
 
@@ -201,7 +202,7 @@ const ConventionDetailPage = () => {
     return <Chip icon={icon} label={statut} color={color} size="medium" />
   }
 
-  const handleAjouterImputation = async (imputation: any) => {
+  const handleAjouterImputation = async (imputation: ImputationPrevisionnelleInput) => {
     if (!convention) return
     await conventionsAPI.ajouterImputation(convention.id, imputation)
     fetchConvention(convention.id)
@@ -213,13 +214,13 @@ const ConventionDetailPage = () => {
     try {
       await conventionsAPI.supprimerImputation(convention.id, imputationId)
       fetchConvention(convention.id)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur suppression imputation:', error)
-      alert(error.response?.data?.message || 'Erreur lors de la suppression')
+      alert(getErrorMessage(error, 'Erreur lors de la suppression'))
     }
   }
 
-  const handleAjouterVersement = async (versement: any) => {
+  const handleAjouterVersement = async (versement: VersementPrevisionnelInput) => {
     if (!convention) return
     await conventionsAPI.ajouterVersement(convention.id, versement)
     fetchConvention(convention.id)
@@ -231,9 +232,9 @@ const ConventionDetailPage = () => {
     try {
       await conventionsAPI.supprimerVersement(convention.id, versementId)
       fetchConvention(convention.id)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur suppression versement:', error)
-      alert(error.response?.data?.message || 'Erreur lors de la suppression')
+      alert(getErrorMessage(error, 'Erreur lors de la suppression'))
     }
   }
 

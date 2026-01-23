@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Container,
   Paper,
   IconButton,
   Typography,
@@ -16,10 +15,13 @@ import {
   Description,
   MoreVert,
 } from '@mui/icons-material'
-import { conventionsAPI, budgetsAPI, decomptesAPI, paiementsAPI, projetsAPI } from '../lib/api'
+import { conventionsAPI, decomptesAPI, paiementsAPI, projetsAPI } from '../lib/api'
 import AppLayout from '../components/layout/AppLayout'
-import PageHeader from '../components/common/PageHeader'
 import StatsCard from '../components/common/StatsCard'
+import PageLayout from '../components/layout/PageLayout'
+import colors from '../theme/colors'
+import { Convention as ConventionEntity, Decompte } from '../types/entities'
+import { Projet } from '../types/api'
 
 interface KPI {
   title: string
@@ -33,6 +35,10 @@ interface KPI {
   loading: boolean
 }
 
+interface PaiementResume {
+  montant?: number
+}
+
 const DashboardModern = () => {
   const navigate = useNavigate()
 
@@ -42,8 +48,8 @@ const DashboardModern = () => {
     value: 0,
     subtitle: '0 DH',
     icon: <Description />,
-    color: '#3b82f6',
-    bgColor: '#eff6ff',
+    color: colors.primary[600],
+    bgColor: colors.primary[50],
     loading: true,
   })
 
@@ -52,8 +58,8 @@ const DashboardModern = () => {
     value: 0,
     subtitle: '0 DH',
     icon: <FolderOpen />,
-    color: '#8b5cf6',
-    bgColor: '#f5f3ff',
+    color: colors.info[600],
+    bgColor: colors.info[100],
     loading: true,
   })
 
@@ -62,8 +68,8 @@ const DashboardModern = () => {
     value: 0,
     subtitle: '0 situations',
     icon: <Receipt />,
-    color: '#f59e0b',
-    bgColor: '#fef3c7',
+    color: colors.warning[600],
+    bgColor: colors.warning[100],
     loading: true,
   })
 
@@ -72,8 +78,8 @@ const DashboardModern = () => {
     value: 0,
     subtitle: '0 DH',
     icon: <Payments />,
-    color: '#10b981',
-    bgColor: '#d1fae5',
+    color: colors.success[600],
+    bgColor: colors.success[100],
     loading: true,
   })
 
@@ -92,11 +98,11 @@ const DashboardModern = () => {
       try {
         const res = await conventionsAPI.getAll()
         // Backend retourne directement le tableau dans res.data
-        const conventions = Array.isArray(res.data) ? res.data : []
+        const conventions: ConventionEntity[] = Array.isArray(res.data) ? res.data : []
 
-        const montantTotal = conventions.reduce((sum: number, c: any) => sum + (c.budget || 0), 0)
-        const validees = conventions.filter((c: any) => c.statut === 'VALIDEE').length
-        const enCours = conventions.filter((c: any) => c.statut === 'EN_EXECUTION').length
+        const montantTotal = conventions.reduce((sum, c) => sum + (c.budget || 0), 0)
+        const validees = conventions.filter((c) => c.statut === 'VALIDEE').length
+        const enCours = conventions.filter((c) => c.statut === 'EN_EXECUTION').length
 
         setConventionsKPI({
           title: 'Conventions',
@@ -104,8 +110,8 @@ const DashboardModern = () => {
           subtitle: formatLargeCurrency(montantTotal),
           details: `${validees} validées • ${enCours} en cours`,
           icon: <Description />,
-          color: '#3b82f6',
-          bgColor: '#eff6ff',
+          color: colors.primary[600],
+          bgColor: colors.primary[50],
           trend: '+12%',
           loading: false,
         })
@@ -123,11 +129,11 @@ const DashboardModern = () => {
       try {
         const res = await projetsAPI.getAll()
         // Backend retourne directement le tableau dans res.data
-        const projets = Array.isArray(res.data) ? res.data : []
+        const projets: Projet[] = Array.isArray(res.data) ? res.data : []
 
-        const montantTotal = projets.reduce((sum: number, p: any) => sum + (p.budgetTotal || 0), 0)
-        const enCours = projets.filter((p: any) => p.status === 'ACTIF').length
-        const termine = projets.filter((p: any) => p.status === 'ACHEVE').length
+        const montantTotal = projets.reduce((sum, p) => sum + (p.budgetTotal || 0), 0)
+        const enCours = projets.filter((p) => p.status === 'ACTIF').length
+        const termine = projets.filter((p) => p.status === 'ACHEVE').length
 
         setProjetsKPI({
           title: 'Projets',
@@ -135,8 +141,8 @@ const DashboardModern = () => {
           subtitle: formatLargeCurrency(montantTotal),
           details: `${enCours} en cours • ${termine} terminés`,
           icon: <FolderOpen />,
-          color: '#8b5cf6',
-          bgColor: '#f5f3ff',
+          color: colors.info[600],
+          bgColor: colors.info[100],
           trend: '+10%',
           loading: false,
         })
@@ -154,15 +160,15 @@ const DashboardModern = () => {
       try {
         const res = await decomptesAPI.getAll()
         // Backend retourne directement le tableau dans res.data
-        const decomptes = Array.isArray(res.data) ? res.data : []
+        const decomptes: Decompte[] = Array.isArray(res.data) ? res.data : []
 
         setDecomptesKPI({
           title: 'Décomptes',
           value: decomptes.length,
           subtitle: `${decomptes.length} situations`,
           icon: <Receipt />,
-          color: '#f59e0b',
-          bgColor: '#fef3c7',
+          color: colors.warning[600],
+          bgColor: colors.warning[100],
           trend: '+15%',
           loading: false,
         })
@@ -180,17 +186,17 @@ const DashboardModern = () => {
       try {
         const res = await paiementsAPI.getAll()
         // Backend retourne directement le tableau dans res.data
-        const paiements = Array.isArray(res.data) ? res.data : []
+        const paiements: PaiementResume[] = Array.isArray(res.data) ? res.data : []
 
-        const montantTotal = paiements.reduce((sum: number, p: any) => sum + (p.montant || 0), 0)
+        const montantTotal = paiements.reduce((sum, p) => sum + (p.montant || 0), 0)
 
         setPaiementsKPI({
           title: 'Paiements',
           value: paiements.length,
           subtitle: formatLargeCurrency(montantTotal),
           icon: <Payments />,
-          color: '#10b981',
-          bgColor: '#d1fae5',
+          color: colors.success[600],
+          bgColor: colors.success[100],
           trend: '+20%',
           loading: false,
         })
@@ -206,86 +212,83 @@ const DashboardModern = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="xl">
-          {/* Header */}
-          <PageHeader
-            title="Tableau de Bord"
-            subtitle="Vue d'ensemble de vos investissements et conventions"
-          />
+      <PageLayout
+        title="Tableau de Bord"
+        subtitle="Vue d'ensemble de vos investissements et conventions"
+        showGradient={false}
+        maxWidth="xl"
+      >
+        {/* KPIs Grid - Chargement progressif */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' },
+            gap: 3,
+            mb: 4,
+          }}
+        >
+          {kpis.map((kpi, index) => (
+            kpi.loading ? (
+              <Skeleton
+                key={index}
+                variant="rectangular"
+                height={180}
+                sx={{ borderRadius: '8px' }}
+              />
+            ) : (
+              <StatsCard
+                key={index}
+                {...kpi}
+                onClick={() => {
+                  if (kpi.title === 'Conventions') navigate('/conventions')
+                  if (kpi.title === 'Projets') navigate('/projets')
+                  if (kpi.title === 'Décomptes') navigate('/decomptes')
+                  if (kpi.title === 'Paiements') navigate('/paiements')
+                }}
+              />
+            )
+          ))}
+        </Box>
 
-          {/* KPIs Grid - Chargement progressif */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' },
-              gap: 3,
-              mb: 4,
-            }}
-          >
-            {kpis.map((kpi, index) => (
-              kpi.loading ? (
-                <Skeleton
-                  key={index}
-                  variant="rectangular"
-                  height={180}
-                  sx={{ borderRadius: '8px' }}
-                />
-              ) : (
-                <StatsCard
-                  key={index}
-                  {...kpi}
-                  onClick={() => {
-                    if (kpi.title === 'Conventions') navigate('/conventions')
-                    if (kpi.title === 'Projets') navigate('/projets')
-                    if (kpi.title === 'Décomptes') navigate('/decomptes')
-                    if (kpi.title === 'Paiements') navigate('/paiements')
-                  }}
-                />
-              )
-            ))}
-          </Box>
-
-          {/* Secondary Cards Row */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
-              gap: 3,
-            }}
-          >
-            {/* Activités récentes */}
-            <Paper sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" fontWeight={600}>
-                  Activités récentes
-                </Typography>
-                <IconButton size="small">
-                  <MoreVert />
-                </IconButton>
-              </Box>
-
-              <Stack spacing={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Chargement des données en temps réel...
-                </Typography>
-              </Stack>
-            </Paper>
-
-            {/* Alertes */}
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" fontWeight={600} gutterBottom>
-                Alertes
+        {/* Secondary Cards Row */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
+            gap: 3,
+          }}
+        >
+          {/* Activités récentes */}
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" fontWeight={600}>
+                Activités récentes
               </Typography>
-              <Stack spacing={2} sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Aucune alerte pour le moment
-                </Typography>
-              </Stack>
-            </Paper>
-          </Box>
-        </Container>
-      </Box>
+              <IconButton size="small">
+                <MoreVert />
+              </IconButton>
+            </Box>
+
+            <Stack spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                Chargement des données en temps réel...
+              </Typography>
+            </Stack>
+          </Paper>
+
+          {/* Alertes */}
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Alertes
+            </Typography>
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Aucune alerte pour le moment
+              </Typography>
+            </Stack>
+          </Paper>
+        </Box>
+      </PageLayout>
     </AppLayout>
   )
 }

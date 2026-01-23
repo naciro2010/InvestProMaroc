@@ -21,6 +21,8 @@ import { ArrowBack, Save, CompareArrows } from '@mui/icons-material'
 import { conventionsAPI, avenantConventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
 import FileUpload from '../../components/ui/FileUpload'
+import { Convention } from '../../types/entities'
+import { getErrorMessage } from '../../lib/errors'
 
 const steps = ['Sélection des modifications', 'Nouvelles valeurs', 'Pièces jointes', 'Récapitulatif']
 
@@ -29,7 +31,7 @@ const AvenantForm = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [convention, setConvention] = useState<any>(null)
+  const [convention, setConvention] = useState<Convention | null>(null)
   const [activeStep, setActiveStep] = useState(0)
   const [createdAvenantId, setCreatedAvenantId] = useState<number | null>(null)
 
@@ -78,9 +80,9 @@ const AvenantForm = () => {
         dateFin: data.data.dateFin || '',
         objetModifie: data.data.objet || '',
       }))
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur chargement convention:', error)
-      setError('Impossible de charger la convention')
+      setError(getErrorMessage(error, 'Impossible de charger la convention'))
     }
   }
 
@@ -98,7 +100,7 @@ const AvenantForm = () => {
 
     try {
       // Construire l'objet modifications
-      const modifications: any = {}
+      const modifications: Record<string, string | number> = {}
       if (selectedFields.budget) modifications.budget = parseFloat(formData.budget)
       if (selectedFields.tauxCommission) modifications.tauxCommission = parseFloat(formData.tauxCommission)
       if (selectedFields.baseCalcul) modifications.baseCalcul = formData.baseCalcul
@@ -118,9 +120,9 @@ const AvenantForm = () => {
       const { data } = await avenantConventionsAPI.create(payload)
       setCreatedAvenantId(data.data.id)
       handleNext()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur création avenant:', err)
-      setError(err.response?.data?.message || 'Erreur lors de la création')
+      setError(getErrorMessage(err, 'Erreur lors de la création'))
     } finally {
       setLoading(false)
     }

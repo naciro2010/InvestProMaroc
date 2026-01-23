@@ -34,14 +34,32 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import { paiementsAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
+import { getErrorMessage } from '../../lib/errors'
+import colors from '../../theme/colors'
+
+type StatutPaiementBadge = 'EN_ATTENTE' | 'EFFECTUE' | 'ANNULE'
+type ModeReglement = 'VIREMENT' | 'CHEQUE' | 'ESPECES' | 'CARTE' | 'PRELEVEMENT'
+
+interface PaiementListItem {
+  id: number
+  numeroPaiement: string
+  datePaiement: string
+  montant: number
+  modeReglement?: ModeReglement
+  referenceBancaire?: string
+  beneficiaire?: string
+  observation?: string
+  ordrePaiementId?: number
+  statut?: StatutPaiementBadge
+}
 
 const PaiementsPage = () => {
   const navigate = useNavigate()
-  const [paiements, setPaiements] = useState<any[]>([])
+  const [paiements, setPaiements] = useState<PaiementListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [openDialog, setOpenDialog] = useState(false)
-  const [selectedPaiement, setSelectedPaiement] = useState<any>(null)
+  const [selectedPaiement, setSelectedPaiement] = useState<PaiementListItem | null>(null)
   const [formData, setFormData] = useState({
     numeroPaiement: '',
     datePaiement: new Date().toISOString().split('T')[0],
@@ -62,14 +80,15 @@ const PaiementsPage = () => {
     try {
       const { data } = await paiementsAPI.getAll()
       setPaiements(data.data || [])
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur chargement paiements:', error)
+      alert(getErrorMessage(error, 'Erreur lors du chargement des paiements'))
     } finally {
       setLoading(false)
     }
   }
 
-  const handleOpenDialog = (paiement: any = null) => {
+  const handleOpenDialog = (paiement: PaiementListItem | null = null) => {
     if (paiement) {
       setSelectedPaiement(paiement)
       setFormData({
@@ -119,8 +138,9 @@ const PaiementsPage = () => {
 
       handleCloseDialog()
       loadPaiements()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur sauvegarde paiement:', error)
+      alert(getErrorMessage(error, 'Erreur lors de la sauvegarde'))
     }
   }
 
@@ -130,8 +150,9 @@ const PaiementsPage = () => {
     try {
       await paiementsAPI.delete(id)
       loadPaiements()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur suppression:', error)
+      alert(getErrorMessage(error, 'Erreur lors de la suppression'))
     }
   }
 
@@ -148,24 +169,24 @@ const PaiementsPage = () => {
     }).format(amount) + ' MAD'
   }
 
-  const getStatusColor = (statut: string) => {
-    const colors: any = {
-      'EN_ATTENTE': 'warning',
-      'EFFECTUE': 'success',
-      'ANNULE': 'error',
+  const getStatusColor = (statut?: StatutPaiementBadge) => {
+    const statusColors: Record<StatutPaiementBadge, 'warning' | 'success' | 'error'> = {
+      EN_ATTENTE: 'warning',
+      EFFECTUE: 'success',
+      ANNULE: 'error',
     }
-    return colors[statut] || 'default'
+    return statut ? statusColors[statut] : 'default'
   }
 
-  const getModeReglementLabel = (mode: string) => {
-    const labels: any = {
-      'VIREMENT': 'Virement',
-      'CHEQUE': 'Chèque',
-      'ESPECES': 'Espèces',
-      'CARTE': 'Carte Bancaire',
-      'PRELEVEMENT': 'Prélèvement',
+  const getModeReglementLabel = (mode?: ModeReglement) => {
+    const labels: Record<ModeReglement, string> = {
+      VIREMENT: 'Virement',
+      CHEQUE: 'Chèque',
+      ESPECES: 'Espèces',
+      CARTE: 'Carte Bancaire',
+      PRELEVEMENT: 'Prélèvement',
     }
-    return labels[mode] || mode
+    return mode ? labels[mode] : ''
   }
 
   return (
@@ -179,7 +200,7 @@ const PaiementsPage = () => {
             variant="contained"
             startIcon={<Add />}
             onClick={() => handleOpenDialog()}
-            sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
+            sx={{ bgcolor: colors.primary[800], '&:hover': { bgcolor: colors.primary[900] } }}
           >
             Nouveau Paiement
           </Button>

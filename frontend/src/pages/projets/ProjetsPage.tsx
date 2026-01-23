@@ -34,6 +34,7 @@ import AppLayout from '../../components/layout/AppLayout';
 import PageHeader from '../../components/common/PageHeader';
 import StatsCard from '../../components/common/StatsCard';
 import { projetsAPI, Projet } from '../../lib/projetsAPI';
+import { getErrorMessage } from '../../lib/errors';
 
 const ProjetsPage = () => {
   const navigate = useNavigate();
@@ -60,8 +61,8 @@ const ProjetsPage = () => {
       const response = await projetsAPI.getAll();
       setProjets(response.data);
       setError(null);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors du chargement des projets');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Erreur lors du chargement des projets'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +72,7 @@ const ProjetsPage = () => {
     try {
       const response = await projetsAPI.getStatistiques();
       setStats(response.data);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Erreur chargement stats:', err);
     }
   };
@@ -93,8 +94,8 @@ const ProjetsPage = () => {
       loadProjets();
       loadStats();
       handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors du démarrage');
+    } catch (err: unknown) {
+      alert(getErrorMessage(err, 'Erreur lors du démarrage'));
     }
   };
 
@@ -112,8 +113,8 @@ const ProjetsPage = () => {
       loadProjets();
       loadStats();
       handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la reprise');
+    } catch (err: unknown) {
+      alert(getErrorMessage(err, 'Erreur lors de la reprise'));
     }
   };
 
@@ -125,8 +126,8 @@ const ProjetsPage = () => {
       loadProjets();
       loadStats();
       handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la clôture');
+    } catch (err: unknown) {
+      alert(getErrorMessage(err, 'Erreur lors de la clôture'));
     }
   };
 
@@ -149,8 +150,13 @@ const ProjetsPage = () => {
       loadStats();
       setMotifDialog(false);
       setMotif('');
-    } catch (err: any) {
-      alert(err.response?.data?.message || `Erreur lors de l'${actionType === 'suspendre' ? 'suspension' : 'annulation'}`);
+    } catch (err: unknown) {
+      alert(
+        getErrorMessage(
+          err,
+          `Erreur lors de l'${actionType === 'suspendre' ? 'suspension' : 'annulation'}`
+        )
+      );
     }
   };
 
@@ -162,8 +168,8 @@ const ProjetsPage = () => {
       loadProjets();
       loadStats();
       handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la suppression');
+    } catch (err: unknown) {
+      alert(getErrorMessage(err, 'Erreur lors de la suppression'));
     }
   };
 

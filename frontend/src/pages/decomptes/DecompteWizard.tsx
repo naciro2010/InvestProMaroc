@@ -23,6 +23,7 @@ import PageHeader from '../../components/common/PageHeader'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { decomptesAPI, marchesAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
 
 const steps = ['Informations générales', 'Montants & Retenues', 'Pièces jointes & Confirmation']
 
@@ -635,8 +636,7 @@ const DecompteWizard = () => {
 
             {createMutation.error && (
               <Alert severity="error">
-                {(createMutation.error as any)?.response?.data?.message ||
-                  'Erreur lors de la création du décompte'}
+                {getErrorMessage(createMutation.error, 'Erreur lors de la création du décompte')}
               </Alert>
             )}
           </Box>

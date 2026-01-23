@@ -10,6 +10,7 @@ import {
   Grid,
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import { getErrorMessage } from '@/lib/errors';
 
 interface ImputationPrevisionnelleForm {
   volet?: string;
@@ -34,7 +35,10 @@ const AddImputationDialog = ({ open, onClose, onAdd }: AddImputationDialogProps)
     remarques: '',
   });
 
-  const handleChange = (field: keyof ImputationPrevisionnelleForm, value: any) => {
+  const handleChange = (
+    field: keyof ImputationPrevisionnelleForm,
+    value: ImputationPrevisionnelleForm[keyof ImputationPrevisionnelleForm]
+  ) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -56,8 +60,8 @@ const AddImputationDialog = ({ open, onClose, onAdd }: AddImputationDialogProps)
         remarques: '',
       });
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'ajout');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Erreur lors de l\'ajout'));
     } finally {
       setLoading(false);
     }

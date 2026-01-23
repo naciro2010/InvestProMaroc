@@ -33,14 +33,32 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import { ordresPaiementAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
+import { getErrorMessage } from '../../lib/errors'
+import colors from '../../theme/colors'
+
+type StatutOrdreBadge = 'EN_ATTENTE' | 'VALIDE' | 'EXECUTE' | 'ANNULE'
+
+interface OrdrePaiementListItem {
+  id: number
+  numeroOrdre: string
+  dateEmission: string
+  dateExecution?: string
+  montant: number
+  beneficiaire?: string
+  compteBancaire?: string
+  reference?: string
+  observation?: string
+  decompteId?: number
+  statut?: StatutOrdreBadge
+}
 
 const OrdresPaiementPage = () => {
   const navigate = useNavigate()
-  const [ordres, setOrdres] = useState<any[]>([])
+  const [ordres, setOrdres] = useState<OrdrePaiementListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [openDialog, setOpenDialog] = useState(false)
-  const [selectedOrdre, setSelectedOrdre] = useState<any>(null)
+  const [selectedOrdre, setSelectedOrdre] = useState<OrdrePaiementListItem | null>(null)
   const [formData, setFormData] = useState({
     numeroOrdre: '',
     dateEmission: new Date().toISOString().split('T')[0],
@@ -62,14 +80,15 @@ const OrdresPaiementPage = () => {
     try {
       const { data } = await ordresPaiementAPI.getAll()
       setOrdres(data.data || [])
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur chargement ordres de paiement:', error)
+      alert(getErrorMessage(error, 'Erreur lors du chargement des ordres de paiement'))
     } finally {
       setLoading(false)
     }
   }
 
-  const handleOpenDialog = (ordre: any = null) => {
+  const handleOpenDialog = (ordre: OrdrePaiementListItem | null = null) => {
     if (ordre) {
       setSelectedOrdre(ordre)
       setFormData({
@@ -121,8 +140,9 @@ const OrdresPaiementPage = () => {
 
       handleCloseDialog()
       loadOrdres()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur sauvegarde ordre de paiement:', error)
+      alert(getErrorMessage(error, 'Erreur lors de la sauvegarde'))
     }
   }
 
@@ -132,8 +152,9 @@ const OrdresPaiementPage = () => {
     try {
       await ordresPaiementAPI.delete(id)
       loadOrdres()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur suppression:', error)
+      alert(getErrorMessage(error, 'Erreur lors de la suppression'))
     }
   }
 
@@ -150,14 +171,14 @@ const OrdresPaiementPage = () => {
     }).format(amount) + ' MAD'
   }
 
-  const getStatusColor = (statut: string) => {
-    const colors: any = {
-      'EN_ATTENTE': 'warning',
-      'VALIDE': 'info',
-      'EXECUTE': 'success',
-      'ANNULE': 'error',
+  const getStatusColor = (statut?: StatutOrdreBadge) => {
+    const statusColors: Record<StatutOrdreBadge, 'warning' | 'info' | 'success' | 'error'> = {
+      EN_ATTENTE: 'warning',
+      VALIDE: 'info',
+      EXECUTE: 'success',
+      ANNULE: 'error',
     }
-    return colors[statut] || 'default'
+    return statut ? statusColors[statut] : 'default'
   }
 
   return (
@@ -171,7 +192,7 @@ const OrdresPaiementPage = () => {
             variant="contained"
             startIcon={<Add />}
             onClick={() => handleOpenDialog()}
-            sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
+            sx={{ bgcolor: colors.primary[800], '&:hover': { bgcolor: colors.primary[900] } }}
           >
             Nouvel Ordre de Paiement
           </Button>

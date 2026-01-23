@@ -7,63 +7,75 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Palette Moderne - Bleu Professionnel
-        modern: {
-          blue: '#3b82f6',          // Bleu principal moderne
-          'blue-dark': '#1e3a8a',   // Bleu foncé profond
-          'blue-light': '#60a5fa',  // Bleu clair
-        },
-        // Gris GitLab (très important pour le look épuré)
-        gray: {
-          50: '#FAFAFA',
-          100: '#F5F5F5',
-          200: '#EEEEEE',
-          300: '#DBDBDB',
-          400: '#BFBFBF',
-          500: '#999999',
-          600: '#666666',
-          700: '#525252',
-          800: '#303030',
-          900: '#2E2E2E',
-          950: '#1F1F1F',
-        },
-        // Couleurs sémantiques GitLab (douces)
-        success: {
-          50: '#F0FDF4',
-          100: '#DCFCE7',
-          500: '#108548',   // Vert GitLab
-          600: '#0D6B3D',
-        },
-        danger: {
-          50: '#FEF2F2',
-          100: '#FEE2E2',
-          500: '#DD2B0E',   // Rouge GitLab
-          600: '#C91C00',
-        },
-        info: {
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          500: '#1F75CB',   // Bleu GitLab
-          600: '#1068BF',
-        },
-        warning: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          500: '#AB6100',   // Jaune/Orange GitLab
-          600: '#9E5A00',
-        },
-        // Alias pour compatibilité
+        // Palette unifiée (alignée avec src/theme/colors.ts)
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
           200: '#bfdbfe',
           300: '#93c5fd',
           400: '#60a5fa',
-          500: '#3b82f6',
+          500: '#0ea5e9',
           600: '#2563eb',
           700: '#1d4ed8',
           800: '#1e40af',
           900: '#1e3a8a',
+        },
+        secondary: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+        },
+        gray: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+          950: '#030712',
+        },
+        success: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          500: '#22c55e',
+          600: '#16a34a',
+          700: '#15803d',
+        },
+        danger: {
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          500: '#ef4444',
+          600: '#dc2626',
+          700: '#b91c1c',
+        },
+        info: {
+          50: '#ecf0ff',
+          100: '#cfe2ff',
+          200: '#9ec5ff',
+          500: '#2e81ff',
+          600: '#2563eb',
+          700: '#1d4ed8',
+        },
+        warning: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
         },
       },
       fontFamily: {

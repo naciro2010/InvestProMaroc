@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { Box, Typography, Stack } from '@mui/material'
+import colors from '@/theme/colors'
 
 interface PageHeaderProps {
   title: string
@@ -28,7 +29,7 @@ const PageHeader = ({ title, subtitle, actions }: PageHeaderProps) => {
             variant="h4"
             sx={{
               fontWeight: 600,
-              color: '#1f2937',
+              color: colors.gray[900],
               mb: subtitle ? 0.5 : 0,
               letterSpacing: '-0.02em',
             }}
@@ -36,7 +37,7 @@ const PageHeader = ({ title, subtitle, actions }: PageHeaderProps) => {
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body2" sx={{ color: '#6b7280' }}>
+            <Typography variant="body2" sx={{ color: colors.gray[600] }}>
               {subtitle}
             </Typography>
           )}

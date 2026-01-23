@@ -44,6 +44,7 @@ import { projetsAPI, Projet as ProjetAPI } from '../../lib/projetsAPI'
 import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { getErrorMessage } from '../../lib/errors'
 
 type StatutProjet = 'EN_PREPARATION' | 'EN_COURS' | 'SUSPENDU' | 'TERMINE' | 'ANNULE'
 
@@ -101,8 +102,9 @@ const ProjetDetailPage = () => {
         const convResponse = await conventionsAPI.getById(data.conventionId)
         setConventions([convResponse.data?.data || convResponse.data])
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur chargement projet:', error)
+      alert(getErrorMessage(error, 'Erreur lors du chargement du projet'))
     } finally {
       setLoading(false)
     }
@@ -114,8 +116,8 @@ const ProjetDetailPage = () => {
     try {
       await projetsAPI.demarrer(projet.id)
       fetchProjet(projet.id)
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Erreur lors du démarrage')
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, 'Erreur lors du démarrage'))
     }
   }
 
@@ -126,8 +128,8 @@ const ProjetDetailPage = () => {
     try {
       await projetsAPI.suspendre(projet.id, motif)
       fetchProjet(projet.id)
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Erreur lors de la suspension')
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, 'Erreur lors de la suspension'))
     }
   }
 
@@ -137,8 +139,8 @@ const ProjetDetailPage = () => {
     try {
       await projetsAPI.reprendre(projet.id)
       fetchProjet(projet.id)
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Erreur lors de la reprise')
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, 'Erreur lors de la reprise'))
     }
   }
 
@@ -148,8 +150,8 @@ const ProjetDetailPage = () => {
     try {
       await projetsAPI.terminer(projet.id)
       fetchProjet(projet.id)
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Erreur lors de la finalisation')
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, 'Erreur lors de la finalisation'))
     }
   }
 

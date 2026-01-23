@@ -21,6 +21,7 @@ import PageHeader from '../../components/common/PageHeader'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
 
 const steps = ['Informations générales', 'Montants & Statut', 'Pièces jointes & Confirmation']
 
@@ -360,8 +361,7 @@ const BudgetWizard = () => {
 
             {createMutation.error && (
               <Alert severity="error">
-                {(createMutation.error as any)?.response?.data?.message ||
-                  'Erreur lors de la création du budget'}
+                {getErrorMessage(createMutation.error, 'Erreur lors de la création du budget')}
               </Alert>
             )}
           </Box>

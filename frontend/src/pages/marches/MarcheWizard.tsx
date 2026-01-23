@@ -22,6 +22,7 @@ import PageHeader from '../../components/common/PageHeader'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { marchesAPI, conventionsAPI, fournisseursAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
 
 const steps = ['Informations générales', 'Montants & Dates', 'Localisation & Confirmation']
 
@@ -567,8 +568,7 @@ const MarcheWizard = () => {
 
             {createMutation.error && (
               <Alert severity="error">
-                {(createMutation.error as any)?.response?.data?.message ||
-                  'Erreur lors de la création du marché'}
+                {getErrorMessage(createMutation.error, 'Erreur lors de la création du marché')}
               </Alert>
             )}
           </Box>

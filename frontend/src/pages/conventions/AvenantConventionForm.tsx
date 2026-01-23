@@ -12,10 +12,12 @@ import {
 import { Save, Close } from '@mui/icons-material'
 import { avenantConventionsAPI } from '../../lib/api'
 import { AvenantConventionRequest, AvenantConventionResponse } from '../../types/avenantConvention'
+import { Convention } from '../../types/entities'
+import { getErrorMessage } from '../../lib/errors'
 
 interface AvenantConventionFormProps {
   conventionId: number
-  conventionData?: any // Données de la convention pour créer le snapshot
+  conventionData?: Convention // Données de la convention pour créer le snapshot
   avenantToEdit?: AvenantConventionResponse
   onSave: () => void
   onCancel: () => void
@@ -110,7 +112,7 @@ const AvenantConventionForm = ({
       } : undefined
 
       // Créer l'objet des modifications
-      const modifications: Record<string, any> = {}
+      const modifications: Partial<Pick<Convention, 'budget' | 'tauxCommission'>> = {}
 
       if (formData.nouveauBudget && formData.ancienBudget !== formData.nouveauBudget) {
         modifications.budget = parseFormattedNumber(formData.nouveauBudget)
@@ -144,9 +146,9 @@ const AvenantConventionForm = ({
       }
 
       onSave()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur sauvegarde avenant:', err)
-      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde')
+      setError(getErrorMessage(err, 'Erreur lors de la sauvegarde'))
     } finally {
       setLoading(false)
     }

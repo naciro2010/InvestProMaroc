@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react'
 import { Box, Container, Typography, useTheme, useMediaQuery } from '@mui/material'
-import { getGradient } from '@/theme/colors'
+import colors, { getGradient } from '@/theme/colors'
 
 export interface PageLayoutProps {
   /**
@@ -27,6 +27,11 @@ export interface PageLayoutProps {
    * Optional CSS class for custom styling
    */
   className?: string
+
+  /**
+   * Maximum width for the content container
+   */
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false
 
   /**
    * Show gradient header background
@@ -65,6 +70,7 @@ export function PageLayout({
   actions,
   children,
   className,
+  maxWidth = 'lg',
   showGradient = true,
   headerBg,
 }: PageLayoutProps): React.ReactElement {
@@ -83,7 +89,7 @@ export function PageLayout({
       {(title || subtitle || actions) && (
         <Box
           sx={{
-            background: headerBg || (showGradient ? getGradient('primary') : 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)'),
+            background: headerBg || (showGradient ? getGradient('primary') : `linear-gradient(135deg, ${colors.ui.white} 0%, ${colors.gray[50]} 100%)`),
             color: showGradient ? 'white' : 'text.primary',
             px: { xs: 2, sm: 3, md: 4 },
             py: { xs: 3, sm: 4, md: 5 },
@@ -91,7 +97,7 @@ export function PageLayout({
             boxShadow: showGradient ? '0 2px 8px rgba(0, 0, 0, 0.1)' : 'none',
           }}
         >
-          <Container maxWidth="lg">
+          <Container maxWidth={maxWidth}>
             <Box
               sx={{
                 display: 'flex',
@@ -151,7 +157,7 @@ export function PageLayout({
 
       {/* Content Section */}
       <Container
-        maxWidth="lg"
+        maxWidth={maxWidth}
         sx={{
           py: { xs: 3, sm: 4, md: 5 },
           px: { xs: 2, sm: 3, md: 4 },
@@ -203,7 +209,7 @@ export function DetailPageLayout({
       subtitle={subtitle}
       actions={actions}
       showGradient={true}
-      headerBg="linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)"
+      headerBg={getGradient('primary')}
     >
       {children}
     </PageLayout>

@@ -34,10 +34,12 @@ import {
 import { avenantConventionsAPI } from '../../lib/api'
 import { AvenantConventionResponse, StatutAvenantConvention } from '../../types/avenantConvention'
 import AvenantConventionForm from './AvenantConventionForm'
+import { Convention } from '../../types/entities'
+import { getErrorMessage } from '../../lib/errors'
 
 interface AvenantConventionListProps {
   conventionId: number
-  conventionData?: any
+  conventionData?: Convention
   canEdit?: boolean // Peut créer/modifier des avenants
   canValidate?: boolean // Peut valider des avenants
 }
@@ -76,9 +78,9 @@ const AvenantConventionList = ({
       setLoading(true)
       const response = await avenantConventionsAPI.getByConvention(conventionId)
       setAvenants(response.data.data || [])
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur chargement avenants:', err)
-      setError('Erreur lors du chargement des avenants')
+      setError(getErrorMessage(err, 'Erreur lors du chargement des avenants'))
     } finally {
       setLoading(false)
     }
@@ -109,9 +111,9 @@ const AvenantConventionList = ({
     try {
       await avenantConventionsAPI.soumettre(avenant.id)
       loadAvenants()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur soumission:', err)
-      alert('Erreur lors de la soumission')
+      alert(getErrorMessage(err, 'Erreur lors de la soumission'))
     }
   }
 
@@ -126,9 +128,9 @@ const AvenantConventionList = ({
       setValiderDialog({ open: false })
       setRemarquesValidation('')
       loadAvenants()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur validation:', err)
-      alert('Erreur lors de la validation')
+      alert(getErrorMessage(err, 'Erreur lors de la validation'))
     }
   }
 
@@ -146,9 +148,9 @@ const AvenantConventionList = ({
       setRejeterDialog({ open: false })
       setMotifRejet('')
       loadAvenants()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur rejet:', err)
-      alert('Erreur lors du rejet')
+      alert(getErrorMessage(err, 'Erreur lors du rejet'))
     }
   }
 
@@ -159,9 +161,9 @@ const AvenantConventionList = ({
       await avenantConventionsAPI.delete(deleteDialog.avenant.id)
       setDeleteDialog({ open: false })
       loadAvenants()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur suppression:', err)
-      alert('Erreur lors de la suppression')
+      alert(getErrorMessage(err, 'Erreur lors de la suppression'))
     }
   }
 

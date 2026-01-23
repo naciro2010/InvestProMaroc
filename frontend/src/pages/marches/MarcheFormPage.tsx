@@ -5,7 +5,8 @@ import { Card, Button } from '../../components/ui'
 import AppLayout from '../../components/layout/AppLayout'
 import LocationPicker from '../../components/ui/LocationPicker'
 import api from '../../lib/api'
-import { MarcheLigne, DimensionAnalytique } from '../../types/entities'
+import { MarcheLigne, DimensionAnalytique, Convention, Fournisseur } from '../../types/entities'
+import { getErrorMessage } from '../../lib/errors'
 
 // Dimension avec valeurs - étendu de DimensionAnalytique
 interface Dimension extends DimensionAnalytique {
@@ -19,8 +20,8 @@ export default function MarcheFormPage() {
 
   // État principal
   const [loading, setLoading] = useState(false)
-  const [conventions, setConventions] = useState<any[]>([])
-  const [fournisseurs, setFournisseurs] = useState<any[]>([])
+  const [conventions, setConventions] = useState<Convention[]>([])
+  const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [dimensions, setDimensions] = useState<Dimension[]>([])
 
   // État du marché
@@ -72,8 +73,9 @@ export default function MarcheFormPage() {
       setConventions(convRes.data)
       setFournisseurs(fournRes.data)
       setDimensions(dimRes.data)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur chargement données:', error)
+      alert(getErrorMessage(error, 'Erreur lors du chargement des données'))
     }
   }
 
@@ -104,8 +106,9 @@ export default function MarcheFormPage() {
       setLongitude(marche.longitude)
       setZoneGeographique(marche.zoneGeographique || '')
       setLignes(marche.lignes || [])
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur chargement marché:', error)
+      alert(getErrorMessage(error, 'Erreur lors du chargement du marché'))
     } finally {
       setLoading(false)
     }
@@ -145,7 +148,7 @@ export default function MarcheFormPage() {
     setLignes(newLignes)
   }
 
-  const updateLigne = (index: number, field: keyof MarcheLigne, value: any) => {
+  const updateLigne = (index: number, field: keyof MarcheLigne, value: MarcheLigne[keyof MarcheLigne]) => {
     const newLignes = [...lignes]
     newLignes[index] = { ...newLignes[index], [field]: value }
 
@@ -207,9 +210,9 @@ export default function MarcheFormPage() {
       }
 
       navigate('/marches')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur sauvegarde:', error)
-      alert(error.response?.data?.message || 'Erreur lors de la sauvegarde')
+      alert(getErrorMessage(error, 'Erreur lors de la sauvegarde'))
     } finally {
       setLoading(false)
     }

@@ -21,6 +21,7 @@ import PageHeader from '../../components/common/PageHeader'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { projetsAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
 
 const steps = ['Informations générales', 'Budget & Planning', 'Pièces jointes & Confirmation']
 
@@ -379,8 +380,7 @@ const ProjetWizard = () => {
 
             {createMutation.error && (
               <Alert severity="error">
-                {(createMutation.error as any)?.response?.data?.message ||
-                  'Erreur lors de la création du projet'}
+                {getErrorMessage(createMutation.error, 'Erreur lors de la création du projet')}
               </Alert>
             )}
           </Box>

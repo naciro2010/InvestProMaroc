@@ -34,14 +34,29 @@ import AppLayout from '../../components/layout/AppLayout'
 import { SimplePageLayout } from '../../components/layout/PageLayout'
 import api, { decomptesAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
+import { getErrorMessage } from '../../lib/errors'
+
+type StatutDecompteBadge = 'EN_ATTENTE' | 'VALIDE' | 'REJETE' | 'PAYE'
+
+interface DecompteListItem {
+  id: number
+  numero: string
+  dateDecompte: string
+  montant: number
+  montantRetenue: number
+  netAPayer: number
+  observation?: string
+  marcheId: number
+  statut?: StatutDecompteBadge
+}
 
 const DecomptesPage = () => {
   const navigate = useNavigate()
-  const [decomptes, setDecomptes] = useState<any[]>([])
+  const [decomptes, setDecomptes] = useState<DecompteListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [openDialog, setOpenDialog] = useState(false)
-  const [selectedDecompte, setSelectedDecompte] = useState<any>(null)
+  const [selectedDecompte, setSelectedDecompte] = useState<DecompteListItem | null>(null)
   const [formData, setFormData] = useState({
     numero: '',
     dateDecompte: new Date().toISOString().split('T')[0],
@@ -63,14 +78,15 @@ const DecomptesPage = () => {
       // This follows micro-frontends pattern: each component loads only what it needs
       const response = await api.get('/decomptes/list')
       setDecomptes(response.data)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur chargement décomptes:', error)
+      alert(getErrorMessage(error, 'Erreur lors du chargement des décomptes'))
     } finally {
       setLoading(false)
     }
   }
 
-  const handleOpenDialog = (decompte: any = null) => {
+  const handleOpenDialog = (decompte: DecompteListItem | null = null) => {
     if (decompte) {
       setSelectedDecompte(decompte)
       setFormData({
@@ -120,8 +136,9 @@ const DecomptesPage = () => {
 
       handleCloseDialog()
       loadDecomptes()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur sauvegarde décompte:', error)
+      alert(getErrorMessage(error, 'Erreur lors de la sauvegarde'))
     }
   }
 
@@ -131,8 +148,9 @@ const DecomptesPage = () => {
     try {
       await decomptesAPI.delete(id)
       loadDecomptes()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur suppression:', error)
+      alert(getErrorMessage(error, 'Erreur lors de la suppression'))
     }
   }
 
@@ -154,14 +172,14 @@ const DecomptesPage = () => {
     }).format(amount) + ' MAD'
   }
 
-  const getStatusColor = (statut: string) => {
-    const colors: any = {
-      'EN_ATTENTE': 'warning',
-      'VALIDE': 'success',
-      'REJETE': 'error',
-      'PAYE': 'info',
+  const getStatusColor = (statut?: StatutDecompteBadge) => {
+    const statusColors: Record<StatutDecompteBadge, 'warning' | 'success' | 'error' | 'info'> = {
+      EN_ATTENTE: 'warning',
+      VALIDE: 'success',
+      REJETE: 'error',
+      PAYE: 'info',
     }
-    return colors[statut] || 'default'
+    return statut ? statusColors[statut] : 'default'
   }
 
   return (

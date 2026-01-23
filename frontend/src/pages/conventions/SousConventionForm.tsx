@@ -17,6 +17,7 @@ import {
 } from '@mui/material'
 import { Save, Close } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
 
 interface Convention {
   id: number
@@ -27,12 +28,30 @@ interface Convention {
   tauxTva: number
 }
 
+interface SousConvention {
+  id: number
+  code?: string
+  numero?: string
+  libelle?: string
+  objet?: string
+  dateConvention?: string
+  dateDebut?: string
+  dateFin?: string
+  budget?: number
+  tauxCommission?: number
+  baseCalcul?: string
+  tauxTva?: number
+  surchargeTauxCommission?: number
+  surchargeBaseCalcul?: string
+  heriteParametres?: boolean
+}
+
 interface SousConventionFormProps {
   open: boolean
   onClose: () => void
   onSuccess: () => void
   parentConvention: Convention
-  editingSousConvention?: any
+  editingSousConvention?: SousConvention
 }
 
 // Helper pour formater les nombres en affichage
@@ -154,9 +173,9 @@ const SousConventionForm = ({
 
       onSuccess()
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur sous-convention:', err)
-      setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement')
+      setError(getErrorMessage(err, 'Erreur lors de l\'enregistrement'))
     } finally {
       setLoading(false)
     }

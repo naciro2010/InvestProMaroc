@@ -26,6 +26,7 @@ import {
   Close,
 } from '@mui/icons-material'
 import { piecesJointesAPI } from '../../lib/api'
+import { getErrorMessage } from '../../lib/errors'
 
 interface FileUploadProps {
   typeEntite: string
@@ -116,9 +117,9 @@ const FileUpload = ({
 
       try {
         await piecesJointesAPI.upload(file, typeEntite, entiteId)
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur upload:', error)
-        alert(`Erreur upload ${file.name}: ${error.response?.data?.message || error.message}`)
+        alert(`Erreur upload ${file.name}: ${getErrorMessage(error, 'Erreur lors du téléchargement')}`)
       }
     }
 

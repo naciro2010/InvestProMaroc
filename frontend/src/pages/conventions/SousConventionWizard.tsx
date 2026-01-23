@@ -19,6 +19,8 @@ import Step2DatesEtBudget from './wizard/Step2DatesEtBudget'
 import Step3PiecesJointes from './wizard/Step3PiecesJointes'
 import Step4Recapitulatif from './wizard/Step4Recapitulatif'
 import { ConventionFormData } from './types'
+import { Convention } from '../../types/entities'
+import { getErrorMessage } from '../../lib/errors'
 
 const steps = [
   'Informations générales',
@@ -34,7 +36,7 @@ const SousConventionWizard = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [createdId, setCreatedId] = useState<number | null>(null)
-  const [parentConvention, setParentConvention] = useState<any>(null)
+  const [parentConvention, setParentConvention] = useState<Convention | null>(null)
   const [heriteParametres, setHeriteParametres] = useState(true)
 
   const [formData, setFormData] = useState<ConventionFormData>({
@@ -72,9 +74,9 @@ const SousConventionWizard = () => {
           tauxTva: data.data.tauxTva.toString(),
         }))
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur chargement convention parent:', error)
-      setError('Impossible de charger la convention parente')
+      setError(getErrorMessage(error, 'Impossible de charger la convention parente'))
     }
   }
 
@@ -115,9 +117,9 @@ const SousConventionWizard = () => {
       const { data } = await conventionsAPI.createSousConvention(Number(parentId), payload)
       setCreatedId(data.data.id)
       handleNext()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur création sous-convention:', err)
-      setError(err.response?.data?.message || 'Erreur lors de la création')
+      setError(getErrorMessage(err, 'Erreur lors de la création'))
     } finally {
       setLoading(false)
     }

@@ -875,13 +875,50 @@ COMMENT ON COLUMN maitres_oeuvre.type_mo IS 'Type: MO (Maître d''Œuvre) ou MOD
 COMMENT ON COLUMN maitres_oeuvre.missions IS 'Description des missions confiées au MO/MOD';
 
 -- ============================================================================
+-- SECTION 15: HISTORIQUE DES MODIFICATIONS - JANUARY 2026
+-- ============================================================================
+
+-- Historique des modifications des conventions pour traçabilité complète
+CREATE TABLE IF NOT EXISTS convention_modifications (
+    id BIGSERIAL PRIMARY KEY,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    modifie_par_id BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    date_modification TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    motif_modification TEXT NOT NULL,
+    donnees_avant JSONB NOT NULL,
+    donnees_apres JSONB NOT NULL,
+    champs_modifies TEXT[] NOT NULL,
+    type_modification VARCHAR(50) NOT NULL DEFAULT 'UPDATE',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_convention_modifications_convention ON convention_modifications(convention_id, date_modification DESC);
+CREATE INDEX IF NOT EXISTS idx_convention_modifications_user ON convention_modifications(modifie_par_id);
+CREATE INDEX IF NOT EXISTS idx_convention_modifications_date ON convention_modifications(date_modification DESC);
+CREATE INDEX IF NOT EXISTS idx_convention_modifications_type ON convention_modifications(type_modification);
+
+-- GIN index for JSONB search
+CREATE INDEX IF NOT EXISTS idx_convention_modifications_avant_gin ON convention_modifications USING gin(donnees_avant);
+CREATE INDEX IF NOT EXISTS idx_convention_modifications_apres_gin ON convention_modifications USING gin(donnees_apres);
+
+-- Comments
+COMMENT ON TABLE convention_modifications IS 'Historique complet des modifications apportées aux conventions avec traçabilité';
+COMMENT ON COLUMN convention_modifications.motif_modification IS 'Motif obligatoire de la modification';
+COMMENT ON COLUMN convention_modifications.donnees_avant IS 'État complet de la convention avant modification (JSONB)';
+COMMENT ON COLUMN convention_modifications.donnees_apres IS 'État complet de la convention après modification (JSONB)';
+COMMENT ON COLUMN convention_modifications.champs_modifies IS 'Liste des champs qui ont été modifiés';
+COMMENT ON COLUMN convention_modifications.type_modification IS 'Type: UPDATE, STATUS_CHANGE, PARTNER_CHANGE, etc.';
+
+-- ============================================================================
 -- END OF SCHEMA DEFINITION
 -- ============================================================================
--- Total Tables: 40+
+-- Total Tables: 41+
 -- All entities from InvestPro Maroc fully mapped with:
 -- - Complete column definitions matching @Column annotations
 -- - Proper data types (DECIMAL for BigDecimal, JSONB for flexible storage)
 -- - All indexes for performance optimization
+-- - Full audit trail with convention_modifications table
 -- - Foreign key relationships with CASCADE deletes where appropriate
 -- - Base entity fields (id, created_at, updated_at, actif) on all tables
 -- ============================================================================

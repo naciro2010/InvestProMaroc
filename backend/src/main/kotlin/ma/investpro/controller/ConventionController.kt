@@ -1,24 +1,26 @@
 package ma.investpro.controller
 
-import ma.investpro.dto.ConventionDTO
-import ma.investpro.dto.ConventionSimpleDTO
-import ma.investpro.dto.ImputationPrevisionnelleDTO
-import ma.investpro.dto.VersementPrevisionnelDTO
+import ma.investpro.dto.*
 import ma.investpro.entity.Convention
 import ma.investpro.entity.StatutConvention
 import ma.investpro.entity.ImputationPrevisionnelle
 import ma.investpro.entity.VersementPrevisionnel
+import ma.investpro.entity.User
+import ma.investpro.entity.TypeConvention
 import ma.investpro.mapper.ConventionMapper
+import ma.investpro.mapper.ConventionModificationMapper
 import ma.investpro.service.ConventionService
+import ma.investpro.service.MarcheService
 import ma.investpro.repository.ImputationPrevisionnelleRepository
 import ma.investpro.repository.VersementPrevisionnelRepository
 import ma.investpro.repository.PartenaireRepository
+import ma.investpro.repository.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
-import ma.investpro.entity.User
+import jakarta.validation.Valid
 
 @RestController
 @RequestMapping("/api/conventions")
@@ -26,9 +28,12 @@ import ma.investpro.entity.User
 class ConventionController(
     private val conventionService: ConventionService,
     private val conventionMapper: ConventionMapper,
+    private val conventionModificationMapper: ConventionModificationMapper,
     private val imputationRepository: ImputationPrevisionnelleRepository,
     private val versementRepository: VersementPrevisionnelRepository,
-    private val partenaireRepository: PartenaireRepository
+    private val partenaireRepository: PartenaireRepository,
+    private val userRepository: UserRepository,
+    private val marcheService: MarcheService
 ) {
 
     // ========== CRUD Endpoints ==========
@@ -394,6 +399,157 @@ class ConventionController(
             ResponseEntity.noContent().build()
         } catch (e: Exception) {
             ResponseEntity.notFound().build()
+        }
+    }
+
+    // ========== Gestion de l'historique des modifications ==========
+
+    /**
+     * Modifier une convention avec historique complet
+     */
+    @PutMapping("/{id}/with-history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun updateWithHistory(
+        @PathVariable id: Long,
+        @Valid @RequestBody request: UpdateConventionWithHistoryRequest
+    ): ResponseEntity<ApiResponse<ConventionDTO>> {
+        return try {
+            // Récupérer l'utilisateur qui effectue la modification
+            val user: User = userRepository.findById(request.modifieParId).orElseThrow {
+                IllegalArgumentException("Utilisateur non trouvé")
+            }
+
+            // Créer l'objet Convention à partir de la requête
+            val convention: Convention = conventionService.findById(id)
+                ?: throw IllegalArgumentException("Convention non trouvée")
+
+            convention.apply {
+                libelle = request.libelle
+                numero = request.numero
+                objet = request.objet
+                typeConvention = TypeConvention.valueOf(request.typeConvention)
+                tauxCommission = request.tauxCommission
+                budget = request.budget
+                baseCalcul = request.baseCalcul ?: "DECAISSEMENTS_TTC"
+                tauxTva = request.tauxTva
+                dateDebut = request.dateDebut
+                dateFin = request.dateFin
+                description = request.description
+            }
+
+            // Appeler le service avec historique
+            val updated: Convention = conventionService.updateWithHistory(
+                id = id,
+                convention = convention,
+                motifModification = request.motifModification,
+                modifiePar = user
+            )
+
+            val dto: ConventionDTO = conventionMapper.toDTO(updated)
+            ResponseEntity.ok(ApiResponse.success(dto, "Convention modifiée avec succès"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur de validation"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la modification: ${e.message}"))
+        }
+    }
+
+    /**
+     * Récupérer l'historique complet des modifications d'une convention
+     */
+    @GetMapping("/{id}/historique")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    fun getHistorique(@PathVariable id: Long): ResponseEntity<ApiResponse<List<ConventionModificationDTO>>> {
+        return try {
+            val historique: List<ConventionModificationDTO> = conventionService.getHistoriqueModifications(id)
+                .let { modifications: List<ma.investpro.entity.ConventionModification> ->
+                    conventionModificationMapper.toDTOList(modifications)
+                }
+            ResponseEntity.ok(ApiResponse.success(historique))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la récupération de l'historique"))
+        }
+    }
+
+    /**
+     * Récupérer les N dernières modifications d'une convention
+     */
+    @GetMapping("/{id}/historique/derniers/{limit}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    fun getDernieresModifications(
+        @PathVariable id: Long,
+        @PathVariable limit: Int
+    ): ResponseEntity<ApiResponse<List<ConventionModificationDTO>>> {
+        return try {
+            val historique: List<ConventionModificationDTO> = conventionService.getDernieresModifications(id, limit)
+                .let { modifications: List<ma.investpro.entity.ConventionModification> ->
+                    conventionModificationMapper.toDTOList(modifications)
+                }
+            ResponseEntity.ok(ApiResponse.success(historique))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la récupération de l'historique"))
+        }
+    }
+
+    /**
+     * Vérifier si une convention a été modifiée
+     */
+    @GetMapping("/{id}/a-ete-modifiee")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    fun aEteModifiee(@PathVariable id: Long): ResponseEntity<ApiResponse<Boolean>> {
+        return try {
+            val modifiee: Boolean = conventionService.aEteModifiee(id)
+            ResponseEntity.ok(ApiResponse.success(modifiee))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la vérification"))
+        }
+    }
+
+    // ========== Marché Linking Endpoints ==========
+
+    /**
+     * Link an existing marché to this convention
+     */
+    @PostMapping("/{conventionId}/marches/{marcheId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun linkMarche(
+        @PathVariable conventionId: Long,
+        @PathVariable marcheId: Long
+    ): ResponseEntity<ApiResponse<Unit>> {
+        return try {
+            marcheService.linkMarcheToConvention(marcheId, conventionId)
+            ResponseEntity.ok(ApiResponse.success(Unit, "Marché lié à la convention avec succès"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.message ?: "Marché ou convention non trouvé"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la liaison du marché"))
+        }
+    }
+
+    /**
+     * Unlink a marché from this convention
+     */
+    @DeleteMapping("/{conventionId}/marches/{marcheId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun unlinkMarche(
+        @PathVariable conventionId: Long,
+        @PathVariable marcheId: Long
+    ): ResponseEntity<ApiResponse<Unit>> {
+        return try {
+            marcheService.unlinkMarcheFromConvention(marcheId)
+            ResponseEntity.ok(ApiResponse.success(Unit, "Marché délié de la convention avec succès"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.message ?: "Marché non trouvé"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la suppression de la liaison"))
         }
     }
 }

@@ -38,7 +38,15 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import { api, conventionsAPI, avenantConventionsAPI } from '../../lib/api'
-import { ConventionInfoCard, ConventionSousConventionsCard, ConventionAvenantsTab } from '../../components/conventions/detail'
+import {
+  ConventionInfoCard,
+  ConventionSousConventionsCard,
+  ConventionAvenantsTab,
+  ConventionHistoryCard,
+} from '../../components/conventions/detail'
+import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
+import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
+import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -119,6 +127,11 @@ const ConventionDetailPageModern = () => {
   const [projets, setProjets] = useState<Projet[]>([])
   const [marches, setMarches] = useState<Marche[]>([])
   const [error, setError] = useState<string | null>(null)
+
+  // Modal states
+  const [addPartenaireDialogOpen, setAddPartenaireDialogOpen] = useState(false)
+  const [linkProjetDialogOpen, setLinkProjetDialogOpen] = useState(false)
+  const [linkMarcheDialogOpen, setLinkMarcheDialogOpen] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -364,10 +377,7 @@ const ConventionDetailPageModern = () => {
                         size="small"
                         startIcon={<Add />}
                         variant="outlined"
-                        onClick={() => {
-                          // TODO: Ouvrir modal d'ajout de partenaire
-                          alert('Fonctionnalité en développement : Ajouter un partenaire')
-                        }}
+                        onClick={() => setAddPartenaireDialogOpen(true)}
                       >
                         Ajouter
                       </Button>
@@ -572,6 +582,11 @@ const ConventionDetailPageModern = () => {
                 formatDate={formatDate}
                 getStatusColor={getStatusColor}
               />
+
+              {/* Historique des modifications */}
+              <Container maxWidth="xl" sx={{ mt: 4 }}>
+                <ConventionHistoryCard conventionId={convention.id} />
+              </Container>
             </TabPanel>
 
             {/* Projets Tab */}
@@ -581,10 +596,7 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     startIcon={<Add />}
-                    onClick={() => {
-                      // TODO: Ouvrir modal pour lier un projet existant ou en créer un nouveau
-                      alert('Fonctionnalité en développement : Lier/Créer un projet')
-                    }}
+                    onClick={() => setLinkProjetDialogOpen(true)}
                   >
                     Lier un projet
                   </Button>
@@ -637,10 +649,7 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     startIcon={<Add />}
-                    onClick={() => {
-                      // TODO: Ouvrir modal pour lier un marché existant ou en créer un nouveau
-                      alert('Fonctionnalité en développement : Lier/Créer un marché')
-                    }}
+                    onClick={() => setLinkMarcheDialogOpen(true)}
                   >
                     Lier un marché
                   </Button>
@@ -690,6 +699,41 @@ const ConventionDetailPageModern = () => {
           </Paper>
         </Container>
       </Box>
+
+      {/* Modals */}
+      {convention && (
+        <>
+          <AddPartenaireDialog
+            open={addPartenaireDialogOpen}
+            conventionId={convention.id}
+            onClose={() => setAddPartenaireDialogOpen(false)}
+            onSuccess={() => {
+              // Reload convention data to refresh partenaires
+              loadConvention(convention.id)
+            }}
+          />
+
+          <LinkProjetDialog
+            open={linkProjetDialogOpen}
+            conventionId={convention.id}
+            onClose={() => setLinkProjetDialogOpen(false)}
+            onSuccess={() => {
+              // Reload projets
+              loadProjets(convention.id)
+            }}
+          />
+
+          <LinkMarcheDialog
+            open={linkMarcheDialogOpen}
+            conventionId={convention.id}
+            onClose={() => setLinkMarcheDialogOpen(false)}
+            onSuccess={() => {
+              // Reload marchés
+              loadMarches(convention.id)
+            }}
+          />
+        </>
+      )}
     </AppLayout>
   )
 }

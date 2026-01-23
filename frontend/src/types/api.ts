@@ -138,6 +138,22 @@ export interface UpdateConventionDTO extends Partial<CreateConventionDTO> {
   status?: ConventionStatus
 }
 
+export interface UpdateConventionWithHistoryRequest extends Record<string, unknown> {
+  motifModification: string
+  modifieParId: number
+  libelle: string
+  numero: string
+  objet: string
+  typeConvention: string
+  tauxCommission: number
+  budget: number
+  baseCalcul: string | null
+  tauxTva: number
+  dateDebut: string
+  dateFin: string | null
+  description: string | null
+}
+
 export interface ConventionSimpleDTO {
   id: number
   code: string

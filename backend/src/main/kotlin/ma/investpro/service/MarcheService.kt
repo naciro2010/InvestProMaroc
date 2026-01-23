@@ -9,6 +9,7 @@ import ma.investpro.entity.StatutMarche
 import ma.investpro.repository.MarcheRepository
 import ma.investpro.repository.FournisseurRepository
 import ma.investpro.repository.ProjetRepository
+import ma.investpro.repository.ConventionRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,7 +23,8 @@ private val logger = KotlinLogging.logger {}
 class MarcheService(
     private val marcheRepository: MarcheRepository,
     private val fournisseurRepository: FournisseurRepository,
-    private val projetRepository: ProjetRepository
+    private val projetRepository: ProjetRepository,
+    private val conventionRepository: ConventionRepository
 ) {
 
     fun findAll(): List<Marche> {
@@ -284,5 +286,70 @@ class MarcheService(
             "totalAmount" to allMarches.sumOf { it.montantTtc },
             "avgAmount" to if (allMarches.isNotEmpty()) allMarches.sumOf { it.montantTtc } / BigDecimal(allMarches.size) else BigDecimal.ZERO
         )
+    }
+
+    /**
+     * Link a marché to a convention
+     * Sets the convention field of the marché
+     */
+    fun linkMarcheToConvention(marcheId: Long, conventionId: Long): Marche {
+        logger.info { "Linking marché $marcheId to convention $conventionId" }
+
+        // Fetch marché
+        val marche: Marche = marcheRepository.findById(marcheId)
+            .orElseThrow {
+                logger.warn { "Marché not found - ID: $marcheId" }
+                IllegalArgumentException("Marché avec ID $marcheId non trouvé")
+            }
+
+        // Fetch convention
+        val convention = conventionRepository.findById(conventionId)
+            .orElseThrow {
+                logger.warn { "Convention not found - ID: $conventionId" }
+                IllegalArgumentException("Convention avec ID $conventionId non trouvée")
+            }
+
+        // Check if already linked
+        if (marche.convention?.id == conventionId) {
+            logger.info { "Marché $marcheId already linked to convention $conventionId" }
+            return marche
+        }
+
+        // Link marché to convention
+        marche.convention = convention
+
+        return marcheRepository.save(marche).also {
+            logger.info { "Marché $marcheId successfully linked to convention $conventionId" }
+        }
+    }
+
+    /**
+     * Unlink a marché from its convention
+     * Sets the convention field to null
+     */
+    fun unlinkMarcheFromConvention(marcheId: Long): Marche {
+        logger.info { "Unlinking marché $marcheId from convention" }
+
+        // Fetch marché
+        val marche: Marche = marcheRepository.findById(marcheId)
+            .orElseThrow {
+                logger.warn { "Marché not found - ID: $marcheId" }
+                IllegalArgumentException("Marché avec ID $marcheId non trouvé")
+            }
+
+        // Check if marché has a convention
+        if (marche.convention == null) {
+            logger.info { "Marché $marcheId has no convention to unlink" }
+            return marche
+        }
+
+        val oldConventionId: Long? = marche.convention?.id
+
+        // Unlink marché from convention
+        marche.convention = null
+
+        return marcheRepository.save(marche).also {
+            logger.info { "Marché $marcheId successfully unlinked from convention $oldConventionId" }
+        }
     }
 }

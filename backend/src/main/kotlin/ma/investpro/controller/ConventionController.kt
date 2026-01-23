@@ -11,6 +11,7 @@ import ma.investpro.entity.TypeConvention
 import ma.investpro.mapper.ConventionMapper
 import ma.investpro.mapper.ConventionModificationMapper
 import ma.investpro.service.ConventionService
+import ma.investpro.service.MarcheService
 import ma.investpro.repository.ImputationPrevisionnelleRepository
 import ma.investpro.repository.VersementPrevisionnelRepository
 import ma.investpro.repository.PartenaireRepository
@@ -32,7 +33,8 @@ class ConventionController(
     private val imputationRepository: ImputationPrevisionnelleRepository,
     private val versementRepository: VersementPrevisionnelRepository,
     private val partenaireRepository: PartenaireRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val marcheService: MarcheService
 ) {
 
     // ========== CRUD Endpoints ==========
@@ -505,6 +507,50 @@ class ConventionController(
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Erreur lors de la vérification"))
+        }
+    }
+
+    // ========== Marché Linking Endpoints ==========
+
+    /**
+     * Link an existing marché to this convention
+     */
+    @PostMapping("/{conventionId}/marches/{marcheId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun linkMarche(
+        @PathVariable conventionId: Long,
+        @PathVariable marcheId: Long
+    ): ResponseEntity<ApiResponse<Unit>> {
+        return try {
+            marcheService.linkMarcheToConvention(marcheId, conventionId)
+            ResponseEntity.ok(ApiResponse.success(Unit, "Marché lié à la convention avec succès"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.message ?: "Marché ou convention non trouvé"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la liaison du marché"))
+        }
+    }
+
+    /**
+     * Unlink a marché from this convention
+     */
+    @DeleteMapping("/{conventionId}/marches/{marcheId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    fun unlinkMarche(
+        @PathVariable conventionId: Long,
+        @PathVariable marcheId: Long
+    ): ResponseEntity<ApiResponse<Unit>> {
+        return try {
+            marcheService.unlinkMarcheFromConvention(marcheId)
+            ResponseEntity.ok(ApiResponse.success(Unit, "Marché délié de la convention avec succès"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.message ?: "Marché non trouvé"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la suppression de la liaison"))
         }
     }
 }

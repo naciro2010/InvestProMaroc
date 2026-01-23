@@ -325,6 +325,41 @@ export const conventionsAPI = {
   getDernieresModifications: (id: number, limit: number) =>
     api.get(`/conventions/${id}/historique/derniers/${limit}`),
   aEteModifiee: (id: number) => api.get(`/conventions/${id}/a-ete-modifiee`),
+
+  // Gestion des partenaires
+  getPartenaires: (conventionId: number) => api.get(`/conventions/${conventionId}/partenaires`),
+  addPartenaire: (conventionId: number, data: {
+    partenaireId: number;
+    budgetAlloue: number;
+    pourcentage: number;
+    estMaitreOeuvre?: boolean;
+    estMaitreOeuvreDelegue?: boolean;
+    remarques?: string;
+  }) => api.post(`/conventions/${conventionId}/partenaires`, data),
+  updatePartenaire: (conventionId: number, id: number, data: {
+    budgetAlloue: number;
+    pourcentage: number;
+    estMaitreOeuvre?: boolean;
+    estMaitreOeuvreDelegue?: boolean;
+    remarques?: string;
+  }) => api.put(`/conventions/${conventionId}/partenaires/${id}`, data),
+  deletePartenaire: (conventionId: number, id: number) =>
+    api.delete(`/conventions/${conventionId}/partenaires/${id}`),
+
+  // Gestion des projets (via ProjetConvention join table)
+  getProjets: (conventionId: number) =>
+    api.get(`/projet-conventions/convention/${conventionId}`),
+  linkProjet: (data: { projetId: number; conventionId: number; ordre?: number }) =>
+    api.post('/projet-conventions', data),
+  unlinkProjet: (projetId: number, conventionId: number) =>
+    api.delete(`/projet-conventions/projet/${projetId}/convention/${conventionId}`),
+
+  // Gestion des marchés (direct link via marche.convention field)
+  getMarches: (conventionId: number) => api.get(`/marches/convention/${conventionId}`),
+  linkMarche: (conventionId: number, marcheId: number) =>
+    api.post(`/conventions/${conventionId}/marches/${marcheId}`),
+  unlinkMarche: (conventionId: number, marcheId: number) =>
+    api.delete(`/conventions/${conventionId}/marches/${marcheId}`),
 }
 
 // Projets API
@@ -353,6 +388,13 @@ export const fournisseursAPI = {
   create: (data: CreateFournisseurDTO) => api.post('/fournisseurs', data),
   update: (id: number, data: UpdateFournisseurDTO) => api.put(`/fournisseurs/${id}`, data),
   delete: (id: number) => api.delete(`/fournisseurs/${id}`),
+}
+
+// Partenaires API
+export const partenairesAPI = {
+  getAll: () => api.get('/partenaires'),
+  getActive: () => api.get('/partenaires/active'),
+  getById: (id: number) => api.get(`/partenaires/${id}`),
 }
 
 // Marchés API

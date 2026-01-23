@@ -1,5 +1,5 @@
 import { Paper, Typography, Divider, Box, Chip, Stack } from '@mui/material'
-import { Description, CalendarToday, TrendingUp, AccountBalance } from '@mui/icons-material'
+import { Description, CalendarToday, TrendingUp } from '@mui/icons-material'
 
 interface Decompte {
   id: number

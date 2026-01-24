@@ -1,37 +1,28 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import ReactQuill from 'react-quill'
-import 'react-quill/dist/quill.snow.css'
 import {
   Box,
   Container,
-  Paper,
   Typography,
   Button,
-  TextField,
-  MenuItem,
-  Divider,
   Stack,
   Alert,
   CircularProgress,
-  InputAdornment,
 } from '@mui/material'
 import {
   ArrowBack,
   Save,
   Cancel as CancelIcon,
-  Description,
-  CalendarToday,
-  Percent,
-  Euro,
-  Business,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
-import DecimalInput from '../../components/ui/DecimalInput'
+import {
+  ConventionInfoSection,
+  ConventionFinancesSection,
+  ConventionDatesSection,
+} from '../../components/conventions/edit'
 import { conventionsAPI } from '../../lib/api'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -53,7 +44,7 @@ const conventionSchema = z.object({
   tauxCommission: z.number()
     .min(0, 'Le taux de commission doit être positif')
     .max(100, 'Le taux de commission ne peut pas dépasser 100%'),
-  baseCalcul: z.enum(['MONTANT_HT', 'MONTANT_TTC', 'MONTANT_MARCHE'], {
+  baseCalcul: z.enum(['DECAISSEMENTS_HT', 'DECAISSEMENTS_TTC', 'MONTANT_HT', 'MONTANT_TTC', 'MONTANT_MARCHE'], {
     errorMap: () => ({ message: 'Base de calcul invalide' })
   }),
   montant: z.number()
@@ -130,13 +121,7 @@ const ConventionEditPageModern = () => {
     resolver: zodResolver(conventionSchema),
   })
 
-  useEffect(() => {
-    if (id) {
-      loadConvention()
-    }
-  }, [id])
-
-  const loadConvention = async () => {
+  const loadConvention = useCallback(async () => {
     try {
       setLoading(true)
       const response = await conventionsAPI.getById(Number(id))
@@ -164,7 +149,13 @@ const ConventionEditPageModern = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, navigate, showToast, reset])
+
+  useEffect(() => {
+    if (id) {
+      loadConvention()
+    }
+  }, [id, loadConvention])
 
   const onSubmit = async (data: ConventionFormData) => {
     try {
@@ -311,432 +302,14 @@ const ConventionEditPageModern = () => {
               </Alert>
             )}
 
-            {/* Informations Générales */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, md: 3 },
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-              }}
-            >
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" fontWeight={600} color="primary.main" gutterBottom>
-                  Informations Générales
-                </Typography>
-                <Divider />
-              </Box>
+            {/* Informations Générales - Micro-component */}
+            <ConventionInfoSection control={control} errors={errors} />
 
-              <Box sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: { xs: 2, md: 3 }
-              }}>
-                {/* Row 1: Type & Code */}
-                <Box>
-                  <Controller
-                    name="typeConvention"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        select
-                        fullWidth
-                        label="Type de convention"
-                        error={!!errors.typeConvention}
-                        helperText={errors.typeConvention?.message}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Description color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      >
-                        <MenuItem value="CADRE">CADRE</MenuItem>
-                        <MenuItem value="SPECIFIQUE">SPECIFIQUE</MenuItem>
-                      </TextField>
-                    )}
-                  />
-                </Box>
+            {/* Informations Financières - Micro-component */}
+            <ConventionFinancesSection control={control} errors={errors} />
 
-                <Box>
-                  <Controller
-                    name="code"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Code"
-                        error={!!errors.code}
-                        helperText={errors.code?.message}
-                        placeholder="CONV-XXX"
-                      />
-                    )}
-                  />
-                </Box>
-
-                {/* Row 2: Numéro & Libellé */}
-                <Box>
-                  <Controller
-                    name="numero"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Numéro"
-                        error={!!errors.numero}
-                        helperText={errors.numero?.message}
-                        placeholder="XXX/YYYY"
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="libelle"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Libellé"
-                        error={!!errors.libelle}
-                        helperText={errors.libelle?.message}
-                        placeholder="Convention de..."
-                      />
-                    )}
-                  />
-                </Box>
-
-                {/* Row 3: Objet (full width) - Rich Text Editor */}
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    fontWeight={500}
-                    gutterBottom
-                    display="block"
-                    sx={{ mb: 1 }}
-                  >
-                    Objet de la convention *
-                  </Typography>
-                  <Controller
-                    name="objet"
-                    control={control}
-                    render={({ field }) => (
-                      <Box>
-                        <Box
-                          sx={{
-                            '& .quill': {
-                              bgcolor: 'background.paper',
-                              borderRadius: 1,
-                              border: errors.objet ? '1px solid' : '1px solid',
-                              borderColor: errors.objet ? 'error.main' : 'divider',
-                              transition: 'border-color 0.2s',
-                              '&:hover': {
-                                borderColor: errors.objet ? 'error.main' : 'text.primary',
-                              },
-                            },
-                            '& .ql-toolbar': {
-                              borderRadius: '4px 4px 0 0',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                              bgcolor: 'grey.50',
-                            },
-                            '& .ql-container': {
-                              borderRadius: '0 0 4px 4px',
-                              minHeight: 120,
-                              fontSize: '0.875rem',
-                            },
-                            '& .ql-editor': {
-                              minHeight: 120,
-                            },
-                            '& .ql-editor.ql-blank::before': {
-                              color: 'text.disabled',
-                              fontStyle: 'normal',
-                            },
-                          }}
-                        >
-                          <ReactQuill
-                            value={field.value}
-                            onChange={field.onChange}
-                            theme="snow"
-                            placeholder="Décrivez l'objet de la convention..."
-                            modules={{
-                              toolbar: [
-                                ['bold', 'italic', 'underline'],
-                                [{ list: 'ordered' }, { list: 'bullet' }],
-                                ['clean']
-                              ]
-                            }}
-                          />
-                        </Box>
-                        {errors.objet && (
-                          <Typography
-                            variant="caption"
-                            color="error"
-                            sx={{ mt: 0.75, ml: 1.75, display: 'block' }}
-                          >
-                            {errors.objet.message}
-                          </Typography>
-                        )}
-                      </Box>
-                    )}
-                  />
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Informations Financières */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, md: 3 },
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-              }}
-            >
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" fontWeight={600} color="primary.main" gutterBottom>
-                  Informations Financières
-                </Typography>
-                <Divider />
-              </Box>
-
-              <Box sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: { xs: 2, md: 3 }
-              }}>
-                {/* Row 1: Montant & Base de Calcul */}
-                <Box>
-                  <Controller
-                    name="montant"
-                    control={control}
-                    render={({ field }) => (
-                      <DecimalInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        fullWidth
-                        label="Montant"
-                        error={!!errors.montant}
-                        helperText={errors.montant?.message}
-                        decimalPlaces={2}
-                        min={0}
-                        max={999999999}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Euro color="action" />
-                            </InputAdornment>
-                          ),
-                          endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="baseCalcul"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        select
-                        fullWidth
-                        label="Base de calcul"
-                        error={!!errors.baseCalcul}
-                        helperText={errors.baseCalcul?.message}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Business color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      >
-                        <MenuItem value="MONTANT_HT">Montant HT</MenuItem>
-                        <MenuItem value="MONTANT_TTC">Montant TTC</MenuItem>
-                        <MenuItem value="MONTANT_MARCHE">Montant Marché</MenuItem>
-                      </TextField>
-                    )}
-                  />
-                </Box>
-
-                {/* Row 2: Taux Commission & Taux TVA */}
-                <Box>
-                  <Controller
-                    name="tauxCommission"
-                    control={control}
-                    render={({ field }) => (
-                      <DecimalInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        fullWidth
-                        label="Taux de commission"
-                        error={!!errors.tauxCommission}
-                        helperText={errors.tauxCommission?.message}
-                        decimalPlaces={2}
-                        min={0}
-                        max={100}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Percent color="action" />
-                            </InputAdornment>
-                          ),
-                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="tauxTva"
-                    control={control}
-                    render={({ field }) => (
-                      <DecimalInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        fullWidth
-                        label="Taux TVA"
-                        error={!!errors.tauxTva}
-                        helperText={errors.tauxTva?.message}
-                        decimalPlaces={2}
-                        min={0}
-                        max={100}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Percent color="action" />
-                            </InputAdornment>
-                          ),
-                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Dates */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, md: 3 },
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-              }}
-            >
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" fontWeight={600} color="primary.main" gutterBottom>
-                  Dates
-                </Typography>
-                <Divider />
-              </Box>
-
-              <Box sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-                gap: { xs: 2, md: 3 }
-              }}>
-                <Box>
-                  <Controller
-                    name="dateSignature"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
-                        onChange={(e) => field.onChange(new Date(e.target.value))}
-                        fullWidth
-                        type="date"
-                        label="Date de signature"
-                        error={!!errors.dateSignature}
-                        helperText={errors.dateSignature?.message as string}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <CalendarToday color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="dateDebut"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
-                        onChange={(e) => field.onChange(new Date(e.target.value))}
-                        fullWidth
-                        type="date"
-                        label="Date de début"
-                        error={!!errors.dateDebut}
-                        helperText={errors.dateDebut?.message as string}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <CalendarToday color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="dateFin"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
-                        onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
-                        fullWidth
-                        type="date"
-                        label="Date de fin (optionnel)"
-                        error={!!errors.dateFin}
-                        helperText={errors.dateFin?.message as string}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <CalendarToday color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
-            </Paper>
+            {/* Dates - Micro-component */}
+            <ConventionDatesSection control={control} errors={errors} />
 
           </Stack>
         </form>

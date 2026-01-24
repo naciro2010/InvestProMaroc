@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
+import DecimalInput from '../../components/ui/DecimalInput'
 import { conventionsAPI } from '../../lib/api'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -521,13 +522,16 @@ const ConventionEditPageModern = () => {
                     name="montant"
                     control={control}
                     render={({ field }) => (
-                      <TextField
-                        {...field}
+                      <DecimalInput
+                        value={field.value}
+                        onChange={field.onChange}
                         fullWidth
-                        type="number"
                         label="Montant"
                         error={!!errors.montant}
                         helperText={errors.montant?.message}
+                        decimalPlaces={2}
+                        min={0}
+                        max={999999999}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
@@ -536,7 +540,6 @@ const ConventionEditPageModern = () => {
                           ),
                           endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
                         }}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
                       />
                     )}
                   />
@@ -576,13 +579,16 @@ const ConventionEditPageModern = () => {
                     name="tauxCommission"
                     control={control}
                     render={({ field }) => (
-                      <TextField
-                        {...field}
+                      <DecimalInput
+                        value={field.value}
+                        onChange={field.onChange}
                         fullWidth
-                        type="number"
                         label="Taux de commission"
                         error={!!errors.tauxCommission}
                         helperText={errors.tauxCommission?.message}
+                        decimalPlaces={2}
+                        min={0}
+                        max={100}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
@@ -591,8 +597,6 @@ const ConventionEditPageModern = () => {
                           ),
                           endAdornment: <InputAdornment position="end">%</InputAdornment>,
                         }}
-                        inputProps={{ step: '0.01', min: 0, max: 100 }}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
                       />
                     )}
                   />
@@ -603,13 +607,16 @@ const ConventionEditPageModern = () => {
                     name="tauxTva"
                     control={control}
                     render={({ field }) => (
-                      <TextField
-                        {...field}
+                      <DecimalInput
+                        value={field.value}
+                        onChange={field.onChange}
                         fullWidth
-                        type="number"
                         label="Taux TVA"
                         error={!!errors.tauxTva}
                         helperText={errors.tauxTva?.message}
+                        decimalPlaces={2}
+                        min={0}
+                        max={100}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
@@ -618,8 +625,6 @@ const ConventionEditPageModern = () => {
                           ),
                           endAdornment: <InputAdornment position="end">%</InputAdornment>,
                         }}
-                        inputProps={{ step: '0.01', min: 0, max: 100 }}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
                       />
                     )}
                   />

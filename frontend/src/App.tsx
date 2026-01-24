@@ -25,6 +25,7 @@ import ConventionWizardComplete from './pages/conventions/ConventionWizardComple
 import SousConventionWizard from './pages/conventions/SousConventionWizard'
 import AvenantForm from './pages/conventions/AvenantForm'
 import ConventionDetailPageModern from './pages/conventions/ConventionDetailPageModern'
+import ConventionEditPageModern from './pages/conventions/ConventionEditPageModern'
 import MarchesPage from './pages/marches/MarchesPage'
 import MarcheDetailPageModern from './pages/marches/MarcheDetailPageModern'
 import MarcheFormPage from './pages/marches/MarcheFormPage'
@@ -148,7 +149,7 @@ function App() {
             path="/conventions/:id/edit"
             element={
               <ProtectedRoute>
-                <ConventionWizardComplete />
+                <ConventionEditPageModern />
               </ProtectedRoute>
             }
           />

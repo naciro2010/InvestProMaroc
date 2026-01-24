@@ -15,6 +15,7 @@ import {
   Box,
 } from '@mui/material'
 import { Save, Close } from '@mui/icons-material'
+import DecimalInput from '../../components/ui/DecimalInput'
 import { conventionsAPI } from '../../lib/api'
 
 interface SousConventionFormProps {
@@ -206,14 +207,15 @@ const SousConventionFormSimple = ({
               />
             </Stack>
 
-            <TextField
+            <DecimalInput
               label="Budget Total"
-              type="number"
-              value={formData.budget}
-              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+              value={parseFloat(formData.budget) || 0}
+              onChange={(value) => setFormData({ ...formData, budget: value.toString() })}
               required
               fullWidth
               size="small"
+              decimalPlaces={2}
+              min={0}
               InputProps={{
                 endAdornment: <InputAdornment position="end">DH</InputAdornment>,
               }}
@@ -232,25 +234,27 @@ const SousConventionFormSimple = ({
             {!heriteParametres && (
               <Stack spacing={2}>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                  <TextField
+                  <DecimalInput
                     label="Taux Commission (%)"
-                    type="number"
-                    value={formData.tauxCommission}
-                    onChange={(e) => setFormData({ ...formData, tauxCommission: e.target.value })}
+                    value={parseFloat(formData.tauxCommission) || 0}
+                    onChange={(value) => setFormData({ ...formData, tauxCommission: value.toString() })}
                     required
                     fullWidth
                     size="small"
-                    inputProps={{ step: '0.01', min: '0', max: '100' }}
+                    decimalPlaces={2}
+                    min={0}
+                    max={100}
                   />
-                  <TextField
+                  <DecimalInput
                     label="Taux TVA (%)"
-                    type="number"
-                    value={formData.tauxTva}
-                    onChange={(e) => setFormData({ ...formData, tauxTva: e.target.value })}
+                    value={parseFloat(formData.tauxTva) || 0}
+                    onChange={(value) => setFormData({ ...formData, tauxTva: value.toString() })}
                     required
                     fullWidth
                     size="small"
-                    inputProps={{ step: '0.01', min: '0', max: '100' }}
+                    decimalPlaces={2}
+                    min={0}
+                    max={100}
                   />
                 </Stack>
                 <TextField

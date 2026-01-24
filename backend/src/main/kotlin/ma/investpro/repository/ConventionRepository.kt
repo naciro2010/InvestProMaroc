@@ -31,6 +31,7 @@ interface ConventionRepository : JpaRepository<Convention, Long> {
 
     // Recherche des sous-conventions d'une convention parente
     fun findByParentConventionId(parentId: Long): List<Convention>
+    fun countByParentConventionId(parentId: Long): Long
 
     // Recherche des conventions racine (sans parent)
     fun findByParentConventionIsNull(): List<Convention>

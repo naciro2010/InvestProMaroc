@@ -21,6 +21,7 @@ interface ProjetRepository : JpaRepository<Projet, Long> {
 
     // Recherche par convention
     fun findByConventionId(conventionId: Long): List<Projet>
+    fun countByConventionId(conventionId: Long): Long
 
     // Recherche par chef de projet
     fun findByChefProjetId(chefProjetId: Long): List<Projet>

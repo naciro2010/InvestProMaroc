@@ -360,6 +360,12 @@ export const conventionsAPI = {
     api.post(`/conventions/${conventionId}/marches/${marcheId}`),
   unlinkMarche: (conventionId: number, marcheId: number) =>
     api.delete(`/conventions/${conventionId}/marches/${marcheId}`),
+
+  // Micro-endpoints (progressive lazy loading)
+  getBasic: (id: number) => api.get(`/conventions/${id}/basic`),
+  getFinances: (id: number) => api.get(`/conventions/${id}/finances`),
+  getDates: (id: number) => api.get(`/conventions/${id}/dates`),
+  getStats: (id: number) => api.get(`/conventions/${id}/stats`),
 }
 
 // Projets API

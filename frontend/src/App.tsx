@@ -20,7 +20,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardModern from './pages/DashboardModern'
-import ConventionsPageMUI from './pages/conventions/ConventionsPageMUI'
+import ConventionsTableModern from './pages/conventions/ConventionsTableModern'
 import ConventionWizardComplete from './pages/conventions/ConventionWizardComplete'
 import SousConventionWizard from './pages/conventions/SousConventionWizard'
 import AvenantForm from './pages/conventions/AvenantForm'
@@ -132,7 +132,7 @@ function App() {
             path="/conventions"
             element={
               <ProtectedRoute>
-                <ConventionsPageMUI />
+                <ConventionsTableModern />
               </ProtectedRoute>
             }
           />

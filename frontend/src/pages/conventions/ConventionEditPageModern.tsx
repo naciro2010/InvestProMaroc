@@ -96,8 +96,8 @@ interface Convention {
   statut: string
   tauxCommission: number
   baseCalcul: string
-  montant: number
-  dateSignature: string
+  budget: number // Backend uses 'budget', not 'montant'
+  dateConvention: string // Backend uses 'dateConvention', not 'dateSignature'
   dateDebut: string
   dateFin?: string
   tauxTva: number
@@ -137,8 +137,8 @@ const ConventionEditPageModern = () => {
         typeConvention: data.typeConvention,
         tauxCommission: data.tauxCommission,
         baseCalcul: data.baseCalcul,
-        montant: data.montant,
-        dateSignature: new Date(data.dateSignature),
+        montant: data.budget, // Map backend 'budget' to form 'montant'
+        dateSignature: new Date(data.dateConvention), // Map backend 'dateConvention' to form 'dateSignature'
         dateDebut: new Date(data.dateDebut),
         dateFin: data.dateFin ? new Date(data.dateFin) : null,
         tauxTva: data.tauxTva,
@@ -169,8 +169,8 @@ const ConventionEditPageModern = () => {
         typeConvention: data.typeConvention,
         tauxCommission: data.tauxCommission,
         baseCalcul: data.baseCalcul,
-        montant: data.montant,
-        dateSignature: data.dateSignature.toISOString(),
+        budget: data.montant, // Map form 'montant' to backend 'budget'
+        dateConvention: data.dateSignature.toISOString(), // Map form 'dateSignature' to backend 'dateConvention'
         dateDebut: data.dateDebut.toISOString(),
         dateFin: data.dateFin ? data.dateFin.toISOString() : null,
         tauxTva: data.tauxTva,

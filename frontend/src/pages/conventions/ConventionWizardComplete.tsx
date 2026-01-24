@@ -38,6 +38,7 @@ import AppLayout from '../../components/layout/AppLayout'
 import { SimplePageLayout } from '../../components/layout/PageLayout'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
+import DecimalInput from '../../components/ui/DecimalInput'
 import { conventionsAPI } from '../../lib/api'
 
 const steps = [
@@ -533,17 +534,17 @@ const ConventionWizardComplete = () => {
               <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
                 Budget Global (MAD) *
               </Typography>
-              <TextField
+              <DecimalInput
                 fullWidth
-                type="number"
                 value={formData.budgetGlobal}
-                onChange={(e) => {
+                onChange={(value) => {
                   setFormData({
                     ...formData,
-                    budgetGlobal: parseFloat(e.target.value) || 0,
+                    budgetGlobal: value,
                   })
                 }}
-                inputProps={{ min: 0, step: 0.01 }}
+                decimalPlaces={2}
+                min={0}
                 size="medium"
                 sx={{ bgcolor: 'white' }}
               />
@@ -580,29 +581,28 @@ const ConventionWizardComplete = () => {
                     onChange={(e) => setNewLigne({ ...newLigne, designation: e.target.value })}
                     placeholder="Travaux, Fournitures, etc."
                   />
-                  <TextField
+                  <DecimalInput
                     size="small"
-                    type="number"
                     label="Montant HT"
                     value={newLigne.montantHT}
-                    onChange={(e) => {
-                      const montantHT = parseFloat(e.target.value) || 0
+                    onChange={(montantHT) => {
                       const montantTTC = montantHT * (1 + newLigne.tauxTVA / 100)
                       setNewLigne({ ...newLigne, montantHT, montantTTC })
                     }}
-                    inputProps={{ min: 0 }}
+                    decimalPlaces={2}
+                    min={0}
                   />
-                  <TextField
+                  <DecimalInput
                     size="small"
-                    type="number"
                     label="TVA (%)"
                     value={newLigne.tauxTVA}
-                    onChange={(e) => {
-                      const tauxTVA = parseFloat(e.target.value) || 0
+                    onChange={(tauxTVA) => {
                       const montantTTC = newLigne.montantHT * (1 + tauxTVA / 100)
                       setNewLigne({ ...newLigne, tauxTVA, montantTTC })
                     }}
-                    inputProps={{ min: 0, max: 100 }}
+                    decimalPlaces={2}
+                    min={0}
+                    max={100}
                   />
                   <TextField
                     size="small"
@@ -773,18 +773,19 @@ const ConventionWizardComplete = () => {
 
             <Card sx={{ p: 3 }}>
               <Box sx={{ display: 'grid', gap: 3 }}>
-                <TextField
+                <DecimalInput
                   fullWidth
                   label="Taux de commission (%)"
-                  type="number"
                   value={formData.tauxCommission}
-                  onChange={(e) => {
+                  onChange={(value) => {
                     setFormData({
                       ...formData,
-                      tauxCommission: parseFloat(e.target.value) || 0,
+                      tauxCommission: value,
                     })
                   }}
-                  inputProps={{ min: 0, max: 100, step: 0.01 }}
+                  decimalPlaces={2}
+                  min={0}
+                  max={100}
                   helperText="Taux appliqué pour calculer la commission"
                 />
 
@@ -799,18 +800,19 @@ const ConventionWizardComplete = () => {
                   <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC - Toutes taxes comprises</MenuItem>
                 </TextField>
 
-                <TextField
+                <DecimalInput
                   fullWidth
                   label="Taux TVA (%)"
-                  type="number"
                   value={formData.tauxTva}
-                  onChange={(e) => {
+                  onChange={(value) => {
                     setFormData({
                       ...formData,
-                      tauxTva: parseFloat(e.target.value) || 0,
+                      tauxTva: value,
                     })
                   }}
-                  inputProps={{ min: 0, max: 100, step: 0.01 }}
+                  decimalPlaces={2}
+                  min={0}
+                  max={100}
                   helperText="Taux de TVA applicable"
                 />
               </Box>

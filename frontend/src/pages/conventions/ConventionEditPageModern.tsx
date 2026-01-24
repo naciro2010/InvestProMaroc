@@ -1,51 +1,87 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   Box,
   Container,
-  Paper,
   Typography,
   Button,
-  TextField,
-  MenuItem,
-  Divider,
   Stack,
   Alert,
   CircularProgress,
-  InputAdornment,
 } from '@mui/material'
 import {
   ArrowBack,
   Save,
   Cancel as CancelIcon,
-  Description,
-  CalendarToday,
-  Percent,
-  Euro,
-  Business,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
+import {
+  ConventionInfoSection,
+  ConventionFinancesSection,
+  ConventionDatesSection,
+} from '../../components/conventions/edit'
 import { conventionsAPI } from '../../lib/api'
 import { useToast } from '../../contexts/ToastContext'
 
-// Zod validation schema
+// Zod validation schema with cross-field validation
 const conventionSchema = z.object({
-  code: z.string().min(1, 'Le code est requis'),
-  numero: z.string().min(1, 'Le numéro est requis'),
-  libelle: z.string().min(3, 'Le libellé doit contenir au moins 3 caractères'),
-  objet: z.string().min(10, 'L\'objet doit contenir au moins 10 caractères'),
-  typeConvention: z.enum(['CADRE', 'SPECIFIQUE']),
-  tauxCommission: z.number().min(0).max(100, 'Le taux doit être entre 0 et 100'),
-  baseCalcul: z.enum(['MONTANT_HT', 'MONTANT_TTC', 'MONTANT_MARCHE']),
-  montant: z.number().min(0, 'Le montant doit être positif'),
-  dateSignature: z.date(),
-  dateDebut: z.date(),
-  dateFin: z.date().nullable(),
-  tauxTva: z.number().min(0).max(100),
+  code: z.string()
+    .min(1, 'Le code est requis')
+    .regex(/^[A-Z0-9-]+$/, 'Le code doit contenir uniquement des majuscules, chiffres et tirets'),
+  numero: z.string()
+    .min(1, 'Le numéro est requis'),
+  libelle: z.string()
+    .min(3, 'Le libellé doit contenir au moins 3 caractères')
+    .max(200, 'Le libellé ne peut pas dépasser 200 caractères'),
+  objet: z.string()
+    .min(10, 'L\'objet doit contenir au moins 10 caractères'),
+  typeConvention: z.enum(['CADRE', 'SPECIFIQUE'], {
+    errorMap: () => ({ message: 'Type de convention invalide' })
+  }),
+  tauxCommission: z.number()
+    .min(0, 'Le taux de commission doit être positif')
+    .max(100, 'Le taux de commission ne peut pas dépasser 100%'),
+  baseCalcul: z.enum(['DECAISSEMENTS_HT', 'DECAISSEMENTS_TTC', 'MONTANT_HT', 'MONTANT_TTC', 'MONTANT_MARCHE'], {
+    errorMap: () => ({ message: 'Base de calcul invalide' })
+  }),
+  montant: z.number()
+    .min(0, 'Le montant doit être positif')
+    .max(999999999, 'Le montant est trop élevé'),
+  dateSignature: z.date({
+    required_error: 'La date de signature est requise',
+    invalid_type_error: 'Date de signature invalide',
+  }),
+  dateDebut: z.date({
+    required_error: 'La date de début est requise',
+    invalid_type_error: 'Date de début invalide',
+  }),
+  dateFin: z.date({
+    invalid_type_error: 'Date de fin invalide',
+  }).nullable(),
+  tauxTva: z.number()
+    .min(0, 'Le taux TVA doit être positif')
+    .max(100, 'Le taux TVA ne peut pas dépasser 100%'),
+}).refine((data) => {
+  // Validation: dateDebut must be after or equal to dateSignature
+  if (data.dateSignature && data.dateDebut) {
+    return data.dateDebut >= data.dateSignature
+  }
+  return true
+}, {
+  message: 'La date de début doit être postérieure ou égale à la date de signature',
+  path: ['dateDebut'],
+}).refine((data) => {
+  // Validation: dateFin must be after dateDebut if provided
+  if (data.dateFin && data.dateDebut) {
+    return data.dateFin > data.dateDebut
+  }
+  return true
+}, {
+  message: 'La date de fin doit être postérieure à la date de début',
+  path: ['dateFin'],
 })
 
 type ConventionFormData = z.infer<typeof conventionSchema>
@@ -85,13 +121,7 @@ const ConventionEditPageModern = () => {
     resolver: zodResolver(conventionSchema),
   })
 
-  useEffect(() => {
-    if (id) {
-      loadConvention()
-    }
-  }, [id])
-
-  const loadConvention = async () => {
+  const loadConvention = useCallback(async () => {
     try {
       setLoading(true)
       const response = await conventionsAPI.getById(Number(id))
@@ -119,7 +149,13 @@ const ConventionEditPageModern = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, navigate, showToast, reset])
+
+  useEffect(() => {
+    if (id) {
+      loadConvention()
+    }
+  }, [id, loadConvention])
 
   const onSubmit = async (data: ConventionFormData) => {
     try {
@@ -184,395 +220,97 @@ const ConventionEditPageModern = () => {
 
   return (
     <AppLayout>
-      <Container maxWidth="xl" sx={{ py: 4, bgcolor: '#f9fafb', minHeight: '100vh' }}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate(`/conventions/${id}`)}
-          sx={{ mb: 2 }}
-        >
-          Retour
-        </Button>
+      <Container maxWidth="lg" sx={{ py: { xs: 2, md: 4 }, minHeight: '100vh' }}>
+        {/* Header with Back Button */}
+        <Box sx={{ mb: 3 }}>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate(`/conventions/${id}`)}
+            sx={{ mb: 2, color: 'text.secondary' }}
+          >
+            Retour
+          </Button>
 
-        <PageHeader
-          title={`Modifier la convention ${convention.code}`}
-          subtitle={convention.libelle}
-        />
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: 2,
+            mb: 2
+          }}>
+            <Box>
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                Modifier la convention
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {convention.code} • {convention.libelle}
+              </Typography>
+            </Box>
+
+            {/* Action Buttons - Sticky on desktop */}
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
+              <Button
+                variant="outlined"
+                startIcon={<CancelIcon />}
+                onClick={handleCancel}
+                disabled={saving}
+                sx={{
+                  minWidth: { sm: 120 },
+                  width: { xs: '100%', sm: 'auto' }
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                startIcon={<Save />}
+                disabled={saving || !isDirty}
+                onClick={handleSubmit(onSubmit)}
+                sx={{
+                  minWidth: { sm: 120 },
+                  width: { xs: '100%', sm: 'auto' }
+                }}
+              >
+                {saving ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack spacing={3}>
-            {/* Action Buttons (top) */}
-            <Paper sx={{ p: 2 }}>
-              <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button
-                  variant="outlined"
-                  startIcon={<CancelIcon />}
-                  onClick={handleCancel}
-                  disabled={saving}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={<Save />}
-                  disabled={saving || !isDirty}
-                >
-                  {saving ? 'Enregistrement...' : 'Enregistrer'}
-                </Button>
-              </Stack>
-            </Paper>
+          <Stack spacing={{ xs: 2, md: 3 }}>
 
             {/* Warning Alert */}
             {convention.statut !== 'BROUILLON' && (
-              <Alert severity="warning">
+              <Alert
+                severity="warning"
+                sx={{
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'warning.light',
+                }}
+              >
                 <strong>Attention :</strong> Cette convention est en statut{' '}
                 <strong>{convention.statut}</strong>. Les modifications peuvent nécessiter une
                 nouvelle validation.
               </Alert>
             )}
 
-            {/* Informations Générales - Same layout as detail page */}
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-                Informations Générales
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
+            {/* Informations Générales - Micro-component */}
+            <ConventionInfoSection control={control} errors={errors} />
 
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                {/* Row 1: Type & Code */}
-                <Box>
-                  <Controller
-                    name="typeConvention"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        select
-                        fullWidth
-                        label="Type de convention"
-                        error={!!errors.typeConvention}
-                        helperText={errors.typeConvention?.message}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Description color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      >
-                        <MenuItem value="CADRE">CADRE</MenuItem>
-                        <MenuItem value="SPECIFIQUE">SPECIFIQUE</MenuItem>
-                      </TextField>
-                    )}
-                  />
-                </Box>
+            {/* Informations Financières - Micro-component */}
+            <ConventionFinancesSection control={control} errors={errors} />
 
-                <Box>
-                  <Controller
-                    name="code"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Code"
-                        error={!!errors.code}
-                        helperText={errors.code?.message}
-                        placeholder="CONV-XXX"
-                      />
-                    )}
-                  />
-                </Box>
+            {/* Dates - Micro-component */}
+            <ConventionDatesSection control={control} errors={errors} />
 
-                {/* Row 2: Numéro & Libellé */}
-                <Box>
-                  <Controller
-                    name="numero"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Numéro"
-                        error={!!errors.numero}
-                        helperText={errors.numero?.message}
-                        placeholder="XXX/YYYY"
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="libelle"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Libellé"
-                        error={!!errors.libelle}
-                        helperText={errors.libelle?.message}
-                        placeholder="Convention de..."
-                      />
-                    )}
-                  />
-                </Box>
-
-                {/* Row 3: Objet (full width) */}
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Controller
-                    name="objet"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        multiline
-                        rows={4}
-                        label="Objet de la convention"
-                        error={!!errors.objet}
-                        helperText={errors.objet?.message}
-                        placeholder="Décrivez l'objet de la convention..."
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Informations Financières - Same layout */}
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-                Informations Financières
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                {/* Row 1: Montant & Base de Calcul */}
-                <Box>
-                  <Controller
-                    name="montant"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        type="number"
-                        label="Montant"
-                        error={!!errors.montant}
-                        helperText={errors.montant?.message}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Euro color="action" />
-                            </InputAdornment>
-                          ),
-                          endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                        }}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="baseCalcul"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        select
-                        fullWidth
-                        label="Base de calcul"
-                        error={!!errors.baseCalcul}
-                        helperText={errors.baseCalcul?.message}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Business color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      >
-                        <MenuItem value="MONTANT_HT">Montant HT</MenuItem>
-                        <MenuItem value="MONTANT_TTC">Montant TTC</MenuItem>
-                        <MenuItem value="MONTANT_MARCHE">Montant Marché</MenuItem>
-                      </TextField>
-                    )}
-                  />
-                </Box>
-
-                {/* Row 2: Taux Commission & Taux TVA */}
-                <Box>
-                  <Controller
-                    name="tauxCommission"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        type="number"
-                        label="Taux de commission"
-                        error={!!errors.tauxCommission}
-                        helperText={errors.tauxCommission?.message}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Percent color="action" />
-                            </InputAdornment>
-                          ),
-                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                        }}
-                        inputProps={{ step: '0.01', min: 0, max: 100 }}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="tauxTva"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        type="number"
-                        label="Taux TVA"
-                        error={!!errors.tauxTva}
-                        helperText={errors.tauxTva?.message}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Percent color="action" />
-                            </InputAdornment>
-                          ),
-                          endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                        }}
-                        inputProps={{ step: '0.01', min: 0, max: 100 }}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Dates - Same layout */}
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-                Dates
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-                <Box>
-                  <Controller
-                    name="dateSignature"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
-                        onChange={(e) => field.onChange(new Date(e.target.value))}
-                        fullWidth
-                        type="date"
-                        label="Date de signature"
-                        error={!!errors.dateSignature}
-                        helperText={errors.dateSignature?.message as string}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <CalendarToday color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="dateDebut"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
-                        onChange={(e) => field.onChange(new Date(e.target.value))}
-                        fullWidth
-                        type="date"
-                        label="Date de début"
-                        error={!!errors.dateDebut}
-                        helperText={errors.dateDebut?.message as string}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <CalendarToday color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-
-                <Box>
-                  <Controller
-                    name="dateFin"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
-                        onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
-                        fullWidth
-                        type="date"
-                        label="Date de fin (optionnel)"
-                        error={!!errors.dateFin}
-                        helperText={errors.dateFin?.message as string}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <CalendarToday color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Action Buttons (bottom) */}
-            <Paper sx={{ p: 2 }}>
-              <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button
-                  variant="outlined"
-                  startIcon={<CancelIcon />}
-                  onClick={handleCancel}
-                  disabled={saving}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={<Save />}
-                  disabled={saving || !isDirty}
-                >
-                  {saving ? 'Enregistrement...' : 'Enregistrer'}
-                </Button>
-              </Stack>
-            </Paper>
           </Stack>
         </form>
       </Container>

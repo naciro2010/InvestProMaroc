@@ -25,6 +25,7 @@ interface MarcheRepository : JpaRepository<Marche, Long> {
      * Recherche par convention
      */
     fun findByConventionId(conventionId: Long): List<Marche>
+    fun countByConventionId(conventionId: Long): Long
 
     /**
      * Recherche par fournisseur

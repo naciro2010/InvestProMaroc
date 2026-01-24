@@ -43,6 +43,9 @@ import {
   ConventionSousConventionsCard,
   ConventionAvenantsTab,
   ConventionHistoryCard,
+  ConventionInfoCardLazy,
+  ConventionFinancesCard,
+  ConventionStatsCard,
 } from '../../components/conventions/detail'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
@@ -312,17 +315,36 @@ const ConventionDetailPageModern = () => {
             }
           />
 
-          {/* Info Section - 2 Micro-Components */}
+          {/* Info Section - Micro-Components with Lazy Loading */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
-            <ConventionInfoCard convention={convention} canEdit={canEdit} getStatusColor={getStatusColor} />
-            <ConventionSousConventionsCard
-              typeConvention={convention.typeConvention}
-              sousConventions={sousConventions}
-              formatCurrency={formatCurrency}
+            {/* Basic Info - Lazy loaded via micro-endpoint (~5-10 KB) */}
+            <ConventionInfoCardLazy
+              conventionId={convention.id}
+              canEdit={canEdit}
               getStatusColor={getStatusColor}
-              setActiveTab={setActiveTab}
             />
+
+            {/* Finances - Lazy loaded via micro-endpoint (~3-5 KB) */}
+            <ConventionFinancesCard conventionId={convention.id} />
           </Box>
+
+          {/* Stats Section - Lazy loaded via micro-endpoint (~5 KB) */}
+          <Box sx={{ mb: 3 }}>
+            <ConventionStatsCard conventionId={convention.id} />
+          </Box>
+
+          {/* Sous-Conventions Summary Card */}
+          {convention.typeConvention === 'CADRE' && sousConventions.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <ConventionSousConventionsCard
+                typeConvention={convention.typeConvention}
+                sousConventions={sousConventions}
+                formatCurrency={formatCurrency}
+                getStatusColor={getStatusColor}
+                setActiveTab={setActiveTab}
+              />
+            </Box>
+          )}
 
           {/* Tabs Section */}
           <Paper>

@@ -138,6 +138,49 @@ export interface UpdateConventionDTO extends Partial<CreateConventionDTO> {
   status?: ConventionStatus
 }
 
+// Micro-DTOs for progressive lazy loading
+export interface ConventionBasicDTO {
+  id: number
+  code: string
+  numero: string
+  libelle: string
+  objet: string | null
+  typeConvention: ConventionType
+  statut: ConventionStatus
+  createdBy: string | null
+}
+
+export interface ConventionFinancesDTO {
+  id: number
+  tauxCommission: number
+  budget: number
+  baseCalcul: string
+  tauxTva: number
+  montantCommissionEstime: number | null
+}
+
+export interface ConventionDatesDTO {
+  id: number
+  dateConvention: string
+  dateDebut: string
+  dateFin: string | null
+  dateSoumission: string | null
+  dateValidation: string | null
+  dureeJours: number | null
+  estActive: boolean
+}
+
+export interface ConventionStatsDTO {
+  id: number
+  nombreProjets: number
+  nombreMarches: number
+  nombreSousConventions: number
+  montantTotalProjets: number
+  montantTotalMarches: number
+  tauxRealisation: number
+  commissionTotale: number
+}
+
 export interface UpdateConventionWithHistoryRequest extends Record<string, unknown> {
   motifModification: string
   modifieParId: number

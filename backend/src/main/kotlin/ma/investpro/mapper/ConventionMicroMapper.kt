@@ -40,7 +40,7 @@ class ConventionMicroMapper(
             objet = convention.objet,
             typeConvention = convention.typeConvention,
             statut = convention.statut,
-            createdBy = convention.createdBy
+            createdBy = null // Convention entity does not have createdBy field
         )
     }
 
@@ -69,15 +69,16 @@ class ConventionMicroMapper(
      * Payload: ~2-3 KB
      */
     fun toDatesDTO(convention: Convention): ConventionDatesDTO {
-        // Calculate duration in days
-        val dureeJours = if (convention.dateFin != null) {
-            ChronoUnit.DAYS.between(convention.dateDebut, convention.dateFin)
+        // Calculate duration in days (use local variable to avoid smart cast issues)
+        val dateFin = convention.dateFin
+        val dureeJours = if (dateFin != null) {
+            ChronoUnit.DAYS.between(convention.dateDebut, dateFin)
         } else null
 
         // Check if convention is currently active
         val now = LocalDate.now()
         val estActive = now.isAfter(convention.dateDebut.minusDays(1)) &&
-                (convention.dateFin == null || now.isBefore(convention.dateFin.plusDays(1)))
+                (dateFin == null || now.isBefore(dateFin.plusDays(1)))
 
         return ConventionDatesDTO(
             id = convention.id ?: 0,
@@ -106,10 +107,14 @@ class ConventionMicroMapper(
 
         // Calculate totals (simple sums for now - can be optimized with JPQL queries)
         val projets = projetRepository.findByConventionId(conventionId)
-        val montantTotalProjets = projets.sumOf { it.budgetTotal }
+        val montantTotalProjets = projets.fold(BigDecimal.ZERO) { acc, projet ->
+            acc.add(projet.budgetTotal)
+        }
 
         val marches = marcheRepository.findByConventionId(conventionId)
-        val montantTotalMarches = marches.sumOf { it.montantTTC }
+        val montantTotalMarches = marches.fold(BigDecimal.ZERO) { acc, marche ->
+            acc.add(marche.montantTtc)
+        }
 
         // Calculate realization rate
         val tauxRealisation = if (convention.budget > BigDecimal.ZERO) {

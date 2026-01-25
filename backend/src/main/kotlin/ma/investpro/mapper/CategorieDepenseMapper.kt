@@ -1,17 +1,17 @@
 package ma.investpro.mapper
 
-import ma.investpro.dto.CreateTypeDepenseDTO
-import ma.investpro.dto.TypeDepenseDTO
-import ma.investpro.dto.TypeDepenseListDTO
-import ma.investpro.dto.UpdateTypeDepenseDTO
-import ma.investpro.entity.TypeDepense
+import ma.investpro.dto.CreateCategorieDepenseDTO
+import ma.investpro.dto.CategorieDepenseDTO
+import ma.investpro.dto.CategorieDepenseListDTO
+import ma.investpro.dto.UpdateCategorieDepenseDTO
+import ma.investpro.entity.CategorieDepense
 import org.springframework.stereotype.Component
 
 @Component
-class TypeDepenseMapper {
+class CategorieDepenseMapper {
 
-    fun toDTO(entity: TypeDepense): TypeDepenseDTO {
-        return TypeDepenseDTO(
+    fun toDTO(entity: CategorieDepense): CategorieDepenseDTO {
+        return CategorieDepenseDTO(
             id = entity.id,
             code = entity.code,
             libelle = entity.libelle,
@@ -24,8 +24,8 @@ class TypeDepenseMapper {
         )
     }
 
-    fun toListDTO(entity: TypeDepense): TypeDepenseListDTO {
-        return TypeDepenseListDTO(
+    fun toListDTO(entity: CategorieDepense): CategorieDepenseListDTO {
+        return CategorieDepenseListDTO(
             id = entity.id ?: 0,
             code = entity.code,
             libelle = entity.libelle,
@@ -33,8 +33,8 @@ class TypeDepenseMapper {
         )
     }
 
-    fun toEntity(dto: CreateTypeDepenseDTO): TypeDepense {
-        return TypeDepense(
+    fun toEntity(dto: CreateCategorieDepenseDTO): CategorieDepense {
+        return CategorieDepense(
             code = dto.code,
             libelle = dto.libelle,
             description = dto.description,
@@ -43,7 +43,7 @@ class TypeDepenseMapper {
         )
     }
 
-    fun updateEntity(entity: TypeDepense, dto: UpdateTypeDepenseDTO): TypeDepense {
+    fun updateEntity(entity: CategorieDepense, dto: UpdateCategorieDepenseDTO): CategorieDepense {
         dto.code?.let { entity.code = it }
         dto.libelle?.let { entity.libelle = it }
         dto.description?.let { entity.description = it }

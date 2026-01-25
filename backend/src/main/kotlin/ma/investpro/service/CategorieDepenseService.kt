@@ -1,55 +1,55 @@
 package ma.investpro.service
 
-import ma.investpro.dto.CreateTypeDepenseDTO
-import ma.investpro.dto.TypeDepenseDTO
-import ma.investpro.dto.TypeDepenseListDTO
-import ma.investpro.dto.UpdateTypeDepenseDTO
-import ma.investpro.entity.TypeDepense
-import ma.investpro.mapper.TypeDepenseMapper
-import ma.investpro.repository.TypeDepenseRepository
+import ma.investpro.dto.CreateCategorieDepenseDTO
+import ma.investpro.dto.CategorieDepenseDTO
+import ma.investpro.dto.CategorieDepenseListDTO
+import ma.investpro.dto.UpdateCategorieDepenseDTO
+import ma.investpro.entity.CategorieDepense
+import ma.investpro.mapper.CategorieDepenseMapper
+import ma.investpro.repository.CategorieDepenseRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional
-class TypeDepenseService(
-    private val repository: TypeDepenseRepository,
-    private val mapper: TypeDepenseMapper
+class CategorieDepenseService(
+    private val repository: CategorieDepenseRepository,
+    private val mapper: CategorieDepenseMapper
 ) {
 
-    fun findAll(): List<TypeDepenseDTO> {
+    fun findAll(): List<CategorieDepenseDTO> {
         return repository.findAll().map(mapper::toDTO)
     }
 
-    fun findAllActive(): List<TypeDepenseDTO> {
+    fun findAllActive(): List<CategorieDepenseDTO> {
         return repository.findByActifTrue().map(mapper::toDTO)
     }
 
     /**
      * Optimized list for dropdowns (minimal payload)
      */
-    fun findAllActiveList(): List<TypeDepenseListDTO> {
+    fun findAllActiveList(): List<CategorieDepenseListDTO> {
         return repository.findByActifTrueOrderByOrdreAffichageAsc()
             .map(mapper::toListDTO)
     }
 
-    fun findById(id: Long): TypeDepenseDTO? {
+    fun findById(id: Long): CategorieDepenseDTO? {
         return repository.findById(id)
             .map(mapper::toDTO)
             .orElse(null)
     }
 
-    fun findByCode(code: String): TypeDepenseDTO? {
+    fun findByCode(code: String): CategorieDepenseDTO? {
         return repository.findByCode(code)?.let(mapper::toDTO)
     }
 
-    fun create(dto: CreateTypeDepenseDTO): TypeDepenseDTO {
+    fun create(dto: CreateCategorieDepenseDTO): CategorieDepenseDTO {
         val entity = mapper.toEntity(dto)
         val saved = repository.save(entity)
         return mapper.toDTO(saved)
     }
 
-    fun update(id: Long, dto: UpdateTypeDepenseDTO): TypeDepenseDTO? {
+    fun update(id: Long, dto: UpdateCategorieDepenseDTO): CategorieDepenseDTO? {
         val entity = repository.findById(id).orElse(null) ?: return null
         val updated = mapper.updateEntity(entity, dto)
         val saved = repository.save(updated)

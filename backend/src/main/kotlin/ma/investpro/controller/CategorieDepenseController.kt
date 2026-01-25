@@ -1,30 +1,30 @@
 package ma.investpro.controller
 
-import ma.investpro.dto.CreateTypeDepenseDTO
-import ma.investpro.dto.TypeDepenseDTO
-import ma.investpro.dto.TypeDepenseListDTO
-import ma.investpro.dto.UpdateTypeDepenseDTO
-import ma.investpro.response.ApiResponse
-import ma.investpro.service.TypeDepenseService
+import ma.investpro.dto.CreateCategorieDepenseDTO
+import ma.investpro.dto.CategorieDepenseDTO
+import ma.investpro.dto.CategorieDepenseListDTO
+import ma.investpro.dto.UpdateCategorieDepenseDTO
+import ma.investpro.dto.ApiResponse
+import ma.investpro.service.CategorieDepenseService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/types-depenses")
-class TypeDepenseController(
-    private val service: TypeDepenseService
+@RequestMapping("/api/categories-depenses")
+class CategorieDepenseController(
+    private val service: CategorieDepenseService
 ) {
 
     @GetMapping
-    fun getAll(): ResponseEntity<ApiResponse<List<TypeDepenseDTO>>> {
+    fun getAll(): ResponseEntity<ApiResponse<List<CategorieDepenseDTO>>> {
         val items = service.findAll()
         return ResponseEntity.ok(ApiResponse.success(items, "Liste des types de dépenses"))
     }
 
     @GetMapping("/active")
-    fun getAllActive(): ResponseEntity<ApiResponse<List<TypeDepenseDTO>>> {
+    fun getAllActive(): ResponseEntity<ApiResponse<List<CategorieDepenseDTO>>> {
         val items = service.findAllActive()
         return ResponseEntity.ok(ApiResponse.success(items, "Liste des types de dépenses actifs"))
     }
@@ -33,13 +33,13 @@ class TypeDepenseController(
      * Optimized endpoint for dropdowns (minimal payload)
      */
     @GetMapping("/list")
-    fun getActiveList(): ResponseEntity<ApiResponse<List<TypeDepenseListDTO>>> {
+    fun getActiveList(): ResponseEntity<ApiResponse<List<CategorieDepenseListDTO>>> {
         val items = service.findAllActiveList()
         return ResponseEntity.ok(ApiResponse.success(items, "Liste simplifiée pour les formulaires"))
     }
 
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<TypeDepenseDTO>> {
+    fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<CategorieDepenseDTO>> {
         val item = service.findById(id)
         return if (item != null) {
             ResponseEntity.ok(ApiResponse.success(item))
@@ -50,7 +50,7 @@ class TypeDepenseController(
     }
 
     @GetMapping("/code/{code}")
-    fun getByCode(@PathVariable code: String): ResponseEntity<ApiResponse<TypeDepenseDTO>> {
+    fun getByCode(@PathVariable code: String): ResponseEntity<ApiResponse<CategorieDepenseDTO>> {
         val item = service.findByCode(code)
         return if (item != null) {
             ResponseEntity.ok(ApiResponse.success(item))
@@ -62,7 +62,7 @@ class TypeDepenseController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun create(@RequestBody dto: CreateTypeDepenseDTO): ResponseEntity<ApiResponse<TypeDepenseDTO>> {
+    fun create(@RequestBody dto: CreateCategorieDepenseDTO): ResponseEntity<ApiResponse<CategorieDepenseDTO>> {
         val created = service.create(dto)
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success(created, "Type de dépense créé avec succès"))
@@ -72,8 +72,8 @@ class TypeDepenseController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun update(
         @PathVariable id: Long,
-        @RequestBody dto: UpdateTypeDepenseDTO
-    ): ResponseEntity<ApiResponse<TypeDepenseDTO>> {
+        @RequestBody dto: UpdateCategorieDepenseDTO
+    ): ResponseEntity<ApiResponse<CategorieDepenseDTO>> {
         val updated = service.update(id, dto)
         return if (updated != null) {
             ResponseEntity.ok(ApiResponse.success(updated, "Type de dépense modifié avec succès"))

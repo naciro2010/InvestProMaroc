@@ -170,7 +170,7 @@ INSERT INTO decompte_retenues (decompte_id, type_retenue, taux_pourcent, montant
 -- ============================================================================
 -- Types de dépenses (référentiel) - JANUARY 2026
 -- ============================================================================
-INSERT INTO types_depenses (id, code, libelle, description, categorie, ordre_affichage, actif) VALUES
+INSERT INTO categories_depenses (id, code, libelle, description, categorie, ordre_affichage, actif) VALUES
 (1, 'TRAV', 'Travaux', 'Travaux de construction et réhabilitation', 'Investissement', 1, TRUE),
 (2, 'FOUR', 'Fournitures', 'Fournitures de bureau et matériel', 'Fonctionnement', 2, TRUE),
 (3, 'SERV', 'Services', 'Prestations de services', 'Fonctionnement', 3, TRUE),
@@ -183,5 +183,5 @@ INSERT INTO types_depenses (id, code, libelle, description, categorie, ordre_aff
 (10, 'COMM', 'Communication', 'Actions de communication', 'Fonctionnement', 10, TRUE);
 
 -- Reset sequence
-SELECT setval('types_depenses_id_seq', 10, true);
+SELECT setval('categories_depenses_id_seq', 10, true);
 

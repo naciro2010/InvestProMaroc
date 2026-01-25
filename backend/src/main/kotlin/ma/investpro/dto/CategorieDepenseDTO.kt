@@ -3,9 +3,9 @@ package ma.investpro.dto
 import java.time.LocalDateTime
 
 /**
- * DTO for TypeDepense entity
+ * DTO for CategorieDepense entity
  */
-data class TypeDepenseDTO(
+data class CategorieDepenseDTO(
     val id: Long? = null,
     val code: String,
     val libelle: String,
@@ -18,9 +18,9 @@ data class TypeDepenseDTO(
 )
 
 /**
- * DTO for creating a new TypeDepense
+ * DTO for creating a new CategorieDepense
  */
-data class CreateTypeDepenseDTO(
+data class CreateCategorieDepenseDTO(
     val code: String,
     val libelle: String,
     val description: String? = null,
@@ -29,9 +29,9 @@ data class CreateTypeDepenseDTO(
 )
 
 /**
- * DTO for updating an existing TypeDepense
+ * DTO for updating an existing CategorieDepense
  */
-data class UpdateTypeDepenseDTO(
+data class UpdateCategorieDepenseDTO(
     val code: String? = null,
     val libelle: String? = null,
     val description: String? = null,
@@ -43,7 +43,7 @@ data class UpdateTypeDepenseDTO(
 /**
  * Minimal DTO for dropdown lists (optimized payload)
  */
-data class TypeDepenseListDTO(
+data class CategorieDepenseListDTO(
     val id: Long,
     val code: String,
     val libelle: String,

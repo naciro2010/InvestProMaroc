@@ -878,8 +878,8 @@ COMMENT ON COLUMN maitres_oeuvre.missions IS 'Description des missions confiées
 -- SECTION 14: RÉFÉRENTIELS - TYPES DE DÉPENSES - JANUARY 2026
 -- ============================================================================
 
--- Types de dépenses (référentiel pour catégoriser les dépenses)
-CREATE TABLE IF NOT EXISTS types_depenses (
+-- Catégories de dépenses (référentiel pour catégoriser les dépenses)
+CREATE TABLE IF NOT EXISTS categories_depenses (
     id BIGSERIAL PRIMARY KEY,
     code VARCHAR(50) NOT NULL UNIQUE,
     libelle VARCHAR(200) NOT NULL,
@@ -892,17 +892,17 @@ CREATE TABLE IF NOT EXISTS types_depenses (
 );
 
 -- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_types_depenses_code ON types_depenses(code, actif);
-CREATE INDEX IF NOT EXISTS idx_types_depenses_libelle ON types_depenses(libelle);
-CREATE INDEX IF NOT EXISTS idx_types_depenses_actif ON types_depenses(actif);
-CREATE INDEX IF NOT EXISTS idx_types_depenses_ordre ON types_depenses(ordre_affichage, actif);
+CREATE INDEX IF NOT EXISTS idx_categories_depenses_code ON categories_depenses(code, actif);
+CREATE INDEX IF NOT EXISTS idx_categories_depenses_libelle ON categories_depenses(libelle);
+CREATE INDEX IF NOT EXISTS idx_categories_depenses_actif ON categories_depenses(actif);
+CREATE INDEX IF NOT EXISTS idx_categories_depenses_ordre ON categories_depenses(ordre_affichage, actif);
 
 -- Comments
-COMMENT ON TABLE types_depenses IS 'Référentiel des types de dépenses pour catégoriser les lignes de marchés et décomptes';
-COMMENT ON COLUMN types_depenses.code IS 'Code unique du type de dépense (ex: TRAV, FOUR, SERV)';
-COMMENT ON COLUMN types_depenses.libelle IS 'Libellé descriptif du type de dépense';
-COMMENT ON COLUMN types_depenses.categorie IS 'Catégorie du type (ex: Investissement, Fonctionnement)';
-COMMENT ON COLUMN types_depenses.ordre_affichage IS 'Ordre d''affichage dans les listes déroulantes';
+COMMENT ON TABLE categories_depenses IS 'Référentiel des catégories de dépenses pour catégoriser les lignes de marchés et décomptes';
+COMMENT ON COLUMN categories_depenses.code IS 'Code unique du type de dépense (ex: TRAV, FOUR, SERV)';
+COMMENT ON COLUMN categories_depenses.libelle IS 'Libellé descriptif du type de dépense';
+COMMENT ON COLUMN categories_depenses.categorie IS 'Catégorie du type (ex: Investissement, Fonctionnement)';
+COMMENT ON COLUMN categories_depenses.ordre_affichage IS 'Ordre d''affichage dans les listes déroulantes';
 
 -- ============================================================================
 -- SECTION 15: HISTORIQUE DES MODIFICATIONS - JANUARY 2026

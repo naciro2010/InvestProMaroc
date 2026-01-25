@@ -206,10 +206,10 @@ export interface ConventionSimpleDTO {
 }
 
 // ============================================================================
-// TypeDepense Types (Référentiel)
+// CategorieDepense Types (Référentiel)
 // ============================================================================
 
-export interface TypeDepense {
+export interface CategorieDepense {
   id: number
   code: string
   libelle: string
@@ -221,14 +221,14 @@ export interface TypeDepense {
   updatedAt?: string
 }
 
-export interface TypeDepenseListDTO {
+export interface CategorieDepenseListDTO {
   id: number
   code: string
   libelle: string
   categorie?: string
 }
 
-export interface CreateTypeDepenseDTO {
+export interface CreateCategorieDepenseDTO {
   code: string
   libelle: string
   description?: string
@@ -236,7 +236,7 @@ export interface CreateTypeDepenseDTO {
   ordreAffichage?: number
 }
 
-export interface UpdateTypeDepenseDTO {
+export interface UpdateCategorieDepenseDTO {
   code?: string
   libelle?: string
   description?: string

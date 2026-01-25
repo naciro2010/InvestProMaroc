@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 
 /**
- * Entité TypeDepense - Référentiel des types de dépenses
+ * Entité CategorieDepense - Référentiel des types de dépenses
  *
  * Permet de catégoriser les dépenses dans les marchés/décomptes
  * Exemples: Travaux, Fournitures, Services, Etudes, Formation, etc.
@@ -13,14 +13,14 @@ import jakarta.validation.constraints.NotBlank
  */
 @Entity
 @Table(
-    name = "types_depenses",
+    name = "categories_depenses",
     indexes = [
-        Index(name = "idx_types_depenses_code", columnList = "code", unique = true),
-        Index(name = "idx_types_depenses_libelle", columnList = "libelle"),
-        Index(name = "idx_types_depenses_actif", columnList = "actif")
+        Index(name = "idx_categories_depenses_code", columnList = "code", unique = true),
+        Index(name = "idx_categories_depenses_libelle", columnList = "libelle"),
+        Index(name = "idx_categories_depenses_actif", columnList = "actif")
     ]
 )
-class TypeDepense(
+class CategorieDepense(
     @Column(nullable = false, unique = true, length = 50)
     @field:NotBlank
     var code: String = "",

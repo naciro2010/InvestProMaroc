@@ -676,4 +676,16 @@ export const versementsPrevisionnelsAPI = {
   getStats: () => api.get('/versements-previsionnels/stats'),
 }
 
+// Catégories de dépenses API (Référentiel)
+export const categoriesDepensesAPI = {
+  getAll: () => api.get('/categories-depenses'),
+  getAllActive: () => api.get('/categories-depenses/active'),
+  getList: () => api.get('/categories-depenses/list'), // Optimized for dropdowns
+  getById: (id: number) => api.get(`/categories-depenses/${id}`),
+  getByCode: (code: string) => api.get(`/categories-depenses/code/${code}`),
+  create: (data: Record<string, unknown>) => api.post('/categories-depenses', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/categories-depenses/${id}`, data),
+  delete: (id: number) => api.delete(`/categories-depenses/${id}`),
+}
+
 export default api

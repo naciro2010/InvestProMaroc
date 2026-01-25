@@ -206,6 +206,46 @@ export interface ConventionSimpleDTO {
 }
 
 // ============================================================================
+// CategorieDepense Types (Référentiel)
+// ============================================================================
+
+export interface CategorieDepense {
+  id: number
+  code: string
+  libelle: string
+  description?: string
+  categorie?: string
+  ordreAffichage?: number
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface CategorieDepenseListDTO {
+  id: number
+  code: string
+  libelle: string
+  categorie?: string
+}
+
+export interface CreateCategorieDepenseDTO {
+  code: string
+  libelle: string
+  description?: string
+  categorie?: string
+  ordreAffichage?: number
+}
+
+export interface UpdateCategorieDepenseDTO {
+  code?: string
+  libelle?: string
+  description?: string
+  categorie?: string
+  ordreAffichage?: number
+  actif?: boolean
+}
+
+// ============================================================================
 // Projet Types
 // ============================================================================
 

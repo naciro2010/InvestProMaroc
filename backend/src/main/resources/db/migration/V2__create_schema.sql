@@ -875,6 +875,36 @@ COMMENT ON COLUMN maitres_oeuvre.type_mo IS 'Type: MO (Maître d''Œuvre) ou MOD
 COMMENT ON COLUMN maitres_oeuvre.missions IS 'Description des missions confiées au MO/MOD';
 
 -- ============================================================================
+-- SECTION 14: RÉFÉRENTIELS - TYPES DE DÉPENSES - JANUARY 2026
+-- ============================================================================
+
+-- Types de dépenses (référentiel pour catégoriser les dépenses)
+CREATE TABLE IF NOT EXISTS types_depenses (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    libelle VARCHAR(200) NOT NULL,
+    description TEXT,
+    categorie VARCHAR(100),
+    ordre_affichage INTEGER,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_types_depenses_code ON types_depenses(code, actif);
+CREATE INDEX IF NOT EXISTS idx_types_depenses_libelle ON types_depenses(libelle);
+CREATE INDEX IF NOT EXISTS idx_types_depenses_actif ON types_depenses(actif);
+CREATE INDEX IF NOT EXISTS idx_types_depenses_ordre ON types_depenses(ordre_affichage, actif);
+
+-- Comments
+COMMENT ON TABLE types_depenses IS 'Référentiel des types de dépenses pour catégoriser les lignes de marchés et décomptes';
+COMMENT ON COLUMN types_depenses.code IS 'Code unique du type de dépense (ex: TRAV, FOUR, SERV)';
+COMMENT ON COLUMN types_depenses.libelle IS 'Libellé descriptif du type de dépense';
+COMMENT ON COLUMN types_depenses.categorie IS 'Catégorie du type (ex: Investissement, Fonctionnement)';
+COMMENT ON COLUMN types_depenses.ordre_affichage IS 'Ordre d''affichage dans les listes déroulantes';
+
+-- ============================================================================
 -- SECTION 15: HISTORIQUE DES MODIFICATIONS - JANUARY 2026
 -- ============================================================================
 

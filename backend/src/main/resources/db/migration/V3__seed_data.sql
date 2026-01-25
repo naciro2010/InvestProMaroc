@@ -166,3 +166,22 @@ INSERT INTO decomptes (marche_id, numero_decompte, date_decompte, periode_debut,
 INSERT INTO decompte_retenues (decompte_id, type_retenue, taux_pourcent, montant, libelle) VALUES
 (1, 'GARANTIE', 10.00, 48000.00, 'Retenue de garantie 10%'),
 (2, 'GARANTIE', 10.00, 72000.00, 'Retenue de garantie 10%');
+
+-- ============================================================================
+-- Types de dépenses (référentiel) - JANUARY 2026
+-- ============================================================================
+INSERT INTO types_depenses (id, code, libelle, description, categorie, ordre_affichage, actif) VALUES
+(1, 'TRAV', 'Travaux', 'Travaux de construction et réhabilitation', 'Investissement', 1, TRUE),
+(2, 'FOUR', 'Fournitures', 'Fournitures de bureau et matériel', 'Fonctionnement', 2, TRUE),
+(3, 'SERV', 'Services', 'Prestations de services', 'Fonctionnement', 3, TRUE),
+(4, 'ETUD', 'Études', 'Études et diagnostics', 'Investissement', 4, TRUE),
+(5, 'FORM', 'Formation', 'Formation et renforcement des capacités', 'Fonctionnement', 5, TRUE),
+(6, 'EQUIP', 'Équipements', 'Acquisition d''équipements', 'Investissement', 6, TRUE),
+(7, 'MAINT', 'Maintenance', 'Maintenance et entretien', 'Fonctionnement', 7, TRUE),
+(8, 'CONS', 'Conseil', 'Missions de conseil et assistance', 'Fonctionnement', 8, TRUE),
+(9, 'INFO', 'Informatique', 'Systèmes d''information et logiciels', 'Investissement', 9, TRUE),
+(10, 'COMM', 'Communication', 'Actions de communication', 'Fonctionnement', 10, TRUE);
+
+-- Reset sequence
+SELECT setval('types_depenses_id_seq', 10, true);
+

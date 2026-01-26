@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional
 private val logger = KotlinLogging.logger {}
 
 /**
- * Service for Partenaire entity - read-only operations
- * Provides access to partners for convention management
+ * Service for Partenaire entity
+ * Provides CRUD operations for partners
  */
 @Service
 @Transactional(readOnly = true)
@@ -50,5 +50,16 @@ class PartenaireService(
             .also { partenaires ->
                 logger.info { "Found ${partenaires.size} active partenaires" }
             }
+    }
+
+    /**
+     * Save or update a partenaire
+     */
+    @Transactional
+    fun save(partenaire: Partenaire): Partenaire {
+        logger.debug { "Saving partenaire: ${partenaire.code}" }
+        return partenaireRepository.save(partenaire).also {
+            logger.info { "Saved partenaire with ID: ${it.id}" }
+        }
     }
 }

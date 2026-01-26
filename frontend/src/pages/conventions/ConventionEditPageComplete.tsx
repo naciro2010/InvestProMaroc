@@ -11,16 +11,9 @@ import {
   Alert,
   Skeleton,
 } from '@mui/material'
-import {
-  ArrowBack,
-  Description,
-  AccountBalance,
-  People,
-  TrendingUp,
-  CalendarToday,
-} from '@mui/icons-material'
+import { ArrowBack } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
+import { PageHeaderOdoo } from '../../components/ui'
 import { conventionsAPI } from '../../lib/api'
 import {
   ConventionInfoEditCard,
@@ -118,28 +111,32 @@ const ConventionEditPageComplete = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="xl">
-          {/* Header */}
-          <PageHeader
-            title={`Modifier Convention ${convention.code}`}
-            subtitle="Modification avec sauvegarde granulaire par section"
-            actions={
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<ArrowBack />}
-                  onClick={() => navigate(`/conventions/${id}`)}
-                >
-                  Retour à la vue
-                </Button>
-              </Box>
-            }
-          />
+      <Box>
+        {/* Header */}
+        <PageHeaderOdoo
+          title={`${convention.code}`}
+          subtitle="Modification avec sauvegarde granulaire par section"
+          breadcrumbs={[
+            { label: 'Accueil', path: '/dashboard' },
+            { label: 'Conventions', path: '/conventions' },
+            { label: convention.code, path: `/conventions/${id}` },
+            { label: 'Modifier' },
+          ]}
+          actions={
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBack />}
+              onClick={() => navigate(`/conventions/${id}`)}
+            >
+              Retour
+            </Button>
+          }
+        />
 
+        <Container maxWidth="xl" sx={{ py: 3 }}>
           {/* Info box */}
           <Alert severity="info" sx={{ mb: 3 }}>
-            💡 <strong>Édition granulaire</strong> : Chaque section se sauvegarde indépendamment.
+            <strong>Édition granulaire</strong> : Chaque section se sauvegarde indépendamment.
             Cliquez sur "Modifier" dans la section à modifier, puis "Enregistrer" pour sauvegarder.
           </Alert>
 
@@ -150,11 +147,11 @@ const ConventionEditPageComplete = () => {
               onChange={(_, newValue) => setActiveTab(newValue)}
               sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
             >
-              <Tab label="Informations générales" icon={<Description />} iconPosition="start" />
-              <Tab label="Paramètres financiers" icon={<AccountBalance />} iconPosition="start" />
-              <Tab label="Dates" icon={<CalendarToday />} iconPosition="start" />
-              <Tab label="Partenaires & Imputations" icon={<People />} iconPosition="start" />
-              <Tab label="Versements prévisionnels" icon={<TrendingUp />} iconPosition="start" />
+              <Tab label="Informations générales" />
+              <Tab label="Paramètres financiers" />
+              <Tab label="Dates" />
+              <Tab label="Partenaires & Imputations" />
+              <Tab label="Versements prévisionnels" />
             </Tabs>
 
             {/* Tab 1: Informations générales */}

@@ -15,3 +15,9 @@ export { default as FileUpload } from './FileUpload'
 export { default as LocationPicker } from './LocationPicker'
 export { default as MarchesMapView } from './MarchesMapView'
 export { default as ConventionMultiSelect } from './ConventionMultiSelect'
+
+// Odoo-style components (clean, professional, no flashy effects)
+export { default as Breadcrumbs } from './Breadcrumbs'
+export { default as PageHeaderOdoo } from './PageHeaderOdoo'
+export { default as FormSection } from './FormSection'
+export { default as DataCard, DataRow } from './DataCard'

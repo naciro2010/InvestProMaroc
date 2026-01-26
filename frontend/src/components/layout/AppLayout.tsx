@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings,
-  Briefcase, ChevronDown, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles, ClipboardCheck
+  Briefcase, ChevronDown, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles, ClipboardCheck, Tags, Handshake
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -56,6 +56,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     { icon: <Building2 className="w-5 h-5" />, label: 'Projets', path: '/projets', implemented: true },
     { icon: <Users className="w-5 h-5" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: false },
     { icon: <Map className="w-5 h-5" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
+    { icon: <Tags className="w-5 h-5" />, label: 'Catégories de dépenses', path: '/parametrage/categories-depenses', implemented: true },
+    { icon: <Handshake className="w-5 h-5" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
     { icon: <CreditCard className="w-5 h-5" />, label: 'Comptes Bancaires', path: '/comptes-bancaires', implemented: false },
     { icon: <Receipt className="w-5 h-5" />, label: 'Dépenses', path: '/depenses', implemented: false },
     { icon: <DollarSign className="w-5 h-5" />, label: 'Commissions', path: '/commissions', implemented: false },

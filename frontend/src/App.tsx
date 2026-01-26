@@ -45,6 +45,9 @@ import PaiementsPage from './pages/paiements/PaiementsPageComplete'
 import VersementsPrevisionnelsPage from './pages/versements/VersementsPrevisionnelsPage'
 import ProfilePage from './pages/ProfilePage'
 import PlanAnalytiquePage from './pages/parametrage/PlanAnalytiquePage'
+import CategoriesDepensesPage from './pages/parametrage/CategoriesDepensesPage'
+import PartenairesPage from './pages/parametrage/PartenairesPage'
+import SelectWithQuickCreateDemo from './pages/examples/SelectWithQuickCreateDemo'
 import ReportingAnalytiquePage from './pages/reporting/ReportingAnalytiquePage'
 import UsersPage from './pages/users/UsersPage'
 import UnderConstruction from './pages/UnderConstruction'
@@ -344,6 +347,36 @@ function App() {
             element={
               <ProtectedRoute>
                 <PlanAnalytiquePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catégories de dépenses (Référentiel) */}
+          <Route
+            path="/parametrage/categories-depenses"
+            element={
+              <ProtectedRoute>
+                <CategoriesDepensesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Partenaires (Référentiel) */}
+          <Route
+            path="/parametrage/partenaires"
+            element={
+              <ProtectedRoute>
+                <PartenairesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* SelectWithQuickCreate Demo */}
+          <Route
+            path="/examples/select-with-quick-create"
+            element={
+              <ProtectedRoute>
+                <SelectWithQuickCreateDemo />
               </ProtectedRoute>
             }
           />

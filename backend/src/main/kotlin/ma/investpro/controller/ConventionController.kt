@@ -17,16 +17,27 @@ import ma.investpro.repository.ImputationPrevisionnelleRepository
 import ma.investpro.repository.VersementPrevisionnelRepository
 import ma.investpro.repository.PartenaireRepository
 import ma.investpro.repository.UserRepository
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import jakarta.validation.Valid
 
+/**
+ * Contrôleur REST pour la gestion des Conventions.
+ *
+ * SÉCURITÉ:
+ * - @ReadAccess: Accessible à USER, MANAGER, ADMIN (via hiérarchie des rôles)
+ * - @WriteAccess: Accessible à MANAGER, ADMIN
+ * - @AdminOnly: Accessible uniquement à ADMIN
+ *
+ * Toutes les routes sont protégées par défaut (authentification requise).
+ */
 @RestController
 @RequestMapping("/api/conventions")
-@CrossOrigin(origins = ["http://localhost:5173", "http://localhost:3000", "https://naciro2010.github.io"])
 class ConventionController(
     private val conventionService: ConventionService,
     private val conventionMapper: ConventionMapper,
@@ -42,7 +53,7 @@ class ConventionController(
     // ========== CRUD Endpoints ==========
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")  // Read-only for all authenticated users
+    @ReadAccess
     fun getAll(): ResponseEntity<List<ConventionDTO>> {
         val conventions = conventionService.findAll()
         val dtos = conventionMapper.toDTOList(conventions)
@@ -50,7 +61,7 @@ class ConventionController(
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getById(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
         val convention = conventionService.findById(id)
             ?: return ResponseEntity.notFound().build()
@@ -63,7 +74,7 @@ class ConventionController(
     }
 
     @GetMapping("/code/{code}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByCode(@PathVariable code: String): ResponseEntity<ConventionDTO> {
         val convention = conventionService.findByCode(code)
             ?: return ResponseEntity.notFound().build()
@@ -72,7 +83,7 @@ class ConventionController(
     }
 
     @GetMapping("/statut/{statut}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByStatut(@PathVariable statut: StatutConvention): ResponseEntity<List<ConventionDTO>> {
         val conventions = conventionService.findByStatut(statut)
         val dtos = conventionMapper.toDTOList(conventions)
@@ -80,7 +91,7 @@ class ConventionController(
     }
 
     @GetMapping("/actives")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getActives(): ResponseEntity<List<ConventionSimpleDTO>> {
         val conventions = conventionService.findConventionsActives()
         val dtos = conventionMapper.toSimpleDTOList(conventions)
@@ -88,7 +99,7 @@ class ConventionController(
     }
 
     @GetMapping("/racine")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getConventionsRacine(): ResponseEntity<List<ConventionDTO>> {
         val conventions = conventionService.findConventionsRacine()
         val dtos = conventionMapper.toDTOList(conventions)
@@ -96,7 +107,7 @@ class ConventionController(
     }
 
     @GetMapping("/{id}/sous-conventions")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getSousConventions(@PathVariable id: Long): ResponseEntity<List<ConventionSimpleDTO>> {
         val conventions = conventionService.findSousConventions(id)
         val dtos = conventionMapper.toSimpleDTOList(conventions)
@@ -104,7 +115,7 @@ class ConventionController(
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun create(@RequestBody convention: Convention): ResponseEntity<ConventionDTO> {
         return try {
             // Capturer l'utilisateur créateur depuis le contexte de sécurité
@@ -121,7 +132,7 @@ class ConventionController(
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun update(
         @PathVariable id: Long,
         @RequestBody convention: Convention
@@ -136,7 +147,7 @@ class ConventionController(
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun delete(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
             conventionService.delete(id)
@@ -149,7 +160,7 @@ class ConventionController(
     // ========== Workflow Endpoints ==========
 
     @PostMapping("/{id}/soumettre")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun soumettre(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
         return try {
             val convention = conventionService.soumettre(id)
@@ -161,7 +172,7 @@ class ConventionController(
     }
 
     @PostMapping("/{id}/valider")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun valider(
         @PathVariable id: Long,
         @RequestBody request: Map<String, Long>
@@ -179,7 +190,7 @@ class ConventionController(
     }
 
     @PostMapping("/{id}/rejeter")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun rejeter(
         @PathVariable id: Long,
         @RequestBody request: Map<String, String>
@@ -195,7 +206,7 @@ class ConventionController(
     }
 
     @PostMapping("/{id}/mettre-en-cours")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun mettreEnCours(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
         return try {
             val convention = conventionService.mettreEnCours(id)
@@ -207,7 +218,7 @@ class ConventionController(
     }
 
     @PostMapping("/{id}/annuler")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun annuler(
         @PathVariable id: Long,
         @RequestBody request: Map<String, String>
@@ -223,7 +234,7 @@ class ConventionController(
     }
 
     @PostMapping("/{id}/demarrer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun demarrer(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
         return try {
             val convention = conventionService.demarrer(id)
@@ -235,7 +246,7 @@ class ConventionController(
     }
 
     @PostMapping("/{id}/achever")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun achever(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
         return try {
             val convention = conventionService.achever(id)
@@ -247,7 +258,7 @@ class ConventionController(
     }
 
     @PostMapping("/{id}/remettre-en-brouillon")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun remettreEnBrouillon(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
         return try {
             val convention = conventionService.remettreEnBrouillon(id)
@@ -261,7 +272,7 @@ class ConventionController(
     // ========== Sous-Conventions ==========
 
     @PostMapping("/{parentId}/sous-conventions")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun creerSousConvention(
         @PathVariable parentId: Long,
         @RequestBody sousConvention: Convention
@@ -278,7 +289,7 @@ class ConventionController(
     // ========== Statistiques ==========
 
     @GetMapping("/statistiques")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getStatistiques(): ResponseEntity<Map<String, Long>> {
         return ResponseEntity.ok(conventionService.getStatistiques())
     }
@@ -286,7 +297,7 @@ class ConventionController(
     // ========== Imputations Prévisionnelles ==========
 
     @PostMapping("/{conventionId}/imputations")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun ajouterImputation(
         @PathVariable conventionId: Long,
         @RequestBody imputation: ImputationPrevisionnelle
@@ -324,7 +335,7 @@ class ConventionController(
     }
 
     @DeleteMapping("/{conventionId}/imputations/{imputationId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun supprimerImputation(
         @PathVariable conventionId: Long,
         @PathVariable imputationId: Long
@@ -340,7 +351,7 @@ class ConventionController(
     // ========== Versements Prévisionnels ==========
 
     @PostMapping("/{conventionId}/versements")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun ajouterVersement(
         @PathVariable conventionId: Long,
         @RequestBody request: Map<String, Any?>
@@ -392,7 +403,7 @@ class ConventionController(
     }
 
     @DeleteMapping("/{conventionId}/versements/{versementId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun supprimerVersement(
         @PathVariable conventionId: Long,
         @PathVariable versementId: Long
@@ -411,7 +422,7 @@ class ConventionController(
      * Modifier une convention avec historique complet
      */
     @PutMapping("/{id}/with-history")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun updateWithHistory(
         @PathVariable id: Long,
         @Valid @RequestBody request: UpdateConventionWithHistoryRequest
@@ -462,7 +473,7 @@ class ConventionController(
      * Récupérer l'historique complet des modifications d'une convention
      */
     @GetMapping("/{id}/historique")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getHistorique(@PathVariable id: Long): ResponseEntity<ApiResponse<List<ConventionModificationDTO>>> {
         return try {
             val historique: List<ConventionModificationDTO> = conventionService.getHistoriqueModifications(id)
@@ -480,7 +491,7 @@ class ConventionController(
      * Récupérer les N dernières modifications d'une convention
      */
     @GetMapping("/{id}/historique/derniers/{limit}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getDernieresModifications(
         @PathVariable id: Long,
         @PathVariable limit: Int
@@ -501,7 +512,7 @@ class ConventionController(
      * Vérifier si une convention a été modifiée
      */
     @GetMapping("/{id}/a-ete-modifiee")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun aEteModifiee(@PathVariable id: Long): ResponseEntity<ApiResponse<Boolean>> {
         return try {
             val modifiee: Boolean = conventionService.aEteModifiee(id)
@@ -518,7 +529,7 @@ class ConventionController(
      * Link an existing marché to this convention
      */
     @PostMapping("/{conventionId}/marches/{marcheId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun linkMarche(
         @PathVariable conventionId: Long,
         @PathVariable marcheId: Long
@@ -539,7 +550,7 @@ class ConventionController(
      * Unlink a marché from this convention
      */
     @DeleteMapping("/{conventionId}/marches/{marcheId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun unlinkMarche(
         @PathVariable conventionId: Long,
         @PathVariable marcheId: Long
@@ -557,25 +568,9 @@ class ConventionController(
     }
 
     // ========== MICRO-ENDPOINTS (Micro-Services Architecture) ==========
-    // Following CLAUDE.md standards for granular, focused endpoints
-    // - Small payloads (2-10 KB each)
-    // - Lazy loading friendly
-    // - Independent caching
-    // - Fast response times
 
-    /**
-     * GET /api/conventions/{id}/basic
-     *
-     * Returns only basic identification information (~5-10 KB).
-     * Used for initial page load - loads first, fastest.
-     *
-     * Benefits:
-     * - Fast initial render (300ms vs 2.5s for full data)
-     * - Minimal database query
-     * - Cacheable independently
-     */
     @GetMapping("/{id}/basic")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getBasicInfo(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionBasicDTO>> {
         return try {
             val convention = conventionService.findById(id)
@@ -590,19 +585,8 @@ class ConventionController(
         }
     }
 
-    /**
-     * GET /api/conventions/{id}/finances
-     *
-     * Returns only financial information (~3-5 KB).
-     * Loaded lazily when user expands financial section.
-     *
-     * Benefits:
-     * - Load only when needed
-     * - Can be cached separately
-     * - Fast financial queries
-     */
     @GetMapping("/{id}/finances")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getFinancesInfo(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionFinancesDTO>> {
         return try {
             val convention = conventionService.findById(id)
@@ -617,19 +601,8 @@ class ConventionController(
         }
     }
 
-    /**
-     * GET /api/conventions/{id}/dates
-     *
-     * Returns only date-related information (~2-3 KB).
-     * Loaded lazily when user expands dates section.
-     *
-     * Benefits:
-     * - Minimal payload
-     * - Includes calculated fields (duration, isActive)
-     * - Fast response
-     */
     @GetMapping("/{id}/dates")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getDatesInfo(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDatesDTO>> {
         return try {
             val convention = conventionService.findById(id)
@@ -644,19 +617,8 @@ class ConventionController(
         }
     }
 
-    /**
-     * GET /api/conventions/{id}/stats
-     *
-     * Returns aggregated statistics (~5 KB).
-     * Loaded lazily for analytics/dashboard display.
-     *
-     * Benefits:
-     * - Aggregated metrics in one call
-     * - Should be cached (expensive queries)
-     * - Optional load (not needed for basic editing)
-     */
     @GetMapping("/{id}/stats")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getStats(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionStatsDTO>> {
         return try {
             val convention = conventionService.findById(id)

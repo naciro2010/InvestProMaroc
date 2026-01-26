@@ -69,9 +69,10 @@ class PartenaireMapper {
             email = dto.email,
             telephone = dto.telephone,
             adresse = dto.adresse,
-            description = dto.description,
+            description = dto.description
+        ).apply {
             actif = true
-        )
+        }
     }
 
     /**

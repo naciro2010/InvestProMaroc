@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   Box,
   Container,
@@ -12,102 +9,24 @@ import {
   Tabs,
   Tab,
   Alert,
-  CircularProgress,
   Skeleton,
 } from '@mui/material'
 import {
   ArrowBack,
-  Save,
-  Cancel as CancelIcon,
   Description,
   AccountBalance,
   People,
   TrendingUp,
+  CalendarToday,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import { conventionsAPI } from '../../lib/api'
-import { useToast } from '../../contexts/ToastContext'
 import {
-  ConventionInfoSection,
-  ConventionFinancesSection,
-  ConventionDatesSection,
+  ConventionInfoEditCard,
+  ConventionFinancesEditCard,
+  ConventionDatesEditCard,
 } from '../../components/conventions/edit'
-
-// Zod validation schema
-const conventionSchema = z.object({
-  code: z.string()
-    .min(1, 'Le code est requis')
-    .regex(/^[A-Z0-9-]+$/, 'Le code doit contenir uniquement des majuscules, chiffres et tirets'),
-  numero: z.string()
-    .min(1, 'Le numéro est requis'),
-  libelle: z.string()
-    .min(3, 'Le libellé doit contenir au moins 3 caractères')
-    .max(200, 'Le libellé ne peut pas dépasser 200 caractères'),
-  objet: z.string()
-    .min(10, 'L\'objet doit contenir au moins 10 caractères'),
-  typeConvention: z.enum(['CADRE', 'SPECIFIQUE'], {
-    errorMap: () => ({ message: 'Type de convention invalide' })
-  }),
-  tauxCommission: z.number()
-    .min(0, 'Le taux de commission doit être positif')
-    .max(100, 'Le taux de commission ne peut pas dépasser 100%'),
-  baseCalcul: z.enum(['DECAISSEMENTS_HT', 'DECAISSEMENTS_TTC', 'MONTANT_HT', 'MONTANT_TTC', 'MONTANT_MARCHE'], {
-    errorMap: () => ({ message: 'Base de calcul invalide' })
-  }),
-  montant: z.number()
-    .min(0, 'Le montant doit être positif')
-    .max(999999999, 'Le montant est trop élevé'),
-  dateSignature: z.date({
-    required_error: 'La date de signature est requise',
-    invalid_type_error: 'Date de signature invalide',
-  }),
-  dateDebut: z.date({
-    required_error: 'La date de début est requise',
-    invalid_type_error: 'Date de début invalide',
-  }),
-  dateFin: z.date({
-    invalid_type_error: 'Date de fin invalide',
-  }).nullable(),
-  tauxTva: z.number()
-    .min(0, 'Le taux TVA doit être positif')
-    .max(100, 'Le taux TVA ne peut pas dépasser 100%'),
-}).refine((data) => {
-  if (data.dateSignature && data.dateDebut) {
-    return data.dateDebut >= data.dateSignature
-  }
-  return true
-}, {
-  message: 'La date de début doit être postérieure ou égale à la date de signature',
-  path: ['dateDebut'],
-}).refine((data) => {
-  if (data.dateFin && data.dateDebut) {
-    return data.dateFin > data.dateDebut
-  }
-  return true
-}, {
-  message: 'La date de fin doit être postérieure à la date de début',
-  path: ['dateFin'],
-})
-
-type ConventionFormData = z.infer<typeof conventionSchema>
-
-interface Convention {
-  id: number
-  code: string
-  numero: string
-  libelle: string
-  objet: string
-  typeConvention: 'CADRE' | 'SPECIFIQUE'
-  statut: string
-  tauxCommission: number
-  baseCalcul: string
-  budget: number
-  dateConvention: string
-  dateDebut: string
-  dateFin?: string | null
-  tauxTva: number
-}
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -124,91 +43,53 @@ function TabPanel(props: TabPanelProps) {
   )
 }
 
+/**
+ * Page d'édition complète avec architecture micro-frontend
+ *
+ * Pattern:
+ * - Page orchestratrice (~100 lignes)
+ * - Micro-composants éditables chargent leurs données indépendamment
+ * - Chaque micro-composant sauvegarde ses données via son propre micro-endpoint
+ * - Lazy loading par onglet
+ *
+ * Micro-composants:
+ * - ConventionInfoEditCard: GET/PATCH /conventions/{id}/basic
+ * - ConventionFinancesEditCard: GET/PATCH /conventions/{id}/finances
+ * - ConventionDatesEditCard: GET/PATCH /conventions/{id}/dates
+ *
+ * Benefits:
+ * - Chargement progressif (pas tout d'un coup)
+ * - Sauvegarde granulaire (section par section)
+ * - Chaque composant < 150 lignes
+ * - Scalable et maintenable
+ */
 const ConventionEditPageComplete = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { showToast } = useToast()
 
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [convention, setConvention] = useState<Convention | null>(null)
+  const [convention, setConvention] = useState<{ code: string; statut: string } | null>(null)
   const [activeTab, setActiveTab] = useState(0)
-
-  const {
-    control,
-    handleSubmit: handleFormSubmit,
-    reset,
-    formState: { errors, isDirty },
-  } = useForm<ConventionFormData>({
-    resolver: zodResolver(conventionSchema),
-  })
 
   useEffect(() => {
     if (id) {
-      loadConvention(parseInt(id))
+      loadConventionMetadata(parseInt(id))
     }
   }, [id])
 
-  const loadConvention = async (conventionId: number) => {
+  // Load only metadata for header (not all data)
+  const loadConventionMetadata = async (conventionId: number) => {
     try {
       setLoading(true)
-      const response = await conventionsAPI.getById(conventionId)
+      // Micro-endpoint: only metadata (~1 KB)
+      const response = await conventionsAPI.getBasic(conventionId)
       const data = response.data.data || response.data
-      setConvention(data)
-
-      // Map backend fields to form fields
-      reset({
-        code: data.code,
-        numero: data.numero,
-        libelle: data.libelle,
-        objet: data.objet,
-        typeConvention: data.typeConvention,
-        tauxCommission: data.tauxCommission,
-        baseCalcul: data.baseCalcul,
-        montant: data.budget,
-        dateSignature: new Date(data.dateConvention),
-        dateDebut: new Date(data.dateDebut),
-        dateFin: data.dateFin ? new Date(data.dateFin) : null,
-        tauxTva: data.tauxTva,
-      })
+      setConvention({ code: data.code, statut: data.statut })
     } catch (err) {
-      setError('Erreur lors du chargement de la convention')
-      showToast('Erreur lors du chargement de la convention', 'error')
+      setError('Convention non trouvée')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleSave = async (data: ConventionFormData) => {
-    if (!id) return
-
-    try {
-      setSaving(true)
-
-      // Map form fields to backend fields
-      const payload = {
-        code: data.code,
-        numero: data.numero,
-        libelle: data.libelle,
-        objet: data.objet,
-        typeConvention: data.typeConvention,
-        tauxCommission: data.tauxCommission,
-        baseCalcul: data.baseCalcul,
-        budget: data.montant,
-        dateConvention: data.dateSignature.toISOString(),
-        dateDebut: data.dateDebut.toISOString(),
-        dateFin: data.dateFin ? data.dateFin.toISOString() : null,
-        tauxTva: data.tauxTva,
-      }
-
-      await conventionsAPI.update(parseInt(id), payload)
-      showToast('Convention modifiée avec succès', 'success')
-      navigate(`/conventions/${id}`)
-    } catch (err) {
-      showToast('Erreur lors de la modification', 'error')
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -223,7 +104,7 @@ const ConventionEditPageComplete = () => {
     )
   }
 
-  if (error || !convention) {
+  if (error || !convention || !id) {
     return (
       <AppLayout>
         <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -233,6 +114,8 @@ const ConventionEditPageComplete = () => {
     )
   }
 
+  const conventionId = parseInt(id)
+
   return (
     <AppLayout>
       <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
@@ -240,49 +123,27 @@ const ConventionEditPageComplete = () => {
           {/* Header */}
           <PageHeader
             title={`Modifier Convention ${convention.code}`}
-            subtitle="Modification complète de la convention avec validation"
+            subtitle="Modification avec sauvegarde granulaire par section"
             actions={
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <Button
                   variant="outlined"
                   startIcon={<ArrowBack />}
                   onClick={() => navigate(`/conventions/${id}`)}
-                  disabled={saving}
                 >
-                  Retour
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<CancelIcon />}
-                  onClick={() => {
-                    if (isDirty) {
-                      if (window.confirm('Abandonner les modifications ?')) {
-                        navigate(`/conventions/${id}`)
-                      }
-                    } else {
-                      navigate(`/conventions/${id}`)
-                    }
-                  }}
-                  disabled={saving}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={saving ? <CircularProgress size={20} /> : <Save />}
-                  onClick={handleFormSubmit(handleSave)}
-                  disabled={saving || !isDirty}
-                  sx={{
-                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                  }}
-                >
-                  {saving ? 'Enregistrement...' : 'Enregistrer'}
+                  Retour à la vue
                 </Button>
               </Box>
             }
           />
 
-          {/* Form with Tabs */}
+          {/* Info box */}
+          <Alert severity="info" sx={{ mb: 3 }}>
+            💡 <strong>Édition granulaire</strong> : Chaque section se sauvegarde indépendamment.
+            Cliquez sur "Modifier" dans la section à modifier, puis "Enregistrer" pour sauvegarder.
+          </Alert>
+
+          {/* Tabs */}
           <Paper>
             <Tabs
               value={activeTab}
@@ -291,93 +152,80 @@ const ConventionEditPageComplete = () => {
             >
               <Tab label="Informations générales" icon={<Description />} iconPosition="start" />
               <Tab label="Paramètres financiers" icon={<AccountBalance />} iconPosition="start" />
+              <Tab label="Dates" icon={<CalendarToday />} iconPosition="start" />
               <Tab label="Partenaires & Imputations" icon={<People />} iconPosition="start" />
               <Tab label="Versements prévisionnels" icon={<TrendingUp />} iconPosition="start" />
             </Tabs>
 
-            <form onSubmit={handleFormSubmit(handleSave)}>
-              {/* Tab 1: Informations générales */}
-              <TabPanel value={activeTab} index={0}>
-                <Container maxWidth="lg">
-                  <ConventionInfoSection control={control} errors={errors} />
-                  <Box sx={{ mt: 3 }}>
-                    <ConventionDatesSection control={control} errors={errors} />
-                  </Box>
-                </Container>
-              </TabPanel>
+            {/* Tab 1: Informations générales */}
+            <TabPanel value={activeTab} index={0}>
+              <Container maxWidth="lg">
+                <ConventionInfoEditCard conventionId={conventionId} />
+              </Container>
+            </TabPanel>
 
-              {/* Tab 2: Paramètres financiers */}
-              <TabPanel value={activeTab} index={1}>
-                <Container maxWidth="lg">
-                  <ConventionFinancesSection control={control} errors={errors} />
-                </Container>
-              </TabPanel>
+            {/* Tab 2: Paramètres financiers */}
+            <TabPanel value={activeTab} index={1}>
+              <Container maxWidth="lg">
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr' }, gap: 3 }}>
+                  <ConventionFinancesEditCard conventionId={conventionId} />
+                </Box>
+              </Container>
+            </TabPanel>
 
-              {/* Tab 3: Partenaires & Imputations */}
-              <TabPanel value={activeTab} index={2}>
-                <Container maxWidth="lg">
-                  <Alert severity="info" sx={{ mb: 3 }}>
-                    La gestion des partenaires et imputations se fait depuis la page de visualisation de la convention.
-                  </Alert>
-                  <Typography variant="body2" color="text.secondary">
-                    • Partenaires : Ajoutez les organismes financeurs de la convention
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    • Imputations prévisionnelles : Définissez les allocations budgétaires par axe analytique
-                  </Typography>
-                  <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={() => navigate(`/conventions/${id}`)}
-                    >
-                      Aller à la page de visualisation
-                    </Button>
-                  </Box>
-                </Container>
-              </TabPanel>
+            {/* Tab 3: Dates */}
+            <TabPanel value={activeTab} index={2}>
+              <Container maxWidth="lg">
+                <ConventionDatesEditCard conventionId={conventionId} />
+              </Container>
+            </TabPanel>
 
-              {/* Tab 4: Versements prévisionnels */}
-              <TabPanel value={activeTab} index={3}>
-                <Container maxWidth="lg">
-                  <Alert severity="info" sx={{ mb: 3 }}>
-                    Les versements prévisionnels se gèrent depuis la page de visualisation de la convention.
-                  </Alert>
-                  <Typography variant="body2" color="text.secondary">
-                    • Définissez le calendrier prévisionnel des versements
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    • Associez chaque versement à un axe analytique et un projet
-                  </Typography>
-                  <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                    <Button
-                      variant="outlined"
-                      onClick={() => navigate(`/conventions/${id}`)}
-                    >
-                      Aller à la page de visualisation
-                    </Button>
-                  </Box>
-                </Container>
-              </TabPanel>
-            </form>
+            {/* Tab 4: Partenaires & Imputations */}
+            <TabPanel value={activeTab} index={3}>
+              <Container maxWidth="lg">
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  La gestion des partenaires et imputations se fait depuis la page de visualisation de la convention.
+                </Alert>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  • <strong>Partenaires</strong> : Ajoutez les organismes financeurs de la convention
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • <strong>Imputations prévisionnelles</strong> : Définissez les allocations budgétaires par axe analytique
+                </Typography>
+                <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate(`/conventions/${id}`)}
+                  >
+                    Aller à la page de visualisation
+                  </Button>
+                </Box>
+              </Container>
+            </TabPanel>
+
+            {/* Tab 5: Versements prévisionnels */}
+            <TabPanel value={activeTab} index={4}>
+              <Container maxWidth="lg">
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Les versements prévisionnels se gèrent depuis la page de visualisation de la convention.
+                </Alert>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  • Définissez le calendrier prévisionnel des versements
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Associez chaque versement à un axe analytique et un projet
+                </Typography>
+                <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate(`/conventions/${id}`)}
+                  >
+                    Aller à la page de visualisation
+                  </Button>
+                </Box>
+              </Container>
+            </TabPanel>
           </Paper>
-
-          {/* Errors Display */}
-          {Object.keys(errors).length > 0 && (
-            <Paper sx={{ mt: 3, p: 3, bgcolor: '#fef2f2', border: '1px solid #fca5a5' }}>
-              <Typography variant="h6" color="error" sx={{ mb: 2 }}>
-                Erreurs de validation
-              </Typography>
-              <ul>
-                {Object.entries(errors).map(([field, error]) => (
-                  <li key={field}>
-                    <Typography variant="body2" color="error">
-                      {field}: {error.message}
-                    </Typography>
-                  </li>
-                ))}
-              </ul>
-            </Paper>
-          )}
         </Container>
       </Box>
     </AppLayout>

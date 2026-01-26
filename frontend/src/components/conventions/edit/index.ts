@@ -1,14 +1,9 @@
-/**
- * Barrel exports for convention edit micro-components
- *
- * This file provides clean imports for all convention edit components.
- * Following micro-frontend architecture, each component is:
- * - < 300 lines
- * - Single responsibility
- * - Independently testable
- * - Reusable across the application
- */
+// Barrel export for edit micro-components
+export { default as ConventionInfoEditCard } from './ConventionInfoEditCard'
+export { default as ConventionFinancesEditCard } from './ConventionFinancesEditCard'
+export { default as ConventionDatesEditCard } from './ConventionDatesEditCard'
 
+// Legacy exports (for backward compatibility)
 export { default as ConventionInfoSection } from './ConventionInfoSection'
 export { default as ConventionFinancesSection } from './ConventionFinancesSection'
 export { default as ConventionDatesSection } from './ConventionDatesSection'

@@ -3,12 +3,25 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings,
-  Briefcase, ChevronDown, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles, ClipboardCheck, Tags, Handshake
+  Briefcase, ChevronDown, ChevronRight, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles, ClipboardCheck, Tags, Handshake
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface AppLayoutProps {
   children: ReactNode
+}
+
+interface MenuItem {
+  icon: JSX.Element
+  label: string
+  path: string
+  implemented: boolean
+}
+
+interface MenuGroup {
+  label: string
+  icon: JSX.Element
+  items: MenuItem[]
 }
 
 const AppLayout = ({ children }: AppLayoutProps) => {
@@ -20,6 +33,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    'gestion': true, // Expanded by default
+    'parametrage': false,
+    'administration': false,
+  })
 
   // Detect screen size
   useEffect(() => {
@@ -45,23 +63,54 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     }
   }, [location.pathname, isMobile])
 
-  const menuItems = [
-    { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard', implemented: true },
-    { icon: <FileText className="w-5 h-5" />, label: 'Conventions', path: '/conventions', implemented: true },
-    { icon: <Wallet className="w-5 h-5" />, label: 'Budgets', path: '/budgets', implemented: true },
-    { icon: <ShoppingCart className="w-5 h-5" />, label: 'Marchés', path: '/marches', implemented: true },
-    { icon: <FileCheck className="w-5 h-5" />, label: 'Décomptes', path: '/decomptes', implemented: true },
-    { icon: <ClipboardCheck className="w-5 h-5" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
-    { icon: <Banknote className="w-5 h-5" />, label: 'Paiements', path: '/paiements', implemented: true },
-    { icon: <Building2 className="w-5 h-5" />, label: 'Projets', path: '/projets', implemented: true },
-    { icon: <Users className="w-5 h-5" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: false },
-    { icon: <Map className="w-5 h-5" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
-    { icon: <Tags className="w-5 h-5" />, label: 'Catégories de dépenses', path: '/parametrage/categories-depenses', implemented: true },
-    { icon: <Handshake className="w-5 h-5" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
-    { icon: <CreditCard className="w-5 h-5" />, label: 'Comptes Bancaires', path: '/comptes-bancaires', implemented: false },
-    { icon: <Receipt className="w-5 h-5" />, label: 'Dépenses', path: '/depenses', implemented: false },
-    { icon: <DollarSign className="w-5 h-5" />, label: 'Commissions', path: '/commissions', implemented: false },
-    { icon: <UserCog className="w-5 h-5" />, label: 'Utilisateurs', path: '/users', implemented: true },
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupKey]: !prev[groupKey]
+    }))
+  }
+
+  // Menu groups structure
+  const menuGroups: MenuGroup[] = [
+    {
+      label: 'Gestion Financière',
+      icon: <DollarSign className="w-5 h-5" />,
+      items: [
+        { icon: <FileText className="w-5 h-5" />, label: 'Conventions', path: '/conventions', implemented: true },
+        { icon: <Wallet className="w-5 h-5" />, label: 'Budgets', path: '/budgets', implemented: true },
+        { icon: <ShoppingCart className="w-5 h-5" />, label: 'Marchés', path: '/marches', implemented: true },
+        { icon: <FileCheck className="w-5 h-5" />, label: 'Décomptes', path: '/decomptes', implemented: true },
+        { icon: <ClipboardCheck className="w-5 h-5" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
+        { icon: <Banknote className="w-5 h-5" />, label: 'Paiements', path: '/paiements', implemented: true },
+        { icon: <Receipt className="w-5 h-5" />, label: 'Dépenses', path: '/depenses', implemented: false },
+        { icon: <DollarSign className="w-5 h-5" />, label: 'Commissions', path: '/commissions', implemented: false },
+      ]
+    },
+    {
+      label: 'Projets & Tiers',
+      icon: <Building2 className="w-5 h-5" />,
+      items: [
+        { icon: <Building2 className="w-5 h-5" />, label: 'Projets', path: '/projets', implemented: true },
+        { icon: <Users className="w-5 h-5" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: false },
+        { icon: <CreditCard className="w-5 h-5" />, label: 'Comptes Bancaires', path: '/comptes-bancaires', implemented: false },
+      ]
+    },
+    {
+      label: 'Paramétrage',
+      icon: <Settings className="w-5 h-5" />,
+      items: [
+        { icon: <Map className="w-5 h-5" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
+        { icon: <Tags className="w-5 h-5" />, label: 'Catégories de dépenses', path: '/parametrage/categories-depenses', implemented: true },
+        { icon: <Handshake className="w-5 h-5" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
+      ]
+    },
+    {
+      label: 'Administration',
+      icon: <UserCog className="w-5 h-5" />,
+      items: [
+        { icon: <UserCog className="w-5 h-5" />, label: 'Utilisateurs', path: '/users', implemented: true },
+      ]
+    }
   ]
 
   const handleLogout = () => {
@@ -99,29 +148,86 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
         {/* Menu */}
         <nav className="flex-1 overflow-y-auto py-4">
-          {menuItems.map((item, index) => {
-            const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+          {/* Dashboard - Always visible */}
+          <Link
+            to="/dashboard"
+            className={`flex items-center justify-between px-4 py-2.5 mx-2 rounded transition-colors ${
+              location.pathname === '/dashboard'
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <div className="flex items-center space-x-3">
+              <LayoutDashboard className="w-5 h-5" />
+              <span className="text-sm font-medium">Dashboard</span>
+            </div>
+          </Link>
+
+          <div className="h-px bg-gray-200 my-2 mx-4" />
+
+          {/* Grouped Menu Items */}
+          {menuGroups.map((group, groupIndex) => {
+            const groupKey = group.label.toLowerCase().replace(/\s+/g, '-')
+            const isExpanded = expandedGroups[groupKey]
+            const hasActiveItem = group.items.some(
+              item => location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+            )
+
             return (
-              <Link
-                key={index}
-                to={item.path}
-                className={`flex items-center justify-between px-4 py-2.5 mx-2 rounded transition-colors ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  {item.icon}
-                  <span className="text-sm font-medium">{item.label}</span>
-                </div>
-                {!item.implemented && (
-                  <span className="flex items-center gap-1 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-500/30">
-                    <Sparkles className="w-3 h-3" />
-                    Bientôt
-                  </span>
+              <div key={groupIndex} className="mb-1">
+                {/* Group Header */}
+                <button
+                  onClick={() => toggleGroup(groupKey)}
+                  className={`w-full flex items-center justify-between px-4 py-2 mx-2 rounded transition-colors ${
+                    hasActiveItem && !isExpanded
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    {group.icon}
+                    <span className="text-xs font-semibold uppercase tracking-wider">
+                      {group.label}
+                    </span>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+
+                {/* Group Items */}
+                {isExpanded && (
+                  <div className="mt-1 space-y-0.5">
+                    {group.items.map((item, itemIndex) => {
+                      const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+                      return (
+                        <Link
+                          key={itemIndex}
+                          to={item.path}
+                          className={`flex items-center justify-between px-4 py-2 mx-2 ml-6 rounded transition-colors ${
+                            isActive
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            {item.icon}
+                            <span className="text-sm font-medium">{item.label}</span>
+                          </div>
+                          {!item.implemented && (
+                            <span className="flex items-center gap-1 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-500/30">
+                              <Sparkles className="w-3 h-3" />
+                              Bientôt
+                            </span>
+                          )}
+                        </Link>
+                      )
+                    })}
+                  </div>
                 )}
-              </Link>
+              </div>
             )
           })}
         </nav>

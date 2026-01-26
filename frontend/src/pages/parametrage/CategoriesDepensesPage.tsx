@@ -130,7 +130,6 @@ const CategoriesDepensesPage = () => {
         <PageHeader
           title="Catégories de dépenses"
           subtitle="Gestion du référentiel des catégories de dépenses"
-          icon={<Category />}
           actions={
             <Button
               variant="contained"

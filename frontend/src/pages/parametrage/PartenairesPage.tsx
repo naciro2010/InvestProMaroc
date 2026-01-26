@@ -20,7 +20,7 @@ import {
   TextField,
   Alert,
   CircularProgress,
-  Grid,
+  Stack,
 } from '@mui/material'
 import {
   Add,
@@ -154,7 +154,6 @@ const PartenairesPage = () => {
         <PageHeader
           title="Partenaires"
           subtitle="Gestion du référentiel des partenaires (organismes, ministères, agences)"
-          icon={<Business />}
           actions={
             <Button
               variant="contained"
@@ -266,8 +265,8 @@ const PartenairesPage = () => {
           </DialogTitle>
 
           <DialogContent dividers>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+            <Stack spacing={3}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
                   label="Code"
                   value={formData.code}
@@ -277,9 +276,6 @@ const PartenairesPage = () => {
                   fullWidth
                   helperText="Code unique du partenaire"
                 />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Sigle"
                   value={formData.sigle}
@@ -288,20 +284,18 @@ const PartenairesPage = () => {
                   fullWidth
                   helperText="Acronyme (ex: AFD, BM, MASEN)"
                 />
-              </Grid>
+              </Stack>
 
-              <Grid item xs={12}>
-                <TextField
-                  label="Raison sociale"
-                  value={formData.raisonSociale}
-                  onChange={(e) => setFormData({ ...formData, raisonSociale: e.target.value })}
-                  placeholder="Agence Française de Développement"
-                  required
-                  fullWidth
-                />
-              </Grid>
+              <TextField
+                label="Raison sociale"
+                value={formData.raisonSociale}
+                onChange={(e) => setFormData({ ...formData, raisonSociale: e.target.value })}
+                placeholder="Agence Française de Développement"
+                required
+                fullWidth
+              />
 
-              <Grid item xs={12} sm={6}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
                   label="Type de partenaire"
                   value={formData.typePartenaire}
@@ -310,9 +304,6 @@ const PartenairesPage = () => {
                   fullWidth
                   helperText="Ex: Ministère, Agence, Bailleur"
                 />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
                 <TextField
                   label="Téléphone"
                   value={formData.telephone}
@@ -320,43 +311,37 @@ const PartenairesPage = () => {
                   placeholder="+212 5XX XX XX XX"
                   fullWidth
                 />
-              </Grid>
+              </Stack>
 
-              <Grid item xs={12}>
-                <TextField
-                  label="Email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="contact@partenaire.ma"
-                  fullWidth
-                />
-              </Grid>
+              <TextField
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="contact@partenaire.ma"
+                fullWidth
+              />
 
-              <Grid item xs={12}>
-                <TextField
-                  label="Adresse"
-                  value={formData.adresse}
-                  onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-                  placeholder="Adresse complète..."
-                  multiline
-                  rows={2}
-                  fullWidth
-                />
-              </Grid>
+              <TextField
+                label="Adresse"
+                value={formData.adresse}
+                onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
+                placeholder="Adresse complète..."
+                multiline
+                rows={2}
+                fullWidth
+              />
 
-              <Grid item xs={12}>
-                <TextField
-                  label="Description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Description du partenaire..."
-                  multiline
-                  rows={3}
-                  fullWidth
-                />
-              </Grid>
-            </Grid>
+              <TextField
+                label="Description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Description du partenaire..."
+                multiline
+                rows={3}
+                fullWidth
+              />
+            </Stack>
           </DialogContent>
 
           <DialogActions>

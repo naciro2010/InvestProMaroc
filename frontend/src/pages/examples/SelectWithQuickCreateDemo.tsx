@@ -9,7 +9,6 @@ import SelectWithQuickCreate from '../../components/ui/SelectWithQuickCreate'
 import { categoriesDepensesAPI, partenairesAPI } from '../../lib/api'
 import { useToast } from '../../contexts/ToastContext'
 import type { CategorieDepenseListDTO, PartenaireListDTO } from '../../types/api'
-import { Lightbulb } from '@mui/icons-material'
 
 // Form schema
 const demoFormSchema = z.object({
@@ -27,14 +26,9 @@ const SelectWithQuickCreateDemo = () => {
   const [categories, setCategories] = useState<CategorieDepenseListDTO[]>([])
   const [partenaires, setPartenaires] = useState<PartenaireListDTO[]>([])
 
-  // Quick create modal states
-  const [categorieModalOpen, setCategorieModalOpen] = useState(false)
-  const [partenaireModalOpen, setPartenaireModalOpen] = useState(false)
-
   // Quick create form data
   const [newCategorie, setNewCategorie] = useState({ code: '', libelle: '' })
   const [newPartenaire, setNewPartenaire] = useState({ code: '', raisonSociale: '' })
-  const [saving, setSaving] = useState(false)
 
   const {
     control,
@@ -81,38 +75,22 @@ const SelectWithQuickCreateDemo = () => {
 
   // Handle create categorie
   const handleCreateCategorie = async () => {
-    try {
-      setSaving(true)
-      const response = await categoriesDepensesAPI.create(newCategorie)
-      const created = response.data.data || response.data
-      showToast('Catégorie créée avec succès', 'success')
-      setCategorieModalOpen(false)
-      setNewCategorie({ code: '', libelle: '' })
-      await loadCategories()
-      setValue('categorieDepenseId', created.id)
-    } catch (error) {
-      showToast('Erreur lors de la création', 'error')
-    } finally {
-      setSaving(false)
-    }
+    const response = await categoriesDepensesAPI.create(newCategorie)
+    const created = response.data.data || response.data
+    showToast('Catégorie créée avec succès', 'success')
+    setNewCategorie({ code: '', libelle: '' })
+    await loadCategories()
+    setValue('categorieDepenseId', created.id)
   }
 
   // Handle create partenaire
   const handleCreatePartenaire = async () => {
-    try {
-      setSaving(true)
-      const response = await partenairesAPI.create(newPartenaire)
-      const created = response.data.data || response.data
-      showToast('Partenaire créé avec succès', 'success')
-      setPartenaireModalOpen(false)
-      setNewPartenaire({ code: '', raisonSociale: '' })
-      await loadPartenaires()
-      setValue('partenaireId', created.id)
-    } catch (error) {
-      showToast('Erreur lors de la création', 'error')
-    } finally {
-      setSaving(false)
-    }
+    const response = await partenairesAPI.create(newPartenaire)
+    const created = response.data.data || response.data
+    showToast('Partenaire créé avec succès', 'success')
+    setNewPartenaire({ code: '', raisonSociale: '' })
+    await loadPartenaires()
+    setValue('partenaireId', created.id)
   }
 
   // Handle form submit
@@ -130,7 +108,6 @@ const SelectWithQuickCreateDemo = () => {
         <PageHeader
           title="Démonstration SelectWithQuickCreate"
           subtitle="Exemple d'utilisation du composant SelectWithQuickCreate avec les référentiels"
-          icon={<Lightbulb />}
         />
 
         {/* Info Box */}
@@ -193,12 +170,6 @@ const SelectWithQuickCreateDemo = () => {
                     label: `${cat.code} - ${cat.libelle}`,
                   }))}
                   loading={categoriesLoading}
-                  createModalOpen={categorieModalOpen}
-                  onOpenCreateModal={() => setCategorieModalOpen(true)}
-                  onCloseCreateModal={() => {
-                    setCategorieModalOpen(false)
-                    setNewCategorie({ code: '', libelle: '' })
-                  }}
                   createModalTitle="Nouvelle Catégorie de Dépense"
                   createModalContent={
                     <Stack spacing={2} sx={{ p: 2 }}>
@@ -225,9 +196,7 @@ const SelectWithQuickCreateDemo = () => {
                     </Stack>
                   }
                   onCreateSubmit={handleCreateCategorie}
-                  createDisabled={!newCategorie.code || !newCategorie.libelle}
-                  createLoading={saving}
-                  error={!!errors.categorieDepenseId}
+                  error={errors.categorieDepenseId}
                   helperText={errors.categorieDepenseId?.message}
                 />
               </Box>
@@ -246,12 +215,6 @@ const SelectWithQuickCreateDemo = () => {
                     label: `${p.code} - ${p.raisonSociale}`,
                   }))}
                   loading={partenairesLoading}
-                  createModalOpen={partenaireModalOpen}
-                  onOpenCreateModal={() => setPartenaireModalOpen(true)}
-                  onCloseCreateModal={() => {
-                    setPartenaireModalOpen(false)
-                    setNewPartenaire({ code: '', raisonSociale: '' })
-                  }}
                   createModalTitle="Nouveau Partenaire"
                   createModalContent={
                     <Stack spacing={2} sx={{ p: 2 }}>
@@ -278,9 +241,7 @@ const SelectWithQuickCreateDemo = () => {
                     </Stack>
                   }
                   onCreateSubmit={handleCreatePartenaire}
-                  createDisabled={!newPartenaire.code || !newPartenaire.raisonSociale}
-                  createLoading={saving}
-                  error={!!errors.partenaireId}
+                  error={errors.partenaireId}
                   helperText={errors.partenaireId?.message}
                 />
               </Box>
@@ -344,17 +305,13 @@ const SelectWithQuickCreateDemo = () => {
     label: \`\${cat.code} - \${cat.libelle}\`
   }))}
   loading={loading}
-  createModalOpen={modalOpen}
-  onOpenCreateModal={() => setModalOpen(true)}
-  onCloseCreateModal={() => setModalOpen(false)}
   createModalTitle="Nouvelle Catégorie"
   createModalContent={
     <TextField label="Code" />
     <TextField label="Libellé" />
   }
   onCreateSubmit={handleCreate}
-  createDisabled={!formValid}
-  error={!!errors.categorieDepenseId}
+  error={errors.categorieDepenseId}
   helperText={errors.categorieDepenseId?.message}
 />`}
           </Box>

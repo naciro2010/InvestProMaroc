@@ -84,7 +84,7 @@ export default function AddPartenaireDialog({
   const fetchPartenaires = async (): Promise<void> => {
     try {
       setLoadingPartenaires(true);
-      const response = await partenairesAPI.getActive();
+      const response = await partenairesAPI.getAllActive();
       const data = response.data.data as PartenaireSimple[];
       setPartenaires(data);
     } catch (err) {

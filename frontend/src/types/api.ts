@@ -550,6 +550,48 @@ export interface LoadingState {
 }
 
 // ============================================================================
+// Partenaire Types (Référentiel)
+// ============================================================================
+
+export interface Partenaire {
+  id: number
+  code: string
+  raisonSociale: string
+  sigle?: string
+  typePartenaire?: string
+  email?: string
+  telephone?: string
+  adresse?: string
+  description?: string
+  actif: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface PartenaireListDTO {
+  id: number
+  code: string
+  raisonSociale: string
+  sigle?: string
+  typePartenaire?: string
+}
+
+export interface CreatePartenaireDTO {
+  code: string
+  raisonSociale: string
+  sigle?: string
+  typePartenaire?: string
+  email?: string
+  telephone?: string
+  adresse?: string
+  description?: string
+}
+
+export interface UpdatePartenaireDTO extends Partial<CreatePartenaireDTO> {
+  actif?: boolean
+}
+
+// ============================================================================
 // Type Guards & Utilities
 // ============================================================================
 

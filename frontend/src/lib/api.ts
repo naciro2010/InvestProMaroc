@@ -399,8 +399,12 @@ export const fournisseursAPI = {
 // Partenaires API
 export const partenairesAPI = {
   getAll: () => api.get('/partenaires'),
-  getActive: () => api.get('/partenaires/active'),
+  getAllActive: () => api.get('/partenaires/active'),
+  getList: () => api.get('/partenaires/list'),
   getById: (id: number) => api.get(`/partenaires/${id}`),
+  create: (data: Record<string, unknown>) => api.post('/partenaires', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/partenaires/${id}`, data),
+  delete: (id: number) => api.delete(`/partenaires/${id}`),
 }
 
 // Marchés API

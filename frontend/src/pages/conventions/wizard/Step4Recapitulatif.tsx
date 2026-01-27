@@ -8,6 +8,7 @@ import {
 } from '@mui/material'
 import { CheckCircle } from '@mui/icons-material'
 import { ConventionFormData } from '../types'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 
 interface Step4Props {
   formData: ConventionFormData
@@ -65,7 +66,7 @@ const Step4Recapitulatif = ({ formData }: Step4Props) => {
           </Box>
           <Box>
             <Typography variant="caption" color="text.secondary">Objet</Typography>
-            <Typography variant="body2">{formData.objet}</Typography>
+            <RichTextDisplay html={formData.objet || ''} />
           </Box>
           <Box>
             <Typography variant="caption" color="text.secondary">Type</Typography>

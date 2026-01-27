@@ -11,27 +11,45 @@ import {
   FormControlLabel,
   Checkbox,
   Alert,
+  CircularProgress,
 } from '@mui/material'
 import AppLayout from '../../components/layout/AppLayout'
 import { PageHeaderOdoo } from '../../components/ui'
-import {
-  ConventionSettings,
-  loadConventionSettings,
-  saveConventionSettings,
-} from '../../lib/settings/conventionSettings'
+import { conventionConfigurationAPI } from '../../lib/api'
+import { ConventionSettings } from '../../lib/settings/conventionSettings'
+import { useConventionConfiguration } from '../../hooks/useConventionConfiguration'
 
-const SettingsPage = () => {
-  const [settings, setSettings] = useState<ConventionSettings>(loadConventionSettings())
+const ParametrageConventionsPage = () => {
+  const { configuration, loading, error, reload } = useConventionConfiguration()
+  const [settings, setSettings] = useState<ConventionSettings>(configuration)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setSettings(loadConventionSettings())
-  }, [])
+    setSettings(configuration)
+  }, [configuration])
 
-  const handleSave = () => {
-    saveConventionSettings(settings)
-    setSaved(true)
-    window.setTimeout(() => setSaved(false), 3000)
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      await conventionConfigurationAPI.update({
+        codeMaskPattern: settings.codeMaskPattern,
+        codeMaskPlaceholder: settings.codeMaskPlaceholder,
+        numeroMaskPattern: settings.numeroMaskPattern,
+        numeroMaskPlaceholder: settings.numeroMaskPlaceholder,
+        typeConfigurations: settings.typeConventionOptions.map((option, index) => ({
+          typeCode: option.value,
+          libelle: option.label,
+          enabled: option.enabled,
+          ordreAffichage: index + 1,
+        })),
+      })
+      setSaved(true)
+      window.setTimeout(() => setSaved(false), 3000)
+      reload()
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleTypeOptionChange = (
@@ -55,19 +73,26 @@ const SettingsPage = () => {
   return (
     <AppLayout>
       <PageHeaderOdoo
-        title="Paramètres"
-        subtitle="Gérez les masques et types utilisés dans les conventions"
+        title="Paramétrage des conventions"
+        subtitle="Gérez les masques et types utilisés pour les conventions"
         breadcrumbs={[
           { label: 'Accueil', path: '/dashboard' },
-          { label: 'Paramètres' },
+          { label: 'Paramétrage' },
+          { label: 'Conventions' },
         ]}
       />
 
       <Container maxWidth="lg" sx={{ pb: 6 }}>
         <Stack spacing={3}>
-          {saved && (
-            <Alert severity="success">Paramètres enregistrés avec succès.</Alert>
+          {loading && (
+            <Alert severity="info" icon={<CircularProgress size={18} />}>
+              Chargement du paramétrage...
+            </Alert>
           )}
+
+          {error && <Alert severity="warning">{error}</Alert>}
+
+          {saved && <Alert severity="success">Paramétrage enregistré avec succès.</Alert>}
 
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" fontWeight={600} gutterBottom>
@@ -93,6 +118,7 @@ const SettingsPage = () => {
                         codeMaskPattern: event.target.value,
                       }))
                     }
+                    disabled={loading || saving}
                     helperText="Exemple : ^[A-Za-z0-9-]+$"
                   />
                   <TextField
@@ -105,6 +131,7 @@ const SettingsPage = () => {
                         codeMaskPlaceholder: event.target.value,
                       }))
                     }
+                    disabled={loading || saving}
                     helperText="Affiché comme suggestion dans le formulaire"
                   />
                 </Stack>
@@ -127,6 +154,7 @@ const SettingsPage = () => {
                         numeroMaskPattern: event.target.value,
                       }))
                     }
+                    disabled={loading || saving}
                     helperText="Exemple : ^[A-Za-z0-9/-]+$"
                   />
                   <TextField
@@ -139,6 +167,7 @@ const SettingsPage = () => {
                         numeroMaskPlaceholder: event.target.value,
                       }))
                     }
+                    disabled={loading || saving}
                     helperText="Affiché comme suggestion dans le formulaire"
                   />
                 </Stack>
@@ -169,6 +198,7 @@ const SettingsPage = () => {
                         onChange={(event) =>
                           handleTypeOptionChange(option.value, 'enabled', event.target.checked)
                         }
+                        disabled={loading || saving}
                       />
                     }
                     label={`Activer ${option.value}`}
@@ -180,6 +210,7 @@ const SettingsPage = () => {
                     onChange={(event) =>
                       handleTypeOptionChange(option.value, 'label', event.target.value)
                     }
+                    disabled={loading || saving}
                   />
                 </Stack>
               ))}
@@ -187,8 +218,8 @@ const SettingsPage = () => {
           </Paper>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant="contained" onClick={handleSave}>
-              Enregistrer les paramètres
+            <Button variant="contained" onClick={handleSave} disabled={loading || saving}>
+              {saving ? 'Enregistrement...' : 'Enregistrer le paramétrage'}
             </Button>
           </Box>
         </Stack>
@@ -197,4 +228,4 @@ const SettingsPage = () => {
   )
 }
 
-export default SettingsPage
+export default ParametrageConventionsPage

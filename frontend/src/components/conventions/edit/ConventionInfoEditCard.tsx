@@ -17,7 +17,8 @@ import { api } from '../../../lib/api'
 import { useToast } from '../../../contexts/ToastContext'
 import { FormTextField, FormSelectField } from '../../form'
 import RichTextEditor from '../../common/RichTextEditor'
-import { getEnabledConventionTypes, loadConventionSettings } from '../../../lib/settings/conventionSettings'
+import { getEnabledConventionTypes } from '../../../lib/settings/conventionSettings'
+import { useConventionConfiguration } from '../../../hooks/useConventionConfiguration'
 import { getPlainTextLength, stripHtml } from '../../../utils/textUtils'
 
 // Schema validation
@@ -49,7 +50,7 @@ interface Props {
  */
 const ConventionInfoEditCard = ({ conventionId }: Props) => {
   const { showToast } = useToast()
-  const settings = loadConventionSettings()
+  const { configuration: settings } = useConventionConfiguration()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -253,7 +254,7 @@ const ConventionInfoEditCard = ({ conventionId }: Props) => {
                 variant="contained"
                 startIcon={saving ? <CircularProgress size={20} /> : <Save />}
                 disabled={saving || !isDirty}
-                sx={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}
+                color="primary"
               >
                 {saving ? 'Enregistrement...' : 'Enregistrer'}
               </Button>

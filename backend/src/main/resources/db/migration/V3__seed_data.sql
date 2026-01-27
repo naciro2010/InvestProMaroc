@@ -168,6 +168,21 @@ INSERT INTO decompte_retenues (decompte_id, type_retenue, taux_pourcent, montant
 (2, 'GARANTIE', 10.00, 72000.00, 'Retenue de garantie 10%');
 
 -- ============================================================================
+-- Paramétrage des conventions
+-- ============================================================================
+INSERT INTO convention_configurations (id, code_mask_pattern, code_mask_placeholder, numero_mask_pattern, numero_mask_placeholder, actif)
+VALUES (1, '^[A-Za-z0-9-]+$', 'CON-09-01', '^[A-Za-z0-9/-]+$', 'N°2026/001', TRUE);
+
+INSERT INTO convention_type_configurations (id, configuration_id, type_code, libelle, enabled, ordre_affichage, actif) VALUES
+(1, 1, 'CADRE', 'Convention cadre', TRUE, 1, TRUE),
+(2, 1, 'NON_CADRE', 'Convention non-cadre', TRUE, 2, TRUE),
+(3, 1, 'SPECIFIQUE', 'Convention spécifique', FALSE, 3, TRUE),
+(4, 1, 'AVENANT', 'Convention avenant', FALSE, 4, TRUE);
+
+SELECT setval('convention_configurations_id_seq', 1, true);
+SELECT setval('convention_type_configurations_id_seq', 4, true);
+
+-- ============================================================================
 -- Types de dépenses (référentiel) - JANUARY 2026
 -- ============================================================================
 INSERT INTO categories_depenses (id, code, libelle, description, categorie, ordre_affichage, actif) VALUES
@@ -184,4 +199,3 @@ INSERT INTO categories_depenses (id, code, libelle, description, categorie, ordr
 
 -- Reset sequence
 SELECT setval('categories_depenses_id_seq', 10, true);
-

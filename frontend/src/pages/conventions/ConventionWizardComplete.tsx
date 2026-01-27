@@ -40,7 +40,8 @@ import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import DecimalInput from '../../components/ui/DecimalInput'
 import { conventionsAPI } from '../../lib/api'
-import { loadConventionSettings, getEnabledConventionTypes } from '../../lib/settings/conventionSettings'
+import { getEnabledConventionTypes } from '../../lib/settings/conventionSettings'
+import { useConventionConfiguration } from '../../hooks/useConventionConfiguration'
 import { incrementConventionCode } from '../../utils/conventionCode'
 import { addMonths, calculateDurationMonths, formatDateInput } from '../../utils/dateUtils'
 import { getPlainTextLength, stripHtml } from '../../utils/textUtils'
@@ -124,7 +125,7 @@ const ConventionWizardComplete = () => {
   const { id } = useParams<{ id?: string }>()
   const isEditing = !!id
   const [activeStep, setActiveStep] = useState(0)
-  const [settings] = useState(loadConventionSettings())
+  const { configuration: settings } = useConventionConfiguration()
   const [autoDateFin, setAutoDateFin] = useState(true)
 
   const defaultFormData: ConventionFormData = {

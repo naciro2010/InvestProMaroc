@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Button } from '@mui/material'
+import { Box, Button, useTheme } from '@mui/material'
 import { ExpandMore, ExpandLess } from '@mui/icons-material'
 import { stripHtml } from '@/utils/textUtils'
 
@@ -17,6 +17,7 @@ const RichTextDisplay = ({
   allowExpand = true,
 }: RichTextDisplayProps) => {
   const [expanded, setExpanded] = useState(false)
+  const theme = useTheme()
   const plainText = stripHtml(html || '')
   const isLongText = allowExpand && plainText.length > collapseLength
 
@@ -39,7 +40,7 @@ const RichTextDisplay = ({
                 left: 0,
                 right: 0,
                 height: '40px',
-                background: 'linear-gradient(transparent, white)',
+                background: `linear-gradient(transparent, ${theme.palette.background.paper})`,
               }
             : {},
         }}

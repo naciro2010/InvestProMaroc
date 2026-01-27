@@ -643,9 +643,24 @@ export const categoriesDepensesAPI = {
   delete: (id: number) => api.delete(`/categories-depenses/${id}`),
 }
 
+interface ConventionTypeConfigurationPayload {
+  typeCode: string
+  libelle: string
+  enabled: boolean
+  ordreAffichage: number
+}
+
+interface ConventionConfigurationPayload {
+  codeMaskPattern: string
+  codeMaskPlaceholder: string
+  numeroMaskPattern: string
+  numeroMaskPlaceholder: string
+  typeConfigurations: ConventionTypeConfigurationPayload[]
+}
+
 export const conventionConfigurationAPI = {
   get: () => api.get('/parametrage/conventions'),
-  update: (data: Record<string, unknown>) => api.put('/parametrage/conventions', data),
+  update: (data: ConventionConfigurationPayload) => api.put('/parametrage/conventions', data),
 }
 
 export default api

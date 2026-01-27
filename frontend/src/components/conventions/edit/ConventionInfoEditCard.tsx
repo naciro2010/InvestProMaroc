@@ -254,7 +254,7 @@ const ConventionInfoEditCard = ({ conventionId }: Props) => {
                 variant="contained"
                 startIcon={saving ? <CircularProgress size={20} /> : <Save />}
                 disabled={saving || !isDirty}
-                sx={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}
+                color="primary"
               >
                 {saving ? 'Enregistrement...' : 'Enregistrer'}
               </Button>

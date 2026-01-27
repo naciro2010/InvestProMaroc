@@ -192,6 +192,158 @@ function App() {
                     }
                   />
                   <Route
+                    path="/marches/nouveau"
+                    element={
+                      <ProtectedRoute>
+                        <MarcheWizard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/marches/:id/modifier"
+                    element={
+                      <ProtectedRoute>
+                        <MarcheFormPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/marches/:id"
+                    element={
+                      <ProtectedRoute>
+                        <MarcheDetailPageModern />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Projets */}
+                  <Route
+                    path="/projets"
+                    element={
+                      <ProtectedRoute>
+                        <ProjetsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/projets/nouveau"
+                    element={
+                      <ProtectedRoute>
+                        <ProjetWizard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/projets/:id/modifier"
+                    element={
+                      <ProtectedRoute>
+                        <ProjetFormPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/projets/:id"
+                    element={
+                      <ProtectedRoute>
+                        <ProjetDetailPageModern />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Budgets */}
+                  <Route
+                    path="/budgets"
+                    element={
+                      <ProtectedRoute>
+                        <BudgetsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/budgets/nouveau"
+                    element={
+                      <ProtectedRoute>
+                        <BudgetWizard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/budgets/:id/modifier"
+                    element={
+                      <ProtectedRoute>
+                        <BudgetFormPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/budgets/:id"
+                    element={
+                      <ProtectedRoute>
+                        <BudgetDetailPageModern />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Décomptes */}
+                  <Route
+                    path="/decomptes"
+                    element={
+                      <ProtectedRoute>
+                        <DecomptesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/decomptes/nouveau"
+                    element={
+                      <ProtectedRoute>
+                        <DecompteWizard />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Ordres de Paiement */}
+                  <Route
+                    path="/ordres-paiement"
+                    element={
+                      <ProtectedRoute>
+                        <OrdresPaiementPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Paiements */}
+                  <Route
+                    path="/paiements"
+                    element={
+                      <ProtectedRoute>
+                        <PaiementsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Versements Prévisionnels */}
+                  <Route
+                    path="/versements-previsionnels"
+                    element={
+                      <ProtectedRoute>
+                        <VersementsPrevisionnelsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* User Profile */}
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Parametrage */}
+                  <Route
                     path="/parametrage/conventions"
                     element={
                       <ProtectedRoute>
@@ -199,271 +351,115 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-          <Route
-            path="/marches/nouveau"
-            element={
-              <ProtectedRoute>
-                <MarcheWizard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/marches/:id/modifier"
-            element={
-              <ProtectedRoute>
-                <MarcheFormPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/marches/:id"
-            element={
-              <ProtectedRoute>
-                <MarcheDetailPageModern />
-              </ProtectedRoute>
-            }
-          />
+                  <Route
+                    path="/parametrage/plan-analytique"
+                    element={
+                      <ProtectedRoute>
+                        <PlanAnalytiquePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/parametrage/categories-depenses"
+                    element={
+                      <ProtectedRoute>
+                        <CategoriesDepensesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/parametrage/partenaires"
+                    element={
+                      <ProtectedRoute>
+                        <PartenairesPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-          {/* Projets */}
-          <Route
-            path="/projets"
-            element={
-              <ProtectedRoute>
-                <ProjetsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/projets/nouveau"
-            element={
-              <ProtectedRoute>
-                <ProjetWizard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/projets/:id/modifier"
-            element={
-              <ProtectedRoute>
-                <ProjetFormPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/projets/:id"
-            element={
-              <ProtectedRoute>
-                <ProjetDetailPageModern />
-              </ProtectedRoute>
-            }
-          />
+                  {/* SelectWithQuickCreate Demo */}
+                  <Route
+                    path="/examples/select-with-quick-create"
+                    element={
+                      <ProtectedRoute>
+                        <SelectWithQuickCreateDemo />
+                      </ProtectedRoute>
+                    }
+                  />
 
-          {/* Budgets */}
-          <Route
-            path="/budgets"
-            element={
-              <ProtectedRoute>
-                <BudgetsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/budgets/nouveau"
-            element={
-              <ProtectedRoute>
-                <BudgetWizard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/budgets/:id/modifier"
-            element={
-              <ProtectedRoute>
-                <BudgetFormPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/budgets/:id"
-            element={
-              <ProtectedRoute>
-                <BudgetDetailPageModern />
-              </ProtectedRoute>
-            }
-          />
+                  {/* Reporting Analytique */}
+                  <Route
+                    path="/reporting/analytique"
+                    element={
+                      <ProtectedRoute>
+                        <ReportingAnalytiquePage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-          {/* Décomptes */}
-          <Route
-            path="/decomptes"
-            element={
-              <ProtectedRoute>
-                <DecomptesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/decomptes/nouveau"
-            element={
-              <ProtectedRoute>
-                <DecompteWizard />
-              </ProtectedRoute>
-            }
-          />
+                  {/* Users Management */}
+                  <Route
+                    path="/users"
+                    element={
+                      <ProtectedRoute>
+                        <UsersPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-          {/* Ordres de Paiement */}
-          <Route
-            path="/ordres-paiement"
-            element={
-              <ProtectedRoute>
-                <OrdresPaiementPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Paiements */}
-          <Route
-            path="/paiements"
-            element={
-              <ProtectedRoute>
-                <PaiementsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Versements Prévisionnels */}
-          <Route
-            path="/versements-previsionnels"
-            element={
-              <ProtectedRoute>
-                <VersementsPrevisionnelsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* User Profile */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Plan Analytique Dynamique */}
-          <Route
-            path="/parametrage/plan-analytique"
-            element={
-              <ProtectedRoute>
-                <PlanAnalytiquePage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catégories de dépenses (Référentiel) */}
-          <Route
-            path="/parametrage/categories-depenses"
-            element={
-              <ProtectedRoute>
-                <CategoriesDepensesPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Partenaires (Référentiel) */}
-          <Route
-            path="/parametrage/partenaires"
-            element={
-              <ProtectedRoute>
-                <PartenairesPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* SelectWithQuickCreate Demo */}
-          <Route
-            path="/examples/select-with-quick-create"
-            element={
-              <ProtectedRoute>
-                <SelectWithQuickCreateDemo />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Reporting Analytique */}
-          <Route
-            path="/reporting/analytique"
-            element={
-              <ProtectedRoute>
-                <ReportingAnalytiquePage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Users Management */}
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
-                <UsersPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Under Construction Pages */}
-          <Route
-            path="/fournisseurs"
-            element={
-              <ProtectedRoute>
-                <UnderConstruction
-                  featureName="Gestion des Fournisseurs"
-                  description="Module complet pour gérer vos fournisseurs avec leurs informations fiscales (ICE, IF, RIB) et suivre leurs contrats et paiements."
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/comptes-bancaires"
-            element={
-              <ProtectedRoute>
-                <UnderConstruction
-                  featureName="Comptes Bancaires"
-                  description="Gérez vos comptes bancaires, suivez les soldes et les opérations de rapprochement bancaire."
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/depenses"
-            element={
-              <ProtectedRoute>
-                <UnderConstruction
-                  featureName="Gestion des Dépenses"
-                  description="Module de suivi détaillé des dépenses avec catégorisation et analyse des coûts."
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/commissions"
-            element={
-              <ProtectedRoute>
-                <UnderConstruction
-                  featureName="Calcul des Commissions"
-                  description="Calculez automatiquement les commissions selon les conventions avec gestion des tranches et exclusions."
-                />
-              </ProtectedRoute>
-            }
-          />
+                  {/* Under Construction Pages */}
+                  <Route
+                    path="/fournisseurs"
+                    element={
+                      <ProtectedRoute>
+                        <UnderConstruction
+                          featureName="Gestion des Fournisseurs"
+                          description="Module complet pour gérer vos fournisseurs avec leurs informations fiscales (ICE, IF, RIB) et suivre leurs contrats et paiements."
+                        />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/comptes-bancaires"
+                    element={
+                      <ProtectedRoute>
+                        <UnderConstruction
+                          featureName="Comptes Bancaires"
+                          description="Gérez vos comptes bancaires, suivez les soldes et les opérations de rapprochement bancaire."
+                        />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/depenses"
+                    element={
+                      <ProtectedRoute>
+                        <UnderConstruction
+                          featureName="Gestion des Dépenses"
+                          description="Module de suivi détaillé des dépenses avec catégorisation et analyse des coûts."
+                        />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/commissions"
+                    element={
+                      <ProtectedRoute>
+                        <UnderConstruction
+                          featureName="Calcul des Commissions"
+                          description="Calculez automatiquement les commissions selon les conventions avec gestion des tranches et exclusions."
+                        />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Catch all */}
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
-            </ToastProvider>
-          </AuthProvider>
-        </LayoutContextProvider>
-      </ThemeContextProvider>
-    </Router>
+              </ToastProvider>
+            </AuthProvider>
+          </LayoutContextProvider>
+        </ThemeContextProvider>
+      </Router>
     </QueryClientProvider>
   )
 }

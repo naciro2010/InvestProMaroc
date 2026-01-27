@@ -11,6 +11,7 @@ interface RichTextEditorProps {
   error?: string
   required?: boolean
   minHeight?: number
+  readOnly?: boolean
 }
 
 const RichTextEditor = ({
@@ -21,21 +22,24 @@ const RichTextEditor = ({
   error,
   required = false,
   minHeight = 200,
+  readOnly = false,
 }: RichTextEditorProps) => {
   // Configuration des modules Quill
   const modules = useMemo(
     () => ({
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        [{ indent: '-1' }, { indent: '+1' }],
-        [{ align: [] }],
-        ['link'],
-        ['clean'],
-      ],
+      toolbar: readOnly
+        ? false
+        : [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ indent: '-1' }, { indent: '+1' }],
+            [{ align: [] }],
+            ['link'],
+            ['clean'],
+          ],
     }),
-    []
+    [readOnly]
   )
 
   const formats = [
@@ -83,6 +87,7 @@ const RichTextEditor = ({
             borderBottom: '1px solid',
             borderColor: 'divider',
             bgcolor: '#fafafa',
+            display: readOnly ? 'none' : 'block',
           },
           '& .ql-container': {
             borderBottomLeftRadius: 4,
@@ -100,14 +105,15 @@ const RichTextEditor = ({
           },
         }}
       >
-        <ReactQuill
-          theme="snow"
-          value={value}
-          onChange={onChange}
-          modules={modules}
-          formats={formats}
-          placeholder={placeholder}
-        />
+      <ReactQuill
+        theme="snow"
+        value={value}
+        onChange={onChange}
+        modules={modules}
+        formats={formats}
+        placeholder={placeholder}
+        readOnly={readOnly}
+      />
       </Box>
 
       {error && (

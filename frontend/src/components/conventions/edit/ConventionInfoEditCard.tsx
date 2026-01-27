@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -16,18 +16,21 @@ import { Save, Edit, Cancel as CancelIcon } from '@mui/icons-material'
 import { api } from '../../../lib/api'
 import { useToast } from '../../../contexts/ToastContext'
 import { FormTextField, FormSelectField } from '../../form'
+import RichTextEditor from '../../common/RichTextEditor'
+import { getEnabledConventionTypes, loadConventionSettings } from '../../../lib/settings/conventionSettings'
+import { getPlainTextLength, stripHtml } from '../../../utils/textUtils'
 
 // Schema validation
 const infoSchema = z.object({
-  code: z.string()
-    .min(1, 'Le code est requis')
-    .regex(/^[A-Z0-9-]+$/, 'Majuscules, chiffres et tirets uniquement'),
+  code: z.string().min(1, 'Le code est requis'),
   numero: z.string().min(1, 'Le numéro est requis'),
   libelle: z.string()
     .min(3, 'Minimum 3 caractères')
-    .max(200, 'Maximum 200 caractères'),
-  objet: z.string().min(10, 'Minimum 10 caractères'),
-  typeConvention: z.enum(['CADRE', 'SPECIFIQUE']),
+    .refine((value) => getPlainTextLength(value) <= 200, 'Maximum 200 caractères'),
+  objet: z.string()
+    .min(10, 'Minimum 10 caractères')
+    .refine((value) => getPlainTextLength(value) <= 2000, 'Maximum 2000 caractères'),
+  typeConvention: z.enum(['CADRE', 'NON_CADRE', 'SPECIFIQUE', 'AVENANT']),
 })
 
 type InfoFormData = z.infer<typeof infoSchema>
@@ -46,6 +49,7 @@ interface Props {
  */
 const ConventionInfoEditCard = ({ conventionId }: Props) => {
   const { showToast } = useToast()
+  const settings = loadConventionSettings()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -55,6 +59,7 @@ const ConventionInfoEditCard = ({ conventionId }: Props) => {
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isDirty },
   } = useForm<InfoFormData>({
     resolver: zodResolver(infoSchema),
@@ -91,7 +96,11 @@ const ConventionInfoEditCard = ({ conventionId }: Props) => {
     try {
       setSaving(true)
       // Micro-endpoint: only update basic info
-      await api.patch(`/conventions/${conventionId}/basic`, data)
+      await api.patch(`/conventions/${conventionId}/basic`, {
+        ...data,
+        libelle: stripHtml(data.libelle),
+        objet: stripHtml(data.objet),
+      })
       showToast('Informations mises à jour', 'success')
       setEditing(false)
       reset(data) // Reset form to mark as not dirty
@@ -149,48 +158,82 @@ const ConventionInfoEditCard = ({ conventionId }: Props) => {
               name="code"
               control={control}
               label="Code"
-              placeholder="CONV-2026-001"
+              placeholder={settings.codeMaskPlaceholder}
               required
               disabled={!editing}
+              helperText={`Format attendu : ${settings.codeMaskPlaceholder}`}
+              inputProps={{ pattern: settings.codeMaskPattern }}
             />
             <FormTextField
               name="numero"
               control={control}
               label="Numéro"
-              placeholder="001/2026"
+              placeholder={settings.numeroMaskPlaceholder}
               required
               disabled={!editing}
+              helperText={`Format attendu : ${settings.numeroMaskPlaceholder}`}
+              inputProps={{ pattern: settings.numeroMaskPattern }}
             />
           </Stack>
 
-          <FormTextField
+          <Controller
             name="libelle"
             control={control}
-            label="Libellé"
-            placeholder="Convention de financement..."
-            required
-            disabled={!editing}
+            render={({ field }) => (
+              <Box>
+                <RichTextEditor
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  label="Libellé"
+                  placeholder="Convention de financement..."
+                  minHeight={140}
+                  required
+                  readOnly={!editing}
+                  error={errors.libelle?.message as string | undefined}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  {getPlainTextLength(field.value || '')} / 200 caractères
+                </Typography>
+              </Box>
+            )}
           />
 
-          <FormTextField
+          <Controller
             name="objet"
             control={control}
-            label="Objet"
-            placeholder="Description de la convention..."
-            multiline
-            rows={4}
-            required
-            disabled={!editing}
+            render={({ field }) => (
+              <Box>
+                <RichTextEditor
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  label="Objet"
+                  placeholder="Description de la convention..."
+                  minHeight={200}
+                  required
+                  readOnly={!editing}
+                  error={errors.objet?.message as string | undefined}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  {getPlainTextLength(field.value || '')} / 2000 caractères
+                </Typography>
+              </Box>
+            )}
           />
 
           <FormSelectField
             name="typeConvention"
             control={control}
             label="Type de convention"
-            options={[
-              { label: 'Convention Cadre', value: 'CADRE' },
-              { label: 'Convention Spécifique', value: 'SPECIFIQUE' },
-            ]}
+            options={(() => {
+              const enabled = getEnabledConventionTypes(settings)
+              const currentValue = watch('typeConvention') || 'CADRE'
+              return enabled.find((option) => option.value === currentValue)
+                ? enabled
+                : [
+                    ...enabled,
+                    { value: currentValue, label: currentValue, enabled: true },
+                  ]
+            })().map((option) => ({ label: option.label, value: option.value }))}
             required
             disabled={!editing}
           />

@@ -38,7 +38,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
  *    - Cela évite de devoir spécifier hasAnyRole('ADMIN', 'MANAGER', 'USER') partout
  *
  * 2. PROTECTION PAR DÉFAUT:
- *    - Toutes les routes /api/** sont protégées par défaut (authentification requise)
+ *    - Toutes les routes /api/… (pattern wildcard) sont protégées par défaut (authentification requise)
  *    - Seules les routes explicitement listées en permitAll() sont publiques
  *    - Les nouvelles routes sont automatiquement protégées sans configuration supplémentaire
  *

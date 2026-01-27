@@ -40,6 +40,10 @@ import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import DecimalInput from '../../components/ui/DecimalInput'
 import { conventionsAPI } from '../../lib/api'
+import { loadConventionSettings, getEnabledConventionTypes } from '../../lib/settings/conventionSettings'
+import { incrementConventionCode } from '../../utils/conventionCode'
+import { addMonths, calculateDurationMonths, formatDateInput } from '../../utils/dateUtils'
+import { getPlainTextLength, stripHtml } from '../../utils/textUtils'
 
 const steps = [
   'Informations',
@@ -87,12 +91,14 @@ interface ConventionFormData {
   code: string
   numeroConvention: string
   libelle: string
+  libelleRich: string
   objet: string
   objetRich: string
-  type: 'CADRE' | 'NON_CADRE'
+  type: 'CADRE' | 'NON_CADRE' | 'SPECIFIQUE' | 'AVENANT'
   dateSignature: string
   dateDebut: string
   dateFin: string
+  dureeMois: number
 
   // Step 2: Budget
   budgetGlobal: number
@@ -118,17 +124,21 @@ const ConventionWizardComplete = () => {
   const { id } = useParams<{ id?: string }>()
   const isEditing = !!id
   const [activeStep, setActiveStep] = useState(0)
+  const [settings] = useState(loadConventionSettings())
+  const [autoDateFin, setAutoDateFin] = useState(true)
 
   const defaultFormData: ConventionFormData = {
     code: '',
     numeroConvention: '',
     libelle: '',
+    libelleRich: '',
     objet: '',
     objetRich: '',
     type: 'CADRE',
     dateSignature: new Date().toISOString().split('T')[0],
     dateDebut: new Date().toISOString().split('T')[0],
-    dateFin: '',
+    dateFin: formatDateInput(addMonths(new Date(), 12)),
+    dureeMois: 12,
     budgetGlobal: 0,
     lignesBudget: [],
     tauxCommission: 2.5,
@@ -163,12 +173,16 @@ const ConventionWizardComplete = () => {
         code: convention.code || '',
         numeroConvention: '',
         libelle: convention.designation || '',
+        libelleRich: convention.designation || '',
         objet: convention.objet || '',
         objetRich: convention.objetRich || '',
         type: convention.type || 'CADRE',
         dateSignature: new Date().toISOString().split('T')[0],
         dateDebut: formatDate(convention.dateDebut),
         dateFin: formatDate(convention.dateFin),
+        dureeMois: convention.dateFin && convention.dateDebut
+          ? calculateDurationMonths(new Date(convention.dateDebut), new Date(convention.dateFin))
+          : 12,
         budgetGlobal: convention.budgetTotal || 0,
         lignesBudget: [],
         tauxCommission: convention.tauxCommission || 2.5,
@@ -180,6 +194,31 @@ const ConventionWizardComplete = () => {
       })
     }
   }, [existingConvention])
+
+  useEffect(() => {
+    const loadNextCode = async () => {
+      if (isEditing || formData.code) return
+      try {
+        const response = await conventionsAPI.getAll()
+        const conventions = response.data.data || response.data
+        if (Array.isArray(conventions) && conventions.length > 0) {
+          const latestConvention = conventions.reduce((latest, current) =>
+            current.id > latest.id ? current : latest
+          )
+          if (latestConvention?.code) {
+            setFormData((prev) => ({
+              ...prev,
+              code: incrementConventionCode(latestConvention.code),
+            }))
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement du code de convention', error)
+      }
+    }
+
+    loadNextCode()
+  }, [formData.code, isEditing])
 
   // Create mutation
   const createMutation = useMutation({
@@ -236,7 +275,47 @@ const ConventionWizardComplete = () => {
   const handleChange = (field: keyof ConventionFormData) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    setFormData({ ...formData, [field]: e.target.value })
+    const value = e.target.value
+
+    if (field === 'dateDebut') {
+      const nextDateDebut = value
+      setFormData((prev) => {
+        const updated = { ...prev, dateDebut: nextDateDebut }
+        if (autoDateFin && prev.dureeMois) {
+          updated.dateFin = formatDateInput(addMonths(new Date(nextDateDebut), prev.dureeMois))
+        }
+        return updated
+      })
+      return
+    }
+
+    if (field === 'dateFin') {
+      setAutoDateFin(false)
+      setFormData((prev) => ({
+        ...prev,
+        dateFin: value,
+        dureeMois:
+          prev.dateDebut && value
+            ? calculateDurationMonths(new Date(prev.dateDebut), new Date(value))
+            : prev.dureeMois,
+      }))
+      return
+    }
+
+    if (field === 'dureeMois') {
+      const duration = Number(value)
+      setAutoDateFin(true)
+      setFormData((prev) => ({
+        ...prev,
+        dureeMois: duration,
+        dateFin: prev.dateDebut
+          ? formatDateInput(addMonths(new Date(prev.dateDebut), duration))
+          : prev.dateFin,
+      }))
+      return
+    }
+
+    setFormData({ ...formData, [field]: value })
   }
 
   const handleNext = () => {
@@ -369,10 +448,21 @@ const ConventionWizardComplete = () => {
     }).format(value)
   }
 
+  const typeOptions = getEnabledConventionTypes(settings)
+  const typeOptionsWithCurrent =
+    typeOptions.find((option) => option.value === formData.type)
+      ? typeOptions
+      : [...typeOptions, { value: formData.type, label: formData.type, enabled: true }]
+
   const isStepValid = () => {
     switch (activeStep) {
       case 0: // Informations
-        return formData.code && formData.libelle && formData.objetRich
+        return (
+          formData.code &&
+          formData.libelle &&
+          getPlainTextLength(formData.libelleRich) <= 200 &&
+          formData.objetRich
+        )
       case 1: // Budget
         return formData.budgetGlobal > 0
       case 2: // Commission
@@ -413,7 +503,9 @@ const ConventionWizardComplete = () => {
                 label="Code *"
                 value={formData.code}
                 onChange={handleChange('code')}
-                placeholder="CONV-2026-001"
+                placeholder={settings.codeMaskPlaceholder}
+                inputProps={{ pattern: settings.codeMaskPattern }}
+                helperText={`Format attendu : ${settings.codeMaskPlaceholder}`}
                 size="small"
               />
               <TextField
@@ -421,7 +513,9 @@ const ConventionWizardComplete = () => {
                 label="Numéro de convention"
                 value={formData.numeroConvention}
                 onChange={handleChange('numeroConvention')}
-                placeholder="N°2026/001"
+                placeholder={settings.numeroMaskPlaceholder}
+                inputProps={{ pattern: settings.numeroMaskPattern }}
+                helperText={`Format attendu : ${settings.numeroMaskPlaceholder}`}
                 size="small"
               />
               <TextField
@@ -432,8 +526,11 @@ const ConventionWizardComplete = () => {
                 onChange={handleChange('type')}
                 size="small"
               >
-                <MenuItem value="CADRE">CADRE - Convention cadre</MenuItem>
-                <MenuItem value="NON_CADRE">NON_CADRE - Convention simple</MenuItem>
+                {typeOptionsWithCurrent.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Box>
 
@@ -445,15 +542,27 @@ const ConventionWizardComplete = () => {
             </Alert>
 
             {/* Libellé */}
-            <TextField
-              fullWidth
-              label="Libellé *"
-              value={formData.libelle}
-              onChange={handleChange('libelle')}
-              placeholder="Convention de financement..."
-              multiline
-              rows={2}
-            />
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+                Libellé de la convention *
+              </Typography>
+              <RichTextEditor
+                value={formData.libelleRich}
+                onChange={(value) => {
+                  const plain = stripHtml(value).substring(0, 200)
+                  setFormData((prev) => ({
+                    ...prev,
+                    libelleRich: value,
+                    libelle: plain,
+                  }))
+                }}
+                placeholder="Libellé de la convention..."
+                minHeight={120}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {getPlainTextLength(formData.libelleRich)} / 200 caractères
+              </Typography>
+            </Box>
 
             {/* Objet (Rich Text) */}
             <Box sx={{ mt: 2 }}>
@@ -466,7 +575,7 @@ const ConventionWizardComplete = () => {
                   setFormData({
                     ...formData,
                     objetRich: value,
-                    objet: value.replace(/<[^>]*>/g, '').substring(0, 500),
+                    objet: stripHtml(value).substring(0, 500),
                   })
                 }}
                 placeholder="Décrivez l'objet de la convention en détail..."
@@ -512,6 +621,22 @@ const ConventionWizardComplete = () => {
                   value={formData.dateFin}
                   onChange={handleChange('dateFin')}
                   InputLabelProps={{ shrink: true }}
+                  size="small"
+                />
+              </Box>
+              <Box sx={{ mt: 2, maxWidth: 260 }}>
+                <TextField
+                  fullWidth
+                  label="Durée (mois)"
+                  type="number"
+                  value={formData.dureeMois}
+                  onChange={handleChange('dureeMois')}
+                  inputProps={{ min: 0 }}
+                  helperText={
+                    autoDateFin
+                      ? 'La date de fin est calculée automatiquement.'
+                      : 'Modifiez la durée pour recalculer la date de fin.'
+                  }
                   size="small"
                 />
               </Box>
@@ -1329,6 +1454,9 @@ const ConventionWizardComplete = () => {
               <Typography variant="body2">
                 Du {new Date(formData.dateDebut).toLocaleDateString('fr-FR')}
                 {formData.dateFin && ` au ${new Date(formData.dateFin).toLocaleDateString('fr-FR')}`}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Durée : {formData.dureeMois} mois
               </Typography>
             </Paper>
 

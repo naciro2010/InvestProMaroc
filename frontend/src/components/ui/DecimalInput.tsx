@@ -59,8 +59,14 @@ const DecimalInput = ({
   const parseNumber = (str: string): number => {
     if (!str || str.trim() === '') return 0
 
+    const trimmed = str.trim()
+    if (trimmed.startsWith('=')) {
+      const computed = evaluateExpression(trimmed.slice(1))
+      return Number.isNaN(computed) ? 0 : computed
+    }
+
     // Remove all spaces
-    let cleaned = str.replace(/\s/g, '')
+    let cleaned = trimmed.replace(/\s/g, '')
 
     // Replace comma with dot for parsing
     cleaned = cleaned.replace(',', '.')
@@ -70,6 +76,20 @@ const DecimalInput = ({
 
     const parsed = parseFloat(cleaned)
     return isNaN(parsed) ? 0 : parsed
+  }
+
+  const evaluateExpression = (expression: string): number => {
+    const cleaned = expression.replace(/\s/g, '').replace(',', '.')
+    if (!/^[\\d+\\-*/().]+$/.test(cleaned)) {
+      return NaN
+    }
+
+    try {
+      // eslint-disable-next-line no-new-func
+      return Function(`\"use strict\"; return (${cleaned});`)() as number
+    } catch (error) {
+      return NaN
+    }
   }
 
   /**
@@ -94,8 +114,8 @@ const DecimalInput = ({
       return
     }
 
-    // Allow natural typing: digits, comma, dot, spaces, minus
-    if (/^[-\d\s,.]*$/.test(inputValue)) {
+    // Allow natural typing: digits, comma, dot, spaces, minus, operators, equal sign
+    if (/^[=\d\s,.\-+*/()]*$/.test(inputValue)) {
       setDisplayValue(inputValue)
     }
   }

@@ -99,6 +99,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       label: 'Paramétrage',
       icon: <Settings className="w-5 h-5" />,
       items: [
+        { icon: <Sparkles className="w-5 h-5" />, label: 'Paramétrage des conventions', path: '/parametrage/conventions', implemented: true },
         { icon: <Map className="w-5 h-5" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
         { icon: <Tags className="w-5 h-5" />, label: 'Catégories de dépenses', path: '/parametrage/categories-depenses', implemented: true },
         { icon: <Handshake className="w-5 h-5" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
@@ -264,7 +265,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                 </button>
                 <button
                   onClick={() => {
-                    navigate('/settings')
+                    navigate('/parametrage/conventions')
                     setUserMenuOpen(false)
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left"

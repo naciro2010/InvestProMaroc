@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
@@ -11,11 +11,13 @@ import {
   CircularProgress,
   Skeleton,
   Alert,
+  TextField,
 } from '@mui/material'
 import { Save, Edit, Cancel as CancelIcon } from '@mui/icons-material'
 import { api } from '../../../lib/api'
 import { useToast } from '../../../contexts/ToastContext'
 import { FormDateField } from '../../form'
+import { addMonths, calculateDurationMonths, formatDateInput } from '../../../utils/dateUtils'
 
 // Schema validation avec cross-field validation
 const datesSchema = z.object({
@@ -30,6 +32,7 @@ const datesSchema = z.object({
   dateFin: z.date({
     invalid_type_error: 'Date invalide',
   }).nullable(),
+  dureeMois: z.number().min(0, 'Durée invalide'),
 }).refine((data) => {
   if (data.dateSignature && data.dateDebut) {
     return data.dateDebut >= data.dateSignature
@@ -68,11 +71,14 @@ const ConventionDatesEditCard = ({ conventionId }: Props) => {
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [autoDateFin, setAutoDateFin] = useState(true)
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isDirty },
   } = useForm<DatesFormData>({
     resolver: zodResolver(datesSchema),
@@ -95,7 +101,11 @@ const ConventionDatesEditCard = ({ conventionId }: Props) => {
         dateSignature: new Date(data.dateConvention || data.dateSignature),
         dateDebut: new Date(data.dateDebut),
         dateFin: data.dateFin ? new Date(data.dateFin) : null,
+        dureeMois: data.dateFin
+          ? calculateDurationMonths(new Date(data.dateDebut), new Date(data.dateFin))
+          : 12,
       })
+      setAutoDateFin(true)
     } catch (err) {
       setError('Erreur lors du chargement')
     } finally {
@@ -129,6 +139,26 @@ const ConventionDatesEditCard = ({ conventionId }: Props) => {
     setEditing(false)
     loadData()
   }
+
+  const dateDebut = watch('dateDebut')
+  const dateFin = watch('dateFin')
+  const dureeMois = watch('dureeMois')
+
+  useEffect(() => {
+    if (!editing || !autoDateFin || !dateDebut) return
+    const computedDateFin = addMonths(dateDebut, dureeMois || 0)
+    if (!dateFin || formatDateInput(dateFin) !== formatDateInput(computedDateFin)) {
+      setValue('dateFin', computedDateFin, { shouldDirty: true })
+    }
+  }, [autoDateFin, dateDebut, dateFin, dureeMois, editing, setValue])
+
+  useEffect(() => {
+    if (!editing || autoDateFin || !dateDebut || !dateFin) return
+    const months = calculateDurationMonths(dateDebut, dateFin)
+    if (months !== dureeMois) {
+      setValue('dureeMois', months, { shouldDirty: true })
+    }
+  }, [autoDateFin, dateDebut, dateFin, dureeMois, editing, setValue])
 
   if (loading) {
     return (
@@ -183,13 +213,59 @@ const ConventionDatesEditCard = ({ conventionId }: Props) => {
               required
               disabled={!editing}
             />
-            <FormDateField
+            <Controller
               name="dateFin"
               control={control}
-              label="Date de Fin (optionnel)"
-              disabled={!editing}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Date de Fin (optionnel)"
+                  type="date"
+                  fullWidth
+                  disabled={!editing}
+                  error={!!errors.dateFin}
+                  helperText={errors.dateFin?.message as string}
+                  variant="outlined"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  value={formatDateInput(field.value)}
+                  onChange={(event) => {
+                    setAutoDateFin(false)
+                    field.onChange(event.target.value ? new Date(event.target.value) : null)
+                  }}
+                />
+              )}
             />
           </Stack>
+
+          <Controller
+            name="dureeMois"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Durée (mois)"
+                type="number"
+                fullWidth
+                disabled={!editing}
+                error={!!errors.dureeMois}
+                helperText={
+                  (errors.dureeMois?.message as string) ||
+                  (autoDateFin
+                    ? 'La date de fin est calculée automatiquement.'
+                    : 'Modifiez la durée pour recalculer la date de fin.')
+                }
+                variant="outlined"
+                size="small"
+                inputProps={{ min: 0 }}
+                onChange={(event) => {
+                  const nextValue = Number(event.target.value)
+                  setAutoDateFin(true)
+                  field.onChange(Number.isNaN(nextValue) ? 0 : nextValue)
+                }}
+              />
+            )}
+          />
 
           {editing && (
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', pt: 2 }}>

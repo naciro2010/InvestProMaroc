@@ -41,6 +41,8 @@ interface FormTextFieldProps<T extends FieldValues> {
   required?: boolean
   disabled?: boolean
   error?: string
+  helperText?: string
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>
 }
 
 export function FormTextField<T extends FieldValues>({
@@ -55,6 +57,8 @@ export function FormTextField<T extends FieldValues>({
   required = false,
   disabled = false,
   error,
+  helperText,
+  inputProps,
 }: FormTextFieldProps<T>): React.ReactElement {
   return (
     <Controller
@@ -72,9 +76,10 @@ export function FormTextField<T extends FieldValues>({
           required={required}
           disabled={disabled}
           error={!!fieldState.error}
-          helperText={fieldState.error?.message || error}
+          helperText={fieldState.error?.message || error || helperText}
           variant="outlined"
           size="small"
+          inputProps={inputProps}
         />
       )}
     />

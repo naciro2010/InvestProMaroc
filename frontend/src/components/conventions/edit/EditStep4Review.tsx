@@ -9,6 +9,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Warning } from '@mui/icons-material';
+import RichTextDisplay from '@/components/ui/RichTextDisplay';
 
 interface ConventionFormData {
   libelle: string;
@@ -146,9 +147,9 @@ export default function EditStep4Review({
               <Typography variant="body2" color="text.secondary" sx={{ minWidth: '150px' }}>
                 Objet:
               </Typography>
-              <Typography variant="body2" fontWeight={500}>
-                {formData.objet}
-              </Typography>
+              <Box sx={{ flex: 1 }}>
+                <RichTextDisplay html={formData.objet || ''} />
+              </Box>
             </Box>
           </Box>
         </Paper>

@@ -20,6 +20,8 @@ DROP TABLE IF EXISTS lignes_budget CASCADE;
 DROP TABLE IF EXISTS budgets CASCADE;
 DROP TABLE IF EXISTS avenant_conventions CASCADE;
 DROP TABLE IF EXISTS avenants CASCADE;
+DROP TABLE IF EXISTS convention_type_configurations CASCADE;
+DROP TABLE IF EXISTS convention_configurations CASCADE;
 DROP TABLE IF EXISTS convention_partenaires CASCADE;
 DROP TABLE IF EXISTS conventions CASCADE;
 DROP TABLE IF EXISTS imputations_analytiques CASCADE;

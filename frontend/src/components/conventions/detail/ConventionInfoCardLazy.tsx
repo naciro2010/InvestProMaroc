@@ -1,16 +1,15 @@
-import { useState } from 'react'
 import {
   Box,
   Paper,
   Typography,
   Chip,
   Divider,
-  Button,
   Skeleton,
   Alert,
 } from '@mui/material'
-import { ExpandMore, ExpandLess, Lock, LockOpen } from '@mui/icons-material'
+import { Lock, LockOpen } from '@mui/icons-material'
 import { useConventionBasic } from '@/hooks/useConventionData'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 
 interface ConventionInfoCardLazyProps {
   conventionId: number
@@ -23,8 +22,6 @@ interface ConventionInfoCardLazyProps {
  * Loads basic convention info (~5-10 KB) independently from other components
  */
 const ConventionInfoCardLazy = ({ conventionId, canEdit, getStatusColor }: ConventionInfoCardLazyProps) => {
-  const [expandedDescription, setExpandedDescription] = useState(false)
-
   // Independent data loading via micro-endpoint
   const { data: convention, loading, error } = useConventionBasic(conventionId)
 
@@ -116,47 +113,7 @@ const ConventionInfoCardLazy = ({ conventionId, canEdit, getStatusColor }: Conve
             <Typography variant="caption" color="text.secondary" gutterBottom display="block">
               Objet de la convention
             </Typography>
-            {(() => {
-              const objetText = convention.objet || ''
-              const isLongText = objetText.length > 300
-              return (
-                <>
-                  <Box
-                    sx={{
-                      '& p': { margin: '0.5em 0' },
-                      '& ul, & ol': { marginLeft: '1.5em' },
-                      '& strong': { fontWeight: 600 },
-                      '& em': { fontStyle: 'italic' },
-                      maxHeight: expandedDescription ? 'none' : '100px',
-                      overflow: 'hidden',
-                      position: 'relative',
-                      '&::after': !expandedDescription && isLongText
-                        ? {
-                            content: '""',
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            height: '40px',
-                            background: 'linear-gradient(transparent, white)',
-                          }
-                        : {},
-                    }}
-                    dangerouslySetInnerHTML={{ __html: objetText }}
-                  />
-                  {isLongText && (
-                    <Button
-                      size="small"
-                      onClick={() => setExpandedDescription(!expandedDescription)}
-                      endIcon={expandedDescription ? <ExpandLess /> : <ExpandMore />}
-                      sx={{ mt: 1 }}
-                    >
-                      {expandedDescription ? 'Voir moins' : 'Voir plus'}
-                    </Button>
-                  )}
-                </>
-              )
-            })()}
+            <RichTextDisplay html={convention.objet || ''} />
           </Box>
         )}
 

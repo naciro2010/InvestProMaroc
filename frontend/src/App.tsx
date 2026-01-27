@@ -4,18 +4,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeContextProvider } from './contexts/ThemeContext'
 import { LayoutContextProvider } from './contexts/LayoutContext'
-
-/**
- * Get the base path from Vite's BASE_URL environment variable
- * This is automatically set by Vite based on the 'base' option in vite.config.ts
- * - Development/Railway: '/'
- * - GitHub Pages: '/InvestProMaroc/'
- */
-const getBasePath = (): string => {
-  const base = import.meta.env.BASE_URL
-  // Ensure it doesn't end with a trailing slash (Router handles this internally)
-  return base.endsWith('/') ? base.slice(0, -1) : base
-}
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -52,6 +40,18 @@ import SelectWithQuickCreateDemo from './pages/examples/SelectWithQuickCreateDem
 import ReportingAnalytiquePage from './pages/reporting/ReportingAnalytiquePage'
 import UsersPage from './pages/users/UsersPage'
 import UnderConstruction from './pages/UnderConstruction'
+
+/**
+ * Get the base path from Vite's BASE_URL environment variable
+ * This is automatically set by Vite based on the 'base' option in vite.config.ts
+ * - Development/Railway: '/'
+ * - GitHub Pages: '/InvestProMaroc/'
+ */
+const getBasePath = (): string => {
+  const base = import.meta.env.BASE_URL
+  // Ensure it doesn't end with a trailing slash (Router handles this internally)
+  return base.endsWith('/') ? base.slice(0, -1) : base
+}
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -102,103 +102,103 @@ function App() {
           <LayoutContextProvider>
             <AuthProvider>
               <ToastProvider>
-          <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <LoginPage />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicRoute>
-                <RegisterPage />
-              </PublicRoute>
-            }
-          />
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route
+                    path="/login"
+                    element={
+                      <PublicRoute>
+                        <LoginPage />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route
+                    path="/register"
+                    element={
+                      <PublicRoute>
+                        <RegisterPage />
+                      </PublicRoute>
+                    }
+                  />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardModern />
-              </ProtectedRoute>
-            }
-          />
+                  {/* Protected Routes */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardModern />
+                      </ProtectedRoute>
+                    }
+                  />
 
-          {/* Conventions - Focus principal */}
-          <Route
-            path="/conventions"
-            element={
-              <ProtectedRoute>
-                <ConventionsTableModern />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/conventions/nouvelle"
-            element={
-              <ProtectedRoute>
-                <ConventionWizardComplete />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/conventions/:id/edit"
-            element={
-              <ProtectedRoute>
-                <ConventionEditPageComplete />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/conventions/:id"
-            element={
-              <ProtectedRoute>
-                <ConventionDetailPageModern />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/conventions/:parentId/sous-conventions/nouvelle"
-            element={
-              <ProtectedRoute>
-                <SousConventionWizard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/conventions/:conventionId/avenants/nouveau"
-            element={
-              <ProtectedRoute>
-                <AvenantForm />
-              </ProtectedRoute>
-            }
-          />
+                  {/* Conventions - Focus principal */}
+                  <Route
+                    path="/conventions"
+                    element={
+                      <ProtectedRoute>
+                        <ConventionsTableModern />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/conventions/nouvelle"
+                    element={
+                      <ProtectedRoute>
+                        <ConventionWizardComplete />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/conventions/:id/edit"
+                    element={
+                      <ProtectedRoute>
+                        <ConventionEditPageComplete />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/conventions/:id"
+                    element={
+                      <ProtectedRoute>
+                        <ConventionDetailPageModern />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/conventions/:parentId/sous-conventions/nouvelle"
+                    element={
+                      <ProtectedRoute>
+                        <SousConventionWizard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/conventions/:conventionId/avenants/nouveau"
+                    element={
+                      <ProtectedRoute>
+                        <AvenantForm />
+                      </ProtectedRoute>
+                    }
+                  />
 
-          {/* Marchés */}
-          <Route
-            path="/marches"
-            element={
-              <ProtectedRoute>
-                <MarchesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/parametrage/conventions"
-            element={
-              <ProtectedRoute>
-                <ParametrageConventionsPage />
-              </ProtectedRoute>
-            }
-          />
+                  {/* Marchés */}
+                  <Route
+                    path="/marches"
+                    element={
+                      <ProtectedRoute>
+                        <MarchesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/parametrage/conventions"
+                    element={
+                      <ProtectedRoute>
+                        <ParametrageConventionsPage />
+                      </ProtectedRoute>
+                    }
+                  />
           <Route
             path="/marches/nouveau"
             element={
@@ -456,9 +456,9 @@ function App() {
             }
           />
 
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+                  {/* Catch all */}
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
             </ToastProvider>
           </AuthProvider>
         </LayoutContextProvider>

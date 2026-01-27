@@ -37,38 +37,92 @@ This includes but is not limited to:
 4. **Update Recent Architecture Changes section** if it's a significant change
 5. **Add line references** using `filename:line_number` format when referencing code
 
-### Example Changes to Document
+---
 
-**Adding a new entity:**
-```markdown
-## Working with the Backend
+## ⚠️ CRITICAL: DESIGN SYSTEM IS MANDATORY
 
-### Adding a New Entity
+**❌ NEVER hardcode colors, typography, spacing, or shadow values in components.**
 
-When creating a new CRUD entity:
+All UI values MUST come from the centralized design system:
 
-1. **Entity**: Create in `entity/` extending `BaseEntity`
-2. **Repository**: Create in `repository/` extending Spring Data JPA
-3. **DTO**: Create request/response DTOs in `dto/`
-4. **Mapper**: Create entity ↔ DTO mapper in `mapper/`
-5. **Service**: Create in `service/` extending `GenericCrudService<Entity, Long>`
-6. **Controller**: Create in `controller/` with standard REST endpoints
-7. **Migration**: Add Flyway migration in `db/migration/V{next_number}__description.sql`
-8. **Tests**: Add integration tests in `src/test/kotlin/ma/investpro/integration/`
+```typescript
+// ✅ GOOD - Use design system tokens
+import { colors, typography, spacing, componentStyles } from '@/lib/designSystem'
+<Box sx={componentStyles.card}>...</Box>
+<Typography sx={{ color: colors.gray[700], fontSize: typography.sizes.sm }}>Label</Typography>
 
-**Update CLAUDE.md** to document any new patterns or field names.
+// ❌ BAD - Hardcoded values
+<Box sx={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}>...</Box>
+<Typography sx={{ color: '#374151', fontSize: '13px' }}>Label</Typography>
 ```
 
-**Updating test credentials:**
-```markdown
-## Important Notes for Development
+**Design Principles:**
+- No gradients in content areas - flat, professional design
+- Use `componentStyles.*` for common patterns (card, buttonPrimary, pageHeader, etc.)
+- Colors, spacing, shadows all centralized in `designSystem.ts`
 
-8. **Test Credentials:** Use test accounts `admin/admin123`, `manager/manager123`, `user/user123`.
-   - Passwords are BCrypt hashed with cost 10
-   - Hash: `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z2L1MJLTzCIBkjy1kzp1HaT6`
-   - **CRITICAL:** If changing passwords, update BOTH the seed data AND the hash
-   - Seeded in: `V3__seed_data.sql`
+---
+
+## ⚠️ CRITICAL: USE CORE COMPONENTS
+
+**Always use the core micro-components for page structure:**
+
+```typescript
+import { PageHeader, StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField, StatusBadge } from '@/components/core'
 ```
+
+| Component | Purpose | Reference |
+|-----------|---------|-----------|
+| `PageHeader` | Breadcrumbs, title, status, actions | Every page |
+| `StickyActionBar` | Sticky top bar for forms/detail pages | Form pages |
+| `FormLayout` | Form container (white bg, border, max-width) | Form pages |
+| `FormPageSection` | Section title + description + divider | Inside FormLayout |
+| `FormGroup` | Responsive grid (1/2/3 columns) | Inside FormGroup |
+| `FormField` | Grid item wrapper (fullWidth option) | Inside FormGroup |
+| `FormFieldLabel` | Custom label with required indicator | Inside FormField |
+| `StatusBadge` | Colored status badge from status code | Tables, detail pages |
+| `StatusDot` | Small colored circle indicator | Tables |
+
+**Reference example:** `SimpleConventionForm.tsx` demonstrates the complete form page pattern.
+
+---
+
+## ⚠️ CRITICAL: SECURITY ANNOTATIONS
+
+**Backend controllers MUST use custom security annotations:**
+
+```kotlin
+// ✅ GOOD - Custom annotations with role hierarchy
+@ReadAccess    // All authenticated users (USER + MANAGER + ADMIN)
+@WriteAccess   // Managers and admins (MANAGER + ADMIN via hierarchy)
+@AdminOnly     // Admins only
+
+// ❌ BAD - Verbose @PreAuthorize
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+```
+
+**Role Hierarchy:** ADMIN > MANAGER > USER (automatic inheritance via SecurityConfig)
+**Default protection:** All routes are protected by `anyRequest().authenticated()` - no route is accidentally public.
+
+---
+
+## ⚠️ CRITICAL DATABASE MIGRATION RULE
+
+**ONLY USE 3 MIGRATION FILES: V1, V2, V3**
+
+❌ **NEVER** create new migration files (V4, V5, etc.)
+✅ **ALWAYS** add new schema to `V2__create_schema.sql`
+✅ **ALWAYS** add new seed data to `V3__seed_data.sql`
+
+**How to Add Migrations:**
+```
+New table or column? → Add to V2__create_schema.sql
+New test data? → Add to V3__seed_data.sql
+Schema changes? → Modify V2 (use ALTER TABLE if needed)
+```
+
+---
 
 ## Section-by-Section Guide
 
@@ -96,79 +150,18 @@ When creating a new CRUD entity:
 - Database Schema (if migrations added)
 - Working with Backend/Frontend (if adding new entity/component)
 
-## Example: Recent Changes Section
-
-```markdown
-## Recent Architecture Changes
-
-- **Plan Analytique Dynamique:** Migrated from rigid Projet+Axe to flexible JSONB dimensions (December 2024)
-- **Flyway Migrations:** Using Flyway for database versioning (12+ migrations as of Jan 2026)
-- **Convention Amendments:** Full amendment (avenant) system with JSONB storage (January 2026)
-- **Fixed Test Credentials:** Updated V3__seed_data.sql with correct BCrypt hashes (January 2026)
-  - admin/admin123: ADMIN role
-  - manager/manager123: MANAGER role
-  - user/user123: USER role
-```
-
-## ⚠️ CRITICAL DATABASE MIGRATION RULE
-
-**ONLY USE 3 MIGRATION FILES: V1, V2, V3**
-
-❌ **NEVER** create new migration files (V4, V5, etc.)
-✅ **ALWAYS** add new schema to `V2__create_schema.sql`
-✅ **ALWAYS** add new seed data to `V3__seed_data.sql`
-
-**How to Add Migrations:**
-```
-New table or column? → Add to V2__create_schema.sql
-New test data? → Add to V3__seed_data.sql
-Schema changes? → Modify V2 (use ALTER TABLE if needed)
-```
-
-**Why?** Flyway tracks migration history sequentially. New files break this chain and cause deployment issues.
-
----
-
-## Current Planned Features (Active Branch)
-
-**Branch:** `feature/rich-text-editor-styling`
-
-**Three Major Improvements in Progress:**
-
-### 1. Rich Text Editor for Descriptions
-- Add formatted text with styling (bold, italic, colors, fonts)
-- Use React Quill for convention/project/market descriptions
-- Store as JSONB in database for flexibility
-- Display formatted text in detail views
-
-### 2. Unified Form Styling
-- Modernize all forms to match landing page design
-- Use blue-600 primary color and gradient backgrounds
-- Consistent spacing, typography, shadows
-- Make ConventionForm and ProjetForm identical in style
-- Match LandingPageSimple.tsx design system
-
-### 3. Project-Convention Association
-- Allow projects to link to multiple conventions
-- Add `projet_conventions` junction table
-- Create multi-select UI in ProjetFormPage
-- Show convention list in ProjetDetailPage
-- Add API endpoints for managing associations
-
-**When implementing these features:**
-1. Update CLAUDE.md "Planned Improvements" section with progress
-2. Add entries to "Recent Architecture Changes" section
-3. Update "Current Implementation Status" when features complete
-4. Document new API endpoints and database schema
-5. Include before/after design comparisons if UI changes significant
-
 ## Remember
 
 ❌ **Never forget to update CLAUDE.md**
+❌ **Never hardcode colors/spacing** - use `designSystem.ts`
+❌ **Never use verbose @PreAuthorize** - use `@ReadAccess`/`@WriteAccess`/`@AdminOnly`
+❌ **Never create components >300 lines** - split into micro-components
+❌ **Never use gradients in content areas** - flat, professional design
 ✅ **Always document what you changed and why**
+✅ **Always use core components** for page structure (PageHeader, StickyActionBar, FormLayout)
+✅ **Always use design system tokens** for UI values
 ✅ **Include code references with filename:line_number**
 ✅ **Keep examples current and working**
 ✅ **Update Recent Architecture Changes section**
-✅ **Update Planned Improvements section as you work**
 
 This ensures every future developer (including AI assistants) knows exactly what's in the codebase and how to work with it.

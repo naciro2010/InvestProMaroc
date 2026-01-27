@@ -118,14 +118,22 @@ InvestProMaroc/
 │   │   ├── repository/   # Spring Data JPA
 │   │   ├── entity/       # JPA entities
 │   │   ├── dto/          # Data Transfer Objects
-│   │   ├── security/     # JWT authentication
-│   │   └── config/       # Spring configuration
+│   │   ├── security/     # JWT auth + custom annotations
+│   │   │   └── annotations/  # @ReadAccess, @WriteAccess, @AdminOnly
+│   │   └── config/       # Spring configuration (SecurityConfig)
 │   └── src/main/resources/db/migration/  # Flyway migrations
 ├── frontend/             # React TypeScript SPA
 │   └── src/
 │       ├── pages/        # Route components
-│       ├── components/   # Reusable UI components
-│       ├── lib/          # API client, utilities
+│       ├── components/
+│       │   ├── core/     # Design system components (PageHeader, StickyActionBar, FormLayout, StatusBadge)
+│       │   ├── form/     # Form field components (FormTextField, FormNumberField, etc.)
+│       │   ├── layout/   # Layout components (AppLayout, Sidebar)
+│       │   └── ui/       # UI widgets (RichTextEditor, modals, etc.)
+│       ├── lib/
+│       │   ├── api.ts          # Axios client + JWT interceptors
+│       │   ├── authService.ts  # Centralized auth service (token parsing, expiry, logout)
+│       │   └── designSystem.ts # Design tokens (colors, typography, spacing, shadows)
 │       ├── contexts/     # React contexts (Auth, Toast)
 │       └── types/        # TypeScript types
 └── legacy/              # Old codebase (ignore)
@@ -135,15 +143,28 @@ InvestProMaroc/
 ```
 HTTP Request → JwtAuthenticationFilter
               ↓
-           SecurityFilterChain (@PreAuthorize)
+           SecurityFilterChain (Role Hierarchy: ADMIN > MANAGER > USER)
               ↓
-           Controller
+           Controller (@ReadAccess / @WriteAccess / @AdminOnly)
               ↓
            Service (extends GenericCrudService<Entity, Long>)
               ↓
            Repository (Spring Data JPA)
               ↓
            PostgreSQL + ApiResponse<T>
+```
+
+### Frontend Architecture
+```
+App.tsx → AuthProvider (JWT + proactive token check)
+          ↓
+       AppLayout → PageHeader (breadcrumbs, title, actions)
+          ↓
+       Pages → Core Components (StickyActionBar, FormLayout, StatusBadge)
+          ↓
+       API Client (axios + authService interceptors)
+          ↓
+       Backend REST API
 ```
 
 ## ⚡ CRITICAL: Micro-Frontend + Micro-Backend Architecture
@@ -408,20 +429,55 @@ CONVENTION → PROJET → MARCHÉ → MARCHE_LIGNE + DECOMPTE → ORDRE_PAIEMENT
 
 ## Authentication & Security
 
+### Centralized Auth Architecture (January 2026)
+
+**Backend - Role Hierarchy + Custom Annotations:**
+```
+SecurityConfig.kt:
+  - Role Hierarchy: ADMIN > MANAGER > USER (automatic inheritance)
+  - All routes protected by default (anyRequest().authenticated())
+  - Public routes explicitly listed in PUBLIC_ROUTES companion object
+  - Custom 401/403 JSON responses (no redirects)
+
+SecurityAnnotations.kt:
+  @ReadAccess   → hasRole('USER')    → All authenticated users
+  @WriteAccess  → hasRole('MANAGER') → Managers and admins (via hierarchy)
+  @AdminOnly    → hasRole('ADMIN')   → Admins only
+```
+
+**Frontend - 3-Layer Token Protection:**
+```
+1. authService.ts - Proactive check (polling every 30s)
+2. api.ts request interceptor - Pre-check before every request
+3. api.ts response interceptor - Handle 401 with token refresh
+```
+
+**Key Files:**
+| File | Purpose |
+|------|---------|
+| `backend/.../config/SecurityConfig.kt` | Role hierarchy, route protection, exception handling |
+| `backend/.../security/annotations/SecurityAnnotations.kt` | @ReadAccess, @WriteAccess, @AdminOnly |
+| `frontend/src/lib/authService.ts` | JWT parsing, token expiry, proactive check, logout |
+| `frontend/src/lib/api.ts` | Axios interceptors using authService |
+| `frontend/src/contexts/AuthContext.tsx` | React auth state with hasRole/hasAnyRole/isAdmin/isManager |
+
 ### JWT Flow
 1. Login via `POST /api/auth/login` with username/password
 2. Backend returns `{accessToken, refreshToken, user}`
-3. Frontend stores tokens in localStorage, sets AuthContext
+3. Frontend stores tokens via `authService.storeTokens()`, sets AuthContext
 4. Axios interceptor adds `Authorization: Bearer <token>` to requests
-5. On 401, interceptor refreshes via `/api/auth/refresh`
-6. If refresh fails, user is logged out
+5. Proactive token expiration check runs every 30 seconds
+6. On 401, interceptor refreshes via `/api/auth/refresh` (queues concurrent requests)
+7. If refresh fails or token expired, user is logged out and redirected to `/login`
 
-### Roles
-| Role | Permissions |
-|------|-------------|
-| **ADMIN** | Full system access |
-| **MANAGER** | CRUD conventions, marchés, décomptes, paiements |
-| **USER** | Read-only access |
+### Roles (with Hierarchy)
+| Role | Permissions | Annotation |
+|------|-------------|------------|
+| **ADMIN** | Full system access (inherits MANAGER + USER) | `@AdminOnly` |
+| **MANAGER** | CRUD conventions, marchés, décomptes (inherits USER) | `@WriteAccess` |
+| **USER** | Read-only access | `@ReadAccess` |
+
+**New routes are automatically protected** - `anyRequest().authenticated()` ensures no route is accidentally public.
 
 ### Test Accounts (V3__seed_data.sql)
 ```
@@ -431,7 +487,11 @@ user / user123        (USER)
 ```
 
 ### Security Checklist
-- ✅ JWT + Spring Security 6.x
+- ✅ JWT + Spring Security 6.x with role hierarchy
+- ✅ Custom security annotations (@ReadAccess, @WriteAccess, @AdminOnly)
+- ✅ All routes protected by default (anyRequest().authenticated())
+- ✅ Proactive token expiration check (30s polling)
+- ✅ Concurrent 401 request queuing during token refresh
 - ✅ BCrypt password hashing (cost 10)
 - ✅ HMAC SHA-256 signing (256+ bit secret)
 - ✅ No sensitive data in localStorage (only tokens)
@@ -534,12 +594,62 @@ See `CRUD_TEMPLATE.md` for detailed template.
 ### Key Files
 | File | Purpose |
 |------|---------|
+| `src/lib/designSystem.ts` | Design tokens (colors, typography, spacing, shadows, componentStyles) |
+| `src/lib/authService.ts` | Centralized auth (JWT parsing, expiry check, logout) |
 | `src/lib/api.ts` | Axios client with JWT interceptors + all endpoints |
-| `src/contexts/AuthContext.tsx` | Global auth state |
-| `src/App.tsx` | React Router main routing |
+| `src/contexts/AuthContext.tsx` | Global auth state (hasRole, isAdmin, isManager) |
+| `src/components/core/` | Core micro-components (PageHeader, StickyActionBar, FormLayout, StatusBadge) |
+| `src/components/form/` | Form field components (FormTextField, FormNumberField, etc.) |
 | `src/components/layout/AppLayout.tsx` | Sidebar layout |
-| `src/components/ui/` | Reusable UI components |
+| `src/App.tsx` | React Router main routing |
 | `vite.config.ts` | Vite config with /api proxy |
+
+### Design System Usage
+```typescript
+// Import design tokens
+import { colors, typography, spacing, componentStyles } from '@/lib/designSystem'
+
+// Use pre-built styles in sx props
+<Box sx={componentStyles.card}>...</Box>
+<Button sx={componentStyles.buttonPrimary}>Save</Button>
+
+// Use tokens directly
+<Typography sx={{ color: colors.gray[700], fontSize: typography.sizes.sm }}>
+  Label
+</Typography>
+```
+
+### Core Components Usage
+```typescript
+import { PageHeader, StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField, StatusBadge } from '@/components/core'
+
+// Page with breadcrumbs
+<PageHeader
+  title="Conventions"
+  breadcrumbs={[
+    { label: 'Accueil', path: '/dashboard' },
+    { label: 'Conventions' },
+  ]}
+  actions={<Button>Nouveau</Button>}
+/>
+
+// Form page pattern
+<form onSubmit={handleSubmit}>
+  <StickyActionBar title="Nouvelle Convention" showBack backUrl="/conventions" isSubmitting={loading} submitType="submit" />
+  <FormLayout>
+    <FormPageSection title="Informations" divider={false}>
+      <FormGroup columns={2}>
+        <FormField><TextField label="Code" /></FormField>
+        <FormField><TextField label="Nom" /></FormField>
+      </FormGroup>
+    </FormPageSection>
+  </FormLayout>
+</form>
+
+// Status badges
+<StatusBadge status="VALIDEE" />
+<StatusBadge status="BROUILLON" size="small" />
+```
 
 ### API Client Usage
 ```typescript
@@ -558,8 +668,8 @@ const newItem = await conventionsAPI.create({ /* ... */ })
 import { useAuth } from '@/contexts/AuthContext'
 
 function MyComponent() {
-  const { user, isAuthenticated, logout } = useAuth()
-  // ...
+  const { user, isAuthenticated, logout, hasRole, isAdmin, isManager } = useAuth()
+  // hasRole('ADMIN'), hasAnyRole(['ADMIN', 'MANAGER'])
 }
 ```
 
@@ -577,13 +687,16 @@ function MyComponent() {
 1. **French Naming:** All business entities use French names (Convention, Marché, Décompte, etc.)
 2. **JSONB Storage:** Use PostgreSQL JSONB for flexible data structures (analytical dimensions, amendments)
 3. **Null Safety:** Kotlin: `Type?` = nullable, `Type` = non-null. TypeScript strict mode enabled
-4. **JWT Refresh:** Auto-refreshed via Axios interceptor. Logout only on refresh failure
+4. **JWT Refresh:** Auto-refreshed via Axios interceptor + proactive 30s polling. Logout on refresh failure
 5. **API Proxy:** Dev server proxies `/api` → `http://localhost:8080`
 6. **Generic CRUD:** All backend services extend `GenericCrudService` for boilerplate reduction
-7. **UI Framework:** MUI for complex components, Tailwind for layout/spacing
-8. **Number Formatting:** French format (1 000 000,00) with automatic parsing
-9. **Error Handling:** Backend uses `@ControllerAdvice`. Frontend shows toast via `ToastContext`
-10. **Reporting:** `ReportingAnalytiquePage` demonstrates dynamic JSONB filters
+7. **Design System:** All UI values (colors, typography, spacing, shadows) come from `designSystem.ts`. No hardcoded values
+8. **Core Components:** Use `PageHeader`, `StickyActionBar`, `FormLayout`, `StatusBadge` from `@/components/core`
+9. **No Gradients:** UI follows flat, professional design. No gradient backgrounds in content areas
+10. **Security Annotations:** Use `@ReadAccess`, `@WriteAccess`, `@AdminOnly` instead of `@PreAuthorize`. Role hierarchy handles inheritance
+11. **Number Formatting:** French format (1 000 000,00) with automatic parsing
+12. **Error Handling:** Backend uses `@ControllerAdvice`. Frontend shows toast via `ToastContext`
+13. **Reporting:** `ReportingAnalytiquePage` demonstrates dynamic JSONB filters
 
 ## Deployment
 

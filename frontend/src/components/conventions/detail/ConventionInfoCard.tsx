@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Box, Paper, Typography, Chip, Divider, Button } from '@mui/material'
-import { ExpandMore, ExpandLess, Lock, LockOpen } from '@mui/icons-material'
+import { Box, Paper, Typography, Chip, Divider } from '@mui/material'
+import { Lock, LockOpen } from '@mui/icons-material'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 
 interface Convention {
   id: number
@@ -26,8 +26,6 @@ interface ConventionInfoCardProps {
 }
 
 const ConventionInfoCard = ({ convention, canEdit, getStatusColor }: ConventionInfoCardProps) => {
-  const [expandedDescription, setExpandedDescription] = useState(false)
-
   return (
     <Paper sx={{ p: 3 }}>
       <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
@@ -77,47 +75,7 @@ const ConventionInfoCard = ({ convention, canEdit, getStatusColor }: ConventionI
           <Typography variant="caption" color="text.secondary" gutterBottom display="block">
             Objet de la convention
           </Typography>
-          {(() => {
-            const objetText = convention.objet || ''
-            const isLongText = objetText.length > 300
-            return (
-              <>
-                <Box
-                  sx={{
-                    '& p': { margin: '0.5em 0' },
-                    '& ul, & ol': { marginLeft: '1.5em' },
-                    '& strong': { fontWeight: 600 },
-                    '& em': { fontStyle: 'italic' },
-                    maxHeight: expandedDescription ? 'none' : '100px',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    '&::after': !expandedDescription && isLongText
-                      ? {
-                          content: '""',
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: '40px',
-                          background: 'linear-gradient(transparent, white)',
-                        }
-                      : {},
-                  }}
-                  dangerouslySetInnerHTML={{ __html: objetText }}
-                />
-                {isLongText && (
-                  <Button
-                    size="small"
-                    onClick={() => setExpandedDescription(!expandedDescription)}
-                    endIcon={expandedDescription ? <ExpandLess /> : <ExpandMore />}
-                    sx={{ mt: 1 }}
-                  >
-                    {expandedDescription ? 'Voir moins' : 'Voir plus'}
-                  </Button>
-                )}
-              </>
-            )
-          })()}
+          <RichTextDisplay html={convention.objet || ''} />
         </Box>
 
         <Box>

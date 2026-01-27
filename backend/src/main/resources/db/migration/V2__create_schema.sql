@@ -941,6 +941,38 @@ COMMENT ON COLUMN convention_modifications.champs_modifies IS 'Liste des champs 
 COMMENT ON COLUMN convention_modifications.type_modification IS 'Type: UPDATE, STATUS_CHANGE, PARTNER_CHANGE, etc.';
 
 -- ============================================================================
+-- SECTION: PARAMÉTRAGE DES CONVENTIONS
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS convention_configurations (
+    id BIGSERIAL PRIMARY KEY,
+    code_mask_pattern VARCHAR(200) NOT NULL,
+    code_mask_placeholder VARCHAR(100) NOT NULL,
+    numero_mask_pattern VARCHAR(200) NOT NULL,
+    numero_mask_placeholder VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN DEFAULT TRUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS convention_type_configurations (
+    id BIGSERIAL PRIMARY KEY,
+    configuration_id BIGINT NOT NULL REFERENCES convention_configurations(id) ON DELETE CASCADE,
+    type_code VARCHAR(50) NOT NULL,
+    libelle VARCHAR(150) NOT NULL,
+    enabled BOOLEAN DEFAULT TRUE NOT NULL,
+    ordre_affichage INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN DEFAULT TRUE NOT NULL,
+    UNIQUE(configuration_id, type_code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_convention_configuration_actif ON convention_configurations(actif);
+CREATE INDEX IF NOT EXISTS idx_convention_type_config_configuration ON convention_type_configurations(configuration_id);
+CREATE INDEX IF NOT EXISTS idx_convention_type_config_type_code ON convention_type_configurations(type_code);
+
+-- ============================================================================
 -- END OF SCHEMA DEFINITION
 -- ============================================================================
 -- Total Tables: 41+

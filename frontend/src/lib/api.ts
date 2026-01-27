@@ -643,4 +643,9 @@ export const categoriesDepensesAPI = {
   delete: (id: number) => api.delete(`/categories-depenses/${id}`),
 }
 
+export const conventionConfigurationAPI = {
+  get: () => api.get('/parametrage/conventions'),
+  update: (data: Record<string, unknown>) => api.put('/parametrage/conventions', data),
+}
+
 export default api

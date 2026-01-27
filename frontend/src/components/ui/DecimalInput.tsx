@@ -80,7 +80,7 @@ const DecimalInput = ({
 
   const evaluateExpression = (expression: string): number => {
     const cleaned = expression.replace(/\s/g, '').replace(',', '.')
-    if (!/^[\\d+\\-*/().]+$/.test(cleaned)) {
+    if (!/^[\\d+*/().-]+$/.test(cleaned)) {
       return NaN
     }
 

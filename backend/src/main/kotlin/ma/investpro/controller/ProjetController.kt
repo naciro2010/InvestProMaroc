@@ -6,16 +6,25 @@ import ma.investpro.entity.Projet
 import ma.investpro.entity.StatutProjet
 import ma.investpro.mapper.ProjetMapper
 import ma.investpro.service.ProjetService
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 
+/**
+ * Contrôleur REST pour la gestion des Projets.
+ *
+ * SÉCURITÉ (via hiérarchie des rôles):
+ * - @ReadAccess: USER, MANAGER, ADMIN
+ * - @WriteAccess: MANAGER, ADMIN
+ * - @AdminOnly: ADMIN uniquement
+ */
 @RestController
 @RequestMapping("/api/projets")
-@CrossOrigin(origins = ["http://localhost:5173", "http://localhost:3000", "https://naciro2010.github.io"])
 class ProjetController(
     private val projetService: ProjetService,
     private val projetMapper: ProjetMapper
@@ -24,7 +33,7 @@ class ProjetController(
     // ========== CRUD Endpoints ==========
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAll(): ResponseEntity<List<ProjetDTO>> {
         val projets = projetService.findAll()
         val dtos = projetMapper.toDTOList(projets)
@@ -32,7 +41,7 @@ class ProjetController(
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getById(@PathVariable id: Long): ResponseEntity<ProjetDTO> {
         val projet = projetService.findById(id)
             ?: return ResponseEntity.notFound().build()
@@ -41,7 +50,7 @@ class ProjetController(
     }
 
     @GetMapping("/code/{code}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByCode(@PathVariable code: String): ResponseEntity<ProjetDTO> {
         val projet = projetService.findByCode(code)
             ?: return ResponseEntity.notFound().build()
@@ -50,7 +59,7 @@ class ProjetController(
     }
 
     @GetMapping("/statut/{statut}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByStatut(@PathVariable statut: StatutProjet): ResponseEntity<List<ProjetDTO>> {
         val projets = projetService.findByStatut(statut)
         val dtos = projetMapper.toDTOList(projets)
@@ -58,7 +67,7 @@ class ProjetController(
     }
 
     @GetMapping("/actifs")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getActifs(): ResponseEntity<List<ProjetSimpleDTO>> {
         val projets = projetService.findProjetsActifs()
         val dtos = projetMapper.toSimpleDTOList(projets)
@@ -66,7 +75,7 @@ class ProjetController(
     }
 
     @GetMapping("/en-retard")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getEnRetard(): ResponseEntity<List<ProjetDTO>> {
         val projets = projetService.findProjetsEnRetard()
         val dtos = projetMapper.toDTOList(projets)
@@ -74,7 +83,7 @@ class ProjetController(
     }
 
     @GetMapping("/convention/{conventionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByConvention(@PathVariable conventionId: Long): ResponseEntity<List<ProjetSimpleDTO>> {
         val projets = projetService.findByConventionId(conventionId)
         val dtos = projetMapper.toSimpleDTOList(projets)
@@ -82,7 +91,7 @@ class ProjetController(
     }
 
     @GetMapping("/chef-projet/{chefProjetId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByChefProjet(@PathVariable chefProjetId: Long): ResponseEntity<List<ProjetSimpleDTO>> {
         val projets = projetService.findByChefProjetId(chefProjetId)
         val dtos = projetMapper.toSimpleDTOList(projets)
@@ -90,7 +99,7 @@ class ProjetController(
     }
 
     @GetMapping("/periode")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByPeriode(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) debut: LocalDate,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) fin: LocalDate
@@ -101,7 +110,7 @@ class ProjetController(
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun search(@RequestParam q: String): ResponseEntity<List<ProjetSimpleDTO>> {
         val projets = projetService.search(q)
         val dtos = projetMapper.toSimpleDTOList(projets)
@@ -109,7 +118,7 @@ class ProjetController(
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun create(@RequestBody projet: Projet): ResponseEntity<ProjetDTO> {
         return try {
             val created = projetService.create(projet)
@@ -121,7 +130,7 @@ class ProjetController(
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun update(
         @PathVariable id: Long,
         @RequestBody projet: Projet
@@ -136,7 +145,7 @@ class ProjetController(
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun delete(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
             projetService.delete(id)
@@ -149,7 +158,7 @@ class ProjetController(
     // ========== Workflow Endpoints ==========
 
     @PostMapping("/{id}/demarrer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun demarrer(@PathVariable id: Long): ResponseEntity<ProjetDTO> {
         return try {
             val projet = projetService.demarrer(id)
@@ -161,7 +170,7 @@ class ProjetController(
     }
 
     @PostMapping("/{id}/suspendre")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun suspendre(
         @PathVariable id: Long,
         @RequestParam(required = false) motif: String?
@@ -176,7 +185,7 @@ class ProjetController(
     }
 
     @PostMapping("/{id}/reprendre")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun reprendre(@PathVariable id: Long): ResponseEntity<ProjetDTO> {
         return try {
             val projet = projetService.reprendre(id)
@@ -188,7 +197,7 @@ class ProjetController(
     }
 
     @PostMapping("/{id}/terminer")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun terminer(@PathVariable id: Long): ResponseEntity<ProjetDTO> {
         return try {
             val projet = projetService.terminer(id)
@@ -200,7 +209,7 @@ class ProjetController(
     }
 
     @PostMapping("/{id}/annuler")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun annuler(
         @PathVariable id: Long,
         @RequestParam(required = false) motif: String?
@@ -215,7 +224,7 @@ class ProjetController(
     }
 
     @PutMapping("/{id}/avancement")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun mettreAJourAvancement(
         @PathVariable id: Long,
         @RequestParam pourcentage: Double
@@ -232,7 +241,7 @@ class ProjetController(
     // ========== Statistics ==========
 
     @GetMapping("/statistiques")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getStatistiques(): ResponseEntity<Map<String, Long>> {
         val stats = projetService.getStatistiques()
         return ResponseEntity.ok(stats)

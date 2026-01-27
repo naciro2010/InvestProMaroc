@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios'
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import {
   ApiResponse,
   LoginRequest,
@@ -20,6 +20,7 @@ import {
   User,
   AuthResponse,
 } from '@/types/api'
+import authService from './authService'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
@@ -32,7 +33,9 @@ export const api = axios.create({
 
 // ==================== UTILITY FUNCTIONS ====================
 
-// Event pour envoyer les notifications d'erreur
+/**
+ * Dispatch un événement toast pour afficher une notification.
+ */
 const dispatchToastEvent = (message: string, type: 'error' | 'success' | 'warning' | 'info') => {
   window.dispatchEvent(
     new CustomEvent('showToast', {
@@ -41,94 +44,48 @@ const dispatchToastEvent = (message: string, type: 'error' | 'success' | 'warnin
   )
 }
 
-// Fonction pour déconnecter l'utilisateur (robuste)
-const logoutUser = (): void => {
-  try {
-    console.warn('🔒 Déconnexion en cours...')
-
-    // Nettoyer tous les tokens et données utilisateur
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('user')
-    localStorage.removeItem('authToken') // Ancien format
-    localStorage.removeItem('token') // Alternative
-
-    // Afficher un message de déconnexion
-    dispatchToastEvent('🔒 Session expirée ou invalide. Veuillez vous reconnecter.', 'warning')
-
-    // Rediriger vers la page de connexion après un court délai
-    setTimeout(() => {
-      console.log('📍 Redirection vers /login')
-      window.location.href = '/login'
-    }, 800)
-  } catch (error) {
-    console.error('❌ Erreur lors du logout:', error)
-    // Force la redirection même en cas d'erreur
-    window.location.href = '/login'
-  }
-}
-
-// Fonction pour vérifier si un token JWT est expiré
-const isTokenExpired = (token: string): boolean => {
-  try {
-    if (!token) return true
-    const parts = token.split('.')
-    if (parts.length !== 3) return true // Token JWT invalide
-
-    const payload = JSON.parse(atob(parts[1]))
-    const expirationTime = payload.exp * 1000 // Convertir en millisecondes
-    const now = Date.now()
-
-    // Considérer le token comme expiré s'il reste moins de 60 secondes (au lieu de 30)
-    const isExpired = expirationTime < (now + 60000)
-
-    if (isExpired) {
-      console.warn('⏰ Token expiré:', {
-        expirationTime: new Date(expirationTime),
-        now: new Date(now),
-        secondsRemaining: (expirationTime - now) / 1000
-      })
-    }
-
-    return isExpired
-  } catch (error) {
-    console.error('❌ Erreur lors du décodage du token:', error)
-    return true // Si on ne peut pas décoder, considérer comme expiré
-  }
-}
-
 // ==================== INTERCEPTORS ====================
 
-// Request interceptor pour ajouter le token et vérifier son expiration
+/**
+ * Request Interceptor:
+ * - Vérifie si le token est expiré AVANT d'envoyer la requête
+ * - Ajoute le token Authorization si disponible
+ * - Redirige vers login si le token est expiré et pas de refresh token
+ */
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken')
-    const refreshToken = localStorage.getItem('refreshToken')
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+  (config: InternalAxiosRequestConfig) => {
+    const token = authService.getAccessToken()
+    const refreshToken = authService.getRefreshToken()
+    const user = authService.getStoredUser()
 
+    // Si pas de token, laisser passer (sera bloqué par le backend si nécessaire)
     if (!token) {
-      console.warn('⚠️ Aucun token disponible. Utilisateur non authentifié.')
-      dispatchToastEvent('🔐 Vous n\'êtes pas connecté. Veuillez vous reconnecter.', 'warning')
+      console.warn('⚠️ Aucun token disponible. Requête envoyée sans authentification.')
       return config
     }
 
-    // Vérifier si le token est expiré avant d'envoyer la requête
-    if (isTokenExpired(token)) {
+    // Vérifier si le token est expiré AVANT d'envoyer la requête
+    if (authService.isTokenExpired(token)) {
       console.warn('⏰ Token expiré détecté avant la requête.')
 
+      // Si pas de refresh token, déconnecter immédiatement
       if (!refreshToken) {
-        console.warn('🔒 Token expiré et pas de refreshToken. Déconnexion immédiate...')
-        dispatchToastEvent('🔒 Votre session a expiré. Veuillez vous reconnecter.', 'warning')
-        logoutUser()
+        console.warn('🔒 Token expiré et pas de refreshToken. Déconnexion...')
+        authService.logoutDueToExpiration()
         return Promise.reject(new Error('Token expiré - Reconnexion nécessaire'))
-      } else {
-        console.log('🔄 Token en cours d\'expiration, tentative de refresh...')
       }
+
+      // Si refresh token existe, laisser passer - le response interceptor gérera le 401
+      console.log('🔄 Token expiré mais refreshToken disponible. La requête sera réessayée après refresh.')
     }
 
     // Ajouter le token au header
     config.headers.Authorization = `Bearer ${token}`
-    console.debug(`📤 ${config.method?.toUpperCase()} ${config.url} | User: ${user?.username} | Roles: ${user?.roles?.join(', ')}`)
+
+    // Log de debug (niveau debug pour ne pas polluer la console)
+    if (import.meta.env.DEV) {
+      console.debug(`📤 ${config.method?.toUpperCase()} ${config.url} | User: ${user?.username || 'unknown'}`)
+    }
 
     return config
   },
@@ -138,130 +95,124 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor pour gérer les erreurs
+/**
+ * Response Interceptor:
+ * - Gère les erreurs 401 (token expiré) avec refresh automatique
+ * - Gère les erreurs 403 (accès refusé)
+ * - Affiche des toasts pour les erreurs communes
+ */
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
-    // Si erreur 401 et pas déjà retry
+    // ==================== 401 - Token expiré ====================
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
-      const refreshToken = localStorage.getItem('refreshToken')
+      const refreshToken = authService.getRefreshToken()
 
       // Si pas de refreshToken, déconnecter immédiatement
       if (!refreshToken) {
-        console.warn('🔒 Token expiré et aucun refreshToken disponible. Déconnexion...')
-        logoutUser()
+        console.warn('🔒 Erreur 401 et aucun refreshToken disponible. Déconnexion...')
+        authService.logoutDueToExpiration()
         return Promise.reject(error)
       }
 
-      try {
-        console.log('🔄 Tentative de refresh du token JWT...')
-        const { data } = await axios.post<ApiResponse<{ accessToken: string }>>(`${API_URL}/auth/refresh`, null, {
-          params: { refreshToken },
-          // Important: pas d'interceptors pour cette requête
-          transformRequest: [(d) => d],
-          transformResponse: [(d) => (typeof d === 'string' ? JSON.parse(d) : d)]
+      // Éviter les refresh multiples simultanés
+      if (authService.isRefreshingToken()) {
+        // Attendre que le refresh en cours se termine
+        return new Promise((resolve, reject) => {
+          authService.subscribeToTokenRefresh((newToken: string) => {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`
+            resolve(api(originalRequest))
+          })
         })
+      }
 
-        // Vérifier que la réponse contient bien un nouveau token
+      try {
+        authService.setRefreshingToken(true)
+        console.log('🔄 Tentative de refresh du token JWT...')
+
+        // Appel direct à axios pour éviter les interceptors
+        const { data } = await axios.post<ApiResponse<{ accessToken: string }>>(
+          `${API_URL}/auth/refresh`,
+          null,
+          { params: { refreshToken } }
+        )
+
         if (data?.data?.accessToken) {
-          localStorage.setItem('accessToken', data.data.accessToken)
-          originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
+          const newToken = data.data.accessToken
+          authService.updateAccessToken(newToken)
+          authService.onTokenRefreshed(newToken)
 
-          console.log('✅ Token rafraîchi avec succès. Renvoi de la requête originale...')
+          console.log('✅ Token rafraîchi avec succès.')
+
+          // Réessayer la requête originale avec le nouveau token
+          originalRequest.headers.Authorization = `Bearer ${newToken}`
           return api(originalRequest)
         } else {
           console.error('❌ Réponse de refresh invalide:', data)
-          dispatchToastEvent('🔒 Impossible de renouveler votre session. Veuillez vous reconnecter.', 'error')
-          logoutUser()
+          authService.logoutDueToExpiration()
           return Promise.reject(new Error('Impossible de rafraîchir le token'))
         }
-      } catch (refreshError: any) {
-        // Si le refresh échoue (400, 401, 500, etc), déconnecter l'utilisateur
-        console.error('❌ Échec du refresh token (Erreur ' + refreshError.response?.status + '):', {
-          status: refreshError.response?.status,
-          message: refreshError.response?.data?.message || refreshError.message,
+      } catch (refreshError) {
+        const axiosRefreshError = refreshError as AxiosError
+        console.error('❌ Échec du refresh token:', {
+          status: axiosRefreshError.response?.status,
+          message: axiosRefreshError.message,
         })
-        dispatchToastEvent(
-          '🔒 Votre session a expiré et ne peut pas être renouvelée. Veuillez vous reconnecter.',
-          'error'
-        )
-        logoutUser()
+        authService.logoutDueToExpiration()
         return Promise.reject(refreshError)
+      } finally {
+        authService.setRefreshingToken(false)
       }
     }
 
-    // Si erreur 403 (Forbidden) - Pas de permission OU token expiré
+    // ==================== 403 - Accès refusé ====================
     if (error.response?.status === 403) {
-      const token = localStorage.getItem('accessToken')
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const roles = user?.roles?.join(', ') || 'Aucun rôle'
+      const token = authService.getAccessToken()
+      const user = authService.getStoredUser()
       const endpoint = error.config?.url || 'inconnu'
       const method = error.config?.method?.toUpperCase() || 'REQUEST'
 
-      // Vérifier si le token est expiré
-      const tokenExpired = token && isTokenExpired(token)
+      // Vérifier si le token est expiré (peut causer un faux 403)
+      if (token && authService.isTokenExpired(token)) {
+        console.warn('🔒 Token expiré détecté lors d\'une erreur 403. Déconnexion...')
+        authService.logoutDueToExpiration()
+        return Promise.reject(error)
+      }
 
+      // C'est un vrai problème de permissions
+      const roles = user?.roles?.join(', ') || 'Aucun rôle'
       console.error('❌ Erreur 403 - Accès refusé:', {
         endpoint,
         method,
         userRoles: roles,
         user: user?.username,
-        tokenExpired,
-        backendMessage: error.response?.data?.message
       })
 
-      // Si le token est expiré, forcer un logout
-      if (tokenExpired) {
-        console.warn('🔒 Token expiré détecté lors d\'une erreur 403. Déconnexion forcée...')
-        dispatchToastEvent(
-          '🔒 Votre session a expiré. Veuillez vous reconnecter.',
-          'warning'
-        )
-        logoutUser()
-        return Promise.reject(new Error('Token expiré - Reconnexion nécessaire'))
-      }
-
-      // Sinon, c'est un vrai problème de permissions
-      const errorMessage = `❌ Accès Refusé
-
-Opération: ${method} ${endpoint}
-Votre rôle: ${roles}
-
-Vous n'avez pas les permissions nécessaires pour effectuer cette action.
-${error.response?.data?.message ? `Détail: ${error.response.data.message}` : ''}
-
-Rôles requis: Généralement ADMIN ou MANAGER pour les opérations de création/modification.`
-
-      console.error(errorMessage)
       dispatchToastEvent(
-        `❌ Accès refusé. Vous êtes ${user?.username} avec le rôle ${roles}. Vous devez être ADMIN ou MANAGER pour cette opération.`,
+        `❌ Accès refusé pour ${method} ${endpoint}. Vous êtes "${user?.username}" avec le rôle "${roles}".`,
         'error'
       )
     }
 
-    // Si erreur 404 (Not Found)
+    // ==================== 404 - Non trouvé ====================
     if (error.response?.status === 404) {
-      dispatchToastEvent(
-        '⚠️ L\'élément demandé n\'a pas été trouvé.',
-        'warning'
-      )
+      dispatchToastEvent('⚠️ L\'élément demandé n\'a pas été trouvé.', 'warning')
     }
 
-    // Si erreur 500 (Server Error)
-    if (error.response?.status >= 500) {
-      dispatchToastEvent(
-        '🔥 Une erreur serveur s\'est produite. Veuillez réessayer plus tard.',
-        'error'
-      )
+    // ==================== 500+ - Erreur serveur ====================
+    if (error.response?.status && error.response.status >= 500) {
+      dispatchToastEvent('🔥 Une erreur serveur s\'est produite. Veuillez réessayer plus tard.', 'error')
     }
 
     return Promise.reject(error)
   }
 )
+
+// ==================== API ENDPOINTS ====================
 
 // Auth API
 export const authAPI = {
@@ -410,7 +361,7 @@ export const partenairesAPI = {
 // Marchés API
 export const marchesAPI = {
   getAll: () => api.get('/marches'),
-  getList: () => api.get('/marches/list'), // Optimized list for frontend (micro-frontends pattern)
+  getList: () => api.get('/marches/list'),
   getStats: () => api.get('/marches/stats'),
   getActive: () => api.get('/marches/active'),
   getById: (id: number) => api.get(`/marches/${id}`),
@@ -471,7 +422,7 @@ export const budgetsAPI = {
 // Décomptes API
 export const decomptesAPI = {
   getAll: () => api.get('/decomptes'),
-  getList: () => api.get('/decomptes/list'), // Optimized list for frontend (micro-frontends pattern)
+  getList: () => api.get('/decomptes/list'),
   getByMarche: (marcheId: number) => api.get(`/decomptes?marcheId=${marcheId}`),
   getById: (id: number) => api.get(`/decomptes/${id}`),
   create: (data: CreateDecompteDTO) => api.post('/decomptes', data),
@@ -684,7 +635,7 @@ export const versementsPrevisionnelsAPI = {
 export const categoriesDepensesAPI = {
   getAll: () => api.get('/categories-depenses'),
   getAllActive: () => api.get('/categories-depenses/active'),
-  getList: () => api.get('/categories-depenses/list'), // Optimized for dropdowns
+  getList: () => api.get('/categories-depenses/list'),
   getById: (id: number) => api.get(`/categories-depenses/${id}`),
   getByCode: (code: string) => api.get(`/categories-depenses/code/${code}`),
   create: (data: Record<string, unknown>) => api.post('/categories-depenses', data),

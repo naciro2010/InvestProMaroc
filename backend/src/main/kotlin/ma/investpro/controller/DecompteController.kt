@@ -6,10 +6,12 @@ import ma.investpro.entity.DecompteRetenue
 import ma.investpro.entity.DecompteImputation
 import ma.investpro.service.DecompteService
 import ma.investpro.mapper.DecompteMapper
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
@@ -17,21 +19,23 @@ private val logger = KotlinLogging.logger {}
 
 data class RejetRequest(val motif: String)
 
+/**
+ * Contrôleur REST pour la gestion des Décomptes.
+ *
+ * SÉCURITÉ (via hiérarchie des rôles):
+ * - @ReadAccess: USER, MANAGER, ADMIN
+ * - @WriteAccess: MANAGER, ADMIN
+ * - @AdminOnly: ADMIN uniquement
+ */
 @RestController
 @RequestMapping("/api/decomptes")
-@CrossOrigin(origins = ["*"])
 class DecompteController(
     private val decompteService: DecompteService,
     private val decompteMapper: DecompteMapper
 ) {
 
-    /**
-     * Optimized list endpoint for frontend list view
-     * Returns minimal fields per decompte for efficient loading
-     * Supports micro-frontends pattern where each component loads only what it needs
-     */
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getDecomptesList(): ResponseEntity<List<DecompteListDTO>> {
         logger.info { "🌐 API: GET /api/decomptes/list (optimized for list view)" }
         val decomptes = decompteService.findAllForListView()
@@ -39,7 +43,7 @@ class DecompteController(
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllDecomptes(): ResponseEntity<ApiResponse<List<DecompteDTO>>> {
         logger.info { "🌐 API: GET /api/decomptes (full list with DTOs)" }
         val decomptes = decompteService.findAll()
@@ -47,12 +51,8 @@ class DecompteController(
         return ResponseEntity.ok(ApiResponse.success(dtos))
     }
 
-    /**
-     * ✅ FIXED: Returns DecompteDTO instead of Entity
-     * Eliminates circular references and provides flattened data
-     */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getDecompteById(@PathVariable id: Long): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: GET /api/decomptes/$id (returns DTO)" }
         return try {
@@ -69,7 +69,7 @@ class DecompteController(
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun createDecompte(@RequestBody decompte: Decompte): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: POST /api/decomptes - Création décompte ${decompte.numeroDecompte}" }
         return try {
@@ -83,7 +83,7 @@ class DecompteController(
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun updateDecompte(@PathVariable id: Long, @RequestBody decompte: Decompte): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: PUT /api/decomptes/$id" }
         return try {
@@ -97,7 +97,7 @@ class DecompteController(
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun deleteDecompte(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         logger.info { "🌐 API: DELETE /api/decomptes/$id" }
         return try {
@@ -110,7 +110,7 @@ class DecompteController(
     }
 
     @GetMapping("/marche/{marcheId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getDecomptesByMarche(@PathVariable marcheId: Long): ResponseEntity<ApiResponse<List<DecompteDTO>>> {
         logger.info { "🌐 API: GET /api/decomptes/marche/$marcheId" }
         val decomptes = decompteService.findByMarche(marcheId)
@@ -118,14 +118,8 @@ class DecompteController(
         return ResponseEntity.ok(ApiResponse.success(dtos))
     }
 
-    /**
-     * ✅ FIXED: Granular endpoint converting entities to DTOs
-     * Get retentions for a specific decompte
-     * Called by detail page component to load retentions separately
-     * Part of micro-frontends architecture
-     */
     @GetMapping("/{id}/retenues")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getDecompteRetenues(@PathVariable id: Long): ResponseEntity<ApiResponse<List<DecompteRetenueDTO>>> {
         logger.info { "🌐 API: GET /api/decomptes/$id/retenues (granular: retentions only)" }
         return try {
@@ -138,14 +132,8 @@ class DecompteController(
         }
     }
 
-    /**
-     * ✅ FIXED: Granular endpoint converting entities to DTOs
-     * Get imputations for a specific decompte
-     * Called by detail page component to load allocations separately
-     * Part of micro-frontends architecture
-     */
     @GetMapping("/{id}/imputations")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getDecompteImputations(@PathVariable id: Long): ResponseEntity<ApiResponse<List<DecompteImputationDTO>>> {
         logger.info { "🌐 API: GET /api/decomptes/$id/imputations (granular: allocations only)" }
         return try {
@@ -158,20 +146,14 @@ class DecompteController(
         }
     }
 
-    /**
-     * ✅ NEW: Workflow endpoint - Valider un décompte
-     * Changes status from SOUMIS to VALIDE
-     */
     @PostMapping("/{id}/valider")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun validerDecompte(
         @PathVariable id: Long,
         @org.springframework.security.core.annotation.AuthenticationPrincipal userDetails: org.springframework.security.core.userdetails.UserDetails
     ): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: POST /api/decomptes/$id/valider - Validation du décompte par ${userDetails.username}" }
         return try {
-            // Get user ID from username (assuming username is the ID or you have a User service)
-            // For now, using a placeholder - this should be improved with proper User lookup
             val userId = 1L // TODO: Get from UserService based on userDetails.username
             val decompte = decompteService.valider(id, userId)
             val dto = decompteMapper.toDTO(decompte)
@@ -186,13 +168,8 @@ class DecompteController(
         }
     }
 
-    /**
-     * ✅ NEW: Workflow endpoint - Rejeter un décompte
-     * Changes status from SOUMIS to REJETE
-     * Note: motif is logged but not currently stored in entity (can be improved)
-     */
     @PostMapping("/{id}/rejeter")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun rejeterDecompte(
         @PathVariable id: Long,
         @RequestBody request: RejetRequest
@@ -212,12 +189,8 @@ class DecompteController(
         }
     }
 
-    /**
-     * ✅ NEW: Workflow endpoint - Soumettre un décompte
-     * Changes status from BROUILLON to SOUMIS
-     */
     @PostMapping("/{id}/soumettre")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun soumettreDecompte(@PathVariable id: Long): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: POST /api/decomptes/$id/soumettre - Soumission du décompte" }
         return try {

@@ -5,41 +5,41 @@ import ma.investpro.entity.Marche
 import ma.investpro.entity.StatutMarche
 import ma.investpro.service.MarcheService
 import ma.investpro.mapper.MarcheMapper
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 private val logger = KotlinLogging.logger {}
 
+/**
+ * Contrôleur REST pour la gestion des Marchés.
+ *
+ * SÉCURITÉ (via hiérarchie des rôles):
+ * - @ReadAccess: USER, MANAGER, ADMIN
+ * - @WriteAccess: MANAGER, ADMIN
+ * - @AdminOnly: ADMIN uniquement
+ */
 @RestController
 @RequestMapping("/api/marches")
-@CrossOrigin(origins = ["*"])
 class MarcheController(
     private val marcheService: MarcheService,
     private val marcheMapper: MarcheMapper
 ) {
 
-    /**
-     * Optimized list endpoint for frontend list view
-     * Returns minimal fields per marche for efficient loading
-     * Supports micro-frontends pattern where each component loads only what it needs
-     */
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarchesList(): ResponseEntity<List<MarcheListDTO>> {
         logger.info { "🌐 API: GET /api/marches/list (optimized for list view)" }
         val marches = marcheService.findAllForListView()
         return ResponseEntity.ok(marches)
     }
 
-    /**
-     * Statistics endpoint for dashboard/summary
-     * Returns counts and aggregations without loading full entities
-     */
     @GetMapping("/stats")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarchesStats(): ResponseEntity<Map<String, Any>> {
         logger.info { "🌐 API: GET /api/marches/stats" }
         val stats = marcheService.getMarcheStats()
@@ -47,7 +47,7 @@ class MarcheController(
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllMarches(): ResponseEntity<ApiResponse<List<MarcheDTO>>> {
         logger.info { "🌐 API: GET /api/marches (returns DTOs)" }
         val marches = marcheService.findAll()
@@ -55,12 +55,8 @@ class MarcheController(
         return ResponseEntity.ok(ApiResponse.success(dtos))
     }
 
-    /**
-     * ✅ FIXED: Returns DTO instead of Entity
-     * Eliminates circular references and provides flattened data
-     */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarcheById(@PathVariable id: Long): ResponseEntity<ApiResponse<MarcheDTO>> {
         logger.info { "🌐 API: GET /api/marches/$id (returns DTO)" }
         return try {
@@ -75,7 +71,7 @@ class MarcheController(
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun createMarche(@RequestBody marche: Marche): ResponseEntity<ApiResponse<MarcheDTO>> {
         logger.info { "🌐 API: POST /api/marches - Création marché ${marche.numeroMarche}" }
         return try {
@@ -91,7 +87,7 @@ class MarcheController(
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun updateMarche(@PathVariable id: Long, @RequestBody marche: Marche): ResponseEntity<ApiResponse<MarcheDTO>> {
         logger.info { "🌐 API: PUT /api/marches/$id" }
         return try {
@@ -106,7 +102,7 @@ class MarcheController(
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun deleteMarche(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         logger.info { "🌐 API: DELETE /api/marches/$id" }
         return try {
@@ -120,7 +116,7 @@ class MarcheController(
     }
 
     @GetMapping("/fournisseur/{fournisseurId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarchesByFournisseur(@PathVariable fournisseurId: Long): ResponseEntity<ApiResponse<List<MarcheDTO>>> {
         logger.info { "🌐 API: GET /api/marches/fournisseur/$fournisseurId" }
         val marches = marcheService.findByFournisseur(fournisseurId)
@@ -129,7 +125,7 @@ class MarcheController(
     }
 
     @GetMapping("/convention/{conventionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarchesByConvention(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<List<MarcheDTO>>> {
         logger.info { "🌐 API: GET /api/marches/convention/$conventionId" }
         val marches = marcheService.findByConvention(conventionId)
@@ -138,7 +134,7 @@ class MarcheController(
     }
 
     @GetMapping("/projet/{projetId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarchesByProjet(@PathVariable projetId: Long): ResponseEntity<ApiResponse<List<MarcheDTO>>> {
         logger.info { "🌐 API: GET /api/marches/projet/$projetId" }
         return try {
@@ -153,7 +149,7 @@ class MarcheController(
     }
 
     @GetMapping("/statut/{statut}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarchesByStatut(@PathVariable statut: StatutMarche): ResponseEntity<ApiResponse<List<MarcheDTO>>> {
         logger.info { "🌐 API: GET /api/marches/statut/$statut" }
         val marches = marcheService.findByStatut(statut)
@@ -162,7 +158,7 @@ class MarcheController(
     }
 
     @GetMapping("/retard")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarchesEnRetard(): ResponseEntity<ApiResponse<List<MarcheDTO>>> {
         logger.info { "🌐 API: GET /api/marches/retard" }
         val marches = marcheService.findMarchesEnRetard()
@@ -170,14 +166,8 @@ class MarcheController(
         return ResponseEntity.ok(ApiResponse.success(dtos))
     }
 
-    /**
-     * ✅ FIXED: Granular endpoint returning DTOs
-     * Get line items for a specific marche
-     * Called by detail page component to load lignes separately
-     * Part of micro-frontends architecture
-     */
     @GetMapping("/{id}/lignes")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarcheLignes(@PathVariable id: Long): ResponseEntity<ApiResponse<List<MarcheLigneDTO>>> {
         logger.info { "🌐 API: GET /api/marches/$id/lignes (granular: line items only)" }
         return try {
@@ -191,14 +181,8 @@ class MarcheController(
         }
     }
 
-    /**
-     * ✅ FIXED: Granular endpoint returning DTOs
-     * Get amendments for a specific marche
-     * Called by detail page component to load avenants separately
-     * Part of micro-frontends architecture
-     */
     @GetMapping("/{id}/avenants")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarcheAvenants(@PathVariable id: Long): ResponseEntity<ApiResponse<List<AvenantMarcheDTO>>> {
         logger.info { "🌐 API: GET /api/marches/$id/avenants (granular: amendments only)" }
         return try {
@@ -212,14 +196,8 @@ class MarcheController(
         }
     }
 
-    /**
-     * ✅ FIXED: Granular endpoint returning DTOs
-     * Get billing statements for a specific marche
-     * Called by detail page component to load decomptes separately
-     * Part of micro-frontends architecture
-     */
     @GetMapping("/{id}/decomptes")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMarcheDecomptes(@PathVariable id: Long): ResponseEntity<ApiResponse<List<DecompteSimpleDTO>>> {
         logger.info { "🌐 API: GET /api/marches/$id/decomptes (granular: billing statements only)" }
         return try {

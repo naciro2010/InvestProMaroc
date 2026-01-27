@@ -98,8 +98,9 @@ InvestProMaroc/
 │   │   ├── repository/   # Spring Data JPA
 │   │   ├── entity/       # JPA entities with BaseEntity
 │   │   ├── dto/          # Data Transfer Objects
-│   │   ├── security/     # JWT authentication
-│   │   ├── config/       # Spring configuration
+│   │   ├── security/     # JWT auth + custom annotations
+│   │   │   └── annotations/  # @ReadAccess, @WriteAccess, @AdminOnly
+│   │   ├── config/       # Spring configuration (SecurityConfig with role hierarchy)
 │   │   └── mapper/       # Entity ↔ DTO mappers
 │   └── src/main/resources/
 │       ├── application.properties
@@ -107,8 +108,15 @@ InvestProMaroc/
 ├── frontend/             # React TypeScript SPA
 │   └── src/
 │       ├── pages/        # Route-level components (Dashboard, Conventions, Marchés, etc.)
-│       ├── components/   # Reusable UI components (layout, ui)
-│       ├── lib/          # API client (axios), utilities
+│       ├── components/
+│       │   ├── core/     # Design system components (PageHeader, StickyActionBar, FormLayout, StatusBadge)
+│       │   ├── form/     # Form field components (FormTextField, FormNumberField, etc.)
+│       │   ├── layout/   # Layout components (AppLayout, Sidebar)
+│       │   └── ui/       # UI widgets (RichTextEditor, modals, etc.)
+│       ├── lib/
+│       │   ├── api.ts          # Axios client + JWT interceptors
+│       │   ├── authService.ts  # Centralized auth (token parsing, expiry, logout)
+│       │   └── designSystem.ts # Design tokens (colors, typography, spacing, shadows)
 │       ├── contexts/     # React contexts (AuthContext, ToastContext)
 │       └── types/        # TypeScript type definitions
 └── legacy/              # Old codebase (ignore)
@@ -119,9 +127,9 @@ InvestProMaroc/
 ```
 HTTP Request → JwtAuthenticationFilter (validates JWT)
               ↓
-           SecurityFilterChain (checks @PreAuthorize roles)
+           SecurityFilterChain (Role Hierarchy: ADMIN > MANAGER > USER)
               ↓
-           Controller (validates input, delegates to service)
+           Controller (@ReadAccess / @WriteAccess / @AdminOnly)
               ↓
            Service (business logic, extends GenericCrudService<Entity, Long>)
               ↓
@@ -137,13 +145,13 @@ HTTP Request → JwtAuthenticationFilter (validates JWT)
 ```
 App.tsx → React Router
           ↓
-       AuthProvider (JWT token management, refresh logic)
+       AuthProvider (JWT + proactive token check every 30s)
           ↓
-       AppLayout (sidebar, navbar, responsive)
+       AppLayout → PageHeader (breadcrumbs, title, actions)
           ↓
-       Pages (conventions, marchés, projets, décomptes)
+       Pages → Core Components (StickyActionBar, FormLayout, StatusBadge)
           ↓
-       API Client (axios with interceptors)
+       API Client (axios + authService interceptors)
           ↓
        Backend REST API (http://localhost:8080/api)
 ```
@@ -154,10 +162,13 @@ App.tsx → React Router
 |---------|----------|---------|
 | **GenericCrudService** | `backend/service/GenericCrudService.kt` | Base class for all entity services - reduces boilerplate |
 | **BaseEntity** | `backend/entity/BaseEntity.kt` | Shared audit fields (id, createdAt, updatedAt) |
-| **JWT Stateless Auth** | `backend/security/` | Access + refresh tokens, no server-side sessions |
+| **Security Annotations** | `backend/security/annotations/` | @ReadAccess, @WriteAccess, @AdminOnly with role hierarchy |
 | **DTO Pattern** | `backend/dto/` | Decouples API from JPA entities |
+| **Design System** | `frontend/src/lib/designSystem.ts` | Centralized design tokens (colors, typography, spacing) |
+| **Core Components** | `frontend/src/components/core/` | PageHeader, StickyActionBar, FormLayout, StatusBadge |
+| **Auth Service** | `frontend/src/lib/authService.ts` | JWT parsing, proactive expiry check, logout coordination |
 | **Axios Interceptors** | `frontend/src/lib/api.ts` | Auto-inject JWT, handle 401 refresh, logout on expiry |
-| **AuthContext** | `frontend/src/contexts/AuthContext.tsx` | Global auth state (React Context API) |
+| **AuthContext** | `frontend/src/contexts/AuthContext.tsx` | Global auth state with role helpers (hasRole, isAdmin) |
 | **API Response Wrapper** | Backend controllers | All responses: `{success, message, data}` |
 
 ## Business Domain Concepts
@@ -306,30 +317,44 @@ CONV-002 (CADRE) "Convention Equipement Public"
 
 ## Authentication & Security
 
+### Centralized Auth Architecture (January 2026)
+
+**Backend - Role Hierarchy + Custom Annotations:**
+- `SecurityConfig.kt`: Role Hierarchy (ADMIN > MANAGER > USER), all routes protected by default
+- `SecurityAnnotations.kt`: `@ReadAccess` (USER), `@WriteAccess` (MANAGER), `@AdminOnly` (ADMIN)
+- New routes are automatically protected via `anyRequest().authenticated()`
+- Custom 401/403 JSON responses with `X-Token-Expired` header
+
+**Frontend - 3-Layer Token Protection:**
+- `authService.ts`: Proactive token expiration check (polling every 30s)
+- `api.ts` request interceptor: Pre-check token before sending
+- `api.ts` response interceptor: Handle 401 with token refresh (queues concurrent requests)
+
 ### JWT Authentication Flow
 
 1. User logs in via `POST /api/auth/login` with username/password
 2. Backend validates credentials, returns `{accessToken, refreshToken, user}`
-3. Frontend stores tokens in `localStorage` and sets user in `AuthContext`
+3. Frontend stores tokens via `authService.storeTokens()` and sets user in `AuthContext`
 4. Axios interceptor adds `Authorization: Bearer <token>` to all requests
-5. On 401 response, interceptor tries to refresh token via `/api/auth/refresh`
-6. If refresh fails or token expired, user is logged out and redirected to `/login`
+5. Proactive token expiration check runs every 30 seconds
+6. On 401 response, interceptor refreshes via `/api/auth/refresh` (queues concurrent requests)
+7. If refresh fails or token expired, user is logged out and redirected to `/login`
 
-### Roles & Permissions
+### Roles & Permissions (with Hierarchy)
 
-| Role | Permissions | Notes |
-|------|-------------|-------|
-| **ADMIN** | Full system access | User management, configuration |
-| **MANAGER** | CRUD conventions, marchés, décomptes, paiements | Business operations |
-| **USER** | Read-only access | Reporting, exports |
+| Role | Permissions | Annotation | Notes |
+|------|-------------|------------|-------|
+| **ADMIN** | Full access (inherits MANAGER + USER) | `@AdminOnly` | User management, configuration |
+| **MANAGER** | CRUD conventions, marchés, décomptes (inherits USER) | `@WriteAccess` | Business operations |
+| **USER** | Read-only access | `@ReadAccess` | Reporting, exports |
 
 Test accounts available in `README.md` (admin/admin123, manager/manager123, user/user123).
 
 ### Security Configuration
 
-- **Backend:** Spring Security 6.x with `@PreAuthorize` annotations
-- **Frontend:** `PrivateRoute` wrapper checks `isAuthenticated` from `AuthContext`
-- **CORS:** Configured in `SecurityConfig.kt` (dev: localhost, prod: GitHub Pages)
+- **Backend:** Spring Security 6.x with role hierarchy + custom annotations (@ReadAccess, @WriteAccess, @AdminOnly)
+- **Frontend:** `PrivateRoute` wrapper + `authService.ts` proactive token check
+- **CORS:** Configured in `SecurityConfig.kt` (dev: localhost, prod: Railway)
 - **Tokens:** Access token (24h), refresh token (7d)
 
 ### Security Best Practices (January 2026)
@@ -528,12 +553,61 @@ See `CRUD_TEMPLATE.md` for detailed template.
 
 | File | Purpose |
 |------|---------|
+| `src/lib/designSystem.ts` | Design tokens (colors, typography, spacing, shadows, componentStyles) |
+| `src/lib/authService.ts` | Centralized auth (JWT parsing, expiry check, logout) |
 | `src/lib/api.ts` | Axios client with JWT interceptors and all API endpoints |
-| `src/contexts/AuthContext.tsx` | Global auth state (user, login, logout, register) |
-| `src/App.tsx` | Main routing with React Router |
+| `src/contexts/AuthContext.tsx` | Global auth state (hasRole, isAdmin, isManager) |
+| `src/components/core/` | Core micro-components (PageHeader, StickyActionBar, FormLayout, StatusBadge) |
+| `src/components/form/` | Form field components (FormTextField, FormNumberField, etc.) |
 | `src/components/layout/AppLayout.tsx` | Responsive sidebar layout |
-| `src/components/ui/` | Reusable UI components (Button, Card, Badge, Modal, etc.) |
+| `src/App.tsx` | Main routing with React Router |
 | `vite.config.ts` | Vite configuration with proxy to backend |
+
+### Design System Usage
+
+```typescript
+// Import design tokens
+import { colors, typography, spacing, componentStyles } from '@/lib/designSystem'
+
+// Use pre-built styles in sx props
+<Box sx={componentStyles.card}>...</Box>
+<Button sx={componentStyles.buttonPrimary}>Save</Button>
+
+// Use tokens directly
+<Typography sx={{ color: colors.gray[700], fontSize: typography.sizes.sm }}>Label</Typography>
+```
+
+### Core Components Usage
+
+```typescript
+import { PageHeader, StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField, StatusBadge } from '@/components/core'
+
+// Page with breadcrumbs
+<PageHeader
+  title="Conventions"
+  breadcrumbs={[
+    { label: 'Accueil', path: '/dashboard' },
+    { label: 'Conventions' },
+  ]}
+  actions={<Button>Nouveau</Button>}
+/>
+
+// Form page pattern
+<form onSubmit={handleSubmit}>
+  <StickyActionBar title="Nouvelle Convention" showBack backUrl="/conventions" isSubmitting={loading} submitType="submit" />
+  <FormLayout>
+    <FormPageSection title="Informations" divider={false}>
+      <FormGroup columns={2}>
+        <FormField><TextField label="Code" /></FormField>
+        <FormField><TextField label="Nom" /></FormField>
+      </FormGroup>
+    </FormPageSection>
+  </FormLayout>
+</form>
+
+// Status badges
+<StatusBadge status="VALIDEE" />
+```
 
 ### API Client Usage
 
@@ -550,8 +624,6 @@ const newConvention = await conventionsAPI.create({
   objet: 'Convention description',
   montant: 1000000
 })
-
-// All APIs follow same pattern: {method}API.{operation}()
 ```
 
 ### Authentication in Components
@@ -560,14 +632,8 @@ const newConvention = await conventionsAPI.create({
 import { useAuth } from '@/contexts/AuthContext'
 
 function MyComponent() {
-  const { user, isAuthenticated, logout } = useAuth()
-
-  return (
-    <div>
-      {isAuthenticated && <p>Welcome {user?.fullName}</p>}
-      <button onClick={logout}>Logout</button>
-    </div>
-  )
+  const { user, isAuthenticated, logout, hasRole, isAdmin, isManager } = useAuth()
+  // hasRole('ADMIN'), hasAnyRole(['ADMIN', 'MANAGER'])
 }
 ```
 
@@ -591,28 +657,34 @@ Use `PrivateRoute` wrapper for authenticated pages:
 
 3. **Null Safety:** Backend uses Kotlin's type system - `Type?` means nullable, `Type` means non-null. Frontend uses TypeScript strict mode.
 
-4. **JWT Refresh Logic:** Frontend automatically refreshes expired tokens via interceptor in `api.ts`. Users are logged out only if refresh fails.
+4. **JWT Refresh Logic:** Frontend uses 3-layer token protection: proactive 30s polling via `authService.ts`, request interceptor pre-check, response interceptor 401 handling with concurrent request queuing.
 
 5. **API Proxy:** Frontend Vite dev server proxies `/api` requests to `http://localhost:8080` (see `vite.config.ts`).
 
 6. **Generic CRUD Service:** All backend services extend `GenericCrudService.kt` which provides standard CRUD operations. Override only when custom logic needed.
 
-7. **Material-UI + Tailwind:** Frontend uses both MUI components and Tailwind utility classes. Prefer Tailwind for layout/spacing, MUI for complex components.
+7. **Design System:** All UI values (colors, typography, spacing, shadows) come from `designSystem.ts`. No hardcoded color values.
 
-8. **Test Credentials:** Use `admin/admin123` for testing (see README.md for full list). Change passwords before production.
+8. **Core Components:** Use `PageHeader`, `StickyActionBar`, `FormLayout`, `StatusBadge` from `@/components/core`. See `SimpleConventionForm.tsx` as reference.
 
-9. **Reporting:** The `ReportingAnalytiquePage` demonstrates dynamic JSONB queries with filters. Use this pattern for new analytical features.
+9. **No Gradients:** UI follows flat, professional design. No gradient backgrounds in content areas. Use design system tokens.
 
-10. **Error Handling:** Backend uses `@ControllerAdvice` for global exception handling. Frontend shows toast notifications via `ToastContext`.
+10. **Security Annotations:** Use `@ReadAccess`, `@WriteAccess`, `@AdminOnly` instead of `@PreAuthorize`. Role hierarchy handles inheritance (ADMIN > MANAGER > USER).
 
-11. **Convention Workflow:** Improved workflow with rejection handling:
+11. **Test Credentials:** Use `admin/admin123` for testing (see README.md for full list). Change passwords before production.
+
+12. **Reporting:** The `ReportingAnalytiquePage` demonstrates dynamic JSONB queries with filters. Use this pattern for new analytical features.
+
+13. **Error Handling:** Backend uses `@ControllerAdvice` for global exception handling. Frontend shows toast notifications via `ToastContext`.
+
+14. **Convention Workflow:** Improved workflow with rejection handling:
     - BROUILLON → SOUMIS → VALIDEE → EN_EXECUTION → ACHEVE
     - SOUMIS → REJETE (with motif) → BROUILLON (correction)
     - Status EN_COURS renamed to EN_EXECUTION for clarity
     - CreatedBy field tracks convention creator automatically
     - Rejection motif stored and displayed in UI
 
-12. **Number Formatting:** Frontend forms use French number formatting (1 000 000,00) with automatic parsing for clean UX.
+15. **Number Formatting:** Frontend forms use French number formatting (1 000 000,00) with automatic parsing for clean UX.
 
 ## Deployment
 
@@ -736,6 +808,25 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
 - **Convention Amendments System:** Full amendment (avenant) system with JSONB storage for flexible data snapshots and workflow (BROUILLON → SOUMIS → VALIDE) (January 2026)
 - **Modern Under Construction Pages:** Professional "under construction" pages with roadmap for features in development (January 2026)
 - **Backend CI/CD:** GitHub Actions workflow for automatic compilation verification on every push (January 2026)
+
+- **Centralized Auth System:** Complete auth refactor with role hierarchy and custom annotations (January 2026)
+  - Backend: Role hierarchy (ADMIN > MANAGER > USER) in SecurityConfig.kt
+  - Custom annotations: @ReadAccess, @WriteAccess, @AdminOnly (replaces verbose @PreAuthorize)
+  - All routes protected by default (anyRequest().authenticated())
+  - Frontend: authService.ts centralizes JWT parsing, token expiry, logout
+  - Proactive token expiration check (30s polling)
+  - Concurrent 401 request queuing during token refresh
+  - AuthContext extended with hasRole, hasAnyRole, isAdmin, isManager
+
+- **Design System & Core Components:** Professional UI architecture (January 2026)
+  - `designSystem.ts`: Centralized design tokens (colors, typography, spacing, shadows, componentStyles)
+  - `components/core/PageHeader.tsx`: Breadcrumbs, title, status chip, actions
+  - `components/core/StickyActionBar.tsx`: Sticky form/detail page action bar (form + custom modes)
+  - `components/core/FormLayout.tsx`: FormLayout, FormPageSection, FormGroup, FormField, FormFieldLabel
+  - `components/core/StatusBadge.tsx`: StatusBadge + StatusDot with semantic colors
+  - `components/core/index.ts`: Barrel export for all core components
+  - No gradients in content areas - flat, professional design
+  - SimpleConventionForm refactored as reference example using all core components
 
 ## Current Implementation Status
 

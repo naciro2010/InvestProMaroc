@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { AxiosError } from 'axios'
 import { authAPI } from '@/lib/api'
+import authService, { StoredUser } from '@/lib/authService'
 import { User as ApiUser } from '@/types/api'
 
 interface User extends ApiUser {
@@ -19,6 +20,22 @@ interface AuthContextType {
     fullName: string
   }) => Promise<void>
   logout: () => void
+  /**
+   * Vérifie si l'utilisateur a un rôle spécifique.
+   */
+  hasRole: (role: string) => boolean
+  /**
+   * Vérifie si l'utilisateur a au moins un des rôles spécifiés.
+   */
+  hasAnyRole: (roles: string[]) => boolean
+  /**
+   * Vérifie si l'utilisateur est admin.
+   */
+  isAdmin: boolean
+  /**
+   * Vérifie si l'utilisateur est manager (ou admin).
+   */
+  isManager: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -35,27 +52,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    // Vérifier si l'utilisateur est connecté au chargement
-    const storedUser = localStorage.getItem('user')
-    const token = localStorage.getItem('accessToken')
-
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser))
-    }
-    setIsLoading(false)
+  /**
+   * Fonction de logout appelée par le service d'authentification.
+   */
+  const handleLogout = useCallback(() => {
+    setUser(null)
   }, [])
 
+  /**
+   * Initialisation: vérifie si l'utilisateur est connecté au chargement.
+   */
+  useEffect(() => {
+    // Enregistrer le callback de logout pour synchroniser avec le service
+    authService.onLogout(handleLogout)
+
+    // Vérifier si l'utilisateur est connecté
+    const storedUser = authService.getStoredUser()
+    const token = authService.getAccessToken()
+
+    if (storedUser && token && !authService.isTokenExpired(token)) {
+      setUser(storedUser as User)
+
+      // Démarrer la vérification proactive du token (toutes les 30 secondes)
+      authService.startTokenExpirationCheck(30000)
+    } else if (token && authService.isTokenExpired(token)) {
+      // Token expiré, nettoyer
+      console.warn('⏰ Token expiré au chargement. Nettoyage...')
+      authService.clearAuthData()
+    }
+
+    setIsLoading(false)
+
+    // Cleanup: arrêter la vérification à la destruction
+    return () => {
+      authService.stopTokenExpirationCheck()
+    }
+  }, [handleLogout])
+
+  /**
+   * Connexion utilisateur.
+   */
   const login = async (username: string, password: string) => {
     try {
       const { data } = await authAPI.login(username, password)
 
       if (data.success) {
         const authData = data.data
-        localStorage.setItem('accessToken', authData.accessToken)
-        localStorage.setItem('refreshToken', authData.refreshToken)
-        localStorage.setItem('user', JSON.stringify(authData.user))
+
+        // Stocker les tokens via le service
+        authService.storeTokens({
+          accessToken: authData.accessToken,
+          refreshToken: authData.refreshToken,
+        })
+
+        // Stocker l'utilisateur
+        authService.storeUser(authData.user as StoredUser)
+
+        // Mettre à jour l'état
         setUser(authData.user)
+
+        // Démarrer la vérification proactive
+        authService.startTokenExpirationCheck(30000)
       } else {
         throw new Error(data.message || 'Échec de la connexion')
       }
@@ -74,6 +131,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  /**
+   * Inscription utilisateur.
+   */
   const register = async (data: {
     username: string
     email: string
@@ -85,10 +145,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (response.data.success) {
         const authData = response.data.data
-        localStorage.setItem('accessToken', authData.accessToken)
-        localStorage.setItem('refreshToken', authData.refreshToken)
-        localStorage.setItem('user', JSON.stringify(authData.user))
+
+        // Stocker les tokens via le service
+        authService.storeTokens({
+          accessToken: authData.accessToken,
+          refreshToken: authData.refreshToken,
+        })
+
+        // Stocker l'utilisateur
+        authService.storeUser(authData.user as StoredUser)
+
+        // Mettre à jour l'état
         setUser(authData.user)
+
+        // Démarrer la vérification proactive
+        authService.startTokenExpirationCheck(30000)
       } else {
         throw new Error(response.data.message || 'Échec de l\'inscription')
       }
@@ -107,22 +178,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  /**
+   * Déconnexion utilisateur.
+   */
   const logout = () => {
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('user')
-    setUser(null)
+    // Arrêter la vérification proactive
+    authService.stopTokenExpirationCheck()
+
+    // Utiliser le service pour le logout complet
+    authService.logout({
+      message: 'Vous avez été déconnecté.',
+      showToast: true,
+      redirect: true,
+    })
+  }
+
+  /**
+   * Vérifie si l'utilisateur a un rôle spécifique.
+   */
+  const hasRole = (role: string): boolean => {
+    return user?.roles?.includes(role) ?? false
+  }
+
+  /**
+   * Vérifie si l'utilisateur a au moins un des rôles spécifiés.
+   */
+  const hasAnyRole = (roles: string[]): boolean => {
+    return roles.some(role => user?.roles?.includes(role))
   }
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && !authService.isTokenExpired(authService.getAccessToken()),
         isLoading,
         login,
         register,
         logout,
+        hasRole,
+        hasAnyRole,
+        isAdmin: hasRole('ADMIN'),
+        isManager: hasAnyRole(['ADMIN', 'MANAGER']),
       }}
     >
       {children}

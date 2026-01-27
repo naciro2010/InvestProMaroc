@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { AxiosError } from 'axios'
 import { authAPI } from '@/lib/api'
 import authService, { StoredUser } from '@/lib/authService'
-import { User as ApiUser } from '@/types/api'
+import { User as ApiUser, UserRole } from '@/types/api'
 
 interface User extends ApiUser {
   enabled?: boolean
@@ -23,11 +23,11 @@ interface AuthContextType {
   /**
    * Vérifie si l'utilisateur a un rôle spécifique.
    */
-  hasRole: (role: string) => boolean
+  hasRole: (role: UserRole) => boolean
   /**
    * Vérifie si l'utilisateur a au moins un des rôles spécifiés.
    */
-  hasAnyRole: (roles: string[]) => boolean
+  hasAnyRole: (roles: UserRole[]) => boolean
   /**
    * Vérifie si l'utilisateur est admin.
    */
@@ -196,14 +196,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /**
    * Vérifie si l'utilisateur a un rôle spécifique.
    */
-  const hasRole = (role: string): boolean => {
+  const hasRole = (role: UserRole): boolean => {
     return user?.roles?.includes(role) ?? false
   }
 
   /**
    * Vérifie si l'utilisateur a au moins un des rôles spécifiés.
    */
-  const hasAnyRole = (roles: string[]): boolean => {
+  const hasAnyRole = (roles: UserRole[]): boolean => {
     return roles.some(role => user?.roles?.includes(role))
   }
 

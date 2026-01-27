@@ -61,7 +61,7 @@ interface StickyActionBarProps {
  *     isSubmitting={isSubmitting}
  *     submitType="submit"
  *   />
- *   {/* Form fields */}
+ *   // Form fields
  * </form>
  *
  * @example Mode custom:

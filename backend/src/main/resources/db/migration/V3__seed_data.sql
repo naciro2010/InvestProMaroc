@@ -65,7 +65,7 @@ INSERT INTO conventions (id, code, numero, libelle, objet, type_convention, date
 
 -- Sous-Conventions (SPECIFIQUE type, inheriting from parent CADRE conventions)
 INSERT INTO conventions (
-    code, numero, libelle, objet, type_convention,
+    id, code, numero, libelle, objet, type_convention,
     date_convention, budget, taux_commission, base_calcul, taux_tva,
     statut, date_debut, date_fin,
     parent_convention_id, herite_parametres,
@@ -73,7 +73,7 @@ INSERT INTO conventions (
 ) VALUES
 -- Sous-conventions pour CONV-001 (Infrastructure)
 (
-    'SC-001', 'SC/2024/001', 'Sous-Convention Voirie Urbaine Casablanca',
+    3, 'SC-001', 'SC/2024/001', 'Sous-Convention Voirie Urbaine Casablanca',
     'Travaux de voirie et amenagement urbain dans la region de Casablanca',
     'SPECIFIQUE',
     '2024-02-01', 3500000.00, 2.5, 'DECAISSEMENTS_TTC', 20.00,
@@ -82,7 +82,7 @@ INSERT INTO conventions (
     2, CURRENT_TIMESTAMP
 ),
 (
-    'SC-002', 'SC/2024/002', 'Sous-Convention Routes Nationales',
+    4, 'SC-002', 'SC/2024/002', 'Sous-Convention Routes Nationales',
     'Rehabilitation et entretien des routes nationales',
     'SPECIFIQUE',
     '2024-03-01', 4000000.00, 2.5, 'DECAISSEMENTS_TTC', 20.00,
@@ -91,7 +91,7 @@ INSERT INTO conventions (
     2, CURRENT_TIMESTAMP
 ),
 (
-    'SC-003', 'SC/2024/003', 'Sous-Convention Ponts et Ouvrages',
+    5, 'SC-003', 'SC/2024/003', 'Sous-Convention Ponts et Ouvrages',
     'Construction et maintenance des ponts et ouvrages d''art',
     'SPECIFIQUE',
     '2024-04-01', 2500000.00, 3.0, 'DECAISSEMENTS_TTC', 20.00,
@@ -101,7 +101,7 @@ INSERT INTO conventions (
 ),
 -- Sous-conventions pour CONV-002 (Equipement Public)
 (
-    'SC-004', 'SC/2024/004', 'Sous-Convention Equipement Scolaire',
+    6, 'SC-004', 'SC/2024/004', 'Sous-Convention Equipement Scolaire',
     'Fourniture et installation equipements scolaires',
     'SPECIFIQUE',
     '2024-03-10', 2000000.00, 3.0, 'DECAISSEMENTS_TTC', 20.00,
@@ -110,7 +110,7 @@ INSERT INTO conventions (
     2, CURRENT_TIMESTAMP
 ),
 (
-    'SC-005', 'SC/2024/005', 'Sous-Convention Equipement Sanitaire',
+    7, 'SC-005', 'SC/2024/005', 'Sous-Convention Equipement Sanitaire',
     'Equipement des centres de sante et hopitaux',
     'SPECIFIQUE',
     '2024-04-15', 3000000.00, 3.0, 'DECAISSEMENTS_TTC', 20.00,

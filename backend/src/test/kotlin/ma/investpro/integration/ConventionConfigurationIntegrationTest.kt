@@ -170,19 +170,19 @@ class ConventionConfigurationIntegrationTest : PostgresIntegrationTest() {
     @Order(5)
     fun `should persist configuration changes to database`() {
         // Fetch from database directly
-        val config = configurationRepository.findFirstWithTypeConfigurations()
+        val config = configurationRepository.findFirstByOrderByIdAsc()
         config shouldNotBe null
 
         config?.codeMaskPattern shouldBe "^CONV-[0-9]{4}$"
         config?.codeMaskPlaceholder shouldBe "CONV-0001"
 
         // Verify type configurations
-        val typeConfigs = config?.typeConfigurations
+        val typeConfigs = config?.typeConfigurations?.toList()
         typeConfigs shouldNotBe null
         typeConfigs?.size shouldBe 4
 
         // Verify SPECIFIQUE is now enabled (from previous test update)
-        val specifique = typeConfigs?.find { it.typeCode == "SPECIFIQUE" }
+        val specifique = typeConfigs?.find { typeConfig -> typeConfig.typeCode == "SPECIFIQUE" }
         specifique?.enabled shouldBe true
     }
 

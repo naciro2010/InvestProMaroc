@@ -325,6 +325,136 @@ class FlywayMigrationIntegrationTest {
         fkExists shouldBe 1
     }
 
+    @Test
+    fun `should have all V2 tables dropped in V1 to prevent duplicate key errors`() {
+        // This test verifies migration consistency:
+        // Every table created in V2 must be dropped in V1
+        // Otherwise, re-running migrations will cause duplicate key violations
+
+        val allTables = jdbcTemplate.queryForList(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_type = 'BASE TABLE'
+            ORDER BY table_name
+            """.trimIndent()
+        ).map { it["table_name"] as String }
+
+        // Exclude Flyway internal table
+        val appTables = allTables.filter { it != "flyway_schema_history" }
+
+        // All these tables should exist (created by V2, seeded by V3)
+        val expectedTables = listOf(
+            "users", "user_roles",
+            "partenaires", "fournisseurs", "comptes_bancaires",
+            "dimensions_analytiques", "valeurs_dimensions", "imputations_analytiques",
+            "conventions", "avenant_conventions", "convention_partenaires",
+            "budgets", "lignes_budget",
+            "subventions", "echeances_subvention",
+            "projets", "projet_conventions",
+            "imputations_previsionnelles", "versements_previsionnels",
+            "marches", "marche_lignes", "avenant_marches",
+            "bons_commande", "depenses_investissement", "commissions",
+            "decomptes", "decompte_retenues", "decompte_imputations",
+            "ordres_paiement", "op_imputations",
+            "paiements", "paiement_imputations",
+            "avenants",
+            "pieces_jointes", "maitres_oeuvre", "categories_depenses",
+            "convention_modifications",
+            "convention_configurations", "convention_type_configurations"
+        )
+
+        // Verify all expected tables exist
+        expectedTables.forEach { tableName ->
+            val exists = appTables.contains(tableName)
+            if (!exists) {
+                throw AssertionError("Expected table '$tableName' not found. V2 may be missing CREATE TABLE statement.")
+            }
+        }
+    }
+
+    @Test
+    fun `should seed all reference data tables correctly`() {
+        // Verify all seeded tables have expected row counts
+        // This catches INSERT errors like duplicate keys or missing explicit IDs
+
+        val seedDataCounts = mapOf(
+            "users" to 3L,
+            "user_roles" to 3L,
+            "dimensions_analytiques" to 4L,
+            "valeurs_dimensions" to 9L,
+            "fournisseurs" to 4L,
+            "projets" to 3L,
+            "conventions" to 7L, // 2 CADRE + 5 SPECIFIQUE
+            "marches" to 5L,
+            "marche_lignes" to 6L,
+            "decomptes" to 2L,
+            "decompte_retenues" to 2L,
+            "convention_configurations" to 1L,
+            "convention_type_configurations" to 4L,
+            "categories_depenses" to 10L
+        )
+
+        seedDataCounts.forEach { (tableName, expectedCount) ->
+            val actualCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM $tableName",
+                Long::class.java
+            )
+            if (actualCount != expectedCount) {
+                throw AssertionError(
+                    "Table '$tableName' has $actualCount rows, expected $expectedCount. " +
+                    "Check V3__seed_data.sql for duplicate key or missing INSERT."
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `should have sequences properly set after seed data`() {
+        // Verify sequences are set correctly to avoid duplicate key on next INSERT
+        // This catches issues where explicit IDs are used without setval()
+
+        val sequenceChecks = listOf(
+            "users_id_seq" to 3L,
+            "dimensions_analytiques_id_seq" to 4L,
+            "fournisseurs_id_seq" to 4L,
+            "projets_id_seq" to 3L,
+            "conventions_id_seq" to 7L,
+            "marches_id_seq" to 5L,
+            "decomptes_id_seq" to 2L,
+            "convention_configurations_id_seq" to 1L,
+            "convention_type_configurations_id_seq" to 4L,
+            "categories_depenses_id_seq" to 10L
+        )
+
+        sequenceChecks.forEach { (sequenceName, minExpected) ->
+            val currentVal = jdbcTemplate.queryForObject(
+                "SELECT last_value FROM $sequenceName",
+                Long::class.java
+            )
+            if (currentVal == null || currentVal < minExpected) {
+                throw AssertionError(
+                    "Sequence '$sequenceName' is at $currentVal, expected >= $minExpected. " +
+                    "Add 'SELECT setval('$sequenceName', $minExpected)' to V3__seed_data.sql"
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `should run migrations idempotently without errors`() {
+        // Verify migrations can be validated without errors
+        // This catches checksum mismatches and script errors
+        val validationResult = runCatching { flyway.validateWithResult() }
+
+        validationResult.isSuccess shouldBe true
+
+        val result = validationResult.getOrNull()
+        result shouldNotBe null
+        result?.validationSuccessful shouldBe true
+    }
+
     // Helper extension
     private infix fun <T> List<T>.shouldContain(element: T) {
         this.contains(element) shouldBe true

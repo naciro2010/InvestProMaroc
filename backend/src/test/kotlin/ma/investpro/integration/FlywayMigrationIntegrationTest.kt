@@ -104,7 +104,9 @@ class FlywayMigrationIntegrationTest {
             "marches",
             "fournisseurs",
             "decomptes",
-            "paiements"
+            "paiements",
+            "convention_configurations",
+            "convention_type_configurations"
         )
 
         tables.forEach { tableName ->
@@ -220,6 +222,107 @@ class FlywayMigrationIntegrationTest {
         val modificationsType = columns.find { it["column_name"] == "modifications" }
         modificationsType shouldNotBe null
         modificationsType?.get("data_type") shouldBe "jsonb"
+    }
+
+    @Test
+    fun `should have convention_configurations table with all columns`() {
+        val columns = jdbcTemplate.queryForList(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'convention_configurations'
+            ORDER BY ordinal_position
+            """.trimIndent()
+        )
+
+        val columnNames = columns.map { it["column_name"] as String }
+
+        // BaseEntity fields
+        columnNames shouldContain "id"
+        columnNames shouldContain "created_at"
+        columnNames shouldContain "updated_at"
+        columnNames shouldContain "actif"
+
+        // ConventionConfiguration specific fields
+        columnNames shouldContain "code_mask_pattern"
+        columnNames shouldContain "code_mask_placeholder"
+        columnNames shouldContain "numero_mask_pattern"
+        columnNames shouldContain "numero_mask_placeholder"
+    }
+
+    @Test
+    fun `should have convention_type_configurations table with all columns`() {
+        val columns = jdbcTemplate.queryForList(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'convention_type_configurations'
+            ORDER BY ordinal_position
+            """.trimIndent()
+        )
+
+        val columnNames = columns.map { it["column_name"] as String }
+
+        // BaseEntity fields
+        columnNames shouldContain "id"
+        columnNames shouldContain "created_at"
+        columnNames shouldContain "updated_at"
+        columnNames shouldContain "actif"
+
+        // ConventionTypeConfiguration specific fields
+        columnNames shouldContain "configuration_id"
+        columnNames shouldContain "type_code"
+        columnNames shouldContain "libelle"
+        columnNames shouldContain "enabled"
+        columnNames shouldContain "ordre_affichage"
+    }
+
+    @Test
+    fun `should seed convention configuration data correctly`() {
+        // Verify convention_configurations was seeded
+        val configCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM convention_configurations",
+            Long::class.java
+        )
+        configCount shouldBe 1
+
+        // Verify 4 type configurations were seeded
+        val typeConfigCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM convention_type_configurations",
+            Long::class.java
+        )
+        typeConfigCount shouldBe 4
+
+        // Verify CADRE is enabled
+        val cadreEnabled = jdbcTemplate.queryForObject(
+            "SELECT enabled FROM convention_type_configurations WHERE type_code = 'CADRE'",
+            Boolean::class.java
+        )
+        cadreEnabled shouldBe true
+
+        // Verify SPECIFIQUE is disabled
+        val specifiqueEnabled = jdbcTemplate.queryForObject(
+            "SELECT enabled FROM convention_type_configurations WHERE type_code = 'SPECIFIQUE'",
+            Boolean::class.java
+        )
+        specifiqueEnabled shouldBe false
+    }
+
+    @Test
+    fun `should have foreign key from convention_type_configurations to convention_configurations`() {
+        val fkExists = jdbcTemplate.queryForObject(
+            """
+            SELECT COUNT(*)
+            FROM information_schema.table_constraints tc
+            JOIN information_schema.constraint_column_usage ccu
+              ON tc.constraint_name = ccu.constraint_name
+            WHERE tc.table_name = 'convention_type_configurations'
+              AND tc.constraint_type = 'FOREIGN KEY'
+              AND ccu.table_name = 'convention_configurations'
+            """.trimIndent(),
+            Long::class.java
+        )
+        fkExists shouldBe 1
     }
 
     // Helper extension

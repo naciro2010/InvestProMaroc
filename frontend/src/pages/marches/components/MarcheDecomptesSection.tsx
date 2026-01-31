@@ -17,7 +17,7 @@ import {
 import { Add } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { marchesAPI } from '../../../lib/api'
-import colors from '../../../theme/colors'
+import { colors, componentStyles } from '@/lib/designSystem'
 
 interface MarcheDecomptesSectionProps {
   marcheId: number
@@ -110,7 +110,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
           variant="contained"
           startIcon={<Add />}
           onClick={() => navigate('/decomptes/nouveau')}
-          sx={{ background: colors.gradients.primary }}
+          sx={componentStyles.buttonPrimary}
         >
           Nouveau Décompte
         </Button>

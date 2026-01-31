@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Paper, Typography, Stack, Box, Chip, CircularProgress, Divider } from '@mui/material'
 import { Business, CalendarMonth, AttachMoney, Description } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
-import colors from '../../../theme/colors'
+import { colors } from '@/lib/designSystem'
 
 interface MarcheInfoCardProps {
   marcheId: number

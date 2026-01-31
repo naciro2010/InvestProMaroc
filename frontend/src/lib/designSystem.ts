@@ -1,13 +1,13 @@
 /**
- * Design System - Tokens de design centralisés pour InvestPro Maroc.
+ * Design System v2.0 - InvestPro Maroc
+ *
+ * INSPIRATION: Confluence + Jira + Odoo
+ * - Épuré et professionnel (Confluence)
+ * - Dense et fonctionnel (Jira)
+ * - Moderne et accessible (Odoo)
  *
  * SOURCE UNIQUE DE VÉRITÉ pour toutes les valeurs de design.
  * Ce fichier remplace les couleurs en dur éparpillées dans les composants.
- *
- * ARCHITECTURE:
- * - Ce fichier exporte des constantes TypeScript fortement typées
- * - Les composants importent ce fichier au lieu de coder les valeurs en dur
- * - Les modifications visuelles se font ICI et se propagent partout
  *
  * PRINCIPES DE DESIGN:
  * - Interface professionnelle, sobre et fonctionnelle
@@ -15,26 +15,28 @@
  * - Espacement cohérent (base 8px)
  * - Hiérarchie typographique claire
  * - Ombres subtiles, pas de flashy
+ * - Accessibilité (contraste WCAG AA)
  */
 
 // ==================== COULEURS ====================
 
 export const colors = {
   /**
-   * Couleur primaire - Bleu
+   * Couleur primaire - Bleu Atlassian
    * Utilisée pour: boutons principaux, liens, sélection, focus
    */
   primary: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#3b82f6',
-    600: '#2563eb',
-    700: '#1d4ed8',
-    800: '#1e40af',
-    900: '#1e3a8a',
+    25: '#f5f8ff',
+    50: '#e9f2ff',
+    100: '#cce0ff',
+    200: '#85b8ff',
+    300: '#579dff',
+    400: '#388bff',
+    500: '#1d7afc',
+    600: '#0c66e4', // Main brand color
+    700: '#0055cc',
+    800: '#09326c',
+    900: '#092957',
   },
 
   /**
@@ -42,12 +44,17 @@ export const colors = {
    * Utilisée pour: validation, statuts actifs, confirmations
    */
   success: {
-    50: '#f0fdf4',
-    100: '#dcfce7',
-    200: '#bbf7d0',
-    500: '#108548',
-    600: '#0d6b3d',
-    700: '#166534',
+    25: '#f3fcf5',
+    50: '#dcfff1',
+    100: '#baf3db',
+    200: '#7ee2b8',
+    300: '#4bce97',
+    400: '#2abb7f',
+    500: '#22a06b',
+    600: '#1f845a', // Main success
+    700: '#216e4e',
+    800: '#164b35',
+    900: '#133527',
   },
 
   /**
@@ -55,101 +62,178 @@ export const colors = {
    * Utilisée pour: erreurs, suppression, alertes critiques
    */
   danger: {
-    50: '#fef2f2',
-    100: '#fee2e2',
-    200: '#fecaca',
-    500: '#dd2b0e',
-    600: '#c91c00',
-    700: '#b91c1c',
+    25: '#fff5f5',
+    50: '#ffedeb',
+    100: '#ffd5d2',
+    200: '#fd9891',
+    300: '#f87168',
+    400: '#f15b50',
+    500: '#e2483d',
+    600: '#c9372c', // Main danger
+    700: '#ae2e24',
+    800: '#5d1f1a',
+    900: '#42221f',
   },
 
   /**
-   * Warning - Orange
+   * Warning - Jaune/Orange
    * Utilisée pour: avertissements, statuts en attente
    */
   warning: {
-    50: '#fffbeb',
-    100: '#fef3c7',
-    200: '#fde68a',
-    500: '#ab6100',
-    600: '#9e5a00',
-    700: '#92400e',
+    25: '#fffdf5',
+    50: '#fff7d6',
+    100: '#f8e6a0',
+    200: '#f5cd47',
+    300: '#e2b203',
+    400: '#cf9f02',
+    500: '#b38600',
+    600: '#946f00', // Main warning
+    700: '#7f5f01',
+    800: '#533f04',
+    900: '#3d2e00',
   },
 
   /**
-   * Info - Bleu clair
+   * Info - Bleu clair / Teal
    * Utilisée pour: informations, statuts en cours
    */
   info: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    500: '#1f75cb',
-    600: '#1068bf',
-    700: '#1e40af',
+    25: '#f3fcff',
+    50: '#e7f9ff',
+    100: '#c6edfb',
+    200: '#9dd9ee',
+    300: '#6cc3e0',
+    400: '#42b2d7',
+    500: '#2898bd',
+    600: '#227d9b', // Main info
+    700: '#206a83',
+    800: '#164555',
+    900: '#103c4b',
   },
 
   /**
-   * Gris - Palette neutre
+   * Purple - Accent secondaire (Odoo inspired)
+   * Utilisée pour: highlights, badges spéciaux
+   */
+  purple: {
+    25: '#faf5ff',
+    50: '#f3e8ff',
+    100: '#dfd8fd',
+    200: '#b8acf6',
+    300: '#9f8fef',
+    400: '#8f7ee7',
+    500: '#8270db',
+    600: '#6e5dc6', // Main purple
+    700: '#5e4db2',
+    800: '#352c63',
+    900: '#2b273f',
+  },
+
+  /**
+   * Gris - Palette neutre (Atlassian Neutral)
    * Utilisée pour: textes, bordures, arrière-plans, séparateurs
    */
+  neutral: {
+    0: '#ffffff',
+    25: '#fafbfc',
+    50: '#f7f8f9',
+    100: '#f1f2f4',
+    200: '#dcdfe4',
+    300: '#b3b9c4',
+    400: '#8590a2',
+    500: '#626f86',
+    600: '#44546f',
+    700: '#2c3e5d',
+    800: '#172b4d',
+    900: '#091e42',
+  },
+
+  // Aliases pour compatibilité
   gray: {
-    50: '#fafafa',
-    100: '#f5f5f5',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
-    900: '#111827',
+    50: '#fafbfc',
+    100: '#f7f8f9',
+    200: '#dcdfe4',
+    300: '#b3b9c4',
+    400: '#8590a2',
+    500: '#626f86',
+    600: '#44546f',
+    700: '#2c3e5d',
+    800: '#172b4d',
+    900: '#091e42',
   },
 
   /** Fond de page principal */
-  background: '#f5f5f5',
+  background: '#f7f8f9',
 
   /** Fond blanc (cartes, papier) */
   surface: '#ffffff',
 
+  /** Fond de sidebar */
+  sidebarBg: '#fafbfc',
+
   /** Bordure standard */
-  border: '#e5e7eb',
+  border: '#dcdfe4',
+
+  /** Bordure subtile */
+  borderSubtle: '#ebecf0',
 
   /** Séparateur (plus subtil que border) */
-  divider: '#f0f0f0',
+  divider: '#f1f2f4',
+
+  /** Texte principal */
+  textPrimary: '#172b4d',
+
+  /** Texte secondaire */
+  textSecondary: '#626f86',
+
+  /** Texte désactivé */
+  textDisabled: '#8590a2',
+
+  /** Texte sur fond coloré */
+  textOnColor: '#ffffff',
+
+  /** Lien */
+  link: '#0c66e4',
+  linkHover: '#0055cc',
 } as const
 
 // ==================== TYPOGRAPHIE ====================
 
 export const typography = {
   /**
-   * Famille de polices système
-   * Priorité: polices natives OS pour performance optimale
+   * Famille de polices système optimisée
+   * Priorité: Inter > System > fallbacks
    */
   fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell, 'Helvetica Neue', sans-serif",
+    "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, 'Helvetica Neue', sans-serif",
 
   fontFamilyMono:
-    "Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    "'JetBrains Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace",
 
   /**
-   * Tailles de police
+   * Tailles de police (scale harmonique)
    */
   sizes: {
-    /** Très petit - métadonnées, timestamps */
-    xs: '0.75rem',    // 12px
-    /** Petit - labels secondaires, breadcrumbs */
-    sm: '0.8125rem',  // 13px
-    /** Base - texte courant */
-    base: '0.875rem', // 14px
-    /** Moyen - sous-titres */
-    md: '1rem',       // 16px
-    /** Grand - titres de section */
-    lg: '1.125rem',   // 18px
-    /** Très grand - titres de page */
-    xl: '1.5rem',     // 24px
-    /** Titre principal */
-    '2xl': '1.875rem', // 30px
+    /** 11px - Micro labels, timestamps */
+    '2xs': '0.6875rem',
+    /** 12px - Métadonnées, badges */
+    xs: '0.75rem',
+    /** 13px - Labels secondaires, breadcrumbs */
+    sm: '0.8125rem',
+    /** 14px - Texte courant (base) */
+    base: '0.875rem',
+    /** 16px - Sous-titres */
+    md: '1rem',
+    /** 18px - Titres de section */
+    lg: '1.125rem',
+    /** 20px - Titres de page secondaires */
+    xl: '1.25rem',
+    /** 24px - Titres de page */
+    '2xl': '1.5rem',
+    /** 30px - Titre principal, dashboard */
+    '3xl': '1.875rem',
+    /** 36px - Hero sections */
+    '4xl': '2.25rem',
   },
 
   /**
@@ -166,15 +250,32 @@ export const typography = {
    * Hauteurs de ligne
    */
   lineHeights: {
+    none: 1,
     tight: 1.25,
+    snug: 1.375,
     normal: 1.5,
-    relaxed: 1.75,
+    relaxed: 1.625,
+    loose: 2,
+  },
+
+  /**
+   * Letter spacing
+   */
+  letterSpacing: {
+    tighter: '-0.05em',
+    tight: '-0.025em',
+    normal: '0',
+    wide: '0.025em',
+    wider: '0.05em',
+    widest: '0.1em',
   },
 } as const
 
 // ==================== ESPACEMENT ====================
 
 export const spacing = {
+  /** 2px */
+  '2xs': '0.125rem',
   /** 4px */
   xs: '0.25rem',
   /** 8px - Base unit */
@@ -183,24 +284,43 @@ export const spacing = {
   md: '0.75rem',
   /** 16px */
   lg: '1rem',
+  /** 20px */
+  xl: '1.25rem',
   /** 24px */
-  xl: '1.5rem',
+  '2xl': '1.5rem',
   /** 32px */
-  '2xl': '2rem',
+  '3xl': '2rem',
+  /** 40px */
+  '4xl': '2.5rem',
   /** 48px */
-  '3xl': '3rem',
+  '5xl': '3rem',
+  /** 64px */
+  '6xl': '4rem',
 
   /**
    * Valeurs numériques MUI (1 unit = 8px)
    */
   mui: {
-    xs: 0.5,  // 4px
-    sm: 1,    // 8px
-    md: 1.5,  // 12px
-    lg: 2,    // 16px
-    xl: 3,    // 24px
-    '2xl': 4, // 32px
-    '3xl': 6, // 48px
+    '2xs': 0.25, // 2px
+    xs: 0.5,     // 4px
+    sm: 1,       // 8px
+    md: 1.5,     // 12px
+    lg: 2,       // 16px
+    xl: 2.5,     // 20px
+    '2xl': 3,    // 24px
+    '3xl': 4,    // 32px
+    '4xl': 5,    // 40px
+    '5xl': 6,    // 48px
+  },
+
+  /**
+   * Espacements de page
+   */
+  page: {
+    paddingX: '1.5rem',   // 24px
+    paddingY: '1.5rem',   // 24px
+    maxWidth: '1280px',
+    gutter: '1.5rem',     // 24px
   },
 } as const
 
@@ -209,49 +329,69 @@ export const spacing = {
 export const shadows = {
   /** Pas d'ombre */
   none: 'none',
-  /** Très subtile - éléments au repos */
-  xs: '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
-  /** Standard - cartes, conteneurs */
-  sm: '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06)',
-  /** Hover - survol de cartes */
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.06)',
-  /** Focus - modals, dropdowns */
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.06)',
+  /** Très subtile - bordure virtuelle */
+  xs: '0 1px 2px 0 rgba(9, 30, 66, 0.04)',
+  /** Légère - cartes au repos */
+  sm: '0 1px 3px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.08)',
+  /** Standard - cartes hover */
+  md: '0 4px 8px -2px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.08)',
+  /** Élevée - dropdowns, popovers */
+  lg: '0 8px 16px -4px rgba(9, 30, 66, 0.12), 0 0 1px rgba(9, 30, 66, 0.12)',
+  /** Très élevée - modals */
+  xl: '0 16px 32px -8px rgba(9, 30, 66, 0.16), 0 0 1px rgba(9, 30, 66, 0.12)',
+  /** Focus ring */
+  focus: '0 0 0 2px #ffffff, 0 0 0 4px #388bff',
+  /** Focus ring danger */
+  focusDanger: '0 0 0 2px #ffffff, 0 0 0 4px #f15b50',
 } as const
 
 // ==================== BORDURES ====================
 
 export const borders = {
-  /** Rayon standard (4px) */
+  /** Rayon standard */
   radius: {
     none: '0',
-    sm: '0.125rem',   // 2px
-    base: '0.25rem',  // 4px - Standard
-    md: '0.375rem',   // 6px
-    lg: '0.5rem',     // 8px
-    xl: '0.75rem',    // 12px
-    full: '9999px',
+    xs: '2px',
+    sm: '3px',      // Badges, tags
+    base: '4px',    // Boutons, inputs
+    md: '6px',      // Cards petites
+    lg: '8px',      // Cards standard
+    xl: '12px',     // Panels, modals
+    '2xl': '16px',  // Large panels
+    full: '9999px', // Pills, avatars
   },
 
   /** Épaisseurs */
   width: {
     thin: '1px',
     medium: '2px',
-    thick: '4px',
+    thick: '3px',
   },
 } as const
 
 // ==================== TRANSITIONS ====================
 
 export const transitions = {
-  fast: '150ms ease',
-  normal: '200ms ease',
-  slow: '300ms ease',
+  /** Interactions rapides */
+  fast: '100ms ease-out',
+  /** Standard */
+  normal: '150ms ease-out',
+  /** Animations */
+  slow: '250ms ease-out',
+  /** Transitions longues */
+  slower: '350ms ease-out',
+  /** Timing functions */
+  easing: {
+    easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
+    easeOut: 'cubic-bezier(0, 0, 0.2, 1)',
+    easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+  },
 } as const
 
 // ==================== Z-INDEX ====================
 
 export const zIndex = {
+  base: 0,
   dropdown: 1000,
   sticky: 1020,
   fixed: 1030,
@@ -289,7 +429,7 @@ export const componentStyles = {
   },
 
   /**
-   * Carte standard (paper blanc, bordure subtile)
+   * Carte standard (Confluence style)
    */
   card: {
     backgroundColor: colors.surface,
@@ -303,22 +443,44 @@ export const componentStyles = {
    */
   cardElevated: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.border}`,
+    border: `1px solid ${colors.borderSubtle}`,
     borderRadius: borders.radius.lg,
     boxShadow: shadows.sm,
-    transition: `box-shadow ${transitions.normal}`,
+    transition: `box-shadow ${transitions.normal}, border-color ${transitions.normal}`,
     '&:hover': {
       boxShadow: shadows.md,
+      borderColor: colors.border,
     },
   },
 
   /**
-   * Header de page (blanc, bordure bottom)
+   * Carte interactive (cliquable)
+   */
+  cardInteractive: {
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.borderSubtle}`,
+    borderRadius: borders.radius.lg,
+    boxShadow: shadows.sm,
+    transition: `all ${transitions.normal}`,
+    cursor: 'pointer',
+    '&:hover': {
+      boxShadow: shadows.md,
+      borderColor: colors.primary[200],
+      transform: 'translateY(-1px)',
+    },
+    '&:active': {
+      transform: 'translateY(0)',
+      boxShadow: shadows.sm,
+    },
+  },
+
+  /**
+   * Header de page (Confluence style)
    */
   pageHeader: {
     backgroundColor: colors.surface,
     borderBottom: `1px solid ${colors.border}`,
-    px: spacing.mui.xl,
+    px: spacing.mui['2xl'],
     py: spacing.mui.lg,
   },
 
@@ -331,18 +493,20 @@ export const componentStyles = {
     zIndex: zIndex.sticky,
     backgroundColor: colors.surface,
     borderBottom: `1px solid ${colors.border}`,
-    px: spacing.mui.xl,
+    px: spacing.mui['2xl'],
     py: spacing.mui.md,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backdropFilter: 'blur(8px)',
+    boxShadow: shadows.xs,
   },
 
   /**
    * Section de formulaire
    */
   formSection: {
-    mb: spacing.mui['2xl'],
+    mb: spacing.mui['3xl'],
   },
 
   /**
@@ -362,21 +526,28 @@ export const componentStyles = {
   },
 
   /**
-   * Bouton primaire (style flat, pas de gradient)
+   * Bouton primaire (Atlassian style)
    */
   buttonPrimary: {
     backgroundColor: colors.primary[600],
-    color: colors.surface,
+    color: colors.textOnColor,
     fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.base,
     textTransform: 'none' as const,
     boxShadow: shadows.none,
     borderRadius: borders.radius.base,
+    px: spacing.mui.lg,
+    py: spacing.mui.sm,
     '&:hover': {
       backgroundColor: colors.primary[700],
       boxShadow: shadows.none,
     },
+    '&:focus-visible': {
+      boxShadow: shadows.focus,
+    },
     '&:disabled': {
-      backgroundColor: colors.gray[300],
+      backgroundColor: colors.neutral[200],
+      color: colors.textDisabled,
     },
   },
 
@@ -384,14 +555,39 @@ export const componentStyles = {
    * Bouton secondaire (outlined)
    */
   buttonSecondary: {
-    borderColor: colors.gray[300],
-    color: colors.gray[600],
+    backgroundColor: 'transparent',
+    border: `1px solid ${colors.neutral[300]}`,
+    color: colors.textPrimary,
     fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.base,
     textTransform: 'none' as const,
     borderRadius: borders.radius.base,
+    px: spacing.mui.lg,
+    py: spacing.mui.sm,
     '&:hover': {
-      backgroundColor: colors.gray[50],
-      borderColor: colors.gray[400],
+      backgroundColor: colors.neutral[100],
+      borderColor: colors.neutral[400],
+    },
+    '&:focus-visible': {
+      boxShadow: shadows.focus,
+    },
+  },
+
+  /**
+   * Bouton ghost (sans bordure)
+   */
+  buttonGhost: {
+    backgroundColor: 'transparent',
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.base,
+    textTransform: 'none' as const,
+    borderRadius: borders.radius.base,
+    px: spacing.mui.md,
+    py: spacing.mui.sm,
+    '&:hover': {
+      backgroundColor: colors.neutral[100],
+      color: colors.textPrimary,
     },
   },
 
@@ -400,13 +596,37 @@ export const componentStyles = {
    */
   buttonDanger: {
     backgroundColor: colors.danger[600],
-    color: colors.surface,
+    color: colors.textOnColor,
     fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.base,
     textTransform: 'none' as const,
     boxShadow: shadows.none,
     borderRadius: borders.radius.base,
+    px: spacing.mui.lg,
+    py: spacing.mui.sm,
     '&:hover': {
       backgroundColor: colors.danger[700],
+    },
+    '&:focus-visible': {
+      boxShadow: shadows.focusDanger,
+    },
+  },
+
+  /**
+   * Bouton success
+   */
+  buttonSuccess: {
+    backgroundColor: colors.success[600],
+    color: colors.textOnColor,
+    fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.base,
+    textTransform: 'none' as const,
+    boxShadow: shadows.none,
+    borderRadius: borders.radius.base,
+    px: spacing.mui.lg,
+    py: spacing.mui.sm,
+    '&:hover': {
+      backgroundColor: colors.success[700],
     },
   },
 
@@ -415,9 +635,10 @@ export const componentStyles = {
    */
   fieldLabel: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-    color: colors.gray[700],
-    mb: 0.5,
+    fontWeight: typography.weights.semibold,
+    color: colors.textPrimary,
+    mb: 0.75,
+    display: 'block',
   },
 
   /**
@@ -427,100 +648,358 @@ export const componentStyles = {
     color: colors.danger[500],
     ml: 0.5,
   },
+
+  /**
+   * Input field standard
+   */
+  inputField: {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: colors.surface,
+      borderRadius: borders.radius.base,
+      fontSize: typography.sizes.base,
+      '& fieldset': {
+        borderColor: colors.neutral[300],
+      },
+      '&:hover fieldset': {
+        borderColor: colors.neutral[400],
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: colors.primary[500],
+        borderWidth: '2px',
+      },
+    },
+  },
+
+  /**
+   * Sidebar styles
+   */
+  sidebar: {
+    container: {
+      backgroundColor: colors.sidebarBg,
+      borderRight: `1px solid ${colors.border}`,
+      width: 264,
+    },
+    menuItem: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: spacing.md,
+      px: spacing.md,
+      py: spacing.sm,
+      mx: spacing.sm,
+      borderRadius: borders.radius.base,
+      color: colors.textSecondary,
+      fontSize: typography.sizes.base,
+      fontWeight: typography.weights.medium,
+      transition: `all ${transitions.fast}`,
+      cursor: 'pointer',
+      '&:hover': {
+        backgroundColor: colors.neutral[100],
+        color: colors.textPrimary,
+      },
+    },
+    menuItemActive: {
+      backgroundColor: colors.primary[50],
+      color: colors.primary[700],
+      '&:hover': {
+        backgroundColor: colors.primary[100],
+        color: colors.primary[700],
+      },
+    },
+    groupHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      px: spacing.md,
+      py: spacing.xs,
+      mx: spacing.sm,
+      borderRadius: borders.radius.base,
+      color: colors.textSecondary,
+      fontSize: typography.sizes.xs,
+      fontWeight: typography.weights.semibold,
+      textTransform: 'uppercase' as const,
+      letterSpacing: typography.letterSpacing.wider,
+      cursor: 'pointer',
+      '&:hover': {
+        backgroundColor: colors.neutral[50],
+      },
+    },
+  },
+
+  /**
+   * Table styles
+   */
+  table: {
+    container: {
+      backgroundColor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.lg,
+      overflow: 'hidden',
+    },
+    header: {
+      backgroundColor: colors.neutral[50],
+      borderBottom: `1px solid ${colors.border}`,
+    },
+    headerCell: {
+      fontWeight: typography.weights.semibold,
+      fontSize: typography.sizes.xs,
+      textTransform: 'uppercase' as const,
+      letterSpacing: typography.letterSpacing.wide,
+      color: colors.textSecondary,
+      py: spacing.mui.md,
+      px: spacing.mui.lg,
+    },
+    row: {
+      borderBottom: `1px solid ${colors.divider}`,
+      transition: `background-color ${transitions.fast}`,
+      '&:hover': {
+        backgroundColor: colors.neutral[25],
+      },
+      '&:last-child': {
+        borderBottom: 'none',
+      },
+    },
+    cell: {
+      fontSize: typography.sizes.base,
+      color: colors.textPrimary,
+      py: spacing.mui.md,
+      px: spacing.mui.lg,
+    },
+  },
+
+  /**
+   * Stat card (Dashboard KPIs)
+   */
+  statCard: {
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.borderSubtle}`,
+    borderRadius: borders.radius.lg,
+    p: spacing.mui.xl,
+    transition: `all ${transitions.normal}`,
+    '&:hover': {
+      borderColor: colors.border,
+      boxShadow: shadows.sm,
+    },
+  },
+
+  /**
+   * Empty state
+   */
+  emptyState: {
+    textAlign: 'center' as const,
+    py: spacing.mui['5xl'],
+    px: spacing.mui['2xl'],
+    color: colors.textSecondary,
+  },
+
+  /**
+   * Breadcrumb
+   */
+  breadcrumb: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.xs,
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    '& a': {
+      color: colors.link,
+      textDecoration: 'none',
+      '&:hover': {
+        color: colors.linkHover,
+        textDecoration: 'underline',
+      },
+    },
+    '& .separator': {
+      color: colors.neutral[400],
+    },
+  },
 } as const
 
 // ==================== STATUTS - Mapping couleurs ====================
 
-export type StatusColor = 'success' | 'warning' | 'danger' | 'info' | 'gray' | 'primary'
+export type StatusColor = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'primary' | 'purple'
 
 export interface StatusConfig {
   label: string
   color: StatusColor
   bgColor: string
   textColor: string
+  dotColor: string
 }
 
 export const statusColors: Record<string, StatusConfig> = {
+  // Workflow Convention/Projet
   BROUILLON: {
     label: 'Brouillon',
-    color: 'gray',
-    bgColor: colors.gray[100],
-    textColor: colors.gray[700],
+    color: 'neutral',
+    bgColor: colors.neutral[100],
+    textColor: colors.neutral[700],
+    dotColor: colors.neutral[400],
   },
   SOUMIS: {
     label: 'Soumis',
     color: 'warning',
     bgColor: colors.warning[50],
     textColor: colors.warning[700],
+    dotColor: colors.warning[500],
   },
-  VALIDEE: {
-    label: 'Valid\u00e9e',
+  VALIDE: {
+    label: 'Validé',
     color: 'success',
     bgColor: colors.success[50],
     textColor: colors.success[700],
+    dotColor: colors.success[500],
+  },
+  VALIDEE: {
+    label: 'Validée',
+    color: 'success',
+    bgColor: colors.success[50],
+    textColor: colors.success[700],
+    dotColor: colors.success[500],
   },
   EN_EXECUTION: {
-    label: 'En ex\u00e9cution',
+    label: 'En exécution',
     color: 'info',
     bgColor: colors.info[50],
     textColor: colors.info[700],
+    dotColor: colors.info[500],
   },
   EN_COURS: {
     label: 'En cours',
     color: 'info',
     bgColor: colors.info[50],
     textColor: colors.info[700],
+    dotColor: colors.info[500],
   },
   ACHEVE: {
-    label: 'Achev\u00e9',
+    label: 'Achevé',
     color: 'success',
     bgColor: colors.success[100],
-    textColor: colors.success[600],
+    textColor: colors.success[700],
+    dotColor: colors.success[600],
+  },
+  TERMINE: {
+    label: 'Terminé',
+    color: 'success',
+    bgColor: colors.success[100],
+    textColor: colors.success[700],
+    dotColor: colors.success[600],
   },
   REJETE: {
-    label: 'Rejet\u00e9',
+    label: 'Rejeté',
     color: 'danger',
     bgColor: colors.danger[50],
     textColor: colors.danger[700],
+    dotColor: colors.danger[500],
   },
   ANNULE: {
-    label: 'Annul\u00e9',
+    label: 'Annulé',
     color: 'danger',
     bgColor: colors.danger[100],
     textColor: colors.danger[600],
+    dotColor: colors.danger[500],
   },
   EN_RETARD: {
     label: 'En retard',
-    color: 'warning',
-    bgColor: colors.warning[100],
-    textColor: colors.warning[700],
+    color: 'danger',
+    bgColor: colors.danger[50],
+    textColor: colors.danger[700],
+    dotColor: colors.danger[500],
   },
   SUSPENDU: {
     label: 'Suspendu',
     color: 'warning',
     bgColor: colors.warning[50],
-    textColor: colors.warning[600],
+    textColor: colors.warning[700],
+    dotColor: colors.warning[500],
   },
-  TERMINE: {
-    label: 'Termin\u00e9',
+
+  // Types supplémentaires
+  ACTIF: {
+    label: 'Actif',
     color: 'success',
     bgColor: colors.success[50],
-    textColor: colors.success[600],
+    textColor: colors.success[700],
+    dotColor: colors.success[500],
+  },
+  INACTIF: {
+    label: 'Inactif',
+    color: 'neutral',
+    bgColor: colors.neutral[100],
+    textColor: colors.neutral[600],
+    dotColor: colors.neutral[400],
+  },
+  NOUVEAU: {
+    label: 'Nouveau',
+    color: 'purple',
+    bgColor: colors.purple[50],
+    textColor: colors.purple[700],
+    dotColor: colors.purple[500],
+  },
+  URGENT: {
+    label: 'Urgent',
+    color: 'danger',
+    bgColor: colors.danger[50],
+    textColor: colors.danger[700],
+    dotColor: colors.danger[500],
+  },
+
+  // Convention types
+  CADRE: {
+    label: 'Cadre',
+    color: 'primary',
+    bgColor: colors.primary[50],
+    textColor: colors.primary[700],
+    dotColor: colors.primary[500],
+  },
+  SPECIFIQUE: {
+    label: 'Spécifique',
+    color: 'purple',
+    bgColor: colors.purple[50],
+    textColor: colors.purple[700],
+    dotColor: colors.purple[500],
   },
 } as const
 
 /**
  * Récupère la configuration d'un statut.
- * Retourne un style gris par défaut si le statut n'est pas trouvé.
+ * Retourne un style neutre par défaut si le statut n'est pas trouvé.
  */
 export function getStatusConfig(status: string): StatusConfig {
-  return statusColors[status] ?? {
-    label: status,
-    color: 'gray' as StatusColor,
-    bgColor: colors.gray[100],
-    textColor: colors.gray[700],
+  const normalizedStatus = status?.toUpperCase().replace(/-/g, '_')
+  return statusColors[normalizedStatus] ?? {
+    label: status || 'Inconnu',
+    color: 'neutral' as StatusColor,
+    bgColor: colors.neutral[100],
+    textColor: colors.neutral[700],
+    dotColor: colors.neutral[400],
   }
 }
+
+/**
+ * Couleurs pour les graphiques (charts)
+ */
+export const chartColors = {
+  primary: colors.primary[500],
+  secondary: colors.purple[500],
+  tertiary: colors.info[500],
+  success: colors.success[500],
+  warning: colors.warning[500],
+  danger: colors.danger[500],
+  neutral: colors.neutral[400],
+  // Palette étendue pour charts multiples
+  palette: [
+    colors.primary[500],
+    colors.purple[500],
+    colors.info[500],
+    colors.success[500],
+    colors.warning[500],
+    colors.danger[500],
+    colors.primary[300],
+    colors.purple[300],
+    colors.info[300],
+    colors.success[300],
+  ],
+} as const
 
 // ==================== EXPORT PAR DÉFAUT ====================
 
@@ -536,6 +1015,7 @@ const designSystem = {
   componentStyles,
   statusColors,
   getStatusConfig,
+  chartColors,
 }
 
 export default designSystem

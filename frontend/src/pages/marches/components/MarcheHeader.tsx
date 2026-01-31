@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Button, Typography, Chip, CircularProgress, Alert } from '@mui/material'
 import { ArrowBack, Edit } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
-import colors from '../../../theme/colors'
+import { colors } from '@/lib/designSystem'
 
 interface MarcheHeaderProps {
   marcheId: number

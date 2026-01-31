@@ -14,7 +14,7 @@ import {
   Box,
 } from '@mui/material'
 import { marchesAPI } from '../../../lib/api'
-import colors from '../../../theme/colors'
+import { colors } from '@/lib/designSystem'
 
 interface MarcheLignesSectionProps {
   marcheId: number

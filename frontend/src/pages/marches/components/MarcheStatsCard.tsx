@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Box, Card, Typography, Stack, CircularProgress } from '@mui/material'
 import { TrendingUp, Receipt, Payments, CheckCircle } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
-import colors from '../../../theme/colors'
+import { colors, componentStyles, borders, typography } from '@/lib/designSystem'
 
 interface MarcheStatsCardProps {
   marcheId: number
@@ -19,6 +19,7 @@ interface MarcheStats {
 
 /**
  * MICRO-COMPONENT: MarcheStatsCard
+ * Design: Atlassian-style stat cards (flat, clean, professional)
  * Charge uniquement les statistiques calculées
  * Endpoint: GET /marches/{id}/stats
  */
@@ -70,123 +71,103 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
 
   if (!stats) return null
 
+  // Stat card configurations with semantic colors
+  const statCards = [
+    {
+      label: 'Montant Total TTC',
+      value: `${formatCurrency(stats.montantTotal)} DH`,
+      icon: TrendingUp,
+      bgColor: colors.primary[50],
+      iconBgColor: colors.primary[100],
+      iconColor: colors.primary[600],
+      textColor: colors.primary[700],
+    },
+    {
+      label: 'Montant Payé',
+      value: `${formatCurrency(stats.montantPaye)} DH`,
+      icon: Payments,
+      bgColor: colors.success[50],
+      iconBgColor: colors.success[100],
+      iconColor: colors.success[600],
+      textColor: colors.success[700],
+    },
+    {
+      label: 'Reste à Payer',
+      value: `${formatCurrency(stats.resteAPayer)} DH`,
+      icon: Receipt,
+      bgColor: colors.warning[50],
+      iconBgColor: colors.warning[100],
+      iconColor: colors.warning[600],
+      textColor: colors.warning[700],
+    },
+    {
+      label: 'Avancement',
+      value: `${stats.tauxAvancement.toFixed(1)}%`,
+      icon: CheckCircle,
+      bgColor: colors.info[50],
+      iconBgColor: colors.info[100],
+      iconColor: colors.info[600],
+      textColor: colors.info[700],
+    },
+  ]
+
   return (
-    <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 3 }}>
-      {/* Montant Total */}
-      <Box sx={{ flex: 1 }}>
-        <Card sx={{ p: 3, background: colors.gradients.primary, color: 'white' }}>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Box
+    <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 3 }}>
+      {statCards.map((card, index) => {
+        const IconComponent = card.icon
+        return (
+          <Box key={index} sx={{ flex: 1 }}>
+            <Card
               sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '12px',
-                bgcolor: 'rgba(255, 255, 255, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                ...componentStyles.statCard,
+                backgroundColor: card.bgColor,
+                border: 'none',
               }}
             >
-              <TrendingUp sx={{ fontSize: 32 }} />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Montant Total TTC
-              </Typography>
-              <Typography variant="h5" fontWeight="bold">
-                {formatCurrency(stats.montantTotal)} DH
-              </Typography>
-            </Box>
-          </Stack>
-        </Card>
-      </Box>
-
-      {/* Montant Payé */}
-      <Box sx={{ flex: 1 }}>
-        <Card sx={{ p: 3, background: colors.gradients.success, color: 'white' }}>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '12px',
-                bgcolor: 'rgba(255, 255, 255, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Payments sx={{ fontSize: 32 }} />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Montant Payé
-              </Typography>
-              <Typography variant="h5" fontWeight="bold">
-                {formatCurrency(stats.montantPaye)} DH
-              </Typography>
-            </Box>
-          </Stack>
-        </Card>
-      </Box>
-
-      {/* Reste à Payer */}
-      <Box sx={{ flex: 1 }}>
-        <Card sx={{ p: 3, background: colors.gradients.warning, color: 'white' }}>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '12px',
-                bgcolor: 'rgba(255, 255, 255, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Receipt sx={{ fontSize: 32 }} />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Reste à Payer
-              </Typography>
-              <Typography variant="h5" fontWeight="bold">
-                {formatCurrency(stats.resteAPayer)} DH
-              </Typography>
-            </Box>
-          </Stack>
-        </Card>
-      </Box>
-
-      {/* Avancement */}
-      <Box sx={{ flex: 1 }}>
-        <Card sx={{ p: 3, background: colors.gradients.error, color: 'white' }}>
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '12px',
-                bgcolor: 'rgba(255, 255, 255, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <CheckCircle sx={{ fontSize: 32 }} />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Avancement
-              </Typography>
-              <Typography variant="h5" fontWeight="bold">
-                {stats.tauxAvancement.toFixed(1)}%
-              </Typography>
-            </Box>
-          </Stack>
-        </Card>
-      </Box>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: borders.radius.lg,
+                    bgcolor: card.iconBgColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <IconComponent sx={{ fontSize: 24, color: card.iconColor }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: colors.textSecondary,
+                      fontSize: typography.sizes.xs,
+                      fontWeight: typography.weights.medium,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      mb: 0.5,
+                    }}
+                  >
+                    {card.label}
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: typography.weights.bold,
+                      color: card.textColor,
+                      fontSize: typography.sizes.xl,
+                    }}
+                  >
+                    {card.value}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Card>
+          </Box>
+        )
+      })}
     </Stack>
   )
 }

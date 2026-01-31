@@ -16,7 +16,7 @@ import {
 } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
-import colors from '../../../theme/colors'
+import { colors } from '@/lib/designSystem'
 
 interface MarcheAvenantsSectionProps {
   marcheId: number

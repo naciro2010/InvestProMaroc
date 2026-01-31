@@ -6,7 +6,6 @@ import {
   Button,
   Paper,
   TextField,
-  Chip,
   IconButton,
   LinearProgress,
   Stack,
@@ -28,22 +27,40 @@ import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import StatsCard from '../../components/common/StatsCard'
 import MarchesMapView from '../../components/ui/MarchesMapView'
+import StatusBadge from '../../components/core/StatusBadge'
 import api from '../../lib/api'
-import { Marche as MarcheType, Fournisseur } from '../../types/entities'
+import { colors } from '../../lib/designSystem'
 
-// Interface étendue avec champs calculés par le backend
-interface Marche extends Omit<MarcheType, 'montantHT' | 'montantTTC'> {
-  montantHt: number // Backend uses camelCase
-  montantTtc: number // Backend uses camelCase
-  fournisseur?: Partial<Fournisseur>
-  convention?: {
-    id: number
-    code: string
-    libelle: string
-  }
-  nbLignes?: number
-  nbAvenants?: number
-  nbDecomptes?: number
+// Interface correspondant exactement au MarcheListDTO du backend
+interface MarcheListItem {
+  id: number
+  numeroMarche: string
+  numAo: string | null
+  dateMarche: string
+  fournisseurId: number
+  fournisseurCode: string
+  fournisseurNom: string
+  fournisseurIce: string | null
+  conventionId: number | null
+  conventionNumero: string | null
+  conventionLibelle: string | null
+  objet: string
+  montantHt: number
+  tauxTva: number
+  montantTva: number
+  montantTtc: number
+  statut: string
+  dateDebut: string | null
+  dateFinPrevue: string | null
+  delaiExecutionMois: number | null
+  adresse: string | null
+  latitude: number | null
+  longitude: number | null
+  zoneGeographique: string | null
+  nbLignes: number
+  nbAvenants: number
+  nbDecomptes: number
+  actif: boolean
 }
 
 const statutColors: Record<string, 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'> = {
@@ -57,8 +74,8 @@ const statutColors: Record<string, 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETAR
 
 export default function MarchesPage() {
   const navigate = useNavigate()
-  const [marches, setMarches] = useState<Marche[]>([])
-  const [filteredMarches, setFilteredMarches] = useState<Marche[]>([])
+  const [marches, setMarches] = useState<MarcheListItem[]>([])
+  const [filteredMarches, setFilteredMarches] = useState<MarcheListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatut, setSelectedStatut] = useState<string>('ALL')
@@ -92,11 +109,12 @@ export default function MarchesPage() {
 
     // Filtre par recherche
     if (searchTerm) {
+      const query = searchTerm.toLowerCase()
       filtered = filtered.filter(m =>
-        m.numeroMarche.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (m.objet?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
-        (m.fournisseur?.raisonSociale?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
-        (m.convention?.libelle?.toLowerCase() ?? '').includes(searchTerm.toLowerCase())
+        m.numeroMarche.toLowerCase().includes(query) ||
+        m.objet.toLowerCase().includes(query) ||
+        m.fournisseurNom.toLowerCase().includes(query) ||
+        (m.conventionLibelle?.toLowerCase() ?? '').includes(query)
       )
     }
 
@@ -183,42 +201,42 @@ export default function MarchesPage() {
               title="Total Marchés"
               value={stats.total}
               icon={<ShoppingCart />}
-              color="#3b82f6"
-              bgColor="#eff6ff"
+              color={colors.primary[600]}
+              bgColor={colors.primary[50]}
             />
             <StatsCard
               title="En Cours"
               value={stats.enCours}
               icon={<Receipt />}
-              color="#f59e0b"
-              bgColor="#fef3c7"
+              color={colors.warning[600]}
+              bgColor={colors.warning[50]}
             />
             <StatsCard
               title="Validés"
               value={stats.valide}
               icon={<Description />}
-              color="#10b981"
-              bgColor="#d1fae5"
+              color={colors.success[600]}
+              bgColor={colors.success[50]}
             />
             <StatsCard
               title="Terminés"
               value={stats.termine}
               icon={<Description />}
-              color="#3b82f6"
-              bgColor="#dbeafe"
+              color={colors.info[600]}
+              bgColor={colors.info[50]}
             />
             <StatsCard
               title="Montant Total"
               value={formatCurrency(stats.montantTotal)}
               subtitle="DH"
               icon={<ShoppingCart />}
-              color="#8b5cf6"
-              bgColor="#f5f3ff"
+              color={colors.purple[600]}
+              bgColor={colors.purple[50]}
             />
           </Box>
 
           {/* Main Content */}
-          <Paper sx={{ p: 3, border: '1px solid #e5e7eb', boxShadow: 'none', borderRadius: '12px' }}>
+          <Paper sx={{ p: 3, border: `1px solid ${colors.border}`, boxShadow: 'none', borderRadius: '12px' }}>
             {/* Filters and Search */}
             <Stack spacing={3} sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
@@ -288,55 +306,63 @@ export default function MarchesPage() {
               <Box sx={{ mt: 2, overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>N° Marché</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>N° AO</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Objet</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Fournisseur</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Montant TTC</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Lignes</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Statut</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Actions</th>
+                    <tr style={{ backgroundColor: colors.neutral[50], borderBottom: `1px solid ${colors.border}` }}>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>N° Marché</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>N° AO</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Objet</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Fournisseur</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Montant TTC</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Lignes</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Statut</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredMarches.map((marche) => (
                       <tr
                         key={marche.id}
-                        style={{ borderBottom: '1px solid #e5e7eb', cursor: 'pointer', transition: 'background-color 0.2s' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
+                        style={{ borderBottom: `1px solid ${colors.border}`, cursor: 'pointer', transition: 'background-color 0.2s' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.neutral[50])}
                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                         onClick={() => navigate(`/marches/${marche.id}`)}
                       >
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 500 }}>{marche.numeroMarche}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#6b7280' }}>{marche.numAO || '-'}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{marche.objet}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem' }}>{marche.fournisseur?.raisonSociale || '-'}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600 }}>{formatCurrency(marche.montantTtc)}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 500, color: colors.textPrimary }}>{marche.numeroMarche}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: colors.textSecondary }}>{marche.numAo || '-'}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: colors.textPrimary }}>{marche.objet}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: colors.textPrimary }}>{marche.fournisseurNom}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, textAlign: 'right', color: colors.primary[700] }}>{formatCurrency(marche.montantTtc)}</td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <Chip label={marche.nbLignes || 0} size="small" sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 600 }} />
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              minWidth: 24,
+                              height: 24,
+                              borderRadius: '6px',
+                              bgcolor: colors.primary[100],
+                              color: colors.primary[700],
+                              fontWeight: 600,
+                              fontSize: '0.75rem',
+                              px: 1,
+                            }}
+                          >
+                            {marche.nbLignes}
+                          </Box>
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <Chip
-                            label={marche.statut.replace('_', ' ')}
-                            size="small"
-                            color={
-                              marche.statut === 'VALIDE' ? 'success' :
-                              marche.statut === 'EN_COURS' ? 'warning' :
-                              marche.statut === 'TERMINE' ? 'info' :
-                              'default'
-                            }
-                          />
+                          <StatusBadge status={marche.statut} size="small" />
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                           <Stack direction="row" spacing={1} justifyContent="flex-end">
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}`); }}>
+                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}`); }} sx={{ color: colors.neutral[500] }}>
                               <Visibility fontSize="small" />
                             </IconButton>
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}/modifier`); }}>
+                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}/modifier`); }} sx={{ color: colors.neutral[500] }}>
                               <Edit fontSize="small" />
                             </IconButton>
-                            <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }}>
+                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }} sx={{ color: colors.danger[500] }}>
                               <Delete fontSize="small" />
                             </IconButton>
                           </Stack>
@@ -348,7 +374,7 @@ export default function MarchesPage() {
 
                 {filteredMarches.length === 0 && (
                   <Box sx={{ textAlign: 'center', py: 6 }}>
-                    <Typography variant="body1" color="text.secondary">Aucun marché trouvé</Typography>
+                    <Typography variant="body1" sx={{ color: colors.textSecondary }}>Aucun marché trouvé</Typography>
                   </Box>
                 )}
               </Box>

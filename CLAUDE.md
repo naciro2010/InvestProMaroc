@@ -682,6 +682,167 @@ function MyComponent() {
 } />
 ```
 
+## ⚠️ CRITICAL: Design System UX v2.0 (Confluence/Jira/Odoo)
+
+### Principes de Design UX
+
+**INSPIRATION:**
+- **Confluence** - Interface épurée, professionnelle, beaucoup de blanc
+- **Jira** - Dense mais organisé, badges de statut colorés, données structurées
+- **Odoo** - Moderne, accent purple, cards plates, formulaires clairs
+
+**PRINCIPES OBLIGATOIRES:**
+1. **Pas de gradients** dans les zones de contenu (flat design)
+2. **Couleurs du design system uniquement** (`designSystem.ts`)
+3. **Ombres subtiles** (Atlassian-style, low opacity)
+4. **Espacement cohérent** (base 8px)
+5. **Typographie hiérarchisée** (xs → 4xl)
+6. **Accessibilité WCAG AA** (contraste minimum)
+
+### Palette de Couleurs (Design System v2.0)
+
+```typescript
+// ❌ INTERDIT - Couleurs en dur
+<Box sx={{ backgroundColor: '#3b82f6' }}>  // NON!
+<Card style={{ color: 'rgb(16, 185, 129)' }}>  // NON!
+
+// ✅ OBLIGATOIRE - Utiliser designSystem.ts
+import { colors, componentStyles } from '@/lib/designSystem'
+
+<Box sx={{ backgroundColor: colors.primary[600] }}>
+<Card sx={componentStyles.card}>
+```
+
+**Couleurs sémantiques:**
+| Couleur | Usage | Token |
+|---------|-------|-------|
+| **Primary (Blue)** | Actions, liens, sélection | `colors.primary[600]` = `#0c66e4` |
+| **Success (Green)** | Validation, statuts actifs | `colors.success[600]` = `#1f845a` |
+| **Danger (Red)** | Erreurs, suppression | `colors.danger[600]` = `#c9372c` |
+| **Warning (Yellow)** | Avertissements, en attente | `colors.warning[600]` = `#946f00` |
+| **Info (Teal)** | Informations, en cours | `colors.info[600]` = `#227d9b` |
+| **Purple** | Accent Odoo, badges spéciaux | `colors.purple[600]` = `#6e5dc6` |
+| **Neutral** | Textes, bordures, fonds | `colors.neutral[50-900]` |
+
+### Styles de Composants Pré-définis
+
+```typescript
+import { componentStyles } from '@/lib/designSystem'
+
+// Cards
+<Box sx={componentStyles.card}>           // Bordure, pas d'ombre
+<Box sx={componentStyles.cardElevated}>   // Ombre subtile, hover effect
+<Box sx={componentStyles.cardInteractive}> // Cliquable, lift on hover
+
+// Boutons
+<Button sx={componentStyles.buttonPrimary}>   // Bleu plein
+<Button sx={componentStyles.buttonSecondary}> // Outline gris
+<Button sx={componentStyles.buttonDanger}>    // Rouge plein
+<Button sx={componentStyles.buttonGhost}>     // Sans bordure
+
+// Tables
+<TableContainer sx={componentStyles.table.container}>
+<TableHead sx={componentStyles.table.header}>
+<TableRow sx={componentStyles.table.row}>
+<TableCell sx={componentStyles.table.cell}>
+
+// Stat Cards (Dashboard KPIs)
+<Card sx={componentStyles.statCard}>
+```
+
+### Pattern Micro-Component avec Data Loading
+
+```typescript
+// ✅ OBLIGATOIRE - Chaque micro-component charge ses propres données
+
+// Parent (orchestrateur) - NE charge PAS tout
+function MarcheDetailPage({ marcheId }: { marcheId: number }) {
+  return (
+    <>
+      <MarcheHeader marcheId={marcheId} />      {/* GET /marches/{id}/basic */}
+      <MarcheStatsCard marcheId={marcheId} />   {/* GET /marches/{id}/stats */}
+      <MarcheLignesSection marcheId={marcheId} /> {/* GET /marches/{id}/lignes */}
+      <MarcheDecomptesSection marcheId={marcheId} /> {/* GET /marches/{id}/decomptes */}
+    </>
+  )
+}
+
+// Micro-component - charge SES données uniquement
+function MarcheStatsCard({ marcheId }: { marcheId: number }) {
+  const [stats, setStats] = useState<MarcheStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    marchesAPI.getStats(marcheId).then(res => setStats(res.data.data))
+  }, [marcheId])
+
+  if (loading) return <CircularProgress />
+
+  return (
+    <Card sx={componentStyles.statCard}>
+      {/* Affiche uniquement les stats */}
+    </Card>
+  )
+}
+```
+
+### StatusBadge - Badges de Statut Atlassian-Style
+
+```typescript
+import StatusBadge from '@/components/core/StatusBadge'
+
+// Statuts workflow
+<StatusBadge status="BROUILLON" />  // Gris
+<StatusBadge status="SOUMIS" />     // Jaune/Orange
+<StatusBadge status="VALIDEE" />    // Vert
+<StatusBadge status="EN_EXECUTION" /> // Bleu/Teal
+<StatusBadge status="REJETE" />     // Rouge
+<StatusBadge status="ACHEVE" />     // Vert foncé
+
+// Types
+<StatusBadge status="CADRE" />      // Bleu (primary)
+<StatusBadge status="SPECIFIQUE" /> // Purple
+
+// Options
+<StatusBadge status="VALIDEE" size="small" />
+<StatusBadge status="URGENT" dotOnly />  // Point seul sans label
+```
+
+### Sidebar/AppLayout - Design Confluence
+
+Le sidebar utilise **uniquement** les tokens du design system:
+- Fond: `colors.surface` (blanc)
+- Bordure: `colors.border`
+- Texte: `colors.textPrimary`, `colors.textSecondary`
+- Active: `colors.primary[50]` bg + `colors.primary[700]` text
+- Hover: `colors.neutral[100]`
+- Badge "Bientôt": `colors.purple[50/700]`
+
+### Règles Anti-Gradient
+
+```typescript
+// ❌ INTERDIT
+background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+background: colors.gradients.primary  // N'EXISTE PLUS
+
+// ✅ OBLIGATOIRE - Couleurs plates
+backgroundColor: colors.primary[600]
+// ou pour header spécial (exception acceptée):
+background: `linear-gradient(135deg, ${colors.primary[600]} 0%, ${colors.primary[700]} 100%)`
+```
+
+### Checklist Design UX
+
+- ✅ **Aucune couleur hardcodée** - Tout vient de `designSystem.ts`
+- ✅ **Pas de gradient** dans le contenu
+- ✅ **Micro-components** avec data loading indépendant
+- ✅ **StatusBadge** pour tous les statuts (pas de Chip manuel)
+- ✅ **componentStyles** pour cards, boutons, tables
+- ✅ **Espacement** via `spacing.mui.*` (pas de valeurs en dur)
+- ✅ **Typographie** via `typography.sizes.*`
+- ✅ **Bordures** via `borders.radius.*`
+- ✅ **Ombres** via `shadows.*`
+
 ## Important Development Notes
 
 1. **French Naming:** All business entities use French names (Convention, Marché, Décompte, etc.)

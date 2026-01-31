@@ -12,19 +12,19 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 })
 
+// Interface compatible avec MarcheListDTO du backend (champs plats)
 interface Marche {
   id: number
   numeroMarche: string
-  objet?: string
-  adresse?: string
-  latitude?: number
-  longitude?: number
-  zoneGeographique?: string
+  objet: string
+  adresse: string | null
+  latitude: number | null
+  longitude: number | null
+  zoneGeographique: string | null
   montantTtc: number
   statut: string
-  fournisseur?: {
-    raisonSociale?: string
-  }
+  // Champ plat au lieu d'objet imbriqué
+  fournisseurNom?: string
 }
 
 interface MarchesMapViewProps {
@@ -164,10 +164,10 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
                   )}
 
                   <div className="space-y-1 text-xs text-gray-700 mb-3">
-                    {marche.fournisseur?.raisonSociale && (
+                    {marche.fournisseurNom && (
                       <p>
                         <span className="font-medium">Fournisseur:</span>{' '}
-                        {marche.fournisseur.raisonSociale}
+                        {marche.fournisseurNom}
                       </p>
                     )}
                     <p>

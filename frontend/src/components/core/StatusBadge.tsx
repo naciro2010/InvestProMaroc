@@ -1,7 +1,6 @@
 import { Box, Typography } from '@mui/material'
-import { getStatusConfig } from '@/lib/designSystem'
+import { getStatusConfig, colors, borders, typography } from '@/lib/designSystem'
 import type { StatusColor } from '@/lib/designSystem'
-import { borders, typography } from '@/lib/designSystem'
 
 // ==================== TYPES ====================
 
@@ -12,6 +11,8 @@ interface StatusBadgeProps {
   label?: string
   /** Taille */
   size?: 'small' | 'medium'
+  /** Afficher uniquement le point sans label */
+  dotOnly?: boolean
 }
 
 interface StatusDotProps {
@@ -22,6 +23,17 @@ interface StatusDotProps {
 }
 
 // ==================== COMPOSANTS ====================
+
+// Color mapping using design system tokens
+const dotColorMap: Record<StatusColor, string> = {
+  success: colors.success[500],
+  warning: colors.warning[500],
+  danger: colors.danger[500],
+  info: colors.info[500],
+  neutral: colors.neutral[400],
+  primary: colors.primary[500],
+  purple: colors.purple[500],
+}
 
 /**
  * StatusDot - Point de couleur pour indiquer un statut.
@@ -34,22 +46,13 @@ interface StatusDotProps {
  * <StatusDot color="warning" size={10} />
  */
 export const StatusDot = ({ color, size = 8 }: StatusDotProps) => {
-  const colorMap: Record<StatusColor, string> = {
-    success: '#108548',
-    warning: '#ab6100',
-    danger: '#dd2b0e',
-    info: '#1f75cb',
-    gray: '#6b7280',
-    primary: '#2563eb',
-  }
-
   return (
     <Box
       sx={{
         width: size,
         height: size,
-        borderRadius: '50%',
-        backgroundColor: colorMap[color] || colorMap.gray,
+        borderRadius: borders.radius.full,
+        backgroundColor: dotColorMap[color] || dotColorMap.neutral,
         flexShrink: 0,
       }}
     />
@@ -59,20 +62,37 @@ export const StatusDot = ({ color, size = 8 }: StatusDotProps) => {
 /**
  * StatusBadge - Badge de statut avec couleur sémantique.
  *
+ * Design: Atlassian-style status lozenges (flat, colored background)
  * Affiche le statut d'une entité avec un fond coloré.
  * Utilise le design system pour les couleurs.
  *
  * @example
  * <StatusBadge status="VALIDEE" />
  * <StatusBadge status="BROUILLON" label="Draft" size="small" />
+ * <StatusBadge status="EN_COURS" dotOnly />
  */
-const StatusBadge = ({ status, label, size = 'medium' }: StatusBadgeProps) => {
+const StatusBadge = ({ status, label, size = 'medium', dotOnly = false }: StatusBadgeProps) => {
   const config = getStatusConfig(status)
   const displayLabel = label || config.label
 
+  // If dotOnly, just show the dot
+  if (dotOnly) {
+    return <StatusDot color={config.color} size={size === 'small' ? 6 : 8} />
+  }
+
   const sizeStyles = size === 'small'
-    ? { px: 1, py: 0.25, fontSize: typography.sizes.xs }
-    : { px: 1.5, py: 0.5, fontSize: typography.sizes.sm }
+    ? {
+        px: 1,
+        py: 0.25,
+        fontSize: typography.sizes.xs,
+        gap: 0.5,
+      }
+    : {
+        px: 1.5,
+        py: 0.5,
+        fontSize: typography.sizes.sm,
+        gap: 0.75,
+      }
 
   return (
     <Box
@@ -80,16 +100,24 @@ const StatusBadge = ({ status, label, size = 'medium' }: StatusBadgeProps) => {
       sx={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 0.5,
         backgroundColor: config.bgColor,
         color: config.textColor,
-        borderRadius: borders.radius.base,
+        borderRadius: borders.radius.sm,
         fontWeight: typography.weights.medium,
         whiteSpace: 'nowrap',
+        lineHeight: 1,
         ...sizeStyles,
       }}
     >
-      <StatusDot color={config.color} size={size === 'small' ? 6 : 8} />
+      <Box
+        sx={{
+          width: size === 'small' ? 6 : 8,
+          height: size === 'small' ? 6 : 8,
+          borderRadius: borders.radius.full,
+          backgroundColor: config.dotColor,
+          flexShrink: 0,
+        }}
+      />
       <Typography
         component="span"
         sx={{

@@ -1,6 +1,9 @@
 import React, { ReactNode } from 'react'
 import { Box, Container, Typography, useTheme, useMediaQuery } from '@mui/material'
-import { getGradient } from '@/theme/colors'
+import { colors } from '@/lib/designSystem'
+
+// Simple helper for primary gradient (maintains consistency with design system)
+const getPrimaryGradient = () => `linear-gradient(135deg, ${colors.primary[600]} 0%, ${colors.primary[700]} 100%)`
 
 export interface PageLayoutProps {
   /**
@@ -83,7 +86,7 @@ export function PageLayout({
       {(title || subtitle || actions) && (
         <Box
           sx={{
-            background: headerBg || (showGradient ? getGradient('primary') : 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)'),
+            background: headerBg || (showGradient ? getPrimaryGradient() : colors.surface),
             color: showGradient ? 'white' : 'text.primary',
             px: { xs: 2, sm: 3, md: 4 },
             py: { xs: 3, sm: 4, md: 5 },
@@ -203,7 +206,7 @@ export function DetailPageLayout({
       subtitle={subtitle}
       actions={actions}
       showGradient={true}
-      headerBg="linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)"
+      headerBg={getPrimaryGradient()}
     >
       {children}
     </PageLayout>

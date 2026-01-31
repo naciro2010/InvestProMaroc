@@ -25,7 +25,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Alert,
   Card,
 } from '@mui/material'
 import {
@@ -40,7 +39,7 @@ import {
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import { versementsPrevisionnelsAPI, conventionsAPI } from '../../lib/api'
-import colors from '../../theme/colors'
+import { colors, componentStyles, borders, typography, spacing } from '@/lib/designSystem'
 
 interface VersementPrevisionnel {
   id: number
@@ -260,160 +259,156 @@ const VersementsPrevisionnelsPage = () => {
     return vDate >= today && vDate <= thirtyDaysLater
   }
 
+  // Stat card configurations with semantic colors (Atlassian-style)
+  const statCards = [
+    {
+      label: 'Total Versements',
+      value: stats.totalVersements.toString(),
+      icon: AccountBalanceWallet,
+      bgColor: colors.primary[50],
+      iconBgColor: colors.primary[100],
+      iconColor: colors.primary[600],
+      textColor: colors.primary[700],
+    },
+    {
+      label: 'Montant Total',
+      value: `${formatCurrency(stats.montantTotal)} DH`,
+      icon: TrendingUp,
+      bgColor: colors.success[50],
+      iconBgColor: colors.success[100],
+      iconColor: colors.success[600],
+      textColor: colors.success[700],
+    },
+    {
+      label: 'Conventions',
+      value: stats.conventionsCount.toString(),
+      icon: FilterList,
+      bgColor: colors.warning[50],
+      iconBgColor: colors.warning[100],
+      iconColor: colors.warning[600],
+      textColor: colors.warning[700],
+    },
+    {
+      label: 'Proches (30j)',
+      value: stats.versementsProches.toString(),
+      icon: CalendarMonth,
+      bgColor: colors.info[50],
+      iconBgColor: colors.info[100],
+      iconColor: colors.info[600],
+      textColor: colors.info[700],
+    },
+  ]
+
   return (
     <AppLayout>
-      <Box sx={{ p: 4, minHeight: '100vh', bgcolor: '#f9fafb' }}>
+      <Box sx={{ p: { xs: 2, md: 4 }, minHeight: '100vh', bgcolor: colors.background }}>
         {/* Header */}
-        <Box
-          sx={{
-            background: `linear-gradient(135deg, ${colors.primary[600]} 0%, ${colors.primary[700]} 100%)`,
-            color: 'white',
-            borderRadius: '16px',
-            p: 4,
-            mb: 4,
-          }}
-        >
-          <Typography variant="h3" fontWeight="bold" gutterBottom>
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: typography.weights.bold,
+              color: colors.textPrimary,
+              mb: 1,
+            }}
+          >
             Versements Prévisionnels
           </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9 }}>
+          <Typography
+            variant="body1"
+            sx={{
+              color: colors.textSecondary,
+              fontSize: typography.sizes.base,
+            }}
+          >
             Planification et suivi des paiements prévisionnels pour les conventions
           </Typography>
         </Box>
 
-        {/* Stats Cards */}
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 4 }}>
-          <Box sx={{ flex: 1 }}>
-            <Card sx={{ p: 3, background: colors.gradients.primary }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Box
+        {/* Stats Cards - Atlassian Style */}
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 4 }}>
+          {statCards.map((card, index) => {
+            const IconComponent = card.icon
+            return (
+              <Box key={index} sx={{ flex: 1 }}>
+                <Card
                   sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '12px',
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    ...componentStyles.statCard,
+                    backgroundColor: card.bgColor,
+                    border: 'none',
                   }}
                 >
-                  <AccountBalanceWallet sx={{ fontSize: 32, color: 'white' }} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                    Total Versements
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold" sx={{ color: 'white' }}>
-                    {stats.totalVersements}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Card>
-          </Box>
-
-          <Box sx={{ flex: 1 }}>
-            <Card sx={{ p: 3, background: colors.gradients.success }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '12px',
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <TrendingUp sx={{ fontSize: 32, color: 'white' }} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                    Montant Total
-                  </Typography>
-                  <Typography variant="h5" fontWeight="bold" sx={{ color: 'white' }}>
-                    {formatCurrency(stats.montantTotal)} DH
-                  </Typography>
-                </Box>
-              </Stack>
-            </Card>
-          </Box>
-
-          <Box sx={{ flex: 1 }}>
-            <Card sx={{ p: 3, background: colors.gradients.warning }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '12px',
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FilterList sx={{ fontSize: 32, color: 'white' }} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                    Conventions
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold" sx={{ color: 'white' }}>
-                    {stats.conventionsCount}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Card>
-          </Box>
-
-          <Box sx={{ flex: 1 }}>
-            <Card sx={{ p: 3, background: colors.gradients.error }}>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '12px',
-                    bgcolor: 'rgba(255, 255, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CalendarMonth sx={{ fontSize: 32, color: 'white' }} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                    Proches (30j)
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold" sx={{ color: 'white' }}>
-                    {stats.versementsProches}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Card>
-          </Box>
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: borders.radius.lg,
+                        bgcolor: card.iconBgColor,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <IconComponent sx={{ fontSize: 24, color: card.iconColor }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: colors.textSecondary,
+                          fontSize: typography.sizes.xs,
+                          fontWeight: typography.weights.medium,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          mb: 0.5,
+                        }}
+                      >
+                        {card.label}
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: typography.weights.bold,
+                          color: card.textColor,
+                          fontSize: typography.sizes.xl,
+                        }}
+                      >
+                        {card.value}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Card>
+              </Box>
+            )
+          })}
         </Stack>
 
         {/* Filters & Actions */}
-        <Paper sx={{ p: 3, mb: 3 }}>
+        <Paper
+          sx={{
+            ...componentStyles.card,
+            p: 3,
+            mb: 3,
+          }}
+        >
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
             <TextField
               placeholder="Rechercher..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ flex: 1 }}
+              size="small"
+              sx={{ flex: 1, ...componentStyles.inputField }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Search />
+                    <Search sx={{ color: colors.textSecondary }} />
                   </InputAdornment>
                 ),
               }}
             />
 
-            <FormControl sx={{ minWidth: 250 }}>
+            <FormControl sx={{ minWidth: 250 }} size="small">
               <InputLabel>Filtrer par Convention</InputLabel>
               <Select
                 value={filterConventionId}
@@ -436,7 +431,7 @@ const VersementsPrevisionnelsPage = () => {
               startIcon={<Add />}
               onClick={() => handleOpenDialog()}
               sx={{
-                background: colors.gradients.primary,
+                ...componentStyles.buttonPrimary,
                 minWidth: 200,
               }}
             >
@@ -446,40 +441,28 @@ const VersementsPrevisionnelsPage = () => {
         </Paper>
 
         {/* Table */}
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={componentStyles.table.container}>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell>
-                  <strong>Convention</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Volet</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Date Versement</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>Montant</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Remarques</strong>
-                </TableCell>
-                <TableCell align="center">
-                  <strong>Actions</strong>
-                </TableCell>
+              <TableRow sx={componentStyles.table.header}>
+                <TableCell sx={componentStyles.table.headerCell}>Convention</TableCell>
+                <TableCell sx={componentStyles.table.headerCell}>Volet</TableCell>
+                <TableCell sx={componentStyles.table.headerCell}>Date Versement</TableCell>
+                <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Montant</TableCell>
+                <TableCell sx={componentStyles.table.headerCell}>Remarques</TableCell>
+                <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'center' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    Chargement...
+                    <Typography color="textSecondary">Chargement...</Typography>
                   </TableCell>
                 </TableRow>
               ) : filteredVersements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={6} sx={componentStyles.emptyState}>
                     <Typography color="textSecondary">Aucun versement trouvé</Typography>
                   </TableCell>
                 </TableRow>
@@ -487,50 +470,65 @@ const VersementsPrevisionnelsPage = () => {
                 filteredVersements
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((versement) => (
-                    <TableRow key={versement.id} hover>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="bold">
+                    <TableRow key={versement.id} sx={componentStyles.table.row}>
+                      <TableCell sx={componentStyles.table.cell}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}
+                        >
                           {versement.convention.code}
                         </Typography>
-                        <Typography variant="caption" color="textSecondary">
+                        <Typography variant="caption" sx={{ color: colors.textSecondary }}>
                           {versement.convention.objet}
                         </Typography>
                       </TableCell>
-                      <TableCell>{versement.volet || '-'}</TableCell>
-                      <TableCell>
+                      <TableCell sx={componentStyles.table.cell}>{versement.volet || '-'}</TableCell>
+                      <TableCell sx={componentStyles.table.cell}>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Typography variant="body2">{formatDate(versement.dateVersement)}</Typography>
                           {isVersementProche(versement.dateVersement) && (
-                            <Chip label="Proche" size="small" color="warning" />
+                            <Chip
+                              label="Proche"
+                              size="small"
+                              sx={{
+                                backgroundColor: colors.warning[50],
+                                color: colors.warning[700],
+                                fontWeight: typography.weights.medium,
+                                fontSize: typography.sizes.xs,
+                              }}
+                            />
                           )}
                         </Stack>
                       </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" fontWeight="bold" color="primary">
+                      <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: typography.weights.semibold, color: colors.primary[600] }}
+                        >
                           {formatCurrency(versement.montant)} DH
                         </Typography>
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="textSecondary">
+                      <TableCell sx={componentStyles.table.cell}>
+                        <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                           {versement.remarques || '-'}
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'center' }}>
                         <IconButton
                           size="small"
-                          color="info"
                           onClick={() => handleOpenDialog(versement)}
                           title="Modifier"
+                          sx={{ color: colors.primary[600] }}
                         >
-                          <Edit />
+                          <Edit fontSize="small" />
                         </IconButton>
                         <IconButton
                           size="small"
-                          color="error"
                           onClick={() => handleDelete(versement.id)}
                           title="Supprimer"
+                          sx={{ color: colors.danger[600] }}
                         >
-                          <Delete />
+                          <Delete fontSize="small" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -550,15 +548,18 @@ const VersementsPrevisionnelsPage = () => {
             }}
             labelRowsPerPage="Lignes par page"
             labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
+            sx={{ borderTop: `1px solid ${colors.divider}` }}
           />
         </TableContainer>
 
         {/* Add/Edit Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-          <DialogTitle>{editingId ? 'Modifier' : 'Ajouter'} un Versement Prévisionnel</DialogTitle>
+          <DialogTitle sx={{ fontWeight: typography.weights.semibold }}>
+            {editingId ? 'Modifier' : 'Ajouter'} un Versement Prévisionnel
+          </DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>
-              <FormControl fullWidth required>
+              <FormControl fullWidth required size="small">
                 <InputLabel>Convention</InputLabel>
                 <Select
                   value={formData.conventionId}
@@ -576,6 +577,7 @@ const VersementsPrevisionnelsPage = () => {
 
               <TextField
                 fullWidth
+                size="small"
                 label="Volet / Composante"
                 value={formData.volet}
                 onChange={(e) => setFormData({ ...formData, volet: e.target.value })}
@@ -585,6 +587,7 @@ const VersementsPrevisionnelsPage = () => {
               <TextField
                 fullWidth
                 required
+                size="small"
                 type="date"
                 label="Date de Versement"
                 value={formData.dateVersement}
@@ -595,6 +598,7 @@ const VersementsPrevisionnelsPage = () => {
               <TextField
                 fullWidth
                 required
+                size="small"
                 type="number"
                 label="Montant (DH)"
                 value={formData.montant}
@@ -607,6 +611,7 @@ const VersementsPrevisionnelsPage = () => {
 
               <TextField
                 fullWidth
+                size="small"
                 multiline
                 rows={3}
                 label="Remarques"
@@ -615,9 +620,11 @@ const VersementsPrevisionnelsPage = () => {
               />
             </Stack>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Annuler</Button>
-            <Button variant="contained" onClick={handleSave} sx={{ background: colors.gradients.primary }}>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={handleCloseDialog} sx={componentStyles.buttonSecondary}>
+              Annuler
+            </Button>
+            <Button variant="contained" onClick={handleSave} sx={componentStyles.buttonPrimary}>
               {editingId ? 'Modifier' : 'Ajouter'}
             </Button>
           </DialogActions>

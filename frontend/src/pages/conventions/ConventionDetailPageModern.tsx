@@ -46,7 +46,10 @@ import {
   ConventionInfoCardLazy,
   ConventionFinancesCard,
   ConventionStatsCard,
+  ConventionPartenairesCard,
 } from '../../components/conventions/detail'
+import { colors, componentStyles, typography } from '../../lib/designSystem'
+import StatusBadge from '../../components/core/StatusBadge'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
 import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
@@ -262,7 +265,7 @@ const ConventionDetailPageModern = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
+      <Box sx={{ bgcolor: colors.background, minHeight: '100vh', py: 4 }}>
         <Container maxWidth="xl">
           {/* Header */}
           <PageHeader
@@ -388,91 +391,61 @@ const ConventionDetailPageModern = () => {
             <TabPanel value={activeTab} index={0}>
               <Container maxWidth="xl">
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-                  {/* Partenaires Card */}
-                  <Paper sx={{ p: 3, bgcolor: '#f9fafb' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        <People fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Partenaires
-                      </Typography>
-                      <Button
-                        size="small"
-                        startIcon={<Add />}
-                        variant="outlined"
-                        onClick={() => setAddPartenaireDialogOpen(true)}
-                      >
-                        Ajouter
-                      </Button>
-                    </Box>
-                    <Divider sx={{ mb: 2 }} />
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Partenaire</TableCell>
-                            <TableCell align="right">Budget (M)</TableCell>
-                            <TableCell align="right">%</TableCell>
-                            <TableCell align="right">CI (M)</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow>
-                            <TableCell colSpan={4} align="center">
-                              <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                                Aucun partenaire défini
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Paper>
+                  {/* Partenaires Card - Micro-Component */}
+                  <ConventionPartenairesCard
+                    conventionId={convention.id}
+                    onAddClick={() => setAddPartenaireDialogOpen(true)}
+                  />
 
                   {/* Maître d'œuvre Card */}
-                  <Paper sx={{ p: 3, bgcolor: '#f9fafb' }}>
+                  <Paper sx={{ ...componentStyles.card, p: 3 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        <Business fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Maître d'œuvre
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Business sx={{ color: colors.info[600] }} />
+                        <Typography variant="h6" sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+                          Maître d'œuvre
+                        </Typography>
+                      </Box>
                       <Button
                         size="small"
                         startIcon={<Add />}
                         variant="outlined"
                         onClick={() => {
-                          // TODO: Ouvrir modal d'ajout de maître d'œuvre
                           alert('Fonctionnalité en développement : Ajouter un maître d\'œuvre')
                         }}
+                        sx={{ borderColor: colors.primary[300], color: colors.primary[600] }}
                       >
                         Ajouter
                       </Button>
                     </Box>
-                    <Divider sx={{ mb: 2 }} />
-                    <Typography variant="body2" color="text.secondary">
+                    <Divider sx={{ mb: 2, borderColor: colors.border }} />
+                    <Typography variant="body2" sx={{ color: colors.textSecondary }}>
                       Aucun maître d'œuvre défini
                     </Typography>
                   </Paper>
 
                   {/* Imputations prévisionnelles Card */}
-                  <Paper sx={{ p: 3, bgcolor: '#f9fafb', gridColumn: { xs: '1', md: 'span 2' } }}>
+                  <Paper sx={{ ...componentStyles.card, p: 3, gridColumn: { xs: '1', md: 'span 2' } }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        <TrendingUp fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Imputations prévisionnelles
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TrendingUp sx={{ color: colors.success[600] }} />
+                        <Typography variant="h6" sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+                          Imputations prévisionnelles
+                        </Typography>
+                      </Box>
                       <Button
                         size="small"
                         startIcon={<Add />}
                         variant="outlined"
                         onClick={() => {
-                          // TODO: Ouvrir modal d'ajout d'imputation
                           alert('Fonctionnalité en développement : Ajouter une imputation')
                         }}
+                        sx={{ borderColor: colors.primary[300], color: colors.primary[600] }}
                       >
                         Ajouter
                       </Button>
                     </Box>
-                    <Divider sx={{ mb: 2 }} />
+                    <Divider sx={{ mb: 2, borderColor: colors.border }} />
                     <TableContainer>
                       <Table size="small">
                         <TableHead>
@@ -499,25 +472,27 @@ const ConventionDetailPageModern = () => {
                   </Paper>
 
                   {/* Versements prévisionnels Card */}
-                  <Paper sx={{ p: 3, bgcolor: '#f9fafb', gridColumn: { xs: '1', md: 'span 2' } }}>
+                  <Paper sx={{ ...componentStyles.card, p: 3, gridColumn: { xs: '1', md: 'span 2' } }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        <AccountBalance fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                        Versements prévisionnels
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <AccountBalance sx={{ color: colors.warning[600] }} />
+                        <Typography variant="h6" sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+                          Versements prévisionnels
+                        </Typography>
+                      </Box>
                       <Button
                         size="small"
                         startIcon={<Add />}
                         variant="outlined"
                         onClick={() => {
-                          // TODO: Ouvrir modal d'ajout de versement
                           alert('Fonctionnalité en développement : Ajouter un versement')
                         }}
+                        sx={{ borderColor: colors.primary[300], color: colors.primary[600] }}
                       >
                         Ajouter
                       </Button>
                     </Box>
-                    <Divider sx={{ mb: 2 }} />
+                    <Divider sx={{ mb: 2, borderColor: colors.border }} />
                     <TableContainer>
                       <Table size="small">
                         <TableHead>
@@ -569,7 +544,7 @@ const ConventionDetailPageModern = () => {
                             <TableCell>{sc.numero}</TableCell>
                             <TableCell>{sc.libelle}</TableCell>
                             <TableCell>
-                              <Chip label={sc.statut} size="small" color={getStatusColor(sc.statut)} />
+                              <StatusBadge status={sc.statut} size="small" />
                             </TableCell>
                             <TableCell align="right">{formatCurrency(sc.montant)}</TableCell>
                             <TableCell>{formatDate(sc.dateDebut)}</TableCell>
@@ -641,7 +616,7 @@ const ConventionDetailPageModern = () => {
                           <TableCell>{projet.designation}</TableCell>
                           <TableCell align="right">{formatCurrency(projet.budgetTotal)}</TableCell>
                           <TableCell>
-                            <Chip label={projet.statut} size="small" color={getStatusColor(projet.statut)} />
+                            <StatusBadge status={projet.statut} size="small" />
                           </TableCell>
                           <TableCell align="center">
                             <IconButton size="small" onClick={() => navigate(`/projets/${projet.id}`)}>
@@ -696,7 +671,7 @@ const ConventionDetailPageModern = () => {
                           <TableCell>{marche.fournisseurNom || '-'}</TableCell>
                           <TableCell align="right">{formatCurrency(marche.montantTTC)}</TableCell>
                           <TableCell>
-                            <Chip label={marche.statut} size="small" color={getStatusColor(marche.statut)} />
+                            <StatusBadge status={marche.statut} size="small" />
                           </TableCell>
                           <TableCell align="center">
                             <IconButton size="small" onClick={() => navigate(`/marches/${marche.id}`)}>

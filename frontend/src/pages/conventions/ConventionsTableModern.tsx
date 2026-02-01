@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -33,18 +33,15 @@ import {
   MoreVert,
   CheckCircle,
   Cancel,
-  Pending,
   Lock,
   Edit,
   Delete,
   Send,
   Visibility,
   PlayArrow,
-  Undo,
   Search,
   Person,
   CalendarToday,
-  Warning,
   Description,
   TrendingUp,
   CheckCircleOutline,
@@ -56,6 +53,14 @@ import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import StatsCard from '../../components/common/StatsCard'
+import {
+  SortableTableRow,
+  useSortableTable,
+  DndContext,
+  SortableContext,
+  verticalListSortingStrategy,
+  closestCenter,
+} from '../../components/core/SortableTable'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
 type OrderDirection = 'asc' | 'desc'
@@ -86,7 +91,7 @@ const ConventionsTableModern = () => {
   const { user } = useAuth()
   const { showToast } = useToast()
 
-  const [conventions, setConventions] = useState<Convention[]>([])
+  const [rawConventions, setRawConventions] = useState<Convention[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<StatutConvention | 'ALL'>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
@@ -98,6 +103,28 @@ const ConventionsTableModern = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [motifRejet, setMotifRejet] = useState('')
 
+  // Ref for scrolling to table when clicking stats
+  const tableRef = useRef<HTMLDivElement>(null)
+
+  // Handle stat card click - filter and scroll to table
+  const handleStatClick = (filterValue: StatutConvention | 'ALL') => {
+    setFilter(filterValue)
+    setTimeout(() => {
+      tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
+
+  // Drag & drop avec persistance localStorage
+  const {
+    items: conventions,
+    sensors,
+    handleDragEnd,
+  } = useSortableTable({
+    initialItems: rawConventions,
+    idKey: 'id',
+    storageKey: 'conventions-order',
+  })
+
   useEffect(() => {
     fetchConventions()
   }, [])
@@ -107,7 +134,7 @@ const ConventionsTableModern = () => {
       setLoading(true)
       const response = await conventionsAPI.getAll()
       const data = Array.isArray(response.data) ? response.data : (response.data?.data || [])
-      setConventions(data)
+      setRawConventions(data)
     } catch (error) {
       console.error('Erreur lors du chargement des conventions:', error)
       showToast('Erreur lors du chargement des conventions', 'error')
@@ -329,8 +356,8 @@ const ConventionsTableModern = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', py: 4, bgcolor: '#f9fafb' }}>
-        <Container maxWidth="xl">
+      <Box sx={{ minHeight: '100vh', py: { xs: 2, md: 4 }, bgcolor: '#f9fafb' }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
           <PageHeader
             title="Conventions"
             subtitle="Gestion complète des conventions avec workflow de validation"
@@ -339,9 +366,10 @@ const ConventionsTableModern = () => {
                 variant="contained"
                 startIcon={<Add />}
                 onClick={() => navigate('/conventions/nouvelle')}
-                sx={{ px: 3 }}
+                sx={{ px: { xs: 2, md: 3 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
               >
-                Nouvelle Convention
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Nouvelle Convention</Box>
+                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Nouveau</Box>
               </Button>
             }
           />
@@ -361,7 +389,7 @@ const ConventionsTableModern = () => {
               icon={<Description />}
               color="#3b82f6"
               bgColor="#eff6ff"
-              onClick={() => setFilter('ALL')}
+              onClick={() => handleStatClick('ALL')}
             />
             <StatsCard
               title="Brouillon"
@@ -369,7 +397,7 @@ const ConventionsTableModern = () => {
               icon={<Edit />}
               color="#6b7280"
               bgColor="#f3f4f6"
-              onClick={() => setFilter('BROUILLON')}
+              onClick={() => handleStatClick('BROUILLON')}
             />
             <StatsCard
               title="Soumis"
@@ -377,7 +405,7 @@ const ConventionsTableModern = () => {
               icon={<HourglassEmpty />}
               color="#f59e0b"
               bgColor="#fef3c7"
-              onClick={() => setFilter('SOUMIS')}
+              onClick={() => handleStatClick('SOUMIS')}
             />
             <StatsCard
               title="Validées"
@@ -385,7 +413,7 @@ const ConventionsTableModern = () => {
               icon={<CheckCircle />}
               color="#10b981"
               bgColor="#d1fae5"
-              onClick={() => setFilter('VALIDEE')}
+              onClick={() => handleStatClick('VALIDEE')}
             />
             <StatsCard
               title="Rejetées"
@@ -393,7 +421,7 @@ const ConventionsTableModern = () => {
               icon={<Cancel />}
               color="#ef4444"
               bgColor="#fee2e2"
-              onClick={() => setFilter('REJETE')}
+              onClick={() => handleStatClick('REJETE')}
             />
             <StatsCard
               title="En Exécution"
@@ -401,7 +429,7 @@ const ConventionsTableModern = () => {
               icon={<TrendingUp />}
               color="#8b5cf6"
               bgColor="#ede9fe"
-              onClick={() => setFilter('EN_EXECUTION')}
+              onClick={() => handleStatClick('EN_EXECUTION')}
             />
             <StatsCard
               title="Annulées"
@@ -409,7 +437,7 @@ const ConventionsTableModern = () => {
               icon={<Cancel />}
               color="#9ca3af"
               bgColor="#f3f4f6"
-              onClick={() => setFilter('ANNULE')}
+              onClick={() => handleStatClick('ANNULE')}
             />
           </Box>
 
@@ -470,11 +498,25 @@ const ConventionsTableModern = () => {
             </Stack>
           </Paper>
 
-          {/* Table */}
-          <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)' }}>
-            <Table sx={{ minWidth: 1200 }}>
+          {/* Table avec Drag & Drop */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+          <TableContainer
+            ref={tableRef}
+            component={Paper}
+            sx={{ borderRadius: 2, boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', overflowX: 'auto' }}
+          >
+            <SortableContext
+              items={filteredConventions.map(c => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+            <Table sx={{ minWidth: { xs: 600, md: 1200 } }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: '#f9fafb' }}>
+                  <TableCell sx={{ width: 40, p: 1, display: { xs: 'none', md: 'table-cell' } }} />
                   <TableCell sx={{ fontWeight: 700, color: '#374151' }}>
                     <TableSortLabel
                       active={orderBy === 'code'}
@@ -484,7 +526,7 @@ const ConventionsTableModern = () => {
                       Code
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: 250 }}>
+                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: { xs: 150, md: 250 } }}>
                     <TableSortLabel
                       active={orderBy === 'libelle'}
                       direction={orderBy === 'libelle' ? orderDirection : 'asc'}
@@ -493,7 +535,7 @@ const ConventionsTableModern = () => {
                       Libellé
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: 140 }}>
+                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: 120 }}>
                     <TableSortLabel
                       active={orderBy === 'statut'}
                       direction={orderBy === 'statut' ? orderDirection : 'asc'}
@@ -502,7 +544,7 @@ const ConventionsTableModern = () => {
                       Statut
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, color: '#374151', minWidth: 130 }}>
+                  <TableCell align="right" sx={{ fontWeight: 700, color: '#374151', minWidth: 100, display: { xs: 'none', sm: 'table-cell' } }}>
                     <TableSortLabel
                       active={orderBy === 'budget'}
                       direction={orderBy === 'budget' ? orderDirection : 'asc'}
@@ -511,7 +553,7 @@ const ConventionsTableModern = () => {
                       Budget
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, color: '#374151' }}>
+                  <TableCell align="center" sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', lg: 'table-cell' } }}>
                     <TableSortLabel
                       active={orderBy === 'tauxCommission'}
                       direction={orderBy === 'tauxCommission' ? orderDirection : 'asc'}
@@ -520,25 +562,25 @@ const ConventionsTableModern = () => {
                       Commission
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: 110 }}>
+                  <TableCell sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', lg: 'table-cell' } }}>
                     <TableSortLabel
                       active={orderBy === 'dateDebut'}
                       direction={orderBy === 'dateDebut' ? orderDirection : 'asc'}
                       onClick={() => handleSort('dateDebut')}
                     >
-                      Date Début
+                      Début
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: 110 }}>
+                  <TableCell sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', xl: 'table-cell' } }}>
                     <TableSortLabel
                       active={orderBy === 'dateFin'}
                       direction={orderBy === 'dateFin' ? orderDirection : 'asc'}
                       onClick={() => handleSort('dateFin')}
                     >
-                      Date Fin
+                      Fin
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: 130 }}>
+                  <TableCell sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', xl: 'table-cell' } }}>
                     <TableSortLabel
                       active={orderBy === 'createdByNom'}
                       direction={orderBy === 'createdByNom' ? orderDirection : 'asc'}
@@ -547,7 +589,7 @@ const ConventionsTableModern = () => {
                       Créé par
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: 150 }}>
+                  <TableCell sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', lg: 'table-cell' } }}>
                     <TableSortLabel
                       active={orderBy === 'createdAt'}
                       direction={orderBy === 'createdAt' ? orderDirection : 'asc'}
@@ -564,7 +606,7 @@ const ConventionsTableModern = () => {
               <TableBody>
                 {filteredConventions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                    <TableCell colSpan={11} align="center" sx={{ py: 8 }}>
                       <Typography variant="body1" color="text.secondary">
                         Aucune convention trouvée
                       </Typography>
@@ -572,11 +614,11 @@ const ConventionsTableModern = () => {
                   </TableRow>
                 ) : (
                   filteredConventions.map((convention, index) => (
-                    <TableRow
+                    <SortableTableRow
                       key={convention.id}
-                      onClick={() => navigate(`/conventions/${convention.id}`)}
+                      id={convention.id}
+                      hideDragHandle={{ xs: true, md: false }}
                       sx={{
-                        cursor: 'pointer',
                         bgcolor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
                         '&:hover': {
                           bgcolor: '#f3f4f6',
@@ -584,7 +626,10 @@ const ConventionsTableModern = () => {
                         transition: 'background-color 0.2s ease',
                       }}
                     >
-                      <TableCell>
+                      <TableCell
+                        onClick={() => navigate(`/conventions/${convention.id}`)}
+                        sx={{ cursor: 'pointer' }}
+                      >
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Typography variant="body2" fontWeight={600} color="primary.main">
                             {convention.code}
@@ -598,7 +643,7 @@ const ConventionsTableModern = () => {
                       </TableCell>
                       <TableCell>
                         <Stack spacing={0.5}>
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" fontWeight={600} sx={{ wordBreak: 'break-word' }}>
                             {convention.libelle}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -616,12 +661,12 @@ const ConventionsTableModern = () => {
                       <TableCell>
                         {getStatutBadge(convention.statut)}
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                         <Typography variant="body2" fontWeight={600}>
                           {formatCurrency(convention.budget)}
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell align="center" sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
                         <Chip
                           label={`${convention.tauxCommission}%`}
                           size="small"
@@ -629,17 +674,17 @@ const ConventionsTableModern = () => {
                           color="primary"
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
                         <Typography variant="body2">
                           {formatDate(convention.dateDebut)}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', xl: 'table-cell' } }}>
                         <Typography variant="body2" color={convention.dateFin ? 'text.primary' : 'text.secondary'}>
                           {formatDate(convention.dateFin)}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', xl: 'table-cell' } }}>
                         <Stack direction="row" spacing={0.5} alignItems="center">
                           <Person fontSize="small" sx={{ color: '#9ca3af' }} />
                           <Typography variant="body2">
@@ -647,7 +692,7 @@ const ConventionsTableModern = () => {
                           </Typography>
                         </Stack>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
                         <Stack direction="row" spacing={0.5} alignItems="center">
                           <CalendarToday fontSize="small" sx={{ color: '#9ca3af' }} />
                           <Typography variant="body2">
@@ -668,12 +713,14 @@ const ConventionsTableModern = () => {
                           <MoreVert fontSize="small" />
                         </IconButton>
                       </TableCell>
-                    </TableRow>
+                    </SortableTableRow>
                   ))
                 )}
               </TableBody>
             </Table>
+            </SortableContext>
           </TableContainer>
+          </DndContext>
 
           {filteredConventions.length > 0 && (
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -843,6 +843,129 @@ background: `linear-gradient(135deg, ${colors.primary[600]} 0%, ${colors.primary
 - ✅ **Bordures** via `borders.radius.*`
 - ✅ **Ombres** via `shadows.*`
 
+## 🖱️ Drag & Drop - Signature UX InvestPro
+
+**Le drag & drop est LA signature UX d'InvestPro.** Toutes les listes doivent permettre la réorganisation par l'utilisateur.
+
+### Composants Disponibles
+
+```typescript
+// Import depuis le composant centralisé
+import {
+  SortableTableRow,      // Ligne de table draggable
+  SortableListItem,      // Item de liste draggable
+  DragHandle,            // Poignée de drag autonome
+  useSortableTable,      // Hook de gestion du drag & drop
+  DndContext,            // Contexte DnD
+  SortableContext,       // Contexte de tri
+  closestCenter,         // Détection de collision
+  verticalListSortingStrategy,
+  useSortable,           // Hook bas niveau
+} from '@/components/core/SortableTable'
+```
+
+### Pattern Table (MUI Table)
+
+```tsx
+import { SortableTableRow, useSortableTable, DndContext, SortableContext, closestCenter, verticalListSortingStrategy } from '@/components/core/SortableTable'
+
+function MyTable() {
+  const [rawData, setRawData] = useState<Item[]>([])
+
+  // Hook qui gère état + localStorage
+  const { items, sensors, handleDragEnd } = useSortableTable({
+    initialItems: rawData,
+    idKey: 'id',
+    storageKey: 'my-table-order',  // Persiste l'ordre dans localStorage
+  })
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <TableContainer>
+        <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: 40 }} />  {/* Colonne pour le handle */}
+                <TableCell>Nom</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {items.map(item => (
+                <SortableTableRow key={item.id} id={item.id}>
+                  <TableCell>{item.name}</TableCell>
+                </SortableTableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </SortableContext>
+      </TableContainer>
+    </DndContext>
+  )
+}
+```
+
+### Pattern Cartes/Grid
+
+```tsx
+import { useSortableTable, useSortable, DndContext, SortableContext, closestCenter } from '@/components/core/SortableTable'
+import { CSS } from '@dnd-kit/utilities'
+
+// Carte draggable personnalisée
+const SortableCard = ({ item, onClick }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+
+  return (
+    <Paper
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+      onClick={onClick}
+    >
+      {/* Handle de drag */}
+      <Box {...attributes} {...listeners} sx={{ cursor: 'grab' }}>
+        <GripVertical />
+      </Box>
+      <Typography>{item.name}</Typography>
+    </Paper>
+  )
+}
+
+function MyGrid() {
+  const [rawData, setRawData] = useState<Item[]>([])
+  const { items, sensors, handleDragEnd } = useSortableTable({
+    initialItems: rawData,
+    idKey: 'id',
+    storageKey: 'my-grid-order',
+  })
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={items.map(i => i.id)}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
+          {items.map(item => (
+            <SortableCard key={item.id} item={item} onClick={() => navigate(`/detail/${item.id}`)} />
+          ))}
+        </Box>
+      </SortableContext>
+    </DndContext>
+  )
+}
+```
+
+### Listes avec Drag & Drop Actif
+
+- ✅ **Conventions** (`ConventionsTableModern.tsx`) - `storageKey: 'conventions-order'`
+- ✅ **Marchés** (`MarchesPage.tsx`) - `storageKey: 'marches-order'`
+- ✅ **Projets** (`ProjetsPage.tsx`) - `storageKey: 'projets-order'`
+- ✅ **Menu Sidebar** (`Sidebar.tsx`) - `storageKey: 'menu-order'`
+
+### Règles Obligatoires
+
+1. **Toujours un drag handle visible** - Icône GripVertical de lucide-react
+2. **Persistance localStorage** - L'ordre personnalisé survit au rechargement
+3. **Feedback visuel** - Opacité réduite pendant le drag, couleur de fond primaire
+4. **Non-blocant** - Le clic reste fonctionnel (navigation, actions)
+
 ## Important Development Notes
 
 1. **French Naming:** All business entities use French names (Convention, Marché, Décompte, etc.)

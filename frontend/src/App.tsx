@@ -12,6 +12,7 @@ import ConventionsTableModern from './pages/conventions/ConventionsTableModern'
 import ConventionWizardComplete from './pages/conventions/ConventionWizardComplete'
 import SousConventionWizard from './pages/conventions/SousConventionWizard'
 import AvenantForm from './pages/conventions/AvenantForm'
+import AvenantDetailPage from './pages/conventions/AvenantDetailPage'
 import ConventionDetailPageModern from './pages/conventions/ConventionDetailPageModern'
 import ConventionEditPageComplete from './pages/conventions/ConventionEditPageComplete'
 import ParametrageConventionsPage from './pages/settings/ParametrageConventionsPage'
@@ -178,6 +179,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <AvenantForm />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/conventions/:conventionId/avenants/:avenantId"
+                    element={
+                      <ProtectedRoute>
+                        <AvenantDetailPage />
                       </ProtectedRoute>
                     }
                   />

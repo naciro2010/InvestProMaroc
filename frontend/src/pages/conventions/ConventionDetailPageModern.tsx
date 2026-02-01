@@ -20,6 +20,12 @@ import {
   Skeleton,
   Tooltip,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  CircularProgress,
 } from '@mui/material'
 import {
   ArrowBack,
@@ -34,7 +40,14 @@ import {
   Visibility,
   History,
   Lock,
+  Send,
+  CheckCircle,
+  Cancel,
+  PlayArrow,
+  Stop,
+  Flag,
 } from '@mui/icons-material'
+import { useAuth } from '../../contexts/AuthContext'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import { api, conventionsAPI, avenantConventionsAPI } from '../../lib/api'
@@ -125,6 +138,7 @@ interface Marche {
 const ConventionDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user, isAdmin, isManager } = useAuth()
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [convention, setConvention] = useState<Convention | null>(null)
@@ -133,11 +147,30 @@ const ConventionDetailPageModern = () => {
   const [projets, setProjets] = useState<Projet[]>([])
   const [marches, setMarches] = useState<Marche[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Modal states
   const [addPartenaireDialogOpen, setAddPartenaireDialogOpen] = useState(false)
+  const [editPartenaireData, setEditPartenaireData] = useState<{
+    id: number
+    partenaireId: number
+    partenaireNom: string
+    budgetAlloue: number
+    pourcentage: number
+    estMaitreOeuvre: boolean
+    estMaitreOeuvreDelegue: boolean
+    remarques?: string
+  } | null>(null)
   const [linkProjetDialogOpen, setLinkProjetDialogOpen] = useState(false)
   const [linkMarcheDialogOpen, setLinkMarcheDialogOpen] = useState(false)
+  const [partenairesRefreshKey, setPartenairesRefreshKey] = useState(0)
+
+  // Workflow states
+  const [workflowLoading, setWorkflowLoading] = useState(false)
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
+  const [rejectMotif, setRejectMotif] = useState('')
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [cancelMotif, setCancelMotif] = useState('')
 
   useEffect(() => {
     if (id) {
@@ -205,6 +238,138 @@ const ConventionDetailPageModern = () => {
     }
   }
 
+  // Workflow action handlers
+  const handleSoumettre = async () => {
+    if (!convention) return
+    try {
+      setWorkflowLoading(true)
+      setError(null)
+      await conventionsAPI.soumettre(convention.id)
+      setSuccessMessage('Convention soumise avec succès')
+      loadConvention(convention.id)
+    } catch (err) {
+      setError('Erreur lors de la soumission de la convention')
+      console.error(err)
+    } finally {
+      setWorkflowLoading(false)
+    }
+  }
+
+  const handleValider = async () => {
+    if (!convention || !user?.id) return
+    try {
+      setWorkflowLoading(true)
+      setError(null)
+      await conventionsAPI.valider(convention.id, user.id)
+      setSuccessMessage('Convention validée avec succès')
+      loadConvention(convention.id)
+    } catch (err) {
+      setError('Erreur lors de la validation de la convention')
+      console.error(err)
+    } finally {
+      setWorkflowLoading(false)
+    }
+  }
+
+  const handleRejeter = async () => {
+    if (!convention || !rejectMotif.trim()) return
+    try {
+      setWorkflowLoading(true)
+      setError(null)
+      await conventionsAPI.rejeter(convention.id, rejectMotif)
+      setSuccessMessage('Convention rejetée')
+      setRejectDialogOpen(false)
+      setRejectMotif('')
+      loadConvention(convention.id)
+    } catch (err) {
+      setError('Erreur lors du rejet de la convention')
+      console.error(err)
+    } finally {
+      setWorkflowLoading(false)
+    }
+  }
+
+  const handleMettreEnCours = async () => {
+    if (!convention) return
+    try {
+      setWorkflowLoading(true)
+      setError(null)
+      await conventionsAPI.mettreEnCours(convention.id)
+      setSuccessMessage('Convention mise en exécution')
+      loadConvention(convention.id)
+    } catch (err) {
+      setError('Erreur lors de la mise en exécution')
+      console.error(err)
+    } finally {
+      setWorkflowLoading(false)
+    }
+  }
+
+  const handleAchever = async () => {
+    if (!convention) return
+    try {
+      setWorkflowLoading(true)
+      setError(null)
+      await conventionsAPI.achever(convention.id)
+      setSuccessMessage('Convention achevée avec succès')
+      loadConvention(convention.id)
+    } catch (err) {
+      setError('Erreur lors de l\'achèvement de la convention')
+      console.error(err)
+    } finally {
+      setWorkflowLoading(false)
+    }
+  }
+
+  const handleAnnuler = async () => {
+    if (!convention || !cancelMotif.trim()) return
+    try {
+      setWorkflowLoading(true)
+      setError(null)
+      await conventionsAPI.annuler(convention.id, cancelMotif)
+      setSuccessMessage('Convention annulée')
+      setCancelDialogOpen(false)
+      setCancelMotif('')
+      loadConvention(convention.id)
+    } catch (err) {
+      setError('Erreur lors de l\'annulation de la convention')
+      console.error(err)
+    } finally {
+      setWorkflowLoading(false)
+    }
+  }
+
+  const handleRemettreEnBrouillon = async () => {
+    if (!convention) return
+    try {
+      setWorkflowLoading(true)
+      setError(null)
+      await conventionsAPI.remettreEnBrouillon(convention.id)
+      setSuccessMessage('Convention remise en brouillon')
+      loadConvention(convention.id)
+    } catch (err) {
+      setError('Erreur lors de la remise en brouillon')
+      console.error(err)
+    } finally {
+      setWorkflowLoading(false)
+    }
+  }
+
+  // Clear messages after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMessage])
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
   const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
     if (!statut) return 'default'
     switch (statut.toUpperCase()) {
@@ -267,26 +432,136 @@ const ConventionDetailPageModern = () => {
     <AppLayout>
       <Box sx={{ bgcolor: colors.background, minHeight: '100vh', py: 4 }}>
         <Container maxWidth="xl">
+          {/* Messages */}
+          {successMessage && (
+            <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage(null)}>
+              {successMessage}
+            </Alert>
+          )}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+
           {/* Header */}
           <PageHeader
             title={`Convention ${convention.code}`}
             subtitle={convention.libelle}
             actions={
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                {/* Workflow Actions */}
+                {workflowLoading && <CircularProgress size={24} />}
+
+                {/* BROUILLON → SOUMIS */}
+                {convention.statut === 'BROUILLON' && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Send />}
+                    onClick={handleSoumettre}
+                    disabled={workflowLoading}
+                  >
+                    Soumettre
+                  </Button>
+                )}
+
+                {/* SOUMIS → VALIDEE (Admin/Manager only) */}
+                {convention.statut === 'SOUMIS' && (isAdmin || isManager) && (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      startIcon={<CheckCircle />}
+                      onClick={handleValider}
+                      disabled={workflowLoading}
+                    >
+                      Valider
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<Cancel />}
+                      onClick={() => setRejectDialogOpen(true)}
+                      disabled={workflowLoading}
+                    >
+                      Rejeter
+                    </Button>
+                  </>
+                )}
+
+                {/* REJETE → BROUILLON */}
+                {convention.statut === 'REJETE' && (
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    startIcon={<Edit />}
+                    onClick={handleRemettreEnBrouillon}
+                    disabled={workflowLoading}
+                  >
+                    Corriger
+                  </Button>
+                )}
+
+                {/* VALIDEE → EN_EXECUTION */}
+                {convention.statut === 'VALIDEE' && (
+                  <Button
+                    variant="contained"
+                    color="info"
+                    startIcon={<PlayArrow />}
+                    onClick={handleMettreEnCours}
+                    disabled={workflowLoading}
+                  >
+                    Démarrer
+                  </Button>
+                )}
+
+                {/* EN_EXECUTION → ACHEVE */}
+                {convention.statut === 'EN_EXECUTION' && (
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    startIcon={<Flag />}
+                    onClick={handleAchever}
+                    disabled={workflowLoading}
+                  >
+                    Achever
+                  </Button>
+                )}
+
+                {/* Annuler (sauf ACHEVE et ANNULE) */}
+                {!['ACHEVE', 'ANNULE'].includes(convention.statut) && (isAdmin || isManager) && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<Stop />}
+                    onClick={() => setCancelDialogOpen(true)}
+                    disabled={workflowLoading}
+                    size="small"
+                  >
+                    Annuler
+                  </Button>
+                )}
+
+                <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+
+                {/* Other Actions */}
                 <Button
                   variant="outlined"
                   startIcon={<Add />}
                   onClick={() => navigate(`/conventions/${id}/avenants/nouveau`)}
+                  size="small"
                 >
-                  Ajout Avenant
+                  Avenant
                 </Button>
                 {convention.typeConvention === 'CADRE' && (
                   <Button
-                    variant="contained"
+                    variant="outlined"
                     startIcon={<Add />}
                     onClick={() => navigate(`/conventions/${id}/sous-conventions/nouveau`)}
+                    size="small"
                   >
-                    Ajout Conv. Spécifique
+                    Conv. Spécifique
                   </Button>
                 )}
                 <Tooltip
@@ -302,6 +577,7 @@ const ConventionDetailPageModern = () => {
                       startIcon={canEdit ? <Edit /> : <Lock />}
                       onClick={() => navigate(`/conventions/${id}/edit`)}
                       disabled={!canEdit}
+                      size="small"
                     >
                       Modifier
                     </Button>
@@ -311,6 +587,7 @@ const ConventionDetailPageModern = () => {
                   variant="outlined"
                   startIcon={<ArrowBack />}
                   onClick={() => navigate('/conventions')}
+                  size="small"
                 >
                   Retour
                 </Button>
@@ -393,8 +670,22 @@ const ConventionDetailPageModern = () => {
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
                   {/* Partenaires Card - Micro-Component */}
                   <ConventionPartenairesCard
+                    key={partenairesRefreshKey}
                     conventionId={convention.id}
                     onAddClick={() => setAddPartenaireDialogOpen(true)}
+                    onEditClick={(partenaire) => {
+                      setEditPartenaireData({
+                        id: partenaire.id,
+                        partenaireId: partenaire.partenaireId,
+                        partenaireNom: partenaire.partenaireNom,
+                        budgetAlloue: partenaire.budgetAlloue,
+                        pourcentage: partenaire.pourcentage,
+                        estMaitreOeuvre: partenaire.estMaitreOeuvre,
+                        estMaitreOeuvreDelegue: partenaire.estMaitreOeuvreDelegue,
+                        remarques: partenaire.remarques || undefined,
+                      })
+                      setAddPartenaireDialogOpen(true)
+                    }}
                   />
 
                   {/* Maître d'œuvre Card */}
@@ -703,11 +994,16 @@ const ConventionDetailPageModern = () => {
           <AddPartenaireDialog
             open={addPartenaireDialogOpen}
             conventionId={convention.id}
-            onClose={() => setAddPartenaireDialogOpen(false)}
-            onSuccess={() => {
-              // Reload convention data to refresh partenaires
-              loadConvention(convention.id)
+            onClose={() => {
+              setAddPartenaireDialogOpen(false)
+              setEditPartenaireData(null)
             }}
+            onSuccess={() => {
+              // Refresh partenaires list
+              setPartenairesRefreshKey((k) => k + 1)
+              setEditPartenaireData(null)
+            }}
+            editData={editPartenaireData}
           />
 
           <LinkProjetDialog
@@ -731,6 +1027,102 @@ const ConventionDetailPageModern = () => {
           />
         </>
       )}
+
+      {/* Reject Dialog */}
+      <Dialog
+        open={rejectDialogOpen}
+        onClose={() => setRejectDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ color: colors.danger[700] }}>
+          Rejeter la convention
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: colors.textSecondary }}>
+            Veuillez indiquer le motif du rejet. La convention sera remise en brouillon pour correction.
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            rows={3}
+            label="Motif du rejet"
+            value={rejectMotif}
+            onChange={(e) => setRejectMotif(e.target.value)}
+            placeholder="Décrivez les raisons du rejet..."
+            required
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setRejectDialogOpen(false)
+              setRejectMotif('')
+            }}
+            disabled={workflowLoading}
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleRejeter}
+            disabled={workflowLoading || !rejectMotif.trim()}
+            startIcon={workflowLoading ? <CircularProgress size={16} /> : <Cancel />}
+          >
+            Confirmer le rejet
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Cancel Dialog */}
+      <Dialog
+        open={cancelDialogOpen}
+        onClose={() => setCancelDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ color: colors.danger[700] }}>
+          Annuler la convention
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Cette action est irréversible. La convention sera définitivement annulée.
+          </Alert>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            rows={3}
+            label="Motif de l'annulation"
+            value={cancelMotif}
+            onChange={(e) => setCancelMotif(e.target.value)}
+            placeholder="Décrivez les raisons de l'annulation..."
+            required
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setCancelDialogOpen(false)
+              setCancelMotif('')
+            }}
+            disabled={workflowLoading}
+          >
+            Retour
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleAnnuler}
+            disabled={workflowLoading || !cancelMotif.trim()}
+            startIcon={workflowLoading ? <CircularProgress size={16} /> : <Stop />}
+          >
+            Confirmer l'annulation
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppLayout>
   )
 }

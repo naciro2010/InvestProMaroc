@@ -27,11 +27,23 @@ interface PartenaireSimple {
   actif: boolean;
 }
 
+interface ConventionPartenaireEdit {
+  id: number;
+  partenaireId: number;
+  partenaireNom: string;
+  budgetAlloue: number;
+  pourcentage: number;
+  estMaitreOeuvre: boolean;
+  estMaitreOeuvreDelegue: boolean;
+  remarques?: string;
+}
+
 interface AddPartenaireDialogProps {
   open: boolean;
   conventionId: number;
   onClose: () => void;
   onSuccess: () => void;
+  editData?: ConventionPartenaireEdit | null;
 }
 
 interface FormData {
@@ -50,7 +62,7 @@ interface ValidationErrors {
 }
 
 /**
- * Modal dialog for adding a partenaire to a convention
+ * Modal dialog for adding/editing a partenaire in a convention
  * Allows selecting partenaire, setting budget, percentage, and roles (MO/MOD)
  */
 export default function AddPartenaireDialog({
@@ -58,7 +70,9 @@ export default function AddPartenaireDialog({
   conventionId,
   onClose,
   onSuccess,
+  editData,
 }: AddPartenaireDialogProps): JSX.Element {
+  const isEditMode = Boolean(editData);
   const [partenaires, setPartenaires] = useState<PartenaireSimple[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingPartenaires, setLoadingPartenaires] = useState<boolean>(true);
@@ -73,6 +87,20 @@ export default function AddPartenaireDialog({
     estMaitreOeuvreDelegue: false,
     remarques: '',
   });
+
+  // Initialize form data when editing
+  useEffect(() => {
+    if (open && editData) {
+      setFormData({
+        partenaireId: editData.partenaireId,
+        budgetAlloue: editData.budgetAlloue.toString(),
+        pourcentage: editData.pourcentage.toString(),
+        estMaitreOeuvre: editData.estMaitreOeuvre,
+        estMaitreOeuvreDelegue: editData.estMaitreOeuvreDelegue,
+        remarques: editData.remarques || '',
+      });
+    }
+  }, [open, editData]);
 
   // Fetch available partenaires on mount
   useEffect(() => {
@@ -136,23 +164,33 @@ export default function AddPartenaireDialog({
     setError('');
 
     try {
-      await conventionsAPI.addPartenaire(conventionId, {
-        partenaireId: formData.partenaireId,
+      const payload = {
         budgetAlloue: parseFloat(formData.budgetAlloue),
         pourcentage: parseFloat(formData.pourcentage),
         estMaitreOeuvre: formData.estMaitreOeuvre,
         estMaitreOeuvreDelegue: formData.estMaitreOeuvreDelegue,
         remarques: formData.remarques || undefined,
-      });
+      };
+
+      if (isEditMode && editData) {
+        // Update existing partenaire
+        await conventionsAPI.updatePartenaire(conventionId, editData.id, payload);
+      } else {
+        // Add new partenaire
+        await conventionsAPI.addPartenaire(conventionId, {
+          partenaireId: formData.partenaireId,
+          ...payload,
+        });
+      }
 
       onSuccess();
       handleClose();
     } catch (err: unknown) {
-      console.error('Error adding partenaire:', err);
+      console.error('Error saving partenaire:', err);
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Erreur lors de l\'ajout du partenaire');
+        setError(isEditMode ? 'Erreur lors de la modification du partenaire' : 'Erreur lors de l\'ajout du partenaire');
       }
     } finally {
       setLoading(false);
@@ -191,7 +229,7 @@ export default function AddPartenaireDialog({
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Ajouter un partenaire</DialogTitle>
+      <DialogTitle>{isEditMode ? 'Modifier le partenaire' : 'Ajouter un partenaire'}</DialogTitle>
 
       <DialogContent>
         {error && (
@@ -200,35 +238,45 @@ export default function AddPartenaireDialog({
           </Alert>
         )}
 
-        {loadingPartenaires ? (
+        {loadingPartenaires && !isEditMode ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress />
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-            {/* Partenaire Selection */}
-            <FormControl fullWidth required error={Boolean(validationErrors.partenaireId)}>
-              <InputLabel>Partenaire</InputLabel>
-              <Select
-                value={formData.partenaireId}
+            {/* Partenaire Selection - Disabled in edit mode */}
+            {isEditMode ? (
+              <TextField
+                fullWidth
                 label="Partenaire"
-                onChange={(e) => handleFieldChange('partenaireId', e.target.value as number)}
-              >
-                <MenuItem value={0} disabled>
-                  Sélectionner un partenaire
-                </MenuItem>
-                {partenaires.map((p: PartenaireSimple) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {getPartenaireLabel(p)}
+                value={editData?.partenaireNom || ''}
+                disabled
+                helperText="Le partenaire ne peut pas être modifié"
+              />
+            ) : (
+              <FormControl fullWidth required error={Boolean(validationErrors.partenaireId)}>
+                <InputLabel>Partenaire</InputLabel>
+                <Select
+                  value={formData.partenaireId}
+                  label="Partenaire"
+                  onChange={(e) => handleFieldChange('partenaireId', e.target.value as number)}
+                >
+                  <MenuItem value={0} disabled>
+                    Sélectionner un partenaire
                   </MenuItem>
-                ))}
-              </Select>
-              {validationErrors.partenaireId && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                  {validationErrors.partenaireId}
-                </Typography>
-              )}
-            </FormControl>
+                  {partenaires.map((p: PartenaireSimple) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {getPartenaireLabel(p)}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {validationErrors.partenaireId && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                    {validationErrors.partenaireId}
+                  </Typography>
+                )}
+              </FormControl>
+            )}
 
             {/* Budget and Pourcentage */}
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -300,9 +348,12 @@ export default function AddPartenaireDialog({
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || loadingPartenaires}
+          disabled={loading || (loadingPartenaires && !isEditMode)}
         >
-          {loading ? 'Ajout en cours...' : 'Ajouter'}
+          {loading
+            ? (isEditMode ? 'Modification...' : 'Ajout en cours...')
+            : (isEditMode ? 'Modifier' : 'Ajouter')
+          }
         </Button>
       </DialogActions>
     </Dialog>

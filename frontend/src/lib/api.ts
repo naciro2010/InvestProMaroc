@@ -241,6 +241,7 @@ export const conventionsAPI = {
   rejeter: (id: number, motif: string) => api.post(`/conventions/${id}/rejeter`, { motif }),
   remettreEnBrouillon: (id: number) => api.post(`/conventions/${id}/remettre-en-brouillon`),
   mettreEnCours: (id: number) => api.post(`/conventions/${id}/mettre-en-cours`),
+  achever: (id: number) => api.post(`/conventions/${id}/achever`),
   annuler: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
 
   // Imputations et Versements

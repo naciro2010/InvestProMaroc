@@ -1,6 +1,7 @@
 import { Box, Container, Paper, Typography, Chip, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip } from '@mui/material'
 import { History, Visibility } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
+import RichTextDisplay from '../../ui/RichTextDisplay'
 
 interface Convention {
   id: number
@@ -72,7 +73,7 @@ const ConventionAvenantsTab = ({ convention, avenants, formatCurrency, formatDat
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">{avenant.objet}</Typography>
+                    <RichTextDisplay html={avenant.objet || ''} collapseLength={100} allowExpand />
                   </TableCell>
                   <TableCell>
                     <Chip label={avenant.type} size="small" variant="outlined" />

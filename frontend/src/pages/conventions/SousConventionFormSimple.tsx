@@ -16,6 +16,7 @@ import {
 } from '@mui/material'
 import { Save, Close } from '@mui/icons-material'
 import DecimalInput from '../../components/ui/DecimalInput'
+import RichTextEditor from '../../components/ui/RichTextEditor'
 import { conventionsAPI } from '../../lib/api'
 
 interface SousConventionFormProps {
@@ -165,14 +166,12 @@ const SousConventionFormSimple = ({
               size="small"
             />
 
-            <TextField
-              label="Objet"
+            <RichTextEditor
+              label="Objet / Description"
               value={formData.objet}
-              onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
-              multiline
-              rows={2}
-              fullWidth
-              size="small"
+              onChange={(content) => setFormData({ ...formData, objet: content })}
+              placeholder="Description détaillée de la sous-convention..."
+              minHeight="100px"
             />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>

@@ -66,6 +66,8 @@ import StatusBadge from '../../components/core/StatusBadge'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
 import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
+import SousConventionFormSimple from './SousConventionFormSimple'
+import RichTextDisplay from '../../components/ui/RichTextDisplay'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -164,6 +166,10 @@ const ConventionDetailPageModern = () => {
   const [linkProjetDialogOpen, setLinkProjetDialogOpen] = useState(false)
   const [linkMarcheDialogOpen, setLinkMarcheDialogOpen] = useState(false)
   const [partenairesRefreshKey, setPartenairesRefreshKey] = useState(0)
+
+  // Sous-convention modal states
+  const [sousConventionDialogOpen, setSousConventionDialogOpen] = useState(false)
+  const [editingSousConvention, setEditingSousConvention] = useState<SousConvention | null>(null)
 
   // Workflow states
   const [workflowLoading, setWorkflowLoading] = useState(false)
@@ -558,7 +564,10 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="outlined"
                     startIcon={<Add />}
-                    onClick={() => navigate(`/conventions/${id}/sous-conventions/nouveau`)}
+                    onClick={() => {
+                      setEditingSousConvention(null)
+                      setSousConventionDialogOpen(true)
+                    }}
                     size="small"
                   >
                     Conv. Spécifique
@@ -815,6 +824,20 @@ const ConventionDetailPageModern = () => {
             {convention.typeConvention === 'CADRE' && (
               <TabPanel value={activeTab} index={1}>
                 <Container maxWidth="xl">
+                  {sousConventions.length > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => {
+                          setEditingSousConvention(null)
+                          setSousConventionDialogOpen(true)
+                        }}
+                      >
+                        Ajouter une conv. spécifique
+                      </Button>
+                    </Box>
+                  )}
                   <TableContainer>
                     <Table>
                       <TableHead>
@@ -840,9 +863,27 @@ const ConventionDetailPageModern = () => {
                             <TableCell align="right">{formatCurrency(sc.montant)}</TableCell>
                             <TableCell>{formatDate(sc.dateDebut)}</TableCell>
                             <TableCell align="center">
-                              <IconButton size="small" onClick={() => navigate(`/conventions/${sc.id}`)}>
-                                <Visibility fontSize="small" />
-                              </IconButton>
+                              <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                                <Tooltip title="Voir les détails">
+                                  <IconButton size="small" onClick={() => navigate(`/conventions/${sc.id}`)}>
+                                    <Visibility fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                {sc.statut === 'BROUILLON' && (
+                                  <Tooltip title="Modifier">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => {
+                                        setEditingSousConvention(sc)
+                                        setSousConventionDialogOpen(true)
+                                      }}
+                                      sx={{ color: colors.primary[600] }}
+                                    >
+                                      <Edit fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                              </Box>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -852,9 +893,19 @@ const ConventionDetailPageModern = () => {
 
                   {sousConventions.length === 0 && (
                     <Box sx={{ py: 4, textAlign: 'center' }}>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Aucune convention spécifique
                       </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => {
+                          setEditingSousConvention(null)
+                          setSousConventionDialogOpen(true)
+                        }}
+                      >
+                        Créer une convention spécifique
+                      </Button>
                     </Box>
                   )}
                 </Container>
@@ -1024,6 +1075,28 @@ const ConventionDetailPageModern = () => {
               // Reload marchés
               loadMarches(convention.id)
             }}
+          />
+
+          <SousConventionFormSimple
+            open={sousConventionDialogOpen}
+            onClose={() => {
+              setSousConventionDialogOpen(false)
+              setEditingSousConvention(null)
+            }}
+            onSuccess={() => {
+              loadSousConventions(convention.id)
+              setSousConventionDialogOpen(false)
+              setEditingSousConvention(null)
+            }}
+            parentConvention={{
+              id: convention.id,
+              numero: convention.numero,
+              libelle: convention.libelle,
+              tauxCommission: convention.tauxCommission,
+              baseCalcul: convention.baseCalcul,
+              tauxTva: convention.tauxTva,
+            }}
+            editingSousConvention={editingSousConvention}
           />
         </>
       )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -16,6 +16,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import {
   Add,
@@ -88,11 +90,25 @@ const statutColors: Record<string, 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETAR
 
 export default function MarchesPage() {
   const navigate = useNavigate()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [rawMarches, setRawMarches] = useState<MarcheListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatut, setSelectedStatut] = useState<string>('ALL')
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
+
+  // Ref for scrolling to table when clicking stats
+  const tableRef = useRef<HTMLDivElement>(null)
+
+  // Handle stat card click - filter and scroll to table
+  const handleStatClick = (statut: string) => {
+    setSelectedStatut(statut)
+    setViewMode('list')
+    setTimeout(() => {
+      tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
 
   // Drag & drop avec persistance localStorage
   const {
@@ -192,8 +208,8 @@ export default function MarchesPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="xl">
+      <Box sx={{ minHeight: '100vh', py: { xs: 2, md: 4 } }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
           <PageHeader
             title="Marchés"
             subtitle="Gestion complète des contrats et marchés publics"
@@ -202,27 +218,30 @@ export default function MarchesPage() {
                 variant="contained"
                 startIcon={<Add />}
                 onClick={() => navigate('/marches/nouveau')}
+                sx={{ px: { xs: 2, md: 3 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
               >
-                Nouveau Marché
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Nouveau Marché</Box>
+                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Nouveau</Box>
               </Button>
             }
           />
 
-          {/* Stats */}
+          {/* Stats - Clickable to filter and scroll */}
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(5, 1fr)' },
-              gap: 3,
-              mb: 4,
+              gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' },
+              gap: { xs: 2, md: 3 },
+              mb: { xs: 3, md: 4 },
             }}
           >
             <StatsCard
-              title="Total Marchés"
+              title="Total"
               value={stats.total}
               icon={<ShoppingCart />}
               color={colors.primary[600]}
               bgColor={colors.primary[50]}
+              onClick={() => handleStatClick('ALL')}
             />
             <StatsCard
               title="En Cours"
@@ -230,6 +249,7 @@ export default function MarchesPage() {
               icon={<Receipt />}
               color={colors.warning[600]}
               bgColor={colors.warning[50]}
+              onClick={() => handleStatClick('EN_COURS')}
             />
             <StatsCard
               title="Validés"
@@ -237,6 +257,7 @@ export default function MarchesPage() {
               icon={<Description />}
               color={colors.success[600]}
               bgColor={colors.success[50]}
+              onClick={() => handleStatClick('VALIDE')}
             />
             <StatsCard
               title="Terminés"
@@ -244,11 +265,11 @@ export default function MarchesPage() {
               icon={<Description />}
               color={colors.info[600]}
               bgColor={colors.info[50]}
+              onClick={() => handleStatClick('TERMINE')}
             />
             <StatsCard
-              title="Montant Total"
-              value={formatCurrency(stats.montantTotal)}
-              subtitle="DH"
+              title={isMobile ? "Total" : "Montant Total"}
+              value={isMobile ? `${(stats.montantTotal / 1000000).toFixed(1)}M` : formatCurrency(stats.montantTotal)}
               icon={<ShoppingCart />}
               color={colors.purple[600]}
               bgColor={colors.purple[50]}
@@ -256,15 +277,16 @@ export default function MarchesPage() {
           </Box>
 
           {/* Main Content */}
-          <Paper sx={{ p: 3, border: `1px solid ${colors.border}`, boxShadow: 'none', borderRadius: '12px' }}>
+          <Paper sx={{ p: { xs: 2, md: 3 }, border: `1px solid ${colors.border}`, boxShadow: 'none', borderRadius: '12px' }}>
             {/* Filters and Search */}
-            <Stack spacing={3} sx={{ mb: 3 }}>
+            <Stack spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2, md: 3 } }}>
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' } }}>
                 <TextField
                   fullWidth
-                  placeholder="Rechercher par numéro, objet, fournisseur, convention..."
+                  placeholder={isMobile ? "Rechercher..." : "Rechercher par numéro, objet, fournisseur, convention..."}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  size={isMobile ? "small" : "medium"}
                   InputProps={{
                     startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />,
                   }}
@@ -274,7 +296,8 @@ export default function MarchesPage() {
                   SelectProps={{ native: true }}
                   value={selectedStatut}
                   onChange={(e) => setSelectedStatut(e.target.value)}
-                  sx={{ minWidth: 200 }}
+                  size={isMobile ? "small" : "medium"}
+                  sx={{ minWidth: { xs: '100%', md: 200 } }}
                 >
                   <option value="ALL">Tous les statuts</option>
                   <option value="EN_COURS">En cours</option>
@@ -287,28 +310,27 @@ export default function MarchesPage() {
               </Box>
 
               {/* Results count and view toggle */}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Affichage de <strong>{filteredMarches.length}</strong> sur{' '}
-                  <strong>{marches.length}</strong> marché(s)
+                  <strong>{filteredMarches.length}</strong> / <strong>{marches.length}</strong> marché(s)
                 </Typography>
 
                 <Stack direction="row" spacing={1}>
                   <Button
                     variant={viewMode === 'list' ? 'contained' : 'outlined'}
-                    startIcon={<ViewList />}
+                    startIcon={!isMobile && <ViewList />}
                     onClick={() => setViewMode('list')}
                     size="small"
                   >
-                    Liste
+                    {isMobile ? <ViewList /> : 'Liste'}
                   </Button>
                   <Button
                     variant={viewMode === 'map' ? 'contained' : 'outlined'}
-                    startIcon={<MapIcon />}
+                    startIcon={!isMobile && <MapIcon />}
                     onClick={() => setViewMode('map')}
                     size="small"
                   >
-                    Carte
+                    {isMobile ? <MapIcon /> : 'Carte'}
                   </Button>
                 </Stack>
               </Box>
@@ -328,22 +350,22 @@ export default function MarchesPage() {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
-              <Box sx={{ mt: 2, overflowX: 'auto' }}>
+              <Box ref={tableRef} sx={{ mt: 2, overflowX: 'auto' }}>
                 <TableContainer>
                   <SortableContext
                     items={filteredMarches.map(m => m.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                  <Table>
+                  <Table sx={{ minWidth: { xs: 500, md: 900 } }}>
                     <TableHead>
                       <TableRow sx={{ bgcolor: colors.neutral[50] }}>
-                        <TableCell sx={{ width: 40, p: 1 }} />
+                        <TableCell sx={{ width: 40, p: 1, display: { xs: 'none', md: 'table-cell' } }} />
                         <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>N° Marché</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>N° AO</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase', display: { xs: 'none', lg: 'table-cell' } }}>N° AO</TableCell>
                         <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Objet</TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Fournisseur</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Montant TTC</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Lignes</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase', display: { xs: 'none', md: 'table-cell' } }}>Fournisseur</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase', display: { xs: 'none', sm: 'table-cell' } }}>Montant</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase', display: { xs: 'none', lg: 'table-cell' } }}>Lignes</TableCell>
                         <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Statut</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Actions</TableCell>
                       </TableRow>
@@ -360,6 +382,7 @@ export default function MarchesPage() {
                           <SortableTableRow
                             key={marche.id}
                             id={marche.id}
+                            hideDragHandle={{ xs: true, md: false }}
                             sx={{
                               bgcolor: index % 2 === 0 ? '#ffffff' : colors.neutral[50],
                               '&:hover': { bgcolor: colors.neutral[100] },
@@ -371,16 +394,18 @@ export default function MarchesPage() {
                             >
                               {marche.numeroMarche}
                             </TableCell>
-                            <TableCell sx={{ color: colors.textSecondary }}>{marche.numAo || '-'}</TableCell>
+                            <TableCell sx={{ color: colors.textSecondary, display: { xs: 'none', lg: 'table-cell' } }}>{marche.numAo || '-'}</TableCell>
                             <TableCell
                               onClick={() => navigate(`/marches/${marche.id}`)}
-                              sx={{ cursor: 'pointer', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                              sx={{ cursor: 'pointer', maxWidth: { xs: 150, md: 300 }, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                             >
                               {marche.objet}
                             </TableCell>
-                            <TableCell>{marche.fournisseurNom}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 600, color: colors.primary[700] }}>{formatCurrency(marche.montantTtc)}</TableCell>
-                            <TableCell align="center">
+                            <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{marche.fournisseurNom}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600, color: colors.primary[700], display: { xs: 'none', sm: 'table-cell' } }}>
+                              {isMobile ? `${(marche.montantTtc / 1000).toFixed(0)}K` : formatCurrency(marche.montantTtc)}
+                            </TableCell>
+                            <TableCell align="center" sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
                               <Box
                                 component="span"
                                 sx={{
@@ -404,14 +429,14 @@ export default function MarchesPage() {
                               <StatusBadge status={marche.statut} size="small" />
                             </TableCell>
                             <TableCell align="right">
-                              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                              <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}`); }} sx={{ color: colors.neutral[500] }}>
                                   <Visibility fontSize="small" />
                                 </IconButton>
-                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}/modifier`); }} sx={{ color: colors.neutral[500] }}>
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}/modifier`); }} sx={{ color: colors.neutral[500], display: { xs: 'none', sm: 'inline-flex' } }}>
                                   <Edit fontSize="small" />
                                 </IconButton>
-                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }} sx={{ color: colors.danger[500] }}>
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }} sx={{ color: colors.danger[500], display: { xs: 'none', md: 'inline-flex' } }}>
                                   <Delete fontSize="small" />
                                 </IconButton>
                               </Stack>

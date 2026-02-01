@@ -228,8 +228,22 @@ export default function AddPartenaireDialog({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>{isEditMode ? 'Modifier le partenaire' : 'Ajouter un partenaire'}</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          m: { xs: 1, sm: 2 },
+          width: { xs: 'calc(100% - 16px)', sm: 'auto' },
+          maxHeight: { xs: 'calc(100% - 16px)', sm: 'calc(100% - 64px)' },
+        }
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        {isEditMode ? 'Modifier le partenaire' : 'Ajouter un partenaire'}
+      </DialogTitle>
 
       <DialogContent>
         {error && (
@@ -243,7 +257,7 @@ export default function AddPartenaireDialog({
             <CircularProgress />
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 3 }, mt: 2 }}>
             {/* Partenaire Selection - Disabled in edit mode */}
             {isEditMode ? (
               <TextField
@@ -278,8 +292,12 @@ export default function AddPartenaireDialog({
               </FormControl>
             )}
 
-            {/* Budget and Pourcentage */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            {/* Budget and Pourcentage - Responsive grid */}
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: 2
+            }}>
               <TextField
                 fullWidth
                 required
@@ -305,8 +323,12 @@ export default function AddPartenaireDialog({
               />
             </Box>
 
-            {/* Roles (MO/MOD) */}
-            <Box sx={{ display: 'flex', gap: 3 }}>
+            {/* Roles (MO/MOD) - Responsive stack */}
+            <Box sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 1, sm: 3 }
+            }}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -341,14 +363,21 @@ export default function AddPartenaireDialog({
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
+        <Button
+          onClick={handleClose}
+          disabled={loading}
+          fullWidth
+          sx={{ width: { xs: '100%', sm: 'auto' }, order: { xs: 2, sm: 1 } }}
+        >
           Annuler
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={loading || (loadingPartenaires && !isEditMode)}
+          fullWidth
+          sx={{ width: { xs: '100%', sm: 'auto' }, order: { xs: 1, sm: 2 } }}
         >
           {loading
             ? (isEditMode ? 'Modification...' : 'Ajout en cours...')

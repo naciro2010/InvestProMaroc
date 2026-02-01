@@ -57,11 +57,21 @@ import { colors, transitions } from '@/lib/designSystem'
 // SortableTableRow - Ligne de table draggable
 // ============================================================================
 
+interface ResponsiveDisplay {
+  xs?: boolean
+  sm?: boolean
+  md?: boolean
+  lg?: boolean
+  xl?: boolean
+}
+
 interface SortableTableRowProps {
   id: string | number
   children: React.ReactNode
   disabled?: boolean
   showHandle?: boolean
+  /** Responsive hide settings: { xs: true, md: false } means hide on xs/sm, show from md */
+  hideDragHandle?: ResponsiveDisplay
   sx?: Record<string, unknown>
 }
 
@@ -70,6 +80,7 @@ export const SortableTableRow = ({
   children,
   disabled = false,
   showHandle = true,
+  hideDragHandle,
   sx = {},
 }: SortableTableRowProps) => {
   const {
@@ -88,6 +99,22 @@ export const SortableTableRow = ({
     backgroundColor: isDragging ? colors.primary[50] : undefined,
     position: 'relative' as const,
     zIndex: isDragging ? 1000 : undefined,
+  }
+
+  // Build responsive display sx for drag handle
+  const getHandleDisplay = () => {
+    if (!hideDragHandle) return { display: 'table-cell' }
+
+    const displayStyles: Record<string, string> = {}
+    const breakpoints = ['xs', 'sm', 'md', 'lg', 'xl'] as const
+
+    breakpoints.forEach((bp) => {
+      if (hideDragHandle[bp] !== undefined) {
+        displayStyles[bp] = hideDragHandle[bp] ? 'none' : 'table-cell'
+      }
+    })
+
+    return { display: displayStyles }
   }
 
   return (
@@ -116,6 +143,7 @@ export const SortableTableRow = ({
               color: disabled ? colors.neutral[400] : colors.neutral[600],
             },
             transition: `color ${transitions.fast}`,
+            ...getHandleDisplay(),
           }}
         >
           <GripVertical className="w-4 h-4" />

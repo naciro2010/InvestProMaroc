@@ -30,14 +30,158 @@ import {
   Visibility,
   FolderOpen,
 } from '@mui/icons-material';
+import { GripVertical } from 'lucide-react';
 import AppLayout from '../../components/layout/AppLayout';
 import PageHeader from '../../components/common/PageHeader';
 import StatsCard from '../../components/common/StatsCard';
 import { projetsAPI, Projet } from '../../lib/projetsAPI';
+import {
+  useSortableTable,
+  useSortable,
+  DndContext,
+  SortableContext,
+  verticalListSortingStrategy,
+  closestCenter,
+} from '../../components/core/SortableTable';
+import { CSS } from '@dnd-kit/utilities';
+import { colors, transitions } from '../../lib/designSystem';
+
+// Composant carte projet draggable
+interface SortableProjetCardProps {
+  projet: Projet;
+  onMenuOpen: (event: React.MouseEvent<HTMLElement>, projet: Projet) => void;
+  onClick: () => void;
+  getStatutColor: (statut: string) => 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+  getStatutLabel: (statut: string) => string;
+  formatMontant: (montant: number) => string;
+}
+
+const SortableProjetCard = ({
+  projet,
+  onMenuOpen,
+  onClick,
+  getStatutColor,
+  getStatutLabel,
+  formatMontant,
+}: SortableProjetCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: projet.id ?? 0 });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : undefined,
+  };
+
+  return (
+    <Paper
+      ref={setNodeRef}
+      style={style}
+      sx={{
+        p: 3,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        cursor: 'pointer',
+        border: `1px solid ${colors.border}`,
+        boxShadow: 'none',
+        borderRadius: '12px',
+        transition: `all ${transitions.normal}`,
+        bgcolor: isDragging ? colors.primary[50] : 'white',
+        '&:hover': {
+          borderColor: colors.neutral[300],
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+          transform: isDragging ? undefined : 'translateY(-2px)',
+        },
+      }}
+      onClick={onClick}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'start', gap: 1 }}>
+          {/* Drag Handle */}
+          <Box
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+            sx={{
+              cursor: 'grab',
+              color: colors.neutral[400],
+              '&:hover': { color: colors.neutral[600] },
+              transition: `color ${transitions.fast}`,
+              mt: 0.5,
+            }}
+          >
+            <GripVertical className="w-4 h-4" />
+          </Box>
+          <Box>
+            <Typography variant="caption" color="textSecondary">
+              {projet.code}
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, mt: 0.5 }}>
+              {projet.nom}
+            </Typography>
+          </Box>
+        </Box>
+        <IconButton
+          size="small"
+          onClick={(e) => { e.stopPropagation(); onMenuOpen(e, projet); }}
+        >
+          <MoreVert />
+        </IconButton>
+      </Box>
+
+      <Chip
+        label={getStatutLabel(projet.statut)}
+        color={getStatutColor(projet.statut)}
+        size="small"
+        sx={{ mb: 2, alignSelf: 'flex-start' }}
+      />
+
+      {projet.description && (
+        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+          {projet.description.substring(0, 100)}...
+        </Typography>
+      )}
+
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="caption" color="textSecondary">
+          Avancement
+        </Typography>
+        <LinearProgress
+          variant="determinate"
+          value={projet.pourcentageAvancement}
+          sx={{ height: 8, borderRadius: 4, mt: 0.5 }}
+        />
+        <Typography variant="caption" color="textSecondary">
+          {projet.pourcentageAvancement}%
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 'auto' }}>
+        <Typography variant="body2">
+          <strong>Budget:</strong> {formatMontant(projet.budgetTotal)}
+        </Typography>
+      </Box>
+
+      {projet.dateDebut && (
+        <Typography variant="caption" color="textSecondary" display="block" sx={{ mt: 1 }}>
+          Début: {new Date(projet.dateDebut).toLocaleDateString('fr-FR')}
+        </Typography>
+      )}
+    </Paper>
+  );
+};
 
 const ProjetsPage = () => {
   const navigate = useNavigate();
-  const [projets, setProjets] = useState<Projet[]>([]);
+  const [rawProjets, setRawProjets] = useState<Projet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -49,6 +193,17 @@ const ProjetsPage = () => {
   const [motif, setMotif] = useState('');
   const [actionType, setActionType] = useState<'suspendre' | 'annuler'>('suspendre');
 
+  // Drag & drop avec persistance localStorage
+  const {
+    items: projets,
+    sensors,
+    handleDragEnd,
+  } = useSortableTable({
+    initialItems: rawProjets,
+    idKey: 'id',
+    storageKey: 'projets-order',
+  });
+
   useEffect(() => {
     loadProjets();
     loadStats();
@@ -58,10 +213,11 @@ const ProjetsPage = () => {
     try {
       setLoading(true);
       const response = await projetsAPI.getAll();
-      setProjets(response.data);
+      setRawProjets(response.data);
       setError(null);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors du chargement des projets');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des projets';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -93,8 +249,8 @@ const ProjetsPage = () => {
       loadProjets();
       loadStats();
       handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors du démarrage');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erreur lors du démarrage');
     }
   };
 
@@ -112,8 +268,8 @@ const ProjetsPage = () => {
       loadProjets();
       loadStats();
       handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la reprise');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erreur lors de la reprise');
     }
   };
 
@@ -125,8 +281,8 @@ const ProjetsPage = () => {
       loadProjets();
       loadStats();
       handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la clôture');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erreur lors de la clôture');
     }
   };
 
@@ -149,8 +305,8 @@ const ProjetsPage = () => {
       loadStats();
       setMotifDialog(false);
       setMotif('');
-    } catch (err: any) {
-      alert(err.response?.data?.message || `Erreur lors de l'${actionType === 'suspendre' ? 'suspension' : 'annulation'}`);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : `Erreur lors de l'${actionType === 'suspendre' ? 'suspension' : 'annulation'}`);
     }
   };
 
@@ -162,12 +318,12 @@ const ProjetsPage = () => {
       loadProjets();
       loadStats();
       handleMenuClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erreur lors de la suppression');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erreur lors de la suppression');
     }
   };
 
-  const getStatutColor = (statut: string) => {
+  const getStatutColor = (statut: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
     switch (statut) {
       case 'EN_PREPARATION': return 'info';
       case 'EN_COURS': return 'primary';
@@ -263,93 +419,37 @@ const ProjetsPage = () => {
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {loading && <LinearProgress sx={{ mb: 2 }} />}
 
-          {/* Liste des projets */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' },
-              gap: 3,
-            }}
+          {/* Liste des projets avec Drag & Drop */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            {projets.map((projet) => (
-                <Paper
-                  key={`projet-${projet.id}`}
-                  sx={{
-                    p: 3,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    border: '1px solid #e5e7eb',
-                    boxShadow: 'none',
-                    borderRadius: '12px',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      borderColor: '#d1d5db',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                      transform: 'translateY(-2px)',
-                    },
-                  }}
-                  onClick={() => navigate(`/projets/${projet.id}`)}
-                >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-                      <Box>
-                        <Typography variant="caption" color="textSecondary">
-                          {projet.code}
-                        </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mt: 0.5 }}>
-                          {projet.nom}
-                        </Typography>
-                      </Box>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => { e.stopPropagation(); handleMenuOpen(e, projet); }}
-                      >
-                        <MoreVert />
-                      </IconButton>
-                    </Box>
-
-                    <Chip
-                      label={getStatutLabel(projet.statut)}
-                      color={getStatutColor(projet.statut)}
-                      size="small"
-                      sx={{ mb: 2 }}
-                    />
-
-                    {projet.description && (
-                      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                        {projet.description.substring(0, 100)}...
-                      </Typography>
-                    )}
-
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="caption" color="textSecondary">
-                        Avancement
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={projet.pourcentageAvancement}
-                        sx={{ height: 8, borderRadius: 4, mt: 0.5 }}
-                      />
-                      <Typography variant="caption" color="textSecondary">
-                        {projet.pourcentageAvancement}%
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                      <Typography variant="body2">
-                        <strong>Budget:</strong> {formatMontant(projet.budgetTotal)}
-                      </Typography>
-                    </Box>
-
-                    {projet.dateDebut && (
-                      <Typography variant="caption" color="textSecondary" display="block" sx={{ mt: 1 }}>
-                        Début: {new Date(projet.dateDebut).toLocaleDateString('fr-FR')}
-                      </Typography>
-                    )}
-                  </Paper>
-            ))}
-          </Box>
+            <SortableContext
+              items={projets.map(p => p.id ?? 0)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' },
+                  gap: 3,
+                }}
+              >
+                {projets.map((projet) => (
+                  <SortableProjetCard
+                    key={projet.id}
+                    projet={projet}
+                    onMenuOpen={handleMenuOpen}
+                    onClick={() => navigate(`/projets/${projet.id}`)}
+                    getStatutColor={getStatutColor}
+                    getStatutLabel={getStatutLabel}
+                    formatMontant={formatMontant}
+                  />
+                ))}
+              </Box>
+            </SortableContext>
+          </DndContext>
 
         {/* Menu contextuel */}
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>

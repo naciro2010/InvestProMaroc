@@ -33,18 +33,15 @@ import {
   MoreVert,
   CheckCircle,
   Cancel,
-  Pending,
   Lock,
   Edit,
   Delete,
   Send,
   Visibility,
   PlayArrow,
-  Undo,
   Search,
   Person,
   CalendarToday,
-  Warning,
   Description,
   TrendingUp,
   CheckCircleOutline,
@@ -56,6 +53,14 @@ import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import StatsCard from '../../components/common/StatsCard'
+import {
+  SortableTableRow,
+  useSortableTable,
+  DndContext,
+  SortableContext,
+  verticalListSortingStrategy,
+  closestCenter,
+} from '../../components/core/SortableTable'
 
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
 type OrderDirection = 'asc' | 'desc'
@@ -86,7 +91,7 @@ const ConventionsTableModern = () => {
   const { user } = useAuth()
   const { showToast } = useToast()
 
-  const [conventions, setConventions] = useState<Convention[]>([])
+  const [rawConventions, setRawConventions] = useState<Convention[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<StatutConvention | 'ALL'>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
@@ -98,6 +103,17 @@ const ConventionsTableModern = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [motifRejet, setMotifRejet] = useState('')
 
+  // Drag & drop avec persistance localStorage
+  const {
+    items: conventions,
+    sensors,
+    handleDragEnd,
+  } = useSortableTable({
+    initialItems: rawConventions,
+    idKey: 'id',
+    storageKey: 'conventions-order',
+  })
+
   useEffect(() => {
     fetchConventions()
   }, [])
@@ -107,7 +123,7 @@ const ConventionsTableModern = () => {
       setLoading(true)
       const response = await conventionsAPI.getAll()
       const data = Array.isArray(response.data) ? response.data : (response.data?.data || [])
-      setConventions(data)
+      setRawConventions(data)
     } catch (error) {
       console.error('Erreur lors du chargement des conventions:', error)
       showToast('Erreur lors du chargement des conventions', 'error')
@@ -470,11 +486,21 @@ const ConventionsTableModern = () => {
             </Stack>
           </Paper>
 
-          {/* Table */}
+          {/* Table avec Drag & Drop */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
           <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)' }}>
+            <SortableContext
+              items={filteredConventions.map(c => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
             <Table sx={{ minWidth: 1200 }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: '#f9fafb' }}>
+                  <TableCell sx={{ width: 40, p: 1 }} />
                   <TableCell sx={{ fontWeight: 700, color: '#374151' }}>
                     <TableSortLabel
                       active={orderBy === 'code'}
@@ -564,7 +590,7 @@ const ConventionsTableModern = () => {
               <TableBody>
                 {filteredConventions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                    <TableCell colSpan={11} align="center" sx={{ py: 8 }}>
                       <Typography variant="body1" color="text.secondary">
                         Aucune convention trouvée
                       </Typography>
@@ -572,11 +598,10 @@ const ConventionsTableModern = () => {
                   </TableRow>
                 ) : (
                   filteredConventions.map((convention, index) => (
-                    <TableRow
+                    <SortableTableRow
                       key={convention.id}
-                      onClick={() => navigate(`/conventions/${convention.id}`)}
+                      id={convention.id}
                       sx={{
-                        cursor: 'pointer',
                         bgcolor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
                         '&:hover': {
                           bgcolor: '#f3f4f6',
@@ -584,7 +609,10 @@ const ConventionsTableModern = () => {
                         transition: 'background-color 0.2s ease',
                       }}
                     >
-                      <TableCell>
+                      <TableCell
+                        onClick={() => navigate(`/conventions/${convention.id}`)}
+                        sx={{ cursor: 'pointer' }}
+                      >
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Typography variant="body2" fontWeight={600} color="primary.main">
                             {convention.code}
@@ -668,12 +696,14 @@ const ConventionsTableModern = () => {
                           <MoreVert fontSize="small" />
                         </IconButton>
                       </TableCell>
-                    </TableRow>
+                    </SortableTableRow>
                   ))
                 )}
               </TableBody>
             </Table>
+            </SortableContext>
           </TableContainer>
+          </DndContext>
 
           {filteredConventions.length > 0 && (
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

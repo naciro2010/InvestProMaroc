@@ -10,6 +10,12 @@ import {
   LinearProgress,
   Stack,
   Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material'
 import {
   Add,
@@ -30,6 +36,14 @@ import MarchesMapView from '../../components/ui/MarchesMapView'
 import StatusBadge from '../../components/core/StatusBadge'
 import api from '../../lib/api'
 import { colors } from '../../lib/designSystem'
+import {
+  SortableTableRow,
+  useSortableTable,
+  DndContext,
+  SortableContext,
+  verticalListSortingStrategy,
+  closestCenter,
+} from '../../components/core/SortableTable'
 
 // Interface correspondant exactement au MarcheListDTO du backend
 interface MarcheListItem {
@@ -74,20 +88,26 @@ const statutColors: Record<string, 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETAR
 
 export default function MarchesPage() {
   const navigate = useNavigate()
-  const [marches, setMarches] = useState<MarcheListItem[]>([])
-  const [filteredMarches, setFilteredMarches] = useState<MarcheListItem[]>([])
+  const [rawMarches, setRawMarches] = useState<MarcheListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatut, setSelectedStatut] = useState<string>('ALL')
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
 
+  // Drag & drop avec persistance localStorage
+  const {
+    items: marches,
+    sensors,
+    handleDragEnd,
+  } = useSortableTable({
+    initialItems: rawMarches,
+    idKey: 'id',
+    storageKey: 'marches-order',
+  })
+
   useEffect(() => {
     fetchMarches()
   }, [])
-
-  useEffect(() => {
-    filterMarches()
-  }, [searchTerm, selectedStatut, marches])
 
   const fetchMarches = async () => {
     try {
@@ -95,8 +115,7 @@ export default function MarchesPage() {
       // Use optimized /list endpoint instead of full /marches endpoint
       // This follows micro-frontends pattern: each component loads only what it needs
       const response = await api.get('/marches/list')
-      setMarches(response.data)
-      setFilteredMarches(response.data)
+      setRawMarches(response.data)
     } catch (error) {
       console.error('Erreur lors du chargement des marchés:', error)
     } finally {
@@ -104,27 +123,28 @@ export default function MarchesPage() {
     }
   }
 
-  const filterMarches = () => {
-    let filtered = marches
-
+  // Filtre les marchés (calcul dérivé, pas de state)
+  const filteredMarches = marches.filter(m => {
     // Filtre par recherche
     if (searchTerm) {
       const query = searchTerm.toLowerCase()
-      filtered = filtered.filter(m =>
+      if (!(
         m.numeroMarche.toLowerCase().includes(query) ||
         m.objet.toLowerCase().includes(query) ||
         m.fournisseurNom.toLowerCase().includes(query) ||
         (m.conventionLibelle?.toLowerCase() ?? '').includes(query)
-      )
+      )) {
+        return false
+      }
     }
 
     // Filtre par statut
-    if (selectedStatut !== 'ALL') {
-      filtered = filtered.filter(m => m.statut === selectedStatut)
+    if (selectedStatut !== 'ALL' && m.statut !== selectedStatut) {
+      return false
     }
 
-    setFilteredMarches(filtered)
-  }
+    return true
+  })
 
   const handleDelete = async (id: number) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce marché ?')) return
@@ -301,83 +321,110 @@ export default function MarchesPage() {
               </Box>
             )}
 
-            {/* Table View */}
+            {/* Table View avec Drag & Drop */}
             {viewMode === 'list' && (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
               <Box sx={{ mt: 2, overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: colors.neutral[50], borderBottom: `1px solid ${colors.border}` }}>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>N° Marché</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>N° AO</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Objet</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Fournisseur</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Montant TTC</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Lignes</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Statut</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 600, color: colors.textSecondary, textTransform: 'uppercase' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMarches.map((marche) => (
-                      <tr
-                        key={marche.id}
-                        style={{ borderBottom: `1px solid ${colors.border}`, cursor: 'pointer', transition: 'background-color 0.2s' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.neutral[50])}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                        onClick={() => navigate(`/marches/${marche.id}`)}
-                      >
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 500, color: colors.textPrimary }}>{marche.numeroMarche}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: colors.textSecondary }}>{marche.numAo || '-'}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: colors.textPrimary }}>{marche.objet}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: colors.textPrimary }}>{marche.fournisseurNom}</td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, textAlign: 'right', color: colors.primary[700] }}>{formatCurrency(marche.montantTtc)}</td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <Box
-                            component="span"
+                <TableContainer>
+                  <SortableContext
+                    items={filteredMarches.map(m => m.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: colors.neutral[50] }}>
+                        <TableCell sx={{ width: 40, p: 1 }} />
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>N° Marché</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>N° AO</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Objet</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Fournisseur</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Montant TTC</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Lignes</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Statut</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem', color: colors.textSecondary, textTransform: 'uppercase' }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredMarches.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                            <Typography variant="body1" sx={{ color: colors.textSecondary }}>Aucun marché trouvé</Typography>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredMarches.map((marche, index) => (
+                          <SortableTableRow
+                            key={marche.id}
+                            id={marche.id}
                             sx={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              minWidth: 24,
-                              height: 24,
-                              borderRadius: '6px',
-                              bgcolor: colors.primary[100],
-                              color: colors.primary[700],
-                              fontWeight: 600,
-                              fontSize: '0.75rem',
-                              px: 1,
+                              bgcolor: index % 2 === 0 ? '#ffffff' : colors.neutral[50],
+                              '&:hover': { bgcolor: colors.neutral[100] },
                             }}
                           >
-                            {marche.nbLignes}
-                          </Box>
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <StatusBadge status={marche.statut} size="small" />
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                          <Stack direction="row" spacing={1} justifyContent="flex-end">
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}`); }} sx={{ color: colors.neutral[500] }}>
-                              <Visibility fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}/modifier`); }} sx={{ color: colors.neutral[500] }}>
-                              <Edit fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }} sx={{ color: colors.danger[500] }}>
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </Stack>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {filteredMarches.length === 0 && (
-                  <Box sx={{ textAlign: 'center', py: 6 }}>
-                    <Typography variant="body1" sx={{ color: colors.textSecondary }}>Aucun marché trouvé</Typography>
-                  </Box>
-                )}
+                            <TableCell
+                              onClick={() => navigate(`/marches/${marche.id}`)}
+                              sx={{ cursor: 'pointer', fontWeight: 500, color: colors.textPrimary }}
+                            >
+                              {marche.numeroMarche}
+                            </TableCell>
+                            <TableCell sx={{ color: colors.textSecondary }}>{marche.numAo || '-'}</TableCell>
+                            <TableCell
+                              onClick={() => navigate(`/marches/${marche.id}`)}
+                              sx={{ cursor: 'pointer', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            >
+                              {marche.objet}
+                            </TableCell>
+                            <TableCell>{marche.fournisseurNom}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600, color: colors.primary[700] }}>{formatCurrency(marche.montantTtc)}</TableCell>
+                            <TableCell align="center">
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  minWidth: 24,
+                                  height: 24,
+                                  borderRadius: '6px',
+                                  bgcolor: colors.primary[100],
+                                  color: colors.primary[700],
+                                  fontWeight: 600,
+                                  fontSize: '0.75rem',
+                                  px: 1,
+                                }}
+                              >
+                                {marche.nbLignes}
+                              </Box>
+                            </TableCell>
+                            <TableCell align="center">
+                              <StatusBadge status={marche.statut} size="small" />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}`); }} sx={{ color: colors.neutral[500] }}>
+                                  <Visibility fontSize="small" />
+                                </IconButton>
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/marches/${marche.id}/modifier`); }} sx={{ color: colors.neutral[500] }}>
+                                  <Edit fontSize="small" />
+                                </IconButton>
+                                <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleDelete(marche.id); }} sx={{ color: colors.danger[500] }}>
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </Stack>
+                            </TableCell>
+                          </SortableTableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                  </SortableContext>
+                </TableContainer>
               </Box>
+              </DndContext>
             )}
           </Paper>
         </Container>

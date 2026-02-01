@@ -1,12 +1,29 @@
-import { ReactNode, useState, useEffect } from 'react'
+import { ReactNode, useState, useEffect, useCallback } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings,
-  Briefcase, ChevronDown, ChevronRight, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles, ClipboardCheck, Tags, Handshake
+  Briefcase, ChevronDown, ChevronRight, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles, ClipboardCheck, Tags, Handshake, GripVertical, Package
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { colors, typography, borders, transitions, shadows, spacing } from '@/lib/designSystem'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -26,6 +43,115 @@ interface MenuGroup {
   key: string
 }
 
+// Storage key for menu order
+const MENU_ORDER_KEY = 'investpro_menu_order'
+
+// Get saved menu order from localStorage
+const getSavedMenuOrder = (): string[] | null => {
+  try {
+    const saved = localStorage.getItem(MENU_ORDER_KEY)
+    return saved ? JSON.parse(saved) : null
+  } catch {
+    return null
+  }
+}
+
+// Save menu order to localStorage
+const saveMenuOrder = (order: string[]) => {
+  try {
+    localStorage.setItem(MENU_ORDER_KEY, JSON.stringify(order))
+  } catch {
+    console.error('Failed to save menu order')
+  }
+}
+
+// Sortable menu group component
+interface SortableGroupProps {
+  group: MenuGroup
+  isExpanded: boolean
+  hasActiveItem: boolean
+  onToggle: () => void
+  children: React.ReactNode
+  sidebarStyles: Record<string, React.CSSProperties>
+}
+
+const SortableGroup = ({ group, isExpanded, hasActiveItem, onToggle, children, sidebarStyles }: SortableGroupProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: group.key })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    marginBottom: spacing.xs,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        style={{
+          ...sidebarStyles.groupHeader,
+          ...(hasActiveItem && !isExpanded ? { backgroundColor: colors.primary[50], color: colors.primary[700] } : {}),
+        }}
+      >
+        {/* Drag handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          style={{
+            cursor: 'grab',
+            padding: '2px',
+            marginRight: spacing.xs,
+            color: colors.neutral[400],
+            display: 'flex',
+            alignItems: 'center',
+          }}
+          title="Glisser pour réorganiser"
+        >
+          <GripVertical className="w-3 h-3" />
+        </div>
+        <div
+          onClick={onToggle}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flex: 1,
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            if (!(hasActiveItem && !isExpanded)) {
+              (e.currentTarget.parentElement as HTMLElement).style.backgroundColor = colors.neutral[50]
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!(hasActiveItem && !isExpanded)) {
+              (e.currentTarget.parentElement as HTMLElement).style.backgroundColor = 'transparent'
+            }
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+            {group.icon}
+            <span>{group.label}</span>
+          </div>
+          {isExpanded ? (
+            <ChevronDown className="w-3 h-3" />
+          ) : (
+            <ChevronRight className="w-3 h-3" />
+          )}
+        </div>
+      </div>
+      {isExpanded && children}
+    </div>
+  )
+}
+
 /**
  * AppLayout - Main application shell
  * Design: Confluence/Jira inspired - clean, professional, functional
@@ -39,7 +165,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'gestion-financiere': true,
+    'conventions-budgets': true,
+    'marches-decomptes': true,
+    'paiements': false,
     'projets-tiers': false,
     'parametrage': false,
     'administration': false,
@@ -76,17 +204,31 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     }))
   }
 
-  // Menu groups structure
-  const menuGroups: MenuGroup[] = [
+  // Default menu groups structure - reorganized with Marchés & Décomptes grouped
+  const defaultMenuGroups: MenuGroup[] = [
     {
-      key: 'gestion-financiere',
-      label: 'Gestion Financière',
-      icon: <DollarSign className="w-4 h-4" />,
+      key: 'conventions-budgets',
+      label: 'Conventions & Budgets',
+      icon: <FileText className="w-4 h-4" />,
       items: [
         { icon: <FileText className="w-4 h-4" />, label: 'Conventions', path: '/conventions', implemented: true },
         { icon: <Wallet className="w-4 h-4" />, label: 'Budgets', path: '/budgets', implemented: true },
+      ]
+    },
+    {
+      key: 'marches-decomptes',
+      label: 'Marchés & Décomptes',
+      icon: <Package className="w-4 h-4" />,
+      items: [
         { icon: <ShoppingCart className="w-4 h-4" />, label: 'Marchés', path: '/marches', implemented: true },
         { icon: <FileCheck className="w-4 h-4" />, label: 'Décomptes', path: '/decomptes', implemented: true },
+      ]
+    },
+    {
+      key: 'paiements',
+      label: 'Paiements',
+      icon: <Banknote className="w-4 h-4" />,
+      items: [
         { icon: <ClipboardCheck className="w-4 h-4" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
         { icon: <Banknote className="w-4 h-4" />, label: 'Paiements', path: '/paiements', implemented: true },
         { icon: <Receipt className="w-4 h-4" />, label: 'Dépenses', path: '/depenses', implemented: false },
@@ -123,6 +265,55 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       ]
     }
   ]
+
+  // State for ordered menu groups (persisted)
+  const [menuGroups, setMenuGroups] = useState<MenuGroup[]>(() => {
+    const savedOrder = getSavedMenuOrder()
+    if (savedOrder) {
+      // Reorder defaultMenuGroups based on saved order
+      const orderedGroups: MenuGroup[] = []
+      savedOrder.forEach(key => {
+        const group = defaultMenuGroups.find(g => g.key === key)
+        if (group) orderedGroups.push(group)
+      })
+      // Add any new groups not in saved order
+      defaultMenuGroups.forEach(group => {
+        if (!savedOrder.includes(group.key)) {
+          orderedGroups.push(group)
+        }
+      })
+      return orderedGroups
+    }
+    return defaultMenuGroups
+  })
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Handle drag end
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      setMenuGroups((items) => {
+        const oldIndex = items.findIndex((item) => item.key === active.id)
+        const newIndex = items.findIndex((item) => item.key === over.id)
+        const newOrder = arrayMove(items, oldIndex, newIndex)
+        // Save to localStorage
+        saveMenuOrder(newOrder.map(g => g.key))
+        return newOrder
+      })
+    }
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -325,86 +516,73 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
           <div style={{ height: '1px', backgroundColor: colors.divider, margin: `${spacing.sm} ${spacing.lg}` }} />
 
-          {/* Grouped Menu Items */}
-          {menuGroups.map((group) => {
-            const isExpanded = expandedGroups[group.key]
-            const hasActiveItem = group.items.some(item => isActive(item.path))
+          {/* Grouped Menu Items with Drag & Drop */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={menuGroups.map(g => g.key)}
+              strategy={verticalListSortingStrategy}
+            >
+              {menuGroups.map((group) => {
+                const isExpanded = expandedGroups[group.key]
+                const hasActiveItem = group.items.some(item => isActive(item.path))
 
-            return (
-              <div key={group.key} style={{ marginBottom: spacing.xs }}>
-                {/* Group Header */}
-                <div
-                  onClick={() => toggleGroup(group.key)}
-                  style={{
-                    ...sidebarStyles.groupHeader,
-                    ...(hasActiveItem && !isExpanded ? { backgroundColor: colors.primary[50], color: colors.primary[700] } : {}),
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!(hasActiveItem && !isExpanded)) {
-                      e.currentTarget.style.backgroundColor = colors.neutral[50]
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!(hasActiveItem && !isExpanded)) {
-                      e.currentTarget.style.backgroundColor = 'transparent'
-                    }
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-                    {group.icon}
-                    <span>{group.label}</span>
-                  </div>
-                  {isExpanded ? (
-                    <ChevronDown className="w-3 h-3" />
-                  ) : (
-                    <ChevronRight className="w-3 h-3" />
-                  )}
-                </div>
-
-                {/* Group Items */}
-                {isExpanded && (
-                  <div style={{ marginTop: '2px' }}>
-                    {group.items.map((item, itemIndex) => {
-                      const itemActive = isActive(item.path)
-                      return (
-                        <Link
-                          key={itemIndex}
-                          to={item.path}
-                          style={{
-                            ...sidebarStyles.menuItem,
-                            marginLeft: spacing.xl,
-                            ...(itemActive ? sidebarStyles.menuItemActive : {}),
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!itemActive) {
-                              Object.assign(e.currentTarget.style, sidebarStyles.menuItemHover)
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!itemActive) {
-                              e.currentTarget.style.backgroundColor = 'transparent'
-                              e.currentTarget.style.color = colors.textSecondary
-                            }
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
-                            {item.icon}
-                            <span>{item.label}</span>
-                          </div>
-                          {!item.implemented && (
-                            <span style={sidebarStyles.badge}>
-                              <Sparkles className="w-3 h-3" />
-                              Bientôt
-                            </span>
-                          )}
-                        </Link>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                return (
+                  <SortableGroup
+                    key={group.key}
+                    group={group}
+                    isExpanded={isExpanded}
+                    hasActiveItem={hasActiveItem}
+                    onToggle={() => toggleGroup(group.key)}
+                    sidebarStyles={sidebarStyles}
+                  >
+                    {/* Group Items */}
+                    <div style={{ marginTop: '2px' }}>
+                      {group.items.map((item, itemIndex) => {
+                        const itemActive = isActive(item.path)
+                        return (
+                          <Link
+                            key={itemIndex}
+                            to={item.path}
+                            style={{
+                              ...sidebarStyles.menuItem,
+                              marginLeft: spacing.xl,
+                              ...(itemActive ? sidebarStyles.menuItemActive : {}),
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!itemActive) {
+                                Object.assign(e.currentTarget.style, sidebarStyles.menuItemHover)
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!itemActive) {
+                                e.currentTarget.style.backgroundColor = 'transparent'
+                                e.currentTarget.style.color = colors.textSecondary
+                              }
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
+                              {item.icon}
+                              <span>{item.label}</span>
+                            </div>
+                            {!item.implemented && (
+                              <span style={sidebarStyles.badge}>
+                                <Sparkles className="w-3 h-3" />
+                                Bientôt
+                              </span>
+                            )}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </SortableGroup>
+                )
+              })}
+            </SortableContext>
+          </DndContext>
         </nav>
 
         {/* User Section */}

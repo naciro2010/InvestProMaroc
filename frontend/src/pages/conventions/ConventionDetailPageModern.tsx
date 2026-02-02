@@ -203,22 +203,9 @@ const ConventionDetailPageModern = () => {
   const tabsRef = useRef<HTMLDivElement>(null)
 
   // Handle stat click - scroll to tabs and switch to appropriate tab
+  // Tab indices: 0=Détail, 1=Sous-conv, 2=Avenants, 3=Projets, 4=Marchés
   const handleStatClick = (statType: 'projets' | 'marches' | 'sousConventions') => {
-    // Calculate tab index based on convention type
-    const isCadre = convention?.typeConvention === 'CADRE'
-    let tabIndex = 0
-
-    switch (statType) {
-      case 'sousConventions':
-        tabIndex = isCadre ? 1 : 0 // Only for CADRE conventions
-        break
-      case 'projets':
-        tabIndex = isCadre ? 3 : 2
-        break
-      case 'marches':
-        tabIndex = isCadre ? 4 : 3
-        break
-    }
+    const tabIndex = statType === 'sousConventions' ? 1 : statType === 'projets' ? 3 : 4
 
     setActiveTab(tabIndex)
     setTimeout(() => {
@@ -558,7 +545,7 @@ const ConventionDetailPageModern = () => {
             subtitle={convention.libelle}
             actions={
               <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, flexWrap: 'wrap', alignItems: 'center' }}>
-                {/* Workflow Actions */}
+                {/* Workflow Actions - Simplifié: BROUILLON → SOUMIS → VALIDE */}
                 {workflowLoading && <CircularProgress size={24} />}
 
                 {/* BROUILLON → SOUMIS */}
@@ -575,7 +562,7 @@ const ConventionDetailPageModern = () => {
                   </Button>
                 )}
 
-                {/* SOUMIS → VALIDEE (Admin/Manager only) */}
+                {/* SOUMIS → VALIDE (Admin/Manager only) */}
                 {convention.statut === 'SOUMIS' && (isAdmin || isManager) && (
                   <>
                     <Button
@@ -601,63 +588,6 @@ const ConventionDetailPageModern = () => {
                   </>
                 )}
 
-                {/* REJETE → BROUILLON */}
-                {convention.statut === 'REJETE' && (
-                  <Button
-                    variant="contained"
-                    color="warning"
-                    startIcon={!isMobile && <Edit />}
-                    onClick={handleRemettreEnBrouillon}
-                    disabled={workflowLoading}
-                    size={isMobile ? 'small' : 'medium'}
-                  >
-                    {isMobile ? <Edit /> : 'Corriger'}
-                  </Button>
-                )}
-
-                {/* VALIDEE → EN_EXECUTION */}
-                {convention.statut === 'VALIDEE' && (
-                  <Button
-                    variant="contained"
-                    color="info"
-                    startIcon={!isMobile && <PlayArrow />}
-                    onClick={handleMettreEnCours}
-                    disabled={workflowLoading}
-                    size={isMobile ? 'small' : 'medium'}
-                  >
-                    {isMobile ? <PlayArrow /> : 'Démarrer'}
-                  </Button>
-                )}
-
-                {/* EN_EXECUTION → ACHEVE */}
-                {convention.statut === 'EN_EXECUTION' && (
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    startIcon={!isMobile && <Flag />}
-                    onClick={handleAchever}
-                    disabled={workflowLoading}
-                    size={isMobile ? 'small' : 'medium'}
-                  >
-                    {isMobile ? <Flag /> : 'Achever'}
-                  </Button>
-                )}
-
-                {/* Annuler (sauf ACHEVE et ANNULE) */}
-                {!['ACHEVE', 'ANNULE'].includes(convention.statut) && (isAdmin || isManager) && (
-                  <Tooltip title="Annuler la convention">
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      onClick={() => setCancelDialogOpen(true)}
-                      disabled={workflowLoading}
-                      size="small"
-                    >
-                      {isMobile ? <Stop /> : <><Stop sx={{ mr: 0.5 }} /> Annuler</>}
-                    </Button>
-                  </Tooltip>
-                )}
-
                 <Divider orientation="vertical" flexItem sx={{ mx: 1, display: { xs: 'none', md: 'block' } }} />
 
                 {/* Other Actions */}
@@ -670,20 +600,18 @@ const ConventionDetailPageModern = () => {
                     {isMobile ? <Add /> : <><Add sx={{ mr: 0.5 }} /> Avenant</>}
                   </Button>
                 </Tooltip>
-                {convention.typeConvention === 'CADRE' && (
-                  <Tooltip title="Ajouter une convention spécifique">
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        setEditingSousConvention(null)
-                        setSousConventionDialogOpen(true)
-                      }}
-                      size="small"
-                    >
-                      {isMobile ? <Assignment /> : <><Add sx={{ mr: 0.5 }} /> Conv. Spéc.</>}
-                    </Button>
-                  </Tooltip>
-                )}
+                <Tooltip title="Ajouter une sous-convention">
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setEditingSousConvention(null)
+                      setSousConventionDialogOpen(true)
+                    }}
+                    size="small"
+                  >
+                    {isMobile ? <Assignment /> : <><Add sx={{ mr: 0.5 }} /> Sous-conv.</>}
+                  </Button>
+                </Tooltip>
                 <Tooltip
                   title={
                     !canEdit
@@ -734,7 +662,7 @@ const ConventionDetailPageModern = () => {
           </Box>
 
           {/* Sous-Conventions Summary Card */}
-          {convention.typeConvention === 'CADRE' && sousConventions.length > 0 && (
+          {sousConventions.length > 0 && (
             <Box sx={{ mb: 3 }}>
               <ConventionSousConventionsCard
                 typeConvention={convention.typeConvention}
@@ -756,20 +684,18 @@ const ConventionDetailPageModern = () => {
               scrollButtons="auto"
             >
               <Tab label="Détail de la convention" icon={<Description />} iconPosition="start" />
-              {convention.typeConvention === 'CADRE' && (
-                <Tab
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      Conventions spécifiques
-                      {sousConventions.length > 0 && (
-                        <Chip label={sousConventions.length} size="small" color="primary" />
-                      )}
-                    </Box>
-                  }
-                  icon={<Assignment />}
-                  iconPosition="start"
-                />
-              )}
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    Sous-conventions
+                    {sousConventions.length > 0 && (
+                      <Chip label={sousConventions.length} size="small" color="primary" />
+                    )}
+                  </Box>
+                }
+                icon={<Assignment />}
+                iconPosition="start"
+              />
               <Tab
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1010,99 +936,97 @@ const ConventionDetailPageModern = () => {
             </TabPanel>
 
             {/* Sous-conventions Tab */}
-            {convention.typeConvention === 'CADRE' && (
-              <TabPanel value={activeTab} index={1}>
-                <Container maxWidth="xl">
-                  {sousConventions.length > 0 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={() => {
-                          setEditingSousConvention(null)
-                          setSousConventionDialogOpen(true)
-                        }}
-                      >
-                        Ajouter une conv. spécifique
-                      </Button>
-                    </Box>
-                  )}
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Code</TableCell>
-                          <TableCell>Numéro</TableCell>
-                          <TableCell>Libellé</TableCell>
-                          <TableCell>Statut</TableCell>
-                          <TableCell align="right">Montant</TableCell>
-                          <TableCell>Date début</TableCell>
-                          <TableCell align="center">Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {sousConventions.map((sc) => (
-                          <TableRow key={sc.id} hover>
-                            <TableCell>{sc.code}</TableCell>
-                            <TableCell>{sc.numero}</TableCell>
-                            <TableCell>{sc.libelle}</TableCell>
-                            <TableCell>
-                              <StatusBadge status={sc.statut} size="small" />
-                            </TableCell>
-                            <TableCell align="right">{formatCurrency(sc.montant)}</TableCell>
-                            <TableCell>{formatDate(sc.dateDebut)}</TableCell>
-                            <TableCell align="center">
-                              <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                                <Tooltip title="Voir les détails">
-                                  <IconButton size="small" onClick={() => navigate(`/conventions/${sc.id}`)}>
-                                    <Visibility fontSize="small" />
+            <TabPanel value={activeTab} index={1}>
+              <Container maxWidth="xl">
+                {sousConventions.length > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      onClick={() => {
+                        setEditingSousConvention(null)
+                        setSousConventionDialogOpen(true)
+                      }}
+                    >
+                      Ajouter une sous-convention
+                    </Button>
+                  </Box>
+                )}
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Code</TableCell>
+                        <TableCell>Numéro</TableCell>
+                        <TableCell>Libellé</TableCell>
+                        <TableCell>Statut</TableCell>
+                        <TableCell align="right">Montant</TableCell>
+                        <TableCell>Date début</TableCell>
+                        <TableCell align="center">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {sousConventions.map((sc) => (
+                        <TableRow key={sc.id} hover>
+                          <TableCell>{sc.code}</TableCell>
+                          <TableCell>{sc.numero}</TableCell>
+                          <TableCell>{sc.libelle}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={sc.statut} size="small" />
+                          </TableCell>
+                          <TableCell align="right">{formatCurrency(sc.montant)}</TableCell>
+                          <TableCell>{formatDate(sc.dateDebut)}</TableCell>
+                          <TableCell align="center">
+                            <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                              <Tooltip title="Voir les détails">
+                                <IconButton size="small" onClick={() => navigate(`/conventions/${sc.id}`)}>
+                                  <Visibility fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              {sc.statut === 'BROUILLON' && (
+                                <Tooltip title="Modifier">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                      setEditingSousConvention(sc)
+                                      setSousConventionDialogOpen(true)
+                                    }}
+                                    sx={{ color: colors.primary[600] }}
+                                  >
+                                    <Edit fontSize="small" />
                                   </IconButton>
                                 </Tooltip>
-                                {sc.statut === 'BROUILLON' && (
-                                  <Tooltip title="Modifier">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => {
-                                        setEditingSousConvention(sc)
-                                        setSousConventionDialogOpen(true)
-                                      }}
-                                      sx={{ color: colors.primary[600] }}
-                                    >
-                                      <Edit fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                              )}
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
-                  {sousConventions.length === 0 && (
-                    <Box sx={{ py: 4, textAlign: 'center' }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Aucune convention spécifique
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={() => {
-                          setEditingSousConvention(null)
-                          setSousConventionDialogOpen(true)
-                        }}
-                      >
-                        Créer une convention spécifique
-                      </Button>
-                    </Box>
-                  )}
-                </Container>
-              </TabPanel>
-            )}
+                {sousConventions.length === 0 && (
+                  <Box sx={{ py: 4, textAlign: 'center' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Aucune sous-convention
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      onClick={() => {
+                        setEditingSousConvention(null)
+                        setSousConventionDialogOpen(true)
+                      }}
+                    >
+                      Créer une sous-convention
+                    </Button>
+                  </Box>
+                )}
+              </Container>
+            </TabPanel>
 
             {/* Avenants & Historique Tab - Micro-Component */}
-            <TabPanel value={activeTab} index={convention.typeConvention === 'CADRE' ? 2 : 1}>
+            <TabPanel value={activeTab} index={2}>
               <ConventionAvenantsTab
                 convention={convention}
                 avenants={avenants}
@@ -1118,7 +1042,7 @@ const ConventionDetailPageModern = () => {
             </TabPanel>
 
             {/* Projets Tab */}
-            <TabPanel value={activeTab} index={convention.typeConvention === 'CADRE' ? 3 : 2}>
+            <TabPanel value={activeTab} index={3}>
               <Container maxWidth="xl">
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                   <Button
@@ -1191,7 +1115,7 @@ const ConventionDetailPageModern = () => {
             </TabPanel>
 
             {/* Marchés Tab */}
-            <TabPanel value={activeTab} index={convention.typeConvention === 'CADRE' ? 4 : 3}>
+            <TabPanel value={activeTab} index={4}>
               <Container maxWidth="xl">
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                   <Button

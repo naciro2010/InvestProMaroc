@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -26,6 +26,8 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import {
   ArrowBack,
@@ -141,6 +143,8 @@ const ConventionDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user, isAdmin, isManager } = useAuth()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [convention, setConvention] = useState<Convention | null>(null)
@@ -177,6 +181,33 @@ const ConventionDetailPageModern = () => {
   const [rejectMotif, setRejectMotif] = useState('')
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelMotif, setCancelMotif] = useState('')
+
+  // Refs for scroll to section
+  const tabsRef = useRef<HTMLDivElement>(null)
+
+  // Handle stat click - scroll to tabs and switch to appropriate tab
+  const handleStatClick = (statType: 'projets' | 'marches' | 'sousConventions') => {
+    // Calculate tab index based on convention type
+    const isCadre = convention?.typeConvention === 'CADRE'
+    let tabIndex = 0
+
+    switch (statType) {
+      case 'sousConventions':
+        tabIndex = isCadre ? 1 : 0 // Only for CADRE conventions
+        break
+      case 'projets':
+        tabIndex = isCadre ? 3 : 2
+        break
+      case 'marches':
+        tabIndex = isCadre ? 4 : 3
+        break
+    }
+
+    setActiveTab(tabIndex)
+    setTimeout(() => {
+      tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
 
   useEffect(() => {
     if (id) {
@@ -455,7 +486,7 @@ const ConventionDetailPageModern = () => {
             title={`Convention ${convention.code}`}
             subtitle={convention.libelle}
             actions={
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, flexWrap: 'wrap', alignItems: 'center' }}>
                 {/* Workflow Actions */}
                 {workflowLoading && <CircularProgress size={24} />}
 
@@ -464,11 +495,12 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     color="primary"
-                    startIcon={<Send />}
+                    startIcon={!isMobile && <Send />}
                     onClick={handleSoumettre}
                     disabled={workflowLoading}
+                    size={isMobile ? 'small' : 'medium'}
                   >
-                    Soumettre
+                    {isMobile ? <Send /> : 'Soumettre'}
                   </Button>
                 )}
 
@@ -478,20 +510,22 @@ const ConventionDetailPageModern = () => {
                     <Button
                       variant="contained"
                       color="success"
-                      startIcon={<CheckCircle />}
+                      startIcon={!isMobile && <CheckCircle />}
                       onClick={handleValider}
                       disabled={workflowLoading}
+                      size={isMobile ? 'small' : 'medium'}
                     >
-                      Valider
+                      {isMobile ? <CheckCircle /> : 'Valider'}
                     </Button>
                     <Button
                       variant="outlined"
                       color="error"
-                      startIcon={<Cancel />}
+                      startIcon={!isMobile && <Cancel />}
                       onClick={() => setRejectDialogOpen(true)}
                       disabled={workflowLoading}
+                      size={isMobile ? 'small' : 'medium'}
                     >
-                      Rejeter
+                      {isMobile ? <Cancel /> : 'Rejeter'}
                     </Button>
                   </>
                 )}
@@ -501,11 +535,12 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     color="warning"
-                    startIcon={<Edit />}
+                    startIcon={!isMobile && <Edit />}
                     onClick={handleRemettreEnBrouillon}
                     disabled={workflowLoading}
+                    size={isMobile ? 'small' : 'medium'}
                   >
-                    Corriger
+                    {isMobile ? <Edit /> : 'Corriger'}
                   </Button>
                 )}
 
@@ -514,11 +549,12 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     color="info"
-                    startIcon={<PlayArrow />}
+                    startIcon={!isMobile && <PlayArrow />}
                     onClick={handleMettreEnCours}
                     disabled={workflowLoading}
+                    size={isMobile ? 'small' : 'medium'}
                   >
-                    Démarrer
+                    {isMobile ? <PlayArrow /> : 'Démarrer'}
                   </Button>
                 )}
 
@@ -527,51 +563,55 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     color="secondary"
-                    startIcon={<Flag />}
+                    startIcon={!isMobile && <Flag />}
                     onClick={handleAchever}
                     disabled={workflowLoading}
+                    size={isMobile ? 'small' : 'medium'}
                   >
-                    Achever
+                    {isMobile ? <Flag /> : 'Achever'}
                   </Button>
                 )}
 
                 {/* Annuler (sauf ACHEVE et ANNULE) */}
                 {!['ACHEVE', 'ANNULE'].includes(convention.statut) && (isAdmin || isManager) && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<Stop />}
-                    onClick={() => setCancelDialogOpen(true)}
-                    disabled={workflowLoading}
-                    size="small"
-                  >
-                    Annuler
-                  </Button>
+                  <Tooltip title="Annuler la convention">
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      onClick={() => setCancelDialogOpen(true)}
+                      disabled={workflowLoading}
+                      size="small"
+                    >
+                      {isMobile ? <Stop /> : <><Stop sx={{ mr: 0.5 }} /> Annuler</>}
+                    </Button>
+                  </Tooltip>
                 )}
 
-                <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                <Divider orientation="vertical" flexItem sx={{ mx: 1, display: { xs: 'none', md: 'block' } }} />
 
                 {/* Other Actions */}
-                <Button
-                  variant="outlined"
-                  startIcon={<Add />}
-                  onClick={() => navigate(`/conventions/${id}/avenants/nouveau`)}
-                  size="small"
-                >
-                  Avenant
-                </Button>
-                {convention.typeConvention === 'CADRE' && (
+                <Tooltip title="Ajouter un avenant">
                   <Button
                     variant="outlined"
-                    startIcon={<Add />}
-                    onClick={() => {
-                      setEditingSousConvention(null)
-                      setSousConventionDialogOpen(true)
-                    }}
+                    onClick={() => navigate(`/conventions/${id}/avenants/nouveau`)}
                     size="small"
                   >
-                    Conv. Spécifique
+                    {isMobile ? <Add /> : <><Add sx={{ mr: 0.5 }} /> Avenant</>}
                   </Button>
+                </Tooltip>
+                {convention.typeConvention === 'CADRE' && (
+                  <Tooltip title="Ajouter une convention spécifique">
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        setEditingSousConvention(null)
+                        setSousConventionDialogOpen(true)
+                      }}
+                      size="small"
+                    >
+                      {isMobile ? <Assignment /> : <><Add sx={{ mr: 0.5 }} /> Conv. Spéc.</>}
+                    </Button>
+                  </Tooltip>
                 )}
                 <Tooltip
                   title={
@@ -583,23 +623,23 @@ const ConventionDetailPageModern = () => {
                   <span>
                     <Button
                       variant="outlined"
-                      startIcon={canEdit ? <Edit /> : <Lock />}
                       onClick={() => navigate(`/conventions/${id}/edit`)}
                       disabled={!canEdit}
                       size="small"
                     >
-                      Modifier
+                      {isMobile ? (canEdit ? <Edit /> : <Lock />) : <>{canEdit ? <Edit sx={{ mr: 0.5 }} /> : <Lock sx={{ mr: 0.5 }} />} Modifier</>}
                     </Button>
                   </span>
                 </Tooltip>
-                <Button
-                  variant="outlined"
-                  startIcon={<ArrowBack />}
-                  onClick={() => navigate('/conventions')}
-                  size="small"
-                >
-                  Retour
-                </Button>
+                <Tooltip title="Retour à la liste">
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate('/conventions')}
+                    size="small"
+                  >
+                    {isMobile ? <ArrowBack /> : <><ArrowBack sx={{ mr: 0.5 }} /> Retour</>}
+                  </Button>
+                </Tooltip>
               </Box>
             }
           />
@@ -619,7 +659,7 @@ const ConventionDetailPageModern = () => {
 
           {/* Stats Section - Lazy loaded via micro-endpoint (~5 KB) */}
           <Box sx={{ mb: 3 }}>
-            <ConventionStatsCard conventionId={convention.id} />
+            <ConventionStatsCard conventionId={convention.id} onStatClick={handleStatClick} />
           </Box>
 
           {/* Sous-Conventions Summary Card */}
@@ -636,11 +676,13 @@ const ConventionDetailPageModern = () => {
           )}
 
           {/* Tabs Section */}
-          <Paper>
+          <Paper ref={tabsRef}>
             <Tabs
               value={activeTab}
               onChange={(_, newValue) => setActiveTab(newValue)}
               sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+              variant="scrollable"
+              scrollButtons="auto"
             >
               <Tab label="Détail de la convention" icon={<Description />} iconPosition="start" />
               {convention.typeConvention === 'CADRE' && (

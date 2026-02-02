@@ -106,15 +106,25 @@ const SortableGroup = ({ group, isExpanded, hasActiveItem, onToggle, children, s
           {...listeners}
           style={{
             cursor: 'grab',
-            padding: '2px',
+            padding: spacing.xs,
             marginRight: spacing.xs,
             color: colors.neutral[400],
             display: 'flex',
             alignItems: 'center',
+            borderRadius: borders.radius.sm,
+            transition: `all ${transitions.fast}`,
           }}
           title="Glisser pour réorganiser"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors.neutral[100]
+            e.currentTarget.style.color = colors.neutral[600]
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = colors.neutral[400]
+          }}
         >
-          <GripVertical className="w-3 h-3" />
+          <GripVertical className="w-4 h-4" />
         </div>
         <div
           onClick={onToggle}
@@ -291,7 +301,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5, // Reduced for easier drag activation
       },
     }),
     useSensor(KeyboardSensor, {
@@ -469,9 +479,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <aside
         style={{
           ...sidebarStyles.container,
-          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transform: (sidebarOpen || !isMobile) ? 'translateX(0)' : 'translateX(-100%)',
         }}
-        className="lg:translate-x-0"
       >
         {/* Logo */}
         <div style={sidebarStyles.logo}>

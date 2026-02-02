@@ -4,6 +4,7 @@ import { useConventionStats } from '@/hooks/useConventionData'
 
 interface ConventionStatsCardProps {
   conventionId: number
+  onStatClick?: (statType: 'projets' | 'marches' | 'sousConventions') => void
 }
 
 /**
@@ -11,7 +12,7 @@ interface ConventionStatsCardProps {
  * Loads aggregated stats (~5 KB) independently via micro-endpoint
  * Displays: project count, market count, sub-convention count, amounts, realization rate
  */
-const ConventionStatsCard = ({ conventionId }: ConventionStatsCardProps) => {
+const ConventionStatsCard = ({ conventionId, onStatClick }: ConventionStatsCardProps) => {
   const { data: stats, loading, error } = useConventionStats(conventionId)
 
   const formatCurrency = (amount: number) => {
@@ -65,6 +66,7 @@ const ConventionStatsCard = ({ conventionId }: ConventionStatsCardProps) => {
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
         {/* Nombre de Projets */}
         <Box
+          onClick={() => onStatClick?.('projets')}
           sx={{
             p: 2,
             textAlign: 'center',
@@ -72,10 +74,17 @@ const ConventionStatsCard = ({ conventionId }: ConventionStatsCardProps) => {
             borderRadius: 2,
             border: '1px solid',
             borderColor: 'primary.light',
+            cursor: onStatClick ? 'pointer' : 'default',
+            transition: 'all 0.2s ease',
+            '&:hover': onStatClick ? {
+              transform: 'translateY(-2px)',
+              boxShadow: 2,
+              bgcolor: 'primary.100',
+            } : {},
           }}
         >
-          <FolderOpen color="primary" sx={{ fontSize: 32, mb: 1 }} />
-          <Typography variant="h4" fontWeight={700} color="primary.dark">
+          <FolderOpen color="primary" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1 }} />
+          <Typography variant="h4" fontWeight={700} color="primary.dark" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
             {stats.nombreProjets}
           </Typography>
           <Typography variant="caption" color="text.secondary">
@@ -85,6 +94,7 @@ const ConventionStatsCard = ({ conventionId }: ConventionStatsCardProps) => {
 
         {/* Nombre de Marchés */}
         <Box
+          onClick={() => onStatClick?.('marches')}
           sx={{
             p: 2,
             textAlign: 'center',
@@ -92,10 +102,17 @@ const ConventionStatsCard = ({ conventionId }: ConventionStatsCardProps) => {
             borderRadius: 2,
             border: '1px solid',
             borderColor: 'secondary.light',
+            cursor: onStatClick ? 'pointer' : 'default',
+            transition: 'all 0.2s ease',
+            '&:hover': onStatClick ? {
+              transform: 'translateY(-2px)',
+              boxShadow: 2,
+              bgcolor: 'secondary.100',
+            } : {},
           }}
         >
-          <Business color="secondary" sx={{ fontSize: 32, mb: 1 }} />
-          <Typography variant="h4" fontWeight={700} color="secondary.dark">
+          <Business color="secondary" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1 }} />
+          <Typography variant="h4" fontWeight={700} color="secondary.dark" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
             {stats.nombreMarches}
           </Typography>
           <Typography variant="caption" color="text.secondary">
@@ -105,6 +122,7 @@ const ConventionStatsCard = ({ conventionId }: ConventionStatsCardProps) => {
 
         {/* Sous-Conventions */}
         <Box
+          onClick={() => onStatClick?.('sousConventions')}
           sx={{
             p: 2,
             textAlign: 'center',
@@ -112,10 +130,17 @@ const ConventionStatsCard = ({ conventionId }: ConventionStatsCardProps) => {
             borderRadius: 2,
             border: '1px solid',
             borderColor: 'info.light',
+            cursor: onStatClick ? 'pointer' : 'default',
+            transition: 'all 0.2s ease',
+            '&:hover': onStatClick ? {
+              transform: 'translateY(-2px)',
+              boxShadow: 2,
+              bgcolor: 'info.100',
+            } : {},
           }}
         >
-          <AccountTree color="info" sx={{ fontSize: 32, mb: 1 }} />
-          <Typography variant="h4" fontWeight={700} color="info.dark">
+          <AccountTree color="info" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1 }} />
+          <Typography variant="h4" fontWeight={700} color="info.dark" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
             {stats.nombreSousConventions}
           </Typography>
           <Typography variant="caption" color="text.secondary">
@@ -134,8 +159,8 @@ const ConventionStatsCard = ({ conventionId }: ConventionStatsCardProps) => {
             borderColor: 'success.light',
           }}
         >
-          <TrendingUp color="success" sx={{ fontSize: 32, mb: 1 }} />
-          <Typography variant="h4" fontWeight={700} color="success.dark">
+          <TrendingUp color="success" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1 }} />
+          <Typography variant="h4" fontWeight={700} color="success.dark" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
             {formatPercent(stats.tauxRealisation)}
           </Typography>
           <Typography variant="caption" color="text.secondary">

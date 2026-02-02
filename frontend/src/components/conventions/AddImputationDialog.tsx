@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -7,128 +7,131 @@ import {
   Button,
   TextField,
   Alert,
-  Grid,
-} from '@mui/material';
-import { Add } from '@mui/icons-material';
+  Box,
+  CircularProgress,
+} from '@mui/material'
+import { Add, Cancel } from '@mui/icons-material'
+import { colors, typography } from '@/lib/designSystem'
 
 interface ImputationPrevisionnelleForm {
-  volet?: string;
-  dateDemarrage: string;
-  delaiMois: number;
-  remarques?: string;
+  volet?: string
+  dateDemarrage: string
+  delaiMois: number
+  remarques?: string
 }
 
 interface AddImputationDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onAdd: (imputation: ImputationPrevisionnelleForm) => Promise<void>;
+  open: boolean
+  onClose: () => void
+  onAdd: (imputation: ImputationPrevisionnelleForm) => Promise<void>
 }
 
 const AddImputationDialog = ({ open, onClose, onAdd }: AddImputationDialogProps) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<ImputationPrevisionnelleForm>({
     volet: '',
     dateDemarrage: new Date().toISOString().split('T')[0],
     delaiMois: 12,
     remarques: '',
-  });
+  })
 
-  const handleChange = (field: keyof ImputationPrevisionnelleForm, value: any) => {
-    setFormData({ ...formData, [field]: value });
-  };
+  const handleChange = (field: keyof ImputationPrevisionnelleForm, value: string | number) => {
+    setFormData({ ...formData, [field]: value })
+  }
 
   const handleSubmit = async () => {
     if (!formData.dateDemarrage || formData.delaiMois <= 0) {
-      setError('Veuillez remplir tous les champs requis');
-      return;
+      setError('Veuillez remplir tous les champs requis')
+      return
     }
 
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     try {
-      await onAdd(formData);
+      await onAdd(formData)
       setFormData({
         volet: '',
         dateDemarrage: new Date().toISOString().split('T')[0],
         delaiMois: 12,
         remarques: '',
-      });
-      onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'ajout');
+      })
+      onClose()
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'Erreur lors de l\'ajout')
+      } else {
+        setError('Erreur lors de l\'ajout')
+      }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Ajouter une Imputation Prévisionnelle</DialogTitle>
+      <DialogTitle sx={{ color: colors.primary[700], fontWeight: typography.weights.semibold }}>
+        Ajouter une Imputation Prévisionnelle
+      </DialogTitle>
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="Volet / Composante"
-              value={formData.volet}
-              onChange={(e) => handleChange('volet', e.target.value)}
-              placeholder="Ex: Volet 1 - Infrastructure"
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              required
-              type="date"
-              label="Date de Démarrage"
-              value={formData.dateDemarrage}
-              onChange={(e) => handleChange('dateDemarrage', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              required
-              type="number"
-              label="Délai (mois)"
-              value={formData.delaiMois}
-              onChange={(e) => handleChange('delaiMois', parseInt(e.target.value) || 0)}
-              inputProps={{ min: 1 }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Remarques"
-              value={formData.remarques}
-              onChange={(e) => handleChange('remarques', e.target.value)}
-            />
-          </Grid>
-        </Grid>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          <TextField
+            fullWidth
+            label="Volet / Composante"
+            value={formData.volet}
+            onChange={(e) => handleChange('volet', e.target.value)}
+            placeholder="Ex: Volet 1 - Infrastructure"
+            size="small"
+          />
+          <TextField
+            fullWidth
+            required
+            type="date"
+            label="Date de Démarrage"
+            value={formData.dateDemarrage}
+            onChange={(e) => handleChange('dateDemarrage', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+          />
+          <TextField
+            fullWidth
+            required
+            type="number"
+            label="Délai (mois)"
+            value={formData.delaiMois}
+            onChange={(e) => handleChange('delaiMois', parseInt(e.target.value) || 0)}
+            inputProps={{ min: 1 }}
+            size="small"
+          />
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Remarques"
+            value={formData.remarques}
+            onChange={(e) => handleChange('remarques', e.target.value)}
+            size="small"
+          />
+        </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} disabled={loading} startIcon={<Cancel />}>
           Annuler
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          startIcon={<Add />}
+          startIcon={loading ? <CircularProgress size={16} /> : <Add />}
           disabled={loading}
-          sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
         >
           {loading ? 'Ajout...' : 'Ajouter'}
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
-export default AddImputationDialog;
+export default AddImputationDialog

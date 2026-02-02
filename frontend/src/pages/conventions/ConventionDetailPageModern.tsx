@@ -64,6 +64,8 @@ import {
   ConventionFinancesCard,
   ConventionStatsCard,
   ConventionPartenairesCard,
+  ConventionSubventionsCard,
+  ConventionImputationsCard,
 } from '../../components/conventions/detail'
 import { colors, componentStyles, typography } from '../../lib/designSystem'
 import StatusBadge from '../../components/core/StatusBadge'
@@ -763,52 +765,18 @@ const ConventionDetailPageModern = () => {
                     </Typography>
                   </Paper>
 
-                  {/* Imputations prévisionnelles Card */}
-                  <Paper sx={{ ...componentStyles.card, p: 3, gridColumn: { xs: '1', md: 'span 2' } }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <TrendingUp sx={{ color: colors.success[600] }} />
-                        <Typography variant="h6" sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
-                          Imputations prévisionnelles
-                        </Typography>
-                      </Box>
-                      <Button
-                        size="small"
-                        startIcon={<Add />}
-                        variant="outlined"
-                        onClick={() => {
-                          alert('Fonctionnalité en développement : Ajouter une imputation')
-                        }}
-                        sx={{ borderColor: colors.primary[300], color: colors.primary[600] }}
-                      >
-                        Ajouter
-                      </Button>
-                    </Box>
-                    <Divider sx={{ mb: 2, borderColor: colors.border }} />
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Axe</TableCell>
-                            <TableCell>Projet</TableCell>
-                            <TableCell>Volet</TableCell>
-                            <TableCell>Date démarrage</TableCell>
-                            <TableCell>Délai</TableCell>
-                            <TableCell>Date fin prévue</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          <TableRow>
-                            <TableCell colSpan={6} align="center">
-                              <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                                Aucune imputation prévisionnelle
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Paper>
+                  {/* Imputations prévisionnelles Card - Micro-Component */}
+                  <Box sx={{ gridColumn: { xs: '1', md: 'span 2' } }}>
+                    <ConventionImputationsCard
+                      conventionId={convention.id}
+                      onRefresh={() => loadConvention(convention.id)}
+                    />
+                  </Box>
+
+                  {/* Subventions Card - Micro-Component */}
+                  <Box sx={{ gridColumn: { xs: '1', md: 'span 2' } }}>
+                    <ConventionSubventionsCard conventionId={convention.id} />
+                  </Box>
 
                   {/* Versements prévisionnels Card */}
                   <Paper sx={{ ...componentStyles.card, p: 3, gridColumn: { xs: '1', md: 'span 2' } }}>

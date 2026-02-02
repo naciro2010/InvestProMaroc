@@ -56,7 +56,7 @@ export default function BudgetsPage() {
       REJETE: { variant: 'danger', label: 'Rejeté' },
       ARCHIVE: { variant: 'gray', label: 'Archivé' },
     }
-    const cfg = config[statut]
+    const cfg = config[statut] || { variant: 'gray' as const, label: statut }
     return <Badge variant={cfg.variant}>{cfg.label}</Badge>
   }
 

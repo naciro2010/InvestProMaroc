@@ -1,6 +1,6 @@
 // Types TypeScript pour toutes les entités backend
 
-export type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_COURS' | 'ACHEVE' | 'EN_RETARD' | 'ANNULE'
+export type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
 export type TypeConvention = 'CADRE' | 'NON_CADRE' | 'SPECIFIQUE' | 'AVENANT'
 
 export interface Convention {

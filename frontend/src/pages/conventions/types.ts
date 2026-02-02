@@ -74,10 +74,7 @@ export type TypeConvention = 'CADRE' | 'NON_CADRE' | 'SPECIFIQUE' | 'AVENANT'
 export type StatutConvention =
   | 'BROUILLON'
   | 'SOUMIS'
-  | 'VALIDEE'
-  | 'REJETE'
-  | 'EN_EXECUTION'
-  | 'ACHEVE'
+  | 'VALIDE'
 
 export type BaseCalcul =
   | 'DECAISSEMENTS_TTC'

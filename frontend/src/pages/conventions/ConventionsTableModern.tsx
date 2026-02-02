@@ -62,7 +62,7 @@ import {
   closestCenter,
 } from '../../components/core/SortableTable'
 
-type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
+type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
 type OrderDirection = 'asc' | 'desc'
 type OrderByColumn = keyof Convention
 
@@ -257,14 +257,10 @@ const ConventionsTableModern = () => {
     const config: Record<StatutConvention, { color: 'default' | 'warning' | 'success' | 'error' | 'info' | 'primary'; icon: JSX.Element; label: string }> = {
       BROUILLON: { color: 'default', icon: <Edit fontSize="small" />, label: 'Brouillon' },
       SOUMIS: { color: 'warning', icon: <Send fontSize="small" />, label: 'Soumis' },
-      VALIDEE: { color: 'success', icon: <CheckCircle fontSize="small" />, label: 'Validée' },
-      REJETE: { color: 'error', icon: <Cancel fontSize="small" />, label: 'Rejeté' },
-      EN_EXECUTION: { color: 'primary', icon: <PlayArrow fontSize="small" />, label: 'En exécution' },
-      ACHEVE: { color: 'info', icon: <CheckCircleOutline fontSize="small" />, label: 'Achevé' },
-      ANNULE: { color: 'error', icon: <Cancel fontSize="small" />, label: 'Annulé' },
+      VALIDE: { color: 'success', icon: <CheckCircle fontSize="small" />, label: 'Validé' },
     }
-    const { color, icon, label } = config[statut]
-    return <Chip icon={icon} label={label} color={color} size="small" sx={{ fontWeight: 600 }} />
+    const statusConfig = config[statut] || { color: 'default' as const, icon: <Edit fontSize="small" />, label: statut }
+    return <Chip icon={statusConfig.icon} label={statusConfig.label} color={statusConfig.color} size="small" sx={{ fontWeight: 600 }} />
   }
 
   const formatCurrency = (amount: number) => {
@@ -338,10 +334,7 @@ const ConventionsTableModern = () => {
     total: conventions.length,
     brouillon: conventions.filter(c => c.statut === 'BROUILLON').length,
     soumis: conventions.filter(c => c.statut === 'SOUMIS').length,
-    validees: conventions.filter(c => c.statut === 'VALIDEE').length,
-    rejetees: conventions.filter(c => c.statut === 'REJETE').length,
-    enExecution: conventions.filter(c => c.statut === 'EN_EXECUTION').length,
-    annulees: conventions.filter(c => c.statut === 'ANNULE').length,
+    validees: conventions.filter(c => c.statut === 'VALIDE').length,
   }
 
   if (loading) {
@@ -413,31 +406,7 @@ const ConventionsTableModern = () => {
               icon={<CheckCircle />}
               color="#10b981"
               bgColor="#d1fae5"
-              onClick={() => handleStatClick('VALIDEE')}
-            />
-            <StatsCard
-              title="Rejetées"
-              value={stats.rejetees}
-              icon={<Cancel />}
-              color="#ef4444"
-              bgColor="#fee2e2"
-              onClick={() => handleStatClick('REJETE')}
-            />
-            <StatsCard
-              title="En Exécution"
-              value={stats.enExecution}
-              icon={<TrendingUp />}
-              color="#8b5cf6"
-              bgColor="#ede9fe"
-              onClick={() => handleStatClick('EN_EXECUTION')}
-            />
-            <StatsCard
-              title="Annulées"
-              value={stats.annulees}
-              icon={<Cancel />}
-              color="#9ca3af"
-              bgColor="#f3f4f6"
-              onClick={() => handleStatClick('ANNULE')}
+              onClick={() => handleStatClick('VALIDE')}
             />
           </Box>
 
@@ -478,21 +447,9 @@ const ConventionsTableModern = () => {
                 />
                 <Chip
                   label={`Validées (${stats.validees})`}
-                  onClick={() => setFilter('VALIDEE')}
-                  color={filter === 'VALIDEE' ? 'primary' : 'default'}
-                  variant={filter === 'VALIDEE' ? 'filled' : 'outlined'}
-                />
-                <Chip
-                  label={`Rejetées (${stats.rejetees})`}
-                  onClick={() => setFilter('REJETE')}
-                  color={filter === 'REJETE' ? 'primary' : 'default'}
-                  variant={filter === 'REJETE' ? 'filled' : 'outlined'}
-                />
-                <Chip
-                  label={`En Exécution (${stats.enExecution})`}
-                  onClick={() => setFilter('EN_EXECUTION')}
-                  color={filter === 'EN_EXECUTION' ? 'primary' : 'default'}
-                  variant={filter === 'EN_EXECUTION' ? 'filled' : 'outlined'}
+                  onClick={() => setFilter('VALIDE')}
+                  color={filter === 'VALIDE' ? 'primary' : 'default'}
+                  variant={filter === 'VALIDE' ? 'filled' : 'outlined'}
                 />
               </Stack>
             </Stack>
@@ -649,13 +606,6 @@ const ConventionsTableModern = () => {
                           <Typography variant="caption" color="text.secondary">
                             {convention.numero}
                           </Typography>
-                          {convention.statut === 'REJETE' && convention.motifRejet && (
-                            <Alert severity="error" sx={{ mt: 0.5, py: 0 }}>
-                              <Typography variant="caption">
-                                <strong>Rejet:</strong> {convention.motifRejet}
-                              </Typography>
-                            </Alert>
-                          )}
                         </Stack>
                       </TableCell>
                       <TableCell>
@@ -769,13 +719,6 @@ const ConventionsTableModern = () => {
               Rejeter
             </MenuItem>
           </>
-        )}
-
-        {selectedConvention?.statut === 'VALIDEE' && (
-          <MenuItem onClick={() => handleActionClick('start')}>
-            <PlayArrow fontSize="small" sx={{ mr: 1 }} />
-            Démarrer
-          </MenuItem>
         )}
 
         {selectedConvention?.statut === 'BROUILLON' && (

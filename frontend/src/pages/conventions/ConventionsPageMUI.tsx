@@ -43,7 +43,7 @@ import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import StatsCard from '../../components/common/StatsCard'
 
-type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
+type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
 
 interface Convention {
   id: number
@@ -190,17 +190,13 @@ const ConventionsPageMUI = () => {
   }
 
   const getStatutBadge = (statut: StatutConvention) => {
-    const config: Record<StatutConvention, { color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'; icon: JSX.Element }> = {
-      BROUILLON: { color: 'default', icon: <Edit fontSize="small" /> },
-      SOUMIS: { color: 'warning', icon: <Send fontSize="small" /> },
-      VALIDEE: { color: 'success', icon: <CheckCircle fontSize="small" /> },
-      REJETE: { color: 'error', icon: <Cancel fontSize="small" /> },
-      EN_EXECUTION: { color: 'info', icon: <Pending fontSize="small" /> },
-      ACHEVE: { color: 'success', icon: <CheckCircle fontSize="small" /> },
-      ANNULE: { color: 'error', icon: <Cancel fontSize="small" /> },
+    const config: Record<StatutConvention, { color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'; icon: JSX.Element; label: string }> = {
+      BROUILLON: { color: 'default', icon: <Edit fontSize="small" />, label: 'Brouillon' },
+      SOUMIS: { color: 'warning', icon: <Send fontSize="small" />, label: 'Soumis' },
+      VALIDE: { color: 'success', icon: <CheckCircle fontSize="small" />, label: 'Validé' },
     }
-    const { color, icon } = config[statut]
-    return <Chip icon={icon} label={statut.replace('_', ' ')} color={color} size="small" />
+    const statusConfig = config[statut] || { color: 'default' as const, icon: <Edit fontSize="small" />, label: statut }
+    return <Chip icon={statusConfig.icon} label={statusConfig.label} color={statusConfig.color} size="small" />
   }
 
   const formatCurrency = (amount: number) => {
@@ -231,10 +227,7 @@ const ConventionsPageMUI = () => {
     total: conventions.length,
     brouillon: conventions.filter(c => c.statut === 'BROUILLON').length,
     soumis: conventions.filter(c => c.statut === 'SOUMIS').length,
-    validees: conventions.filter(c => c.statut === 'VALIDEE').length,
-    rejetees: conventions.filter(c => c.statut === 'REJETE').length,
-    enExecution: conventions.filter(c => c.statut === 'EN_EXECUTION').length,
-    annulees: conventions.filter(c => c.statut === 'ANNULE').length,
+    validees: conventions.filter(c => c.statut === 'VALIDE').length,
   }
 
   if (loading) {
@@ -268,7 +261,7 @@ const ConventionsPageMUI = () => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(7, 1fr)' },
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
             gap: 3,
             mb: 4,
           }}
@@ -303,31 +296,7 @@ const ConventionsPageMUI = () => {
             icon={<CheckCircle />}
             color="#10b981"
             bgColor="#d1fae5"
-            onClick={() => setFilter('VALIDEE')}
-          />
-          <StatsCard
-            title="Rejetées"
-            value={stats.rejetees}
-            icon={<Cancel />}
-            color="#ef4444"
-            bgColor="#fee2e2"
-            onClick={() => setFilter('REJETE')}
-          />
-          <StatsCard
-            title="En Exécution"
-            value={stats.enExecution}
-            icon={<Pending />}
-            color="#3b82f6"
-            bgColor="#dbeafe"
-            onClick={() => setFilter('EN_EXECUTION')}
-          />
-          <StatsCard
-            title="Annulées"
-            value={stats.annulees}
-            icon={<Cancel />}
-            color="#ef4444"
-            bgColor="#fee2e2"
-            onClick={() => setFilter('ANNULE')}
+            onClick={() => setFilter('VALIDE')}
           />
         </Box>
 
@@ -361,18 +330,8 @@ const ConventionsPageMUI = () => {
             />
             <Chip
               label="Validées"
-              onClick={() => setFilter('VALIDEE')}
-              color={filter === 'VALIDEE' ? 'primary' : 'default'}
-            />
-            <Chip
-              label="Rejetées"
-              onClick={() => setFilter('REJETE')}
-              color={filter === 'REJETE' ? 'primary' : 'default'}
-            />
-            <Chip
-              label="En Exécution"
-              onClick={() => setFilter('EN_EXECUTION')}
-              color={filter === 'EN_EXECUTION' ? 'primary' : 'default'}
+              onClick={() => setFilter('VALIDE')}
+              color={filter === 'VALIDE' ? 'primary' : 'default'}
             />
           </Stack>
         </Paper>
@@ -385,13 +344,12 @@ const ConventionsPageMUI = () => {
               sx={{
                 p: 3,
                 cursor: 'pointer',
-                border: '1px solid',
-                borderColor: convention.statut === 'REJETE' ? 'error.main' : '#e5e7eb',
+                border: '1px solid #e5e7eb',
                 boxShadow: 'none',
                 borderRadius: '12px',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  borderColor: convention.statut === 'REJETE' ? 'error.main' : '#d1d5db',
+                  borderColor: '#d1d5db',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                   transform: 'translateY(-2px)',
                 },
@@ -415,31 +373,6 @@ const ConventionsPageMUI = () => {
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       {convention.numero} • Code: {convention.code}
                     </Typography>
-
-                    {/* Motif de rejet */}
-                    {convention.statut === 'REJETE' && convention.motifRejet && (
-                      <Box
-                        sx={{
-                          mt: 1,
-                          p: 1.5,
-                          bgcolor: 'error.light',
-                          borderRadius: 1,
-                          display: 'flex',
-                          alignItems: 'start',
-                          gap: 1
-                        }}
-                      >
-                        <Warning fontSize="small" sx={{ color: 'error.dark', mt: 0.3 }} />
-                        <Box>
-                          <Typography variant="caption" fontWeight={600} color="error.dark">
-                            Motif du rejet:
-                          </Typography>
-                          <Typography variant="body2" color="error.dark">
-                            {convention.motifRejet}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
 
                     <Stack direction="row" spacing={3} mt={2} flexWrap="wrap">
                       <Box>
@@ -520,16 +453,6 @@ const ConventionsPageMUI = () => {
                 <Cancel fontSize="small" sx={{ mr: 1 }} /> Rejeter
               </MenuItem>
             </>
-          )}
-          {selectedConvention?.statut === 'REJETE' && (
-            <MenuItem onClick={handleRemettreEnBrouillon}>
-              <Undo fontSize="small" sx={{ mr: 1 }} /> Remettre en Brouillon
-            </MenuItem>
-          )}
-          {selectedConvention?.statut === 'VALIDEE' && (
-            <MenuItem onClick={handleMettreEnCours}>
-              <PlayArrow fontSize="small" sx={{ mr: 1 }} /> Mettre en Exécution
-            </MenuItem>
           )}
           {selectedConvention?.statut === 'BROUILLON' && !selectedConvention?.isLocked && (
             <>

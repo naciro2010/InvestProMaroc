@@ -43,7 +43,7 @@ import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import StatsCard from '../../components/common/StatsCard'
 
-type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
+type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
 
 interface Convention {
   id: number
@@ -190,17 +190,13 @@ const ConventionsPageMUI = () => {
   }
 
   const getStatutBadge = (statut: StatutConvention) => {
-    const config: Record<StatutConvention, { color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'; icon: JSX.Element }> = {
-      BROUILLON: { color: 'default', icon: <Edit fontSize="small" /> },
-      SOUMIS: { color: 'warning', icon: <Send fontSize="small" /> },
-      VALIDEE: { color: 'success', icon: <CheckCircle fontSize="small" /> },
-      REJETE: { color: 'error', icon: <Cancel fontSize="small" /> },
-      EN_EXECUTION: { color: 'info', icon: <Pending fontSize="small" /> },
-      ACHEVE: { color: 'success', icon: <CheckCircle fontSize="small" /> },
-      ANNULE: { color: 'error', icon: <Cancel fontSize="small" /> },
+    const config: Record<StatutConvention, { color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'; icon: JSX.Element; label: string }> = {
+      BROUILLON: { color: 'default', icon: <Edit fontSize="small" />, label: 'Brouillon' },
+      SOUMIS: { color: 'warning', icon: <Send fontSize="small" />, label: 'Soumis' },
+      VALIDE: { color: 'success', icon: <CheckCircle fontSize="small" />, label: 'Validé' },
     }
-    const { color, icon } = config[statut]
-    return <Chip icon={icon} label={statut.replace('_', ' ')} color={color} size="small" />
+    const statusConfig = config[statut] || { color: 'default' as const, icon: <Edit fontSize="small" />, label: statut }
+    return <Chip icon={statusConfig.icon} label={statusConfig.label} color={statusConfig.color} size="small" />
   }
 
   const formatCurrency = (amount: number) => {
@@ -231,10 +227,7 @@ const ConventionsPageMUI = () => {
     total: conventions.length,
     brouillon: conventions.filter(c => c.statut === 'BROUILLON').length,
     soumis: conventions.filter(c => c.statut === 'SOUMIS').length,
-    validees: conventions.filter(c => c.statut === 'VALIDEE').length,
-    rejetees: conventions.filter(c => c.statut === 'REJETE').length,
-    enExecution: conventions.filter(c => c.statut === 'EN_EXECUTION').length,
-    annulees: conventions.filter(c => c.statut === 'ANNULE').length,
+    validees: conventions.filter(c => c.statut === 'VALIDE').length,
   }
 
   if (loading) {

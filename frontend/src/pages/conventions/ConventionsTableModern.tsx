@@ -62,7 +62,7 @@ import {
   closestCenter,
 } from '../../components/core/SortableTable'
 
-type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'REJETE' | 'EN_EXECUTION' | 'ACHEVE' | 'ANNULE'
+type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
 type OrderDirection = 'asc' | 'desc'
 type OrderByColumn = keyof Convention
 
@@ -257,14 +257,10 @@ const ConventionsTableModern = () => {
     const config: Record<StatutConvention, { color: 'default' | 'warning' | 'success' | 'error' | 'info' | 'primary'; icon: JSX.Element; label: string }> = {
       BROUILLON: { color: 'default', icon: <Edit fontSize="small" />, label: 'Brouillon' },
       SOUMIS: { color: 'warning', icon: <Send fontSize="small" />, label: 'Soumis' },
-      VALIDEE: { color: 'success', icon: <CheckCircle fontSize="small" />, label: 'Validée' },
-      REJETE: { color: 'error', icon: <Cancel fontSize="small" />, label: 'Rejeté' },
-      EN_EXECUTION: { color: 'primary', icon: <PlayArrow fontSize="small" />, label: 'En exécution' },
-      ACHEVE: { color: 'info', icon: <CheckCircleOutline fontSize="small" />, label: 'Achevé' },
-      ANNULE: { color: 'error', icon: <Cancel fontSize="small" />, label: 'Annulé' },
+      VALIDE: { color: 'success', icon: <CheckCircle fontSize="small" />, label: 'Validé' },
     }
-    const { color, icon, label } = config[statut]
-    return <Chip icon={icon} label={label} color={color} size="small" sx={{ fontWeight: 600 }} />
+    const statusConfig = config[statut] || { color: 'default' as const, icon: <Edit fontSize="small" />, label: statut }
+    return <Chip icon={statusConfig.icon} label={statusConfig.label} color={statusConfig.color} size="small" sx={{ fontWeight: 600 }} />
   }
 
   const formatCurrency = (amount: number) => {
@@ -338,10 +334,7 @@ const ConventionsTableModern = () => {
     total: conventions.length,
     brouillon: conventions.filter(c => c.statut === 'BROUILLON').length,
     soumis: conventions.filter(c => c.statut === 'SOUMIS').length,
-    validees: conventions.filter(c => c.statut === 'VALIDEE').length,
-    rejetees: conventions.filter(c => c.statut === 'REJETE').length,
-    enExecution: conventions.filter(c => c.statut === 'EN_EXECUTION').length,
-    annulees: conventions.filter(c => c.statut === 'ANNULE').length,
+    validees: conventions.filter(c => c.statut === 'VALIDE').length,
   }
 
   if (loading) {

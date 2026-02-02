@@ -80,7 +80,7 @@ export interface RegisterRequest {
 // Convention Types
 // ============================================================================
 
-export type ConventionStatus = 'BROUILLON' | 'SOUMIS' | 'VALIDEE' | 'EN_EXECUTION' | 'ACHEVE'
+export type ConventionStatus = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
 export type ConventionType = 'CADRE' | 'NON_CADRE'
 
 export interface Convention {

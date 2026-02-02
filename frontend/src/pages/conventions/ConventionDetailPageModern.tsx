@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -26,6 +26,8 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import {
   ArrowBack,
@@ -46,11 +48,13 @@ import {
   PlayArrow,
   Stop,
   Flag,
+  Delete,
+  LinkOff,
 } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
-import { api, conventionsAPI, avenantConventionsAPI } from '../../lib/api'
+import { api, conventionsAPI, avenantConventionsAPI, versementsPrevisionnelsAPI } from '../../lib/api'
 import {
   ConventionInfoCard,
   ConventionSousConventionsCard,
@@ -66,6 +70,9 @@ import StatusBadge from '../../components/core/StatusBadge'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
 import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
+import SousConventionFormSimple from './SousConventionFormSimple'
+import VersementFormDialog from '../../components/conventions/VersementFormDialog'
+import RichTextDisplay from '../../components/ui/RichTextDisplay'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -135,10 +142,21 @@ interface Marche {
   fournisseurNom?: string
 }
 
+interface VersementPrevisionnel {
+  id: number
+  axe?: string
+  projet?: string
+  volet?: string
+  dateVersement: string
+  montant: number
+}
+
 const ConventionDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user, isAdmin, isManager } = useAuth()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [convention, setConvention] = useState<Convention | null>(null)
@@ -146,6 +164,7 @@ const ConventionDetailPageModern = () => {
   const [sousConventions, setSousConventions] = useState<SousConvention[]>([])
   const [projets, setProjets] = useState<Projet[]>([])
   const [marches, setMarches] = useState<Marche[]>([])
+  const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -165,12 +184,47 @@ const ConventionDetailPageModern = () => {
   const [linkMarcheDialogOpen, setLinkMarcheDialogOpen] = useState(false)
   const [partenairesRefreshKey, setPartenairesRefreshKey] = useState(0)
 
+  // Sous-convention modal states
+  const [sousConventionDialogOpen, setSousConventionDialogOpen] = useState(false)
+  const [editingSousConvention, setEditingSousConvention] = useState<SousConvention | null>(null)
+
+  // Versement modal states
+  const [versementDialogOpen, setVersementDialogOpen] = useState(false)
+  const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
+
   // Workflow states
   const [workflowLoading, setWorkflowLoading] = useState(false)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectMotif, setRejectMotif] = useState('')
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelMotif, setCancelMotif] = useState('')
+
+  // Refs for scroll to section
+  const tabsRef = useRef<HTMLDivElement>(null)
+
+  // Handle stat click - scroll to tabs and switch to appropriate tab
+  const handleStatClick = (statType: 'projets' | 'marches' | 'sousConventions') => {
+    // Calculate tab index based on convention type
+    const isCadre = convention?.typeConvention === 'CADRE'
+    let tabIndex = 0
+
+    switch (statType) {
+      case 'sousConventions':
+        tabIndex = isCadre ? 1 : 0 // Only for CADRE conventions
+        break
+      case 'projets':
+        tabIndex = isCadre ? 3 : 2
+        break
+      case 'marches':
+        tabIndex = isCadre ? 4 : 3
+        break
+    }
+
+    setActiveTab(tabIndex)
+    setTimeout(() => {
+      tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
 
   useEffect(() => {
     if (id) {
@@ -190,6 +244,7 @@ const ConventionDetailPageModern = () => {
         loadSousConventions(conventionId),
         loadProjets(conventionId),
         loadMarches(conventionId),
+        loadVersements(conventionId),
       ])
     } catch (err) {
       setError('Erreur lors du chargement de la convention')
@@ -235,6 +290,59 @@ const ConventionDetailPageModern = () => {
     } catch (err) {
       console.error('Error loading marchés:', err)
       setMarches([])
+    }
+  }
+
+  const loadVersements = async (conventionId: number) => {
+    try {
+      const res = await versementsPrevisionnelsAPI.getByConvention(conventionId)
+      setVersements(res.data.data || res.data || [])
+    } catch (err) {
+      console.error('Error loading versements:', err)
+      setVersements([])
+    }
+  }
+
+  // Unlink handlers
+  const handleUnlinkProjet = async (projetId: number) => {
+    if (!convention) return
+    if (!window.confirm('Êtes-vous sûr de vouloir délier ce projet de la convention ?')) return
+
+    try {
+      await conventionsAPI.unlinkProjet(projetId, convention.id)
+      setSuccessMessage('Projet délié avec succès')
+      loadProjets(convention.id)
+    } catch (err) {
+      console.error('Error unlinking projet:', err)
+      setError('Erreur lors de la suppression du lien avec le projet')
+    }
+  }
+
+  const handleUnlinkMarche = async (marcheId: number) => {
+    if (!convention) return
+    if (!window.confirm('Êtes-vous sûr de vouloir délier ce marché de la convention ?')) return
+
+    try {
+      await conventionsAPI.unlinkMarche(convention.id, marcheId)
+      setSuccessMessage('Marché délié avec succès')
+      loadMarches(convention.id)
+    } catch (err) {
+      console.error('Error unlinking marché:', err)
+      setError('Erreur lors de la suppression du lien avec le marché')
+    }
+  }
+
+  const handleDeleteVersement = async (versementId: number) => {
+    if (!convention) return
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce versement ?')) return
+
+    try {
+      await versementsPrevisionnelsAPI.delete(versementId)
+      setSuccessMessage('Versement supprimé avec succès')
+      loadVersements(convention.id)
+    } catch (err) {
+      console.error('Error deleting versement:', err)
+      setError('Erreur lors de la suppression du versement')
     }
   }
 
@@ -449,7 +557,7 @@ const ConventionDetailPageModern = () => {
             title={`Convention ${convention.code}`}
             subtitle={convention.libelle}
             actions={
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, flexWrap: 'wrap', alignItems: 'center' }}>
                 {/* Workflow Actions */}
                 {workflowLoading && <CircularProgress size={24} />}
 
@@ -458,11 +566,12 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     color="primary"
-                    startIcon={<Send />}
+                    startIcon={!isMobile && <Send />}
                     onClick={handleSoumettre}
                     disabled={workflowLoading}
+                    size={isMobile ? 'small' : 'medium'}
                   >
-                    Soumettre
+                    {isMobile ? <Send /> : 'Soumettre'}
                   </Button>
                 )}
 
@@ -472,20 +581,22 @@ const ConventionDetailPageModern = () => {
                     <Button
                       variant="contained"
                       color="success"
-                      startIcon={<CheckCircle />}
+                      startIcon={!isMobile && <CheckCircle />}
                       onClick={handleValider}
                       disabled={workflowLoading}
+                      size={isMobile ? 'small' : 'medium'}
                     >
-                      Valider
+                      {isMobile ? <CheckCircle /> : 'Valider'}
                     </Button>
                     <Button
                       variant="outlined"
                       color="error"
-                      startIcon={<Cancel />}
+                      startIcon={!isMobile && <Cancel />}
                       onClick={() => setRejectDialogOpen(true)}
                       disabled={workflowLoading}
+                      size={isMobile ? 'small' : 'medium'}
                     >
-                      Rejeter
+                      {isMobile ? <Cancel /> : 'Rejeter'}
                     </Button>
                   </>
                 )}
@@ -495,11 +606,12 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     color="warning"
-                    startIcon={<Edit />}
+                    startIcon={!isMobile && <Edit />}
                     onClick={handleRemettreEnBrouillon}
                     disabled={workflowLoading}
+                    size={isMobile ? 'small' : 'medium'}
                   >
-                    Corriger
+                    {isMobile ? <Edit /> : 'Corriger'}
                   </Button>
                 )}
 
@@ -508,11 +620,12 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     color="info"
-                    startIcon={<PlayArrow />}
+                    startIcon={!isMobile && <PlayArrow />}
                     onClick={handleMettreEnCours}
                     disabled={workflowLoading}
+                    size={isMobile ? 'small' : 'medium'}
                   >
-                    Démarrer
+                    {isMobile ? <PlayArrow /> : 'Démarrer'}
                   </Button>
                 )}
 
@@ -521,48 +634,55 @@ const ConventionDetailPageModern = () => {
                   <Button
                     variant="contained"
                     color="secondary"
-                    startIcon={<Flag />}
+                    startIcon={!isMobile && <Flag />}
                     onClick={handleAchever}
                     disabled={workflowLoading}
+                    size={isMobile ? 'small' : 'medium'}
                   >
-                    Achever
+                    {isMobile ? <Flag /> : 'Achever'}
                   </Button>
                 )}
 
                 {/* Annuler (sauf ACHEVE et ANNULE) */}
                 {!['ACHEVE', 'ANNULE'].includes(convention.statut) && (isAdmin || isManager) && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<Stop />}
-                    onClick={() => setCancelDialogOpen(true)}
-                    disabled={workflowLoading}
-                    size="small"
-                  >
-                    Annuler
-                  </Button>
+                  <Tooltip title="Annuler la convention">
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      onClick={() => setCancelDialogOpen(true)}
+                      disabled={workflowLoading}
+                      size="small"
+                    >
+                      {isMobile ? <Stop /> : <><Stop sx={{ mr: 0.5 }} /> Annuler</>}
+                    </Button>
+                  </Tooltip>
                 )}
 
-                <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                <Divider orientation="vertical" flexItem sx={{ mx: 1, display: { xs: 'none', md: 'block' } }} />
 
                 {/* Other Actions */}
-                <Button
-                  variant="outlined"
-                  startIcon={<Add />}
-                  onClick={() => navigate(`/conventions/${id}/avenants/nouveau`)}
-                  size="small"
-                >
-                  Avenant
-                </Button>
-                {convention.typeConvention === 'CADRE' && (
+                <Tooltip title="Ajouter un avenant">
                   <Button
                     variant="outlined"
-                    startIcon={<Add />}
-                    onClick={() => navigate(`/conventions/${id}/sous-conventions/nouveau`)}
+                    onClick={() => navigate(`/conventions/${id}/avenants/nouveau`)}
                     size="small"
                   >
-                    Conv. Spécifique
+                    {isMobile ? <Add /> : <><Add sx={{ mr: 0.5 }} /> Avenant</>}
                   </Button>
+                </Tooltip>
+                {convention.typeConvention === 'CADRE' && (
+                  <Tooltip title="Ajouter une convention spécifique">
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        setEditingSousConvention(null)
+                        setSousConventionDialogOpen(true)
+                      }}
+                      size="small"
+                    >
+                      {isMobile ? <Assignment /> : <><Add sx={{ mr: 0.5 }} /> Conv. Spéc.</>}
+                    </Button>
+                  </Tooltip>
                 )}
                 <Tooltip
                   title={
@@ -574,23 +694,23 @@ const ConventionDetailPageModern = () => {
                   <span>
                     <Button
                       variant="outlined"
-                      startIcon={canEdit ? <Edit /> : <Lock />}
                       onClick={() => navigate(`/conventions/${id}/edit`)}
                       disabled={!canEdit}
                       size="small"
                     >
-                      Modifier
+                      {isMobile ? (canEdit ? <Edit /> : <Lock />) : <>{canEdit ? <Edit sx={{ mr: 0.5 }} /> : <Lock sx={{ mr: 0.5 }} />} Modifier</>}
                     </Button>
                   </span>
                 </Tooltip>
-                <Button
-                  variant="outlined"
-                  startIcon={<ArrowBack />}
-                  onClick={() => navigate('/conventions')}
-                  size="small"
-                >
-                  Retour
-                </Button>
+                <Tooltip title="Retour à la liste">
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate('/conventions')}
+                    size="small"
+                  >
+                    {isMobile ? <ArrowBack /> : <><ArrowBack sx={{ mr: 0.5 }} /> Retour</>}
+                  </Button>
+                </Tooltip>
               </Box>
             }
           />
@@ -610,7 +730,7 @@ const ConventionDetailPageModern = () => {
 
           {/* Stats Section - Lazy loaded via micro-endpoint (~5 KB) */}
           <Box sx={{ mb: 3 }}>
-            <ConventionStatsCard conventionId={convention.id} />
+            <ConventionStatsCard conventionId={convention.id} onStatClick={handleStatClick} />
           </Box>
 
           {/* Sous-Conventions Summary Card */}
@@ -627,11 +747,13 @@ const ConventionDetailPageModern = () => {
           )}
 
           {/* Tabs Section */}
-          <Paper>
+          <Paper ref={tabsRef}>
             <Tabs
               value={activeTab}
               onChange={(_, newValue) => setActiveTab(newValue)}
               sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+              variant="scrollable"
+              scrollButtons="auto"
             >
               <Tab label="Détail de la convention" icon={<Description />} iconPosition="start" />
               {convention.typeConvention === 'CADRE' && (
@@ -770,13 +892,25 @@ const ConventionDetailPageModern = () => {
                         <Typography variant="h6" sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
                           Versements prévisionnels
                         </Typography>
+                        {versements.length > 0 && (
+                          <Chip
+                            label={versements.length}
+                            size="small"
+                            sx={{
+                              bgcolor: colors.warning[100],
+                              color: colors.warning[700],
+                              fontWeight: typography.weights.medium,
+                            }}
+                          />
+                        )}
                       </Box>
                       <Button
                         size="small"
                         startIcon={<Add />}
                         variant="outlined"
                         onClick={() => {
-                          alert('Fonctionnalité en développement : Ajouter un versement')
+                          setEditingVersement(null)
+                          setVersementDialogOpen(true)
                         }}
                         sx={{ borderColor: colors.primary[300], color: colors.primary[600] }}
                       >
@@ -787,22 +921,86 @@ const ConventionDetailPageModern = () => {
                     <TableContainer>
                       <Table size="small">
                         <TableHead>
-                          <TableRow>
-                            <TableCell>Axe</TableCell>
-                            <TableCell>Projet</TableCell>
-                            <TableCell>Volet</TableCell>
-                            <TableCell>Date versement</TableCell>
-                            <TableCell align="right">Montant</TableCell>
+                          <TableRow sx={{ bgcolor: colors.neutral[50] }}>
+                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Axe</TableCell>
+                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Projet</TableCell>
+                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Volet</TableCell>
+                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Date versement</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: typography.weights.semibold }}>Montant</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: typography.weights.semibold }}>Actions</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          <TableRow>
-                            <TableCell colSpan={5} align="center">
-                              <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                                Aucun versement prévisionnel
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
+                          {versements.length > 0 ? (
+                            versements.map((versement) => (
+                              <TableRow key={versement.id} hover>
+                                <TableCell>{versement.axe || '-'}</TableCell>
+                                <TableCell>{versement.projet || '-'}</TableCell>
+                                <TableCell>{versement.volet || '-'}</TableCell>
+                                <TableCell>{formatDate(versement.dateVersement)}</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: typography.weights.medium, color: colors.success[600] }}>
+                                  {formatCurrency(versement.montant)}
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                                    <Tooltip title="Modifier">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                          setEditingVersement(versement)
+                                          setVersementDialogOpen(true)
+                                        }}
+                                        sx={{ color: colors.primary[600] }}
+                                      >
+                                        <Edit fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Supprimer">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleDeleteVersement(versement.id)}
+                                        sx={{ color: colors.danger[500] }}
+                                      >
+                                        <Delete fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={6} align="center">
+                                <Box sx={{ py: 3 }}>
+                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Aucun versement prévisionnel
+                                  </Typography>
+                                  <Button
+                                    size="small"
+                                    startIcon={<Add />}
+                                    onClick={() => {
+                                      setEditingVersement(null)
+                                      setVersementDialogOpen(true)
+                                    }}
+                                    sx={{ color: colors.primary[600] }}
+                                  >
+                                    Ajouter un versement
+                                  </Button>
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {versements.length > 0 && (
+                            <TableRow sx={{ bgcolor: colors.neutral[100] }}>
+                              <TableCell colSpan={4} sx={{ fontWeight: typography.weights.bold }}>
+                                Total
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontWeight: typography.weights.bold, color: colors.success[700] }}>
+                                {formatCurrency(versements.reduce((sum, v) => sum + v.montant, 0))}
+                              </TableCell>
+                              <TableCell />
+                            </TableRow>
+                          )}
                         </TableBody>
                       </Table>
                     </TableContainer>
@@ -815,6 +1013,20 @@ const ConventionDetailPageModern = () => {
             {convention.typeConvention === 'CADRE' && (
               <TabPanel value={activeTab} index={1}>
                 <Container maxWidth="xl">
+                  {sousConventions.length > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => {
+                          setEditingSousConvention(null)
+                          setSousConventionDialogOpen(true)
+                        }}
+                      >
+                        Ajouter une conv. spécifique
+                      </Button>
+                    </Box>
+                  )}
                   <TableContainer>
                     <Table>
                       <TableHead>
@@ -840,9 +1052,27 @@ const ConventionDetailPageModern = () => {
                             <TableCell align="right">{formatCurrency(sc.montant)}</TableCell>
                             <TableCell>{formatDate(sc.dateDebut)}</TableCell>
                             <TableCell align="center">
-                              <IconButton size="small" onClick={() => navigate(`/conventions/${sc.id}`)}>
-                                <Visibility fontSize="small" />
-                              </IconButton>
+                              <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                                <Tooltip title="Voir les détails">
+                                  <IconButton size="small" onClick={() => navigate(`/conventions/${sc.id}`)}>
+                                    <Visibility fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                {sc.statut === 'BROUILLON' && (
+                                  <Tooltip title="Modifier">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => {
+                                        setEditingSousConvention(sc)
+                                        setSousConventionDialogOpen(true)
+                                      }}
+                                      sx={{ color: colors.primary[600] }}
+                                    >
+                                      <Edit fontSize="small" />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                              </Box>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -852,9 +1082,19 @@ const ConventionDetailPageModern = () => {
 
                   {sousConventions.length === 0 && (
                     <Box sx={{ py: 4, textAlign: 'center' }}>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Aucune convention spécifique
                       </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={() => {
+                          setEditingSousConvention(null)
+                          setSousConventionDialogOpen(true)
+                        }}
+                      >
+                        Créer une convention spécifique
+                      </Button>
                     </Box>
                   )}
                 </Container>
@@ -910,9 +1150,22 @@ const ConventionDetailPageModern = () => {
                             <StatusBadge status={projet.statut} size="small" />
                           </TableCell>
                           <TableCell align="center">
-                            <IconButton size="small" onClick={() => navigate(`/projets/${projet.id}`)}>
-                              <Visibility fontSize="small" />
-                            </IconButton>
+                            <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                              <Tooltip title="Voir les détails">
+                                <IconButton size="small" onClick={() => navigate(`/projets/${projet.id}`)}>
+                                  <Visibility fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Délier ce projet">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleUnlinkProjet(projet.id)}
+                                  sx={{ color: colors.danger[500] }}
+                                >
+                                  <LinkOff fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -922,9 +1175,16 @@ const ConventionDetailPageModern = () => {
 
                 {projets.length === 0 && (
                   <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       Aucun projet lié à cette convention
                     </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      onClick={() => setLinkProjetDialogOpen(true)}
+                    >
+                      Lier un projet
+                    </Button>
                   </Box>
                 )}
               </Container>
@@ -965,9 +1225,22 @@ const ConventionDetailPageModern = () => {
                             <StatusBadge status={marche.statut} size="small" />
                           </TableCell>
                           <TableCell align="center">
-                            <IconButton size="small" onClick={() => navigate(`/marches/${marche.id}`)}>
-                              <Visibility fontSize="small" />
-                            </IconButton>
+                            <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                              <Tooltip title="Voir les détails">
+                                <IconButton size="small" onClick={() => navigate(`/marches/${marche.id}`)}>
+                                  <Visibility fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Délier ce marché">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleUnlinkMarche(marche.id)}
+                                  sx={{ color: colors.danger[500] }}
+                                >
+                                  <LinkOff fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -977,9 +1250,16 @@ const ConventionDetailPageModern = () => {
 
                 {marches.length === 0 && (
                   <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       Aucun marché lié à cette convention
                     </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<Add />}
+                      onClick={() => setLinkMarcheDialogOpen(true)}
+                    >
+                      Lier un marché
+                    </Button>
                   </Box>
                 )}
               </Container>
@@ -1024,6 +1304,43 @@ const ConventionDetailPageModern = () => {
               // Reload marchés
               loadMarches(convention.id)
             }}
+          />
+
+          <SousConventionFormSimple
+            open={sousConventionDialogOpen}
+            onClose={() => {
+              setSousConventionDialogOpen(false)
+              setEditingSousConvention(null)
+            }}
+            onSuccess={() => {
+              loadSousConventions(convention.id)
+              setSousConventionDialogOpen(false)
+              setEditingSousConvention(null)
+            }}
+            parentConvention={{
+              id: convention.id,
+              numero: convention.numero,
+              libelle: convention.libelle,
+              tauxCommission: convention.tauxCommission,
+              baseCalcul: convention.baseCalcul,
+              tauxTva: convention.tauxTva,
+            }}
+            editingSousConvention={editingSousConvention}
+          />
+
+          <VersementFormDialog
+            open={versementDialogOpen}
+            conventionId={convention.id}
+            onClose={() => {
+              setVersementDialogOpen(false)
+              setEditingVersement(null)
+            }}
+            onSuccess={() => {
+              loadVersements(convention.id)
+              setVersementDialogOpen(false)
+              setEditingVersement(null)
+            }}
+            editingVersement={editingVersement}
           />
         </>
       )}

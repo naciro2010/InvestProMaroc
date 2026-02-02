@@ -40,12 +40,12 @@ interface ConventionRepository : JpaRepository<Convention, Long> {
     @Query("SELECT c FROM Convention c WHERE c.dateDebut <= :dateFin AND (c.dateFin IS NULL OR c.dateFin >= :dateDebut)")
     fun findByPeriode(dateDebut: LocalDate, dateFin: LocalDate): List<Convention>
 
-    // Recherche des conventions en cours
-    @Query("SELECT c FROM Convention c WHERE c.statut = 'EN_COURS' AND c.dateDebut <= CURRENT_DATE AND (c.dateFin IS NULL OR c.dateFin >= CURRENT_DATE)")
+    // Recherche des conventions validées et actives
+    @Query("SELECT c FROM Convention c WHERE c.statut = 'VALIDE' AND c.dateDebut <= CURRENT_DATE AND (c.dateFin IS NULL OR c.dateFin >= CURRENT_DATE)")
     fun findConventionsEnCours(): List<Convention>
 
     // Recherche des conventions expirées ou en retard
-    @Query("SELECT c FROM Convention c WHERE c.statut IN ('EN_COURS', 'VALIDEE') AND c.dateFin < CURRENT_DATE")
+    @Query("SELECT c FROM Convention c WHERE c.statut = 'VALIDE' AND c.dateFin < CURRENT_DATE")
     fun findConventionsExpirees(): List<Convention>
 
     // Recherche des conventions verrouillées

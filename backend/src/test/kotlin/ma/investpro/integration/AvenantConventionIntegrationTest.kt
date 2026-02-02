@@ -100,7 +100,7 @@ class AvenantConventionIntegrationTest : PostgresIntegrationTest() {
                 budget = BigDecimal("1000000.00"),
                 tauxCommission = BigDecimal("2.50"),
                 dateDebut = LocalDate.now().minusDays(30),
-                statut = StatutConvention.VALIDEE
+                statut = StatutConvention.VALIDE
             )
         )
     }

@@ -229,11 +229,7 @@ class ConventionService(
             "total" to conventionRepository.count(),
             "brouillon" to conventionRepository.countByStatut(StatutConvention.BROUILLON),
             "soumis" to conventionRepository.countByStatut(StatutConvention.SOUMIS),
-            "validees" to conventionRepository.countByStatut(StatutConvention.VALIDEE),
-            "enExecution" to conventionRepository.countByStatut(StatutConvention.EN_EXECUTION),
-            "rejetees" to conventionRepository.countByStatut(StatutConvention.REJETE),
-            "achevees" to conventionRepository.countByStatut(StatutConvention.ACHEVE),
-            "annulees" to conventionRepository.countByStatut(StatutConvention.ANNULE)
+            "validees" to conventionRepository.countByStatut(StatutConvention.VALIDE)
         )
     }
 

@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Container,
   Typography,
   Button,
   Paper,
@@ -11,15 +10,16 @@ import {
   Menu,
   MenuItem,
   Alert,
-  LinearProgress,
+  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+  LinearProgress,
+  TablePagination,
+  InputAdornment,
+} from '@mui/material'
 import {
   Add,
   MoreVert,
@@ -31,12 +31,11 @@ import {
   Delete,
   Visibility,
   FolderOpen,
-} from '@mui/icons-material';
-import { GripVertical } from 'lucide-react';
-import AppLayout from '../../components/layout/AppLayout';
-import PageHeader from '../../components/common/PageHeader';
-import StatsCard from '../../components/common/StatsCard';
-import { projetsAPI, Projet } from '../../lib/projetsAPI';
+  Search,
+} from '@mui/icons-material'
+import { GripVertical } from 'lucide-react'
+import AppLayout from '../../components/layout/AppLayout'
+import { projetsAPI, Projet } from '../../lib/projetsAPI'
 import {
   useSortableTable,
   useSortable,
@@ -44,26 +43,47 @@ import {
   SortableContext,
   verticalListSortingStrategy,
   closestCenter,
-} from '../../components/core/SortableTable';
-import { CSS } from '@dnd-kit/utilities';
-import { colors, transitions } from '../../lib/designSystem';
+} from '../../components/core/SortableTable'
+import { CSS } from '@dnd-kit/utilities'
+import { colors, typography, transitions, componentStyles, getStatusConfig } from '../../lib/designSystem'
+
+// Styles from design system
+const styles = componentStyles.listPage
+
+// Status Badge utilisant le design system
+const StatusBadge = ({ status }: { status: string }) => {
+  const config = getStatusConfig(status)
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        px: 1.5,
+        py: 0.5,
+        borderRadius: '4px',
+        bgcolor: config.bgColor,
+        color: config.textColor,
+        fontSize: typography.sizes.xs,
+        fontWeight: typography.weights.semibold,
+      }}
+    >
+      {config.label}
+    </Box>
+  )
+}
 
 // Composant carte projet draggable
 interface SortableProjetCardProps {
-  projet: Projet;
-  onMenuOpen: (event: React.MouseEvent<HTMLElement>, projet: Projet) => void;
-  onClick: () => void;
-  getStatutColor: (statut: string) => 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-  getStatutLabel: (statut: string) => string;
-  formatMontant: (montant: number) => string;
+  projet: Projet
+  onMenuOpen: (event: React.MouseEvent<HTMLElement>, projet: Projet) => void
+  onClick: () => void
+  formatMontant: (montant: number) => string
 }
 
 const SortableProjetCard = ({
   projet,
   onMenuOpen,
   onClick,
-  getStatutColor,
-  getStatutLabel,
   formatMontant,
 }: SortableProjetCardProps) => {
   const {
@@ -73,21 +93,21 @@ const SortableProjetCard = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: projet.id ?? 0 });
+  } = useSortable({ id: projet.id ?? 0 })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 1000 : undefined,
-  };
+  }
 
   return (
     <Paper
       ref={setNodeRef}
       style={style}
       sx={{
-        p: { xs: 2, md: 3 },
+        p: 3,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -105,9 +125,9 @@ const SortableProjetCard = ({
       }}
       onClick={onClick}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: { xs: 1.5, md: 2 } }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'start', gap: 1, flex: 1, minWidth: 0 }}>
-          {/* Drag Handle - Hidden on mobile */}
+          {/* Drag Handle */}
           <Box
             {...attributes}
             {...listeners}
@@ -118,21 +138,19 @@ const SortableProjetCard = ({
               '&:hover': { color: colors.neutral[600] },
               transition: `color ${transitions.fast}`,
               mt: 0.5,
-              display: { xs: 'none', md: 'block' },
             }}
           >
             <GripVertical className="w-4 h-4" />
           </Box>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="caption" color="textSecondary">
+            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
               {projet.code}
             </Typography>
             <Typography
-              variant="h6"
               sx={{
-                fontWeight: 600,
+                fontWeight: typography.weights.semibold,
                 mt: 0.5,
-                fontSize: { xs: '0.95rem', md: '1.25rem' },
+                fontSize: typography.sizes.lg,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -150,20 +168,17 @@ const SortableProjetCard = ({
         </IconButton>
       </Box>
 
-      <Chip
-        label={getStatutLabel(projet.statut)}
-        color={getStatutColor(projet.statut)}
-        size="small"
-        sx={{ mb: { xs: 1.5, md: 2 }, alignSelf: 'flex-start' }}
-      />
+      <Box sx={{ mb: 2 }}>
+        <StatusBadge status={projet.statut} />
+      </Box>
 
       {projet.description && (
         <Typography
-          variant="body2"
-          color="textSecondary"
           sx={{
-            mb: { xs: 1.5, md: 2 },
-            display: { xs: 'none', sm: '-webkit-box' },
+            mb: 2,
+            color: colors.textSecondary,
+            fontSize: typography.sizes.sm,
+            display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
@@ -173,63 +188,55 @@ const SortableProjetCard = ({
         </Typography>
       )}
 
-      <Box sx={{ mb: { xs: 1.5, md: 2 } }}>
+      <Box sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-          <Typography variant="caption" color="textSecondary">
+          <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
             Avancement
           </Typography>
-          <Typography variant="caption" color="textSecondary" fontWeight={600}>
+          <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
             {projet.pourcentageAvancement}%
           </Typography>
         </Box>
         <LinearProgress
           variant="determinate"
           value={projet.pourcentageAvancement}
-          sx={{ height: 6, borderRadius: 3 }}
+          sx={{ height: 6, borderRadius: 3, bgcolor: colors.neutral[100] }}
         />
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
-        <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}>
+        <Typography sx={{ fontSize: typography.sizes.sm }}>
           <strong>Budget:</strong> {formatMontant(projet.budgetTotal)}
         </Typography>
         {projet.dateDebut && (
-          <Typography variant="caption" color="textSecondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
             {new Date(projet.dateDebut).toLocaleDateString('fr-FR')}
           </Typography>
         )}
       </Box>
     </Paper>
-  );
-};
+  )
+}
 
 const ProjetsPage = () => {
-  const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [rawProjets, setRawProjets] = useState<Projet[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedProjet, setSelectedProjet] = useState<Projet | null>(null);
-  const [stats, setStats] = useState<Record<string, number>>({});
-  const [statutFilter, setStatutFilter] = useState<string>('ALL');
+  const navigate = useNavigate()
+  const [rawProjets, setRawProjets] = useState<Projet[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [selectedProjet, setSelectedProjet] = useState<Projet | null>(null)
+  const [stats, setStats] = useState<Record<string, number>>({})
+  const [statutFilter, setStatutFilter] = useState<string>('ALL')
+  const [searchTerm, setSearchTerm] = useState('')
 
-  // Ref for scrolling to cards when clicking stats
-  const cardsRef = useRef<HTMLDivElement>(null);
-
-  // Handle stat card click - filter and scroll to cards
-  const handleStatClick = (statut: string) => {
-    setStatutFilter(statut);
-    setTimeout(() => {
-      cardsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-  };
+  // Pagination
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(12)
 
   // Dialog states
-  const [motifDialog, setMotifDialog] = useState(false);
-  const [motif, setMotif] = useState('');
-  const [actionType, setActionType] = useState<'suspendre' | 'annuler'>('suspendre');
+  const [motifDialog, setMotifDialog] = useState(false)
+  const [motif, setMotif] = useState('')
+  const [actionType, setActionType] = useState<'suspendre' | 'annuler'>('suspendre')
 
   // Drag & drop avec persistance localStorage
   const {
@@ -240,282 +247,259 @@ const ProjetsPage = () => {
     initialItems: rawProjets,
     idKey: 'id',
     storageKey: 'projets-order',
-  });
+  })
 
   useEffect(() => {
-    loadProjets();
-    loadStats();
-  }, []);
+    loadProjets()
+    loadStats()
+  }, [])
 
   const loadProjets = async () => {
     try {
-      setLoading(true);
-      const response = await projetsAPI.getAll();
-      setRawProjets(response.data);
-      setError(null);
+      setLoading(true)
+      const response = await projetsAPI.getAll()
+      setRawProjets(response.data)
+      setError(null)
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des projets';
-      setError(errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des projets'
+      setError(errorMessage)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const loadStats = async () => {
     try {
-      const response = await projetsAPI.getStatistiques();
-      setStats(response.data);
+      const response = await projetsAPI.getStatistiques()
+      setStats(response.data)
     } catch (err) {
-      console.error('Erreur chargement stats:', err);
+      console.error('Erreur chargement stats:', err)
     }
-  };
+  }
+
+  // Filtrage
+  const filteredProjets = useMemo(() => {
+    return projets.filter(p => {
+      // Filtre par recherche
+      if (searchTerm) {
+        const query = searchTerm.toLowerCase()
+        if (!(
+          p.code.toLowerCase().includes(query) ||
+          p.nom.toLowerCase().includes(query) ||
+          (p.description?.toLowerCase() ?? '').includes(query)
+        )) {
+          return false
+        }
+      }
+      // Filtre par statut
+      if (statutFilter !== 'ALL' && p.statut !== statutFilter) {
+        return false
+      }
+      return true
+    })
+  }, [projets, searchTerm, statutFilter])
+
+  // Pagination
+  const paginatedProjets = useMemo(() => {
+    const start = page * rowsPerPage
+    return filteredProjets.slice(start, start + rowsPerPage)
+  }, [filteredProjets, page, rowsPerPage])
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, projet: Projet) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedProjet(projet);
-  };
+    setAnchorEl(event.currentTarget)
+    setSelectedProjet(projet)
+  }
 
   const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedProjet(null);
-  };
+    setAnchorEl(null)
+    setSelectedProjet(null)
+  }
 
   const handleDemarrer = async () => {
-    if (!selectedProjet?.id) return;
+    if (!selectedProjet?.id) return
     try {
-      await projetsAPI.demarrer(selectedProjet.id);
-      loadProjets();
-      loadStats();
-      handleMenuClose();
+      await projetsAPI.demarrer(selectedProjet.id)
+      loadProjets()
+      loadStats()
+      handleMenuClose()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erreur lors du démarrage');
+      alert(err instanceof Error ? err.message : 'Erreur lors du démarrage')
     }
-  };
+  }
 
   const handleSuspendre = () => {
-    setActionType('suspendre');
-    setMotif('');
-    setMotifDialog(true);
-    handleMenuClose();
-  };
+    setActionType('suspendre')
+    setMotif('')
+    setMotifDialog(true)
+    handleMenuClose()
+  }
 
   const handleReprendre = async () => {
-    if (!selectedProjet?.id) return;
+    if (!selectedProjet?.id) return
     try {
-      await projetsAPI.reprendre(selectedProjet.id);
-      loadProjets();
-      loadStats();
-      handleMenuClose();
+      await projetsAPI.reprendre(selectedProjet.id)
+      loadProjets()
+      loadStats()
+      handleMenuClose()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erreur lors de la reprise');
+      alert(err instanceof Error ? err.message : 'Erreur lors de la reprise')
     }
-  };
+  }
 
   const handleTerminer = async () => {
-    if (!selectedProjet?.id) return;
-    if (!window.confirm('Confirmer la clôture du projet ?')) return;
+    if (!selectedProjet?.id) return
+    if (!window.confirm('Confirmer la clôture du projet ?')) return
     try {
-      await projetsAPI.terminer(selectedProjet.id);
-      loadProjets();
-      loadStats();
-      handleMenuClose();
+      await projetsAPI.terminer(selectedProjet.id)
+      loadProjets()
+      loadStats()
+      handleMenuClose()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erreur lors de la clôture');
+      alert(err instanceof Error ? err.message : 'Erreur lors de la clôture')
     }
-  };
+  }
 
   const handleAnnuler = () => {
-    setActionType('annuler');
-    setMotif('');
-    setMotifDialog(true);
-    handleMenuClose();
-  };
+    setActionType('annuler')
+    setMotif('')
+    setMotifDialog(true)
+    handleMenuClose()
+  }
 
   const handleMotifSubmit = async () => {
-    if (!selectedProjet?.id) return;
+    if (!selectedProjet?.id) return
     try {
       if (actionType === 'suspendre') {
-        await projetsAPI.suspendre(selectedProjet.id, motif);
+        await projetsAPI.suspendre(selectedProjet.id, motif)
       } else {
-        await projetsAPI.annuler(selectedProjet.id, motif);
+        await projetsAPI.annuler(selectedProjet.id, motif)
       }
-      loadProjets();
-      loadStats();
-      setMotifDialog(false);
-      setMotif('');
+      loadProjets()
+      loadStats()
+      setMotifDialog(false)
+      setMotif('')
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : `Erreur lors de l'${actionType === 'suspendre' ? 'suspension' : 'annulation'}`);
+      alert(err instanceof Error ? err.message : `Erreur lors de l'${actionType === 'suspendre' ? 'suspension' : 'annulation'}`)
     }
-  };
+  }
 
   const handleDelete = async () => {
-    if (!selectedProjet?.id) return;
-    if (!window.confirm('Confirmer la suppression ?')) return;
+    if (!selectedProjet?.id) return
+    if (!window.confirm('Confirmer la suppression ?')) return
     try {
-      await projetsAPI.delete(selectedProjet.id);
-      loadProjets();
-      loadStats();
-      handleMenuClose();
+      await projetsAPI.delete(selectedProjet.id)
+      loadProjets()
+      loadStats()
+      handleMenuClose()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erreur lors de la suppression');
+      alert(err instanceof Error ? err.message : 'Erreur lors de la suppression')
     }
-  };
-
-  const getStatutColor = (statut: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-    switch (statut) {
-      case 'EN_PREPARATION': return 'info';
-      case 'EN_COURS': return 'primary';
-      case 'SUSPENDU': return 'warning';
-      case 'TERMINE': return 'success';
-      case 'ANNULE': return 'error';
-      default: return 'default';
-    }
-  };
-
-  const getStatutLabel = (statut: string) => {
-    switch (statut) {
-      case 'EN_PREPARATION': return 'En préparation';
-      case 'EN_COURS': return 'En cours';
-      case 'SUSPENDU': return 'Suspendu';
-      case 'TERMINE': return 'Terminé';
-      case 'ANNULE': return 'Annulé';
-      default: return statut;
-    }
-  };
+  }
 
   const formatMontant = (montant: number) => {
     if (montant >= 1000000) {
-      return `${(montant / 1000000).toFixed(2)} M DH`;
+      return `${(montant / 1000000).toFixed(2)} M DH`
     }
-    return `${montant.toLocaleString('fr-MA')} DH`;
-  };
+    return `${montant.toLocaleString('fr-MA')} DH`
+  }
 
-  // Filter projets based on selected statut
-  const filteredProjets = statutFilter === 'ALL'
-    ? projets
-    : projets.filter(p => p.statut === statutFilter);
+  if (loading) {
+    return (
+      <AppLayout>
+        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress size={40} />
+        </Box>
+      </AppLayout>
+    )
+  }
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', py: { xs: 2, md: 4 } }}>
-        <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-          <PageHeader
-            title="Projets"
-            subtitle="Gestion des projets d'investissement et programmes budgétaires"
-            actions={
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/projets/nouveau')}
-                sx={{ px: { xs: 2, md: 3 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-              >
-                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Nouveau Projet</Box>
-                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Nouveau</Box>
-              </Button>
-            }
-          />
-
-          {/* Statistiques - Clickable to filter and scroll */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' },
-              gap: { xs: 2, md: 3 },
-              mb: { xs: 3, md: 4 },
-            }}
-          >
-            <StatsCard
-              title="Total"
-              value={stats.total || 0}
-              icon={<FolderOpen />}
-              color="#3b82f6"
-              bgColor="#eff6ff"
-              onClick={() => handleStatClick('ALL')}
-            />
-            <StatsCard
-              title={isMobile ? "Prép." : "En préparation"}
-              value={stats.EN_PREPARATION || 0}
-              icon={<Edit />}
-              color="#8b5cf6"
-              bgColor="#f5f3ff"
-              onClick={() => handleStatClick('EN_PREPARATION')}
-            />
-            <StatsCard
-              title="En cours"
-              value={stats.EN_COURS || 0}
-              icon={<PlayArrow />}
-              color="#10b981"
-              bgColor="#d1fae5"
-              onClick={() => handleStatClick('EN_COURS')}
-            />
-            <StatsCard
-              title="Suspendus"
-              value={stats.SUSPENDU || 0}
-              icon={<Pause />}
-              color="#f59e0b"
-              bgColor="#fef3c7"
-              onClick={() => handleStatClick('SUSPENDU')}
-            />
-            <StatsCard
-              title="En retard"
-              value={stats.EN_RETARD || 0}
-              icon={<Cancel />}
-              color="#ef4444"
-              bgColor="#fee2e2"
-            />
-          </Box>
-
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          {loading && <LinearProgress sx={{ mb: 2 }} />}
-
-          {/* Filter status indicator */}
-          {statutFilter !== 'ALL' && (
-            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                Filtré par: <strong>{getStatutLabel(statutFilter)}</strong>
+      <Box sx={styles.container}>
+        {/* Header */}
+        <Box sx={styles.header}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography sx={styles.title}>Projets</Typography>
+              <Typography sx={styles.subtitle}>
+                Gestion des projets d'investissement et programmes budgétaires
               </Typography>
-              <Chip
-                label="Effacer"
-                size="small"
-                onClick={() => setStatutFilter('ALL')}
-                onDelete={() => setStatutFilter('ALL')}
-              />
             </Box>
-          )}
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => navigate('/projets/nouveau')}
+              sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
+            >
+              Nouveau Projet
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Toolbar avec filtres */}
+        <Box sx={styles.toolbar}>
+          <TextField
+            placeholder="Rechercher par code, nom, description..."
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+            size="small"
+            sx={styles.searchField}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {['ALL', 'EN_PREPARATION', 'EN_COURS', 'SUSPENDU', 'TERMINE', 'ANNULE'].map((statut) => {
+              const count = statut === 'ALL' ? projets.length : (stats[statut] || 0)
+              const isActive = statutFilter === statut
+              return (
+                <Chip
+                  key={statut}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
+                      <Box component="span" sx={styles.countBadge}>{count}</Box>
+                    </Box>
+                  }
+                  onClick={() => { setStatutFilter(statut); setPage(0); }}
+                  sx={isActive ? styles.filterPillActive : styles.filterPill}
+                />
+              )
+            })}
+          </Box>
+        </Box>
+
+        {/* Main Content Area */}
+        <Box sx={{ px: 3, pb: 3 }}>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
           {/* Liste des projets avec Drag & Drop */}
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={filteredProjets.map(p => p.id ?? 0)}
-              strategy={verticalListSortingStrategy}
-            >
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={paginatedProjets.map(p => p.id ?? 0)} strategy={verticalListSortingStrategy}>
               <Box
-                ref={cardsRef}
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
-                  gap: { xs: 2, md: 3 },
+                  gap: 3,
                 }}
               >
-                {filteredProjets.length === 0 ? (
-                  <Box sx={{ gridColumn: '1 / -1', py: 6, textAlign: 'center' }}>
-                    <Typography variant="body1" color="text.secondary">
+                {paginatedProjets.length === 0 ? (
+                  <Box sx={{ gridColumn: '1 / -1', py: 8, textAlign: 'center' }}>
+                    <Typography sx={{ color: colors.textSecondary }}>
                       Aucun projet trouvé
                     </Typography>
                   </Box>
                 ) : (
-                  filteredProjets.map((projet) => (
+                  paginatedProjets.map((projet) => (
                     <SortableProjetCard
                       key={projet.id}
                       projet={projet}
                       onMenuOpen={handleMenuOpen}
                       onClick={() => navigate(`/projets/${projet.id}`)}
-                      getStatutColor={getStatutColor}
-                      getStatutLabel={getStatutLabel}
                       formatMontant={formatMontant}
                     />
                   ))
@@ -523,6 +507,25 @@ const ProjetsPage = () => {
               </Box>
             </SortableContext>
           </DndContext>
+
+          {/* Pagination */}
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <TablePagination
+              component="div"
+              count={filteredProjets.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10))
+                setPage(0)
+              }}
+              rowsPerPageOptions={[8, 12, 24, 48]}
+              labelRowsPerPage="Projets par page"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
+            />
+          </Box>
+        </Box>
 
         {/* Menu contextuel */}
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
@@ -557,7 +560,7 @@ const ProjetsPage = () => {
           <MenuItem onClick={() => navigate(`/projets/${selectedProjet?.id}/modifier`)}>
             <Edit fontSize="small" sx={{ mr: 1 }} /> Modifier
           </MenuItem>
-          <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={handleDelete} sx={{ color: colors.danger[600] }}>
             <Delete fontSize="small" sx={{ mr: 1 }} /> Supprimer
           </MenuItem>
         </Menu>
@@ -589,10 +592,9 @@ const ProjetsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-        </Container>
       </Box>
     </AppLayout>
-  );
-};
+  )
+}
 
-export default ProjetsPage;
+export default ProjetsPage

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Container,
   Typography,
   Button,
   Paper,
@@ -12,9 +11,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableSortLabel,
+  TablePagination,
   Chip,
-  Stack,
   IconButton,
   Menu,
   MenuItem,
@@ -23,48 +21,36 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  LinearProgress,
-  Tooltip,
   InputAdornment,
-  Alert,
+  Collapse,
+  Skeleton,
+  Tooltip,
+  Divider,
 } from '@mui/material'
 import {
   Add,
   MoreVert,
   CheckCircle,
   Cancel,
-  Lock,
   Edit,
   Delete,
   Send,
   Visibility,
-  PlayArrow,
   Search,
-  Person,
-  CalendarToday,
+  KeyboardArrowDown,
+  KeyboardArrowRight,
+  FolderOpen,
   Description,
-  TrendingUp,
-  CheckCircleOutline,
-  HourglassEmpty,
+  Refresh,
 } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
-import StatsCard from '../../components/common/StatsCard'
-import {
-  SortableTableRow,
-  useSortableTable,
-  DndContext,
-  SortableContext,
-  verticalListSortingStrategy,
-  closestCenter,
-} from '../../components/core/SortableTable'
+import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
 
+// Types
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
-type OrderDirection = 'asc' | 'desc'
-type OrderByColumn = keyof Convention
 
 interface Convention {
   id: number
@@ -72,59 +58,45 @@ interface Convention {
   numero: string
   libelle: string
   statut: StatutConvention
-  version?: string
+  type?: 'CADRE' | 'SPECIFIQUE'
   budget: number
   tauxCommission: number
-  dateConvention: string
   dateDebut: string
   dateFin?: string
   isLocked: boolean
-  createdAt?: string
-  updatedAt?: string
   createdByNom?: string
-  motifRejet?: string
-  valideParNom?: string
+  parentConventionId?: number
+  sousConventionsCount?: number
 }
+
+interface ConventionWithChildren extends Convention {
+  sousConventions: Convention[]
+}
+
+// Styles from design system
+const styles = componentStyles.listPage
 
 const ConventionsTableModern = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { showToast } = useToast()
 
-  const [rawConventions, setRawConventions] = useState<Convention[]>([])
+  // State
+  const [conventions, setConventions] = useState<Convention[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<StatutConvention | 'ALL'>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
-  const [orderBy, setOrderBy] = useState<OrderByColumn>('updatedAt')
-  const [orderDirection, setOrderDirection] = useState<OrderDirection>('desc')
+  const [statusFilter, setStatusFilter] = useState<StatutConvention | 'ALL'>('ALL')
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(25)
+  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set())
 
+  // Menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedConvention, setSelectedConvention] = useState<Convention | null>(null)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [motifRejet, setMotifRejet] = useState('')
 
-  // Ref for scrolling to table when clicking stats
-  const tableRef = useRef<HTMLDivElement>(null)
-
-  // Handle stat card click - filter and scroll to table
-  const handleStatClick = (filterValue: StatutConvention | 'ALL') => {
-    setFilter(filterValue)
-    setTimeout(() => {
-      tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 100)
-  }
-
-  // Drag & drop avec persistance localStorage
-  const {
-    items: conventions,
-    sensors,
-    handleDragEnd,
-  } = useSortableTable({
-    initialItems: rawConventions,
-    idKey: 'id',
-    storageKey: 'conventions-order',
-  })
-
+  // Fetch data
   useEffect(() => {
     fetchConventions()
   }, [])
@@ -134,86 +106,128 @@ const ConventionsTableModern = () => {
       setLoading(true)
       const response = await conventionsAPI.getAll()
       const data = Array.isArray(response.data) ? response.data : (response.data?.data || [])
-      setRawConventions(data)
+      setConventions(data)
     } catch (error) {
-      console.error('Erreur lors du chargement des conventions:', error)
-      showToast('Erreur lors du chargement des conventions', 'error')
+      console.error('Erreur:', error)
+      showToast('Erreur lors du chargement', 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, convention: Convention) => {
-    event.stopPropagation()
-    setAnchorEl(event.currentTarget)
-    setSelectedConvention(convention)
+  // Group conventions: parents with their children
+  const groupedData = useMemo((): ConventionWithChildren[] => {
+    const parents = conventions.filter(c => !c.parentConventionId)
+    const children = conventions.filter(c => c.parentConventionId)
+
+    return parents.map(parent => ({
+      ...parent,
+      sousConventions: children.filter(c => c.parentConventionId === parent.id),
+    }))
+  }, [conventions])
+
+  // Filter and search
+  const filteredData = useMemo(() => {
+    return groupedData.filter(conv => {
+      if (statusFilter !== 'ALL' && conv.statut !== statusFilter) return false
+
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchParent =
+          conv.code?.toLowerCase().includes(query) ||
+          conv.libelle?.toLowerCase().includes(query) ||
+          conv.numero?.toLowerCase().includes(query)
+        const matchChildren = conv.sousConventions?.some(
+          sc =>
+            sc.code?.toLowerCase().includes(query) ||
+            sc.libelle?.toLowerCase().includes(query)
+        )
+        return matchParent || matchChildren
+      }
+      return true
+    })
+  }, [groupedData, statusFilter, searchQuery])
+
+  // Pagination
+  const paginatedData = useMemo(() => {
+    const start = page * rowsPerPage
+    return filteredData.slice(start, start + rowsPerPage)
+  }, [filteredData, page, rowsPerPage])
+
+  // Stats
+  const stats = useMemo(() => ({
+    total: conventions.length,
+    brouillon: conventions.filter(c => c.statut === 'BROUILLON').length,
+    soumis: conventions.filter(c => c.statut === 'SOUMIS').length,
+    valide: conventions.filter(c => c.statut === 'VALIDE').length,
+  }), [conventions])
+
+  // Handlers
+  const toggleGroup = (id: number) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleRowClick = (id: number) => {
+    navigate(`/conventions/${id}`)
+  }
+
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>, conv: Convention) => {
+    e.stopPropagation()
+    setAnchorEl(e.currentTarget)
+    setSelectedConvention(conv)
   }
 
   const handleMenuClose = () => {
     setAnchorEl(null)
   }
 
-  const handleActionClick = (action: string) => {
+  const handleAction = async (action: string) => {
     if (!selectedConvention) return
-
-    switch (action) {
-      case 'view':
-        navigate(`/conventions/${selectedConvention.id}`)
-        break
-      case 'edit':
-        navigate(`/conventions/${selectedConvention.id}/edit`)
-        break
-      case 'submit':
-        handleSubmit(selectedConvention.id)
-        break
-      case 'validate':
-        handleValidate(selectedConvention.id)
-        break
-      case 'reject':
-        setRejectDialogOpen(true)
-        break
-      case 'start':
-        handleStart(selectedConvention.id)
-        break
-      case 'delete':
-        handleDelete(selectedConvention.id)
-        break
-      default:
-        break
-    }
     handleMenuClose()
-  }
 
-  const handleSubmit = async (id: number) => {
     try {
-      await conventionsAPI.soumettre(id)
-      showToast('Convention soumise avec succès', 'success')
-      fetchConventions()
+      switch (action) {
+        case 'view':
+          navigate(`/conventions/${selectedConvention.id}`)
+          break
+        case 'edit':
+          navigate(`/conventions/${selectedConvention.id}/edit`)
+          break
+        case 'submit':
+          await conventionsAPI.soumettre(selectedConvention.id)
+          showToast('Convention soumise', 'success')
+          fetchConventions()
+          break
+        case 'validate':
+          if (user?.id) {
+            await conventionsAPI.valider(selectedConvention.id, user.id)
+            showToast('Convention validée', 'success')
+            fetchConventions()
+          }
+          break
+        case 'reject':
+          setRejectDialogOpen(true)
+          break
+        case 'delete':
+          if (window.confirm('Supprimer cette convention ?')) {
+            await conventionsAPI.delete(selectedConvention.id)
+            showToast('Convention supprimée', 'success')
+            fetchConventions()
+          }
+          break
+      }
     } catch (error) {
-      showToast('Erreur lors de la soumission', 'error')
-    }
-  }
-
-  const handleValidate = async (id: number) => {
-    if (!user?.id) {
-      showToast('Utilisateur non identifié', 'error')
-      return
-    }
-    try {
-      await conventionsAPI.valider(id, user.id)
-      showToast('Convention validée avec succès', 'success')
-      fetchConventions()
-    } catch (error) {
-      showToast('Erreur lors de la validation', 'error')
+      showToast('Erreur lors de l\'action', 'error')
     }
   }
 
   const handleReject = async () => {
-    if (!selectedConvention || !motifRejet.trim()) {
-      showToast('Veuillez saisir un motif de rejet', 'warning')
-      return
-    }
-
+    if (!selectedConvention || !motifRejet.trim()) return
     try {
       await conventionsAPI.rejeter(selectedConvention.id, motifRejet)
       showToast('Convention rejetée', 'success')
@@ -225,461 +239,369 @@ const ConventionsTableModern = () => {
     }
   }
 
-  const handleStart = async (id: number) => {
-    try {
-      await conventionsAPI.mettreEnCours(id)
-      showToast('Convention démarrée avec succès', 'success')
-      fetchConventions()
-    } catch (error) {
-      showToast('Erreur lors du démarrage', 'error')
-    }
-  }
-
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette convention ?')) return
-
-    try {
-      await conventionsAPI.delete(id)
-      showToast('Convention supprimée', 'success')
-      fetchConventions()
-    } catch (error) {
-      showToast('Erreur lors de la suppression', 'error')
-    }
-  }
-
-  const handleSort = (column: OrderByColumn) => {
-    const isAsc = orderBy === column && orderDirection === 'asc'
-    setOrderDirection(isAsc ? 'desc' : 'asc')
-    setOrderBy(column)
-  }
-
-  const getStatutBadge = (statut: StatutConvention) => {
-    const config: Record<StatutConvention, { color: 'default' | 'warning' | 'success' | 'error' | 'info' | 'primary'; icon: JSX.Element; label: string }> = {
-      BROUILLON: { color: 'default', icon: <Edit fontSize="small" />, label: 'Brouillon' },
-      SOUMIS: { color: 'warning', icon: <Send fontSize="small" />, label: 'Soumis' },
-      VALIDE: { color: 'success', icon: <CheckCircle fontSize="small" />, label: 'Validé' },
-    }
-    const statusConfig = config[statut] || { color: 'default' as const, icon: <Edit fontSize="small" />, label: statut }
-    return <Chip icon={statusConfig.icon} label={statusConfig.label} color={statusConfig.color} size="small" sx={{ fontWeight: 600 }} />
-  }
-
   const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(2)} M MAD`
-    }
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-      minimumFractionDigits: 0,
-    }).format(amount)
+    if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`
+    if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`
+    return amount.toLocaleString('fr-FR')
   }
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
+  const formatDate = (date?: string) => {
+    if (!date) return '-'
+    return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  // Sorting logic
-  const sortedConventions = [...conventions].sort((a, b) => {
-    const aValue = a[orderBy]
-    const bValue = b[orderBy]
-
-    if (aValue === undefined || aValue === null) return 1
-    if (bValue === undefined || bValue === null) return -1
-
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return orderDirection === 'asc'
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue)
-    }
-
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return orderDirection === 'asc' ? aValue - bValue : bValue - aValue
-    }
-
-    return 0
-  })
-
-  // Filter logic
-  const filteredConventions = sortedConventions
-    .filter(c => filter === 'ALL' || c.statut === filter)
-    .filter(c => {
-      if (!searchQuery) return true
-      const query = searchQuery.toLowerCase()
-      return (
-        c.libelle?.toLowerCase().includes(query) ||
-        c.code?.toLowerCase().includes(query) ||
-        c.numero?.toLowerCase().includes(query) ||
-        c.createdByNom?.toLowerCase().includes(query)
-      )
-    })
-
-  // Stats
-  const stats = {
-    total: conventions.length,
-    brouillon: conventions.filter(c => c.statut === 'BROUILLON').length,
-    soumis: conventions.filter(c => c.statut === 'SOUMIS').length,
-    validees: conventions.filter(c => c.statut === 'VALIDE').length,
-  }
-
-  if (loading) {
+  // Status Badge using design system
+  const StatusBadge = ({ status }: { status: string }) => {
+    const config = getStatusConfig(status)
     return (
-      <AppLayout>
-        <Box sx={{ width: '100%', mt: 2 }}>
-          <LinearProgress />
-        </Box>
-      </AppLayout>
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          px: 1.5,
+          py: 0.5,
+          borderRadius: '4px',
+          bgcolor: config.bgColor,
+          color: config.textColor,
+          fontSize: typography.sizes.xs,
+          fontWeight: typography.weights.semibold,
+        }}
+      >
+        {config.label}
+      </Box>
     )
   }
 
+  // Filter pill component
+  const FilterPill = ({
+    label,
+    count,
+    active,
+    onClick,
+    color,
+  }: {
+    label: string
+    count: number
+    active: boolean
+    onClick: () => void
+    color?: string
+  }) => (
+    <Chip
+      label={`${label} (${count})`}
+      onClick={onClick}
+      sx={active ? {
+        ...styles.filterPillActive,
+        ...(color && { bgcolor: color, borderColor: color }),
+      } : styles.filterPill}
+    />
+  )
+
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', py: { xs: 2, md: 4 }, bgcolor: '#f9fafb' }}>
-        <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-          <PageHeader
-            title="Conventions"
-            subtitle="Gestion complète des conventions avec workflow de validation"
-            actions={
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate('/conventions/nouvelle')}
-                sx={{ px: { xs: 2, md: 3 }, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-              >
-                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Nouvelle Convention</Box>
-                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Nouveau</Box>
-              </Button>
-            }
-          />
-
-          {/* Stats */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)', lg: 'repeat(7, 1fr)' },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <StatsCard
-              title="Total"
-              value={stats.total}
-              icon={<Description />}
-              color="#3b82f6"
-              bgColor="#eff6ff"
-              onClick={() => handleStatClick('ALL')}
-            />
-            <StatsCard
-              title="Brouillon"
-              value={stats.brouillon}
-              icon={<Edit />}
-              color="#6b7280"
-              bgColor="#f3f4f6"
-              onClick={() => handleStatClick('BROUILLON')}
-            />
-            <StatsCard
-              title="Soumis"
-              value={stats.soumis}
-              icon={<HourglassEmpty />}
-              color="#f59e0b"
-              bgColor="#fef3c7"
-              onClick={() => handleStatClick('SOUMIS')}
-            />
-            <StatsCard
-              title="Validées"
-              value={stats.validees}
-              icon={<CheckCircle />}
-              color="#10b981"
-              bgColor="#d1fae5"
-              onClick={() => handleStatClick('VALIDE')}
-            />
+      <Box sx={styles.container}>
+        {/* Header */}
+        <Box sx={styles.header}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box>
+              <Typography variant="h5" sx={styles.title}>
+                Conventions
+              </Typography>
+              <Typography variant="body2" sx={styles.subtitle}>
+                {stats.total} convention{stats.total > 1 ? 's' : ''} • {stats.valide} validée{stats.valide > 1 ? 's' : ''}
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => navigate('/conventions/nouvelle')}
+              sx={{
+                ...componentStyles.buttonPrimary,
+                px: 3,
+              }}
+            >
+              Nouvelle Convention
+            </Button>
           </Box>
 
-          {/* Search & Filters */}
-          <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-            <Stack spacing={2}>
-              <TextField
-                fullWidth
-                placeholder="Rechercher par libellé, code, numéro ou créateur..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                <Chip
-                  label={`Tous (${stats.total})`}
-                  onClick={() => setFilter('ALL')}
-                  color={filter === 'ALL' ? 'primary' : 'default'}
-                  variant={filter === 'ALL' ? 'filled' : 'outlined'}
-                />
-                <Chip
-                  label={`Brouillon (${stats.brouillon})`}
-                  onClick={() => setFilter('BROUILLON')}
-                  color={filter === 'BROUILLON' ? 'primary' : 'default'}
-                  variant={filter === 'BROUILLON' ? 'filled' : 'outlined'}
-                />
-                <Chip
-                  label={`Soumis (${stats.soumis})`}
-                  onClick={() => setFilter('SOUMIS')}
-                  color={filter === 'SOUMIS' ? 'primary' : 'default'}
-                  variant={filter === 'SOUMIS' ? 'filled' : 'outlined'}
-                />
-                <Chip
-                  label={`Validées (${stats.validees})`}
-                  onClick={() => setFilter('VALIDE')}
-                  color={filter === 'VALIDE' ? 'primary' : 'default'}
-                  variant={filter === 'VALIDE' ? 'filled' : 'outlined'}
-                />
-              </Stack>
-            </Stack>
-          </Paper>
+          {/* Filter Pills */}
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <FilterPill
+              label="Tous"
+              count={stats.total}
+              active={statusFilter === 'ALL'}
+              onClick={() => setStatusFilter('ALL')}
+            />
+            <FilterPill
+              label="Brouillon"
+              count={stats.brouillon}
+              active={statusFilter === 'BROUILLON'}
+              onClick={() => setStatusFilter('BROUILLON')}
+              color={statusFilter === 'BROUILLON' ? colors.neutral[600] : undefined}
+            />
+            <FilterPill
+              label="En attente"
+              count={stats.soumis}
+              active={statusFilter === 'SOUMIS'}
+              onClick={() => setStatusFilter('SOUMIS')}
+              color={statusFilter === 'SOUMIS' ? colors.warning[600] : undefined}
+            />
+            <FilterPill
+              label="Validées"
+              count={stats.valide}
+              active={statusFilter === 'VALIDE'}
+              onClick={() => setStatusFilter('VALIDE')}
+              color={statusFilter === 'VALIDE' ? colors.success[600] : undefined}
+            />
+          </Box>
+        </Box>
 
-          {/* Table avec Drag & Drop */}
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-          <TableContainer
-            ref={tableRef}
-            component={Paper}
-            sx={{ borderRadius: 2, boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', overflowX: 'auto' }}
-          >
-            <SortableContext
-              items={filteredConventions.map(c => c.id)}
-              strategy={verticalListSortingStrategy}
-            >
-            <Table sx={{ minWidth: { xs: 600, md: 1200 } }}>
+        {/* Toolbar */}
+        <Box sx={styles.toolbar}>
+          <TextField
+            size="small"
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={styles.searchField}
+          />
+          <Box sx={{ flex: 1 }} />
+          <Tooltip title="Rafraîchir">
+            <IconButton onClick={fetchConventions} size="small">
+              <Refresh />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        {/* Table */}
+        <Box sx={{ p: 3 }}>
+          <TableContainer component={Paper} sx={styles.tableContainer}>
+            <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: '#f9fafb' }}>
-                  <TableCell sx={{ width: 40, p: 1, display: { xs: 'none', md: 'table-cell' } }} />
-                  <TableCell sx={{ fontWeight: 700, color: '#374151' }}>
-                    <TableSortLabel
-                      active={orderBy === 'code'}
-                      direction={orderBy === 'code' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('code')}
-                    >
-                      Code
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: { xs: 150, md: 250 } }}>
-                    <TableSortLabel
-                      active={orderBy === 'libelle'}
-                      direction={orderBy === 'libelle' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('libelle')}
-                    >
-                      Libellé
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', minWidth: 120 }}>
-                    <TableSortLabel
-                      active={orderBy === 'statut'}
-                      direction={orderBy === 'statut' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('statut')}
-                    >
-                      Statut
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, color: '#374151', minWidth: 100, display: { xs: 'none', sm: 'table-cell' } }}>
-                    <TableSortLabel
-                      active={orderBy === 'budget'}
-                      direction={orderBy === 'budget' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('budget')}
-                    >
-                      Budget
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', lg: 'table-cell' } }}>
-                    <TableSortLabel
-                      active={orderBy === 'tauxCommission'}
-                      direction={orderBy === 'tauxCommission' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('tauxCommission')}
-                    >
-                      Commission
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', lg: 'table-cell' } }}>
-                    <TableSortLabel
-                      active={orderBy === 'dateDebut'}
-                      direction={orderBy === 'dateDebut' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('dateDebut')}
-                    >
-                      Début
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', xl: 'table-cell' } }}>
-                    <TableSortLabel
-                      active={orderBy === 'dateFin'}
-                      direction={orderBy === 'dateFin' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('dateFin')}
-                    >
-                      Fin
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', xl: 'table-cell' } }}>
-                    <TableSortLabel
-                      active={orderBy === 'createdByNom'}
-                      direction={orderBy === 'createdByNom' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('createdByNom')}
-                    >
-                      Créé par
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#374151', display: { xs: 'none', lg: 'table-cell' } }}>
-                    <TableSortLabel
-                      active={orderBy === 'createdAt'}
-                      direction={orderBy === 'createdAt' ? orderDirection : 'asc'}
-                      onClick={() => handleSort('createdAt')}
-                    >
-                      Créé le
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, color: '#374151' }}>
-                    Actions
-                  </TableCell>
+                <TableRow sx={styles.tableHeader}>
+                  <TableCell sx={{ width: 40, pl: 1 }} />
+                  <TableCell>Convention</TableCell>
+                  <TableCell>Statut</TableCell>
+                  <TableCell align="right">Budget</TableCell>
+                  <TableCell align="center">Commission</TableCell>
+                  <TableCell>Période</TableCell>
+                  <TableCell>Créé par</TableCell>
+                  <TableCell align="center" sx={{ width: 60 }} />
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredConventions.length === 0 ? (
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={8}>
+                        <Skeleton variant="rectangular" height={40} />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : paginatedData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} align="center" sx={{ py: 8 }}>
-                      <Typography variant="body1" color="text.secondary">
-                        Aucune convention trouvée
-                      </Typography>
+                    <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                      <Description sx={{ fontSize: 48, color: colors.neutral[300], mb: 1 }} />
+                      <Typography color="text.secondary">Aucune convention trouvée</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredConventions.map((convention, index) => (
-                    <SortableTableRow
-                      key={convention.id}
-                      id={convention.id}
-                      hideDragHandle={{ xs: true, md: false }}
-                      sx={{
-                        bgcolor: index % 2 === 0 ? '#ffffff' : '#f9fafb',
-                        '&:hover': {
-                          bgcolor: '#f3f4f6',
-                        },
-                        transition: 'background-color 0.2s ease',
-                      }}
-                    >
-                      <TableCell
-                        onClick={() => navigate(`/conventions/${convention.id}`)}
-                        sx={{ cursor: 'pointer' }}
+                  paginatedData.map((conv) => (
+                    <>
+                      {/* Parent Row */}
+                      <TableRow
+                        key={conv.id}
+                        hover
+                        onClick={() => handleRowClick(conv.id)}
+                        sx={{
+                          ...styles.tableRowClickable,
+                          borderLeft: conv.type === 'CADRE' ? `3px solid ${colors.primary[600]}` : 'none',
+                        }}
                       >
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body2" fontWeight={600} color="primary.main">
-                            {convention.code}
-                          </Typography>
-                          {convention.isLocked && (
-                            <Tooltip title="Verrouillée">
-                              <Lock fontSize="small" sx={{ color: '#9ca3af' }} />
-                            </Tooltip>
+                        <TableCell sx={{ pl: 1 }}>
+                          {conv.sousConventions && conv.sousConventions.length > 0 && (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleGroup(conv.id)
+                              }}
+                            >
+                              {expandedGroups.has(conv.id) ? (
+                                <KeyboardArrowDown fontSize="small" />
+                              ) : (
+                                <KeyboardArrowRight fontSize="small" />
+                              )}
+                            </IconButton>
                           )}
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.5}>
-                          <Typography variant="body2" fontWeight={600} sx={{ wordBreak: 'break-word' }}>
-                            {convention.libelle}
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <FolderOpen
+                              sx={{
+                                fontSize: 18,
+                                color: conv.type === 'CADRE' ? colors.primary[600] : colors.neutral[400],
+                              }}
+                            />
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}
+                              >
+                                {conv.code}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: colors.textSecondary,
+                                  display: 'block',
+                                  maxWidth: 300,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {conv.libelle}
+                              </Typography>
+                            </Box>
+                            {conv.sousConventions && conv.sousConventions.length > 0 && (
+                              <Chip
+                                label={`${conv.sousConventions.length} sous-conv.`}
+                                size="small"
+                                sx={styles.countBadge}
+                              />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={conv.statut} />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold }}>
+                            {formatCurrency(conv.budget)} MAD
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {convention.numero}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={`${conv.tauxCommission}%`}
+                            size="small"
+                            sx={{
+                              bgcolor: colors.neutral[100],
+                              fontWeight: typography.weights.semibold,
+                              fontSize: typography.sizes.xs,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                            {formatDate(conv.dateDebut)} → {formatDate(conv.dateFin)}
                           </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        {getStatutBadge(convention.statut)}
-                      </TableCell>
-                      <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                        <Typography variant="body2" fontWeight={600}>
-                          {formatCurrency(convention.budget)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center" sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
-                        <Chip
-                          label={`${convention.tauxCommission}%`}
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                        />
-                      </TableCell>
-                      <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
-                        <Typography variant="body2">
-                          {formatDate(convention.dateDebut)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ display: { xs: 'none', xl: 'table-cell' } }}>
-                        <Typography variant="body2" color={convention.dateFin ? 'text.primary' : 'text.secondary'}>
-                          {formatDate(convention.dateFin)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ display: { xs: 'none', xl: 'table-cell' } }}>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          <Person fontSize="small" sx={{ color: '#9ca3af' }} />
-                          <Typography variant="body2">
-                            {convention.createdByNom || '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                            {conv.createdByNom || '-'}
                           </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          <CalendarToday fontSize="small" sx={{ color: '#9ca3af' }} />
-                          <Typography variant="body2">
-                            {formatDateTime(convention.createdAt)}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleMenuOpen(e, convention)}
-                          sx={{
-                            '&:hover': {
-                              bgcolor: '#e5e7eb',
-                            },
-                          }}
-                        >
-                          <MoreVert fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </SortableTableRow>
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton size="small" onClick={(e) => handleMenuOpen(e, conv)}>
+                            <MoreVert fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Sous-conventions (collapsed rows) */}
+                      {conv.sousConventions && conv.sousConventions.length > 0 && (
+                        <TableRow>
+                          <TableCell colSpan={8} sx={{ p: 0, border: 0 }}>
+                            <Collapse in={expandedGroups.has(conv.id)} timeout="auto" unmountOnExit>
+                              <Table size="small">
+                                <TableBody>
+                                  {conv.sousConventions.map((sc) => (
+                                    <TableRow
+                                      key={sc.id}
+                                      hover
+                                      onClick={() => handleRowClick(sc.id)}
+                                      sx={styles.tableRowChild}
+                                    >
+                                      <TableCell sx={{ width: 40 }} />
+                                      <TableCell sx={{ pl: 6 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                          <Description sx={{ fontSize: 16, color: colors.neutral[400] }} />
+                                          <Box>
+                                            <Typography variant="body2" sx={{ fontWeight: typography.weights.medium }}>
+                                              {sc.code}
+                                            </Typography>
+                                            <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                              {sc.libelle}
+                                            </Typography>
+                                          </Box>
+                                        </Box>
+                                      </TableCell>
+                                      <TableCell>
+                                        <StatusBadge status={sc.statut} />
+                                      </TableCell>
+                                      <TableCell align="right">
+                                        <Typography variant="body2">
+                                          {formatCurrency(sc.budget)} MAD
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell align="center">
+                                        <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                                          {sc.tauxCommission}%
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                                          {formatDate(sc.dateDebut)}
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell align="center">
+                                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, sc)}>
+                                          <MoreVert fontSize="small" />
+                                        </IconButton>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
                   ))
                 )}
               </TableBody>
             </Table>
-            </SortableContext>
-          </TableContainer>
-          </DndContext>
 
-          {filteredConventions.length > 0 && (
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                {filteredConventions.length} convention{filteredConventions.length > 1 ? 's' : ''} affichée{filteredConventions.length > 1 ? 's' : ''}
-              </Typography>
-            </Box>
-          )}
-        </Container>
+            {/* Pagination */}
+            <TablePagination
+              component="div"
+              count={filteredData.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10))
+                setPage(0)
+              }}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              labelRowsPerPage="Lignes par page:"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
+              sx={{
+                borderTop: `1px solid ${colors.divider}`,
+                '.MuiTablePagination-select': { fontWeight: typography.weights.semibold },
+              }}
+            />
+          </TableContainer>
+        </Box>
       </Box>
 
       {/* Actions Menu */}
@@ -689,49 +611,48 @@ const ConventionsTableModern = () => {
         onClose={handleMenuClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        PaperProps={{
+          sx: { minWidth: 180, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' },
+        }}
       >
-        <MenuItem onClick={() => handleActionClick('view')}>
-          <Visibility fontSize="small" sx={{ mr: 1 }} />
+        <MenuItem onClick={() => handleAction('view')}>
+          <Visibility fontSize="small" sx={{ mr: 1.5, color: colors.textSecondary }} />
           Voir détails
         </MenuItem>
-
         {selectedConvention?.statut === 'BROUILLON' && (
           <>
-            <MenuItem onClick={() => handleActionClick('edit')}>
-              <Edit fontSize="small" sx={{ mr: 1 }} />
-              Éditer
+            <MenuItem onClick={() => handleAction('edit')}>
+              <Edit fontSize="small" sx={{ mr: 1.5, color: colors.textSecondary }} />
+              Modifier
             </MenuItem>
-            <MenuItem onClick={() => handleActionClick('submit')}>
-              <Send fontSize="small" sx={{ mr: 1 }} />
+            <MenuItem onClick={() => handleAction('submit')}>
+              <Send fontSize="small" sx={{ mr: 1.5, color: colors.info[600] }} />
               Soumettre
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={() => handleAction('delete')} sx={{ color: colors.danger[600] }}>
+              <Delete fontSize="small" sx={{ mr: 1.5 }} />
+              Supprimer
             </MenuItem>
           </>
         )}
-
         {selectedConvention?.statut === 'SOUMIS' && user?.roles?.includes('ADMIN') && (
           <>
-            <MenuItem onClick={() => handleActionClick('validate')}>
-              <CheckCircle fontSize="small" sx={{ mr: 1 }} />
+            <MenuItem onClick={() => handleAction('validate')}>
+              <CheckCircle fontSize="small" sx={{ mr: 1.5, color: colors.success[600] }} />
               Valider
             </MenuItem>
-            <MenuItem onClick={() => handleActionClick('reject')}>
-              <Cancel fontSize="small" sx={{ mr: 1 }} />
+            <MenuItem onClick={() => handleAction('reject')}>
+              <Cancel fontSize="small" sx={{ mr: 1.5, color: colors.danger[600] }} />
               Rejeter
             </MenuItem>
           </>
-        )}
-
-        {selectedConvention?.statut === 'BROUILLON' && (
-          <MenuItem onClick={() => handleActionClick('delete')} sx={{ color: 'error.main' }}>
-            <Delete fontSize="small" sx={{ mr: 1 }} />
-            Supprimer
-          </MenuItem>
         )}
       </Menu>
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Rejeter la convention</DialogTitle>
+        <DialogTitle sx={{ fontWeight: typography.weights.semibold }}>Rejeter la convention</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -741,14 +662,17 @@ const ConventionsTableModern = () => {
             value={motifRejet}
             onChange={(e) => setMotifRejet(e.target.value)}
             placeholder="Expliquez pourquoi cette convention est rejetée..."
-            sx={{ mt: 2 }}
+            sx={{ mt: 1 }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRejectDialogOpen(false)}>
-            Annuler
-          </Button>
-          <Button onClick={handleReject} variant="contained" color="error" disabled={!motifRejet.trim()}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setRejectDialogOpen(false)}>Annuler</Button>
+          <Button
+            onClick={handleReject}
+            variant="contained"
+            color="error"
+            disabled={!motifRejet.trim()}
+          >
             Rejeter
           </Button>
         </DialogActions>

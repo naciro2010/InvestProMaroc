@@ -1,10 +1,58 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FaPlus, FaSearch, FaFileInvoiceDollar } from 'react-icons/fa'
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Chip,
+  IconButton,
+  CircularProgress,
+  InputAdornment,
+} from '@mui/material'
+import {
+  Add,
+  Search,
+  Visibility,
+  Edit,
+  Delete,
+} from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import { Card, Button, Badge } from '../../components/ui'
 import { budgetsAPI } from '../../lib/api'
 import type { Budget, StatutBudget } from '../../types/entities'
+import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
+
+// Styles from design system
+const styles = componentStyles.listPage
+
+// Status Badge utilisant le design system
+const StatusBadge = ({ status }: { status: string }) => {
+  const config = getStatusConfig(status)
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        px: 1.5,
+        py: 0.5,
+        borderRadius: '4px',
+        bgcolor: config.bgColor,
+        color: config.textColor,
+        fontSize: typography.sizes.xs,
+        fontWeight: typography.weights.semibold,
+      }}
+    >
+      {config.label}
+    </Box>
+  )
+}
 
 export default function BudgetsPage() {
   const navigate = useNavigate()
@@ -12,6 +60,10 @@ export default function BudgetsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statutFilter, setStatutFilter] = useState<string>('ALL')
+
+  // Pagination
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(25)
 
   useEffect(() => {
     fetchBudgets()
@@ -29,11 +81,32 @@ export default function BudgetsPage() {
     }
   }
 
-  const filteredBudgets = budgets.filter((budget) => {
-    const matchesSearch = budget.version.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatut = statutFilter === 'ALL' || budget.statut === statutFilter
-    return matchesSearch && matchesStatut
-  })
+  // Statistiques
+  const stats = useMemo(() => {
+    return {
+      total: budgets.length,
+      BROUILLON: budgets.filter(b => b.statut === 'BROUILLON').length,
+      SOUMIS: budgets.filter(b => b.statut === 'SOUMIS').length,
+      VALIDE: budgets.filter(b => b.statut === 'VALIDE').length,
+      REJETE: budgets.filter(b => b.statut === 'REJETE').length,
+      ARCHIVE: budgets.filter(b => b.statut === 'ARCHIVE').length,
+    }
+  }, [budgets])
+
+  // Filtrage
+  const filteredBudgets = useMemo(() => {
+    return budgets.filter((budget) => {
+      const matchesSearch = budget.version.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatut = statutFilter === 'ALL' || budget.statut === statutFilter
+      return matchesSearch && matchesStatut
+    })
+  }, [budgets, searchTerm, statutFilter])
+
+  // Pagination
+  const paginatedBudgets = useMemo(() => {
+    const start = page * rowsPerPage
+    return filteredBudgets.slice(start, start + rowsPerPage)
+  }, [filteredBudgets, page, rowsPerPage])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-MA', {
@@ -48,165 +121,197 @@ export default function BudgetsPage() {
     return new Date(date).toLocaleDateString('fr-MA')
   }
 
-  const getStatutBadge = (statut: StatutBudget) => {
-    const config: Record<StatutBudget, { variant: 'success' | 'danger' | 'warning' | 'info' | 'gray'; label: string }> = {
-      BROUILLON: { variant: 'gray', label: 'Brouillon' },
-      SOUMIS: { variant: 'warning', label: 'Soumis' },
-      VALIDE: { variant: 'success', label: 'Validé' },
-      REJETE: { variant: 'danger', label: 'Rejeté' },
-      ARCHIVE: { variant: 'gray', label: 'Archivé' },
+  const handleDelete = async (id: number) => {
+    if (!confirm('Confirmer la suppression de ce budget ?')) return
+    try {
+      await budgetsAPI.delete(id)
+      fetchBudgets()
+    } catch (error) {
+      console.error('Erreur suppression:', error)
     }
-    const cfg = config[statut] || { variant: 'gray' as const, label: statut }
-    return <Badge variant={cfg.variant}>{cfg.label}</Badge>
   }
 
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-info"></div>
-        </div>
+        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress size={40} />
+        </Box>
       </AppLayout>
     )
   }
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <Box sx={styles.container}>
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-rubik text-gray-800">Budgets</h1>
-            <p className="text-gray-600 mt-1">Gestion des budgets avec versions (V0, V1, V2...)</p>
-          </div>
-          <Button
-            variant="success"
-            icon={<FaPlus />}
-            onClick={() => navigate('/budgets/nouveau')}
-          >
-            Nouveau Budget
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card title="Total Budgets">
-            <div className="text-3xl font-bold font-rubik text-gray-800">{budgets.length}</div>
-          </Card>
-          <Card title="Validés">
-            <div className="text-3xl font-bold font-rubik text-success">
-              {budgets.filter(b => b.statut === 'VALIDE').length}
-            </div>
-          </Card>
-          <Card title="En Attente">
-            <div className="text-3xl font-bold font-rubik text-warning">
-              {budgets.filter(b => b.statut === 'SOUMIS').length}
-            </div>
-          </Card>
-          <Card title="Brouillon">
-            <div className="text-3xl font-bold font-rubik text-gray-500">
-              {budgets.filter(b => b.statut === 'BROUILLON').length}
-            </div>
-          </Card>
-        </div>
-
-        {/* Filtres */}
-        <Card title="Recherche et Filtres">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher par version..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-info"
-              />
-            </div>
-            <select
-              value={statutFilter}
-              onChange={(e) => setStatutFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-info"
+        <Box sx={styles.header}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography sx={styles.title}>Budgets</Typography>
+              <Typography sx={styles.subtitle}>
+                Gestion des budgets avec versions (V0, V1, V2...)
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => navigate('/budgets/nouveau')}
+              sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
             >
-              <option value="ALL">Tous les statuts</option>
-              <option value="BROUILLON">Brouillon</option>
-              <option value="SOUMIS">Soumis</option>
-              <option value="VALIDE">Validé</option>
-              <option value="REJETE">Rejeté</option>
-              <option value="ARCHIVE">Archivé</option>
-            </select>
-          </div>
-        </Card>
+              Nouveau Budget
+            </Button>
+          </Box>
+        </Box>
 
-        {/* Table */}
-        <Card title="Liste des Budgets">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Version</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Convention</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Plafond</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Budget</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Delta</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBudgets.map((budget) => (
-                  <tr
-                    key={budget.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/budgets/${budget.id}`)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <FaFileInvoiceDollar className="text-info mr-2" />
-                        <span className="text-sm font-semibold text-gray-900">{budget.version}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{budget.convention?.libelle || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(budget.dateBudget)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
-                      {formatCurrency(budget.plafondConvention)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-900">
-                      {formatCurrency(budget.totalBudget)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {budget.deltaMontant && (
-                        <span className={budget.deltaMontant > 0 ? 'text-success' : 'text-danger'}>
-                          {budget.deltaMontant > 0 ? '+' : ''}{formatCurrency(budget.deltaMontant)}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getStatutBadge(budget.statut)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); navigate(`/budgets/${budget.id}`); }}
-                        className="text-info hover:text-info-dark"
+        {/* Toolbar avec filtres */}
+        <Box sx={styles.toolbar}>
+          <TextField
+            placeholder="Rechercher par version..."
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+            size="small"
+            sx={styles.searchField}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {['ALL', 'BROUILLON', 'SOUMIS', 'VALIDE', 'REJETE', 'ARCHIVE'].map((statut) => {
+              const count = statut === 'ALL' ? budgets.length : (stats[statut as keyof typeof stats] || 0)
+              const isActive = statutFilter === statut
+              return (
+                <Chip
+                  key={statut}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
+                      <Box component="span" sx={styles.countBadge}>{count}</Box>
+                    </Box>
+                  }
+                  onClick={() => { setStatutFilter(statut); setPage(0); }}
+                  sx={isActive ? styles.filterPillActive : styles.filterPill}
+                />
+              )
+            })}
+          </Box>
+        </Box>
+
+        {/* Main Content Area */}
+        <Box sx={{ px: 3, pb: 3 }}>
+          <Box sx={styles.tableContainer}>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={styles.tableHeader}>
+                    <TableCell>Version</TableCell>
+                    <TableCell>Convention</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell align="right">Plafond</TableCell>
+                    <TableCell align="right">Total Budget</TableCell>
+                    <TableCell align="right">Delta</TableCell>
+                    <TableCell align="center">Statut</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedBudgets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                        <Typography sx={{ color: colors.textSecondary }}>Aucun budget trouvé</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedBudgets.map((budget) => (
+                      <TableRow
+                        key={budget.id}
+                        sx={styles.tableRowClickable}
+                        onClick={() => navigate(`/budgets/${budget.id}`)}
                       >
-                        Détails
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredBudgets.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Aucun budget trouvé</p>
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
+                        <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
+                          {budget.version}
+                        </TableCell>
+                        <TableCell>
+                          {budget.convention?.libelle || '-'}
+                        </TableCell>
+                        <TableCell sx={{ color: colors.textSecondary }}>
+                          {formatDate(budget.dateBudget)}
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.medium }}>
+                          {formatCurrency(budget.plafondConvention)}
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.semibold }}>
+                          {formatCurrency(budget.totalBudget)}
+                        </TableCell>
+                        <TableCell align="right">
+                          {budget.deltaMontant && (
+                            <Typography
+                              component="span"
+                              sx={{
+                                color: budget.deltaMontant > 0 ? colors.success[600] : colors.danger[600],
+                                fontWeight: typography.weights.medium,
+                                fontSize: typography.sizes.sm,
+                              }}
+                            >
+                              {budget.deltaMontant > 0 ? '+' : ''}{formatCurrency(budget.deltaMontant)}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="center">
+                          <StatusBadge status={budget.statut} />
+                        </TableCell>
+                        <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`/budgets/${budget.id}`)}
+                              sx={{ color: colors.neutral[500] }}
+                            >
+                              <Visibility fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => navigate(`/budgets/${budget.id}/modifier`)}
+                              sx={{ color: colors.neutral[500] }}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(budget.id)}
+                              sx={{ color: colors.danger[500] }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              component="div"
+              count={filteredBudgets.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10))
+                setPage(0)
+              }}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              labelRowsPerPage="Lignes par page"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
+            />
+          </Box>
+        </Box>
+      </Box>
     </AppLayout>
   )
 }

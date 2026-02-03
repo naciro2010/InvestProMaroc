@@ -398,7 +398,8 @@ class FlywayMigrationIntegrationTest {
             "convention_partenaires" to 7L,
             "versements_previsionnels" to 13L,
             "subventions" to 8L,
-            "imputations_analytiques" to 12L
+            "imputations_analytiques" to 12L,
+            "projet_conventions" to 3L
         )
 
         seedDataCounts.forEach { (tableName, expectedCount) ->
@@ -435,7 +436,8 @@ class FlywayMigrationIntegrationTest {
             "convention_partenaires_id_seq" to 7L,
             "versements_previsionnels_id_seq" to 13L,
             "subventions_id_seq" to 8L,
-            "imputations_analytiques_id_seq" to 12L
+            "imputations_analytiques_id_seq" to 12L,
+            "projet_conventions_id_seq" to 3L
         )
 
         sequenceChecks.forEach { (sequenceName, minExpected) ->

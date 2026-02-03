@@ -67,13 +67,29 @@ const ConventionImputationsCard = ({
     remarques: '',
   })
 
-  // Update local state when props change
+  // Load imputations from API if not provided as props
   useEffect(() => {
     if (initialImputations) {
       setImputations(initialImputations)
       setLoading(false)
+    } else {
+      // Fetch from API
+      const loadImputations = async () => {
+        try {
+          setLoading(true)
+          const res = await conventionsAPI.getImputations(conventionId)
+          setImputations(res.data.data || [])
+          setError(null)
+        } catch (err) {
+          console.error('Error loading imputations:', err)
+          setError('Erreur lors du chargement des imputations')
+        } finally {
+          setLoading(false)
+        }
+      }
+      loadImputations()
     }
-  }, [initialImputations])
+  }, [initialImputations, conventionId])
 
   const handleDelete = async (imputationId: number) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette imputation ?')) return

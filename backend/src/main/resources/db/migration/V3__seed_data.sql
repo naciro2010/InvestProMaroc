@@ -128,6 +128,17 @@ INSERT INTO conventions (
 -- 8 parent conventions + 5 sous-conventions = 13 total
 SELECT setval('conventions_id_seq', 13);
 
+-- Projet-Convention associations (many-to-many)
+INSERT INTO projet_conventions (id, projet_id, convention_id, ordre) VALUES
+-- Projet 1 (Infrastructure Casablanca) lié à Convention 1 (Infrastructure)
+(1, 1, 1, 1),
+-- Projet 2 (Equipement Rabat) lié à Convention 2 (Equipement Public)
+(2, 2, 2, 1),
+-- Projet 3 (Amenagement Tanger) lié à Convention 8 (Aménagement Territorial)
+(3, 3, 8, 1);
+
+SELECT setval('projet_conventions_id_seq', 3, true);
+
 -- Marchés avec géolocalisation
 INSERT INTO marches (
     id, fournisseur_id, convention_id, numero_marche, objet,

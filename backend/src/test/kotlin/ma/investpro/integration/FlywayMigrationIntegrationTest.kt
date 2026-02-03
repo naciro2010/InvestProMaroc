@@ -174,12 +174,12 @@ class FlywayMigrationIntegrationTest {
         )
         userCount shouldBe 3
 
-        // Verify conventions were created (2 CADRE + 5 SPECIFIQUE sous-conventions in V3 seed data)
+        // Verify conventions were created (8 CADRE + 5 SPECIFIQUE sous-conventions in V3 seed data)
         val conventionCount = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM conventions",
             Long::class.java
         )
-        conventionCount shouldBe 7
+        conventionCount shouldBe 13
 
         // Verify admin user exists
         val adminExists = jdbcTemplate.queryForObject(
@@ -386,14 +386,19 @@ class FlywayMigrationIntegrationTest {
             "valeurs_dimensions" to 9L,
             "fournisseurs" to 4L,
             "projets" to 3L,
-            "conventions" to 7L, // 2 CADRE + 5 SPECIFIQUE
+            "conventions" to 13L, // 8 CADRE + 5 SPECIFIQUE
             "marches" to 5L,
             "marche_lignes" to 6L,
             "decomptes" to 2L,
             "decompte_retenues" to 2L,
             "convention_configurations" to 1L,
             "convention_type_configurations" to 4L,
-            "categories_depenses" to 10L
+            "categories_depenses" to 10L,
+            "partenaires" to 8L,
+            "convention_partenaires" to 7L,
+            "versements_previsionnels" to 13L,
+            "subventions" to 8L,
+            "imputations_analytiques" to 12L
         )
 
         seedDataCounts.forEach { (tableName, expectedCount) ->
@@ -420,12 +425,17 @@ class FlywayMigrationIntegrationTest {
             "dimensions_analytiques_id_seq" to 4L,
             "fournisseurs_id_seq" to 4L,
             "projets_id_seq" to 3L,
-            "conventions_id_seq" to 7L,
+            "conventions_id_seq" to 13L,
             "marches_id_seq" to 5L,
             "decomptes_id_seq" to 2L,
             "convention_configurations_id_seq" to 1L,
             "convention_type_configurations_id_seq" to 4L,
-            "categories_depenses_id_seq" to 10L
+            "categories_depenses_id_seq" to 10L,
+            "partenaires_id_seq" to 8L,
+            "convention_partenaires_id_seq" to 7L,
+            "versements_previsionnels_id_seq" to 13L,
+            "subventions_id_seq" to 8L,
+            "imputations_analytiques_id_seq" to 12L
         )
 
         sequenceChecks.forEach { (sequenceName, minExpected) ->

@@ -267,17 +267,9 @@ const ConventionImputationsCard = ({
       ) : (
         <Box sx={{ py: 3, textAlign: 'center' }}>
           <TrendingUp sx={{ fontSize: 48, color: colors.neutral[300], mb: 1 }} />
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
             Aucune imputation prévisionnelle
           </Typography>
-          <Button
-            size="small"
-            startIcon={<Add />}
-            onClick={() => setDialogOpen(true)}
-            sx={{ color: colors.primary[600] }}
-          >
-            Ajouter une imputation
-          </Button>
         </Box>
       )}
 

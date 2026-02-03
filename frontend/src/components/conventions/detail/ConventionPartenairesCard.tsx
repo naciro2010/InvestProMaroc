@@ -171,14 +171,6 @@ const ConventionPartenairesCard = ({
           <Typography variant="body2" sx={{ color: colors.textSecondary }}>
             Aucun partenaire défini pour cette convention
           </Typography>
-          <Button
-            size="small"
-            startIcon={<Add />}
-            onClick={onAddClick}
-            sx={{ mt: 2, color: colors.primary[600] }}
-          >
-            Ajouter un partenaire
-          </Button>
         </Box>
       ) : (
         <>

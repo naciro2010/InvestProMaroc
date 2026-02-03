@@ -126,6 +126,22 @@ data class SubventionDTO(
     val updatedAt: LocalDateTime?
 )
 
+data class SubventionRequest(
+    val conventionId: Long,
+    @field:NotBlank(message = "L'organisme bailleur est obligatoire")
+    val organismeBailleur: String,
+    val typeSubvention: String?,
+    @field:DecimalMin(value = "0", message = "Le montant doit être positif")
+    val montantTotal: BigDecimal,
+    val devise: String = "MAD",
+    val tauxChange: BigDecimal?,
+    val dateSignature: LocalDate?,
+    val dateDebutValidite: LocalDate?,
+    val dateFinValidite: LocalDate?,
+    val conditions: String?,
+    val observations: String?
+)
+
 // Fournisseur DTOs
 data class FournisseurDTO(
     val id: Long?,

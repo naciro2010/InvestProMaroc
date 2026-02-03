@@ -146,11 +146,13 @@ interface Marche {
 
 interface VersementPrevisionnel {
   id: number
-  axe?: string
-  projet?: string
+  partenaireId?: number
+  partenaireNom?: string
+  partenaireSigle?: string
   volet?: string
   dateVersement: string
   montant: number
+  remarques?: string
 }
 
 const ConventionDetailPageModern = () => {
@@ -816,9 +818,8 @@ const ConventionDetailPageModern = () => {
                       <Table size="small">
                         <TableHead>
                           <TableRow sx={{ bgcolor: colors.neutral[50] }}>
-                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Axe</TableCell>
-                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Projet</TableCell>
-                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Volet</TableCell>
+                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Partenaire</TableCell>
+                            <TableCell sx={{ fontWeight: typography.weights.semibold }}>Volet / Tranche</TableCell>
                             <TableCell sx={{ fontWeight: typography.weights.semibold }}>Date versement</TableCell>
                             <TableCell align="right" sx={{ fontWeight: typography.weights.semibold }}>Montant</TableCell>
                             <TableCell align="center" sx={{ fontWeight: typography.weights.semibold }}>Actions</TableCell>
@@ -828,8 +829,16 @@ const ConventionDetailPageModern = () => {
                           {versements.length > 0 ? (
                             versements.map((versement) => (
                               <TableRow key={versement.id} hover>
-                                <TableCell>{versement.axe || '-'}</TableCell>
-                                <TableCell>{versement.projet || '-'}</TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" sx={{ fontWeight: typography.weights.medium }}>
+                                    {versement.partenaireSigle || versement.partenaireNom || '-'}
+                                  </Typography>
+                                  {versement.partenaireSigle && versement.partenaireNom && (
+                                    <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                      {versement.partenaireNom}
+                                    </Typography>
+                                  )}
+                                </TableCell>
                                 <TableCell>{versement.volet || '-'}</TableCell>
                                 <TableCell>{formatDate(versement.dateVersement)}</TableCell>
                                 <TableCell align="right" sx={{ fontWeight: typography.weights.medium, color: colors.success[600] }}>
@@ -864,29 +873,18 @@ const ConventionDetailPageModern = () => {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={6} align="center">
+                              <TableCell colSpan={5} align="center">
                                 <Box sx={{ py: 3 }}>
-                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                  <Typography variant="body2" color="text.secondary">
                                     Aucun versement prévisionnel
                                   </Typography>
-                                  <Button
-                                    size="small"
-                                    startIcon={<Add />}
-                                    onClick={() => {
-                                      setEditingVersement(null)
-                                      setVersementDialogOpen(true)
-                                    }}
-                                    sx={{ color: colors.primary[600] }}
-                                  >
-                                    Ajouter un versement
-                                  </Button>
                                 </Box>
                               </TableCell>
                             </TableRow>
                           )}
                           {versements.length > 0 && (
                             <TableRow sx={{ bgcolor: colors.neutral[100] }}>
-                              <TableCell colSpan={4} sx={{ fontWeight: typography.weights.bold }}>
+                              <TableCell colSpan={3} sx={{ fontWeight: typography.weights.bold }}>
                                 Total
                               </TableCell>
                               <TableCell align="right" sx={{ fontWeight: typography.weights.bold, color: colors.success[700] }}>
@@ -975,19 +973,9 @@ const ConventionDetailPageModern = () => {
 
                 {sousConventions.length === 0 && (
                   <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
                       Aucune sous-convention
                     </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<Add />}
-                      onClick={() => {
-                        setEditingSousConvention(null)
-                        setSousConventionDialogOpen(true)
-                      }}
-                    >
-                      Créer une sous-convention
-                    </Button>
                   </Box>
                 )}
               </Container>
@@ -1067,16 +1055,9 @@ const ConventionDetailPageModern = () => {
 
                 {projets.length === 0 && (
                   <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
                       Aucun projet lié à cette convention
                     </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<Add />}
-                      onClick={() => setLinkProjetDialogOpen(true)}
-                    >
-                      Lier un projet
-                    </Button>
                   </Box>
                 )}
               </Container>
@@ -1142,16 +1123,9 @@ const ConventionDetailPageModern = () => {
 
                 {marches.length === 0 && (
                   <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
                       Aucun marché lié à cette convention
                     </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<Add />}
-                      onClick={() => setLinkMarcheDialogOpen(true)}
-                    >
-                      Lier un marché
-                    </Button>
                   </Box>
                 )}
               </Container>

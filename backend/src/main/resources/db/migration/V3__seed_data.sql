@@ -58,10 +58,16 @@ INSERT INTO projets (id, code, nom, budget_total, statut, date_debut) VALUES
 
 SELECT setval('projets_id_seq', 3);
 
--- Conventions
+-- Conventions CADRE (principales)
 INSERT INTO conventions (id, code, numero, libelle, objet, type_convention, date_convention, budget, taux_commission, statut, date_debut, date_fin, created_by_id, valide_par_id, date_validation, version, is_locked) VALUES
 (1, 'CONV-001', 'CONV/2024/001', 'Convention Cadre Infrastructure', 'Gestion projets infrastructure routiere et urbaine', 'CADRE', '2024-01-15', 10000000.00, 2.5, 'VALIDE', '2024-01-15', '2026-01-15', 1, 2, '2024-01-16', 'V0', true),
-(2, 'CONV-002', 'CONV/2024/002', 'Convention Equipement Public', 'Acquisition equipements collectifs', 'CADRE', '2024-02-01', 5000000.00, 3.0, 'VALIDE', '2024-02-01', '2026-02-01', 1, 2, '2024-02-02', 'V0', true);
+(2, 'CONV-002', 'CONV/2024/002', 'Convention Equipement Public', 'Acquisition equipements collectifs', 'CADRE', '2024-02-01', 5000000.00, 3.0, 'VALIDE', '2024-02-01', '2026-02-01', 1, 2, '2024-02-02', 'V0', true),
+(8, 'CONV-003', 'CONV/2024/003', 'Convention Aménagement Territorial', 'Programme amenagement zones industrielles et zones d''activites', 'CADRE', '2024-03-15', 15000000.00, 2.0, 'EN_EXECUTION', '2024-04-01', '2027-03-31', 2, 1, '2024-03-20', 'V0', true),
+(9, 'CONV-004', 'CONV/2024/004', 'Convention Eau et Assainissement', 'Travaux d''adduction d''eau potable et assainissement liquide', 'CADRE', '2024-05-01', 8000000.00, 2.5, 'SOUMIS', '2024-06-01', '2026-05-31', 3, NULL, NULL, 'V0', false),
+(10, 'CONV-005', 'CONV/2024/005', 'Convention Energie Renouvelable', 'Installation panneaux solaires et eclairage public LED', 'CADRE', '2024-06-10', 6500000.00, 3.5, 'BROUILLON', '2024-07-01', '2026-06-30', 2, NULL, NULL, 'V0', false),
+(11, 'CONV-006', 'CONV/2023/006', 'Convention Transport Urbain', 'Modernisation reseau transport public urbain', 'CADRE', '2023-01-15', 12000000.00, 2.0, 'ACHEVE', '2023-02-01', '2024-12-31', 1, 2, '2023-01-20', 'V1', true),
+(12, 'CONV-007', 'CONV/2024/007', 'Convention Numerique et Digital', 'Transformation digitale des services publics', 'CADRE', '2024-08-01', 4500000.00, 4.0, 'VALIDE', '2024-09-01', '2026-08-31', 1, 2, '2024-08-05', 'V0', true),
+(13, 'CONV-008', 'CONV/2024/008', 'Convention Sport et Jeunesse', 'Construction et rehabilitation infrastructures sportives', 'CADRE', '2024-09-15', 7500000.00, 2.5, 'EN_EXECUTION', '2024-10-01', '2027-09-30', 2, 1, '2024-09-20', 'V0', true);
 
 -- Sous-Conventions (SPECIFIQUE type, inheriting from parent CADRE conventions)
 INSERT INTO conventions (
@@ -119,8 +125,8 @@ INSERT INTO conventions (
     2, CURRENT_TIMESTAMP
 );
 
--- 2 parent conventions + 5 sous-conventions = 7 total
-SELECT setval('conventions_id_seq', 7);
+-- 8 parent conventions + 5 sous-conventions = 13 total
+SELECT setval('conventions_id_seq', 13);
 
 -- Marchés avec géolocalisation
 INSERT INTO marches (
@@ -215,3 +221,103 @@ INSERT INTO categories_depenses (id, code, libelle, description, categorie, ordr
 
 -- Reset sequence
 SELECT setval('categories_depenses_id_seq', 10, true);
+
+-- ============================================================================
+-- Subventions (financements externes)
+-- ============================================================================
+INSERT INTO subventions (id, convention_id, organisme_bailleur, type_subvention, montant_total, devise, taux_change, date_signature, date_debut_validite, date_fin_validite, conditions, observations) VALUES
+-- Convention 1 - Infrastructure
+(1, 1, 'Banque Mondiale', 'PRET', 2000000.00, 'USD', 10.2500, '2024-01-20', '2024-02-01', '2028-01-31', 'Décaissement progressif selon avancement des travaux', 'Prêt à taux préférentiel 2%'),
+(2, 1, 'Union Européenne', 'DON', 1500000.00, 'EUR', 10.8000, '2024-02-15', '2024-03-01', '2026-12-31', 'Rapport semestriel obligatoire', 'Programme de coopération UE-Maroc'),
+(3, 2, 'BAD - Banque Africaine de Développement', 'PRET', 3000000.00, 'MAD', NULL, '2024-03-01', '2024-04-01', '2029-03-31', 'Audit annuel requis', 'Financement équipements publics'),
+(4, 1, 'Fonds Hassan II', 'DON', 500000.00, 'MAD', NULL, '2024-04-10', '2024-05-01', '2025-12-31', NULL, 'Subvention nationale'),
+-- Convention 8 - Aménagement Territorial
+(5, 8, 'BID - Banque Islamique de Développement', 'PRET', 5000000.00, 'USD', 10.3000, '2024-04-01', '2024-05-01', '2029-04-30', 'Conformité Sharia requise', 'Financement zones industrielles'),
+(6, 8, 'Fonds Vert pour le Climat', 'DON', 2000000.00, 'EUR', 10.9000, '2024-05-15', '2024-06-01', '2027-05-31', 'Critères environnementaux stricts', 'Composante écologique'),
+-- Convention 12 - Numérique
+(7, 12, 'USAID', 'DON', 1000000.00, 'USD', 10.2000, '2024-09-01', '2024-10-01', '2026-09-30', NULL, 'Programme e-gouvernement'),
+-- Convention 13 - Sport
+(8, 13, 'FIFA Forward', 'DON', 800000.00, 'USD', 10.2500, '2024-10-01', '2024-11-01', '2027-10-31', 'Rapport annuel FIFA', 'Développement football');
+
+SELECT setval('subventions_id_seq', 8, true);
+
+-- ============================================================================
+-- Partenaires (organismes partenaires)
+-- ============================================================================
+INSERT INTO partenaires (id, code, raison_sociale, sigle, type_partenaire, email, telephone, adresse, description) VALUES
+(1, 'MIN-EQUIP', 'Ministère de l''Équipement et de l''Eau', 'MEE', 'PUBLIC', 'contact@equipement.gov.ma', '+212537123456', 'Avenue Mohammed V, Rabat', 'Tutelle administrative'),
+(2, 'AU-CASA', 'Agence Urbaine de Casablanca', 'AUC', 'PUBLIC', 'contact@auc.ma', '+212522654321', 'Boulevard Zerktouni, Casablanca', 'Appui technique urbanisme'),
+(3, 'CR-CS', 'Conseil Régional Casablanca-Settat', 'CRCS', 'PUBLIC', 'contact@cr-cs.ma', '+212522789012', 'Place Mohammed V, Casablanca', 'Co-financement régional'),
+(4, 'DCL', 'Direction des Collectivités Locales', 'DCL', 'PUBLIC', 'contact@dcl.gov.ma', '+212537234567', 'Avenue Al Fassia, Rabat', 'Tutelle collectivités'),
+(5, 'ONEE', 'Office National de l''Électricité et de l''Eau', 'ONEE', 'PUBLIC', 's.amrani@onee.ma', '+212522345678', 'Rue Hassan II, Casablanca', 'Raccordement électrique'),
+(6, 'MEN', 'Ministère de l''Éducation Nationale', 'MEN', 'PUBLIC', 'contact@men.gov.ma', '+212537772233', 'Avenue Allal Ben Abdellah, Rabat', 'Tutelle éducation'),
+(7, 'MS', 'Ministère de la Santé', 'MS', 'PUBLIC', 'contact@sante.gov.ma', '+212537776655', 'Avenue Ibn Sina, Rabat', 'Tutelle santé'),
+(8, 'ANCFCC', 'Agence Nationale de la Conservation Foncière', 'ANCFCC', 'PUBLIC', 'contact@ancfcc.gov.ma', '+212537665544', 'Avenue My Rachid, Rabat', 'Conservation foncière');
+
+SELECT setval('partenaires_id_seq', 8, true);
+
+-- ============================================================================
+-- Partenaires conventions (liaison convention-partenaire avec budget)
+-- ============================================================================
+INSERT INTO convention_partenaires (id, convention_id, partenaire_id, budget_alloue, pourcentage, commission_intervention, est_maitre_oeuvre, est_maitre_oeuvre_delegue, remarques) VALUES
+-- Convention 1 - Infrastructure
+(1, 1, 1, 4000000.00, 40.00, 100000.00, true, false, 'Maître d''ouvrage principal'),
+(2, 1, 2, 3000000.00, 30.00, 75000.00, false, true, 'Maître d''ouvrage délégué'),
+(3, 1, 3, 3000000.00, 30.00, 75000.00, false, false, 'Co-financement régional'),
+-- Convention 2 - Équipement Public
+(4, 2, 4, 2500000.00, 50.00, 75000.00, true, false, 'Maître d''ouvrage'),
+(5, 2, 5, 2500000.00, 50.00, 75000.00, false, false, 'Partenaire technique'),
+-- Convention 8 - Aménagement Territorial
+(6, 8, 1, 7500000.00, 50.00, 150000.00, true, false, 'Maître d''ouvrage'),
+(7, 8, 8, 7500000.00, 50.00, 150000.00, false, true, 'Gestion foncière');
+
+SELECT setval('convention_partenaires_id_seq', 7, true);
+
+-- ============================================================================
+-- Versements prévisionnels
+-- ============================================================================
+INSERT INTO versements_previsionnels (id, convention_id, partenaire_id, volet, date_versement, montant, remarques) VALUES
+-- Convention 1 - Infrastructure (partenaire 1 = MEE)
+(1, 1, 1, 'Tranche 1 - Démarrage', '2024-03-15', 1500000.00, 'Premier versement après validation'),
+(2, 1, 1, 'Tranche 2 - Avancement 50%', '2024-06-15', 1500000.00, 'Deuxième versement à 50% avancement'),
+(3, 1, 2, 'Tranche 1 - Études', '2024-04-01', 1000000.00, 'Études préliminaires'),
+(4, 1, 2, 'Tranche 2 - Travaux', '2024-09-01', 2000000.00, 'Lancement travaux'),
+-- Convention 2 - Équipement Public (partenaire 4 = DCL)
+(5, 2, 4, 'Mobilier scolaire', '2024-05-01', 1200000.00, 'Commande mobilier'),
+(6, 2, 4, 'Matériel médical', '2024-06-01', 1800000.00, 'Équipement centres de santé'),
+-- Convention 8 - Aménagement Territorial (partenaire 1 = MEE)
+(7, 8, 1, 'Phase 1 - Viabilisation', '2024-05-01', 3000000.00, 'Viabilisation terrain'),
+(8, 8, 1, 'Phase 2 - Construction', '2024-09-01', 4000000.00, 'Construction bâtiments'),
+(9, 8, 8, 'Phase 1 - Foncier', '2024-06-15', 3500000.00, 'Acquisition foncière'),
+-- Convention 12 - Numérique (partenaire 4 = DCL)
+(10, 12, 4, 'Développement', '2024-10-01', 1500000.00, 'Développement plateforme'),
+(11, 12, 4, 'Déploiement', '2025-02-01', 1200000.00, 'Formation et déploiement'),
+-- Convention 13 - Sport (partenaire 6 = MEN)
+(12, 13, 6, 'Construction stades', '2024-11-01', 2500000.00, 'Construction stade municipal'),
+(13, 13, 6, 'Réhabilitation', '2025-01-15', 2000000.00, 'Rénovation complexes sportifs');
+
+SELECT setval('versements_previsionnels_id_seq', 13, true);
+
+-- ============================================================================
+-- Imputations prévisionnelles conventions
+-- ============================================================================
+INSERT INTO imputations_analytiques (id, type_imputation, reference_id, montant, dimensions_valeurs) VALUES
+-- Convention 1 - Infrastructure
+(1, 'CONVENTION', 1, 4000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R001"}'),
+(2, 'CONVENTION', 1, 3500000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R002"}'),
+(3, 'CONVENTION', 1, 2500000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R003"}'),
+-- Convention 2 - Équipement Public
+(4, 'CONVENTION', 2, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}'),
+(5, 'CONVENTION', 2, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}'),
+-- Convention 8 - Aménagement Territorial
+(6, 'CONVENTION', 8, 6000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R002"}'),
+(7, 'CONVENTION', 8, 5000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R003"}'),
+(8, 'CONVENTION', 8, 4000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R001"}'),
+-- Convention 12 - Numérique
+(9, 'CONVENTION', 12, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}'),
+(10, 'CONVENTION', 12, 2000000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}'),
+-- Convention 13 - Sport
+(11, 'CONVENTION', 13, 4000000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}'),
+(12, 'CONVENTION', 13, 3500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}');
+
+SELECT setval('imputations_analytiques_id_seq', 12, true);

@@ -2,6 +2,29 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
+## 🎯 SKILLS & CORE COMPETENCIES
+
+**Architecture Patterns maîtrisés dans InvestPro:**
+
+| Skill | Description | Implementation |
+|-------|-------------|----------------|
+| **🔷 Micro-Frontend** | Composants < 300 lignes, responsabilité unique | `components/[feature]/` avec barrel exports |
+| **🔷 Micro-Backend** | Endpoints granulaires, pas de "god objects" | `GET /entity/{id}/basic`, `/stats`, `/lignes` |
+| **🔷 Design System Centralisé** | Tous les styles dans un fichier unique | `designSystem.ts` - colors, typography, componentStyles |
+| **🔷 List Page Pattern** | Structure uniforme pour tous les listings | `componentStyles.listPage` avec header/toolbar/table |
+| **🔷 Status Badge Pattern** | Gestion centralisée des statuts | `getStatusConfig()` + StatusBadge component |
+| **🔷 Drag & Drop** | Réorganisation utilisateur sur toutes les listes | `SortableTable` + localStorage persistence |
+| **🔷 Strong Typing** | Aucun `any`/`Any`, DTOs typés partout | TypeScript strict + Kotlin non-null |
+| **🔷 Lazy Loading** | Code splitting par route | `React.lazy()` + Vite manualChunks |
+
+**Golden Rules:**
+1. **Never load data you don't display** - Micro-endpoints uniquement
+2. **Never hardcode colors** - `designSystem.ts` uniquement
+3. **Never create monoliths** - Max 300 lignes par fichier
+4. **Never use `any`** - Types explicites partout
+
+---
+
 ## ⚠️ CRITICAL: STRONG TYPING IS MANDATORY
 
 **❌ NEVER use `any` type (TypeScript) or `Any` type (Kotlin) in this project.**
@@ -749,6 +772,92 @@ import { componentStyles } from '@/lib/designSystem'
 // Stat Cards (Dashboard KPIs)
 <Card sx={componentStyles.statCard}>
 ```
+
+### 📋 Pattern List Page - Pages de Listing Uniformes
+
+**OBLIGATOIRE pour toutes les pages de listing** (Conventions, Marchés, Projets, Budgets, Décomptes, etc.)
+
+```typescript
+import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
+
+// 1. Récupérer les styles centralisés
+const styles = componentStyles.listPage
+
+// 2. StatusBadge unifié via getStatusConfig()
+const StatusBadge = ({ status }: { status: string }) => {
+  const config = getStatusConfig(status)
+  return (
+    <Box sx={{
+      display: 'inline-flex',
+      px: 1.5, py: 0.5,
+      borderRadius: '4px',
+      bgcolor: config.bgColor,
+      color: config.textColor,
+      fontSize: typography.sizes.xs,
+      fontWeight: typography.weights.semibold,
+    }}>
+      {config.label}
+    </Box>
+  )
+}
+
+// 3. Structure de page
+return (
+  <AppLayout>
+    <Box sx={styles.container}>
+      {/* Header */}
+      <Box sx={styles.header}>
+        <Typography sx={styles.title}>Conventions</Typography>
+        <Typography sx={styles.subtitle}>Description</Typography>
+        <Button>Nouveau</Button>
+      </Box>
+
+      {/* Toolbar avec filtres */}
+      <Box sx={styles.toolbar}>
+        <TextField sx={styles.searchField} />
+        <Chip sx={isActive ? styles.filterPillActive : styles.filterPill}>
+          <span>Statut</span>
+          <Box sx={styles.countBadge}>{count}</Box>
+        </Chip>
+      </Box>
+
+      {/* Table */}
+      <Box sx={styles.tableContainer}>
+        <TableHead><TableRow sx={styles.tableHeader}>...</TableRow></TableHead>
+        <TableBody>
+          <TableRow sx={styles.tableRowClickable}>...</TableRow>
+          <TableRow sx={styles.tableRowChild}>...</TableRow>  {/* Sous-items */}
+        </TableBody>
+        <TablePagination />
+      </Box>
+    </Box>
+  </AppLayout>
+)
+```
+
+**Styles disponibles dans `componentStyles.listPage`:**
+| Style | Usage |
+|-------|-------|
+| `container` | Container principal `minHeight: 100vh` |
+| `header` | Header avec titre, actions |
+| `title` | Titre principal (2xl, bold) |
+| `subtitle` | Sous-titre (sm, gris) |
+| `toolbar` | Barre recherche/filtres |
+| `searchField` | Champ de recherche stylisé |
+| `tableContainer` | Container table avec ombre |
+| `tableHeader` | Header table (uppercase, gris) |
+| `tableRowClickable` | Ligne cliquable avec hover |
+| `tableRowChild` | Ligne enfant (sous-convention) |
+| `filterPillActive` | Filtre actif (primary) |
+| `filterPill` | Filtre inactif (outline) |
+| `countBadge` | Badge compteur dans filtre |
+
+**Pages utilisant ce pattern:**
+- ✅ `ConventionsTableModern.tsx` - Avec groupement parent/enfants
+- ✅ `MarchesPage.tsx` - Avec vue carte
+- ✅ `ProjetsPage.tsx` - Avec cards grid
+- ✅ `BudgetsPage.tsx` - Table simple
+- ✅ `DecomptesPageComplete.tsx` - Table simple
 
 ### Pattern Micro-Component avec Data Loading
 

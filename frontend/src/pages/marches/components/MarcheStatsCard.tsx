@@ -54,7 +54,8 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
     }
   }
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amount: number | undefined | null): string => {
+    if (amount === undefined || amount === null) return '0,00'
     return amount.toLocaleString('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -102,7 +103,7 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
     },
     {
       label: 'Avancement',
-      value: `${stats.tauxAvancement.toFixed(1)}%`,
+      value: `${(stats.tauxAvancement ?? 0).toFixed(1)}%`,
       icon: CheckCircle,
       bgColor: colors.info[50],
       iconBgColor: colors.info[100],

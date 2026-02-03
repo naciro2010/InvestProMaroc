@@ -137,9 +137,9 @@ interface Projet {
 
 interface Marche {
   id: number
-  code: string
+  numeroMarche: string
   objet: string
-  montantTTC: number
+  montantTtc: number
   statut: string
   fournisseurNom?: string
 }
@@ -1090,10 +1090,10 @@ const ConventionDetailPageModern = () => {
                     <TableBody>
                       {marches.map((marche) => (
                         <TableRow key={marche.id} hover>
-                          <TableCell>{marche.code}</TableCell>
+                          <TableCell>{marche.numeroMarche}</TableCell>
                           <TableCell>{marche.objet}</TableCell>
                           <TableCell>{marche.fournisseurNom || '-'}</TableCell>
-                          <TableCell align="right">{formatCurrency(marche.montantTTC)}</TableCell>
+                          <TableCell align="right">{formatCurrency(marche.montantTtc)}</TableCell>
                           <TableCell>
                             <StatusBadge status={marche.statut} size="small" />
                           </TableCell>

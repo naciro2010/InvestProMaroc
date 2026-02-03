@@ -812,6 +812,116 @@ export const componentStyles = {
       color: colors.neutral[400],
     },
   },
+
+  /**
+   * List Page - Style moderne inspiré Odoo/Confluence
+   * Utiliser pour toutes les pages de listing
+   */
+  listPage: {
+    /** Container principal */
+    container: {
+      minHeight: '100vh',
+      bgcolor: colors.background,
+    },
+    /** Header de page avec titre et actions */
+    header: {
+      bgcolor: colors.surface,
+      borderBottom: `1px solid ${colors.border}`,
+      px: 3,
+      py: 2,
+    },
+    /** Titre principal */
+    title: {
+      fontWeight: typography.weights.bold,
+      color: colors.textPrimary,
+      fontSize: typography.sizes['2xl'],
+      mb: 0.5,
+    },
+    /** Sous-titre / stats */
+    subtitle: {
+      color: colors.textSecondary,
+      fontSize: typography.sizes.sm,
+    },
+    /** Toolbar de recherche/filtres */
+    toolbar: {
+      px: 3,
+      py: 2,
+      bgcolor: colors.surface,
+      borderBottom: `1px solid ${colors.divider}`,
+      display: 'flex',
+      gap: 2,
+      alignItems: 'center',
+    },
+    /** Champ de recherche */
+    searchField: {
+      width: 300,
+      '& .MuiOutlinedInput-root': {
+        bgcolor: colors.neutral[50],
+        borderRadius: borders.radius.base,
+        '&:hover': { bgcolor: colors.surface },
+        '&.Mui-focused': { bgcolor: colors.surface },
+      },
+    },
+    /** Container de la table */
+    tableContainer: {
+      borderRadius: borders.radius.lg,
+      boxShadow: shadows.sm,
+      overflow: 'hidden',
+      bgcolor: colors.surface,
+    },
+    /** Header de table */
+    tableHeader: {
+      bgcolor: colors.neutral[50],
+      '& th': {
+        fontWeight: typography.weights.semibold,
+        color: colors.textSecondary,
+        fontSize: typography.sizes.xs,
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.05em',
+        py: 1.5,
+        borderBottom: `1px solid ${colors.border}`,
+      },
+    },
+    /** Ligne de table cliquable */
+    tableRowClickable: {
+      cursor: 'pointer',
+      transition: `background-color ${transitions.fast}`,
+      '&:hover': { bgcolor: colors.neutral[50] },
+      borderBottom: `1px solid ${colors.divider}`,
+    },
+    /** Ligne enfant (sous-convention, sous-item) */
+    tableRowChild: {
+      cursor: 'pointer',
+      bgcolor: colors.neutral[25],
+      '&:hover': { bgcolor: colors.neutral[100] },
+      borderBottom: `1px solid ${colors.divider}`,
+    },
+    /** Pill de filtre actif */
+    filterPillActive: {
+      bgcolor: colors.primary[600],
+      color: colors.textOnColor,
+      fontWeight: typography.weights.semibold,
+      border: `1px solid ${colors.primary[600]}`,
+      '&:hover': { bgcolor: colors.primary[700] },
+    },
+    /** Pill de filtre inactif */
+    filterPill: {
+      bgcolor: colors.surface,
+      color: colors.textSecondary,
+      fontWeight: typography.weights.semibold,
+      border: `1px solid ${colors.border}`,
+      '&:hover': { bgcolor: colors.neutral[50] },
+    },
+    /** Badge de compteur */
+    countBadge: {
+      bgcolor: colors.primary[50],
+      color: colors.primary[700],
+      fontSize: typography.sizes.xs,
+      fontWeight: typography.weights.semibold,
+      height: 20,
+      px: 1,
+    },
+  },
 } as const
 
 // ==================== STATUTS - Mapping couleurs ====================

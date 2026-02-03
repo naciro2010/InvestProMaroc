@@ -245,6 +245,7 @@ export const conventionsAPI = {
   annuler: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
 
   // Imputations et Versements
+  getImputations: (conventionId: number) => api.get(`/conventions/${conventionId}/imputations`),
   ajouterImputation: (conventionId: number, imputation: Record<string, unknown>) =>
     api.post(`/conventions/${conventionId}/imputations`, imputation),
   supprimerImputation: (conventionId: number, imputationId: number) =>

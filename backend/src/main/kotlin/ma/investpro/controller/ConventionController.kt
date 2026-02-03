@@ -108,10 +108,10 @@ class ConventionController(
 
     @GetMapping("/{id}/sous-conventions")
     @ReadAccess
-    fun getSousConventions(@PathVariable id: Long): ResponseEntity<List<ConventionSimpleDTO>> {
+    fun getSousConventions(@PathVariable id: Long): ResponseEntity<ApiResponse<List<ConventionSimpleDTO>>> {
         val conventions = conventionService.findSousConventions(id)
         val dtos = conventionMapper.toSimpleDTOList(conventions)
-        return ResponseEntity.ok(dtos)
+        return ResponseEntity.ok(ApiResponse.success(dtos))
     }
 
     @PostMapping
@@ -295,6 +295,32 @@ class ConventionController(
     }
 
     // ========== Imputations Prévisionnelles ==========
+
+    @GetMapping("/{conventionId}/imputations")
+    @ReadAccess
+    fun getImputations(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<List<ImputationPrevisionnelleDTO>>> {
+        return try {
+            val imputations = imputationRepository.findByConventionId(conventionId)
+            val dtos = imputations.map { imputation ->
+                ImputationPrevisionnelleDTO(
+                    id = imputation.id,
+                    conventionId = imputation.convention?.id ?: 0,
+                    volet = imputation.volet,
+                    dateDemarrage = imputation.dateDemarrage,
+                    delaiMois = imputation.delaiMois,
+                    dateFinPrevue = imputation.dateFinPrevue,
+                    remarques = imputation.remarques,
+                    actif = imputation.actif,
+                    createdAt = imputation.createdAt,
+                    updatedAt = imputation.updatedAt
+                )
+            }
+            ResponseEntity.ok(ApiResponse.success(dtos))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la récupération des imputations"))
+        }
+    }
 
     @PostMapping("/{conventionId}/imputations")
     @WriteAccess

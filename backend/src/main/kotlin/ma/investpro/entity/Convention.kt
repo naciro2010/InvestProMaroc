@@ -182,10 +182,13 @@ enum class TypeConvention {
 }
 
 /**
- * Statut de la convention - Workflow simplifié
+ * Statut de la convention - Workflow complet
  */
 enum class StatutConvention {
     BROUILLON,      // Brouillon en cours de saisie (éditable)
     SOUMIS,         // Soumis pour validation (non éditable)
-    VALIDE          // Convention validée (verrouillée)
+    VALIDE,         // Convention validée (verrouillée)
+    EN_EXECUTION,   // Convention en cours d'exécution
+    ACHEVE,         // Convention achevée/terminée
+    REJETE          // Convention rejetée (retour à brouillon possible)
 }

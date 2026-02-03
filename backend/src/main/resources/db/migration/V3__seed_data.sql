@@ -301,23 +301,23 @@ SELECT setval('versements_previsionnels_id_seq', 13, true);
 -- ============================================================================
 -- Imputations prévisionnelles conventions
 -- ============================================================================
-INSERT INTO imputations_analytiques (id, type_entite, entite_id, montant, dimensions_analytiques, observations) VALUES
+INSERT INTO imputations_analytiques (id, type_imputation, reference_id, montant, dimensions_valeurs) VALUES
 -- Convention 1 - Infrastructure
-(1, 'CONVENTION', 1, 4000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R001"}', 'Imputation infrastructure Casablanca'),
-(2, 'CONVENTION', 1, 3500000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R002"}', 'Imputation infrastructure Rabat'),
-(3, 'CONVENTION', 1, 2500000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R003"}', 'Imputation infrastructure Tanger'),
+(1, 'CONVENTION', 1, 4000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R001"}'),
+(2, 'CONVENTION', 1, 3500000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R002"}'),
+(3, 'CONVENTION', 1, 2500000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R003"}'),
 -- Convention 2 - Équipement Public
-(4, 'CONVENTION', 2, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}', 'Imputation équipement Casa'),
-(5, 'CONVENTION', 2, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}', 'Imputation équipement Rabat'),
+(4, 'CONVENTION', 2, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}'),
+(5, 'CONVENTION', 2, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}'),
 -- Convention 8 - Aménagement Territorial
-(6, 'CONVENTION', 8, 6000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R002"}', 'Aménagement Zone Kénitra'),
-(7, 'CONVENTION', 8, 5000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R003"}', 'Aménagement Zone Tanger'),
-(8, 'CONVENTION', 8, 4000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R001"}', 'Aménagement Zone Casablanca'),
+(6, 'CONVENTION', 8, 6000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R002"}'),
+(7, 'CONVENTION', 8, 5000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R003"}'),
+(8, 'CONVENTION', 8, 4000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S002","REGION":"R001"}'),
 -- Convention 12 - Numérique
-(9, 'CONVENTION', 12, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}', 'Digital Casablanca'),
-(10, 'CONVENTION', 12, 2000000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}', 'Digital Rabat'),
+(9, 'CONVENTION', 12, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}'),
+(10, 'CONVENTION', 12, 2000000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}'),
 -- Convention 13 - Sport
-(11, 'CONVENTION', 13, 4000000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}', 'Sport Casablanca'),
-(12, 'CONVENTION', 13, 3500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}', 'Sport Rabat');
+(11, 'CONVENTION', 13, 4000000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}'),
+(12, 'CONVENTION', 13, 3500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}');
 
 SELECT setval('imputations_analytiques_id_seq', 12, true);

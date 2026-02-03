@@ -242,39 +242,59 @@ INSERT INTO subventions (id, convention_id, organisme_bailleur, type_subvention,
 SELECT setval('subventions_id_seq', 8, true);
 
 -- ============================================================================
--- Partenaires conventions
+-- Partenaires (organismes partenaires)
 -- ============================================================================
-INSERT INTO convention_partenaires (id, convention_id, nom_partenaire, type_partenaire, role_partenaire, contact_nom, contact_email, contact_telephone, observations) VALUES
-(1, 1, 'Ministère de l''Équipement', 'PUBLIC', 'MAITRE_OUVRAGE', 'M. Ahmed Bennani', 'a.bennani@equipement.gov.ma', '+212537123456', 'Tutelle administrative'),
-(2, 1, 'Agence Urbaine Casablanca', 'PUBLIC', 'PARTENAIRE_TECHNIQUE', 'Mme Fatima Alaoui', 'f.alaoui@auc.ma', '+212522654321', 'Appui technique urbanisme'),
-(3, 1, 'Conseil Régional Casablanca-Settat', 'PUBLIC', 'COFINANCEUR', 'M. Hassan Idrissi', 'h.idrissi@cr-cs.ma', '+212522789012', 'Co-financement 30%'),
-(4, 2, 'Direction des Collectivités Locales', 'PUBLIC', 'MAITRE_OUVRAGE', 'M. Karim Tazi', 'k.tazi@dcl.gov.ma', '+212537234567', NULL),
-(5, 2, 'ONEE - Office National de l''Électricité', 'PUBLIC', 'PARTENAIRE_TECHNIQUE', 'Mme Sara Amrani', 's.amrani@onee.ma', '+212522345678', 'Raccordement électrique');
+INSERT INTO partenaires (id, code, raison_sociale, sigle, type_partenaire, email, telephone, adresse, description) VALUES
+(1, 'MIN-EQUIP', 'Ministère de l''Équipement et de l''Eau', 'MEE', 'PUBLIC', 'contact@equipement.gov.ma', '+212537123456', 'Avenue Mohammed V, Rabat', 'Tutelle administrative'),
+(2, 'AU-CASA', 'Agence Urbaine de Casablanca', 'AUC', 'PUBLIC', 'contact@auc.ma', '+212522654321', 'Boulevard Zerktouni, Casablanca', 'Appui technique urbanisme'),
+(3, 'CR-CS', 'Conseil Régional Casablanca-Settat', 'CRCS', 'PUBLIC', 'contact@cr-cs.ma', '+212522789012', 'Place Mohammed V, Casablanca', 'Co-financement régional'),
+(4, 'DCL', 'Direction des Collectivités Locales', 'DCL', 'PUBLIC', 'contact@dcl.gov.ma', '+212537234567', 'Avenue Al Fassia, Rabat', 'Tutelle collectivités'),
+(5, 'ONEE', 'Office National de l''Électricité et de l''Eau', 'ONEE', 'PUBLIC', 's.amrani@onee.ma', '+212522345678', 'Rue Hassan II, Casablanca', 'Raccordement électrique'),
+(6, 'MEN', 'Ministère de l''Éducation Nationale', 'MEN', 'PUBLIC', 'contact@men.gov.ma', '+212537772233', 'Avenue Allal Ben Abdellah, Rabat', 'Tutelle éducation'),
+(7, 'MS', 'Ministère de la Santé', 'MS', 'PUBLIC', 'contact@sante.gov.ma', '+212537776655', 'Avenue Ibn Sina, Rabat', 'Tutelle santé'),
+(8, 'ANCFCC', 'Agence Nationale de la Conservation Foncière', 'ANCFCC', 'PUBLIC', 'contact@ancfcc.gov.ma', '+212537665544', 'Avenue My Rachid, Rabat', 'Conservation foncière');
 
-SELECT setval('convention_partenaires_id_seq', 5, true);
+SELECT setval('partenaires_id_seq', 8, true);
+
+-- ============================================================================
+-- Partenaires conventions (liaison convention-partenaire avec budget)
+-- ============================================================================
+INSERT INTO convention_partenaires (id, convention_id, partenaire_id, budget_alloue, pourcentage, commission_intervention, est_maitre_oeuvre, est_maitre_oeuvre_delegue, remarques) VALUES
+-- Convention 1 - Infrastructure
+(1, 1, 1, 4000000.00, 40.00, 100000.00, true, false, 'Maître d''ouvrage principal'),
+(2, 1, 2, 3000000.00, 30.00, 75000.00, false, true, 'Maître d''ouvrage délégué'),
+(3, 1, 3, 3000000.00, 30.00, 75000.00, false, false, 'Co-financement régional'),
+-- Convention 2 - Équipement Public
+(4, 2, 4, 2500000.00, 50.00, 75000.00, true, false, 'Maître d''ouvrage'),
+(5, 2, 5, 2500000.00, 50.00, 75000.00, false, false, 'Partenaire technique'),
+-- Convention 8 - Aménagement Territorial
+(6, 8, 1, 7500000.00, 50.00, 150000.00, true, false, 'Maître d''ouvrage'),
+(7, 8, 8, 7500000.00, 50.00, 150000.00, false, true, 'Gestion foncière');
+
+SELECT setval('convention_partenaires_id_seq', 7, true);
 
 -- ============================================================================
 -- Versements prévisionnels
 -- ============================================================================
-INSERT INTO versements_previsionnels (id, convention_id, axe, projet, volet, date_versement, montant, observations) VALUES
--- Convention 1 - Infrastructure
-(1, 1, 'Infrastructure', 'Voirie Casablanca', 'Tranche 1', '2024-03-15', 1500000.00, 'Premier versement après validation'),
-(2, 1, 'Infrastructure', 'Voirie Casablanca', 'Tranche 2', '2024-06-15', 1500000.00, 'Deuxième versement à 50% avancement'),
-(3, 1, 'Infrastructure', 'Routes Nationales', 'Tranche 1', '2024-04-01', 2000000.00, 'Démarrage travaux RN'),
-(4, 1, 'Infrastructure', 'Routes Nationales', 'Tranche 2', '2024-09-01', 2000000.00, 'Fin travaux RN'),
--- Convention 2 - Équipement Public
-(5, 2, 'Équipement', 'Écoles', 'Mobilier', '2024-05-01', 1200000.00, 'Commande mobilier scolaire'),
-(6, 2, 'Équipement', 'Santé', 'Matériel médical', '2024-06-01', 1800000.00, 'Équipement centres de santé'),
--- Convention 8 - Aménagement Territorial
-(7, 8, 'Aménagement', 'Zone Industrielle Kénitra', 'Phase 1', '2024-05-01', 3000000.00, 'Viabilisation terrain'),
-(8, 8, 'Aménagement', 'Zone Industrielle Kénitra', 'Phase 2', '2024-09-01', 4000000.00, 'Construction bâtiments'),
-(9, 8, 'Aménagement', 'Zone Activités Tanger', 'Phase 1', '2024-06-15', 3500000.00, 'Aménagement voirie'),
--- Convention 12 - Numérique
-(10, 12, 'Digital', 'E-Administration', 'Développement', '2024-10-01', 1500000.00, 'Développement plateforme'),
-(11, 12, 'Digital', 'E-Administration', 'Déploiement', '2025-02-01', 1200000.00, 'Formation et déploiement'),
--- Convention 13 - Sport
-(12, 13, 'Sport', 'Stades', 'Construction', '2024-11-01', 2500000.00, 'Construction stade municipal'),
-(13, 13, 'Sport', 'Complexes', 'Réhabilitation', '2025-01-15', 2000000.00, 'Rénovation complexes sportifs');
+INSERT INTO versements_previsionnels (id, convention_id, partenaire_id, volet, date_versement, montant, remarques) VALUES
+-- Convention 1 - Infrastructure (partenaire 1 = MEE)
+(1, 1, 1, 'Tranche 1 - Démarrage', '2024-03-15', 1500000.00, 'Premier versement après validation'),
+(2, 1, 1, 'Tranche 2 - Avancement 50%', '2024-06-15', 1500000.00, 'Deuxième versement à 50% avancement'),
+(3, 1, 2, 'Tranche 1 - Études', '2024-04-01', 1000000.00, 'Études préliminaires'),
+(4, 1, 2, 'Tranche 2 - Travaux', '2024-09-01', 2000000.00, 'Lancement travaux'),
+-- Convention 2 - Équipement Public (partenaire 4 = DCL)
+(5, 2, 4, 'Mobilier scolaire', '2024-05-01', 1200000.00, 'Commande mobilier'),
+(6, 2, 4, 'Matériel médical', '2024-06-01', 1800000.00, 'Équipement centres de santé'),
+-- Convention 8 - Aménagement Territorial (partenaire 1 = MEE)
+(7, 8, 1, 'Phase 1 - Viabilisation', '2024-05-01', 3000000.00, 'Viabilisation terrain'),
+(8, 8, 1, 'Phase 2 - Construction', '2024-09-01', 4000000.00, 'Construction bâtiments'),
+(9, 8, 8, 'Phase 1 - Foncier', '2024-06-15', 3500000.00, 'Acquisition foncière'),
+-- Convention 12 - Numérique (partenaire 4 = DCL)
+(10, 12, 4, 'Développement', '2024-10-01', 1500000.00, 'Développement plateforme'),
+(11, 12, 4, 'Déploiement', '2025-02-01', 1200000.00, 'Formation et déploiement'),
+-- Convention 13 - Sport (partenaire 6 = MEN)
+(12, 13, 6, 'Construction stades', '2024-11-01', 2500000.00, 'Construction stade municipal'),
+(13, 13, 6, 'Réhabilitation', '2025-01-15', 2000000.00, 'Rénovation complexes sportifs');
 
 SELECT setval('versements_previsionnels_id_seq', 13, true);
 

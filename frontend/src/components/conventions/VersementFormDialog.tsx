@@ -10,18 +10,31 @@ import {
   CircularProgress,
   Alert,
   InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from '@mui/material'
 import { Save, Cancel } from '@mui/icons-material'
-import { versementsPrevisionnelsAPI } from '@/lib/api'
+import { versementsPrevisionnelsAPI, partenairesAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 
 interface VersementPrevisionnel {
   id: number
-  axe?: string
-  projet?: string
+  partenaireId?: number
+  partenaireNom?: string
   volet?: string
   dateVersement: string
   montant: number
+  remarques?: string
+}
+
+interface Partenaire {
+  id: number
+  code: string
+  raisonSociale: string
+  sigle?: string
 }
 
 interface VersementFormDialogProps {
@@ -41,31 +54,52 @@ const VersementFormDialog = ({
 }: VersementFormDialogProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [partenaires, setPartenaires] = useState<Partenaire[]>([])
+  const [loadingPartenaires, setLoadingPartenaires] = useState(false)
   const [formData, setFormData] = useState({
-    axe: '',
-    projet: '',
+    partenaireId: 0,
     volet: '',
     dateVersement: '',
     montant: 0,
+    remarques: '',
   })
+
+  // Load partenaires on open
+  useEffect(() => {
+    if (open) {
+      loadPartenaires()
+    }
+  }, [open])
+
+  const loadPartenaires = async () => {
+    try {
+      setLoadingPartenaires(true)
+      const res = await partenairesAPI.getAllActive()
+      setPartenaires(res.data.data || res.data || [])
+    } catch (err) {
+      console.error('Error loading partenaires:', err)
+    } finally {
+      setLoadingPartenaires(false)
+    }
+  }
 
   useEffect(() => {
     if (open) {
       if (editingVersement) {
         setFormData({
-          axe: editingVersement.axe || '',
-          projet: editingVersement.projet || '',
+          partenaireId: editingVersement.partenaireId || 0,
           volet: editingVersement.volet || '',
           dateVersement: editingVersement.dateVersement?.split('T')[0] || '',
           montant: editingVersement.montant,
+          remarques: editingVersement.remarques || '',
         })
       } else {
         setFormData({
-          axe: '',
-          projet: '',
+          partenaireId: 0,
           volet: '',
-          dateVersement: '',
+          dateVersement: new Date().toISOString().split('T')[0],
           montant: 0,
+          remarques: '',
         })
       }
       setError(null)
@@ -77,8 +111,16 @@ const VersementFormDialog = ({
   }
 
   const handleSubmit = async () => {
-    if (!formData.dateVersement || formData.montant <= 0) {
-      setError('La date et le montant sont obligatoires')
+    if (!formData.partenaireId || formData.partenaireId === 0) {
+      setError('Le partenaire est obligatoire')
+      return
+    }
+    if (!formData.dateVersement) {
+      setError('La date de versement est obligatoire')
+      return
+    }
+    if (formData.montant <= 0) {
+      setError('Le montant doit être supérieur à 0')
       return
     }
 
@@ -87,11 +129,11 @@ const VersementFormDialog = ({
       setError(null)
 
       const payload = {
-        axe: formData.axe || null,
-        projet: formData.projet || null,
+        partenaireId: formData.partenaireId,
         volet: formData.volet || null,
         dateVersement: formData.dateVersement,
         montant: formData.montant,
+        remarques: formData.remarques || null,
       }
 
       if (editingVersement) {
@@ -123,32 +165,38 @@ const VersementFormDialog = ({
         )}
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <TextField
-            label="Axe"
-            value={formData.axe}
-            onChange={(e) => handleChange('axe', e.target.value)}
-            placeholder="Ex: Infrastructure"
-            size="small"
-          />
+          <FormControl fullWidth size="small" required error={!formData.partenaireId}>
+            <InputLabel>Partenaire</InputLabel>
+            <Select
+              value={formData.partenaireId || ''}
+              label="Partenaire"
+              onChange={(e) => handleChange('partenaireId', e.target.value as number)}
+              disabled={loadingPartenaires}
+            >
+              {loadingPartenaires ? (
+                <MenuItem disabled>Chargement...</MenuItem>
+              ) : (
+                partenaires.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.sigle ? `${p.sigle} - ${p.raisonSociale}` : p.raisonSociale}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+            <FormHelperText>Organisme destinataire du versement</FormHelperText>
+          </FormControl>
 
           <TextField
-            label="Projet"
-            value={formData.projet}
-            onChange={(e) => handleChange('projet', e.target.value)}
-            placeholder="Ex: Projet Route Nord"
-            size="small"
-          />
-
-          <TextField
-            label="Volet"
+            label="Volet / Tranche"
             value={formData.volet}
             onChange={(e) => handleChange('volet', e.target.value)}
-            placeholder="Ex: Phase 1"
+            placeholder="Ex: Tranche 1 - Démarrage"
             size="small"
+            helperText="Description du volet ou de la tranche de versement"
           />
 
           <TextField
-            label="Date de versement"
+            label="Date de versement prévue"
             type="date"
             value={formData.dateVersement}
             onChange={(e) => handleChange('dateVersement', e.target.value)}
@@ -167,6 +215,16 @@ const VersementFormDialog = ({
             }}
             inputProps={{ min: 0, step: 0.01 }}
             required
+            size="small"
+          />
+
+          <TextField
+            label="Remarques"
+            value={formData.remarques}
+            onChange={(e) => handleChange('remarques', e.target.value)}
+            placeholder="Notes et observations..."
+            multiline
+            rows={2}
             size="small"
           />
         </Box>

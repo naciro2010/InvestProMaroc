@@ -215,3 +215,51 @@ INSERT INTO categories_depenses (id, code, libelle, description, categorie, ordr
 
 -- Reset sequence
 SELECT setval('categories_depenses_id_seq', 10, true);
+
+-- ============================================================================
+-- Subventions (financements externes)
+-- ============================================================================
+INSERT INTO subventions (id, convention_id, organisme_bailleur, type_subvention, montant_total, devise, taux_change, date_signature, date_debut_validite, date_fin_validite, conditions, observations) VALUES
+(1, 1, 'Banque Mondiale', 'PRET', 2000000.00, 'USD', 10.2500, '2024-01-20', '2024-02-01', '2028-01-31', 'Décaissement progressif selon avancement des travaux', 'Prêt à taux préférentiel 2%'),
+(2, 1, 'Union Européenne', 'DON', 1500000.00, 'EUR', 10.8000, '2024-02-15', '2024-03-01', '2026-12-31', 'Rapport semestriel obligatoire', 'Programme de coopération UE-Maroc'),
+(3, 2, 'BAD - Banque Africaine de Développement', 'PRET', 3000000.00, 'MAD', NULL, '2024-03-01', '2024-04-01', '2029-03-31', 'Audit annuel requis', 'Financement équipements publics'),
+(4, 1, 'Fonds Hassan II', 'DON', 500000.00, 'MAD', NULL, '2024-04-10', '2024-05-01', '2025-12-31', NULL, 'Subvention nationale');
+
+SELECT setval('subventions_id_seq', 4, true);
+
+-- ============================================================================
+-- Partenaires conventions
+-- ============================================================================
+INSERT INTO convention_partenaires (id, convention_id, nom_partenaire, type_partenaire, role_partenaire, contact_nom, contact_email, contact_telephone, observations) VALUES
+(1, 1, 'Ministère de l''Équipement', 'PUBLIC', 'MAITRE_OUVRAGE', 'M. Ahmed Bennani', 'a.bennani@equipement.gov.ma', '+212537123456', 'Tutelle administrative'),
+(2, 1, 'Agence Urbaine Casablanca', 'PUBLIC', 'PARTENAIRE_TECHNIQUE', 'Mme Fatima Alaoui', 'f.alaoui@auc.ma', '+212522654321', 'Appui technique urbanisme'),
+(3, 1, 'Conseil Régional Casablanca-Settat', 'PUBLIC', 'COFINANCEUR', 'M. Hassan Idrissi', 'h.idrissi@cr-cs.ma', '+212522789012', 'Co-financement 30%'),
+(4, 2, 'Direction des Collectivités Locales', 'PUBLIC', 'MAITRE_OUVRAGE', 'M. Karim Tazi', 'k.tazi@dcl.gov.ma', '+212537234567', NULL),
+(5, 2, 'ONEE - Office National de l''Électricité', 'PUBLIC', 'PARTENAIRE_TECHNIQUE', 'Mme Sara Amrani', 's.amrani@onee.ma', '+212522345678', 'Raccordement électrique');
+
+SELECT setval('convention_partenaires_id_seq', 5, true);
+
+-- ============================================================================
+-- Versements prévisionnels
+-- ============================================================================
+INSERT INTO versements_previsionnels (id, convention_id, axe, projet, volet, date_versement, montant, observations) VALUES
+(1, 1, 'Infrastructure', 'Voirie Casablanca', 'Tranche 1', '2024-03-15', 1500000.00, 'Premier versement après validation'),
+(2, 1, 'Infrastructure', 'Voirie Casablanca', 'Tranche 2', '2024-06-15', 1500000.00, 'Deuxième versement à 50% avancement'),
+(3, 1, 'Infrastructure', 'Routes Nationales', 'Tranche 1', '2024-04-01', 2000000.00, 'Démarrage travaux RN'),
+(4, 1, 'Infrastructure', 'Routes Nationales', 'Tranche 2', '2024-09-01', 2000000.00, 'Fin travaux RN'),
+(5, 2, 'Équipement', 'Écoles', 'Mobilier', '2024-05-01', 1200000.00, 'Commande mobilier scolaire'),
+(6, 2, 'Équipement', 'Santé', 'Matériel médical', '2024-06-01', 1800000.00, 'Équipement centres de santé');
+
+SELECT setval('versements_previsionnels_id_seq', 6, true);
+
+-- ============================================================================
+-- Imputations prévisionnelles conventions
+-- ============================================================================
+INSERT INTO imputations_analytiques (id, type_entite, entite_id, montant, dimensions_analytiques, observations) VALUES
+(1, 'CONVENTION', 1, 4000000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R001"}', 'Imputation infrastructure Casablanca'),
+(2, 'CONVENTION', 1, 3500000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R002"}', 'Imputation infrastructure Rabat'),
+(3, 'CONVENTION', 1, 2500000.00, '{"BUDGET":"B001","PROJET":"P001","SECTEUR":"S001","REGION":"R003"}', 'Imputation infrastructure Tanger'),
+(4, 'CONVENTION', 2, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R001"}', 'Imputation équipement Casa'),
+(5, 'CONVENTION', 2, 2500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}', 'Imputation équipement Rabat');
+
+SELECT setval('imputations_analytiques_id_seq', 5, true);

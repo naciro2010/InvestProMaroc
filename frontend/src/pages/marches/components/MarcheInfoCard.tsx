@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Paper, Typography, Stack, Box, Chip, CircularProgress, Divider } from '@mui/material'
-import { Business, CalendarMonth, AttachMoney, Description } from '@mui/icons-material'
+import { Box, Typography, Stack, CircularProgress, Divider } from '@mui/material'
+import { Business, CalendarMonth, AttachMoney, Description, LocationOn } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
-import { colors } from '@/lib/designSystem'
+import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 interface MarcheInfoCardProps {
   marcheId: number
@@ -19,12 +19,10 @@ interface MarcheDetails {
   tauxTva: number
   montantTva: number
   montantTtc: number
-  // Flattened fournisseur fields from DTO
   fournisseurId: number
   fournisseurCode: string
   fournisseurNom: string
   fournisseurIce: string | null
-  // Flattened convention fields from DTO
   conventionId: number | null
   conventionNumero: string | null
   adresse?: string
@@ -34,8 +32,8 @@ interface MarcheDetails {
 
 /**
  * MICRO-COMPONENT: MarcheInfoCard
+ * Design: Atlassian/Confluence style - flat, professional
  * Charge les détails complets du marché
- * Endpoint: GET /marches/{id}/details
  */
 const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
   const [details, setDetails] = useState<MarcheDetails | null>(null)
@@ -72,138 +70,223 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
 
   if (loading) {
     return (
-      <Paper sx={{ p: 3, mb: 3, textAlign: 'center' }}>
+      <Box sx={{ ...componentStyles.card, p: 3, mb: 3, textAlign: 'center' }}>
         <CircularProgress size={30} />
-      </Paper>
+      </Box>
     )
   }
 
   if (!details) return null
 
+  const statusConfig = getStatusConfig(details.statut)
+
   return (
-    <Paper sx={{ p: 4, mb: 3 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ color: colors.primary[700] }}>
-        Informations Détaillées
-      </Typography>
+    <Box sx={{ ...componentStyles.card, p: 0, mb: 3, overflow: 'hidden' }}>
+      {/* Header */}
+      <Box
+        sx={{
+          bgcolor: colors.neutral[50],
+          borderBottom: `1px solid ${colors.border}`,
+          px: 3,
+          py: 2,
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: typography.sizes.lg,
+            fontWeight: typography.weights.semibold,
+            color: colors.textPrimary,
+          }}
+        >
+          Informations Détaillées
+        </Typography>
+      </Box>
 
-      <Divider sx={{ my: 2 }} />
+      {/* Content */}
+      <Box sx={{ p: 3 }}>
+        <Stack spacing={3}>
+          {/* Section Identité */}
+          <Box>
+            <Typography
+              sx={{
+                fontSize: typography.sizes.xs,
+                fontWeight: typography.weights.semibold,
+                color: colors.textSecondary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                mb: 2,
+              }}
+            >
+              Identité du Marché
+            </Typography>
+            <Stack spacing={1.5}>
+              <InfoRow icon={<Description />} label="Numéro Marché" value={details.numeroMarche} />
+              <InfoRow icon={<Description />} label="Numéro AO" value={details.numAo || '-'} />
+              <InfoRow icon={<CalendarMonth />} label="Date Marché" value={formatDate(details.dateMarche)} />
+              <InfoRow
+                icon={<Description />}
+                label="Statut"
+                value={
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.75,
+                      px: 1.5,
+                      py: 0.25,
+                      borderRadius: borders.radius.sm,
+                      bgcolor: statusConfig.bgColor,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        bgcolor: statusConfig.dotColor,
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: typography.sizes.xs,
+                        fontWeight: typography.weights.semibold,
+                        color: statusConfig.textColor,
+                      }}
+                    >
+                      {statusConfig.label}
+                    </Typography>
+                  </Box>
+                }
+              />
+            </Stack>
+          </Box>
 
-      <Stack spacing={3}>
-        {/* Section Identité */}
-        <Box>
-          <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-            Identité du Marché
-          </Typography>
-          <Stack spacing={2} sx={{ pl: 2 }}>
-            <InfoRow icon={<Description />} label="Numéro Marché" value={details.numeroMarche} />
-            <InfoRow icon={<Description />} label="Numéro AO" value={details.numAo || '-'} />
-            <InfoRow icon={<CalendarMonth />} label="Date Marché" value={formatDate(details.dateMarche)} />
-            <InfoRow
-              icon={<Description />}
-              label="Statut"
-              value={
-                <Chip
-                  label={details.statut?.replace('_', ' ') || 'N/A'}
-                  size="small"
-                  color={
-                    details.statut === 'EN_COURS'
-                      ? 'primary'
-                      : details.statut === 'TERMINE'
-                        ? 'success'
-                        : 'warning'
-                  }
-                />
-              }
-            />
-          </Stack>
-        </Box>
+          <Divider sx={{ borderColor: colors.divider }} />
 
-        <Divider />
+          {/* Section Objet */}
+          <Box>
+            <Typography
+              sx={{
+                fontSize: typography.sizes.xs,
+                fontWeight: typography.weights.semibold,
+                color: colors.textSecondary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                mb: 1,
+              }}
+            >
+              Objet
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: typography.sizes.base,
+                color: colors.textPrimary,
+              }}
+            >
+              {details.objet}
+            </Typography>
+          </Box>
 
-        {/* Section Objet */}
-        <Box>
-          <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-            Objet
-          </Typography>
-          <Typography variant="body1" sx={{ pl: 2 }}>
-            {details.objet}
-          </Typography>
-        </Box>
+          <Divider sx={{ borderColor: colors.divider }} />
 
-        <Divider />
+          {/* Section Financière */}
+          <Box>
+            <Typography
+              sx={{
+                fontSize: typography.sizes.xs,
+                fontWeight: typography.weights.semibold,
+                color: colors.textSecondary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                mb: 2,
+              }}
+            >
+              Montants
+            </Typography>
+            <Stack spacing={1.5}>
+              <InfoRow
+                icon={<AttachMoney />}
+                label="Montant HT"
+                value={`${formatCurrency(details.montantHt)} DH`}
+              />
+              <InfoRow
+                icon={<AttachMoney />}
+                label={`TVA (${details.tauxTva || 20}%)`}
+                value={`${formatCurrency(details.montantTva)} DH`}
+              />
+              <InfoRow
+                icon={<AttachMoney />}
+                label="Montant TTC"
+                value={
+                  <Typography
+                    sx={{
+                      fontSize: typography.sizes.base,
+                      fontWeight: typography.weights.bold,
+                      color: colors.primary[700],
+                    }}
+                  >
+                    {formatCurrency(details.montantTtc)} DH
+                  </Typography>
+                }
+              />
+            </Stack>
+          </Box>
 
-        {/* Section Financière */}
-        <Box>
-          <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-            Montants
-          </Typography>
-          <Stack spacing={2} sx={{ pl: 2 }}>
-            <InfoRow
-              icon={<AttachMoney />}
-              label="Montant HT"
-              value={`${formatCurrency(details.montantHt)} DH`}
-            />
-            <InfoRow
-              icon={<AttachMoney />}
-              label={`TVA (${details.tauxTva || 20}%)`}
-              value={`${formatCurrency(details.montantTva)} DH`}
-            />
-            <InfoRow
-              icon={<AttachMoney />}
-              label="Montant TTC"
-              value={
-                <Typography variant="body1" fontWeight="bold" color="primary">
-                  {formatCurrency(details.montantTtc)} DH
+          <Divider sx={{ borderColor: colors.divider }} />
+
+          {/* Section Relations */}
+          <Box>
+            <Typography
+              sx={{
+                fontSize: typography.sizes.xs,
+                fontWeight: typography.weights.semibold,
+                color: colors.textSecondary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                mb: 2,
+              }}
+            >
+              Relations
+            </Typography>
+            <Stack spacing={1.5}>
+              <InfoRow icon={<Business />} label="Fournisseur" value={details.fournisseurNom || '-'} />
+              <InfoRow icon={<Description />} label="Convention" value={details.conventionNumero || '-'} />
+            </Stack>
+          </Box>
+
+          {/* Section Géolocalisation */}
+          {details.adresse && (
+            <>
+              <Divider sx={{ borderColor: colors.divider }} />
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: typography.sizes.xs,
+                    fontWeight: typography.weights.semibold,
+                    color: colors.textSecondary,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    mb: 2,
+                  }}
+                >
+                  Localisation
                 </Typography>
-              }
-            />
-          </Stack>
-        </Box>
-
-        <Divider />
-
-        {/* Section Relations */}
-        <Box>
-          <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-            Relations
-          </Typography>
-          <Stack spacing={2} sx={{ pl: 2 }}>
-            <InfoRow
-              icon={<Business />}
-              label="Fournisseur"
-              value={details.fournisseurNom || '-'}
-            />
-            <InfoRow
-              icon={<Description />}
-              label="Convention"
-              value={details.conventionNumero || '-'}
-            />
-          </Stack>
-        </Box>
-
-        {/* Section Géolocalisation (si disponible) */}
-        {details.adresse && (
-          <>
-            <Divider />
-            <Box>
-              <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                Localisation
-              </Typography>
-              <Stack spacing={2} sx={{ pl: 2 }}>
-                <InfoRow icon={<CalendarMonth />} label="Adresse" value={details.adresse} />
-                {details.latitude && details.longitude && (
-                  <InfoRow
-                    icon={<CalendarMonth />}
-                    label="Coordonnées"
-                    value={`${details.latitude}, ${details.longitude}`}
-                  />
-                )}
-              </Stack>
-            </Box>
-          </>
-        )}
-      </Stack>
-    </Paper>
+                <Stack spacing={1.5}>
+                  <InfoRow icon={<LocationOn />} label="Adresse" value={details.adresse} />
+                  {details.latitude && details.longitude && (
+                    <InfoRow
+                      icon={<LocationOn />}
+                      label="Coordonnées"
+                      value={`${details.latitude}, ${details.longitude}`}
+                    />
+                  )}
+                </Stack>
+              </Box>
+            </>
+          )}
+        </Stack>
+      </Box>
+    </Box>
   )
 }
 
@@ -216,12 +299,24 @@ interface InfoRowProps {
 const InfoRow = ({ icon, label, value }: InfoRowProps) => {
   return (
     <Stack direction="row" spacing={2} alignItems="center">
-      <Box sx={{ color: colors.primary[600] }}>{icon}</Box>
-      <Typography variant="body2" color="textSecondary" sx={{ minWidth: 150 }}>
+      <Box sx={{ color: colors.neutral[400], display: 'flex' }}>{icon}</Box>
+      <Typography
+        sx={{
+          fontSize: typography.sizes.sm,
+          color: colors.textSecondary,
+          minWidth: 140,
+        }}
+      >
         {label}
       </Typography>
       <Box sx={{ flex: 1 }}>
-        {typeof value === 'string' ? <Typography variant="body1">{value}</Typography> : value}
+        {typeof value === 'string' ? (
+          <Typography sx={{ fontSize: typography.sizes.base, color: colors.textPrimary }}>
+            {value}
+          </Typography>
+        ) : (
+          value
+        )}
       </Box>
     </Stack>
   )

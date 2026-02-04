@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  Paper,
+  Box,
   Typography,
   Table,
   TableBody,
@@ -10,14 +10,12 @@ import {
   TableRow,
   CircularProgress,
   Alert,
-  Chip,
-  Box,
   Button,
 } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { marchesAPI } from '../../../lib/api'
-import { colors, componentStyles } from '@/lib/designSystem'
+import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 interface MarcheDecomptesSectionProps {
   marcheId: number
@@ -37,6 +35,7 @@ interface Decompte {
 
 /**
  * MICRO-COMPONENT: MarcheDecomptesSection
+ * Design: Atlassian/Confluence style table
  * Charge uniquement les décomptes du marché
  * Endpoint: GET /marches/{id}/decomptes
  */
@@ -54,8 +53,6 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
     try {
       setLoading(true)
       setError(null)
-      // Micro-endpoint dédié aux décomptes d'un marché
-      // Endpoint: GET /marches/{id}/decomptes
       const { data } = await marchesAPI.getDecomptes(marcheId)
       const decomptesData = Array.isArray(data.data) ? data.data : data.data?.data || []
       setDecomptes(decomptesData)
@@ -79,35 +76,38 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
     return new Date(date).toLocaleDateString('fr-FR')
   }
 
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case 'VALIDE':
-        return 'success'
-      case 'BROUILLON':
-        return 'default'
-      case 'SOUMIS':
-        return 'info'
-      case 'REJETE':
-        return 'error'
-      case 'PAYE_TOTAL':
-        return 'success'
-      case 'PAYE_PARTIEL':
-        return 'warning'
-      default:
-        return 'default'
-    }
-  }
-
   const totalDecomptes = decomptes.reduce((sum, d) => sum + (d.netAPayer || 0), 0)
 
   return (
-    <Paper sx={{ p: 4, mb: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Box sx={{ ...componentStyles.card, p: 0, mb: 3, overflow: 'hidden' }}>
+      {/* Header */}
+      <Box
+        sx={{
+          bgcolor: colors.neutral[50],
+          borderBottom: `1px solid ${colors.border}`,
+          px: 3,
+          py: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Box>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: colors.primary[700] }}>
+          <Typography
+            sx={{
+              fontSize: typography.sizes.lg,
+              fontWeight: typography.weights.semibold,
+              color: colors.textPrimary,
+            }}
+          >
             Décomptes
           </Typography>
-          <Typography variant="body2" color="textSecondary">
+          <Typography
+            sx={{
+              fontSize: typography.sizes.sm,
+              color: colors.textSecondary,
+            }}
+          >
             {decomptes.length} décompte(s) - Total: {formatCurrency(totalDecomptes)} DH
           </Typography>
         </Box>
@@ -116,62 +116,104 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
           startIcon={<Add />}
           onClick={() => navigate('/decomptes/nouveau')}
           sx={componentStyles.buttonPrimary}
+          size="small"
         >
           Nouveau Décompte
         </Button>
       </Box>
 
+      {/* Content */}
       {loading ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
-          <CircularProgress />
+          <CircularProgress size={30} />
         </Box>
       ) : error ? (
-        <Alert severity="error">{error}</Alert>
+        <Box sx={{ p: 3 }}>
+          <Alert severity="error">{error}</Alert>
+        </Box>
       ) : decomptes.length === 0 ? (
-        <Alert severity="info">Aucun décompte pour ce marché</Alert>
+        <Box sx={{ p: 3 }}>
+          <Alert severity="info">Aucun décompte pour ce marché</Alert>
+        </Box>
       ) : (
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell>
-                  <strong>Numéro</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Date</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>Net à Payer</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Statut</strong>
-                </TableCell>
+              <TableRow sx={componentStyles.listPage.tableHeader}>
+                <TableCell>Numéro</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell align="right">Net à Payer</TableCell>
+                <TableCell>Statut</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {decomptes.map((decompte) => (
-                <TableRow key={decompte.id} hover>
-                  <TableCell>{decompte.numeroDecompte}</TableCell>
-                  <TableCell>{formatDate(decompte.dateDecompte)}</TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight="bold" color="primary">
-                      {formatCurrency(decompte.netAPayer)} DH
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={decompte.statut?.replace('_', ' ') || 'N/A'}
-                      color={getStatutColor(decompte.statut)}
-                      size="small"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {decomptes.map((decompte) => {
+                const statusConfig = getStatusConfig(decompte.statut)
+                return (
+                  <TableRow
+                    key={decompte.id}
+                    sx={{
+                      borderBottom: `1px solid ${colors.divider}`,
+                      '&:hover': { bgcolor: colors.neutral[50] },
+                      '&:last-child': { borderBottom: 'none' },
+                    }}
+                  >
+                    <TableCell sx={{ color: colors.textPrimary, fontWeight: typography.weights.medium }}>
+                      {decompte.numeroDecompte}
+                    </TableCell>
+                    <TableCell sx={{ color: colors.textSecondary }}>
+                      {formatDate(decompte.dateDecompte)}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography
+                        sx={{
+                          fontSize: typography.sizes.base,
+                          fontWeight: typography.weights.semibold,
+                          color: colors.primary[700],
+                        }}
+                      >
+                        {formatCurrency(decompte.netAPayer)} DH
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 1.5,
+                          py: 0.25,
+                          borderRadius: borders.radius.sm,
+                          bgcolor: statusConfig.bgColor,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            bgcolor: statusConfig.dotColor,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: typography.sizes.xs,
+                            fontWeight: typography.weights.semibold,
+                            color: statusConfig.textColor,
+                          }}
+                        >
+                          {statusConfig.label}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </TableContainer>
       )}
-    </Paper>
+    </Box>
   )
 }
 

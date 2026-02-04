@@ -20,11 +20,15 @@ interface UseConventionDataOptions {
 export const useConventionBasic = (id: number | undefined, options: UseConventionDataOptions = {}) => {
   const { enabled = true } = options
   const [data, setData] = useState<ConventionBasicDTO | null>(null)
-  const [loading, setLoading] = useState(false)
+  // Initialize loading to true if we have an id and are enabled, to prevent flash of error state
+  const [loading, setLoading] = useState(!!id && enabled)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!id || !enabled) return
+    if (!id || !enabled) {
+      setLoading(false)
+      return
+    }
 
     const fetchData = async () => {
       try {
@@ -49,11 +53,15 @@ export const useConventionBasic = (id: number | undefined, options: UseConventio
 export const useConventionFinances = (id: number | undefined, options: UseConventionDataOptions = {}) => {
   const { enabled = true } = options
   const [data, setData] = useState<ConventionFinancesDTO | null>(null)
-  const [loading, setLoading] = useState(false)
+  // Initialize loading to true if we have an id and are enabled, to prevent flash of error state
+  const [loading, setLoading] = useState(!!id && enabled)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!id || !enabled) return
+    if (!id || !enabled) {
+      setLoading(false)
+      return
+    }
 
     const fetchData = async () => {
       try {
@@ -78,11 +86,15 @@ export const useConventionFinances = (id: number | undefined, options: UseConven
 export const useConventionDates = (id: number | undefined, options: UseConventionDataOptions = {}) => {
   const { enabled = true } = options
   const [data, setData] = useState<ConventionDatesDTO | null>(null)
-  const [loading, setLoading] = useState(false)
+  // Initialize loading to true if we have an id and are enabled, to prevent flash of error state
+  const [loading, setLoading] = useState(!!id && enabled)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!id || !enabled) return
+    if (!id || !enabled) {
+      setLoading(false)
+      return
+    }
 
     const fetchData = async () => {
       try {
@@ -107,11 +119,15 @@ export const useConventionDates = (id: number | undefined, options: UseConventio
 export const useConventionStats = (id: number | undefined, options: UseConventionDataOptions = {}) => {
   const { enabled = true } = options
   const [data, setData] = useState<ConventionStatsDTO | null>(null)
-  const [loading, setLoading] = useState(false)
+  // Initialize loading to true if we have an id and are enabled, to prevent flash of error state
+  const [loading, setLoading] = useState(!!id && enabled)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!id || !enabled) return
+    if (!id || !enabled) {
+      setLoading(false)
+      return
+    }
 
     const fetchData = async () => {
       try {

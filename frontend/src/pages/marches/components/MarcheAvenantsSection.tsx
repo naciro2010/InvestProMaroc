@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  Paper,
+  Box,
   Typography,
   Table,
   TableBody,
@@ -10,13 +10,11 @@ import {
   TableRow,
   CircularProgress,
   Alert,
-  Chip,
-  Box,
   Button,
 } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
-import { colors } from '@/lib/designSystem'
+import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 interface MarcheAvenantsSectionProps {
   marcheId: number
@@ -79,99 +77,148 @@ const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
     return new Date(date).toLocaleDateString('fr-FR')
   }
 
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case 'VALIDE':
-        return 'success'
-      case 'BROUILLON':
-        return 'default'
-      case 'REJETE':
-        return 'error'
-      default:
-        return 'default'
-    }
-  }
-
   return (
-    <Paper sx={{ p: 4, mb: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Box sx={{ ...componentStyles.card, p: 0, mb: 3, overflow: 'hidden' }}>
+      {/* Header */}
+      <Box
+        sx={{
+          bgcolor: colors.neutral[50],
+          borderBottom: `1px solid ${colors.border}`,
+          px: 3,
+          py: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Box>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: colors.primary[700] }}>
+          <Typography
+            sx={{
+              fontSize: typography.sizes.lg,
+              fontWeight: typography.weights.semibold,
+              color: colors.textPrimary,
+            }}
+          >
             Avenants
           </Typography>
-          <Typography variant="body2" color="textSecondary">
+          <Typography
+            sx={{
+              fontSize: typography.sizes.sm,
+              color: colors.textSecondary,
+            }}
+          >
             {avenants.length} avenant(s)
           </Typography>
         </Box>
         <Button
-          variant="outlined"
+          variant="contained"
           startIcon={<Add />}
           onClick={() => alert('Création d\'avenant - À implémenter')}
+          sx={componentStyles.buttonPrimary}
+          size="small"
         >
           Nouvel Avenant
         </Button>
       </Box>
 
+      {/* Content */}
       {loading ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
-          <CircularProgress />
+          <CircularProgress size={30} />
         </Box>
       ) : error ? (
-        <Alert severity="error">{error}</Alert>
+        <Box sx={{ p: 3 }}>
+          <Alert severity="error">{error}</Alert>
+        </Box>
       ) : avenants.length === 0 ? (
-        <Alert severity="info">Aucun avenant pour ce marché</Alert>
+        <Box sx={{ p: 3 }}>
+          <Alert severity="info">Aucun avenant pour ce marché</Alert>
+        </Box>
       ) : (
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell>
-                  <strong>Numéro</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Date</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Objet</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>Impact</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Statut</strong>
-                </TableCell>
+              <TableRow sx={componentStyles.listPage.tableHeader}>
+                <TableCell>Numéro</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Objet</TableCell>
+                <TableCell align="right">Impact</TableCell>
+                <TableCell>Statut</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {avenants.map((avenant) => (
-                <TableRow key={avenant.id} hover>
-                  <TableCell>{avenant.numeroAvenant}</TableCell>
-                  <TableCell>{formatDate(avenant.dateAvenant)}</TableCell>
-                  <TableCell>{avenant.objet}</TableCell>
-                  <TableCell align="right">
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color={(avenant.impact ?? 0) >= 0 ? 'success.main' : 'error.main'}
-                    >
-                      {(avenant.impact ?? 0) >= 0 ? '+' : ''}
-                      {formatCurrency(avenant.impact)} DH
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={avenant.statut?.replace('_', ' ') || 'N/A'}
-                      color={getStatutColor(avenant.statut)}
-                      size="small"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {avenants.map((avenant) => {
+                const statusConfig = getStatusConfig(avenant.statut)
+                const impactValue = avenant.impact ?? 0
+                return (
+                  <TableRow
+                    key={avenant.id}
+                    sx={{
+                      borderBottom: `1px solid ${colors.divider}`,
+                      '&:hover': { bgcolor: colors.neutral[50] },
+                      '&:last-child': { borderBottom: 'none' },
+                    }}
+                  >
+                    <TableCell sx={{ color: colors.textPrimary, fontWeight: typography.weights.medium }}>
+                      {avenant.numeroAvenant}
+                    </TableCell>
+                    <TableCell sx={{ color: colors.textSecondary }}>
+                      {formatDate(avenant.dateAvenant)}
+                    </TableCell>
+                    <TableCell sx={{ color: colors.textPrimary }}>
+                      {avenant.objet}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography
+                        sx={{
+                          fontSize: typography.sizes.base,
+                          fontWeight: typography.weights.semibold,
+                          color: impactValue >= 0 ? colors.success[700] : colors.danger[700],
+                        }}
+                      >
+                        {impactValue >= 0 ? '+' : ''}
+                        {formatCurrency(avenant.impact)} DH
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 1.5,
+                          py: 0.25,
+                          borderRadius: borders.radius.sm,
+                          bgcolor: statusConfig.bgColor,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            bgcolor: statusConfig.dotColor,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: typography.sizes.xs,
+                            fontWeight: typography.weights.semibold,
+                            color: statusConfig.textColor,
+                          }}
+                        >
+                          {statusConfig.label}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </TableContainer>
       )}
-    </Paper>
+    </Box>
   )
 }
 

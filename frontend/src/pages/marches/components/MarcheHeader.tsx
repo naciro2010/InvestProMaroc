@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Button, Typography, Chip, CircularProgress, Alert } from '@mui/material'
+import { Box, Button, Typography, CircularProgress, Alert } from '@mui/material'
 import { ArrowBack, Edit } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
-import { colors } from '@/lib/designSystem'
+import { colors, typography, borders, shadows, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 interface MarcheHeaderProps {
   marcheId: number
@@ -19,6 +19,7 @@ interface MarcheBasicInfo {
 
 /**
  * MICRO-COMPONENT: MarcheHeader
+ * Design: Atlassian/Confluence style - flat, professional
  * Charge uniquement les informations de base du marché
  * Endpoint: GET /marches/{id}/basic
  */
@@ -36,7 +37,6 @@ const MarcheHeader = ({ marcheId }: MarcheHeaderProps) => {
     try {
       setLoading(true)
       setError(null)
-      // Micro-endpoint: charge uniquement les infos de base
       const { data } = await marchesAPI.getById(marcheId)
       const marcheData = data.data || data
 
@@ -52,21 +52,6 @@ const MarcheHeader = ({ marcheId }: MarcheHeaderProps) => {
       setError('Impossible de charger les informations du marché')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case 'EN_COURS':
-        return 'primary'
-      case 'TERMINE':
-        return 'success'
-      case 'SUSPENDU':
-        return 'warning'
-      case 'ANNULE':
-        return 'error'
-      default:
-        return 'default'
     }
   }
 
@@ -86,59 +71,113 @@ const MarcheHeader = ({ marcheId }: MarcheHeaderProps) => {
     )
   }
 
+  const statusConfig = getStatusConfig(marche.statut)
+
   return (
     <Box
       sx={{
-        background: `linear-gradient(135deg, ${colors.primary[600]} 0%, ${colors.primary[700]} 100%)`,
-        color: 'white',
-        borderRadius: '16px',
-        p: 4,
+        bgcolor: colors.surface,
+        border: `1px solid ${colors.border}`,
+        borderRadius: borders.radius.lg,
+        overflow: 'hidden',
         mb: 3,
       }}
     >
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate('/marches')}
+      {/* Top bar with back button */}
+      <Box
         sx={{
-          color: 'white',
-          mb: 2,
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          },
+          bgcolor: colors.neutral[50],
+          borderBottom: `1px solid ${colors.border}`,
+          px: 3,
+          py: 1.5,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
-        Retour aux marchés
-      </Button>
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h3" fontWeight="bold" gutterBottom>
-            {marche.numeroMarche}
-          </Typography>
-          <Typography variant="h6" sx={{ opacity: 0.9, mb: 2 }}>
-            {marche.objet}
-          </Typography>
-          <Chip
-            label={marche.statut.replace('_', ' ')}
-            color={getStatutColor(marche.statut)}
-            sx={{ fontWeight: 'bold' }}
-          />
-        </Box>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate('/marches')}
+          sx={{
+            ...componentStyles.buttonGhost,
+            color: colors.textSecondary,
+          }}
+        >
+          Retour aux marchés
+        </Button>
 
         <Button
           variant="contained"
           startIcon={<Edit />}
           onClick={() => navigate(`/marches/${marcheId}/modifier`)}
-          sx={{
-            bgcolor: 'white',
-            color: colors.primary[700],
-            '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.9)',
-            },
-          }}
+          sx={componentStyles.buttonPrimary}
         >
           Modifier
         </Button>
+      </Box>
+
+      {/* Main header content */}
+      <Box sx={{ px: 3, py: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box sx={{ flex: 1 }}>
+            {/* Status badge */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: borders.radius.sm,
+                bgcolor: statusConfig.bgColor,
+                mb: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: statusConfig.dotColor,
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: typography.sizes.xs,
+                  fontWeight: typography.weights.semibold,
+                  color: statusConfig.textColor,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {statusConfig.label}
+              </Typography>
+            </Box>
+
+            {/* Marché number */}
+            <Typography
+              sx={{
+                fontSize: typography.sizes['2xl'],
+                fontWeight: typography.weights.bold,
+                color: colors.textPrimary,
+                mb: 0.5,
+              }}
+            >
+              {marche.numeroMarche}
+            </Typography>
+
+            {/* Objet */}
+            <Typography
+              sx={{
+                fontSize: typography.sizes.base,
+                color: colors.textSecondary,
+                maxWidth: 600,
+              }}
+            >
+              {marche.objet}
+            </Typography>
+          </Box>
+        </Box>
       </Box>
     </Box>
   )

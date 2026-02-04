@@ -19,9 +19,8 @@ interface MarcheStats {
 
 /**
  * MICRO-COMPONENT: MarcheStatsCard
- * Design: Atlassian-style stat cards (flat, clean, professional)
+ * Design: Atlassian-style stat cards (white bg, colored icons/values)
  * Charge uniquement les statistiques calculées
- * Endpoint: GET /marches/{id}/stats
  */
 const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
   const [stats, setStats] = useState<MarcheStats | null>(null)
@@ -34,14 +33,12 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
   const loadStats = async () => {
     try {
       setLoading(true)
-      // Micro-endpoint dédié aux statistiques
       const { data } = await marchesAPI.getById(marcheId)
       const marcheData = data.data || data
 
-      // Calcul des stats (à terme, le backend devrait fournir un endpoint /marches/{id}/stats)
       setStats({
         montantTotal: marcheData.montantTtc || 0,
-        montantPaye: 0, // À charger depuis /marches/{id}/montant-paye
+        montantPaye: 0,
         resteAPayer: marcheData.montantTtc || 0,
         tauxAvancement: 0,
         nombreDecomptes: marcheData.decomptes?.length || 0,
@@ -72,43 +69,35 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
 
   if (!stats) return null
 
-  // Stat card configurations with semantic colors
+  // Stat card configurations - using semantic colors for icons/values only
   const statCards = [
     {
       label: 'Montant Total TTC',
       value: `${formatCurrency(stats.montantTotal)} DH`,
       icon: TrendingUp,
-      bgColor: colors.primary[50],
-      iconBgColor: colors.primary[100],
       iconColor: colors.primary[600],
-      textColor: colors.primary[700],
+      valueColor: colors.primary[700],
     },
     {
       label: 'Montant Payé',
       value: `${formatCurrency(stats.montantPaye)} DH`,
       icon: Payments,
-      bgColor: colors.success[50],
-      iconBgColor: colors.success[100],
       iconColor: colors.success[600],
-      textColor: colors.success[700],
+      valueColor: colors.success[700],
     },
     {
       label: 'Reste à Payer',
       value: `${formatCurrency(stats.resteAPayer)} DH`,
       icon: Receipt,
-      bgColor: colors.warning[50],
-      iconBgColor: colors.warning[100],
       iconColor: colors.warning[600],
-      textColor: colors.warning[700],
+      valueColor: colors.warning[700],
     },
     {
       label: 'Avancement',
       value: `${(stats.tauxAvancement ?? 0).toFixed(1)}%`,
       icon: CheckCircle,
-      bgColor: colors.info[50],
-      iconBgColor: colors.info[100],
       iconColor: colors.info[600],
-      textColor: colors.info[700],
+      valueColor: colors.info[700],
     },
   ]
 
@@ -121,17 +110,17 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
             <Card
               sx={{
                 ...componentStyles.statCard,
-                backgroundColor: card.bgColor,
-                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%' }}>
                 <Box
                   sx={{
                     width: 48,
                     height: 48,
                     borderRadius: borders.radius.lg,
-                    bgcolor: card.iconBgColor,
+                    bgcolor: colors.neutral[100],
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -141,7 +130,6 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
                 </Box>
                 <Box sx={{ flex: 1 }}>
                   <Typography
-                    variant="body2"
                     sx={{
                       color: colors.textSecondary,
                       fontSize: typography.sizes.xs,
@@ -154,11 +142,10 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
                     {card.label}
                   </Typography>
                   <Typography
-                    variant="h6"
                     sx={{
                       fontWeight: typography.weights.bold,
-                      color: card.textColor,
-                      fontSize: typography.sizes.xl,
+                      color: card.valueColor,
+                      fontSize: typography.sizes.lg,
                     }}
                   >
                     {card.value}

@@ -50,14 +50,6 @@ INSERT INTO fournisseurs (id, code, raison_sociale, ice, identifiant_fiscal, adr
 
 SELECT setval('fournisseurs_id_seq', 4);
 
--- Projets
-INSERT INTO projets (id, code, nom, budget_total, statut, date_debut) VALUES
-(1, 'PROJ-001', 'Infrastructure Routiere Casablanca', 5000000.00, 'EN_PREPARATION', '2024-01-01'),
-(2, 'PROJ-002', 'Equipement Public Rabat', 3000000.00, 'EN_COURS', '2024-02-01'),
-(3, 'PROJ-003', 'Amenagement Urbain Tanger', 4500000.00, 'EN_PREPARATION', '2024-03-01');
-
-SELECT setval('projets_id_seq', 3);
-
 -- Conventions CADRE (principales)
 INSERT INTO conventions (id, code, numero, libelle, objet, type_convention, date_convention, budget, taux_commission, statut, date_debut, date_fin, created_by_id, valide_par_id, date_validation, version, is_locked) VALUES
 (1, 'CONV-001', 'CONV/2024/001', 'Convention Cadre Infrastructure', 'Gestion projets infrastructure routiere et urbaine', 'CADRE', '2024-01-15', 10000000.00, 2.5, 'VALIDE', '2024-01-15', '2026-01-15', 1, 2, '2024-01-16', 'V0', true),
@@ -128,16 +120,20 @@ INSERT INTO conventions (
 -- 8 parent conventions + 5 sous-conventions = 13 total
 SELECT setval('conventions_id_seq', 13);
 
--- Projet-Convention associations (many-to-many)
-INSERT INTO projet_conventions (id, projet_id, convention_id, ordre) VALUES
--- Projet 1 (Infrastructure Casablanca) lié à Convention 1 (Infrastructure)
-(1, 1, 1, 1),
--- Projet 2 (Equipement Rabat) lié à Convention 2 (Equipement Public)
-(2, 2, 2, 1),
--- Projet 3 (Amenagement Tanger) lié à Convention 8 (Aménagement Territorial)
-(3, 3, 8, 1);
+-- Projets liés aux conventions
+INSERT INTO projets (id, code, nom, budget_total, statut, date_debut, convention_id, description) VALUES
+-- Projets liés à la Convention 1 (Infrastructure)
+(1, 'PROJ-001', 'Infrastructure Routiere Casablanca', 5000000.00, 'EN_COURS', '2024-01-01', 1, 'Programme de renovation et extension du reseau routier de Casablanca'),
+(2, 'PROJ-002', 'Amenagement Boulevard Zerktouni', 2500000.00, 'EN_PREPARATION', '2024-03-01', 1, 'Amenagement et modernisation du boulevard principal'),
+-- Projets liés à la Convention 2 (Équipement Public)
+(3, 'PROJ-003', 'Equipement Ecoles Rabat', 3000000.00, 'EN_COURS', '2024-02-01', 2, 'Equipement de 15 ecoles primaires avec mobilier et materiel pedagogique'),
+(4, 'PROJ-004', 'Centres de Sante Regionaux', 4000000.00, 'EN_PREPARATION', '2024-04-01', 2, 'Equipement medical pour 5 centres de sante'),
+-- Projets liés à la Convention 8 (Aménagement Territorial)
+(5, 'PROJ-005', 'Zone Industrielle Kenitra', 6000000.00, 'EN_COURS', '2024-05-01', 8, 'Amenagement et viabilisation de la nouvelle zone industrielle'),
+-- Projet sans convention (indépendant)
+(6, 'PROJ-006', 'Amenagement Urbain Tanger', 4500000.00, 'EN_PREPARATION', '2024-03-01', NULL, 'Programme amenagement centre-ville Tanger');
 
-SELECT setval('projet_conventions_id_seq', 3, true);
+SELECT setval('projets_id_seq', 6);
 
 -- Marchés avec géolocalisation
 INSERT INTO marches (

@@ -23,12 +23,16 @@ interface MarcheDecomptesSectionProps {
   marcheId: number
 }
 
+// Interface matching backend DecompteSimpleDTO exactly
 interface Decompte {
   id: number
   numeroDecompte: string
   dateDecompte: string
-  montantTTC: number
   statut: string
+  netAPayer: number
+  montantPaye: number
+  estSolde: boolean
+  actif: boolean
 }
 
 /**
@@ -63,7 +67,8 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
     }
   }
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amount: number | undefined | null): string => {
+    if (amount === undefined || amount === null) return '0,00'
     return amount.toLocaleString('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -93,7 +98,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
     }
   }
 
-  const totalDecomptes = decomptes.reduce((sum, d) => sum + d.montantTTC, 0)
+  const totalDecomptes = decomptes.reduce((sum, d) => sum + (d.netAPayer || 0), 0)
 
   return (
     <Paper sx={{ p: 4, mb: 3 }}>
@@ -136,7 +141,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
                   <strong>Date</strong>
                 </TableCell>
                 <TableCell align="right">
-                  <strong>Montant TTC</strong>
+                  <strong>Net à Payer</strong>
                 </TableCell>
                 <TableCell>
                   <strong>Statut</strong>
@@ -150,12 +155,12 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
                   <TableCell>{formatDate(decompte.dateDecompte)}</TableCell>
                   <TableCell align="right">
                     <Typography variant="body2" fontWeight="bold" color="primary">
-                      {formatCurrency(decompte.montantTTC)} DH
+                      {formatCurrency(decompte.netAPayer)} DH
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={decompte.statut.replace('_', ' ')}
+                      label={decompte.statut?.replace('_', ' ') || 'N/A'}
                       color={getStatutColor(decompte.statut)}
                       size="small"
                     />

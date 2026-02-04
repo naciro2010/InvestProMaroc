@@ -8,25 +8,25 @@ interface MarcheInfoCardProps {
   marcheId: number
 }
 
+// Interface matching backend MarcheDTO exactly
 interface MarcheDetails {
   numeroMarche: string
-  numAO: string
+  numAo: string | null
   dateMarche: string
   objet: string
-  typePrestation: string
-  montantHT: number
-  tauxTVA: number
-  montantTVA: number
-  montantTTC: number
-  fournisseur: {
-    id: number
-    designation: string
-  }
-  convention: {
-    id: number
-    code: string
-    objet: string
-  }
+  statut: string
+  montantHt: number
+  tauxTva: number
+  montantTva: number
+  montantTtc: number
+  // Flattened fournisseur fields from DTO
+  fournisseurId: number
+  fournisseurCode: string
+  fournisseurNom: string
+  fournisseurIce: string | null
+  // Flattened convention fields from DTO
+  conventionId: number | null
+  conventionNumero: string | null
   adresse?: string
   latitude?: number
   longitude?: number
@@ -96,19 +96,19 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
           </Typography>
           <Stack spacing={2} sx={{ pl: 2 }}>
             <InfoRow icon={<Description />} label="Numéro Marché" value={details.numeroMarche} />
-            <InfoRow icon={<Description />} label="Numéro AO" value={details.numAO || '-'} />
+            <InfoRow icon={<Description />} label="Numéro AO" value={details.numAo || '-'} />
             <InfoRow icon={<CalendarMonth />} label="Date Marché" value={formatDate(details.dateMarche)} />
             <InfoRow
               icon={<Description />}
-              label="Type Prestation"
+              label="Statut"
               value={
                 <Chip
-                  label={details.typePrestation}
+                  label={details.statut?.replace('_', ' ') || 'N/A'}
                   size="small"
                   color={
-                    details.typePrestation === 'TRAVAUX'
+                    details.statut === 'EN_COURS'
                       ? 'primary'
-                      : details.typePrestation === 'FOURNITURES'
+                      : details.statut === 'TERMINE'
                         ? 'success'
                         : 'warning'
                   }
@@ -141,19 +141,19 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
             <InfoRow
               icon={<AttachMoney />}
               label="Montant HT"
-              value={`${formatCurrency(details.montantHT)} DH`}
+              value={`${formatCurrency(details.montantHt)} DH`}
             />
             <InfoRow
               icon={<AttachMoney />}
-              label={`TVA (${details.tauxTVA}%)`}
-              value={`${formatCurrency(details.montantTVA)} DH`}
+              label={`TVA (${details.tauxTva || 20}%)`}
+              value={`${formatCurrency(details.montantTva)} DH`}
             />
             <InfoRow
               icon={<AttachMoney />}
               label="Montant TTC"
               value={
                 <Typography variant="body1" fontWeight="bold" color="primary">
-                  {formatCurrency(details.montantTTC)} DH
+                  {formatCurrency(details.montantTtc)} DH
                 </Typography>
               }
             />
@@ -171,12 +171,12 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
             <InfoRow
               icon={<Business />}
               label="Fournisseur"
-              value={details.fournisseur?.designation || '-'}
+              value={details.fournisseurNom || '-'}
             />
             <InfoRow
               icon={<Description />}
               label="Convention"
-              value={details.convention ? `${details.convention.code} - ${details.convention.objet}` : '-'}
+              value={details.conventionNumero || '-'}
             />
           </Stack>
         </Box>

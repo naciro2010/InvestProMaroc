@@ -20,13 +20,19 @@ interface MarcheLignesSectionProps {
   marcheId: number
 }
 
+// Interface matching backend MarcheLigneDTO exactly
 interface MarcheLigne {
   id: number
+  marcheId: number
+  numeroLigne: number
   designation: string
-  unite: string
-  quantite: number
-  prixUnitaire: number
-  total: number
+  unite: string | null
+  quantite: number | null
+  prixUnitaireHT: number
+  montantHT: number
+  tauxTVA: number
+  montantTVA: number
+  montantTTC: number
 }
 
 /**
@@ -59,14 +65,15 @@ const MarcheLignesSection = ({ marcheId }: MarcheLignesSectionProps) => {
     }
   }
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amount: number | undefined | null): string => {
+    if (amount === undefined || amount === null) return '0,00'
     return amount.toLocaleString('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })
   }
 
-  const totalLignes = lignes.reduce((sum, ligne) => sum + ligne.total, 0)
+  const totalLignes = lignes.reduce((sum, ligne) => sum + (ligne.montantTTC || 0), 0)
 
   return (
     <Paper sx={{ p: 4, mb: 3 }}>
@@ -111,12 +118,12 @@ const MarcheLignesSection = ({ marcheId }: MarcheLignesSectionProps) => {
               {lignes.map((ligne) => (
                 <TableRow key={ligne.id} hover>
                   <TableCell>{ligne.designation}</TableCell>
-                  <TableCell>{ligne.unite}</TableCell>
-                  <TableCell align="right">{ligne.quantite.toLocaleString('fr-FR')}</TableCell>
-                  <TableCell align="right">{formatCurrency(ligne.prixUnitaire)} DH</TableCell>
+                  <TableCell>{ligne.unite || '-'}</TableCell>
+                  <TableCell align="right">{ligne.quantite?.toLocaleString('fr-FR') || '-'}</TableCell>
+                  <TableCell align="right">{formatCurrency(ligne.prixUnitaireHT)} DH</TableCell>
                   <TableCell align="right">
                     <Typography variant="body2" fontWeight="bold" color="primary">
-                      {formatCurrency(ligne.total)} DH
+                      {formatCurrency(ligne.montantTTC)} DH
                     </Typography>
                   </TableCell>
                 </TableRow>

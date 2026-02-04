@@ -22,14 +22,18 @@ interface MarcheAvenantsSectionProps {
   marcheId: number
 }
 
+// Interface matching backend AvenantMarcheDTO exactly
 interface Avenant {
   id: number
+  marcheId: number
   numeroAvenant: string
   dateAvenant: string
   objet: string
-  impactMontant: number
-  impactDelai: number
+  montantAvant: number | null
+  montantApres: number | null
+  impact: number | null
   statut: string
+  actif: boolean
 }
 
 /**
@@ -63,7 +67,8 @@ const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
     }
   }
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amount: number | undefined | null): string => {
+    if (amount === undefined || amount === null) return '0,00'
     return amount.toLocaleString('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -130,10 +135,7 @@ const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
                   <strong>Objet</strong>
                 </TableCell>
                 <TableCell align="right">
-                  <strong>Impact Montant</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>Impact Délai</strong>
+                  <strong>Impact</strong>
                 </TableCell>
                 <TableCell>
                   <strong>Statut</strong>
@@ -150,21 +152,15 @@ const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
                     <Typography
                       variant="body2"
                       fontWeight="bold"
-                      color={avenant.impactMontant >= 0 ? 'success.main' : 'error.main'}
+                      color={(avenant.impact ?? 0) >= 0 ? 'success.main' : 'error.main'}
                     >
-                      {avenant.impactMontant >= 0 ? '+' : ''}
-                      {formatCurrency(avenant.impactMontant)} DH
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2">
-                      {avenant.impactDelai >= 0 ? '+' : ''}
-                      {avenant.impactDelai} jours
+                      {(avenant.impact ?? 0) >= 0 ? '+' : ''}
+                      {formatCurrency(avenant.impact)} DH
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={avenant.statut}
+                      label={avenant.statut?.replace('_', ' ') || 'N/A'}
                       color={getStatutColor(avenant.statut)}
                       size="small"
                     />

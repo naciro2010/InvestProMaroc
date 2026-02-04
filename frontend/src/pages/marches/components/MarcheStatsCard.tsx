@@ -40,12 +40,12 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
 
       // Calcul des stats (à terme, le backend devrait fournir un endpoint /marches/{id}/stats)
       setStats({
-        montantTotal: marcheData.montantTTC || 0,
+        montantTotal: marcheData.montantTtc || 0,
         montantPaye: 0, // À charger depuis /marches/{id}/montant-paye
-        resteAPayer: marcheData.montantTTC || 0,
+        resteAPayer: marcheData.montantTtc || 0,
         tauxAvancement: 0,
-        nombreDecomptes: 0, // À charger depuis /marches/{id}/decomptes/count
-        nombreLignes: 0, // À charger depuis /marches/{id}/lignes/count
+        nombreDecomptes: marcheData.decomptes?.length || 0,
+        nombreLignes: marcheData.lignes?.length || 0,
       })
     } catch (err) {
       console.error('Erreur chargement stats:', err)

@@ -143,7 +143,7 @@ export default function MarchesPage() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce marché ?')) return
 
     try {
-      await api.delete(`/api/marches/${id}`)
+      await api.delete(`/marches/${id}`)
       fetchMarches()
     } catch (error) {
       console.error('Erreur lors de la suppression:', error)
@@ -182,7 +182,7 @@ export default function MarchesPage() {
             <Box>
               <Typography sx={styles.title}>Marchés</Typography>
               <Typography sx={styles.subtitle}>
-                Gestion complète des contrats et marchés publics
+                {marches.length} marche{marches.length > 1 ? 's' : ''} • {formatCurrency(marches.reduce((s, m) => s + m.montantTtc, 0))} TTC
               </Typography>
             </Box>
             <Button
@@ -231,22 +231,62 @@ export default function MarchesPage() {
               )
             })}
           </Box>
-          <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+          <Box sx={{
+            ml: 'auto',
+            display: 'flex',
+            bgcolor: colors.neutral[100],
+            borderRadius: '8px',
+            p: '3px',
+          }}>
             <Button
-              variant={viewMode === 'list' ? 'contained' : 'outlined'}
-              startIcon={<ViewList />}
+              startIcon={<ViewList sx={{ fontSize: '16px !important' }} />}
               onClick={() => setViewMode('list')}
               size="small"
-              sx={{ textTransform: 'none' }}
+              sx={{
+                textTransform: 'none',
+                fontWeight: typography.weights.medium,
+                fontSize: typography.sizes.sm,
+                borderRadius: '6px',
+                px: 1.5,
+                minWidth: 0,
+                ...(viewMode === 'list' ? {
+                  bgcolor: colors.surface,
+                  color: colors.textPrimary,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                } : {
+                  bgcolor: 'transparent',
+                  color: colors.textSecondary,
+                }),
+                '&:hover': {
+                  bgcolor: viewMode === 'list' ? colors.surface : colors.neutral[200],
+                },
+              }}
             >
               Liste
             </Button>
             <Button
-              variant={viewMode === 'map' ? 'contained' : 'outlined'}
-              startIcon={<MapIcon />}
+              startIcon={<MapIcon sx={{ fontSize: '16px !important' }} />}
               onClick={() => setViewMode('map')}
               size="small"
-              sx={{ textTransform: 'none' }}
+              sx={{
+                textTransform: 'none',
+                fontWeight: typography.weights.medium,
+                fontSize: typography.sizes.sm,
+                borderRadius: '6px',
+                px: 1.5,
+                minWidth: 0,
+                ...(viewMode === 'map' ? {
+                  bgcolor: colors.surface,
+                  color: colors.textPrimary,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                } : {
+                  bgcolor: 'transparent',
+                  color: colors.textSecondary,
+                }),
+                '&:hover': {
+                  bgcolor: viewMode === 'map' ? colors.surface : colors.neutral[200],
+                },
+              }}
             >
               Carte
             </Button>

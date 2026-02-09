@@ -588,7 +588,7 @@ const ConventionsTableModern = () => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         PaperProps={{
-          sx: { minWidth: 180, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' },
+          sx: { minWidth: 180, borderRadius: '12px', boxShadow: '0 8px 24px rgba(9,30,66,0.12)' },
         }}
       >
         <MenuItem onClick={() => handleAction('view')}>
@@ -627,8 +627,8 @@ const ConventionsTableModern = () => {
       </Menu>
 
       {/* Reject Dialog */}
-      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: typography.weights.semibold }}>Rejeter la convention</DialogTitle>
+      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: componentStyles.dialog.paper }}>
+        <DialogTitle sx={componentStyles.dialog.title}>Rejeter la convention</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
@@ -642,12 +642,12 @@ const ConventionsTableModern = () => {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setRejectDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setRejectDialogOpen(false)} sx={componentStyles.buttonSecondary}>Annuler</Button>
           <Button
             onClick={handleReject}
             variant="contained"
-            color="error"
             disabled={!motifRejet.trim()}
+            sx={componentStyles.buttonDanger}
           >
             Rejeter
           </Button>

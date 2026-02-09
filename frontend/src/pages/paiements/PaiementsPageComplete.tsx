@@ -1,17 +1,15 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Typography,
-  Chip,
   IconButton,
   TextField,
   InputAdornment,
@@ -21,28 +19,68 @@ import {
   DialogContent,
   DialogActions,
   MenuItem,
+  Chip,
+  CircularProgress,
 } from '@mui/material'
 import {
   Add,
   Search,
-  Visibility,
   Edit,
   Delete,
   AttachMoney,
-  Payment,
 } from '@mui/icons-material'
+import { CreditCard } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import { paiementsAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
+import StatusBadge from '../../components/core/StatusBadge'
+import { colors, typography, componentStyles, getStatusConfig, borders } from '../../lib/designSystem'
+
+// Types
+interface Paiement {
+  id: number
+  numeroPaiement: string
+  datePaiement: string
+  montant: number
+  modeReglement: string
+  referenceBancaire?: string
+  beneficiaire?: string
+  observation?: string
+  statut?: string
+  ordrePaiementId?: number
+}
+
+interface PaiementFormData {
+  numeroPaiement: string
+  datePaiement: string
+  montant: string
+  modeReglement: string
+  referenceBancaire: string
+  beneficiaire: string
+  observation: string
+  ordrePaiementId: string
+}
+
+const styles = componentStyles.listPage
+
+const modeReglementLabels: Record<string, string> = {
+  'VIREMENT': 'Virement',
+  'CHEQUE': 'Cheque',
+  'ESPECES': 'Especes',
+  'CARTE': 'Carte Bancaire',
+  'PRELEVEMENT': 'Prelevement',
+}
 
 const PaiementsPage = () => {
-  const navigate = useNavigate()
-  const [paiements, setPaiements] = useState<any[]>([])
+  const [paiements, setPaiements] = useState<Paiement[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [statutFilter, setStatutFilter] = useState<string>('ALL')
   const [openDialog, setOpenDialog] = useState(false)
-  const [selectedPaiement, setSelectedPaiement] = useState<any>(null)
-  const [formData, setFormData] = useState({
+  const [selectedPaiement, setSelectedPaiement] = useState<Paiement | null>(null)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(25)
+  const [formData, setFormData] = useState<PaiementFormData>({
     numeroPaiement: '',
     datePaiement: new Date().toISOString().split('T')[0],
     montant: '',
@@ -62,25 +100,48 @@ const PaiementsPage = () => {
     try {
       const { data } = await paiementsAPI.getAll()
       setPaiements(data.data || [])
-    } catch (error) {
-      console.error('Erreur chargement paiements:', error)
+    } catch {
+      // silently handle
     } finally {
       setLoading(false)
     }
   }
 
-  const handleOpenDialog = (paiement: any = null) => {
+  const stats = useMemo(() => ({
+    total: paiements.length,
+    EN_ATTENTE: paiements.filter(p => p.statut === 'EN_ATTENTE').length,
+    EFFECTUE: paiements.filter(p => p.statut === 'EFFECTUE').length,
+    ANNULE: paiements.filter(p => p.statut === 'ANNULE').length,
+  }), [paiements])
+
+  const filteredPaiements = useMemo(() => {
+    return paiements.filter(p => {
+      if (searchTerm && !p.numeroPaiement?.toLowerCase().includes(searchTerm.toLowerCase())
+        && !p.beneficiaire?.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false
+      }
+      if (statutFilter !== 'ALL' && p.statut !== statutFilter) return false
+      return true
+    })
+  }, [paiements, searchTerm, statutFilter])
+
+  const paginatedPaiements = useMemo(() => {
+    const start = page * rowsPerPage
+    return filteredPaiements.slice(start, start + rowsPerPage)
+  }, [filteredPaiements, page, rowsPerPage])
+
+  const handleOpenDialog = (paiement: Paiement | null = null) => {
     if (paiement) {
       setSelectedPaiement(paiement)
       setFormData({
         numeroPaiement: paiement.numeroPaiement,
         datePaiement: paiement.datePaiement,
-        montant: paiement.montant,
+        montant: paiement.montant.toString(),
         modeReglement: paiement.modeReglement || 'VIREMENT',
         referenceBancaire: paiement.referenceBancaire || '',
         beneficiaire: paiement.beneficiaire || '',
         observation: paiement.observation || '',
-        ordrePaiementId: paiement.ordrePaiementId,
+        ordrePaiementId: paiement.ordrePaiementId?.toString() || '',
       })
     } else {
       setSelectedPaiement(null)
@@ -110,189 +171,223 @@ const PaiementsPage = () => {
         montant: parseFloat(formData.montant),
         ordrePaiementId: parseInt(formData.ordrePaiementId),
       }
-
       if (selectedPaiement) {
         await paiementsAPI.update(selectedPaiement.id, payload)
       } else {
         await paiementsAPI.create(payload)
       }
-
       handleCloseDialog()
       loadPaiements()
-    } catch (error) {
-      console.error('Erreur sauvegarde paiement:', error)
+    } catch {
+      // silently handle
     }
   }
 
   const handleDelete = async (id: number) => {
     if (!confirm('Confirmer la suppression ?')) return
-
     try {
       await paiementsAPI.delete(id)
       loadPaiements()
-    } catch (error) {
-      console.error('Erreur suppression:', error)
+    } catch {
+      // silently handle
     }
   }
 
-
-  const filteredPaiements = paiements.filter(p =>
-    p.numeroPaiement?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.beneficiaire?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount) + ' MAD'
   }
 
-  const getStatusColor = (statut: string) => {
-    const colors: any = {
-      'EN_ATTENTE': 'warning',
-      'EFFECTUE': 'success',
-      'ANNULE': 'error',
-    }
-    return colors[statut] || 'default'
-  }
-
-  const getModeReglementLabel = (mode: string) => {
-    const labels: any = {
-      'VIREMENT': 'Virement',
-      'CHEQUE': 'Chèque',
-      'ESPECES': 'Espèces',
-      'CARTE': 'Carte Bancaire',
-      'PRELEVEMENT': 'Prélèvement',
-    }
-    return labels[mode] || mode
+  if (loading) {
+    return (
+      <AppLayout>
+        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress size={40} />
+        </Box>
+      </AppLayout>
+    )
   }
 
   return (
     <AppLayout>
-      <Box sx={{ p: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" fontWeight="bold">
-            Gestion des Paiements
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
-          >
-            Nouveau Paiement
-          </Button>
-        </Stack>
+      <Box sx={styles.container}>
+        {/* Header */}
+        <Box sx={styles.header}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography sx={styles.title}>Paiements</Typography>
+              <Typography sx={styles.subtitle}>
+                Gestion des paiements et reglements
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => handleOpenDialog()}
+              sx={componentStyles.buttonPrimary}
+            >
+              Nouveau Paiement
+            </Button>
+          </Box>
+        </Box>
 
-        <Paper sx={{ p: 3, mb: 3 }}>
+        {/* Toolbar */}
+        <Box sx={styles.toolbar}>
           <TextField
-            fullWidth
-            placeholder="Rechercher un paiement..."
+            placeholder="Rechercher par numero ou beneficiaire..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(0) }}
+            size="small"
+            sx={styles.searchField}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search />
+                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
                 </InputAdornment>
               ),
             }}
           />
-        </Paper>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {['ALL', 'EN_ATTENTE', 'EFFECTUE', 'ANNULE'].map((statut) => {
+              const count = statut === 'ALL' ? paiements.length : (stats[statut as keyof typeof stats] || 0)
+              const isActive = statutFilter === statut
+              return (
+                <Chip
+                  key={statut}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
+                      <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>
+                        {count}
+                      </Box>
+                    </Box>
+                  }
+                  onClick={() => { setStatutFilter(statut); setPage(0) }}
+                  sx={isActive ? styles.filterPillActive : styles.filterPill}
+                />
+              )
+            })}
+          </Box>
+        </Box>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell><strong>Numéro</strong></TableCell>
-                <TableCell><strong>Date</strong></TableCell>
-                <TableCell><strong>Bénéficiaire</strong></TableCell>
-                <TableCell><strong>Mode Règlement</strong></TableCell>
-                <TableCell align="right"><strong>Montant</strong></TableCell>
-                <TableCell><strong>Statut</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">Chargement...</TableCell>
-                </TableRow>
-              ) : filteredPaiements.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    Aucun paiement trouvé
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredPaiements.map((paiement) => (
-                  <TableRow key={paiement.id} hover>
-                    <TableCell>{paiement.numeroPaiement}</TableCell>
-                    <TableCell>
-                      {new Date(paiement.datePaiement).toLocaleDateString('fr-FR')}
-                    </TableCell>
-                    <TableCell>{paiement.beneficiaire || '-'}</TableCell>
-                    <TableCell>
-                      <Chip
-                        icon={<Payment />}
-                        label={getModeReglementLabel(paiement.modeReglement)}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2" fontWeight="bold" color="primary">
-                        {formatCurrency(paiement.montant)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={paiement.statut || 'EN_ATTENTE'}
-                        color={getStatusColor(paiement.statut)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton size="small" color="primary" title="Voir">
-                        <Visibility />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="info"
-                        onClick={() => handleOpenDialog(paiement)}
-                        title="Modifier"
-                      >
-                        <Edit />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDelete(paiement.id)}
-                        title="Supprimer"
-                      >
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
+        {/* Table */}
+        <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
+          <Box sx={styles.tableContainer}>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={styles.tableHeader}>
+                    <TableCell>Numero</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Beneficiaire</TableCell>
+                    <TableCell>Mode Reglement</TableCell>
+                    <TableCell align="right">Montant</TableCell>
+                    <TableCell align="center">Statut</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {paginatedPaiements.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                        <Box>
+                          <CreditCard size={40} color={colors.textDisabled} style={{ marginBottom: 12 }} />
+                          <Typography sx={{ color: colors.textSecondary, fontWeight: typography.weights.medium }}>
+                            Aucun paiement trouve
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedPaiements.map((paiement) => (
+                      <TableRow
+                        key={paiement.id}
+                        sx={styles.tableRowClickable}
+                        onClick={() => handleOpenDialog(paiement)}
+                      >
+                        <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
+                          {paiement.numeroPaiement}
+                        </TableCell>
+                        <TableCell sx={{ color: colors.textSecondary }}>
+                          {new Date(paiement.datePaiement).toLocaleDateString('fr-FR')}
+                        </TableCell>
+                        <TableCell>{paiement.beneficiaire || '-'}</TableCell>
+                        <TableCell>
+                          <Box sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0.75,
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: borders.radius.full,
+                            bgcolor: colors.neutral[100],
+                            fontSize: typography.sizes.xs,
+                            fontWeight: typography.weights.medium,
+                            color: colors.textSecondary,
+                          }}>
+                            <CreditCard size={12} />
+                            {modeReglementLabels[paiement.modeReglement] || paiement.modeReglement}
+                          </Box>
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.bold, color: colors.primary[700] }}>
+                          {formatCurrency(paiement.montant)}
+                        </TableCell>
+                        <TableCell align="center">
+                          <StatusBadge status={paiement.statut || 'EN_ATTENTE'} size="small" />
+                        </TableCell>
+                        <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                            <IconButton size="small" onClick={() => handleOpenDialog(paiement)} sx={{ color: colors.neutral[500] }}>
+                              <Edit fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" onClick={() => handleDelete(paiement.id)} sx={{ color: colors.danger[500] }}>
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              component="div"
+              count={filteredPaiements.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10))
+                setPage(0)
+              }}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              labelRowsPerPage="Lignes par page"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
+            />
+          </Box>
+        </Box>
 
-        {/* Dialog Formulaire */}
-        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-          <DialogTitle>
+        {/* Dialog */}
+        <Dialog
+          open={openDialog}
+          onClose={handleCloseDialog}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: componentStyles.dialog.paper }}
+        >
+          <DialogTitle sx={componentStyles.dialog.title}>
             {selectedPaiement ? 'Modifier le Paiement' : 'Nouveau Paiement'}
           </DialogTitle>
           <DialogContent>
             <Stack spacing={3} sx={{ mt: 2 }}>
-              <Stack direction="row" spacing={2}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
                   fullWidth
                   required
-                  label="Numéro Paiement"
+                  label="Numero Paiement"
                   value={formData.numeroPaiement}
                   onChange={(e) => setFormData({ ...formData, numeroPaiement: e.target.value })}
                   placeholder="PAI-001"
@@ -308,7 +403,7 @@ const PaiementsPage = () => {
                 />
               </Stack>
 
-              <Stack direction="row" spacing={2}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
                   fullWidth
                   required
@@ -326,33 +421,31 @@ const PaiementsPage = () => {
                   fullWidth
                   required
                   select
-                  label="Mode de Règlement"
+                  label="Mode de Reglement"
                   value={formData.modeReglement}
                   onChange={(e) => setFormData({ ...formData, modeReglement: e.target.value })}
                 >
                   <MenuItem value="VIREMENT">Virement</MenuItem>
-                  <MenuItem value="CHEQUE">Chèque</MenuItem>
-                  <MenuItem value="ESPECES">Espèces</MenuItem>
+                  <MenuItem value="CHEQUE">Cheque</MenuItem>
+                  <MenuItem value="ESPECES">Especes</MenuItem>
                   <MenuItem value="CARTE">Carte Bancaire</MenuItem>
-                  <MenuItem value="PRELEVEMENT">Prélèvement</MenuItem>
+                  <MenuItem value="PRELEVEMENT">Prelevement</MenuItem>
                 </TextField>
               </Stack>
 
               <TextField
                 fullWidth
                 required
-                label="Bénéficiaire"
+                label="Beneficiaire"
                 value={formData.beneficiaire}
                 onChange={(e) => setFormData({ ...formData, beneficiaire: e.target.value })}
-                placeholder="Nom du bénéficiaire"
               />
 
               <TextField
                 fullWidth
-                label="Référence Bancaire"
+                label="Reference Bancaire"
                 value={formData.referenceBancaire}
                 onChange={(e) => setFormData({ ...formData, referenceBancaire: e.target.value })}
-                placeholder="Numéro de transaction, chèque, etc."
               />
 
               <TextField
@@ -362,7 +455,6 @@ const PaiementsPage = () => {
                 label="Ordre de Paiement (ID)"
                 value={formData.ordrePaiementId}
                 onChange={(e) => setFormData({ ...formData, ordrePaiementId: e.target.value })}
-                helperText="ID de l'ordre de paiement associé"
               />
 
               <TextField
@@ -376,23 +468,18 @@ const PaiementsPage = () => {
 
               {selectedPaiement && (
                 <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Pièces jointes
+                  <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary, mb: 1 }}>
+                    Pieces jointes
                   </Typography>
-                  <FileUpload
-                    typeEntite="PAIEMENT"
-                    entiteId={selectedPaiement.id}
-                    maxFiles={10}
-                    maxFileSize={10}
-                  />
+                  <FileUpload typeEntite="PAIEMENT" entiteId={selectedPaiement.id} maxFiles={10} maxFileSize={10} />
                 </Box>
               )}
             </Stack>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Annuler</Button>
-            <Button variant="contained" onClick={handleSubmit}>
-              {selectedPaiement ? 'Modifier' : 'Créer'}
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={handleCloseDialog} sx={componentStyles.buttonSecondary}>Annuler</Button>
+            <Button onClick={handleSubmit} sx={componentStyles.buttonPrimary}>
+              {selectedPaiement ? 'Modifier' : 'Creer'}
             </Button>
           </DialogActions>
         </Dialog>

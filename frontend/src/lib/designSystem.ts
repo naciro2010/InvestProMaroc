@@ -434,7 +434,7 @@ export const componentStyles = {
   card: {
     backgroundColor: colors.surface,
     border: `1px solid ${colors.border}`,
-    borderRadius: borders.radius.lg,
+    borderRadius: borders.radius.xl,
     boxShadow: shadows.none,
   },
 
@@ -444,9 +444,9 @@ export const componentStyles = {
   cardElevated: {
     backgroundColor: colors.surface,
     border: `1px solid ${colors.borderSubtle}`,
-    borderRadius: borders.radius.lg,
+    borderRadius: borders.radius.xl,
     boxShadow: shadows.sm,
-    transition: `box-shadow ${transitions.normal}, border-color ${transitions.normal}`,
+    transition: `all ${transitions.slow}`,
     '&:hover': {
       boxShadow: shadows.md,
       borderColor: colors.border,
@@ -459,14 +459,14 @@ export const componentStyles = {
   cardInteractive: {
     backgroundColor: colors.surface,
     border: `1px solid ${colors.borderSubtle}`,
-    borderRadius: borders.radius.lg,
+    borderRadius: borders.radius.xl,
     boxShadow: shadows.sm,
-    transition: `all ${transitions.normal}`,
+    transition: `all ${transitions.slow}`,
     cursor: 'pointer',
     '&:hover': {
       boxShadow: shadows.md,
       borderColor: colors.primary[200],
-      transform: 'translateY(-1px)',
+      transform: 'translateY(-2px)',
     },
     '&:active': {
       transform: 'translateY(0)',
@@ -767,18 +767,139 @@ export const componentStyles = {
   },
 
   /**
-   * Stat card (Dashboard KPIs)
+   * Stat card (Dashboard KPIs) - Modern elevated design
    */
   statCard: {
     backgroundColor: colors.surface,
     border: `1px solid ${colors.borderSubtle}`,
-    borderRadius: borders.radius.lg,
-    p: spacing.mui.xl,
-    transition: `all ${transitions.normal}`,
+    borderRadius: borders.radius.xl,
+    p: spacing.mui['2xl'],
+    transition: `all ${transitions.slow}`,
+    position: 'relative' as const,
+    overflow: 'hidden',
     '&:hover': {
-      borderColor: colors.border,
-      boxShadow: shadows.sm,
+      borderColor: colors.primary[200],
+      boxShadow: shadows.md,
+      transform: 'translateY(-2px)',
     },
+  },
+
+  /**
+   * Stat card accent strip (left colored border)
+   */
+  statCardAccent: {
+    position: 'absolute' as const,
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '4px',
+    borderRadius: '4px 0 0 4px',
+  },
+
+  /**
+   * Stat card icon container - modern circular design
+   */
+  statCardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: borders.radius.xl,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+
+  /**
+   * Detail page section card
+   */
+  sectionCard: {
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.border}`,
+    borderRadius: borders.radius.xl,
+    overflow: 'hidden',
+  },
+
+  /**
+   * Section card header
+   */
+  sectionCardHeader: {
+    px: spacing.mui['2xl'],
+    py: spacing.mui.lg,
+    borderBottom: `1px solid ${colors.divider}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  /**
+   * Section card body
+   */
+  sectionCardBody: {
+    px: spacing.mui['2xl'],
+    py: spacing.mui.lg,
+  },
+
+  /**
+   * Info row for detail pages (label: value pairs)
+   */
+  infoRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    py: spacing.mui.md,
+    borderBottom: `1px solid ${colors.divider}`,
+    '&:last-child': {
+      borderBottom: 'none',
+    },
+  },
+
+  /**
+   * Info label
+   */
+  infoLabel: {
+    color: colors.textSecondary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    minWidth: 160,
+    flexShrink: 0,
+  },
+
+  /**
+   * Info value
+   */
+  infoValue: {
+    color: colors.textPrimary,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
+    flex: 1,
+  },
+
+  /**
+   * Trend badge (positive/negative)
+   */
+  trendBadgeUp: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 0.5,
+    px: 1,
+    py: 0.25,
+    borderRadius: borders.radius.full,
+    backgroundColor: colors.success[50],
+    color: colors.success[700],
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+  },
+
+  trendBadgeDown: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 0.5,
+    px: 1,
+    py: 0.25,
+    borderRadius: borders.radius.full,
+    backgroundColor: colors.danger[50],
+    color: colors.danger[700],
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
   },
 
   /**
@@ -827,14 +948,15 @@ export const componentStyles = {
     header: {
       bgcolor: colors.surface,
       borderBottom: `1px solid ${colors.border}`,
-      px: 3,
-      py: 2,
+      px: { xs: 2, md: 3 },
+      py: 2.5,
     },
     /** Titre principal */
     title: {
       fontWeight: typography.weights.bold,
       color: colors.textPrimary,
       fontSize: typography.sizes['2xl'],
+      letterSpacing: '-0.01em',
       mb: 0.5,
     },
     /** Sous-titre / stats */
@@ -844,28 +966,45 @@ export const componentStyles = {
     },
     /** Toolbar de recherche/filtres */
     toolbar: {
-      px: 3,
-      py: 2,
+      px: { xs: 2, md: 3 },
+      py: 1.5,
       bgcolor: colors.surface,
       borderBottom: `1px solid ${colors.divider}`,
       display: 'flex',
-      gap: 2,
+      gap: 1.5,
       alignItems: 'center',
+      flexWrap: 'wrap' as const,
     },
     /** Champ de recherche */
     searchField: {
-      width: 300,
+      width: { xs: '100%', sm: 320 },
       '& .MuiOutlinedInput-root': {
         bgcolor: colors.neutral[50],
-        borderRadius: borders.radius.base,
-        '&:hover': { bgcolor: colors.surface },
-        '&.Mui-focused': { bgcolor: colors.surface },
+        borderRadius: borders.radius.lg,
+        fontSize: typography.sizes.base,
+        transition: `all ${transitions.normal}`,
+        '& fieldset': {
+          borderColor: 'transparent',
+        },
+        '&:hover': {
+          bgcolor: colors.surface,
+          '& fieldset': {
+            borderColor: colors.neutral[300],
+          },
+        },
+        '&.Mui-focused': {
+          bgcolor: colors.surface,
+          '& fieldset': {
+            borderColor: colors.primary[400],
+            borderWidth: '2px',
+          },
+        },
       },
     },
     /** Container de la table */
     tableContainer: {
-      borderRadius: borders.radius.lg,
-      boxShadow: shadows.sm,
+      borderRadius: borders.radius.xl,
+      border: `1px solid ${colors.border}`,
       overflow: 'hidden',
       bgcolor: colors.surface,
     },
@@ -886,15 +1025,23 @@ export const componentStyles = {
     tableRowClickable: {
       cursor: 'pointer',
       transition: `background-color ${transitions.fast}`,
-      '&:hover': { bgcolor: colors.neutral[50] },
-      borderBottom: `1px solid ${colors.divider}`,
+      '&:hover': {
+        bgcolor: colors.primary[25],
+      },
+      '& td': {
+        borderBottom: `1px solid ${colors.divider}`,
+      },
     },
     /** Ligne enfant (sous-convention, sous-item) */
     tableRowChild: {
       cursor: 'pointer',
       bgcolor: colors.neutral[25],
-      '&:hover': { bgcolor: colors.neutral[100] },
-      borderBottom: `1px solid ${colors.divider}`,
+      '&:hover': {
+        bgcolor: colors.primary[25],
+      },
+      '& td': {
+        borderBottom: `1px solid ${colors.divider}`,
+      },
     },
     /** Pill de filtre actif */
     filterPillActive: {
@@ -902,24 +1049,85 @@ export const componentStyles = {
       color: colors.textOnColor,
       fontWeight: typography.weights.semibold,
       border: `1px solid ${colors.primary[600]}`,
+      borderRadius: borders.radius.full,
       '&:hover': { bgcolor: colors.primary[700] },
     },
     /** Pill de filtre inactif */
     filterPill: {
       bgcolor: colors.surface,
       color: colors.textSecondary,
-      fontWeight: typography.weights.semibold,
-      border: `1px solid ${colors.border}`,
-      '&:hover': { bgcolor: colors.neutral[50] },
+      fontWeight: typography.weights.medium,
+      border: `1px solid ${colors.neutral[200]}`,
+      borderRadius: borders.radius.full,
+      '&:hover': {
+        bgcolor: colors.neutral[50],
+        borderColor: colors.neutral[300],
+      },
     },
     /** Badge de compteur */
     countBadge: {
-      bgcolor: colors.primary[50],
-      color: colors.primary[700],
-      fontSize: typography.sizes.xs,
-      fontWeight: typography.weights.semibold,
+      bgcolor: 'rgba(255,255,255,0.2)',
+      color: 'inherit',
+      fontSize: typography.sizes['2xs'],
+      fontWeight: typography.weights.bold,
+      minWidth: 20,
       height: 20,
-      px: 1,
+      borderRadius: borders.radius.full,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      px: 0.75,
+    },
+    /** Count badge for inactive pills */
+    countBadgeInactive: {
+      bgcolor: colors.neutral[100],
+      color: colors.neutral[600],
+      fontSize: typography.sizes['2xs'],
+      fontWeight: typography.weights.bold,
+      minWidth: 20,
+      height: 20,
+      borderRadius: borders.radius.full,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      px: 0.75,
+    },
+    /** Empty state container */
+    emptyState: {
+      textAlign: 'center' as const,
+      py: 8,
+      px: 3,
+    },
+  },
+
+  /**
+   * Dialog styles - modern modal design
+   */
+  dialog: {
+    paper: {
+      borderRadius: borders.radius.xl,
+      boxShadow: shadows.xl,
+    },
+    title: {
+      fontWeight: typography.weights.semibold,
+      fontSize: typography.sizes.lg,
+      color: colors.textPrimary,
+      pb: 1,
+    },
+  },
+
+  /**
+   * Modern action menu item
+   */
+  menuItem: {
+    fontSize: typography.sizes.sm,
+    py: 1,
+    px: 2,
+    gap: 1.5,
+    borderRadius: borders.radius.base,
+    mx: 0.5,
+    '&:hover': {
+      bgcolor: colors.neutral[50],
     },
   },
 } as const

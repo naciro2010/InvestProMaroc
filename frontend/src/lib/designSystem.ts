@@ -1,200 +1,187 @@
 /**
- * Design System v2.0 - InvestPro Maroc
+ * Design System v3.0 - InvestPro Maroc
  *
- * INSPIRATION: Confluence + Jira + Odoo
- * - Épuré et professionnel (Confluence)
- * - Dense et fonctionnel (Jira)
- * - Moderne et accessible (Odoo)
+ * STYLE: Epure, sobre, professionnel
+ * Mix Jira (functional density, muted tones) + Odoo (clean whitespace, subtle accents)
  *
- * SOURCE UNIQUE DE VÉRITÉ pour toutes les valeurs de design.
- * Ce fichier remplace les couleurs en dur éparpillées dans les composants.
- *
- * PRINCIPES DE DESIGN:
- * - Interface professionnelle, sobre et fonctionnelle
- * - Pas de gradients dans les zones de contenu
- * - Espacement cohérent (base 8px)
- * - Hiérarchie typographique claire
- * - Ombres subtiles, pas de flashy
- * - Accessibilité (contraste WCAG AA)
+ * PRINCIPES:
+ * - Couleurs desaturees et douces (pas de couleurs "flashy")
+ * - Beaucoup de blanc et gris clair
+ * - Micro-interactions subtiles (pas de translateY, pas de glow)
+ * - Espacement genereux, hierarchie visuelle claire
+ * - Flat design, ombres quasi-inexistantes
  */
 
 // ==================== COULEURS ====================
 
 export const colors = {
   /**
-   * Couleur primaire - Bleu Atlassian
-   * Utilisée pour: boutons principaux, liens, sélection, focus
+   * Primaire - Bleu-gris professionnel (desature)
    */
   primary: {
-    25: '#f5f8ff',
-    50: '#e9f2ff',
-    100: '#cce0ff',
-    200: '#85b8ff',
-    300: '#579dff',
-    400: '#388bff',
-    500: '#1d7afc',
-    600: '#0c66e4', // Main brand color
-    700: '#0055cc',
-    800: '#09326c',
-    900: '#092957',
+    25: '#f8f9fb',
+    50: '#eef2f6',
+    100: '#d8e0ea',
+    200: '#adbdd3',
+    300: '#8199b5',
+    400: '#5f7d9e',
+    500: '#486a8e',
+    600: '#3b5998', // Main - bleu sobre
+    700: '#334d80',
+    800: '#263a5e',
+    900: '#1c2d49',
   },
 
   /**
-   * Succès - Vert
-   * Utilisée pour: validation, statuts actifs, confirmations
+   * Succes - Vert sauge (desature, doux)
    */
   success: {
-    25: '#f3fcf5',
-    50: '#dcfff1',
-    100: '#baf3db',
-    200: '#7ee2b8',
-    300: '#4bce97',
-    400: '#2abb7f',
-    500: '#22a06b',
-    600: '#1f845a', // Main success
-    700: '#216e4e',
-    800: '#164b35',
-    900: '#133527',
+    25: '#f6f9f7',
+    50: '#edf5ef',
+    100: '#d4e8d9',
+    200: '#a8d4b2',
+    300: '#7cbe8c',
+    400: '#5aab6d',
+    500: '#4a9660',
+    600: '#3d7f52', // Main
+    700: '#336a45',
+    800: '#234a31',
+    900: '#1a3724',
   },
 
   /**
-   * Danger - Rouge
-   * Utilisée pour: erreurs, suppression, alertes critiques
+   * Danger - Rouge terre (desature, calme)
    */
   danger: {
-    25: '#fff5f5',
-    50: '#ffedeb',
-    100: '#ffd5d2',
-    200: '#fd9891',
-    300: '#f87168',
-    400: '#f15b50',
-    500: '#e2483d',
-    600: '#c9372c', // Main danger
-    700: '#ae2e24',
-    800: '#5d1f1a',
-    900: '#42221f',
+    25: '#fdf7f7',
+    50: '#faeeed',
+    100: '#f2d5d2',
+    200: '#e0a8a3',
+    300: '#cc7e77',
+    400: '#bb5f57',
+    500: '#a84d45',
+    600: '#93403a', // Main
+    700: '#7b3531',
+    800: '#542422',
+    900: '#3d1b19',
   },
 
   /**
-   * Warning - Jaune/Orange
-   * Utilisée pour: avertissements, statuts en attente
+   * Warning - Ambre doux (desature)
    */
   warning: {
-    25: '#fffdf5',
-    50: '#fff7d6',
-    100: '#f8e6a0',
-    200: '#f5cd47',
-    300: '#e2b203',
-    400: '#cf9f02',
-    500: '#b38600',
-    600: '#946f00', // Main warning
-    700: '#7f5f01',
-    800: '#533f04',
-    900: '#3d2e00',
+    25: '#fdfaf5',
+    50: '#faf3e3',
+    100: '#f0e0b8',
+    200: '#e2c880',
+    300: '#d4af4d',
+    400: '#c49d30',
+    500: '#ad8a20',
+    600: '#8f7218', // Main
+    700: '#755e15',
+    800: '#4d3e0e',
+    900: '#382d0a',
   },
 
   /**
-   * Info - Bleu clair / Teal
-   * Utilisée pour: informations, statuts en cours
+   * Info - Bleu ardoise (calme, subtil)
    */
   info: {
-    25: '#f3fcff',
-    50: '#e7f9ff',
-    100: '#c6edfb',
-    200: '#9dd9ee',
-    300: '#6cc3e0',
-    400: '#42b2d7',
-    500: '#2898bd',
-    600: '#227d9b', // Main info
-    700: '#206a83',
-    800: '#164555',
-    900: '#103c4b',
+    25: '#f6f9fa',
+    50: '#eaf1f4',
+    100: '#cedfea',
+    200: '#a3c5d6',
+    300: '#78abc2',
+    400: '#5695b0',
+    500: '#42809d',
+    600: '#366b84', // Main
+    700: '#2d596e',
+    800: '#1f3d4c',
+    900: '#162d38',
   },
 
   /**
-   * Purple - Accent secondaire (Odoo inspired)
-   * Utilisée pour: highlights, badges spéciaux
+   * Purple - Accent subtil (lavande desature)
    */
   purple: {
-    25: '#faf5ff',
-    50: '#f3e8ff',
-    100: '#dfd8fd',
-    200: '#b8acf6',
-    300: '#9f8fef',
-    400: '#8f7ee7',
-    500: '#8270db',
-    600: '#6e5dc6', // Main purple
-    700: '#5e4db2',
-    800: '#352c63',
-    900: '#2b273f',
+    25: '#f9f8fb',
+    50: '#f0eef6',
+    100: '#ddd8ec',
+    200: '#b9b0d4',
+    300: '#9a8dbe',
+    400: '#8074ab',
+    500: '#6d6199',
+    600: '#5b5187', // Main
+    700: '#4c4372',
+    800: '#342f50',
+    900: '#27233c',
   },
 
   /**
-   * Gris - Palette neutre (Atlassian Neutral)
-   * Utilisée pour: textes, bordures, arrière-plans, séparateurs
+   * Gris - Palette neutre (tons chauds, pas froids)
    */
   neutral: {
     0: '#ffffff',
-    25: '#fafbfc',
-    50: '#f7f8f9',
-    100: '#f1f2f4',
-    200: '#dcdfe4',
-    300: '#b3b9c4',
-    400: '#8590a2',
-    500: '#626f86',
-    600: '#44546f',
-    700: '#2c3e5d',
-    800: '#172b4d',
-    900: '#091e42',
+    25: '#fafafa',
+    50: '#f5f5f6',
+    100: '#eeeff0',
+    200: '#dddee0',
+    300: '#b8babe',
+    400: '#8e9196',
+    500: '#6b6f75',
+    600: '#4f5359',
+    700: '#383c42',
+    800: '#24272d',
+    900: '#16181c',
   },
 
-  // Aliases pour compatibilité
+  // Aliases
   gray: {
-    50: '#fafbfc',
-    100: '#f7f8f9',
-    200: '#dcdfe4',
-    300: '#b3b9c4',
-    400: '#8590a2',
-    500: '#626f86',
-    600: '#44546f',
-    700: '#2c3e5d',
-    800: '#172b4d',
-    900: '#091e42',
+    50: '#f5f5f6',
+    100: '#eeeff0',
+    200: '#dddee0',
+    300: '#b8babe',
+    400: '#8e9196',
+    500: '#6b6f75',
+    600: '#4f5359',
+    700: '#383c42',
+    800: '#24272d',
+    900: '#16181c',
   },
 
-  /** Fond de page principal */
-  background: '#f7f8f9',
+  /** Fond de page - gris tres clair, presque blanc */
+  background: '#f5f5f6',
 
-  /** Fond blanc (cartes, papier) */
+  /** Fond blanc */
   surface: '#ffffff',
 
-  /** Fond de sidebar */
-  sidebarBg: '#fafbfc',
+  /** Sidebar */
+  sidebarBg: '#fafafa',
 
-  /** Bordure standard */
-  border: '#dcdfe4',
+  /** Bordure standard - tres douce */
+  border: '#e2e3e5',
 
   /** Bordure subtile */
-  borderSubtle: '#ebecf0',
+  borderSubtle: '#eeeff0',
 
-  /** Séparateur (plus subtil que border) */
-  divider: '#f1f2f4',
+  /** Separateur */
+  divider: '#f0f0f1',
 
-  /** Texte principal */
-  textPrimary: '#172b4d',
+  /** Texte principal - gris fonce, pas noir */
+  textPrimary: '#24272d',
 
   /** Texte secondaire */
-  textSecondary: '#626f86',
+  textSecondary: '#6b6f75',
 
-  /** Texte désactivé */
-  textDisabled: '#8590a2',
+  /** Texte desactive */
+  textDisabled: '#8e9196',
 
-  /** Texte sur fond coloré */
+  /** Texte sur fond colore */
   textOnColor: '#ffffff',
 
-  /** Lien */
-  link: '#0c66e4',
-  linkHover: '#0055cc',
+  /** Lien - bleu calme */
+  link: '#3b5998',
+  linkHover: '#334d80',
 } as const
 
 // ==================== TYPOGRAPHIE ====================
@@ -434,43 +421,37 @@ export const componentStyles = {
   card: {
     backgroundColor: colors.surface,
     border: `1px solid ${colors.border}`,
-    borderRadius: borders.radius.xl,
+    borderRadius: borders.radius.lg,
     boxShadow: shadows.none,
   },
 
   /**
-   * Carte avec ombre subtile (hover ready)
+   * Carte avec ombre subtile
    */
   cardElevated: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.borderSubtle}`,
-    borderRadius: borders.radius.xl,
-    boxShadow: shadows.sm,
-    transition: `all ${transitions.slow}`,
+    border: `1px solid ${colors.border}`,
+    borderRadius: borders.radius.lg,
+    boxShadow: shadows.xs,
+    transition: `border-color ${transitions.normal}`,
     '&:hover': {
-      boxShadow: shadows.md,
-      borderColor: colors.border,
+      borderColor: colors.neutral[300],
     },
   },
 
   /**
-   * Carte interactive (cliquable)
+   * Carte interactive (cliquable) - hover discret
    */
   cardInteractive: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.borderSubtle}`,
-    borderRadius: borders.radius.xl,
-    boxShadow: shadows.sm,
-    transition: `all ${transitions.slow}`,
+    border: `1px solid ${colors.border}`,
+    borderRadius: borders.radius.lg,
+    boxShadow: 'none',
+    transition: `all ${transitions.normal}`,
     cursor: 'pointer',
     '&:hover': {
-      boxShadow: shadows.md,
-      borderColor: colors.primary[200],
-      transform: 'translateY(-2px)',
-    },
-    '&:active': {
-      transform: 'translateY(0)',
-      boxShadow: shadows.sm,
+      borderColor: colors.primary[300],
+      backgroundColor: colors.primary[25],
     },
   },
 
@@ -767,42 +748,26 @@ export const componentStyles = {
   },
 
   /**
-   * Stat card (Dashboard KPIs) - Modern elevated design
+   * Stat card (Dashboard KPIs) - clean, no gimmicks
    */
   statCard: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.borderSubtle}`,
-    borderRadius: borders.radius.xl,
+    border: `1px solid ${colors.border}`,
+    borderRadius: borders.radius.lg,
     p: spacing.mui['2xl'],
-    transition: `all ${transitions.slow}`,
-    position: 'relative' as const,
-    overflow: 'hidden',
+    transition: `border-color ${transitions.normal}`,
     '&:hover': {
-      borderColor: colors.primary[200],
-      boxShadow: shadows.md,
-      transform: 'translateY(-2px)',
+      borderColor: colors.neutral[300],
     },
   },
 
   /**
-   * Stat card accent strip (left colored border)
-   */
-  statCardAccent: {
-    position: 'absolute' as const,
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: '4px',
-    borderRadius: '4px 0 0 4px',
-  },
-
-  /**
-   * Stat card icon container - modern circular design
+   * Stat card icon - subtle round container
    */
   statCardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: borders.radius.xl,
+    width: 40,
+    height: 40,
+    borderRadius: borders.radius.lg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -815,7 +780,7 @@ export const componentStyles = {
   sectionCard: {
     backgroundColor: colors.surface,
     border: `1px solid ${colors.border}`,
-    borderRadius: borders.radius.xl,
+    borderRadius: borders.radius.lg,
     overflow: 'hidden',
   },
 
@@ -1003,7 +968,7 @@ export const componentStyles = {
     },
     /** Container de la table */
     tableContainer: {
-      borderRadius: borders.radius.xl,
+      borderRadius: borders.radius.lg,
       border: `1px solid ${colors.border}`,
       overflow: 'hidden',
       bgcolor: colors.surface,
@@ -1043,18 +1008,18 @@ export const componentStyles = {
         borderBottom: `1px solid ${colors.divider}`,
       },
     },
-    /** Pill de filtre actif */
+    /** Pill de filtre actif - subtil, pas flashy */
     filterPillActive: {
-      bgcolor: colors.primary[600],
-      color: colors.textOnColor,
+      bgcolor: colors.primary[50],
+      color: colors.primary[700],
       fontWeight: typography.weights.semibold,
-      border: `1px solid ${colors.primary[600]}`,
+      border: `1px solid ${colors.primary[200]}`,
       borderRadius: borders.radius.full,
-      '&:hover': { bgcolor: colors.primary[700] },
+      '&:hover': { bgcolor: colors.primary[100] },
     },
     /** Pill de filtre inactif */
     filterPill: {
-      bgcolor: colors.surface,
+      bgcolor: 'transparent',
       color: colors.textSecondary,
       fontWeight: typography.weights.medium,
       border: `1px solid ${colors.neutral[200]}`,
@@ -1064,10 +1029,10 @@ export const componentStyles = {
         borderColor: colors.neutral[300],
       },
     },
-    /** Badge de compteur */
+    /** Badge de compteur (pill active) */
     countBadge: {
-      bgcolor: 'rgba(255,255,255,0.2)',
-      color: 'inherit',
+      bgcolor: colors.primary[200],
+      color: colors.primary[800],
       fontSize: typography.sizes['2xs'],
       fontWeight: typography.weights.bold,
       minWidth: 20,
@@ -1078,10 +1043,10 @@ export const componentStyles = {
       justifyContent: 'center',
       px: 0.75,
     },
-    /** Count badge for inactive pills */
+    /** Count badge (pill inactive) */
     countBadgeInactive: {
       bgcolor: colors.neutral[100],
-      color: colors.neutral[600],
+      color: colors.neutral[500],
       fontSize: typography.sizes['2xs'],
       fontWeight: typography.weights.bold,
       minWidth: 20,
@@ -1105,8 +1070,8 @@ export const componentStyles = {
    */
   dialog: {
     paper: {
-      borderRadius: borders.radius.xl,
-      boxShadow: shadows.xl,
+      borderRadius: borders.radius.lg,
+      boxShadow: shadows.lg,
     },
     title: {
       fontWeight: typography.weights.semibold,
@@ -1145,12 +1110,11 @@ export interface StatusConfig {
 }
 
 export const statusColors: Record<string, StatusConfig> = {
-  // Workflow Convention/Projet
   BROUILLON: {
     label: 'Brouillon',
     color: 'neutral',
     bgColor: colors.neutral[100],
-    textColor: colors.neutral[700],
+    textColor: colors.neutral[600],
     dotColor: colors.neutral[400],
   },
   SOUMIS: {
@@ -1158,86 +1122,84 @@ export const statusColors: Record<string, StatusConfig> = {
     color: 'warning',
     bgColor: colors.warning[50],
     textColor: colors.warning[700],
-    dotColor: colors.warning[500],
+    dotColor: colors.warning[400],
   },
   VALIDE: {
-    label: 'Validé',
+    label: 'Valide',
     color: 'success',
     bgColor: colors.success[50],
     textColor: colors.success[700],
-    dotColor: colors.success[500],
+    dotColor: colors.success[400],
   },
   VALIDEE: {
-    label: 'Validée',
+    label: 'Validee',
     color: 'success',
     bgColor: colors.success[50],
     textColor: colors.success[700],
-    dotColor: colors.success[500],
+    dotColor: colors.success[400],
   },
   EN_EXECUTION: {
-    label: 'En exécution',
+    label: 'En execution',
     color: 'info',
     bgColor: colors.info[50],
     textColor: colors.info[700],
-    dotColor: colors.info[500],
+    dotColor: colors.info[400],
   },
   EN_COURS: {
     label: 'En cours',
     color: 'info',
     bgColor: colors.info[50],
     textColor: colors.info[700],
-    dotColor: colors.info[500],
+    dotColor: colors.info[400],
   },
   ACHEVE: {
-    label: 'Achevé',
+    label: 'Acheve',
     color: 'success',
     bgColor: colors.success[100],
     textColor: colors.success[700],
-    dotColor: colors.success[600],
+    dotColor: colors.success[500],
   },
   TERMINE: {
-    label: 'Terminé',
+    label: 'Termine',
     color: 'success',
     bgColor: colors.success[100],
     textColor: colors.success[700],
-    dotColor: colors.success[600],
+    dotColor: colors.success[500],
   },
   REJETE: {
-    label: 'Rejeté',
+    label: 'Rejete',
     color: 'danger',
     bgColor: colors.danger[50],
     textColor: colors.danger[700],
-    dotColor: colors.danger[500],
+    dotColor: colors.danger[400],
   },
   ANNULE: {
-    label: 'Annulé',
+    label: 'Annule',
     color: 'danger',
-    bgColor: colors.danger[100],
+    bgColor: colors.danger[50],
     textColor: colors.danger[600],
-    dotColor: colors.danger[500],
+    dotColor: colors.danger[400],
   },
   EN_RETARD: {
     label: 'En retard',
     color: 'danger',
     bgColor: colors.danger[50],
     textColor: colors.danger[700],
-    dotColor: colors.danger[500],
+    dotColor: colors.danger[400],
   },
   SUSPENDU: {
     label: 'Suspendu',
     color: 'warning',
     bgColor: colors.warning[50],
     textColor: colors.warning[700],
-    dotColor: colors.warning[500],
+    dotColor: colors.warning[400],
   },
-
-  // Types supplémentaires
   ACTIF: {
     label: 'Actif',
     color: 'success',
     bgColor: colors.success[50],
     textColor: colors.success[700],
-    dotColor: colors.success[500],
+    dotColor: colors.success[400],
   },
   INACTIF: {
     label: 'Inactif',
@@ -1251,30 +1213,35 @@ export const statusColors: Record<string, StatusConfig> = {
     color: 'purple',
     bgColor: colors.purple[50],
     textColor: colors.purple[700],
-    dotColor: colors.purple[500],
+    dotColor: colors.purple[400],
   },
   URGENT: {
     label: 'Urgent',
     color: 'danger',
     bgColor: colors.danger[50],
     textColor: colors.danger[700],
-    dotColor: colors.danger[500],
+    dotColor: colors.danger[400],
   },
-
-  // Convention types
   CADRE: {
     label: 'Cadre',
     color: 'primary',
     bgColor: colors.primary[50],
     textColor: colors.primary[700],
-    dotColor: colors.primary[500],
+    dotColor: colors.primary[400],
   },
   SPECIFIQUE: {
-    label: 'Spécifique',
+    label: 'Specifique',
     color: 'purple',
     bgColor: colors.purple[50],
     textColor: colors.purple[700],
-    dotColor: colors.purple[500],
+    dotColor: colors.purple[400],
+  },
+  EN_PREPARATION: {
+    label: 'En preparation',
+    color: 'neutral',
+    bgColor: colors.neutral[100],
+    textColor: colors.neutral[600],
+    dotColor: colors.neutral[400],
   },
 } as const
 
@@ -1297,25 +1264,24 @@ export function getStatusConfig(status: string): StatusConfig {
  * Couleurs pour les graphiques (charts)
  */
 export const chartColors = {
-  primary: colors.primary[500],
-  secondary: colors.purple[500],
-  tertiary: colors.info[500],
-  success: colors.success[500],
-  warning: colors.warning[500],
-  danger: colors.danger[500],
-  neutral: colors.neutral[400],
-  // Palette étendue pour charts multiples
+  primary: colors.primary[400],
+  secondary: colors.purple[400],
+  tertiary: colors.info[400],
+  success: colors.success[400],
+  warning: colors.warning[400],
+  danger: colors.danger[400],
+  neutral: colors.neutral[300],
   palette: [
-    colors.primary[500],
-    colors.purple[500],
-    colors.info[500],
-    colors.success[500],
-    colors.warning[500],
-    colors.danger[500],
-    colors.primary[300],
-    colors.purple[300],
-    colors.info[300],
-    colors.success[300],
+    colors.primary[400],
+    colors.info[400],
+    colors.success[400],
+    colors.purple[400],
+    colors.warning[400],
+    colors.danger[400],
+    colors.primary[200],
+    colors.info[200],
+    colors.success[200],
+    colors.purple[200],
   ],
 } as const
 

@@ -246,19 +246,19 @@ export default function MarchesPage() {
                 textTransform: 'none',
                 fontWeight: typography.weights.medium,
                 fontSize: typography.sizes.sm,
-                borderRadius: '6px',
+                borderRadius: '5px',
                 px: 1.5,
                 minWidth: 0,
                 ...(viewMode === 'list' ? {
                   bgcolor: colors.surface,
                   color: colors.textPrimary,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
                 } : {
                   bgcolor: 'transparent',
-                  color: colors.textSecondary,
+                  color: colors.textDisabled,
                 }),
                 '&:hover': {
-                  bgcolor: viewMode === 'list' ? colors.surface : colors.neutral[200],
+                  bgcolor: viewMode === 'list' ? colors.surface : colors.neutral[50],
                 },
               }}
             >
@@ -272,19 +272,19 @@ export default function MarchesPage() {
                 textTransform: 'none',
                 fontWeight: typography.weights.medium,
                 fontSize: typography.sizes.sm,
-                borderRadius: '6px',
+                borderRadius: '5px',
                 px: 1.5,
                 minWidth: 0,
                 ...(viewMode === 'map' ? {
                   bgcolor: colors.surface,
                   color: colors.textPrimary,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
                 } : {
                   bgcolor: 'transparent',
-                  color: colors.textSecondary,
+                  color: colors.textDisabled,
                 }),
                 '&:hover': {
-                  bgcolor: viewMode === 'map' ? colors.surface : colors.neutral[200],
+                  bgcolor: viewMode === 'map' ? colors.surface : colors.neutral[50],
                 },
               }}
             >

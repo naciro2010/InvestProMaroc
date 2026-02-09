@@ -152,24 +152,18 @@ const SectionHeader = ({ icon, title, action }: { icon: JSX.Element; title: stri
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    px: 3,
-    py: 2,
+    px: 2.5,
+    py: 1.5,
     borderBottom: `1px solid ${colors.divider}`,
   }}>
-    <Stack direction="row" alignItems="center" spacing={1.5}>
-      <Box sx={{
-        width: 32, height: 32,
-        borderRadius: borders.radius.lg,
-        bgcolor: colors.neutral[100],
-        color: colors.textSecondary,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
+    <Stack direction="row" alignItems="center" spacing={1}>
+      <Box sx={{ color: colors.textDisabled, display: 'flex' }}>
         {icon}
       </Box>
       <Typography sx={{
-        fontWeight: typography.weights.semibold,
-        fontSize: typography.sizes.md,
-        color: colors.textPrimary,
+        fontWeight: typography.weights.medium,
+        fontSize: typography.sizes.sm,
+        color: colors.textSecondary,
       }}>
         {title}
       </Typography>
@@ -266,8 +260,8 @@ const DashboardModern = () => {
         value: conventions.length,
         subtitle: formatLargeCurrency(budgetConventions),
         details: `${convValidees} validees \u2022 ${convEnCours} en execution`,
-        icon: <FileText size={22} />,
-        color: colors.primary[600],
+        icon: <FileText size={20} />,
+        color: colors.primary[500],
         bgColor: colors.primary[50],
         loading: loading,
         path: '/conventions',
@@ -277,8 +271,8 @@ const DashboardModern = () => {
         value: projets.length,
         subtitle: formatLargeCurrency(budgetProjets),
         details: `${projActifs} actifs \u2022 ${projTermines} termines`,
-        icon: <FolderOpen size={22} />,
-        color: colors.purple[600],
+        icon: <FolderOpen size={20} />,
+        color: colors.purple[500],
         bgColor: colors.purple[50],
         loading: loading,
         path: '/projets',
@@ -288,8 +282,8 @@ const DashboardModern = () => {
         value: marches.length,
         subtitle: formatLargeCurrency(totalMarches),
         details: `${decomptes.length} decomptes`,
-        icon: <Receipt size={22} />,
-        color: colors.info[600],
+        icon: <Receipt size={20} />,
+        color: colors.info[500],
         bgColor: colors.info[50],
         loading: loading,
         path: '/marches',
@@ -301,8 +295,8 @@ const DashboardModern = () => {
         details: budgetConventions > 0
           ? `${((totalPaiements / budgetConventions) * 100).toFixed(1)}% du budget consomme`
           : '0% du budget consomme',
-        icon: <Banknote size={22} />,
-        color: colors.success[600],
+        icon: <Banknote size={20} />,
+        color: colors.success[500],
         bgColor: colors.success[50],
         loading: loading,
         path: '/paiements',
@@ -319,13 +313,13 @@ const DashboardModern = () => {
       counts[s] = (counts[s] || 0) + 1
     })
     const colorMap: Record<string, string> = {
-      BROUILLON: colors.neutral[400],
-      SOUMIS: colors.warning[500],
-      VALIDEE: colors.success[500],
-      EN_EXECUTION: colors.info[500],
-      ACHEVE: colors.success[700],
-      REJETE: colors.danger[500],
-      ANNULE: colors.danger[300],
+      BROUILLON: colors.neutral[300],
+      SOUMIS: colors.warning[300],
+      VALIDEE: colors.success[400],
+      EN_EXECUTION: colors.info[400],
+      ACHEVE: colors.success[600],
+      REJETE: colors.danger[400],
+      ANNULE: colors.danger[200],
     }
     return Object.entries(counts).map(([name, value]) => ({
       name: getStatusConfig(name).label,
@@ -524,7 +518,7 @@ const DashboardModern = () => {
                 <Typography sx={{
                   fontSize: typography.sizes.sm,
                   fontWeight: typography.weights.bold,
-                  color: budgetUtilization > 80 ? colors.danger[600] : budgetUtilization > 50 ? colors.warning[600] : colors.primary[600],
+                  color: budgetUtilization > 80 ? colors.danger[600] : budgetUtilization > 50 ? colors.warning[600] : colors.primary[700],
                 }}>
                   {budgetUtilization.toFixed(1)}%
                 </Typography>
@@ -538,7 +532,7 @@ const DashboardModern = () => {
                   bgcolor: colors.neutral[100],
                   '& .MuiLinearProgress-bar': {
                     borderRadius: borders.radius.full,
-                    bgcolor: budgetUtilization > 80 ? colors.danger[500] : budgetUtilization > 50 ? colors.warning[500] : colors.primary[500],
+                    bgcolor: budgetUtilization > 80 ? colors.danger[400] : budgetUtilization > 50 ? colors.warning[400] : colors.primary[400],
                   },
                 }}
               />
@@ -647,8 +641,8 @@ const DashboardModern = () => {
                         tickFormatter={(v: number) => formatLargeCurrency(v)}
                         width={70}
                       />
-                      <Bar dataKey="budget" fill={colors.primary[200]} radius={[4, 4, 0, 0]} name="Budget" />
-                      <Bar dataKey="consomme" fill={colors.primary[600]} radius={[4, 4, 0, 0]} name="Consomme" />
+                      <Bar dataKey="budget" fill={colors.primary[100]} radius={[3, 3, 0, 0]} name="Budget" />
+                      <Bar dataKey="consomme" fill={colors.primary[400]} radius={[3, 3, 0, 0]} name="Consomme" />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -672,8 +666,8 @@ const DashboardModern = () => {
                     <AreaChart data={paymentTrend}>
                       <defs>
                         <linearGradient id="colorPaiement" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={colors.success[500]} stopOpacity={0.15} />
-                          <stop offset="95%" stopColor={colors.success[500]} stopOpacity={0} />
+                          <stop offset="5%" stopColor={colors.success[400]} stopOpacity={0.12} />
+                          <stop offset="95%" stopColor={colors.success[400]} stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={colors.divider} vertical={false} />
@@ -693,8 +687,8 @@ const DashboardModern = () => {
                       <Area
                         type="monotone"
                         dataKey="montant"
-                        stroke={colors.success[500]}
-                        strokeWidth={2}
+                        stroke={colors.success[400]}
+                        strokeWidth={1.5}
                         fillOpacity={1}
                         fill="url(#colorPaiement)"
                       />
@@ -761,14 +755,10 @@ const DashboardModern = () => {
                         }}
                       >
                         <Box sx={{
-                          width: 36, height: 36,
-                          borderRadius: borders.radius.lg,
-                          bgcolor: item.type === 'convention' ? colors.primary[50]
-                            : item.type === 'marche' ? colors.info[50]
-                            : colors.purple[50],
-                          color: item.type === 'convention' ? colors.primary[600]
-                            : item.type === 'marche' ? colors.info[600]
-                            : colors.purple[600],
+                          width: 34, height: 34,
+                          borderRadius: borders.radius.md,
+                          bgcolor: colors.neutral[50],
+                          color: colors.neutral[500],
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           flexShrink: 0,
                         }}>
@@ -839,9 +829,9 @@ const DashboardModern = () => {
                   <Stack spacing={1}>
                     {alerts.map((alert, idx) => {
                       const alertColors = {
-                        success: { bg: colors.success[25], dot: colors.success[500], text: colors.success[700], icon: <CheckCircle2 size={14} /> },
-                        warning: { bg: colors.warning[50], dot: colors.warning[500], text: colors.warning[700], icon: <AlertTriangle size={14} /> },
-                        info: { bg: colors.info[50], dot: colors.info[500], text: colors.info[700], icon: <Clock size={14} /> },
+                        success: { bg: colors.success[25], dot: colors.success[400], text: colors.success[700], icon: <CheckCircle2 size={14} /> },
+                        warning: { bg: colors.warning[25], dot: colors.warning[400], text: colors.warning[700], icon: <AlertTriangle size={14} /> },
+                        info: { bg: colors.neutral[50], dot: colors.info[400], text: colors.info[700], icon: <Clock size={14} /> },
                       }
                       const ac = alertColors[alert.type]
                       return (
@@ -874,10 +864,10 @@ const DashboardModern = () => {
                 <Box sx={{ p: 1.5 }}>
                   <Stack spacing={0.5}>
                     {[
-                      { label: 'Nouvelle convention', path: '/conventions/new', icon: <FileText size={16} />, color: colors.primary[600], bg: colors.primary[50] },
-                      { label: 'Nouveau projet', path: '/projets/new', icon: <FolderOpen size={16} />, color: colors.purple[600], bg: colors.purple[50] },
-                      { label: 'Nouveau marche', path: '/marches/new', icon: <BarChart3 size={16} />, color: colors.info[600], bg: colors.info[50] },
-                      { label: 'Reporting', path: '/reporting', icon: <TrendingUp size={16} />, color: colors.success[600], bg: colors.success[50] },
+                      { label: 'Nouvelle convention', path: '/conventions/new', icon: <FileText size={16} /> },
+                      { label: 'Nouveau projet', path: '/projets/new', icon: <FolderOpen size={16} /> },
+                      { label: 'Nouveau marche', path: '/marches/new', icon: <BarChart3 size={16} /> },
+                      { label: 'Reporting', path: '/reporting', icon: <TrendingUp size={16} /> },
                     ].map((action) => (
                       <Box
                         key={action.path}
@@ -894,7 +884,8 @@ const DashboardModern = () => {
                         <Box sx={{
                           width: 32, height: 32,
                           borderRadius: borders.radius.md,
-                          bgcolor: action.bg, color: action.color,
+                          bgcolor: colors.neutral[100],
+                          color: colors.neutral[500],
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           flexShrink: 0,
                         }}>

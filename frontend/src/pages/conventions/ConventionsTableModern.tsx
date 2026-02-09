@@ -588,7 +588,7 @@ const ConventionsTableModern = () => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         PaperProps={{
-          sx: { minWidth: 180, borderRadius: '12px', boxShadow: '0 8px 24px rgba(9,30,66,0.12)' },
+          sx: { minWidth: 180, borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
         }}
       >
         <MenuItem onClick={() => handleAction('view')}>

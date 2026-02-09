@@ -1,43 +1,28 @@
-import { Box, Paper, Typography, Divider, Skeleton, Alert, LinearProgress } from '@mui/material'
-import { Assessment, TrendingUp, FolderOpen, Business, AccountTree } from '@mui/icons-material'
+import React from 'react'
+import { Box, Paper, Typography, Skeleton, Alert, LinearProgress } from '@mui/material'
+import { Assessment, FolderOpen, Business, AccountTree, TrendingUp } from '@mui/icons-material'
 import { useConventionStats } from '@/hooks/useConventionData'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 
 interface ConventionStatsCardProps {
   conventionId: number
   onStatClick?: (statType: 'projets' | 'marches' | 'sousConventions') => void
 }
 
-/**
- * Micro-component: Convention Statistics Card
- * Loads aggregated stats (~5 KB) independently via micro-endpoint
- * Displays: project count, market count, sub-convention count, amounts, realization rate
- */
 const ConventionStatsCard = ({ conventionId, onStatClick }: ConventionStatsCardProps) => {
   const { data: stats, loading, error } = useConventionStats(conventionId)
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-      notation: 'compact',
-      maximumFractionDigits: 1,
-    }).format(amount)
-  }
-
-  const formatPercent = (value: number) => {
-    return `${value.toFixed(1)}%`
-  }
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', notation: 'compact', maximumFractionDigits: 1 }).format(amount)
 
   if (loading) {
     return (
-      <Paper sx={{ p: 3 }}>
-        <Skeleton variant="text" width="60%" height={32} sx={{ mb: 2 }} />
-        <Divider sx={{ mb: 2 }} />
-        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}>
-          <Skeleton variant="rectangular" height={100} />
-          <Skeleton variant="rectangular" height={100} />
-          <Skeleton variant="rectangular" height={100} />
-          <Skeleton variant="rectangular" height={100} />
+      <Paper sx={{ ...componentStyles.card, p: 3 }}>
+        <Skeleton variant="text" width="40%" height={28} sx={{ mb: 2 }} />
+        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} variant="rectangular" height={100} sx={{ borderRadius: '10px' }} />
+          ))}
         </Box>
       </Paper>
     )
@@ -45,181 +30,189 @@ const ConventionStatsCard = ({ conventionId, onStatClick }: ConventionStatsCardP
 
   if (error || !stats) {
     return (
-      <Paper sx={{ p: 3 }}>
-        <Alert severity="error">
-          Erreur lors du chargement des statistiques
-        </Alert>
+      <Paper sx={{ ...componentStyles.card, p: 3 }}>
+        <Alert severity="error">Erreur lors du chargement des statistiques</Alert>
       </Paper>
     )
   }
 
+  const StatBox = ({ icon, value, label, color, onClick }: {
+    icon: React.ReactNode
+    value: string | number
+    label: string
+    color: string
+    onClick?: () => void
+  }) => (
+    <Box
+      onClick={onClick}
+      sx={{
+        p: 2.5,
+        textAlign: 'center',
+        bgcolor: `${color}08`,
+        borderRadius: '10px',
+        border: `1px solid ${color}20`,
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.2s ease',
+        '&:hover': onClick ? {
+          transform: 'translateY(-2px)',
+          boxShadow: `0 4px 12px ${color}20`,
+          borderColor: `${color}40`,
+        } : {},
+      }}
+    >
+      <Box sx={{
+        width: 40,
+        height: 40,
+        borderRadius: '10px',
+        bgcolor: `${color}15`,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mb: 1.5,
+        color: color,
+      }}>
+        {icon}
+      </Box>
+      <Typography sx={{
+        fontSize: typography.sizes['2xl'],
+        fontWeight: typography.weights.bold,
+        color: color,
+        lineHeight: 1,
+        mb: 0.5,
+      }}>
+        {value}
+      </Typography>
+      <Typography sx={{
+        fontSize: typography.sizes.xs,
+        color: colors.textSecondary,
+        fontWeight: typography.weights.medium,
+      }}>
+        {label}
+      </Typography>
+    </Box>
+  )
+
+  const budget = stats.montantTotalProjets + stats.montantTotalMarches
+  const maxBudget = Math.max(budget, 1)
+
   return (
-    <Paper sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-        <Assessment color="primary" />
-        <Typography variant="h6" fontWeight={600} color="primary">
+    <Paper sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
+      {/* Header */}
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        px: 3,
+        py: 2,
+        borderBottom: `1px solid ${colors.border}`,
+      }}>
+        <Box sx={{
+          width: 36,
+          height: 36,
+          borderRadius: '8px',
+          bgcolor: colors.primary[50],
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Assessment sx={{ color: colors.primary[600], fontSize: 20 }} />
+        </Box>
+        <Typography sx={{
+          fontWeight: typography.weights.semibold,
+          color: colors.textPrimary,
+          fontSize: typography.sizes.md,
+        }}>
           Statistiques
         </Typography>
       </Box>
-      <Divider sx={{ mb: 3 }} />
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
-        {/* Nombre de Projets */}
-        <Box
-          onClick={() => onStatClick?.('projets')}
-          sx={{
-            p: 2,
-            textAlign: 'center',
-            bgcolor: 'primary.lighter',
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'primary.light',
-            cursor: onStatClick ? 'pointer' : 'default',
-            transition: 'all 0.2s ease',
-            '&:hover': onStatClick ? {
-              transform: 'translateY(-2px)',
-              boxShadow: 2,
-              bgcolor: 'primary.100',
-            } : {},
-          }}
-        >
-          <FolderOpen color="primary" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1 }} />
-          <Typography variant="h4" fontWeight={700} color="primary.dark" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-            {stats.nombreProjets}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Projets liés
-          </Typography>
-        </Box>
-
-        {/* Nombre de Marchés */}
-        <Box
-          onClick={() => onStatClick?.('marches')}
-          sx={{
-            p: 2,
-            textAlign: 'center',
-            bgcolor: 'secondary.lighter',
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'secondary.light',
-            cursor: onStatClick ? 'pointer' : 'default',
-            transition: 'all 0.2s ease',
-            '&:hover': onStatClick ? {
-              transform: 'translateY(-2px)',
-              boxShadow: 2,
-              bgcolor: 'secondary.100',
-            } : {},
-          }}
-        >
-          <Business color="secondary" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1 }} />
-          <Typography variant="h4" fontWeight={700} color="secondary.dark" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-            {stats.nombreMarches}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Marchés liés
-          </Typography>
-        </Box>
-
-        {/* Sous-Conventions */}
-        <Box
-          onClick={() => onStatClick?.('sousConventions')}
-          sx={{
-            p: 2,
-            textAlign: 'center',
-            bgcolor: 'info.lighter',
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'info.light',
-            cursor: onStatClick ? 'pointer' : 'default',
-            transition: 'all 0.2s ease',
-            '&:hover': onStatClick ? {
-              transform: 'translateY(-2px)',
-              boxShadow: 2,
-              bgcolor: 'info.100',
-            } : {},
-          }}
-        >
-          <AccountTree color="info" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1 }} />
-          <Typography variant="h4" fontWeight={700} color="info.dark" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-            {stats.nombreSousConventions}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Sous-conventions
-          </Typography>
-        </Box>
-
-        {/* Taux Réalisation */}
-        <Box
-          sx={{
-            p: 2,
-            textAlign: 'center',
-            bgcolor: 'success.lighter',
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'success.light',
-          }}
-        >
-          <TrendingUp color="success" sx={{ fontSize: { xs: 24, md: 32 }, mb: 1 }} />
-          <Typography variant="h4" fontWeight={700} color="success.dark" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-            {formatPercent(stats.tauxRealisation)}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Taux réalisation
-          </Typography>
-        </Box>
-      </Box>
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-        {/* Montant Total Projets */}
-        <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-          <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-            Montant Total Projets
-          </Typography>
-          <Typography variant="h6" fontWeight={600}>
-            {formatCurrency(stats.montantTotalProjets)}
-          </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={Math.min((stats.montantTotalProjets / 10000000) * 100, 100)}
-            sx={{ mt: 1, height: 6, borderRadius: 1 }}
+      <Box sx={{ px: 3, py: 2.5 }}>
+        {/* KPI Grid */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+          <StatBox
+            icon={<FolderOpen sx={{ fontSize: 22 }} />}
+            value={stats.nombreProjets}
+            label="Projets lies"
+            color={colors.primary[600]}
+            onClick={() => onStatClick?.('projets')}
+          />
+          <StatBox
+            icon={<Business sx={{ fontSize: 22 }} />}
+            value={stats.nombreMarches}
+            label="Marches lies"
+            color={colors.purple[600]}
+            onClick={() => onStatClick?.('marches')}
+          />
+          <StatBox
+            icon={<AccountTree sx={{ fontSize: 22 }} />}
+            value={stats.nombreSousConventions}
+            label="Sous-conventions"
+            color={colors.info[600]}
+            onClick={() => onStatClick?.('sousConventions')}
+          />
+          <StatBox
+            icon={<TrendingUp sx={{ fontSize: 22 }} />}
+            value={`${stats.tauxRealisation.toFixed(1)}%`}
+            label="Taux realisation"
+            color={colors.success[600]}
           />
         </Box>
 
-        {/* Montant Total Marchés */}
-        <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-          <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-            Montant Total Marchés
-          </Typography>
-          <Typography variant="h6" fontWeight={600}>
-            {formatCurrency(stats.montantTotalMarches)}
-          </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={Math.min((stats.montantTotalMarches / 10000000) * 100, 100)}
-            color="secondary"
-            sx={{ mt: 1, height: 6, borderRadius: 1 }}
-          />
+        {/* Financial Summary */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+          <Box sx={{ p: 2, bgcolor: colors.neutral[25], borderRadius: '8px', border: `1px solid ${colors.borderSubtle}` }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, fontWeight: typography.weights.medium, mb: 0.5 }}>
+              Montant Total Projets
+            </Typography>
+            <Typography sx={{ fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary }}>
+              {formatCurrency(stats.montantTotalProjets)}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={maxBudget > 0 ? Math.min((stats.montantTotalProjets / maxBudget) * 100, 100) : 0}
+              sx={{
+                mt: 1,
+                height: 4,
+                borderRadius: 2,
+                bgcolor: colors.neutral[100],
+                '& .MuiLinearProgress-bar': { bgcolor: colors.primary[500], borderRadius: 2 },
+              }}
+            />
+          </Box>
+          <Box sx={{ p: 2, bgcolor: colors.neutral[25], borderRadius: '8px', border: `1px solid ${colors.borderSubtle}` }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, fontWeight: typography.weights.medium, mb: 0.5 }}>
+              Montant Total Marches
+            </Typography>
+            <Typography sx={{ fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary }}>
+              {formatCurrency(stats.montantTotalMarches)}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={maxBudget > 0 ? Math.min((stats.montantTotalMarches / maxBudget) * 100, 100) : 0}
+              sx={{
+                mt: 1,
+                height: 4,
+                borderRadius: 2,
+                bgcolor: colors.neutral[100],
+                '& .MuiLinearProgress-bar': { bgcolor: colors.purple[500], borderRadius: 2 },
+              }}
+            />
+          </Box>
+          <Box sx={{
+            p: 2,
+            bgcolor: colors.warning[25],
+            borderRadius: '8px',
+            border: `1px solid ${colors.warning[100]}`,
+            textAlign: 'center',
+          }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, fontWeight: typography.weights.medium, mb: 0.5 }}>
+              Commission Totale
+            </Typography>
+            <Typography sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.warning[700] }}>
+              {formatCurrency(stats.commissionTotale)}
+            </Typography>
+          </Box>
         </Box>
-      </Box>
-
-      {/* Commission Totale */}
-      <Box
-        sx={{
-          p: 2,
-          bgcolor: 'warning.lighter',
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'warning.light',
-          textAlign: 'center',
-          mt: 2,
-        }}
-      >
-        <Typography variant="caption" color="text.secondary" gutterBottom display="block">
-          Commission Totale
-        </Typography>
-        <Typography variant="h5" fontWeight={700} color="warning.dark">
-          {formatCurrency(stats.commissionTotale)}
-        </Typography>
       </Box>
     </Paper>
   )

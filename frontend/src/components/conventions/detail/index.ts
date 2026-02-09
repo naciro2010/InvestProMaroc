@@ -11,3 +11,8 @@ export { default as ConventionStatsCard } from './ConventionStatsCard'
 export { default as ConventionPartenairesCard } from './ConventionPartenairesCard'
 export { default as ConventionSubventionsCard } from './ConventionSubventionsCard'
 export { default as ConventionImputationsCard } from './ConventionImputationsCard'
+
+// Modular detail components (v2)
+export { default as ConventionWorkflowActions } from './ConventionWorkflowActions'
+export { default as ConventionVersementsCard } from './ConventionVersementsCard'
+export { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedTab'

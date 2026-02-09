@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+// import { useNavigate } from 'react-router-dom' // TODO: use when detail page navigation is ready
 import {
   Box,
   Button,
@@ -33,6 +33,7 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import api, { decomptesAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
+import StatusBadge from '../../components/core/StatusBadge'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
 
 // Types
@@ -51,30 +52,8 @@ interface Decompte {
 // Styles from design system
 const styles = componentStyles.listPage
 
-// Status Badge utilisant le design system
-const StatusBadge = ({ status }: { status: string }) => {
-  const config = getStatusConfig(status)
-  return (
-    <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        px: 1.5,
-        py: 0.5,
-        borderRadius: '4px',
-        bgcolor: config.bgColor,
-        color: config.textColor,
-        fontSize: typography.sizes.xs,
-        fontWeight: typography.weights.semibold,
-      }}
-    >
-      {config.label}
-    </Box>
-  )
-}
-
 const DecomptesPage = () => {
-  const navigate = useNavigate()
+  // const navigate = useNavigate() // TODO: use when detail page navigation is ready
   const [decomptes, setDecomptes] = useState<Decompte[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -280,7 +259,7 @@ const DecomptesPage = () => {
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
-                      <Box component="span" sx={styles.countBadge}>{count}</Box>
+                      <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
                     </Box>
                   }
                   onClick={() => { setStatutFilter(statut); setPage(0); }}
@@ -292,7 +271,7 @@ const DecomptesPage = () => {
         </Box>
 
         {/* Main Content Area */}
-        <Box sx={{ px: 3, pb: 3 }}>
+        <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
           <Box sx={styles.tableContainer}>
             <TableContainer>
               <Table size="small">
@@ -388,8 +367,8 @@ const DecomptesPage = () => {
         </Box>
 
         {/* Dialog Formulaire */}
-        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-          <DialogTitle>
+        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth PaperProps={{ sx: componentStyles.dialog.paper }}>
+          <DialogTitle sx={componentStyles.dialog.title}>
             {selectedDecompte ? 'Modifier le Décompte' : 'Nouveau Décompte'}
           </DialogTitle>
           <DialogContent>
@@ -488,9 +467,9 @@ const DecomptesPage = () => {
               )}
             </Stack>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Annuler</Button>
-            <Button variant="contained" onClick={handleSubmit}>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={handleCloseDialog} sx={componentStyles.buttonSecondary}>Annuler</Button>
+            <Button onClick={handleSubmit} sx={componentStyles.buttonPrimary}>
               {selectedDecompte ? 'Modifier' : 'Créer'}
             </Button>
           </DialogActions>

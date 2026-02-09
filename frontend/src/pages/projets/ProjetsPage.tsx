@@ -30,11 +30,11 @@ import {
   Edit,
   Delete,
   Visibility,
-  FolderOpen,
   Search,
 } from '@mui/icons-material'
 import { GripVertical } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
+import StatusBadge from '../../components/core/StatusBadge'
 import { projetsAPI, Projet } from '../../lib/projetsAPI'
 import {
   useSortableTable,
@@ -49,28 +49,6 @@ import { colors, typography, transitions, componentStyles, getStatusConfig } fro
 
 // Styles from design system
 const styles = componentStyles.listPage
-
-// Status Badge utilisant le design system
-const StatusBadge = ({ status }: { status: string }) => {
-  const config = getStatusConfig(status)
-  return (
-    <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        px: 1.5,
-        py: 0.5,
-        borderRadius: '4px',
-        bgcolor: config.bgColor,
-        color: config.textColor,
-        fontSize: typography.sizes.xs,
-        fontWeight: typography.weights.semibold,
-      }}
-    >
-      {config.label}
-    </Box>
-  )
-}
 
 // Composant carte projet draggable
 interface SortableProjetCardProps {
@@ -107,21 +85,12 @@ const SortableProjetCard = ({
       ref={setNodeRef}
       style={style}
       sx={{
+        ...componentStyles.cardInteractive,
         p: 3,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        cursor: 'pointer',
-        border: `1px solid ${colors.border}`,
-        boxShadow: 'none',
-        borderRadius: '12px',
-        transition: `all ${transitions.normal}`,
-        bgcolor: isDragging ? colors.primary[50] : 'white',
-        '&:hover': {
-          borderColor: colors.neutral[300],
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-          transform: isDragging ? undefined : 'translateY(-2px)',
-        },
+        bgcolor: isDragging ? colors.primary[50] : colors.surface,
       }}
       onClick={onClick}
     >
@@ -462,7 +431,7 @@ const ProjetsPage = () => {
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
-                      <Box component="span" sx={styles.countBadge}>{count}</Box>
+                      <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
                     </Box>
                   }
                   onClick={() => { setStatutFilter(statut); setPage(0); }}

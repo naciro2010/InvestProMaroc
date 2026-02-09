@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { Box, Typography, Stack } from '@mui/material'
+import { colors, typography } from '@/lib/designSystem'
 
 interface PageHeaderProps {
   title: string
@@ -8,11 +9,10 @@ interface PageHeaderProps {
 }
 
 /**
- * Clean page header component following GCP/GitLab design
- * - No gradients, no flashy colors
- * - Simple typography hierarchy
- * - Generous spacing
- * - Optional action buttons on the right
+ * PageHeader (common) - Simple page header using design system tokens.
+ * Used primarily on the Dashboard and other pages that don't need breadcrumbs.
+ *
+ * For pages needing breadcrumbs/status, use the core PageHeader instead.
  */
 const PageHeader = ({ title, subtitle, actions }: PageHeaderProps) => {
   return (
@@ -27,8 +27,8 @@ const PageHeader = ({ title, subtitle, actions }: PageHeaderProps) => {
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 600,
-              color: '#1f2937',
+              fontWeight: typography.weights.bold,
+              color: colors.textPrimary,
               mb: subtitle ? 0.5 : 0,
               letterSpacing: '-0.02em',
             }}
@@ -36,7 +36,13 @@ const PageHeader = ({ title, subtitle, actions }: PageHeaderProps) => {
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body2" sx={{ color: '#6b7280' }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: colors.textSecondary,
+                fontSize: typography.sizes.base,
+              }}
+            >
               {subtitle}
             </Typography>
           )}

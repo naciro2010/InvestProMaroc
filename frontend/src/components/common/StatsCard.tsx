@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
-import { Card, CardContent, Stack, Box, Typography, Chip } from '@mui/material'
-import { ArrowUpward, ArrowDownward } from '@mui/icons-material'
+import { Box, Typography, Stack } from '@mui/material'
+import { TrendingUp, TrendingDown } from 'lucide-react'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 
 interface StatsCardProps {
   title: string
@@ -16,12 +17,14 @@ interface StatsCardProps {
 }
 
 /**
- * Modern stats card component with dark mode support
- * - Adapts colors based on theme mode
- * - Icon in colored circle with pastel background
- * - Large number as focal point
- * - Optional trend indicator
- * - Subtle hover state
+ * StatsCard - Carte KPI moderne avec design system.
+ *
+ * Principes:
+ * - Accent coloré à gauche
+ * - Icône dans cercle avec fond pastel
+ * - Valeur large comme point focal
+ * - Badge de tendance optionnel
+ * - Hover subtil avec élévation
  */
 const StatsCard = ({
   title,
@@ -36,120 +39,106 @@ const StatsCard = ({
   onClick,
 }: StatsCardProps) => {
   return (
-    <Card
+    <Box
       onClick={onClick}
       sx={{
+        ...componentStyles.statCard,
         cursor: onClick ? 'pointer' : 'default',
-        borderRadius: '12px',
-        transition: 'all 0.2s ease',
-        '&:hover': onClick
-          ? {
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-              transform: 'translateY(-2px)',
-            }
-          : {},
+        pl: 4,
       }}
     >
-      <CardContent sx={{ p: 3 }}>
-        <Stack spacing={2.5}>
-          {/* Icon & Trend */}
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+      {/* Left accent strip */}
+      <Box
+        sx={{
+          ...componentStyles.statCardAccent,
+          backgroundColor: color,
+        }}
+      />
+
+      <Stack spacing={2}>
+        {/* Top row: icon + trend */}
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+          <Box
+            sx={{
+              ...componentStyles.statCardIcon,
+              backgroundColor: bgColor,
+              color: color,
+            }}
+          >
+            {icon}
+          </Box>
+          {trend && (
             <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '12px',
-                bgcolor: bgColor,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: color,
-              }}
+              sx={trendDirection === 'up'
+                ? componentStyles.trendBadgeUp
+                : componentStyles.trendBadgeDown
+              }
             >
-              {icon}
+              {trendDirection === 'up'
+                ? <TrendingUp size={12} />
+                : <TrendingDown size={12} />
+              }
+              {trend}
             </Box>
-            {trend && (
-              <Chip
-                icon={
-                  trendDirection === 'up' ? (
-                    <ArrowUpward sx={{ fontSize: 14 }} />
-                  ) : (
-                    <ArrowDownward sx={{ fontSize: 14 }} />
-                  )
-                }
-                label={trend}
-                size="small"
-                sx={{
-                  bgcolor: trendDirection === 'up' ? '#dcfce7' : '#fee2e2',
-                  color: trendDirection === 'up' ? '#166534' : '#991b1b',
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
-                  height: 24,
-                  '& .MuiChip-icon': {
-                    color: trendDirection === 'up' ? '#166534' : '#991b1b',
-                    fontSize: 14,
-                  },
-                }}
-              />
-            )}
-          </Stack>
-
-          {/* Title */}
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              fontSize: '0.875rem',
-              fontWeight: 500,
-            }}
-          >
-            {title}
-          </Typography>
-
-          {/* Value */}
-          <Typography
-            variant="h3"
-            color="text.primary"
-            sx={{
-              fontWeight: 700,
-              fontSize: '2rem',
-              lineHeight: 1,
-            }}
-          >
-            {value}
-          </Typography>
-
-          {/* Subtitle */}
-          {subtitle && (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                fontSize: '0.875rem',
-              }}
-            >
-              {subtitle}
-            </Typography>
           )}
+        </Stack>
 
-          {/* Details */}
-          {details && (
+        {/* Title */}
+        <Typography
+          sx={{
+            fontSize: typography.sizes.sm,
+            fontWeight: typography.weights.medium,
+            color: colors.textSecondary,
+            letterSpacing: typography.letterSpacing.wide,
+            textTransform: 'uppercase' as const,
+          }}
+        >
+          {title}
+        </Typography>
+
+        {/* Value */}
+        <Typography
+          sx={{
+            fontWeight: typography.weights.bold,
+            fontSize: typography.sizes['3xl'],
+            lineHeight: 1,
+            color: colors.textPrimary,
+            letterSpacing: typography.letterSpacing.tight,
+          }}
+        >
+          {value}
+        </Typography>
+
+        {/* Subtitle */}
+        {subtitle && (
+          <Typography
+            sx={{
+              fontSize: typography.sizes.sm,
+              color: colors.textSecondary,
+            }}
+          >
+            {subtitle}
+          </Typography>
+        )}
+
+        {/* Details separator + text */}
+        {details && (
+          <Box sx={{
+            pt: 1.5,
+            borderTop: `1px solid ${colors.divider}`,
+          }}>
             <Typography
-              variant="caption"
-              color="text.secondary"
               sx={{
-                fontSize: '0.75rem',
-                pt: 1,
-                borderTop: 1,
-                borderColor: 'divider',
+                fontSize: typography.sizes.xs,
+                color: colors.textSecondary,
               }}
             >
               {details}
             </Typography>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+          </Box>
+        )}
+      </Stack>
+    </Box>
   )
 }
 

@@ -25,14 +25,10 @@ import {
   Visibility,
   Edit,
   Delete,
-  ShoppingCart,
-  Receipt,
-  Description,
-  KeyboardArrowDown,
-  KeyboardArrowRight,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import MarchesMapView from '../../components/ui/MarchesMapView'
+import StatusBadge from '../../components/core/StatusBadge'
 import api from '../../lib/api'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
 import {
@@ -74,28 +70,6 @@ interface MarcheListItem {
   nbAvenants: number
   nbDecomptes: number
   actif: boolean
-}
-
-// Status Badge component utilisant le design system
-const StatusBadge = ({ status }: { status: string }) => {
-  const config = getStatusConfig(status)
-  return (
-    <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        px: 1.5,
-        py: 0.5,
-        borderRadius: '4px',
-        bgcolor: config.bgColor,
-        color: config.textColor,
-        fontSize: typography.sizes.xs,
-        fontWeight: typography.weights.semibold,
-      }}
-    >
-      {config.label}
-    </Box>
-  )
 }
 
 // Styles from design system
@@ -183,22 +157,6 @@ export default function MarchesPage() {
     }).format(amount)
   }
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('fr-MA')
-  }
-
-  const calculateStats = () => {
-    return {
-      total: marches.length,
-      enCours: marches.filter(m => m.statut === 'EN_COURS').length,
-      valide: marches.filter(m => m.statut === 'VALIDE').length,
-      termine: marches.filter(m => m.statut === 'TERMINE').length,
-      montantTotal: marches.reduce((sum, m) => sum + m.montantTtc, 0)
-    }
-  }
-
-  const stats = calculateStats()
-
   // Pagination des marchés filtrés
   const paginatedMarches = useMemo(() => {
     const start = page * rowsPerPage
@@ -231,7 +189,7 @@ export default function MarchesPage() {
               variant="contained"
               startIcon={<Add />}
               onClick={() => navigate('/marches/nouveau')}
-              sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
+              sx={componentStyles.buttonPrimary}
             >
               Nouveau Marché
             </Button>
@@ -264,7 +222,7 @@ export default function MarchesPage() {
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
-                      <Box component="span" sx={styles.countBadge}>{count}</Box>
+                      <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
                     </Box>
                   }
                   onClick={() => { setSelectedStatut(statut); setPage(0); }}
@@ -296,7 +254,7 @@ export default function MarchesPage() {
         </Box>
 
         {/* Main Content Area */}
-        <Box sx={{ px: 3, pb: 3 }}>
+        <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
           {/* Map View */}
           {viewMode === 'map' && (
             <Box sx={{ mt: 2 }}>

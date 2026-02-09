@@ -47,7 +47,8 @@ import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
-import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
+import StatusBadge from '../../components/core/StatusBadge'
+import { colors, typography, componentStyles } from '../../lib/designSystem'
 
 // Types
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
@@ -250,49 +251,27 @@ const ConventionsTableModern = () => {
     return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
-  // Status Badge using design system
-  const StatusBadge = ({ status }: { status: string }) => {
-    const config = getStatusConfig(status)
-    return (
-      <Box
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          px: 1.5,
-          py: 0.5,
-          borderRadius: '4px',
-          bgcolor: config.bgColor,
-          color: config.textColor,
-          fontSize: typography.sizes.xs,
-          fontWeight: typography.weights.semibold,
-        }}
-      >
-        {config.label}
-      </Box>
-    )
-  }
-
   // Filter pill component
   const FilterPill = ({
     label,
     count,
     active,
     onClick,
-    color,
   }: {
     label: string
     count: number
     active: boolean
     onClick: () => void
-    color?: string
   }) => (
     <Chip
-      label={`${label} (${count})`}
+      label={
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <span>{label}</span>
+          <Box component="span" sx={active ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
+        </Box>
+      }
       onClick={onClick}
-      sx={active ? {
-        ...styles.filterPillActive,
-        ...(color && { bgcolor: color, borderColor: color }),
-      } : styles.filterPill}
+      sx={active ? styles.filterPillActive : styles.filterPill}
     />
   )
 
@@ -336,21 +315,18 @@ const ConventionsTableModern = () => {
               count={stats.brouillon}
               active={statusFilter === 'BROUILLON'}
               onClick={() => setStatusFilter('BROUILLON')}
-              color={statusFilter === 'BROUILLON' ? colors.neutral[600] : undefined}
             />
             <FilterPill
               label="En attente"
               count={stats.soumis}
               active={statusFilter === 'SOUMIS'}
               onClick={() => setStatusFilter('SOUMIS')}
-              color={statusFilter === 'SOUMIS' ? colors.warning[600] : undefined}
             />
             <FilterPill
               label="Validées"
               count={stats.valide}
               active={statusFilter === 'VALIDE'}
               onClick={() => setStatusFilter('VALIDE')}
-              color={statusFilter === 'VALIDE' ? colors.success[600] : undefined}
             />
           </Box>
         </Box>

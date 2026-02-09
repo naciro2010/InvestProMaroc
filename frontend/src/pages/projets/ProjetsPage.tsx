@@ -175,9 +175,9 @@ const SortableProjetCard = ({
             bgcolor: colors.neutral[100],
             '& .MuiLinearProgress-bar': {
               borderRadius: 3,
-              bgcolor: projet.pourcentageAvancement >= 80 ? colors.success[500]
-                : projet.pourcentageAvancement >= 40 ? colors.primary[500]
-                : colors.warning[500],
+              bgcolor: projet.pourcentageAvancement >= 80 ? colors.success[400]
+                : projet.pourcentageAvancement >= 40 ? colors.primary[400]
+                : colors.warning[400],
             },
           }}
         />

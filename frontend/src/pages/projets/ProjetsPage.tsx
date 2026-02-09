@@ -169,7 +169,17 @@ const SortableProjetCard = ({
         <LinearProgress
           variant="determinate"
           value={projet.pourcentageAvancement}
-          sx={{ height: 6, borderRadius: 3, bgcolor: colors.neutral[100] }}
+          sx={{
+            height: 6,
+            borderRadius: 3,
+            bgcolor: colors.neutral[100],
+            '& .MuiLinearProgress-bar': {
+              borderRadius: 3,
+              bgcolor: projet.pourcentageAvancement >= 80 ? colors.success[500]
+                : projet.pourcentageAvancement >= 40 ? colors.primary[500]
+                : colors.warning[500],
+            },
+          }}
         />
       </Box>
 
@@ -398,7 +408,7 @@ const ProjetsPage = () => {
               variant="contained"
               startIcon={<Add />}
               onClick={() => navigate('/projets/nouveau')}
-              sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
+              sx={componentStyles.buttonPrimary}
             >
               Nouveau Projet
             </Button>
@@ -535,8 +545,8 @@ const ProjetsPage = () => {
         </Menu>
 
         {/* Dialog pour motif */}
-        <Dialog open={motifDialog} onClose={() => setMotifDialog(false)}>
-          <DialogTitle>
+        <Dialog open={motifDialog} onClose={() => setMotifDialog(false)} PaperProps={{ sx: componentStyles.dialog.paper }}>
+          <DialogTitle sx={componentStyles.dialog.title}>
             {actionType === 'suspendre' ? 'Suspendre le projet' : 'Annuler le projet'}
           </DialogTitle>
           <DialogContent>
@@ -551,11 +561,11 @@ const ProjetsPage = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setMotifDialog(false)}>Annuler</Button>
+            <Button onClick={() => setMotifDialog(false)} sx={componentStyles.buttonSecondary}>Annuler</Button>
             <Button
               onClick={handleMotifSubmit}
               variant="contained"
-              color={actionType === 'suspendre' ? 'warning' : 'error'}
+              sx={actionType === 'suspendre' ? componentStyles.buttonPrimary : componentStyles.buttonDanger}
             >
               Confirmer
             </Button>

@@ -66,7 +66,7 @@ function DataTable<T extends { id: number | string }>({
             >
               {columns.map((column) => (
                 <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {column.render ? column.render(item) : (item as any)[column.key]}
+                  {column.render ? column.render(item) : String((item as Record<string, unknown>)[column.key] ?? '')}
                 </td>
               ))}
             </motion.tr>

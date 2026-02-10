@@ -19,8 +19,8 @@ export default function MarcheFormPage() {
 
   // État principal
   const [loading, setLoading] = useState(false)
-  const [conventions, setConventions] = useState<any[]>([])
-  const [fournisseurs, setFournisseurs] = useState<any[]>([])
+  const [conventions, setConventions] = useState<{ id: number; code: string; libelle: string }[]>([])
+  const [fournisseurs, setFournisseurs] = useState<{ id: number; raisonSociale: string }[]>([])
   const [dimensions, setDimensions] = useState<Dimension[]>([])
 
   // État du marché
@@ -145,7 +145,7 @@ export default function MarcheFormPage() {
     setLignes(newLignes)
   }
 
-  const updateLigne = (index: number, field: keyof MarcheLigne, value: any) => {
+  const updateLigne = (index: number, field: keyof MarcheLigne, value: string | number) => {
     const newLignes = [...lignes]
     newLignes[index] = { ...newLignes[index], [field]: value }
 
@@ -207,9 +207,10 @@ export default function MarcheFormPage() {
       }
 
       navigate('/marches')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur sauvegarde:', error)
-      alert(error.response?.data?.message || 'Erreur lors de la sauvegarde')
+      const axiosErr = error as { response?: { data?: { message?: string } } }
+      alert(axiosErr.response?.data?.message || 'Erreur lors de la sauvegarde')
     } finally {
       setLoading(false)
     }

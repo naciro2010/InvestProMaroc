@@ -406,32 +406,35 @@ export interface UpdateDecompteDTO extends Partial<CreateDecompteDTO> {}
 export interface Fournisseur {
   id: number
   code: string
-  designation: string
-  email?: string
-  phone?: string
-  ice: string // 15-digit Moroccan tax ID
-  if?: string // Additional tax ID
-  rib?: string // Bank account
+  raisonSociale: string
+  identifiantFiscal?: string
+  ice?: string // 15-digit Moroccan tax ID
   adresse?: string
   ville?: string
-  codePostal?: string
+  telephone?: string
+  fax?: string
+  email?: string
+  contact?: string
+  nonResident: boolean
+  remarques?: string
   actif: boolean
-  createdBy: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface CreateFournisseurDTO extends Record<string, unknown> {
   code: string
-  designation?: string
-  email?: string
-  phone?: string
-  ice: string
-  if?: string
-  rib?: string
+  raisonSociale: string
+  identifiantFiscal?: string
+  ice?: string
   adresse?: string
   ville?: string
-  codePostal?: string
+  telephone?: string
+  fax?: string
+  email?: string
+  contact?: string
+  nonResident?: boolean
+  remarques?: string
 }
 
 export interface UpdateFournisseurDTO extends Partial<CreateFournisseurDTO> {}

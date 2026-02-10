@@ -34,13 +34,27 @@ import AppLayout from '../../components/layout/AppLayout'
 import { ordresPaiementAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
 
+interface OrdrePaiementItem {
+  id: number
+  numeroOrdre: string
+  dateEmission: string
+  dateExecution?: string
+  montant: number
+  beneficiaire?: string
+  compteBancaire?: string
+  reference?: string
+  observation?: string
+  decompteId: number
+  statut?: string
+}
+
 const OrdresPaiementPage = () => {
   const navigate = useNavigate()
-  const [ordres, setOrdres] = useState<any[]>([])
+  const [ordres, setOrdres] = useState<OrdrePaiementItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [openDialog, setOpenDialog] = useState(false)
-  const [selectedOrdre, setSelectedOrdre] = useState<any>(null)
+  const [selectedOrdre, setSelectedOrdre] = useState<OrdrePaiementItem | null>(null)
   const [formData, setFormData] = useState({
     numeroOrdre: '',
     dateEmission: new Date().toISOString().split('T')[0],
@@ -69,7 +83,7 @@ const OrdresPaiementPage = () => {
     }
   }
 
-  const handleOpenDialog = (ordre: any = null) => {
+  const handleOpenDialog = (ordre: OrdrePaiementItem | null = null) => {
     if (ordre) {
       setSelectedOrdre(ordre)
       setFormData({
@@ -151,7 +165,7 @@ const OrdresPaiementPage = () => {
   }
 
   const getStatusColor = (statut: string) => {
-    const colors: any = {
+    const colors: Record<string, 'warning' | 'info' | 'success' | 'error' | 'default'> = {
       'EN_ATTENTE': 'warning',
       'VALIDE': 'info',
       'EXECUTE': 'success',

@@ -51,7 +51,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
 
   const mods = partenaires.filter(p => p.estMaitreOeuvreDelegue);
 
-  const handleChange = (field: keyof VersementPrevisionnelForm, value: any) => {
+  const handleChange = (field: keyof VersementPrevisionnelForm, value: string | number | undefined) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -75,8 +75,9 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
         remarques: '',
       });
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'ajout');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || 'Erreur lors de l\'ajout');
     } finally {
       setLoading(false);
     }

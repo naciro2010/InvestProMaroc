@@ -48,8 +48,8 @@ const RegisterPage = () => {
         fullName: formData.fullName,
       })
       navigate('/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     } finally {
       setIsLoading(false)
     }

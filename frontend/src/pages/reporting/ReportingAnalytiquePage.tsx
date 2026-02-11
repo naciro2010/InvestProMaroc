@@ -298,7 +298,7 @@ export default function ReportingAnalytiquePage() {
     if (viewMode === 'simple') {
       return Object.values(aggregation1D).reduce((sum, val) => sum + val, 0)
     } else {
-      return aggregation2D.reduce((sum, row) => sum + parseFloat(row.montant), 0)
+      return aggregation2D.reduce((sum, row) => sum + (typeof row.montant === 'number' ? row.montant : parseFloat(row.montant)), 0)
     }
   }
 
@@ -313,7 +313,7 @@ export default function ReportingAnalytiquePage() {
       if (!data[item.dimension1]) {
         data[item.dimension1] = {}
       }
-      data[item.dimension1][item.dimension2] = parseFloat(item.montant)
+      data[item.dimension1][item.dimension2] = typeof item.montant === 'number' ? item.montant : parseFloat(item.montant)
     })
 
     return { rows: Array.from(rows), cols: Array.from(cols), data }
@@ -513,7 +513,7 @@ export default function ReportingAnalytiquePage() {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip
-                      formatter={(value: number) => formatMontant(value || 0)}
+                      formatter={(value: number | undefined) => formatMontant(value ?? 0)}
                       labelStyle={{ color: '#000' }}
                     />
                     <Legend />
@@ -535,7 +535,7 @@ export default function ReportingAnalytiquePage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }: { name: string; percent: number }) => `${name}: ${((percent || 0) * 100).toFixed(1)}%`}
+                      label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''}: ${(((percent ?? 0)) * 100).toFixed(1)}%`}
                       outerRadius={120}
                       fill="#8884d8"
                       dataKey="value"
@@ -544,7 +544,7 @@ export default function ReportingAnalytiquePage() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => formatMontant(value || 0)} />
+                    <Tooltip formatter={(value: number | undefined) => formatMontant(value ?? 0)} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>

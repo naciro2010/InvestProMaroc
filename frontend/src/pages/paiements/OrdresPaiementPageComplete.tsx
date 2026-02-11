@@ -90,12 +90,12 @@ const OrdresPaiementPage = () => {
         numeroOrdre: ordre.numeroOrdre,
         dateEmission: ordre.dateEmission,
         dateExecution: ordre.dateExecution || '',
-        montant: ordre.montant,
+        montant: String(ordre.montant),
         beneficiaire: ordre.beneficiaire || '',
         compteBancaire: ordre.compteBancaire || '',
         reference: ordre.reference || '',
         observation: ordre.observation || '',
-        decompteId: ordre.decompteId,
+        decompteId: String(ordre.decompteId),
       })
     } else {
       setSelectedOrdre(null)
@@ -250,7 +250,7 @@ const OrdresPaiementPage = () => {
                     <TableCell>
                       <Chip
                         label={ordre.statut || 'EN_ATTENTE'}
-                        color={getStatusColor(ordre.statut)}
+                        color={getStatusColor(ordre.statut || 'EN_ATTENTE')}
                         size="small"
                       />
                     </TableCell>

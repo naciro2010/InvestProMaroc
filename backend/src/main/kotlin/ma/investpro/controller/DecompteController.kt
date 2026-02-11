@@ -6,6 +6,7 @@ import ma.investpro.entity.DecompteRetenue
 import ma.investpro.entity.DecompteImputation
 import ma.investpro.service.DecompteService
 import ma.investpro.mapper.DecompteMapper
+import ma.investpro.repository.UserRepository
 import ma.investpro.security.annotations.ReadAccess
 import ma.investpro.security.annotations.WriteAccess
 import ma.investpro.security.annotations.AdminOnly
@@ -31,7 +32,8 @@ data class RejetRequest(val motif: String)
 @RequestMapping("/api/decomptes")
 class DecompteController(
     private val decompteService: DecompteService,
-    private val decompteMapper: DecompteMapper
+    private val decompteMapper: DecompteMapper,
+    private val userRepository: UserRepository
 ) {
 
     @GetMapping("/list")
@@ -154,7 +156,10 @@ class DecompteController(
     ): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: POST /api/decomptes/$id/valider - Validation du décompte par ${userDetails.username}" }
         return try {
-            val userId = 1L // TODO: Get from UserService based on userDetails.username
+            val user = userRepository.findByUsername(userDetails.username)
+                .orElseThrow { IllegalArgumentException("Utilisateur non trouvé: ${userDetails.username}") }
+            val userId = user.id
+                ?: throw IllegalArgumentException("ID utilisateur non trouvé pour: ${userDetails.username}")
             val decompte = decompteService.valider(id, userId)
             val dto = decompteMapper.toDTO(decompte)
             ResponseEntity.ok(ApiResponse.success(dto, "Décompte validé avec succès"))

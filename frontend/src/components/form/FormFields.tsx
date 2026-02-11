@@ -400,7 +400,7 @@ export function FormErrors({ errors, className }: FormErrorsProps): React.ReactE
     >
       {errorList.map(([field, error]) => (
         <div key={field} style={{ color: '#c62828', fontSize: '0.875rem' }}>
-          <strong>{field}:</strong> {String((error as any)?.message || error)}
+          <strong>{field}:</strong> {String((error as { message?: string })?.message || error)}
         </div>
       ))}
     </Box>

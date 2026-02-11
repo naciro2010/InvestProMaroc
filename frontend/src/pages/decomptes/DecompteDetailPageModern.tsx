@@ -191,7 +191,7 @@ const DecompteDetailPageModern = () => {
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
             {/* Left Column */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <DecompteInfoCard decompte={decompte} formatCurrency={formatCurrency} formatDate={formatDate} getStatusColor={getStatusColor} />
+              <DecompteInfoCard decompteId={decompte.id} />
               <DecompteRetentionsCard retenues={decompte.retenues || []} totalRetenues={decompte.totalRetenues} formatCurrency={formatCurrency} />
             </Box>
 

@@ -87,17 +87,17 @@ export default function ProfilePage() {
 
     try {
       setLoading(true)
-      // TODO: Implement password change endpoint in backend
-      await api.put('/auth/change-password', {
+      await api.put('/users/change-password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       })
       setPasswordMode(false)
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
       alert('Mot de passe changé avec succès')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur lors du changement de mot de passe:', error)
-      alert(error.response?.data?.message || 'Erreur lors du changement de mot de passe. Endpoint non disponible.')
+      const axiosErr = error as { response?: { data?: { message?: string } } }
+      alert(axiosErr.response?.data?.message || 'Erreur lors du changement de mot de passe. Endpoint non disponible.')
     } finally {
       setLoading(false)
     }

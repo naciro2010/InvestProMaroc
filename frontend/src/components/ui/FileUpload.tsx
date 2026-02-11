@@ -116,9 +116,10 @@ const FileUpload = ({
 
       try {
         await piecesJointesAPI.upload(file, typeEntite, entiteId)
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur upload:', error)
-        alert(`Erreur upload ${file.name}: ${error.response?.data?.message || error.message}`)
+        const axiosErr = error as { response?: { data?: { message?: string } }; message?: string }
+        alert(`Erreur upload ${file.name}: ${axiosErr.response?.data?.message || axiosErr.message || 'Erreur inconnue'}`)
       }
     }
 

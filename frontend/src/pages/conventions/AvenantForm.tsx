@@ -20,6 +20,7 @@ import {
 import { ArrowBack, Save, CompareArrows } from '@mui/icons-material'
 import { conventionsAPI, avenantConventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
+import { Convention } from '../../types/entities'
 import FileUpload from '../../components/ui/FileUpload'
 
 const steps = ['Sélection des modifications', 'Nouvelles valeurs', 'Pièces jointes', 'Récapitulatif']
@@ -29,7 +30,7 @@ const AvenantForm = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [convention, setConvention] = useState<any>(null)
+  const [convention, setConvention] = useState<Convention | null>(null)
   const [activeStep, setActiveStep] = useState(0)
   const [createdAvenantId, setCreatedAvenantId] = useState<number | null>(null)
 
@@ -98,7 +99,7 @@ const AvenantForm = () => {
 
     try {
       // Construire l'objet modifications
-      const modifications: any = {}
+      const modifications: Record<string, string | number> = {}
       if (selectedFields.budget) modifications.budget = parseFloat(formData.budget)
       if (selectedFields.tauxCommission) modifications.tauxCommission = parseFloat(formData.tauxCommission)
       if (selectedFields.baseCalcul) modifications.baseCalcul = formData.baseCalcul
@@ -118,9 +119,10 @@ const AvenantForm = () => {
       const { data } = await avenantConventionsAPI.create(payload)
       setCreatedAvenantId(data.data.id)
       handleNext()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur création avenant:', err)
-      setError(err.response?.data?.message || 'Erreur lors de la création')
+      const axiosErr = err as { response?: { data?: { message?: string } } }
+      setError(axiosErr.response?.data?.message || 'Erreur lors de la création')
     } finally {
       setLoading(false)
     }

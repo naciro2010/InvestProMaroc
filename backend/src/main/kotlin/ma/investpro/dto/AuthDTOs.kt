@@ -46,3 +46,12 @@ data class UserDTO(
     val roles: Set<String>,
     val actif: Boolean
 )
+
+data class ChangePasswordRequest(
+    @field:NotBlank(message = "Le mot de passe actuel est obligatoire")
+    val currentPassword: String,
+
+    @field:NotBlank(message = "Le nouveau mot de passe est obligatoire")
+    @field:Size(min = 6, message = "Le nouveau mot de passe doit contenir au moins 6 caractères")
+    val newPassword: String
+)

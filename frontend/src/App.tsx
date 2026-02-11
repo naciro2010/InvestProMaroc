@@ -43,6 +43,9 @@ const BudgetFormPage = lazy(() => import('./pages/budgets/BudgetFormPage'))
 const BudgetWizard = lazy(() => import('./pages/budgets/BudgetWizard'))
 const BudgetDetailPageModern = lazy(() => import('./pages/budgets/BudgetDetailPageModern'))
 
+// Fournisseurs
+const FournisseursPage = lazy(() => import('./pages/fournisseurs/FournisseursPage'))
+
 // Décomptes & Paiements
 const DecomptesPage = lazy(() => import('./pages/decomptes/DecomptesPageComplete'))
 const DecompteWizard = lazy(() => import('./pages/decomptes/DecompteWizard'))
@@ -444,10 +447,7 @@ function App() {
                       path="/fournisseurs"
                       element={
                         <ProtectedRoute>
-                          <UnderConstruction
-                            featureName="Gestion des Fournisseurs"
-                            description="Module complet pour gérer vos fournisseurs avec leurs informations fiscales (ICE, IF, RIB) et suivre leurs contrats et paiements."
-                          />
+                          <FournisseursPage />
                         </ProtectedRoute>
                       }
                     />

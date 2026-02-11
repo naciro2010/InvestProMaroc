@@ -77,13 +77,19 @@ interface SavedView {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D']
 
+interface Aggregation2DItem {
+  dimension1: string
+  dimension2: string
+  montant: string | number
+}
+
 export default function ReportingAnalytiquePage() {
   const [dimensions, setDimensions] = useState<Dimension[]>([])
   const [selectedType, setSelectedType] = useState('BUDGET')
   const [selectedDim1, setSelectedDim1] = useState('')
   const [selectedDim2, setSelectedDim2] = useState('')
   const [aggregation1D, setAggregation1D] = useState<Record<string, number>>({})
-  const [aggregation2D, setAggregation2D] = useState<any[]>([])
+  const [aggregation2D, setAggregation2D] = useState<Aggregation2DItem[]>([])
   const [loading, setLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'simple' | 'croise'>('simple')
   const [chartType, setChartType] = useState<'bar' | 'pie' | 'table'>('bar')
@@ -235,7 +241,7 @@ export default function ReportingAnalytiquePage() {
 
       // Ajouter les données
       rows.forEach(row => {
-        const rowData: any = { [getDimensionName(selectedDim1)]: row }
+        const rowData: Record<string, string | number> = { [getDimensionName(selectedDim1)]: row }
         cols.forEach(col => {
           rowData[col] = data[row][col] || 0
         })
@@ -245,7 +251,7 @@ export default function ReportingAnalytiquePage() {
       })
 
       // Ligne des totaux
-      const totalRow: any = { [getDimensionName(selectedDim1)]: 'Total' }
+      const totalRow: Record<string, string | number> = { [getDimensionName(selectedDim1)]: 'Total' }
       cols.forEach(col => {
         const colTotal = rows.reduce((sum, row) => sum + (data[row][col] || 0), 0)
         totalRow[col] = colTotal
@@ -292,7 +298,7 @@ export default function ReportingAnalytiquePage() {
     if (viewMode === 'simple') {
       return Object.values(aggregation1D).reduce((sum, val) => sum + val, 0)
     } else {
-      return aggregation2D.reduce((sum, row) => sum + parseFloat(row.montant), 0)
+      return aggregation2D.reduce((sum, row) => sum + (typeof row.montant === 'number' ? row.montant : parseFloat(row.montant)), 0)
     }
   }
 
@@ -307,7 +313,7 @@ export default function ReportingAnalytiquePage() {
       if (!data[item.dimension1]) {
         data[item.dimension1] = {}
       }
-      data[item.dimension1][item.dimension2] = parseFloat(item.montant)
+      data[item.dimension1][item.dimension2] = typeof item.montant === 'number' ? item.montant : parseFloat(item.montant)
     })
 
     return { rows: Array.from(rows), cols: Array.from(cols), data }
@@ -507,7 +513,7 @@ export default function ReportingAnalytiquePage() {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip
-                      formatter={(value: any) => formatMontant(value || 0)}
+                      formatter={(value: number | undefined) => formatMontant(value ?? 0)}
                       labelStyle={{ color: '#000' }}
                     />
                     <Legend />
@@ -529,7 +535,7 @@ export default function ReportingAnalytiquePage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }: any) => `${name}: ${((percent || 0) * 100).toFixed(1)}%`}
+                      label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''}: ${(((percent ?? 0)) * 100).toFixed(1)}%`}
                       outerRadius={120}
                       fill="#8884d8"
                       dataKey="value"
@@ -538,7 +544,7 @@ export default function ReportingAnalytiquePage() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: any) => formatMontant(value || 0)} />
+                    <Tooltip formatter={(value: number | undefined) => formatMontant(value ?? 0)} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>

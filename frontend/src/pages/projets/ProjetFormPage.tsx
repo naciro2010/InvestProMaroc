@@ -32,12 +32,12 @@ const ProjetFormPage = () => {
     try {
       const response = await projetsAPI.getById(projetId);
       setFormData(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Erreur lors du chargement du projet');
     }
   };
 
-  const handleChange = (field: keyof Projet, value: any) => {
+  const handleChange = (field: keyof Projet, value: string | number | boolean) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -55,8 +55,9 @@ const ProjetFormPage = () => {
         alert('Projet créé avec succès !');
       }
       navigate('/projets');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || 'Erreur lors de la sauvegarde');
     } finally {
       setLoading(false);
     }

@@ -172,14 +172,16 @@ const themeOptions: ThemeOptions = {
 
   shadows: [
     'none',
-    '0 1px 3px rgba(0, 0, 0, 0.08)', // Subtle shadow for cards
+    '0 1px 3px rgba(0, 0, 0, 0.08)',
     '0 2px 4px rgba(0, 0, 0, 0.08)',
     '0 3px 6px rgba(0, 0, 0, 0.08)',
     '0 4px 8px rgba(0, 0, 0, 0.08)',
     '0 6px 12px rgba(0, 0, 0, 0.10)',
     '0 8px 16px rgba(0, 0, 0, 0.10)',
-    ...Array(18).fill('none'), // Fill remaining shadows with none
-  ] as any,
+    'none', 'none', 'none', 'none', 'none', 'none',
+    'none', 'none', 'none', 'none', 'none', 'none',
+    'none', 'none', 'none', 'none', 'none', 'none',
+  ],
 
   components: {
     MuiButton: {

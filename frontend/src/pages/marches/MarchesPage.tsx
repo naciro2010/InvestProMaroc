@@ -316,6 +316,7 @@ export default function MarchesPage() {
                           <TableCell>N° AO</TableCell>
                           <TableCell>Objet</TableCell>
                           <TableCell>Fournisseur</TableCell>
+                          <TableCell>Convention</TableCell>
                           <TableCell align="right">Montant TTC</TableCell>
                           <TableCell align="center">Lignes</TableCell>
                           <TableCell align="center">Statut</TableCell>
@@ -325,7 +326,7 @@ export default function MarchesPage() {
                       <TableBody>
                         {paginatedMarches.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
+                            <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
                               <Typography sx={{ color: colors.textSecondary }}>Aucun marché trouvé</Typography>
                             </TableCell>
                           </TableRow>
@@ -359,6 +360,48 @@ export default function MarchesPage() {
                                 sx={{ cursor: 'pointer' }}
                               >
                                 {marche.fournisseurNom}
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                {marche.conventionId ? (
+                                  <Box
+                                    component="span"
+                                    onClick={() => navigate(`/conventions/${marche.conventionId}`)}
+                                    sx={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      cursor: 'pointer',
+                                      color: colors.primary[700],
+                                      fontWeight: typography.weights.medium,
+                                      fontSize: typography.sizes.sm,
+                                      px: 1,
+                                      py: 0.25,
+                                      borderRadius: '4px',
+                                      '&:hover': {
+                                        bgcolor: colors.primary[50],
+                                        textDecoration: 'underline',
+                                      },
+                                    }}
+                                  >
+                                    {marche.conventionNumero || marche.conventionLibelle || '-'}
+                                  </Box>
+                                ) : (
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      px: 1,
+                                      py: 0.25,
+                                      borderRadius: '4px',
+                                      bgcolor: colors.neutral[100],
+                                      color: colors.textSecondary,
+                                      fontSize: typography.sizes.xs,
+                                      fontWeight: typography.weights.medium,
+                                    }}
+                                  >
+                                    Aucune
+                                  </Box>
+                                )}
                               </TableCell>
                               <TableCell
                                 onClick={() => navigate(`/marches/${marche.id}`)}

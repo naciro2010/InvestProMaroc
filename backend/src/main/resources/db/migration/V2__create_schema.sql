@@ -399,6 +399,7 @@ CREATE TABLE IF NOT EXISTS versements_previsionnels (
     volet VARCHAR(200),
     date_versement DATE NOT NULL DEFAULT CURRENT_DATE,
     montant DECIMAL(15,2) DEFAULT 0.00 NOT NULL,
+    montant_prevu DECIMAL(15,2),
     partenaire_id BIGINT NOT NULL REFERENCES partenaires(id),
     mod_id BIGINT REFERENCES partenaires(id),
     remarques TEXT,

@@ -98,6 +98,7 @@ data class VersementPrevisionnelDTO(
     val volet: String?,
     val dateVersement: LocalDate,
     val montant: BigDecimal,
+    val montantPrevu: BigDecimal?,
     val partenaireId: Long,
     val partenaireNom: String?,
     val maitreOeuvreDelegueId: Long?,
@@ -612,6 +613,43 @@ data class DecompteImputationDTO(
     val updatedAt: LocalDateTime?
 )
 
+// ========== Marché Paiement Micro-Endpoint DTOs ==========
+
+/**
+ * DTO for paiement data shown in the marché detail context.
+ * Traverses: Marché -> Décompte -> OrdrePaiement -> Paiement
+ */
+data class MarchePaiementDTO(
+    val id: Long?,
+    val referencePaiement: String,
+    val dateValeur: LocalDate,
+    val dateExecution: LocalDate?,
+    val montantPaye: BigDecimal,
+    val modePaiement: String,
+    val estPaiementPartiel: Boolean,
+    val decompteId: Long,
+    val numeroDecompte: String,
+    val ordrePaiementId: Long,
+    val numeroOP: String,
+    val observations: String?
+)
+
+/**
+ * DTO for the payment situation summary card in marché detail.
+ * Provides aggregated payment metrics.
+ */
+data class MarcheSituationPaiementDTO(
+    val totalDecomptes: Int,
+    val totalNetAPayer: BigDecimal,
+    val totalMontantPaye: BigDecimal,
+    val resteAPayer: BigDecimal,
+    val tauxPaiement: BigDecimal,
+    val decomptesNonPayes: Int,
+    val decomptesPayesPartiellement: Int,
+    val decomptesPayesTotalement: Int,
+    val nombrePaiements: Int
+)
+
 // Projet DTOs
 data class ProjetDTO(
     val id: Long?,
@@ -659,11 +697,14 @@ data class ProjetConventionDTO(
     val projetId: Long,
     val projetCode: String,
     val projetNom: String,
+    val projetBudgetTotal: BigDecimal,
+    val projetStatut: String,
     val conventionId: Long,
     val conventionCode: String,
     val conventionNumero: String,
     val conventionLibelle: String,
     val conventionStatut: String,
+    val conventionBudget: BigDecimal,
     val ordre: Int,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?

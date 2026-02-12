@@ -1243,6 +1243,35 @@ export const statusColors: Record<string, StatusConfig> = {
     textColor: colors.neutral[600],
     dotColor: colors.neutral[400],
   },
+  // Payment statuses
+  NON_PAYE: {
+    label: 'Non paye',
+    color: 'danger',
+    bgColor: colors.danger[50],
+    textColor: colors.danger[700],
+    dotColor: colors.danger[400],
+  },
+  PAYE_PARTIEL: {
+    label: 'Paye partiellement',
+    color: 'warning',
+    bgColor: colors.warning[50],
+    textColor: colors.warning[700],
+    dotColor: colors.warning[400],
+  },
+  PAYE_TOTAL: {
+    label: 'Paye totalement',
+    color: 'success',
+    bgColor: colors.success[50],
+    textColor: colors.success[700],
+    dotColor: colors.success[400],
+  },
+  EXECUTE: {
+    label: 'Execute',
+    color: 'success',
+    bgColor: colors.success[50],
+    textColor: colors.success[700],
+    dotColor: colors.success[400],
+  },
 } as const
 
 /**

@@ -27,6 +27,7 @@ interface VersementPrevisionnel {
   volet?: string
   dateVersement: string
   montant: number
+  montantPrevu?: number
   remarques?: string
 }
 
@@ -61,6 +62,7 @@ const VersementFormDialog = ({
     volet: '',
     dateVersement: '',
     montant: 0,
+    montantPrevu: 0,
     remarques: '',
   })
 
@@ -91,6 +93,7 @@ const VersementFormDialog = ({
           volet: editingVersement.volet || '',
           dateVersement: editingVersement.dateVersement?.split('T')[0] || '',
           montant: editingVersement.montant,
+          montantPrevu: editingVersement.montantPrevu || 0,
           remarques: editingVersement.remarques || '',
         })
       } else {
@@ -99,6 +102,7 @@ const VersementFormDialog = ({
           volet: '',
           dateVersement: new Date().toISOString().split('T')[0],
           montant: 0,
+          montantPrevu: 0,
           remarques: '',
         })
       }
@@ -133,6 +137,7 @@ const VersementFormDialog = ({
         volet: formData.volet || null,
         dateVersement: formData.dateVersement,
         montant: formData.montant,
+        montantPrevu: formData.montantPrevu || null,
         remarques: formData.remarques || null,
       }
 
@@ -206,7 +211,20 @@ const VersementFormDialog = ({
           />
 
           <TextField
-            label="Montant"
+            label="Montant Prevu"
+            type="number"
+            value={formData.montantPrevu || ''}
+            onChange={(e) => handleChange('montantPrevu', parseFloat(e.target.value) || 0)}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
+            }}
+            inputProps={{ min: 0, step: 0.01 }}
+            size="small"
+            helperText="Montant initialement planifie pour ce versement"
+          />
+
+          <TextField
+            label="Montant Reel"
             type="number"
             value={formData.montant}
             onChange={(e) => handleChange('montant', parseFloat(e.target.value) || 0)}
@@ -216,7 +234,18 @@ const VersementFormDialog = ({
             inputProps={{ min: 0, step: 0.01 }}
             required
             size="small"
+            helperText="Montant effectivement verse ou a verser"
           />
+
+          {formData.montantPrevu > 0 && formData.montant > 0 && (
+            <Alert
+              severity={formData.montant === formData.montantPrevu ? 'success' : formData.montant > formData.montantPrevu ? 'warning' : 'info'}
+              sx={{ py: 0.5 }}
+            >
+              Ecart : {new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(formData.montant - formData.montantPrevu)}
+              {formData.montant > formData.montantPrevu ? ' (depassement)' : formData.montant < formData.montantPrevu ? ' (economie)' : ' (conforme)'}
+            </Alert>
+          )}
 
           <TextField
             label="Remarques"

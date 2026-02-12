@@ -32,4 +32,7 @@ interface PaiementRepository : JpaRepository<Paiement, Long> {
 
     // Vérifier si une référence de paiement existe
     fun existsByReferencePaiement(referencePaiement: String): Boolean
+
+    // Recherche par liste d'ordre de paiement IDs (for marché -> décomptes -> OPs -> paiements traversal)
+    fun findByOrdrePaiementIdIn(ordrePaiementIds: List<Long>): List<Paiement>
 }

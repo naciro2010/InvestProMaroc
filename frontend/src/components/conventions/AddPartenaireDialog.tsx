@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,8 +16,10 @@ import {
   Alert,
   CircularProgress,
   Typography,
+  LinearProgress,
 } from '@mui/material';
 import { conventionsAPI, partenairesAPI } from '@/lib/api';
+import { colors, typography, borders } from '@/lib/designSystem';
 
 interface PartenaireSimple {
   id: number;
@@ -41,6 +43,7 @@ interface ConventionPartenaireEdit {
 interface AddPartenaireDialogProps {
   open: boolean;
   conventionId: number;
+  conventionBudget?: number;
   onClose: () => void;
   onSuccess: () => void;
   editData?: ConventionPartenaireEdit | null;
@@ -61,13 +64,19 @@ interface ValidationErrors {
   pourcentage?: string;
 }
 
+type SyncSource = 'budget' | 'pourcentage' | 'none';
+
+const formatCurrency = (amount: number): string =>
+  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount);
+
 /**
- * Modal dialog for adding/editing a partenaire in a convention
- * Allows selecting partenaire, setting budget, percentage, and roles (MO/MOD)
+ * Modal dialog for adding/editing a partenaire in a convention.
+ * Auto-calculates percentage from budget and vice versa when conventionBudget is provided.
  */
 export default function AddPartenaireDialog({
   open,
   conventionId,
+  conventionBudget,
   onClose,
   onSuccess,
   editData,
@@ -78,6 +87,7 @@ export default function AddPartenaireDialog({
   const [loadingPartenaires, setLoadingPartenaires] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const syncSourceRef = useRef<SyncSource>('none');
 
   const [formData, setFormData] = useState<FormData>({
     partenaireId: 0,
@@ -126,29 +136,26 @@ export default function AddPartenaireDialog({
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
 
-    // Validate partenaire selection
     if (formData.partenaireId === 0) {
-      errors.partenaireId = 'Veuillez sélectionner un partenaire';
+      errors.partenaireId = 'Veuillez selectionner un partenaire';
     }
 
-    // Validate budget
     const budget: number = parseFloat(formData.budgetAlloue);
     if (!formData.budgetAlloue || isNaN(budget)) {
       errors.budgetAlloue = 'Le budget est obligatoire';
     } else if (budget < 0) {
-      errors.budgetAlloue = 'Le budget doit être positif';
+      errors.budgetAlloue = 'Le budget doit etre positif';
     } else if (budget > 999999999999) {
-      errors.budgetAlloue = 'Le budget ne peut pas dépasser 999 999 999 999 MAD';
+      errors.budgetAlloue = 'Le budget ne peut pas depasser 999 999 999 999 MAD';
     }
 
-    // Validate pourcentage
     const pct: number = parseFloat(formData.pourcentage);
     if (!formData.pourcentage || isNaN(pct)) {
       errors.pourcentage = 'Le pourcentage est obligatoire';
     } else if (pct < 0) {
-      errors.pourcentage = 'Le pourcentage doit être positif';
+      errors.pourcentage = 'Le pourcentage doit etre positif';
     } else if (pct > 100) {
-      errors.pourcentage = 'Le pourcentage ne peut pas dépasser 100%';
+      errors.pourcentage = 'Le pourcentage ne peut pas depasser 100%';
     }
 
     setValidationErrors(errors);
@@ -173,10 +180,8 @@ export default function AddPartenaireDialog({
       };
 
       if (isEditMode && editData) {
-        // Update existing partenaire
         await conventionsAPI.updatePartenaire(conventionId, editData.id, payload);
       } else {
-        // Add new partenaire
         await conventionsAPI.addPartenaire(conventionId, {
           partenaireId: formData.partenaireId,
           ...payload,
@@ -208,24 +213,70 @@ export default function AddPartenaireDialog({
     });
     setValidationErrors({});
     setError('');
+    syncSourceRef.current = 'none';
     onClose();
+  };
+
+  const handleBudgetChange = (value: string): void => {
+    syncSourceRef.current = 'budget';
+    const newFormData: FormData = { ...formData, budgetAlloue: value };
+
+    // Auto-calculate pourcentage from budget if conventionBudget is available
+    if (conventionBudget && conventionBudget > 0) {
+      const budgetNum = parseFloat(value);
+      if (!isNaN(budgetNum) && budgetNum >= 0) {
+        const calculatedPct = (budgetNum / conventionBudget) * 100;
+        newFormData.pourcentage = calculatedPct.toFixed(2);
+      }
+    }
+
+    setFormData(newFormData);
+    clearFieldError('budgetAlloue');
+  };
+
+  const handlePourcentageChange = (value: string): void => {
+    syncSourceRef.current = 'pourcentage';
+    const newFormData: FormData = { ...formData, pourcentage: value };
+
+    // Auto-calculate budget from pourcentage if conventionBudget is available
+    if (conventionBudget && conventionBudget > 0) {
+      const pctNum = parseFloat(value);
+      if (!isNaN(pctNum) && pctNum >= 0) {
+        const calculatedBudget = (pctNum / 100) * conventionBudget;
+        newFormData.budgetAlloue = calculatedBudget.toFixed(2);
+      }
+    }
+
+    setFormData(newFormData);
+    clearFieldError('pourcentage');
+  };
+
+  const clearFieldError = (field: keyof ValidationErrors): void => {
+    if (validationErrors[field]) {
+      setValidationErrors((prev: ValidationErrors) => {
+        const newErrors: ValidationErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleFieldChange = (field: keyof FormData, value: string | number | boolean): void => {
     setFormData((prev: FormData) => ({ ...prev, [field]: value }));
-    // Clear validation error for this field
     if (validationErrors[field as keyof ValidationErrors]) {
-      setValidationErrors((prev: ValidationErrors) => {
-        const newErrors: ValidationErrors = { ...prev };
-        delete newErrors[field as keyof ValidationErrors];
-        return newErrors;
-      });
+      clearFieldError(field as keyof ValidationErrors);
     }
   };
 
   const getPartenaireLabel = (p: PartenaireSimple): string => {
     return p.sigle ? `${p.code} - ${p.sigle}` : `${p.code} - ${p.raisonSociale}`;
   };
+
+  // Remaining budget indicator
+  const budgetNum = parseFloat(formData.budgetAlloue) || 0;
+  const hasBudgetInfo = conventionBudget !== undefined && conventionBudget > 0;
+  const remainingAfterAllocation = hasBudgetInfo ? conventionBudget - budgetNum : 0;
+  const allocationPct = hasBudgetInfo ? (budgetNum / conventionBudget) * 100 : 0;
 
   return (
     <Dialog
@@ -258,6 +309,52 @@ export default function AddPartenaireDialog({
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 3 }, mt: 2 }}>
+            {/* Convention budget info banner */}
+            {hasBudgetInfo && (
+              <Box sx={{
+                p: 2, borderRadius: borders.radius.md,
+                bgcolor: colors.primary[25],
+                border: `1px solid ${colors.primary[100]}`,
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                    Budget convention
+                  </Typography>
+                  <Typography sx={{
+                    fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold,
+                    color: colors.primary[700],
+                  }}>
+                    {formatCurrency(conventionBudget)}
+                  </Typography>
+                </Box>
+                {budgetNum > 0 && (
+                  <>
+                    <LinearProgress
+                      variant="determinate"
+                      value={Math.min(allocationPct, 100)}
+                      sx={{
+                        height: 4, borderRadius: borders.radius.full, mb: 0.5,
+                        bgcolor: colors.neutral[100],
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: borders.radius.full,
+                          bgcolor: remainingAfterAllocation < 0 ? colors.danger[500] : colors.primary[500],
+                        },
+                      }}
+                    />
+                    <Typography sx={{
+                      fontSize: typography.sizes.xs,
+                      color: remainingAfterAllocation < 0 ? colors.danger[600] : colors.textSecondary,
+                    }}>
+                      {remainingAfterAllocation >= 0
+                        ? `Restant apres allocation: ${formatCurrency(remainingAfterAllocation)}`
+                        : `Depassement: ${formatCurrency(Math.abs(remainingAfterAllocation))}`
+                      }
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            )}
+
             {/* Partenaire Selection - Disabled in edit mode */}
             {isEditMode ? (
               <TextField
@@ -265,7 +362,7 @@ export default function AddPartenaireDialog({
                 label="Partenaire"
                 value={editData?.partenaireNom || ''}
                 disabled
-                helperText="Le partenaire ne peut pas être modifié"
+                helperText="Le partenaire ne peut pas etre modifie"
               />
             ) : (
               <FormControl fullWidth required error={Boolean(validationErrors.partenaireId)}>
@@ -276,7 +373,7 @@ export default function AddPartenaireDialog({
                   onChange={(e) => handleFieldChange('partenaireId', e.target.value as number)}
                 >
                   <MenuItem value={0} disabled>
-                    Sélectionner un partenaire
+                    Selectionner un partenaire
                   </MenuItem>
                   {partenaires.map((p: PartenaireSimple) => (
                     <MenuItem key={p.id} value={p.id}>
@@ -292,7 +389,7 @@ export default function AddPartenaireDialog({
               </FormControl>
             )}
 
-            {/* Budget and Pourcentage - Responsive grid */}
+            {/* Budget and Pourcentage - Bidirectional sync */}
             <Box sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
@@ -301,12 +398,12 @@ export default function AddPartenaireDialog({
               <TextField
                 fullWidth
                 required
-                label="Budget alloué (MAD)"
+                label="Budget alloue (MAD)"
                 type="number"
                 value={formData.budgetAlloue}
-                onChange={(e) => handleFieldChange('budgetAlloue', e.target.value)}
+                onChange={(e) => handleBudgetChange(e.target.value)}
                 error={Boolean(validationErrors.budgetAlloue)}
-                helperText={validationErrors.budgetAlloue || 'Montant en dirhams'}
+                helperText={validationErrors.budgetAlloue || (hasBudgetInfo ? 'Calcul auto du %' : 'Montant en dirhams')}
                 inputProps={{ min: 0, step: 0.01 }}
               />
 
@@ -316,14 +413,14 @@ export default function AddPartenaireDialog({
                 label="Pourcentage (%)"
                 type="number"
                 value={formData.pourcentage}
-                onChange={(e) => handleFieldChange('pourcentage', e.target.value)}
+                onChange={(e) => handlePourcentageChange(e.target.value)}
                 error={Boolean(validationErrors.pourcentage)}
-                helperText={validationErrors.pourcentage || '% du budget total'}
+                helperText={validationErrors.pourcentage || (hasBudgetInfo ? 'Calcul auto du budget' : '% du budget total')}
                 inputProps={{ min: 0, max: 100, step: 0.01 }}
               />
             </Box>
 
-            {/* Roles (MO/MOD) - Responsive stack */}
+            {/* Roles (MO/MOD) */}
             <Box sx={{
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
@@ -336,7 +433,7 @@ export default function AddPartenaireDialog({
                     onChange={(e) => handleFieldChange('estMaitreOeuvre', e.target.checked)}
                   />
                 }
-                label="Maître d'œuvre (MO)"
+                label="Maitre d'oeuvre (MO)"
               />
               <FormControlLabel
                 control={
@@ -345,7 +442,7 @@ export default function AddPartenaireDialog({
                     onChange={(e) => handleFieldChange('estMaitreOeuvreDelegue', e.target.checked)}
                   />
                 }
-                label="Maître d'œuvre délégué (MOD)"
+                label="Maitre d'oeuvre delegue (MOD)"
               />
             </Box>
 
@@ -357,7 +454,7 @@ export default function AddPartenaireDialog({
               label="Remarques"
               value={formData.remarques}
               onChange={(e) => handleFieldChange('remarques', e.target.value)}
-              helperText="Observations ou notes complémentaires (optionnel)"
+              helperText="Observations ou notes complementaires (optionnel)"
             />
           </Box>
         )}

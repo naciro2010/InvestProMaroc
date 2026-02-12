@@ -155,6 +155,7 @@ class ConventionMapper(
             volet = entity.volet,
             dateVersement = entity.dateVersement,
             montant = entity.montant,
+            montantPrevu = entity.montantPrevu,
             partenaireId = entity.partenaire?.id ?: 0,
             partenaireNom = entity.partenaire?.raisonSociale,
             maitreOeuvreDelegueId = entity.maitreOeuvreDelegue?.id,

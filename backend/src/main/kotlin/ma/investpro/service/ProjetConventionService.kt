@@ -47,17 +47,17 @@ class ProjetConventionService(
     }
 
     /**
-     * Récupère toutes les conventions associées à un projet
+     * Récupère toutes les conventions associées à un projet (avec fetch join)
      */
     fun getConventionsByProjetId(projetId: Long): List<ProjetConvention> {
-        return projetConventionRepository.findByProjetIdOrderByOrdre(projetId)
+        return projetConventionRepository.findByProjetIdWithFetch(projetId)
     }
 
     /**
-     * Récupère tous les projets associés à une convention
+     * Récupère tous les projets associés à une convention (avec fetch join)
      */
     fun getProjetsByConventionId(conventionId: Long): List<ProjetConvention> {
-        return projetConventionRepository.findByConventionIdOrderByOrdre(conventionId)
+        return projetConventionRepository.findByConventionIdWithFetch(conventionId)
     }
 
     /**

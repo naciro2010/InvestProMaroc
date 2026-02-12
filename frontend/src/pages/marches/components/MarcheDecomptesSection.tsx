@@ -11,6 +11,7 @@ import {
   CircularProgress,
   Alert,
   Button,
+  LinearProgress,
 } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
@@ -33,11 +34,31 @@ interface Decompte {
   actif: boolean
 }
 
+type PaymentStatusKey = 'NON_PAYE' | 'PAYE_PARTIEL' | 'PAYE_TOTAL'
+
+/**
+ * Derives payment status from decompte data.
+ * Returns a status key for getStatusConfig lookup.
+ */
+function getPaymentStatus(decompte: Decompte): PaymentStatusKey {
+  if (decompte.estSolde || (decompte.montantPaye > 0 && decompte.montantPaye >= decompte.netAPayer)) {
+    return 'PAYE_TOTAL'
+  }
+  if (decompte.montantPaye > 0) {
+    return 'PAYE_PARTIEL'
+  }
+  return 'NON_PAYE'
+}
+
 /**
  * MICRO-COMPONENT: MarcheDecomptesSection
  * Design: Atlassian/Confluence style table
- * Charge uniquement les décomptes du marché
+ * Charge uniquement les decomptes du marche
  * Endpoint: GET /marches/{id}/decomptes
+ *
+ * Enhanced with payment status column showing:
+ * - Non paye (red), Paye partiellement (orange), Paye totalement (green)
+ * - Montant paye vs net a payer with progress bar
  */
 const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
   const navigate = useNavigate()
@@ -57,8 +78,8 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
       const decomptesData = Array.isArray(data.data) ? data.data : data.data?.data || []
       setDecomptes(decomptesData)
     } catch (err) {
-      console.error('Erreur chargement décomptes:', err)
-      setError('Impossible de charger les décomptes')
+      console.error('Erreur chargement decomptes:', err)
+      setError('Impossible de charger les decomptes')
     } finally {
       setLoading(false)
     }
@@ -77,6 +98,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
   }
 
   const totalDecomptes = decomptes.reduce((sum, d) => sum + (d.netAPayer || 0), 0)
+  const totalPaye = decomptes.reduce((sum, d) => sum + (d.montantPaye || 0), 0)
 
   return (
     <Box sx={{ ...componentStyles.card, p: 0, mb: 3, overflow: 'hidden' }}>
@@ -100,7 +122,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
               color: colors.textPrimary,
             }}
           >
-            Décomptes
+            Decomptes
           </Typography>
           <Typography
             sx={{
@@ -108,7 +130,8 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
               color: colors.textSecondary,
             }}
           >
-            {decomptes.length} décompte(s) - Total: {formatCurrency(totalDecomptes)} DH
+            {decomptes.length} decompte(s) - Total: {formatCurrency(totalDecomptes)} DH
+            {totalPaye > 0 && ` - Paye: ${formatCurrency(totalPaye)} DH`}
           </Typography>
         </Box>
         <Button
@@ -118,7 +141,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
           sx={componentStyles.buttonPrimary}
           size="small"
         >
-          Nouveau Décompte
+          Nouveau Decompte
         </Button>
       </Box>
 
@@ -133,22 +156,30 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
         </Box>
       ) : decomptes.length === 0 ? (
         <Box sx={{ p: 3 }}>
-          <Alert severity="info">Aucun décompte pour ce marché</Alert>
+          <Alert severity="info">Aucun decompte pour ce marche</Alert>
         </Box>
       ) : (
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow sx={componentStyles.listPage.tableHeader}>
-                <TableCell>Numéro</TableCell>
+                <TableCell>Numero</TableCell>
                 <TableCell>Date</TableCell>
-                <TableCell align="right">Net à Payer</TableCell>
+                <TableCell align="right">Net a Payer</TableCell>
+                <TableCell align="right">Montant Paye</TableCell>
                 <TableCell>Statut</TableCell>
+                <TableCell>Paiement</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {decomptes.map((decompte) => {
                 const statusConfig = getStatusConfig(decompte.statut)
+                const paymentStatusKey = getPaymentStatus(decompte)
+                const paymentConfig = getStatusConfig(paymentStatusKey)
+                const progressPercent = decompte.netAPayer > 0
+                  ? Math.min(100, (decompte.montantPaye / decompte.netAPayer) * 100)
+                  : 0
+
                 return (
                   <TableRow
                     key={decompte.id}
@@ -173,6 +204,17 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
                         }}
                       >
                         {formatCurrency(decompte.netAPayer)} DH
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography
+                        sx={{
+                          fontSize: typography.sizes.base,
+                          fontWeight: typography.weights.medium,
+                          color: decompte.montantPaye > 0 ? colors.success[700] : colors.textSecondary,
+                        }}
+                      >
+                        {formatCurrency(decompte.montantPaye)} DH
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -204,6 +246,57 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
                         >
                           {statusConfig.label}
                         </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ minWidth: 120 }}>
+                        <Box
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0.75,
+                            px: 1.5,
+                            py: 0.25,
+                            borderRadius: borders.radius.sm,
+                            bgcolor: paymentConfig.bgColor,
+                            mb: 0.5,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              bgcolor: paymentConfig.dotColor,
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: typography.sizes.xs,
+                              fontWeight: typography.weights.semibold,
+                              color: paymentConfig.textColor,
+                            }}
+                          >
+                            {paymentConfig.label}
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={progressPercent}
+                          sx={{
+                            height: 4,
+                            borderRadius: 2,
+                            bgcolor: colors.neutral[100],
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: 2,
+                              bgcolor: paymentStatusKey === 'PAYE_TOTAL'
+                                ? colors.success[500]
+                                : paymentStatusKey === 'PAYE_PARTIEL'
+                                  ? colors.warning[500]
+                                  : colors.neutral[300],
+                            },
+                          }}
+                        />
                       </Box>
                     </TableCell>
                   </TableRow>

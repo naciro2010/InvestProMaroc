@@ -375,6 +375,8 @@ export const marchesAPI = {
   getLignes: (marcheId: number) => api.get(`/marches/${marcheId}/lignes`),
   getAvenants: (marcheId: number) => api.get(`/marches/${marcheId}/avenants`),
   getDecomptes: (marcheId: number) => api.get(`/marches/${marcheId}/decomptes`),
+  getPaiements: (marcheId: number) => api.get(`/marches/${marcheId}/paiements`),
+  getSituationPaiement: (marcheId: number) => api.get(`/marches/${marcheId}/situation-paiement`),
 }
 
 // Axes Analytiques API

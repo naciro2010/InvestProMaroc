@@ -96,7 +96,11 @@ export default function BudgetsPage() {
   // Filtrage
   const filteredBudgets = useMemo(() => {
     return budgets.filter((budget) => {
-      const matchesSearch = budget.version.toLowerCase().includes(searchTerm.toLowerCase())
+      const query = searchTerm.toLowerCase()
+      const matchesSearch = !searchTerm ||
+        budget.version.toLowerCase().includes(query) ||
+        (budget.convention?.code?.toLowerCase() ?? '').includes(query) ||
+        (budget.convention?.libelle?.toLowerCase() ?? '').includes(query)
       const matchesStatut = statutFilter === 'ALL' || budget.statut === statutFilter
       return matchesSearch && matchesStatut
     })
@@ -167,7 +171,7 @@ export default function BudgetsPage() {
         {/* Toolbar avec filtres */}
         <Box sx={styles.toolbar}>
           <TextField
-            placeholder="Rechercher par version..."
+            placeholder="Rechercher par version, convention..."
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
             size="small"
@@ -235,8 +239,48 @@ export default function BudgetsPage() {
                         <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
                           {budget.version}
                         </TableCell>
-                        <TableCell>
-                          {budget.convention?.libelle || '-'}
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          {budget.convention ? (
+                            <Box
+                              component="span"
+                              onClick={() => navigate(`/conventions/${budget.convention.id}`)}
+                              sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 0.75,
+                                cursor: 'pointer',
+                                color: colors.primary[700],
+                                fontWeight: typography.weights.medium,
+                                fontSize: typography.sizes.sm,
+                                px: 1,
+                                py: 0.25,
+                                borderRadius: '4px',
+                                '&:hover': {
+                                  bgcolor: colors.primary[50],
+                                  textDecoration: 'underline',
+                                },
+                              }}
+                            >
+                              {budget.convention.code || budget.convention.libelle}
+                            </Box>
+                          ) : (
+                            <Box
+                              component="span"
+                              sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                px: 1,
+                                py: 0.25,
+                                borderRadius: '4px',
+                                bgcolor: colors.neutral[100],
+                                color: colors.textSecondary,
+                                fontSize: typography.sizes.xs,
+                                fontWeight: typography.weights.medium,
+                              }}
+                            >
+                              Aucune convention
+                            </Box>
+                          )}
                         </TableCell>
                         <TableCell sx={{ color: colors.textSecondary }}>
                           {formatDate(budget.dateBudget)}

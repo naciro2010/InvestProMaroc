@@ -177,6 +177,40 @@ class ConventionService(
     fun achever(id: Long): Convention = findById(id) ?: throw IllegalArgumentException("Convention $id introuvable")
     fun remettreEnBrouillon(id: Long): Convention = rejeter(id, "Remis en brouillon")
 
+    /**
+     * Dévalider une convention (action admin uniquement).
+     * Transitions possibles:
+     * - VALIDE → SOUMIS (retour avant validation)
+     * - EN_EXECUTION → VALIDE (retour avant exécution)
+     */
+    fun devalider(id: Long): Convention {
+        val convention = findById(id)
+            ?: throw IllegalArgumentException("Convention $id introuvable")
+
+        val nouveauStatut = when (convention.statut) {
+            StatutConvention.VALIDE -> StatutConvention.SOUMIS
+            StatutConvention.EN_EXECUTION -> StatutConvention.VALIDE
+            else -> throw IllegalArgumentException(
+                "Impossible de dévalider une convention en statut ${convention.statut}. " +
+                "Seules les conventions VALIDEE ou EN_EXECUTION peuvent être dévalidées."
+            )
+        }
+
+        convention.apply {
+            statut = nouveauStatut
+            // Déverrouiller si retour à SOUMIS
+            if (nouveauStatut == StatutConvention.SOUMIS) {
+                isLocked = false
+                motifVerrouillage = null
+                dateValidation = null
+                valideParId = null
+                version = null
+            }
+        }
+
+        return conventionRepository.save(convention)
+    }
+
     // ========== Sous-Conventions ==========
 
     /**

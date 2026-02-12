@@ -1,15 +1,20 @@
 package ma.investpro.service
 
 import ma.investpro.dto.MarcheListDTO
+import ma.investpro.dto.MarchePaiementDTO
+import ma.investpro.dto.MarcheSituationPaiementDTO
 import ma.investpro.entity.Marche
 import ma.investpro.entity.MarcheLigne
 import ma.investpro.entity.AvenantMarche
 import ma.investpro.entity.Decompte
+import ma.investpro.entity.Paiement
 import ma.investpro.entity.StatutMarche
 import ma.investpro.repository.MarcheRepository
 import ma.investpro.repository.FournisseurRepository
 import ma.investpro.repository.ProjetRepository
 import ma.investpro.repository.ConventionRepository
+import ma.investpro.repository.OrdrePaiementRepository
+import ma.investpro.repository.PaiementRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,7 +29,9 @@ class MarcheService(
     private val marcheRepository: MarcheRepository,
     private val fournisseurRepository: FournisseurRepository,
     private val projetRepository: ProjetRepository,
-    private val conventionRepository: ConventionRepository
+    private val conventionRepository: ConventionRepository,
+    private val ordrePaiementRepository: OrdrePaiementRepository,
+    private val paiementRepository: PaiementRepository
 ) {
 
     fun findAll(): List<Marche> {
@@ -351,5 +358,119 @@ class MarcheService(
         return marcheRepository.save(marche).also {
             logger.info { "Marché $marcheId successfully unlinked from convention $oldConventionId" }
         }
+    }
+
+    /**
+     * Get all paiements for a marché by traversing:
+     * Marché -> Décomptes -> OrdresPaiement -> Paiements
+     */
+    fun findPaiementsByMarcheId(marcheId: Long): List<MarchePaiementDTO> {
+        logger.debug { "Fetching paiements for marche ID: $marcheId" }
+        val marche = marcheRepository.findById(marcheId)
+            .orElseThrow {
+                logger.warn { "Marche not found - ID: $marcheId" }
+                IllegalArgumentException("Marché avec ID $marcheId non trouvé")
+            }
+
+        val decomptes = marche.decomptes.toList()
+        if (decomptes.isEmpty()) {
+            logger.debug { "No decomptes found for marche $marcheId, returning empty paiements" }
+            return emptyList()
+        }
+
+        // Build a map of decompte ID -> Decompte for quick lookup
+        val decompteMap: Map<Long, Decompte> = decomptes.associateBy { it.id ?: 0L }
+        val decompteIds: List<Long> = decomptes.mapNotNull { it.id }
+
+        // Get all ordres de paiement for these décomptes
+        val ordresPaiement = ordrePaiementRepository.findByDecompteIdIn(decompteIds)
+        if (ordresPaiement.isEmpty()) {
+            logger.debug { "No ordres de paiement found for marche $marcheId decomptes" }
+            return emptyList()
+        }
+
+        val opIds: List<Long> = ordresPaiement.mapNotNull { it.id }
+
+        // Get all paiements for these ordres de paiement
+        val paiements: List<Paiement> = paiementRepository.findByOrdrePaiementIdIn(opIds)
+
+        logger.info { "Found ${paiements.size} paiements for marche $marcheId" }
+
+        return paiements.map { paiement: Paiement ->
+            val op = paiement.ordrePaiement
+            val decompte = decompteMap[op.decompte.id]
+            MarchePaiementDTO(
+                id = paiement.id,
+                referencePaiement = paiement.referencePaiement,
+                dateValeur = paiement.dateValeur,
+                dateExecution = paiement.dateExecution,
+                montantPaye = paiement.montantPaye,
+                modePaiement = paiement.modePaiement.name,
+                estPaiementPartiel = paiement.estPaiementPartiel,
+                decompteId = op.decompte.id ?: 0L,
+                numeroDecompte = decompte?.numeroDecompte ?: "",
+                ordrePaiementId = op.id ?: 0L,
+                numeroOP = op.numeroOP,
+                observations = paiement.observations
+            )
+        }
+    }
+
+    /**
+     * Get payment situation summary for a marché.
+     * Computes aggregated metrics from décomptes.
+     */
+    fun getSituationPaiement(marcheId: Long): MarcheSituationPaiementDTO {
+        logger.debug { "Computing situation paiement for marche ID: $marcheId" }
+        val marche = marcheRepository.findById(marcheId)
+            .orElseThrow {
+                logger.warn { "Marche not found - ID: $marcheId" }
+                IllegalArgumentException("Marché avec ID $marcheId non trouvé")
+            }
+
+        val decomptes = marche.decomptes.toList()
+
+        val totalNetAPayer = decomptes.fold(BigDecimal.ZERO) { acc: BigDecimal, d: Decompte ->
+            acc + d.netAPayer
+        }
+        val totalMontantPaye = decomptes.fold(BigDecimal.ZERO) { acc: BigDecimal, d: Decompte ->
+            acc + d.montantPaye
+        }
+        val resteAPayer = totalNetAPayer - totalMontantPaye
+
+        val tauxPaiement = if (totalNetAPayer > BigDecimal.ZERO) {
+            totalMontantPaye.multiply(BigDecimal(100)).divide(totalNetAPayer, 2, java.math.RoundingMode.HALF_UP)
+        } else {
+            BigDecimal.ZERO
+        }
+
+        val decomptesNonPayes = decomptes.count { d: Decompte -> d.montantPaye.compareTo(BigDecimal.ZERO) == 0 }
+        val decomptesPayesTotalement = decomptes.count { d: Decompte -> d.estSolde }
+        val decomptesPayesPartiellement = decomptes.count { d: Decompte ->
+            d.montantPaye > BigDecimal.ZERO && !d.estSolde
+        }
+
+        // Count total paiements by traversing the chain
+        val decompteIds: List<Long> = decomptes.mapNotNull { it.id }
+        val nombrePaiements = if (decompteIds.isNotEmpty()) {
+            val opIds = ordrePaiementRepository.findByDecompteIdIn(decompteIds).mapNotNull { it.id }
+            if (opIds.isNotEmpty()) paiementRepository.findByOrdrePaiementIdIn(opIds).size else 0
+        } else {
+            0
+        }
+
+        logger.info { "Situation paiement marche $marcheId: ${decomptes.size} decomptes, $nombrePaiements paiements, taux=$tauxPaiement%" }
+
+        return MarcheSituationPaiementDTO(
+            totalDecomptes = decomptes.size,
+            totalNetAPayer = totalNetAPayer,
+            totalMontantPaye = totalMontantPaye,
+            resteAPayer = resteAPayer,
+            tauxPaiement = tauxPaiement,
+            decomptesNonPayes = decomptesNonPayes,
+            decomptesPayesPartiellement = decomptesPayesPartiellement,
+            decomptesPayesTotalement = decomptesPayesTotalement,
+            nombrePaiements = nombrePaiements
+        )
     }
 }

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { Box, Paper, CircularProgress, Alert } from '@mui/material'
 import AppLayout from '../../components/layout/AppLayout'
 import MarcheHeader from './components/MarcheHeader'
+import MarcheConventionCard from './components/MarcheConventionCard'
 import MarcheInfoCard from './components/MarcheInfoCard'
 import MarcheStatsCard from './components/MarcheStatsCard'
 import MarcheLignesSection from './components/MarcheLignesSection'
@@ -44,6 +45,9 @@ const MarcheDetailPageModern = () => {
 
           {/* Stats - Charge les métriques calculées */}
           <MarcheStatsCard marcheId={marcheId} />
+
+          {/* Convention rattachée - Charge les infos de la convention liée */}
+          <MarcheConventionCard marcheId={marcheId} />
 
           {/* Info Card - Charge les détails du marché */}
           <MarcheInfoCard marcheId={marcheId} />

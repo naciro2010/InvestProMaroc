@@ -38,4 +38,7 @@ interface OrdrePaiementRepository : JpaRepository<OrdrePaiement, Long> {
 
     // Vérifier si un numéro OP existe
     fun existsByNumeroOP(numeroOP: String): Boolean
+
+    // Recherche par liste de décompte IDs (for marché -> décomptes -> OPs traversal)
+    fun findByDecompteIdIn(decompteIds: List<Long>): List<OrdrePaiement>
 }

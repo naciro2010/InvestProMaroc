@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings,
-  Briefcase, ChevronDown, ChevronRight, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, Sparkles, ClipboardCheck, Tags, Handshake, GripVertical, Package
+  Briefcase, ChevronDown, ChevronRight, ShoppingCart, UserCog, Menu, X, Wallet, FileCheck, Banknote, ClipboardCheck, Tags, Handshake, GripVertical, BarChart3
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { colors, typography, borders, transitions, shadows, spacing } from '@/lib/designSystem'
@@ -38,7 +38,6 @@ interface MenuItem {
 
 interface MenuGroup {
   label: string
-  icon: JSX.Element
   items: MenuItem[]
   key: string
 }
@@ -72,10 +71,10 @@ interface SortableGroupProps {
   hasActiveItem: boolean
   onToggle: () => void
   children: React.ReactNode
-  sidebarStyles: Record<string, React.CSSProperties>
+  isActive: (path: string) => boolean
 }
 
-const SortableGroup = ({ group, isExpanded, hasActiveItem, onToggle, children, sidebarStyles }: SortableGroupProps) => {
+const SortableGroup = ({ group, isExpanded, hasActiveItem, onToggle, children }: SortableGroupProps) => {
   const {
     attributes,
     listeners,
@@ -89,42 +88,46 @@ const SortableGroup = ({ group, isExpanded, hasActiveItem, onToggle, children, s
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    marginBottom: spacing.xs,
   }
 
   return (
     <div ref={setNodeRef} style={style}>
+      {/* Group header - clean divider style */}
       <div
         style={{
-          ...sidebarStyles.groupHeader,
-          ...(hasActiveItem && !isExpanded ? { backgroundColor: colors.primary[50], color: colors.primary[700] } : {}),
+          display: 'flex',
+          alignItems: 'center',
+          padding: `${spacing.lg} ${spacing.xl} ${spacing.xs}`,
+          cursor: 'pointer',
+          userSelect: 'none',
         }}
       >
-        {/* Drag handle */}
+        {/* Drag handle - appears on hover */}
         <div
           {...attributes}
           {...listeners}
           style={{
             cursor: 'grab',
-            padding: spacing.xs,
+            padding: '2px',
             marginRight: spacing.xs,
-            color: colors.neutral[400],
+            color: colors.neutral[300],
             display: 'flex',
             alignItems: 'center',
             borderRadius: borders.radius.sm,
             transition: `all ${transitions.fast}`,
+            opacity: 0.4,
           }}
           title="Glisser pour réorganiser"
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors.neutral[100]
-            e.currentTarget.style.color = colors.neutral[600]
+            e.currentTarget.style.opacity = '1'
+            e.currentTarget.style.color = colors.neutral[500]
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent'
-            e.currentTarget.style.color = colors.neutral[400]
+            e.currentTarget.style.opacity = '0.4'
+            e.currentTarget.style.color = colors.neutral[300]
           }}
         >
-          <GripVertical className="w-4 h-4" />
+          <GripVertical className="w-3.5 h-3.5" />
         </div>
         <div
           onClick={onToggle}
@@ -135,26 +138,23 @@ const SortableGroup = ({ group, isExpanded, hasActiveItem, onToggle, children, s
             flex: 1,
             cursor: 'pointer',
           }}
-          onMouseEnter={(e) => {
-            if (!(hasActiveItem && !isExpanded)) {
-              (e.currentTarget.parentElement as HTMLElement).style.backgroundColor = colors.neutral[50]
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!(hasActiveItem && !isExpanded)) {
-              (e.currentTarget.parentElement as HTMLElement).style.backgroundColor = 'transparent'
-            }
-          }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-            {group.icon}
-            <span>{group.label}</span>
-          </div>
-          {isExpanded ? (
-            <ChevronDown className="w-3 h-3" />
-          ) : (
-            <ChevronRight className="w-3 h-3" />
-          )}
+          <span style={{
+            fontSize: typography.sizes['2xs'],
+            fontWeight: typography.weights.semibold,
+            color: hasActiveItem ? colors.primary[600] : colors.neutral[400],
+            textTransform: 'uppercase',
+            letterSpacing: typography.letterSpacing.widest,
+          }}>
+            {group.label}
+          </span>
+          <span style={{ color: colors.neutral[300], display: 'flex' }}>
+            {isExpanded ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
+          </span>
         </div>
       </div>
       {isExpanded && children}
@@ -164,7 +164,8 @@ const SortableGroup = ({ group, isExpanded, hasActiveItem, onToggle, children, s
 
 /**
  * AppLayout - Main application shell
- * Design: Confluence/Jira inspired - clean, professional, functional
+ * Design: Clean, professional, Confluence/Jira-inspired
+ * Sidebar: Sober with clear visual hierarchy, left-border active indicators
  */
 const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation()
@@ -177,7 +178,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     'conventions-budgets': true,
     'marches-decomptes': true,
-    'paiements': false,
+    'paiements': true,
     'projets-tiers': false,
     'parametrage': false,
     'administration': false,
@@ -200,12 +201,21 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Close sidebar on route change on mobile
+  // Close sidebar on route change on mobile + auto-expand active group
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false)
     }
-  }, [location.pathname, isMobile])
+    // Auto-expand the group containing the active route
+    const activeGroup = menuGroups.find(group =>
+      group.items.some(item =>
+        location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+      )
+    )
+    if (activeGroup && !expandedGroups[activeGroup.key]) {
+      setExpandedGroups(prev => ({ ...prev, [activeGroup.key]: true }))
+    }
+  }, [location.pathname, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleGroup = (groupKey: string) => {
     setExpandedGroups(prev => ({
@@ -214,64 +224,58 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     }))
   }
 
-  // Default menu groups structure - reorganized with Marchés & Décomptes grouped
+  // Default menu groups - clean, no group icons (divider-style headers)
   const defaultMenuGroups: MenuGroup[] = [
     {
       key: 'conventions-budgets',
       label: 'Conventions & Budgets',
-      icon: <FileText className="w-4 h-4" />,
       items: [
-        { icon: <FileText className="w-4 h-4" />, label: 'Conventions', path: '/conventions', implemented: true },
-        { icon: <Wallet className="w-4 h-4" />, label: 'Budgets', path: '/budgets', implemented: true },
+        { icon: <FileText className="w-[18px] h-[18px]" />, label: 'Conventions', path: '/conventions', implemented: true },
+        { icon: <Wallet className="w-[18px] h-[18px]" />, label: 'Budgets', path: '/budgets', implemented: true },
       ]
     },
     {
       key: 'marches-decomptes',
       label: 'Marchés & Décomptes',
-      icon: <Package className="w-4 h-4" />,
       items: [
-        { icon: <ShoppingCart className="w-4 h-4" />, label: 'Marchés', path: '/marches', implemented: true },
-        { icon: <FileCheck className="w-4 h-4" />, label: 'Décomptes', path: '/decomptes', implemented: true },
+        { icon: <ShoppingCart className="w-[18px] h-[18px]" />, label: 'Marchés', path: '/marches', implemented: true },
+        { icon: <FileCheck className="w-[18px] h-[18px]" />, label: 'Décomptes', path: '/decomptes', implemented: true },
       ]
     },
     {
       key: 'paiements',
       label: 'Paiements',
-      icon: <Banknote className="w-4 h-4" />,
       items: [
-        { icon: <ClipboardCheck className="w-4 h-4" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
-        { icon: <Banknote className="w-4 h-4" />, label: 'Paiements', path: '/paiements', implemented: true },
-        { icon: <Receipt className="w-4 h-4" />, label: 'Dépenses', path: '/depenses', implemented: false },
-        { icon: <DollarSign className="w-4 h-4" />, label: 'Commissions', path: '/commissions', implemented: false },
+        { icon: <ClipboardCheck className="w-[18px] h-[18px]" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
+        { icon: <Banknote className="w-[18px] h-[18px]" />, label: 'Paiements', path: '/paiements', implemented: true },
+        { icon: <Receipt className="w-[18px] h-[18px]" />, label: 'Dépenses', path: '/depenses', implemented: false },
+        { icon: <DollarSign className="w-[18px] h-[18px]" />, label: 'Commissions', path: '/commissions', implemented: false },
       ]
     },
     {
       key: 'projets-tiers',
       label: 'Projets & Tiers',
-      icon: <Building2 className="w-4 h-4" />,
       items: [
-        { icon: <Building2 className="w-4 h-4" />, label: 'Projets', path: '/projets', implemented: true },
-        { icon: <Users className="w-4 h-4" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: false },
-        { icon: <CreditCard className="w-4 h-4" />, label: 'Comptes Bancaires', path: '/comptes-bancaires', implemented: false },
+        { icon: <Building2 className="w-[18px] h-[18px]" />, label: 'Projets', path: '/projets', implemented: true },
+        { icon: <Users className="w-[18px] h-[18px]" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: false },
+        { icon: <CreditCard className="w-[18px] h-[18px]" />, label: 'Comptes Bancaires', path: '/comptes-bancaires', implemented: false },
       ]
     },
     {
       key: 'parametrage',
       label: 'Paramétrage',
-      icon: <Settings className="w-4 h-4" />,
       items: [
-        { icon: <Sparkles className="w-4 h-4" />, label: 'Paramétrage des conventions', path: '/parametrage/conventions', implemented: true },
-        { icon: <Map className="w-4 h-4" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
-        { icon: <Tags className="w-4 h-4" />, label: 'Catégories de dépenses', path: '/parametrage/categories-depenses', implemented: true },
-        { icon: <Handshake className="w-4 h-4" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
+        { icon: <Settings className="w-[18px] h-[18px]" />, label: 'Paramétrage des conventions', path: '/parametrage/conventions', implemented: true },
+        { icon: <Map className="w-[18px] h-[18px]" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
+        { icon: <Tags className="w-[18px] h-[18px]" />, label: 'Catégories de dépenses', path: '/parametrage/categories-depenses', implemented: true },
+        { icon: <Handshake className="w-[18px] h-[18px]" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
       ]
     },
     {
       key: 'administration',
       label: 'Administration',
-      icon: <UserCog className="w-4 h-4" />,
       items: [
-        { icon: <UserCog className="w-4 h-4" />, label: 'Utilisateurs', path: '/users', implemented: true },
+        { icon: <UserCog className="w-[18px] h-[18px]" />, label: 'Utilisateurs', path: '/users', implemented: true },
       ]
     }
   ]
@@ -334,14 +338,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return location.pathname === path || location.pathname.startsWith(path + '/')
   }
 
-  // Styles
+  // Styles - Professional, sober design using only designSystem tokens
+  const sidebarWidth = '264px'
+
   const sidebarStyles = {
     container: {
       position: 'fixed' as const,
       left: 0,
       top: 0,
       height: '100vh',
-      width: '260px',
+      width: sidebarWidth,
       backgroundColor: colors.surface,
       borderRight: `1px solid ${colors.border}`,
       display: 'flex',
@@ -354,12 +360,12 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       display: 'flex',
       alignItems: 'center',
       gap: spacing.md,
-      padding: `${spacing.lg} ${spacing.xl}`,
+      padding: `${spacing.xl} ${spacing.xl}`,
       borderBottom: `1px solid ${colors.border}`,
     },
     logoIcon: {
-      width: 32,
-      height: 32,
+      width: 34,
+      height: 34,
       backgroundColor: colors.primary[600],
       borderRadius: borders.radius.md,
       display: 'flex',
@@ -370,51 +376,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     nav: {
       flex: 1,
       overflowY: 'auto' as const,
-      padding: `${spacing.md} 0`,
-    },
-    menuItem: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: `${spacing.sm} ${spacing.lg}`,
-      margin: `2px ${spacing.sm}`,
-      borderRadius: borders.radius.base,
-      color: colors.textSecondary,
-      fontSize: typography.sizes.base,
-      fontWeight: typography.weights.medium,
-      textDecoration: 'none',
-      transition: `all ${transitions.fast}`,
-      cursor: 'pointer',
-    },
-    menuItemActive: {
-      backgroundColor: colors.primary[50],
-      color: colors.primary[700],
-    },
-    menuItemHover: {
-      backgroundColor: colors.neutral[100],
-      color: colors.textPrimary,
-    },
-    groupHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: `${spacing.xs} ${spacing.lg}`,
-      margin: `${spacing.sm} ${spacing.sm} 2px`,
-      borderRadius: borders.radius.base,
-      color: colors.textSecondary,
-      fontSize: typography.sizes.xs,
-      fontWeight: typography.weights.semibold,
-      textTransform: 'uppercase' as const,
-      letterSpacing: typography.letterSpacing.wider,
-      cursor: 'pointer',
+      padding: `${spacing.sm} 0`,
     },
     badge: {
       display: 'inline-flex',
       alignItems: 'center',
       gap: spacing.xs,
       padding: `2px ${spacing.sm}`,
-      backgroundColor: colors.purple[50],
-      color: colors.purple[700],
+      backgroundColor: colors.neutral[100],
+      color: colors.neutral[500],
       fontSize: typography.sizes['2xs'],
       fontWeight: typography.weights.medium,
       borderRadius: borders.radius.full,
@@ -434,8 +404,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       transition: `background-color ${transitions.fast}`,
     },
     avatar: {
-      width: 32,
-      height: 32,
+      width: 34,
+      height: 34,
       backgroundColor: colors.primary[600],
       borderRadius: borders.radius.full,
       display: 'flex',
@@ -459,6 +429,41 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       overflow: 'hidden',
     },
   }
+
+  // Menu item style builder - returns inline styles based on active state
+  const getMenuItemStyle = (active: boolean): React.CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: `10px ${spacing.xl}`,
+    paddingLeft: spacing['2xl'],
+    minHeight: '40px',
+    color: active ? colors.primary[700] : colors.textSecondary,
+    fontSize: typography.sizes.sm,
+    fontWeight: active ? typography.weights.semibold : typography.weights.medium,
+    textDecoration: 'none',
+    transition: `all ${transitions.fast}`,
+    cursor: 'pointer',
+    borderLeft: active ? `3px solid ${colors.primary[600]}` : '3px solid transparent',
+    backgroundColor: active ? colors.primary[25] : 'transparent',
+  })
+
+  // Top-level nav item style (Dashboard, Reporting)
+  const getTopNavStyle = (active: boolean): React.CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: `10px ${spacing.xl}`,
+    minHeight: '42px',
+    color: active ? colors.primary[700] : colors.textPrimary,
+    fontSize: typography.sizes.base,
+    fontWeight: active ? typography.weights.semibold : typography.weights.medium,
+    textDecoration: 'none',
+    transition: `all ${transitions.fast}`,
+    cursor: 'pointer',
+    borderLeft: active ? `3px solid ${colors.primary[600]}` : '3px solid transparent',
+    backgroundColor: active ? colors.primary[25] : 'transparent',
+  })
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: colors.background }}>
@@ -489,41 +494,56 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <Briefcase className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span style={{ color: colors.textPrimary, fontWeight: typography.weights.semibold, fontSize: typography.sizes.lg }}>
+              <span style={{ color: colors.textPrimary, fontWeight: typography.weights.bold, fontSize: typography.sizes.lg, letterSpacing: typography.letterSpacing.tight }}>
                 InvestPro
               </span>
+              <span style={{ color: colors.neutral[400], fontWeight: typography.weights.normal, fontSize: typography.sizes.lg }}> Maroc</span>
             </div>
           </Link>
         </div>
 
         {/* Navigation */}
         <nav style={sidebarStyles.nav}>
-          {/* Dashboard - Always visible */}
+          {/* Top-level quick links */}
           <Link
             to="/dashboard"
-            style={{
-              ...sidebarStyles.menuItem,
-              ...(isActive('/dashboard') ? sidebarStyles.menuItemActive : {}),
-            }}
+            style={getTopNavStyle(isActive('/dashboard'))}
             onMouseEnter={(e) => {
               if (!isActive('/dashboard')) {
-                Object.assign(e.currentTarget.style, sidebarStyles.menuItemHover)
+                e.currentTarget.style.backgroundColor = colors.neutral[50]
+                e.currentTarget.style.color = colors.textPrimary
               }
             }}
             onMouseLeave={(e) => {
               if (!isActive('/dashboard')) {
                 e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = colors.textSecondary
+                e.currentTarget.style.color = colors.textPrimary
               }
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
-              <LayoutDashboard className="w-4 h-4" />
-              <span>Dashboard</span>
-            </div>
+            <LayoutDashboard className="w-[18px] h-[18px]" />
+            <span>Dashboard</span>
           </Link>
 
-          <div style={{ height: '1px', backgroundColor: colors.divider, margin: `${spacing.sm} ${spacing.lg}` }} />
+          <Link
+            to="/reporting"
+            style={getTopNavStyle(isActive('/reporting'))}
+            onMouseEnter={(e) => {
+              if (!isActive('/reporting')) {
+                e.currentTarget.style.backgroundColor = colors.neutral[50]
+                e.currentTarget.style.color = colors.textPrimary
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive('/reporting')) {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = colors.textPrimary
+              }
+            }}
+          >
+            <BarChart3 className="w-[18px] h-[18px]" />
+            <span>Reporting</span>
+          </Link>
 
           {/* Grouped Menu Items with Drag & Drop */}
           <DndContext
@@ -536,34 +556,31 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               strategy={verticalListSortingStrategy}
             >
               {menuGroups.map((group) => {
-                const isExpanded = expandedGroups[group.key]
+                const isGroupExpanded = expandedGroups[group.key]
                 const hasActiveItem = group.items.some(item => isActive(item.path))
 
                 return (
                   <SortableGroup
                     key={group.key}
                     group={group}
-                    isExpanded={isExpanded}
+                    isExpanded={isGroupExpanded}
                     hasActiveItem={hasActiveItem}
                     onToggle={() => toggleGroup(group.key)}
-                    sidebarStyles={sidebarStyles}
+                    isActive={isActive}
                   >
                     {/* Group Items */}
-                    <div style={{ marginTop: '2px' }}>
+                    <div style={{ paddingBottom: spacing.xs }}>
                       {group.items.map((item, itemIndex) => {
                         const itemActive = isActive(item.path)
                         return (
                           <Link
                             key={itemIndex}
                             to={item.path}
-                            style={{
-                              ...sidebarStyles.menuItem,
-                              marginLeft: spacing.xl,
-                              ...(itemActive ? sidebarStyles.menuItemActive : {}),
-                            }}
+                            style={getMenuItemStyle(itemActive)}
                             onMouseEnter={(e) => {
                               if (!itemActive) {
-                                Object.assign(e.currentTarget.style, sidebarStyles.menuItemHover)
+                                e.currentTarget.style.backgroundColor = colors.neutral[50]
+                                e.currentTarget.style.color = colors.textPrimary
                               }
                             }}
                             onMouseLeave={(e) => {
@@ -579,7 +596,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
                             </div>
                             {!item.implemented && (
                               <span style={sidebarStyles.badge}>
-                                <Sparkles className="w-3 h-3" />
                                 Bientôt
                               </span>
                             )}
@@ -737,7 +753,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       <div style={{
         flex: 1,
         width: '100%',
-        marginLeft: isMobile ? 0 : '260px',
+        marginLeft: isMobile ? 0 : sidebarWidth,
         transition: `margin-left ${transitions.normal}`,
       }}>
         {/* Header */}

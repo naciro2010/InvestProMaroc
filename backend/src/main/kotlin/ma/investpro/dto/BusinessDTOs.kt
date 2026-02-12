@@ -724,6 +724,48 @@ data class UpdateProjetConventionRequest(
     val ordre: Int
 )
 
+// ========== Convention Budget Ligne DTOs ==========
+
+data class ConventionBudgetLigneDTO(
+    val id: Long?,
+    val conventionId: Long,
+    val categorieDepenseId: Long,
+    val categorieDepenseCode: String,
+    val categorieDepenseLibelle: String,
+    val designation: String?,
+    val montant: BigDecimal,
+    val pourcentage: BigDecimal,
+    val remarques: String?,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class CreateConventionBudgetLigneRequest(
+    @field:NotNull(message = "La catégorie de dépense est obligatoire")
+    val categorieDepenseId: Long,
+
+    val designation: String? = null,
+
+    @field:NotNull(message = "Le montant est obligatoire")
+    @field:DecimalMin(value = "0.00", message = "Le montant doit être positif")
+    val montant: BigDecimal,
+
+    val remarques: String? = null
+)
+
+data class UpdateConventionBudgetLigneRequest(
+    val categorieDepenseId: Long? = null,
+
+    val designation: String? = null,
+
+    @field:NotNull(message = "Le montant est obligatoire")
+    @field:DecimalMin(value = "0.00", message = "Le montant doit être positif")
+    val montant: BigDecimal,
+
+    val remarques: String? = null
+)
+
 // ========== Convention Modification DTOs ==========
 
 data class ConventionModificationDTO(

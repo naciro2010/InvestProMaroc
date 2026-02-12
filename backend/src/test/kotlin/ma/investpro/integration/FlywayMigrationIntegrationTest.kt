@@ -18,7 +18,10 @@ import javax.sql.DataSource
  * Tests the 3-file migration strategy (V1: DROP, V2: CREATE, V3: SEED)
  *
  * No Spring Boot context - just pure Flyway + PostgreSQL + JdbcTemplate
+ *
+ * Gracefully skips when Docker is unavailable or API version is incompatible.
  */
+@EnabledIfDockerAvailable
 class FlywayMigrationIntegrationTest {
 
     companion object {

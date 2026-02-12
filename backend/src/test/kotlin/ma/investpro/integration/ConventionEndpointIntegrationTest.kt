@@ -24,7 +24,10 @@ import javax.sql.DataSource
  * - GET /api/conventions/{id}/imputations returns imputations
  *
  * Uses real PostgreSQL + Flyway migrations (same as FlywayMigrationIntegrationTest).
+ *
+ * Gracefully skips when Docker is unavailable or API version is incompatible.
  */
+@EnabledIfDockerAvailable
 class ConventionEndpointIntegrationTest {
 
     companion object {

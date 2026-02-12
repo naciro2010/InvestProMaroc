@@ -315,6 +315,24 @@ export const conventionsAPI = {
   unlinkMarche: (conventionId: number, marcheId: number) =>
     api.delete(`/conventions/${conventionId}/marches/${marcheId}`),
 
+  // Budget lignes (répartition par catégorie de dépense)
+  getBudgetLignes: (conventionId: number) =>
+    api.get(`/conventions/${conventionId}/budget-lignes`),
+  addBudgetLigne: (conventionId: number, data: {
+    categorieDepenseId: number;
+    montant: number;
+    designation?: string;
+    remarques?: string;
+  }) => api.post(`/conventions/${conventionId}/budget-lignes`, data),
+  updateBudgetLigne: (conventionId: number, id: number, data: {
+    categorieDepenseId?: number;
+    montant: number;
+    designation?: string;
+    remarques?: string;
+  }) => api.put(`/conventions/${conventionId}/budget-lignes/${id}`, data),
+  deleteBudgetLigne: (conventionId: number, id: number) =>
+    api.delete(`/conventions/${conventionId}/budget-lignes/${id}`),
+
   // Micro-endpoints (progressive lazy loading)
   getBasic: (id: number) => api.get(`/conventions/${id}/basic`),
   getFinances: (id: number) => api.get(`/conventions/${id}/finances`),

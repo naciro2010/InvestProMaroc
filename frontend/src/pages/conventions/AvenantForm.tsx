@@ -18,10 +18,10 @@ import {
   StepLabel,
 } from '@mui/material'
 import { ArrowBack, Save, CompareArrows } from '@mui/icons-material'
-import { conventionsAPI, avenantConventionsAPI } from '../../lib/api'
-import AppLayout from '../../components/layout/AppLayout'
-import { Convention } from '../../types/entities'
-import FileUpload from '../../components/ui/FileUpload'
+import { conventionsAPI, avenantConventionsAPI } from '@/lib/api'
+import AppLayout from '@/components/layout/AppLayout'
+import { Convention } from '@/types/entities'
+import FileUpload from '@/components/ui/FileUpload'
 
 const steps = ['Sélection des modifications', 'Nouvelles valeurs', 'Pièces jointes', 'Récapitulatif']
 
@@ -79,8 +79,9 @@ const AvenantForm = () => {
         dateFin: data.data.dateFin || '',
         objetModifie: data.data.objet || '',
       }))
-    } catch (error) {
-      console.error('Erreur chargement convention:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur chargement convention:', msg)
       setError('Impossible de charger la convention')
     }
   }

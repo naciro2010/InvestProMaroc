@@ -24,10 +24,10 @@ import {
   Edit,
   Delete,
 } from '@mui/icons-material'
-import AppLayout from '../../components/layout/AppLayout'
-import { budgetsAPI } from '../../lib/api'
-import type { Budget, StatutBudget } from '../../types/entities'
-import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
+import AppLayout from '@/components/layout/AppLayout'
+import { budgetsAPI } from '@/lib/api'
+import type { Budget, StatutBudget } from '@/types/entities'
+import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 // Styles from design system
 const styles = componentStyles.listPage
@@ -74,8 +74,9 @@ export default function BudgetsPage() {
       setLoading(true)
       const response = await budgetsAPI.getAll()
       setBudgets(response.data.data || response.data || [])
-    } catch (error) {
-      console.error('Erreur chargement budgets:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur chargement budgets:', msg)
     } finally {
       setLoading(false)
     }
@@ -130,8 +131,9 @@ export default function BudgetsPage() {
     try {
       await budgetsAPI.delete(id)
       fetchBudgets()
-    } catch (error) {
-      console.error('Erreur suppression:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur suppression:', msg)
     }
   }
 

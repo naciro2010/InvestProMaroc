@@ -26,3 +26,9 @@ export {
 
 // Status Badge (badges de statut colorés)
 export { default as StatusBadge, StatusDot } from './StatusBadge'
+
+// Confirm Dialog (remplacement professionnel de window.confirm)
+export { default as ConfirmDialog } from './ConfirmDialog'
+
+// Empty State (placeholder pour listes vides)
+export { default as EmptyState } from './EmptyState'

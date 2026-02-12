@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Stack, CircularProgress, Button } from '@mui/material'
 import { OpenInNew, Description, Gavel } from '@mui/icons-material'
-import { marchesAPI, conventionsAPI } from '../../../lib/api'
-import StatusBadge from '../../../components/core/StatusBadge'
+import { marchesAPI, conventionsAPI } from '@/lib/api'
+import StatusBadge from '@/components/core/StatusBadge'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
 
 interface MarcheConventionCardProps {
@@ -56,8 +56,9 @@ const MarcheConventionCard = ({ marcheId }: MarcheConventionCardProps) => {
       const { data: convResponse } = await conventionsAPI.getBasic(conventionId)
       const convData = convResponse.data || convResponse
       setConvention(convData as ConventionBasicInfo)
-    } catch (err) {
-      console.error('Erreur chargement convention rattachée:', err)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue'
+      console.error('Erreur chargement convention rattachée:', msg)
       setNoConvention(true)
     } finally {
       setLoading(false)

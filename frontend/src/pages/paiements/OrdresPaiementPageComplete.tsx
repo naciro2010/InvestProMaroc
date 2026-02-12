@@ -30,9 +30,10 @@ import {
   Delete,
   AttachMoney,
 } from '@mui/icons-material'
-import AppLayout from '../../components/layout/AppLayout'
-import { ordresPaiementAPI } from '../../lib/api'
-import FileUpload from '../../components/ui/FileUpload'
+import AppLayout from '@/components/layout/AppLayout'
+import { ordresPaiementAPI } from '@/lib/api'
+import FileUpload from '@/components/ui/FileUpload'
+import { colors } from '@/lib/designSystem'
 
 interface OrdrePaiementItem {
   id: number
@@ -76,8 +77,9 @@ const OrdresPaiementPage = () => {
     try {
       const { data } = await ordresPaiementAPI.getAll()
       setOrdres(data.data || [])
-    } catch (error) {
-      console.error('Erreur chargement ordres de paiement:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur chargement ordres de paiement:', msg)
     } finally {
       setLoading(false)
     }
@@ -135,8 +137,9 @@ const OrdresPaiementPage = () => {
 
       handleCloseDialog()
       loadOrdres()
-    } catch (error) {
-      console.error('Erreur sauvegarde ordre de paiement:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur sauvegarde ordre de paiement:', msg)
     }
   }
 
@@ -146,8 +149,9 @@ const OrdresPaiementPage = () => {
     try {
       await ordresPaiementAPI.delete(id)
       loadOrdres()
-    } catch (error) {
-      console.error('Erreur suppression:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur suppression:', msg)
     }
   }
 
@@ -185,7 +189,7 @@ const OrdresPaiementPage = () => {
             variant="contained"
             startIcon={<Add />}
             onClick={() => handleOpenDialog()}
-            sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
+            sx={{ bgcolor: colors.primary[700], '&:hover': { bgcolor: colors.primary[800] } }}
           >
             Nouvel Ordre de Paiement
           </Button>

@@ -243,6 +243,7 @@ export const conventionsAPI = {
   mettreEnCours: (id: number) => api.post(`/conventions/${id}/mettre-en-cours`),
   achever: (id: number) => api.post(`/conventions/${id}/achever`),
   annuler: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
+  devalider: (id: number) => api.post(`/conventions/${id}/devalider`),
 
   // Imputations et Versements
   getImputations: (conventionId: number) => api.get(`/conventions/${conventionId}/imputations`),

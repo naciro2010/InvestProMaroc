@@ -19,7 +19,7 @@ import {
 import { ArrowBack, ArrowForward, Check, Add, Delete } from '@mui/icons-material'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
+import { PageHeader } from '@/components/core'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { decomptesAPI, marchesAPI } from '../../lib/api'

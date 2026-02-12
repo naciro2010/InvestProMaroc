@@ -4,23 +4,12 @@ import {
   Box,
   Container,
   Paper,
-  Typography,
   Button,
   Chip,
-  Divider,
   Tabs,
   Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  LinearProgress,
   Skeleton,
   Alert,
-  IconButton,
-  Stack,
 } from '@mui/material'
 import {
   ArrowBack,
@@ -30,19 +19,24 @@ import {
   Done,
   AccountBalance,
   TrendingUp,
-  AttachMoney,
-  CalendarToday,
   Timeline,
-  Visibility,
-  Cancel,
   Business,
   Description,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
-import { projetsAPI, Projet as ProjetAPI } from '../../lib/projetsAPI'
-import { api, conventionsAPI, marchesAPI, projetConventionsAPI } from '../../lib/api'
+import { PageHeader } from '@/components/core'
+import { projetsAPI } from '../../lib/projetsAPI'
 import { ProjetStatsCards, ProjetProgressBar, ProjetChartTab } from '../../components/projets/detail'
+import {
+  ProjetInfoCard,
+  ProjetConventionsTab,
+  ProjetMarchesTab,
+  ProjetBudgetSection,
+  ProjetHistoriqueTab,
+  Projet,
+  formatCurrency,
+  getStatusColor,
+} from './components'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -59,153 +53,43 @@ function TabPanel(props: TabPanelProps) {
   )
 }
 
-type StatutProjet = 'EN_PREPARATION' | 'EN_COURS' | 'SUSPENDU' | 'TERMINE' | 'ANNULE'
-
-type Projet = Omit<ProjetAPI, 'dateDebut'> & {
-  dateDebut: string
-  dateFin?: string
-  motifSuspension?: string
-  motifAnnulation?: string
-  observations?: string
-  dateModification?: string
-  dateCreation: string
-  dateDebutReel?: string
-  dateFinReelle?: string
-  budgetConsomme: number
-  responsableId?: number
-  responsableNom?: string
-  conventionNumero?: string
-}
-
-interface Convention {
-  id: number
-  code: string
-  numero: string
-  libelle: string
-  statut: string
-  budget: number
-  dateDebut: string
-  dateFin?: string
-}
-
-interface ProjetConventionAssociation {
-  conventionId: number
-  conventionCode: string
-  conventionNumero: string
-  conventionLibelle: string
-  conventionStatut: string
-  conventionBudget: number
-}
-
-interface Marche {
-  id: number
-  code: string
-  objet: string
-  montantTTC: number
-  statut: string
-  fournisseurNom?: string
-}
-
 const ProjetDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [projet, setProjet] = useState<Projet | null>(null)
-  const [conventions, setConventions] = useState<Convention[]>([])
-  const [marches, setMarches] = useState<Marche[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (id) {
-      loadProjet(parseInt(id))
-    }
-  }, [id])
+  const projetId = id ? parseInt(id) : 0
 
-  const loadProjet = async (projetId: number) => {
+  useEffect(() => {
+    if (projetId) {
+      loadProjet(projetId)
+    }
+  }, [projetId])
+
+  const loadProjet = async (pid: number) => {
     try {
       setLoading(true)
-      const response = await projetsAPI.getById(projetId)
-      const data = response.data as Projet
-      setProjet(data)
-
-      // Load related data in parallel
-      Promise.all([
-        loadConventions(projetId, data.conventionId),
-        loadMarches(projetId),
-      ])
-    } catch (err) {
-      setError('Erreur lors du chargement du projet')
-      console.error(err)
+      const response = await projetsAPI.getById(pid)
+      setProjet(response.data as Projet)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du chargement du projet'
+      setError(message)
     } finally {
       setLoading(false)
     }
   }
 
-  const loadConventions = async (projetId: number, directConventionId?: number) => {
-    try {
-      const allConventions: Convention[] = []
-      const seenIds = new Set<number>()
-
-      // 1. Load conventions from junction table (many-to-many)
-      try {
-        const junctionRes = await projetConventionsAPI.getByProjet(projetId)
-        const associations: ProjetConventionAssociation[] = junctionRes.data.data || junctionRes.data || []
-        associations.forEach((assoc: ProjetConventionAssociation) => {
-          if (!seenIds.has(assoc.conventionId)) {
-            seenIds.add(assoc.conventionId)
-            allConventions.push({
-              id: assoc.conventionId,
-              code: assoc.conventionCode,
-              numero: assoc.conventionNumero,
-              libelle: assoc.conventionLibelle,
-              statut: assoc.conventionStatut,
-              budget: assoc.conventionBudget,
-              dateDebut: '',
-            })
-          }
-        })
-      } catch {
-        // Junction table query failed, continue with direct FK
-      }
-
-      // 2. Also load direct FK convention if not already in the list
-      if (directConventionId && !seenIds.has(directConventionId)) {
-        try {
-          const convResponse = await conventionsAPI.getById(directConventionId)
-          const convData = convResponse.data?.data || convResponse.data
-          if (convData) {
-            allConventions.push(convData as Convention)
-          }
-        } catch {
-          // Direct convention load failed, ignore
-        }
-      }
-
-      setConventions(allConventions)
-    } catch (err) {
-      console.error('Error loading conventions:', err)
-    }
-  }
-
-  const loadMarches = async (projetId: number) => {
-    try {
-      const res = await api.get(`/marches/projet/${projetId}`)
-      setMarches(res.data.data || res.data || [])
-    } catch (err) {
-      console.error('Error loading marchés:', err)
-      setMarches([])
-    }
-  }
-
   const handleDemarrer = async () => {
     if (!projet?.id) return
-    if (!window.confirm('Êtes-vous sûr de vouloir démarrer ce projet ?')) return
+    if (!window.confirm('\u00cates-vous s\u00fbr de vouloir d\u00e9marrer ce projet ?')) return
     try {
       await projetsAPI.demarrer(projet.id)
       loadProjet(projet.id)
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Erreur lors du démarrage'
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du d\u00e9marrage'
       alert(message)
     }
   }
@@ -217,71 +101,41 @@ const ProjetDetailPageModern = () => {
     try {
       await projetsAPI.suspendre(projet.id, motif)
       loadProjet(projet.id)
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Erreur lors de la suspension'
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la suspension'
       alert(message)
     }
   }
 
   const handleReprendre = async () => {
     if (!projet?.id) return
-    if (!window.confirm('Êtes-vous sûr de vouloir reprendre ce projet ?')) return
+    if (!window.confirm('\u00cates-vous s\u00fbr de vouloir reprendre ce projet ?')) return
     try {
       await projetsAPI.reprendre(projet.id)
       loadProjet(projet.id)
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Erreur lors de la reprise'
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la reprise'
       alert(message)
     }
   }
 
   const handleTerminer = async () => {
     if (!projet?.id) return
-    if (!window.confirm('Êtes-vous sûr de vouloir terminer ce projet ?')) return
+    if (!window.confirm('\u00cates-vous s\u00fbr de vouloir terminer ce projet ?')) return
     try {
       await projetsAPI.terminer(projet.id)
       loadProjet(projet.id)
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Erreur lors de la finalisation'
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la finalisation'
       alert(message)
     }
   }
 
-  const getStatusColor = (statut: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-    switch (statut.toUpperCase()) {
-      case 'EN_PREPARATION':
-        return 'default'
-      case 'EN_COURS':
-        return 'info'
-      case 'SUSPENDU':
-        return 'warning'
-      case 'TERMINE':
-        return 'success'
-      case 'ANNULE':
-        return 'error'
-      default:
-        return 'default'
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-    }).format(amount)
-  }
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('fr-FR')
-  }
-
   const generateProgressData = () => {
     if (!projet) return []
-
-    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+    const months = ['Jan', 'F\u00e9v', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Ao\u00fb', 'Sep', 'Oct', 'Nov', 'D\u00e9c']
     const data = []
     const currentMonth = new Date().getMonth()
-
     for (let i = 0; i <= currentMonth; i++) {
       data.push({
         mois: months[i],
@@ -289,8 +143,46 @@ const ProjetDetailPageModern = () => {
         planifie: (i + 1) * (100 / 12),
       })
     }
-
     return data
+  }
+
+  const getWorkflowActions = () => {
+    if (!projet) return []
+    const actions: React.ReactNode[] = []
+
+    if (projet.statut === 'EN_PREPARATION') {
+      actions.push(
+        <Button key="demarrer" variant="contained" color="success" startIcon={<PlayArrow />} onClick={handleDemarrer}>
+          D\u00e9marrer
+        </Button>,
+        <Button key="modifier" variant="outlined" startIcon={<Edit />} onClick={() => navigate(`/projets/${projet.id}/modifier`)}>
+          Modifier
+        </Button>,
+      )
+    }
+    if (projet.statut === 'EN_COURS') {
+      actions.push(
+        <Button key="suspendre" variant="outlined" color="warning" startIcon={<Pause />} onClick={handleSuspendre}>
+          Suspendre
+        </Button>,
+        <Button key="terminer" variant="contained" color="success" startIcon={<Done />} onClick={handleTerminer}>
+          Terminer
+        </Button>,
+      )
+    }
+    if (projet.statut === 'SUSPENDU') {
+      actions.push(
+        <Button key="reprendre" variant="contained" color="info" startIcon={<PlayArrow />} onClick={handleReprendre}>
+          Reprendre
+        </Button>,
+      )
+    }
+    actions.push(
+      <Button key="retour" variant="outlined" startIcon={<ArrowBack />} onClick={() => navigate('/projets')}>
+        Retour
+      </Button>,
+    )
+    return actions
   }
 
   if (loading) {
@@ -309,119 +201,31 @@ const ProjetDetailPageModern = () => {
     return (
       <AppLayout>
         <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Alert severity="error">{error || 'Projet non trouvé'}</Alert>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/projets')}
-            sx={{ mt: 2 }}
-          >
-            Retour à la liste
+          <Alert severity="error">{error || 'Projet non trouv\u00e9'}</Alert>
+          <Button startIcon={<ArrowBack />} onClick={() => navigate('/projets')} sx={{ mt: 2 }}>
+            Retour \u00e0 la liste
           </Button>
         </Container>
       </AppLayout>
     )
   }
 
-  const getWorkflowActions = () => {
-    const actions = []
-
-    if (projet.statut === 'EN_PREPARATION') {
-      actions.push(
-        <Button
-          key="demarrer"
-          variant="contained"
-          color="success"
-          startIcon={<PlayArrow />}
-          onClick={handleDemarrer}
-        >
-          Démarrer
-        </Button>,
-        <Button
-          key="modifier"
-          variant="outlined"
-          startIcon={<Edit />}
-          onClick={() => navigate(`/projets/${projet.id}/modifier`)}
-        >
-          Modifier
-        </Button>
-      )
-    }
-
-    if (projet.statut === 'EN_COURS') {
-      actions.push(
-        <Button
-          key="suspendre"
-          variant="outlined"
-          color="warning"
-          startIcon={<Pause />}
-          onClick={handleSuspendre}
-        >
-          Suspendre
-        </Button>,
-        <Button
-          key="terminer"
-          variant="contained"
-          color="success"
-          startIcon={<Done />}
-          onClick={handleTerminer}
-        >
-          Terminer
-        </Button>
-      )
-    }
-
-    if (projet.statut === 'SUSPENDU') {
-      actions.push(
-        <Button
-          key="reprendre"
-          variant="contained"
-          color="info"
-          startIcon={<PlayArrow />}
-          onClick={handleReprendre}
-        >
-          Reprendre
-        </Button>
-      )
-    }
-
-    actions.push(
-      <Button
-        key="retour"
-        variant="outlined"
-        startIcon={<ArrowBack />}
-        onClick={() => navigate('/projets')}
-      >
-        Retour
-      </Button>
-    )
-
-    return actions
-  }
-
   return (
     <AppLayout>
       <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
         <Container maxWidth="xl">
-          {/* Header */}
           <PageHeader
             title={projet.nom}
-            subtitle={`Code: ${projet.code}${projet.conventionNumero ? ` • Convention: ${projet.conventionNumero}` : ''}`}
+            subtitle={`Code: ${projet.code}${projet.conventionNumero ? ` \u2022 Convention: ${projet.conventionNumero}` : ''}`}
             actions={
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <Chip
-                  label={projet.statut.replace('_', ' ')}
-                  color={getStatusColor(projet.statut)}
-                  size="medium"
-                />
-                {projet.estEnRetard && (
-                  <Chip label="En retard" color="error" size="small" />
-                )}
+                <Chip label={projet.statut.replace('_', ' ')} color={getStatusColor(projet.statut)} size="medium" />
+                {projet.estEnRetard && <Chip label="En retard" color="error" size="small" />}
                 {getWorkflowActions()}
               </Box>
             }
           />
 
-          {/* KPI Cards - Micro-Component */}
           <ProjetStatsCards
             budgetTotal={projet.budgetTotal}
             pourcentageAvancement={projet.pourcentageAvancement}
@@ -430,438 +234,38 @@ const ProjetDetailPageModern = () => {
             formatCurrency={formatCurrency}
           />
 
-          {/* Progress Bar - Micro-Component */}
           <ProjetProgressBar pourcentageAvancement={projet.pourcentageAvancement} />
 
-          {/* Tabs Section */}
           <Paper>
-            <Tabs
-              value={activeTab}
-              onChange={(_, newValue) => setActiveTab(newValue)}
-              sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
-            >
-              <Tab label="Informations Générales" icon={<Description />} iconPosition="start" />
-              <Tab label={`Conventions (${conventions.length})`} icon={<AccountBalance />} iconPosition="start" />
-              <Tab label="Marchés liés" icon={<Business />} iconPosition="start" />
+            <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+              <Tab label="Informations G\u00e9n\u00e9rales" icon={<Description />} iconPosition="start" />
+              <Tab label="Conventions" icon={<AccountBalance />} iconPosition="start" />
+              <Tab label="March\u00e9s li\u00e9s" icon={<Business />} iconPosition="start" />
               <Tab label="Graphique d'Avancement" icon={<TrendingUp />} iconPosition="start" />
               <Tab label="Historique" icon={<Timeline />} iconPosition="start" />
             </Tabs>
 
-            {/* Tab Panels */}
             <TabPanel value={activeTab} index={0}>
-              <Container maxWidth="xl">
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-                  {/* Informations Principales */}
-                  <Paper sx={{ p: 3, bgcolor: '#f9fafb' }}>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
-                      Informations Principales
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    <Box sx={{ display: 'grid', gap: 2 }}>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Code Projet</Typography>
-                        <Typography variant="body1" fontWeight={500}>{projet.code}</Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Nom</Typography>
-                        <Typography variant="body1" fontWeight={500}>{projet.nom}</Typography>
-                      </Box>
-                      {projet.description && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Description</Typography>
-                          <Typography variant="body1">{projet.description}</Typography>
-                        </Box>
-                      )}
-                      {projet.responsableNom && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Responsable</Typography>
-                          <Typography variant="body1">{projet.responsableNom}</Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Paper>
-
-                  {/* Dates */}
-                  <Paper sx={{ p: 3, bgcolor: '#f9fafb' }}>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
-                      Dates
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    <Box sx={{ display: 'grid', gap: 2 }}>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Date de Création</Typography>
-                        <Typography variant="body1">{formatDate(projet.dateCreation)}</Typography>
-                      </Box>
-                      {projet.dateDebut && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Date de Début Prévue</Typography>
-                          <Typography variant="body1">{formatDate(projet.dateDebut)}</Typography>
-                        </Box>
-                      )}
-                      {projet.dateFin && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Date de Fin Prévue</Typography>
-                          <Typography variant="body1">{formatDate(projet.dateFin)}</Typography>
-                        </Box>
-                      )}
-                      {projet.dateDebutReel && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Date de Début Réelle</Typography>
-                          <Typography variant="body1">{formatDate(projet.dateDebutReel)}</Typography>
-                        </Box>
-                      )}
-                      {projet.dateFinReelle && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Date de Fin Réelle</Typography>
-                          <Typography variant="body1">{formatDate(projet.dateFinReelle)}</Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Paper>
-
-                  {/* Budget */}
-                  <Paper sx={{ p: 3, bgcolor: '#f9fafb', gridColumn: { xs: '1', md: 'span 2' } }}>
-                    <Typography variant="h6" fontWeight={600} gutterBottom>
-                      Budget
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Budget Total</Typography>
-                        <Typography variant="h6" color="primary.main" fontWeight={600}>
-                          {formatCurrency(projet.budgetTotal)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Budget Consommé</Typography>
-                        <Typography variant="h6" color="warning.main" fontWeight={600}>
-                          {formatCurrency(projet.budgetConsomme)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Budget Restant</Typography>
-                        <Typography variant="h6" color="success.main" fontWeight={600}>
-                          {formatCurrency(projet.budgetTotal - (projet.budgetConsomme || 0))}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Paper>
-
-                  {/* Observations */}
-                  {(projet.motifSuspension || projet.motifAnnulation || projet.observations) && (
-                    <Paper sx={{ p: 3, bgcolor: '#fff3cd', gridColumn: { xs: '1', md: 'span 2' } }}>
-                      <Typography variant="h6" fontWeight={600} gutterBottom>
-                        Observations
-                      </Typography>
-                      <Divider sx={{ mb: 2 }} />
-                      {projet.motifSuspension && (
-                        <Box mb={2}>
-                          <Typography variant="caption" color="text.secondary">Motif de Suspension</Typography>
-                          <Typography variant="body1">{projet.motifSuspension}</Typography>
-                        </Box>
-                      )}
-                      {projet.motifAnnulation && (
-                        <Box mb={2}>
-                          <Typography variant="caption" color="text.secondary">Motif d'Annulation</Typography>
-                          <Typography variant="body1">{projet.motifAnnulation}</Typography>
-                        </Box>
-                      )}
-                      {projet.observations && (
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">Observations</Typography>
-                          <Typography variant="body1">{projet.observations}</Typography>
-                        </Box>
-                      )}
-                    </Paper>
-                  )}
-                </Box>
-              </Container>
+              <ProjetInfoCard projetId={projetId} />
+              <Box sx={{ px: 3, mt: 3 }}>
+                <ProjetBudgetSection projetId={projetId} />
+              </Box>
             </TabPanel>
 
-            {/* Conventions Tab */}
             <TabPanel value={activeTab} index={1}>
-              <Container maxWidth="xl">
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Code</TableCell>
-                        <TableCell>Numéro</TableCell>
-                        <TableCell>Libellé</TableCell>
-                        <TableCell>Statut</TableCell>
-                        <TableCell align="right">Budget</TableCell>
-                        <TableCell>Date Début</TableCell>
-                        <TableCell>Date Fin</TableCell>
-                        <TableCell align="center">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {conventions.map((conv) => (
-                        <TableRow key={conv.id} hover>
-                          <TableCell>{conv.code}</TableCell>
-                          <TableCell>{conv.numero}</TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>{conv.libelle}</TableCell>
-                          <TableCell>
-                            <Chip label={conv.statut} size="small" color="info" />
-                          </TableCell>
-                          <TableCell align="right">{formatCurrency(conv.budget)}</TableCell>
-                          <TableCell>{formatDate(conv.dateDebut)}</TableCell>
-                          <TableCell>{conv.dateFin ? formatDate(conv.dateFin) : '-'}</TableCell>
-                          <TableCell align="center">
-                            <IconButton size="small" onClick={() => navigate(`/conventions/${conv.id}`)}>
-                              <Visibility fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                {conventions.length === 0 && (
-                  <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Aucune convention liée à ce projet
-                    </Typography>
-                  </Box>
-                )}
-              </Container>
+              <ProjetConventionsTab projetId={projetId} />
             </TabPanel>
 
-            {/* Marchés Tab */}
             <TabPanel value={activeTab} index={2}>
-              <Container maxWidth="xl">
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Code</TableCell>
-                        <TableCell>Objet</TableCell>
-                        <TableCell>Fournisseur</TableCell>
-                        <TableCell align="right">Montant TTC</TableCell>
-                        <TableCell>Statut</TableCell>
-                        <TableCell align="center">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {marches.map((marche) => (
-                        <TableRow key={marche.id} hover>
-                          <TableCell>{marche.code}</TableCell>
-                          <TableCell>{marche.objet}</TableCell>
-                          <TableCell>{marche.fournisseurNom || '-'}</TableCell>
-                          <TableCell align="right">{formatCurrency(marche.montantTTC)}</TableCell>
-                          <TableCell>
-                            <Chip label={marche.statut} size="small" color={getStatusColor(marche.statut)} />
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton size="small" onClick={() => navigate(`/marches/${marche.id}`)}>
-                              <Visibility fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                {marches.length === 0 && (
-                  <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Aucun marché lié à ce projet
-                    </Typography>
-                  </Box>
-                )}
-              </Container>
+              <ProjetMarchesTab projetId={projetId} />
             </TabPanel>
 
-            {/* Graphique d'Avancement Tab - Micro-Component */}
             <TabPanel value={activeTab} index={3}>
               <ProjetChartTab chartData={generateProgressData()} />
             </TabPanel>
 
-            {/* Historique Tab */}
             <TabPanel value={activeTab} index={4}>
-              <Container maxWidth="xl">
-                <Typography variant="h6" fontWeight={600} gutterBottom mb={3}>
-                  Historique des Modifications
-                </Typography>
-                <Stack spacing={2}>
-                  <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
-                    <Stack direction="row" spacing={2}>
-                      <Box sx={{
-                        p: 1,
-                        borderRadius: '50%',
-                        bgcolor: 'primary.light',
-                        color: 'primary.dark',
-                        height: 40,
-                        width: 40,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <Timeline />
-                      </Box>
-                      <Box flex={1}>
-                        <Typography variant="body1" fontWeight={600}>
-                          Projet créé
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {projet.dateCreation ? formatDate(projet.dateCreation) : 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" mt={1}>
-                          Statut initial: EN_PREPARATION
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </Paper>
-
-                  {projet.dateDebutReel && (
-                    <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
-                      <Stack direction="row" spacing={2}>
-                        <Box sx={{
-                          p: 1,
-                          borderRadius: '50%',
-                          bgcolor: 'success.light',
-                          color: 'success.dark',
-                          height: 40,
-                          width: 40,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <PlayArrow />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography variant="body1" fontWeight={600}>
-                            Projet démarré
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDate(projet.dateDebutReel)}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" mt={1}>
-                            Passage au statut: EN_COURS
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Paper>
-                  )}
-
-                  {projet.motifSuspension && (
-                    <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
-                      <Stack direction="row" spacing={2}>
-                        <Box sx={{
-                          p: 1,
-                          borderRadius: '50%',
-                          bgcolor: 'warning.light',
-                          color: 'warning.dark',
-                          height: 40,
-                          width: 40,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <Pause />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography variant="body1" fontWeight={600}>
-                            Projet suspendu
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" mt={1}>
-                            Motif: {projet.motifSuspension}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Paper>
-                  )}
-
-                  {projet.dateFinReelle && (
-                    <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
-                      <Stack direction="row" spacing={2}>
-                        <Box sx={{
-                          p: 1,
-                          borderRadius: '50%',
-                          bgcolor: 'success.light',
-                          color: 'success.dark',
-                          height: 40,
-                          width: 40,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <Done />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography variant="body1" fontWeight={600}>
-                            Projet terminé
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDate(projet.dateFinReelle)}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" mt={1}>
-                            Passage au statut: TERMINE
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Paper>
-                  )}
-
-                  {projet.motifAnnulation && (
-                    <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
-                      <Stack direction="row" spacing={2}>
-                        <Box sx={{
-                          p: 1,
-                          borderRadius: '50%',
-                          bgcolor: 'error.light',
-                          color: 'error.dark',
-                          height: 40,
-                          width: 40,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <Cancel />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography variant="body1" fontWeight={600}>
-                            Projet annulé
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" mt={1}>
-                            Motif: {projet.motifAnnulation}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Paper>
-                  )}
-
-                  {projet.dateModification && (
-                    <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
-                      <Stack direction="row" spacing={2}>
-                        <Box sx={{
-                          p: 1,
-                          borderRadius: '50%',
-                          bgcolor: 'info.light',
-                          color: 'info.dark',
-                          height: 40,
-                          width: 40,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <Edit />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography variant="body1" fontWeight={600}>
-                            Dernière modification
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDate(projet.dateModification)}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Paper>
-                  )}
-                </Stack>
-              </Container>
+              <ProjetHistoriqueTab projetId={projetId} />
             </TabPanel>
           </Paper>
         </Container>

@@ -30,7 +30,7 @@ import {
   Business,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
+import { PageHeader } from '@/components/core'
 import { partenairesAPI } from '../../lib/api'
 import { useToast } from '../../contexts/ToastContext'
 

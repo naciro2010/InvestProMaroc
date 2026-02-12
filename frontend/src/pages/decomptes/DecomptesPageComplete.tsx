@@ -10,6 +10,7 @@ import {
   TableHead,
   TableRow,
   TablePagination,
+  TableSortLabel,
   Typography,
   Chip,
   IconButton,
@@ -34,7 +35,10 @@ import AppLayout from '../../components/layout/AppLayout'
 import api, { decomptesAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
 import StatusBadge from '../../components/core/StatusBadge'
+import { ExportButton } from '../../components/core'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
+import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '../../lib/exportUtils'
+import { useTableSort } from '@/hooks/useTableSort'
 
 // Types
 interface Decompte {
@@ -114,11 +118,13 @@ const DecomptesPage = () => {
     })
   }, [decomptes, searchTerm, statutFilter])
 
+  const { sortedItems: sortedDecomptes, sortConfig, requestSort } = useTableSort<Decompte>(filteredDecomptes, { key: 'numero', direction: 'asc' })
+
   // Pagination
   const paginatedDecomptes = useMemo(() => {
     const start = page * rowsPerPage
-    return filteredDecomptes.slice(start, start + rowsPerPage)
-  }, [filteredDecomptes, page, rowsPerPage])
+    return sortedDecomptes.slice(start, start + rowsPerPage)
+  }, [sortedDecomptes, page, rowsPerPage])
 
   const handleOpenDialog = (decompte: Decompte | null = null) => {
     if (decompte) {
@@ -200,6 +206,29 @@ const DecomptesPage = () => {
     }).format(amount) + ' MAD'
   }
 
+  // Export handler
+  const handleExport = () => {
+    const exportData: Record<string, unknown>[] = filteredDecomptes.map(d => ({
+      numero: d.numero,
+      dateDecompte: d.dateDecompte,
+      montant: d.montant,
+      netAPayer: d.netAPayer,
+      statut: d.statut,
+    }))
+    exportToExcel({
+      filename: 'decomptes',
+      sheetName: 'Décomptes',
+      columns: [
+        { header: 'Numéro', key: 'numero', width: 18 },
+        { header: 'Date', key: 'dateDecompte', width: 16, formatter: formatDateForExport },
+        { header: 'Montant Brut (MAD)', key: 'montant', width: 22, formatter: formatCurrencyForExport },
+        { header: 'Net à Payer (MAD)', key: 'netAPayer', width: 22, formatter: formatCurrencyForExport },
+        { header: 'Statut', key: 'statut', width: 14 },
+      ],
+      data: exportData,
+    })
+  }
+
   if (loading) {
     return (
       <AppLayout>
@@ -222,14 +251,17 @@ const DecomptesPage = () => {
                 Gestion des décomptes et facturations
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => handleOpenDialog()}
-              sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
-            >
-              Nouveau Décompte
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <ExportButton onClick={handleExport} />
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => handleOpenDialog()}
+                sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
+              >
+                Nouveau Décompte
+              </Button>
+            </Box>
           </Box>
         </Box>
 
@@ -277,12 +309,22 @@ const DecomptesPage = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow sx={styles.tableHeader}>
-                    <TableCell>Numéro</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell align="right">Montant</TableCell>
+                    <TableCell sortDirection={sortConfig?.key === 'numero' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'numero'} direction={sortConfig?.key === 'numero' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numero')}>Numéro</TableSortLabel>
+                    </TableCell>
+                    <TableCell sortDirection={sortConfig?.key === 'dateDecompte' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'dateDecompte'} direction={sortConfig?.key === 'dateDecompte' ? sortConfig.direction : 'asc'} onClick={() => requestSort('dateDecompte')}>Date</TableSortLabel>
+                    </TableCell>
+                    <TableCell align="right" sortDirection={sortConfig?.key === 'montant' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'montant'} direction={sortConfig?.key === 'montant' ? sortConfig.direction : 'asc'} onClick={() => requestSort('montant')}>Montant</TableSortLabel>
+                    </TableCell>
                     <TableCell align="right">Retenue</TableCell>
-                    <TableCell align="right">Net à Payer</TableCell>
-                    <TableCell align="center">Statut</TableCell>
+                    <TableCell align="right" sortDirection={sortConfig?.key === 'netAPayer' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'netAPayer'} direction={sortConfig?.key === 'netAPayer' ? sortConfig.direction : 'asc'} onClick={() => requestSort('netAPayer')}>Net à Payer</TableSortLabel>
+                    </TableCell>
+                    <TableCell align="center" sortDirection={sortConfig?.key === 'statut' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'statut'} direction={sortConfig?.key === 'statut' ? sortConfig.direction : 'asc'} onClick={() => requestSort('statut')}>Statut</TableSortLabel>
+                    </TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>

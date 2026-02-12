@@ -48,7 +48,11 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
 import StatusBadge from '../../components/core/StatusBadge'
+import ConfirmDialog from '../../components/core/ConfirmDialog'
+import { ExportButton, PageHeader } from '../../components/core'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
+import { FileText } from 'lucide-react'
+import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '../../lib/exportUtils'
 
 // Types
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
@@ -96,6 +100,7 @@ const ConventionsTableModern = () => {
   const [selectedConvention, setSelectedConvention] = useState<Convention | null>(null)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [motifRejet, setMotifRejet] = useState('')
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   // Fetch data
   useEffect(() => {
@@ -215,11 +220,7 @@ const ConventionsTableModern = () => {
           setRejectDialogOpen(true)
           break
         case 'delete':
-          if (window.confirm('Supprimer cette convention ?')) {
-            await conventionsAPI.delete(selectedConvention.id)
-            showToast('Convention supprimée', 'success')
-            fetchConventions()
-          }
+          setDeleteConfirmOpen(true)
           break
       }
     } catch (error) {
@@ -235,8 +236,21 @@ const ConventionsTableModern = () => {
       setRejectDialogOpen(false)
       setMotifRejet('')
       fetchConventions()
-    } catch (error) {
+    } catch {
       showToast('Erreur lors du rejet', 'error')
+    }
+  }
+
+  const confirmDelete = async () => {
+    if (!selectedConvention) return
+    try {
+      await conventionsAPI.delete(selectedConvention.id)
+      showToast('Convention supprimée avec succès', 'success')
+      fetchConventions()
+    } catch {
+      showToast('Erreur lors de la suppression', 'error')
+    } finally {
+      setDeleteConfirmOpen(false)
     }
   }
 
@@ -249,6 +263,42 @@ const ConventionsTableModern = () => {
   const formatDate = (date?: string) => {
     if (!date) return '-'
     return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+  }
+
+  // Export handler
+  const handleExport = () => {
+    const exportData = filteredData.flatMap(conv => {
+      const parent: Record<string, unknown> = {
+        code: conv.code,
+        type: conv.type || '-',
+        libelle: conv.libelle,
+        budget: conv.budget,
+        statut: conv.statut,
+        dateDebut: conv.dateDebut,
+      }
+      const children = (conv.sousConventions || []).map(sc => ({
+        code: sc.code,
+        type: sc.type || 'SPECIFIQUE',
+        libelle: sc.libelle,
+        budget: sc.budget,
+        statut: sc.statut,
+        dateDebut: sc.dateDebut,
+      }))
+      return [parent, ...children]
+    })
+    exportToExcel({
+      filename: 'conventions',
+      sheetName: 'Conventions',
+      columns: [
+        { header: 'Code', key: 'code', width: 18 },
+        { header: 'Type', key: 'type', width: 14 },
+        { header: 'Libellé', key: 'libelle', width: 35 },
+        { header: 'Budget (MAD)', key: 'budget', width: 22, formatter: formatCurrencyForExport },
+        { header: 'Statut', key: 'statut', width: 14 },
+        { header: 'Date Début', key: 'dateDebut', width: 16, formatter: formatDateForExport },
+      ],
+      data: exportData,
+    })
   }
 
   // Filter pill component
@@ -348,6 +398,7 @@ const ConventionsTableModern = () => {
             sx={styles.searchField}
           />
           <Box sx={{ flex: 1 }} />
+          <ExportButton onClick={handleExport} />
           <Tooltip title="Rafraîchir">
             <IconButton onClick={fetchConventions} size="small">
               <Refresh />
@@ -653,6 +704,16 @@ const ConventionsTableModern = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="Supprimer la convention"
+        message="Cette action est irreversible. Voulez-vous continuer ?"
+        variant="danger"
+        confirmLabel="Supprimer"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
     </AppLayout>
   )
 }

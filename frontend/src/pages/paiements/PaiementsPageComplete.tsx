@@ -9,6 +9,7 @@ import {
   TableHead,
   TableRow,
   TablePagination,
+  TableSortLabel,
   Typography,
   IconButton,
   TextField,
@@ -35,6 +36,7 @@ import { paiementsAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
 import StatusBadge from '../../components/core/StatusBadge'
 import { colors, typography, componentStyles, getStatusConfig, borders } from '../../lib/designSystem'
+import { useTableSort } from '@/hooks/useTableSort'
 
 // Types
 interface Paiement {
@@ -125,10 +127,12 @@ const PaiementsPage = () => {
     })
   }, [paiements, searchTerm, statutFilter])
 
+  const { sortedItems: sortedPaiements, sortConfig, requestSort } = useTableSort<Paiement>(filteredPaiements, { key: 'numeroPaiement', direction: 'asc' })
+
   const paginatedPaiements = useMemo(() => {
     const start = page * rowsPerPage
-    return filteredPaiements.slice(start, start + rowsPerPage)
-  }, [filteredPaiements, page, rowsPerPage])
+    return sortedPaiements.slice(start, start + rowsPerPage)
+  }, [sortedPaiements, page, rowsPerPage])
 
   const handleOpenDialog = (paiement: Paiement | null = null) => {
     if (paiement) {
@@ -279,12 +283,22 @@ const PaiementsPage = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow sx={styles.tableHeader}>
-                    <TableCell>Numero</TableCell>
-                    <TableCell>Date</TableCell>
+                    <TableCell sortDirection={sortConfig?.key === 'numeroPaiement' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'numeroPaiement'} direction={sortConfig?.key === 'numeroPaiement' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numeroPaiement')}>Numero</TableSortLabel>
+                    </TableCell>
+                    <TableCell sortDirection={sortConfig?.key === 'datePaiement' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'datePaiement'} direction={sortConfig?.key === 'datePaiement' ? sortConfig.direction : 'asc'} onClick={() => requestSort('datePaiement')}>Date</TableSortLabel>
+                    </TableCell>
                     <TableCell>Beneficiaire</TableCell>
-                    <TableCell>Mode Reglement</TableCell>
-                    <TableCell align="right">Montant</TableCell>
-                    <TableCell align="center">Statut</TableCell>
+                    <TableCell sortDirection={sortConfig?.key === 'modeReglement' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'modeReglement'} direction={sortConfig?.key === 'modeReglement' ? sortConfig.direction : 'asc'} onClick={() => requestSort('modeReglement')}>Mode Reglement</TableSortLabel>
+                    </TableCell>
+                    <TableCell align="right" sortDirection={sortConfig?.key === 'montant' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'montant'} direction={sortConfig?.key === 'montant' ? sortConfig.direction : 'asc'} onClick={() => requestSort('montant')}>Montant</TableSortLabel>
+                    </TableCell>
+                    <TableCell align="center" sortDirection={sortConfig?.key === 'statut' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'statut'} direction={sortConfig?.key === 'statut' ? sortConfig.direction : 'asc'} onClick={() => requestSort('statut')}>Statut</TableSortLabel>
+                    </TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>

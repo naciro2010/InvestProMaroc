@@ -32,3 +32,9 @@ export { default as ConfirmDialog } from './ConfirmDialog'
 
 // Empty State (placeholder pour listes vides)
 export { default as EmptyState } from './EmptyState'
+
+// Sortable Header Cell (column sorting for tables)
+export { default as SortableHeaderCell } from './SortableHeaderCell'
+
+// Export Button (téléchargement Excel)
+export { default as ExportButton } from './ExportButton'

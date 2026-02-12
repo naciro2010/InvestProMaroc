@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Button,
@@ -8,10 +8,18 @@ import {
   Stack,
   InputAdornment,
   Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  CircularProgress,
 } from '@mui/material'
-import { Save, Close } from '@mui/icons-material'
-import { avenantConventionsAPI } from '@/lib/api'
+import { Save, Close, TrendingUp, TrendingDown } from '@mui/icons-material'
+import { avenantConventionsAPI, conventionsAPI } from '@/lib/api'
 import { AvenantConventionRequest, AvenantConventionResponse } from '@/types/avenantConvention'
+import { colors, typography } from '@/lib/designSystem'
 
 interface ConventionDataSnapshot {
   code?: string
@@ -25,6 +33,21 @@ interface ConventionDataSnapshot {
   dateDebut?: string
   dateFin?: string
   statut?: string
+}
+
+/** Partenaire data as returned by GET /conventions/{id}/partenaires */
+interface PartenaireAllocation {
+  id: number
+  partenaireId: number
+  partenaireCode: string
+  partenaireNom: string
+  partenaireSigle: string | null
+  budgetAlloue: number
+  pourcentage: number
+  commissionIntervention: number | null
+  estMaitreOeuvre: boolean
+  estMaitreOeuvreDelegue: boolean
+  remarques: string | null
 }
 
 interface AvenantConventionFormProps {
@@ -60,6 +83,8 @@ const AvenantConventionForm = ({
 }: AvenantConventionFormProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [partenaires, setPartenaires] = useState<PartenaireAllocation[]>([])
+  const [partenairesLoading, setPartenairesLoading] = useState(false)
 
   const isEdit = !!avenantToEdit
 
@@ -101,6 +126,82 @@ const AvenantConventionForm = ({
       }))
     }
   }, [avenantToEdit, conventionData])
+
+  // Load partenaires for this convention
+  useEffect(() => {
+    const loadPartenaires = async () => {
+      setPartenairesLoading(true)
+      try {
+        const response = await conventionsAPI.getPartenaires(conventionId)
+        const data = response.data?.data ?? response.data ?? []
+        if (Array.isArray(data)) {
+          setPartenaires(data as PartenaireAllocation[])
+        }
+      } catch (err: unknown) {
+        console.error('Erreur chargement partenaires:', err)
+      } finally {
+        setPartenairesLoading(false)
+      }
+    }
+    loadPartenaires()
+  }, [conventionId])
+
+  // Compute preview of new partenaire allocations when budget changes
+  const partenairePreview = useMemo(() => {
+    if (partenaires.length === 0) return []
+
+    const nouveauBudgetStr = formData.nouveauBudget
+    const ancienBudgetStr = formData.ancienBudget
+    const nouveauBudget = nouveauBudgetStr ? parseFormattedNumber(nouveauBudgetStr) : 0
+    const ancienBudget = ancienBudgetStr ? parseFormattedNumber(ancienBudgetStr) : 0
+    const hasBudgetChange = nouveauBudget > 0 && nouveauBudget !== ancienBudget
+
+    // Use new taux commission if changed, otherwise use current convention taux
+    const nouveauTaux = formData.nouveauTauxCommission
+      ? parseFloat(formData.nouveauTauxCommission)
+      : (conventionData?.tauxCommission ?? 0)
+
+    return partenaires.map((p: PartenaireAllocation) => {
+      const nouveauBudgetAlloue = hasBudgetChange
+        ? (p.pourcentage / 100) * nouveauBudget
+        : p.budgetAlloue
+
+      const nouvelleCommission = nouveauTaux > 0
+        ? (nouveauBudgetAlloue * nouveauTaux) / 100
+        : p.commissionIntervention ?? 0
+
+      const deltaBudget = nouveauBudgetAlloue - p.budgetAlloue
+      const deltaCommission = nouvelleCommission - (p.commissionIntervention ?? 0)
+
+      return {
+        id: p.id,
+        nom: p.partenaireNom,
+        sigle: p.partenaireSigle,
+        pourcentage: p.pourcentage,
+        budgetActuel: p.budgetAlloue,
+        budgetNouveau: nouveauBudgetAlloue,
+        deltaBudget,
+        commissionActuelle: p.commissionIntervention ?? 0,
+        commissionNouvelle: nouvelleCommission,
+        deltaCommission,
+        estMaitreOeuvre: p.estMaitreOeuvre,
+        estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
+      }
+    })
+  }, [partenaires, formData.nouveauBudget, formData.ancienBudget, formData.nouveauTauxCommission, conventionData?.tauxCommission])
+
+  // Check if there is an actual budget or taux change to show preview
+  const showPreview = useMemo(() => {
+    if (partenaires.length === 0) return false
+    const nouveauBudget = formData.nouveauBudget ? parseFormattedNumber(formData.nouveauBudget) : 0
+    const ancienBudget = formData.ancienBudget ? parseFormattedNumber(formData.ancienBudget) : 0
+    const hasBudgetChange = nouveauBudget > 0 && nouveauBudget !== ancienBudget
+
+    const hasTauxChange = formData.nouveauTauxCommission !== '' &&
+      formData.nouveauTauxCommission !== formData.ancienTauxCommission
+
+    return hasBudgetChange || hasTauxChange
+  }, [partenaires, formData.nouveauBudget, formData.ancienBudget, formData.nouveauTauxCommission, formData.ancienTauxCommission])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -329,6 +430,140 @@ const AvenantConventionForm = ({
               inputProps={{ step: '0.01', min: '0', max: '100' }}
             />
           </Box>
+
+          {/* Repartition Budget Preview */}
+          {partenairesLoading && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}>
+              <CircularProgress size={18} />
+              <Typography variant="body2" sx={{ color: colors.primary[600] }}>
+                Chargement des partenaires...
+              </Typography>
+            </Box>
+          )}
+
+          {partenaires.length > 0 && (
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: typography.weights.semibold, color: colors.primary[800] }}>
+                Repartition Budget Partenaires
+              </Typography>
+
+              {showPreview && (
+                <Box sx={{
+                  mb: 1.5,
+                  px: 2,
+                  py: 1,
+                  borderRadius: '6px',
+                  bgcolor: colors.info[50],
+                  border: `1px solid ${colors.info[200]}`,
+                }}>
+                  <Typography variant="body2" sx={{ color: colors.info[700], fontSize: typography.sizes.xs }}>
+                    Apercu de la nouvelle repartition. Les montants seront recalcules automatiquement
+                    lors de la validation de l&apos;avenant en conservant les pourcentages actuels.
+                  </Typography>
+                </Box>
+              )}
+
+              <TableContainer component={Paper} variant="outlined" sx={{ borderColor: colors.primary[100] }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: colors.primary[25] }}>
+                      <TableCell sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.primary[700] }}>
+                        Partenaire
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.primary[700] }}>
+                        %
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.primary[700] }}>
+                        Budget actuel (DH)
+                      </TableCell>
+                      {showPreview && (
+                        <>
+                          <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.primary[700] }}>
+                            Nouveau budget (DH)
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.primary[700] }}>
+                            Variation (DH)
+                          </TableCell>
+                        </>
+                      )}
+                      <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.primary[700] }}>
+                        Commission actuelle (DH)
+                      </TableCell>
+                      {showPreview && (
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.primary[700] }}>
+                          Nouvelle commission (DH)
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {partenairePreview.map((row) => {
+                      const isPositive = row.deltaBudget > 0
+                      const isNegative = row.deltaBudget < 0
+                      const deltaColor = isPositive ? colors.success[600] : isNegative ? colors.danger[600] : colors.primary[600]
+
+                      return (
+                        <TableRow key={row.id} sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                          <TableCell sx={{ fontSize: typography.sizes.sm }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              {row.nom}
+                              {row.sigle && (
+                                <Typography component="span" sx={{ color: colors.primary[400], fontSize: typography.sizes.xs }}>
+                                  ({row.sigle})
+                                </Typography>
+                              )}
+                              {row.estMaitreOeuvre && (
+                                <Chip label="MO" size="small" sx={{ ml: 0.5, height: 18, fontSize: '0.65rem', bgcolor: colors.primary[50], color: colors.primary[700] }} />
+                              )}
+                              {row.estMaitreOeuvreDelegue && (
+                                <Chip label="MOD" size="small" sx={{ ml: 0.5, height: 18, fontSize: '0.65rem', bgcolor: colors.purple[50], color: colors.purple[700] }} />
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontSize: typography.sizes.sm, color: colors.primary[600] }}>
+                            {row.pourcentage.toFixed(2)}%
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>
+                            {formatNumber(row.budgetActuel)}
+                          </TableCell>
+                          {showPreview && (
+                            <>
+                              <TableCell align="right" sx={{
+                                fontSize: typography.sizes.sm,
+                                fontWeight: typography.weights.semibold,
+                                color: isPositive ? colors.success[700] : isNegative ? colors.danger[700] : colors.primary[800],
+                              }}>
+                                {formatNumber(row.budgetNouveau)}
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>
+                                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: deltaColor }}>
+                                  {isPositive && <TrendingUp sx={{ fontSize: 14 }} />}
+                                  {isNegative && <TrendingDown sx={{ fontSize: 14 }} />}
+                                  {isPositive ? '+' : ''}{formatNumber(row.deltaBudget)}
+                                </Box>
+                              </TableCell>
+                            </>
+                          )}
+                          <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>
+                            {formatNumber(row.commissionActuelle)}
+                          </TableCell>
+                          {showPreview && (
+                            <TableCell align="right" sx={{
+                              fontSize: typography.sizes.sm,
+                              fontWeight: typography.weights.semibold,
+                              color: row.deltaCommission > 0 ? colors.success[700] : row.deltaCommission < 0 ? colors.danger[700] : colors.primary[800],
+                            }}>
+                              {formatNumber(row.commissionNouvelle)}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
 
           <TextField
             label="Détails des modifications"

@@ -372,6 +372,7 @@ data class PaiementStatistiques(
 data class BudgetDTO(
     val id: Long?,
     val conventionId: Long,
+    val conventionCode: String?,
     val conventionNumero: String?,
     val conventionLibelle: String?,
     val version: String,

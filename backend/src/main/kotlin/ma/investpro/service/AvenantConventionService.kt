@@ -19,7 +19,8 @@ import java.time.LocalDate
 class AvenantConventionService(
     private val avenantRepository: AvenantConventionRepository,
     private val conventionRepository: ConventionRepository,
-    private val mapper: AvenantConventionMapper
+    private val mapper: AvenantConventionMapper,
+    private val conventionPartenaireService: ConventionPartenaireService
 ) {
 
     /**
@@ -255,6 +256,14 @@ class AvenantConventionService(
 
         // Sauvegarde la convention modifiée
         conventionRepository.save(convention)
+
+        // Si le budget a changé, recalculer les allocations des partenaires proportionnellement
+        if (modifications.containsKey("budget")) {
+            val newBudget = convention.budget
+            if (newBudget > java.math.BigDecimal.ZERO) {
+                conventionPartenaireService.recalculerProportionnellement(convention.id!!, newBudget)
+            }
+        }
     }
 
     /**

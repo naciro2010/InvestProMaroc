@@ -9,6 +9,7 @@ import ma.investpro.repository.PartenaireRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * Service pour la gestion des partenaires de conventions
@@ -155,5 +156,31 @@ class ConventionPartenaireService(
             throw IllegalArgumentException("ConventionPartenaire $id introuvable")
         }
         conventionPartenaireRepository.deleteById(id)
+    }
+
+    /**
+     * Recalcule proportionnellement les budgets alloués des partenaires
+     * lorsque le budget de la convention change (via un avenant).
+     * Conserve les pourcentages, recalcule budgetAlloue et commissionIntervention.
+     */
+    fun recalculerProportionnellement(conventionId: Long, nouveauBudget: BigDecimal) {
+        val partenaires: List<ConventionPartenaire> = conventionPartenaireRepository.findByConventionId(conventionId)
+
+        partenaires.forEach { cp: ConventionPartenaire ->
+            // Recalcule le budget alloué en gardant le même pourcentage
+            cp.budgetAlloue = cp.pourcentage
+                .multiply(nouveauBudget)
+                .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+
+            // Recalcule la commission d'intervention si le taux de commission existe
+            val tauxCommission: BigDecimal = cp.convention?.tauxCommission ?: BigDecimal.ZERO
+            if (tauxCommission > BigDecimal.ZERO) {
+                cp.commissionIntervention = cp.budgetAlloue
+                    .multiply(tauxCommission)
+                    .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+            }
+        }
+
+        conventionPartenaireRepository.saveAll(partenaires)
     }
 }

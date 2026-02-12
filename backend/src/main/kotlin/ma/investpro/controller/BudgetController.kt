@@ -1,6 +1,7 @@
 package ma.investpro.controller
 
 import ma.investpro.dto.ApiResponse
+import ma.investpro.dto.BudgetDTO
 import ma.investpro.dto.BudgetStatistiques
 import ma.investpro.entity.Budget
 import ma.investpro.service.BudgetService
@@ -19,9 +20,9 @@ class BudgetController(private val budgetService: BudgetService) {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getAllBudgets(): ResponseEntity<ApiResponse<List<Budget>>> {
+    fun getAllBudgets(): ResponseEntity<ApiResponse<List<BudgetDTO>>> {
         logger.info { "GET /api/budgets" }
-        val budgets = budgetService.findAll()
+        val budgets = budgetService.findAllDTOs()
         return ResponseEntity.ok(ApiResponse(
             success = true,
             data = budgets,
@@ -31,10 +32,10 @@ class BudgetController(private val budgetService: BudgetService) {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getBudgetById(@PathVariable id: Long): ResponseEntity<ApiResponse<Budget>> {
+    fun getBudgetById(@PathVariable id: Long): ResponseEntity<ApiResponse<BudgetDTO>> {
         logger.info { "GET /api/budgets/$id" }
         return try {
-            val budget = budgetService.findById(id)
+            val budget = budgetService.findByIdDTO(id)
             if (budget != null) {
                 ResponseEntity.ok(ApiResponse(
                     success = true,

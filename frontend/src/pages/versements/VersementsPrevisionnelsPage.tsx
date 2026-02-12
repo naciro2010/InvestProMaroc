@@ -51,6 +51,7 @@ interface VersementPrevisionnel {
   volet: string
   dateVersement: string
   montant: number
+  montantPrevu?: number
   partenaire: {
     id: number
     designation: string
@@ -86,6 +87,7 @@ const VersementsPrevisionnelsPage = () => {
     conventionId: 0,
     volet: '',
     dateVersement: new Date().toISOString().split('T')[0],
+    montantPrevu: 0,
     montant: 0,
     remarques: '',
   })
@@ -179,6 +181,7 @@ const VersementsPrevisionnelsPage = () => {
         conventionId: versement.convention.id,
         volet: versement.volet || '',
         dateVersement: versement.dateVersement,
+        montantPrevu: versement.montantPrevu || 0,
         montant: versement.montant,
         remarques: versement.remarques || '',
       })
@@ -188,6 +191,7 @@ const VersementsPrevisionnelsPage = () => {
         conventionId: 0,
         volet: '',
         dateVersement: new Date().toISOString().split('T')[0],
+        montantPrevu: 0,
         montant: 0,
         remarques: '',
       })
@@ -210,6 +214,7 @@ const VersementsPrevisionnelsPage = () => {
       const payload = {
         volet: formData.volet,
         dateVersement: formData.dateVersement,
+        montantPrevu: formData.montantPrevu || null,
         montant: formData.montant,
         remarques: formData.remarques,
       }
@@ -448,7 +453,9 @@ const VersementsPrevisionnelsPage = () => {
                 <TableCell sx={componentStyles.table.headerCell}>Convention</TableCell>
                 <TableCell sx={componentStyles.table.headerCell}>Volet</TableCell>
                 <TableCell sx={componentStyles.table.headerCell}>Date Versement</TableCell>
-                <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Montant</TableCell>
+                <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Montant Prevu</TableCell>
+                <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Montant Reel</TableCell>
+                <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Ecart</TableCell>
                 <TableCell sx={componentStyles.table.headerCell}>Remarques</TableCell>
                 <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'center' }}>Actions</TableCell>
               </TableRow>
@@ -456,13 +463,13 @@ const VersementsPrevisionnelsPage = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                     <Typography color="textSecondary">Chargement...</Typography>
                   </TableCell>
                 </TableRow>
               ) : filteredVersements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} sx={componentStyles.emptyState}>
+                  <TableCell colSpan={8} sx={componentStyles.emptyState}>
                     <Typography color="textSecondary">Aucun versement trouvé</Typography>
                   </TableCell>
                 </TableRow>
@@ -503,10 +510,38 @@ const VersementsPrevisionnelsPage = () => {
                       <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
                         <Typography
                           variant="body2"
-                          sx={{ fontWeight: typography.weights.semibold, color: colors.primary[600] }}
+                          sx={{ fontSize: typography.sizes.sm, color: versement.montantPrevu ? colors.textPrimary : colors.textSecondary }}
+                        >
+                          {versement.montantPrevu ? `${formatCurrency(versement.montantPrevu)} DH` : '-'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: typography.weights.semibold, color: colors.success[600] }}
                         >
                           {formatCurrency(versement.montant)} DH
                         </Typography>
+                      </TableCell>
+                      <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
+                        {versement.montantPrevu ? (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: typography.weights.medium,
+                              fontSize: typography.sizes.sm,
+                              color: versement.montant === versement.montantPrevu
+                                ? colors.success[600]
+                                : versement.montant > versement.montantPrevu
+                                  ? colors.danger[600]
+                                  : colors.info[600],
+                            }}
+                          >
+                            {formatCurrency(versement.montant - versement.montantPrevu)} DH
+                          </Typography>
+                        ) : (
+                          <Typography variant="body2" sx={{ color: colors.textSecondary }}>-</Typography>
+                        )}
                       </TableCell>
                       <TableCell sx={componentStyles.table.cell}>
                         <Typography variant="body2" sx={{ color: colors.textSecondary }}>
@@ -597,14 +632,29 @@ const VersementsPrevisionnelsPage = () => {
 
               <TextField
                 fullWidth
+                size="small"
+                type="number"
+                label="Montant Prevu (MAD)"
+                value={formData.montantPrevu || ''}
+                onChange={(e) => setFormData({ ...formData, montantPrevu: parseFloat(e.target.value) || 0 })}
+                helperText="Montant initialement planifie pour ce versement"
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
+                  inputProps: { min: 0, step: 0.01 },
+                }}
+              />
+
+              <TextField
+                fullWidth
                 required
                 size="small"
                 type="number"
-                label="Montant (DH)"
+                label="Montant Reel (MAD)"
                 value={formData.montant}
                 onChange={(e) => setFormData({ ...formData, montant: parseFloat(e.target.value) || 0 })}
+                helperText="Montant effectivement verse ou a verser"
                 InputProps={{
-                  endAdornment: <InputAdornment position="end">DH</InputAdornment>,
+                  endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
                   inputProps: { min: 0, step: 0.01 },
                 }}
               />

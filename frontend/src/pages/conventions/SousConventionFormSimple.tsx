@@ -16,6 +16,12 @@ import {
   Typography,
   Chip,
   CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material'
 import { Save, Close, AccountBalance, People } from '@mui/icons-material'
 import DecimalInput from '../../components/ui/DecimalInput'
@@ -67,6 +73,8 @@ interface ParentPartenaireData {
   partenaireSigle: string | null
   budgetAlloue: number
   pourcentage: number
+  estMaitreOeuvre: boolean
+  estMaitreOeuvreDelegue: boolean
 }
 
 const formatCurrency = (amount: number): string =>

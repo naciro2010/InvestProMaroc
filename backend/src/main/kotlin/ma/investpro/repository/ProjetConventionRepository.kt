@@ -46,6 +46,17 @@ interface ProjetConventionRepository : JpaRepository<ProjetConvention, Long> {
     fun findByConventionIdWithFetch(conventionId: Long): List<ProjetConvention>
 
     /**
+     * Récupère toutes les associations avec les entités chargées
+     */
+    @Query(
+        "SELECT pc FROM ProjetConvention pc " +
+        "JOIN FETCH pc.projet p " +
+        "JOIN FETCH pc.convention c " +
+        "ORDER BY pc.ordre"
+    )
+    fun findAllWithFetch(): List<ProjetConvention>
+
+    /**
      * Vérifie si une association existe entre un projet et une convention
      */
     fun existsByProjetIdAndConventionId(projetId: Long, conventionId: Long): Boolean

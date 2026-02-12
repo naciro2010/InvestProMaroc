@@ -11,7 +11,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'
-import { marchesAPI } from '../../../lib/api'
+import { marchesAPI } from '@/lib/api'
 import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 interface MarchePaiementsSectionProps {
@@ -65,8 +65,9 @@ const MarchePaiementsSection = ({ marcheId }: MarchePaiementsSectionProps) => {
       const { data } = await marchesAPI.getPaiements(marcheId)
       const paiementsData = Array.isArray(data.data) ? data.data : data.data?.data || []
       setPaiements(paiementsData)
-    } catch (err) {
-      console.error('Erreur chargement paiements:', err)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue'
+      console.error('Erreur chargement paiements:', msg)
       setError('Impossible de charger les paiements')
     } finally {
       setLoading(false)

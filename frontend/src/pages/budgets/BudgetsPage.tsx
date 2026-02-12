@@ -12,6 +12,7 @@ import {
   TableHead,
   TableRow,
   TablePagination,
+  TableSortLabel,
   Chip,
   IconButton,
   CircularProgress,
@@ -24,10 +25,11 @@ import {
   Edit,
   Delete,
 } from '@mui/icons-material'
-import AppLayout from '../../components/layout/AppLayout'
-import { budgetsAPI } from '../../lib/api'
-import type { Budget, StatutBudget } from '../../types/entities'
-import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
+import AppLayout from '@/components/layout/AppLayout'
+import { budgetsAPI } from '@/lib/api'
+import type { Budget, StatutBudget } from '@/types/entities'
+import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
+import { useTableSort } from '@/hooks/useTableSort'
 
 // Styles from design system
 const styles = componentStyles.listPage
@@ -74,8 +76,9 @@ export default function BudgetsPage() {
       setLoading(true)
       const response = await budgetsAPI.getAll()
       setBudgets(response.data.data || response.data || [])
-    } catch (error) {
-      console.error('Erreur chargement budgets:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur chargement budgets:', msg)
     } finally {
       setLoading(false)
     }
@@ -106,11 +109,13 @@ export default function BudgetsPage() {
     })
   }, [budgets, searchTerm, statutFilter])
 
+  const { sortedItems: sortedBudgets, sortConfig, requestSort } = useTableSort<Budget>(filteredBudgets, { key: 'version', direction: 'asc' })
+
   // Pagination
   const paginatedBudgets = useMemo(() => {
     const start = page * rowsPerPage
-    return filteredBudgets.slice(start, start + rowsPerPage)
-  }, [filteredBudgets, page, rowsPerPage])
+    return sortedBudgets.slice(start, start + rowsPerPage)
+  }, [sortedBudgets, page, rowsPerPage])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-MA', {
@@ -130,8 +135,9 @@ export default function BudgetsPage() {
     try {
       await budgetsAPI.delete(id)
       fetchBudgets()
-    } catch (error) {
-      console.error('Erreur suppression:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur suppression:', msg)
     }
   }
 
@@ -212,13 +218,23 @@ export default function BudgetsPage() {
               <Table size="small">
                 <TableHead>
                   <TableRow sx={styles.tableHeader}>
-                    <TableCell>Version</TableCell>
+                    <TableCell sortDirection={sortConfig?.key === 'version' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'version'} direction={sortConfig?.key === 'version' ? sortConfig.direction : 'asc'} onClick={() => requestSort('version')}>Version</TableSortLabel>
+                    </TableCell>
                     <TableCell>Convention</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell align="right">Plafond</TableCell>
-                    <TableCell align="right">Total Budget</TableCell>
+                    <TableCell sortDirection={sortConfig?.key === 'dateBudget' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'dateBudget'} direction={sortConfig?.key === 'dateBudget' ? sortConfig.direction : 'asc'} onClick={() => requestSort('dateBudget')}>Date</TableSortLabel>
+                    </TableCell>
+                    <TableCell align="right" sortDirection={sortConfig?.key === 'plafondConvention' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'plafondConvention'} direction={sortConfig?.key === 'plafondConvention' ? sortConfig.direction : 'asc'} onClick={() => requestSort('plafondConvention')}>Plafond</TableSortLabel>
+                    </TableCell>
+                    <TableCell align="right" sortDirection={sortConfig?.key === 'totalBudget' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'totalBudget'} direction={sortConfig?.key === 'totalBudget' ? sortConfig.direction : 'asc'} onClick={() => requestSort('totalBudget')}>Total Budget</TableSortLabel>
+                    </TableCell>
                     <TableCell align="right">Delta</TableCell>
-                    <TableCell align="center">Statut</TableCell>
+                    <TableCell align="center" sortDirection={sortConfig?.key === 'statut' ? sortConfig.direction : false}>
+                      <TableSortLabel active={sortConfig?.key === 'statut'} direction={sortConfig?.key === 'statut' ? sortConfig.direction : 'asc'} onClick={() => requestSort('statut')}>Statut</TableSortLabel>
+                    </TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>

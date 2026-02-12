@@ -243,6 +243,7 @@ export const conventionsAPI = {
   mettreEnCours: (id: number) => api.post(`/conventions/${id}/mettre-en-cours`),
   achever: (id: number) => api.post(`/conventions/${id}/achever`),
   annuler: (id: number, motif: string) => api.post(`/conventions/${id}/annuler`, { motif }),
+  devalider: (id: number) => api.post(`/conventions/${id}/devalider`),
 
   // Imputations et Versements
   getImputations: (conventionId: number) => api.get(`/conventions/${conventionId}/imputations`),
@@ -313,6 +314,24 @@ export const conventionsAPI = {
     api.post(`/conventions/${conventionId}/marches/${marcheId}`),
   unlinkMarche: (conventionId: number, marcheId: number) =>
     api.delete(`/conventions/${conventionId}/marches/${marcheId}`),
+
+  // Budget lignes (répartition par catégorie de dépense)
+  getBudgetLignes: (conventionId: number) =>
+    api.get(`/conventions/${conventionId}/budget-lignes`),
+  addBudgetLigne: (conventionId: number, data: {
+    categorieDepenseId: number;
+    montant: number;
+    designation?: string;
+    remarques?: string;
+  }) => api.post(`/conventions/${conventionId}/budget-lignes`, data),
+  updateBudgetLigne: (conventionId: number, id: number, data: {
+    categorieDepenseId?: number;
+    montant: number;
+    designation?: string;
+    remarques?: string;
+  }) => api.put(`/conventions/${conventionId}/budget-lignes/${id}`, data),
+  deleteBudgetLigne: (conventionId: number, id: number) =>
+    api.delete(`/conventions/${conventionId}/budget-lignes/${id}`),
 
   // Micro-endpoints (progressive lazy loading)
   getBasic: (id: number) => api.get(`/conventions/${id}/basic`),

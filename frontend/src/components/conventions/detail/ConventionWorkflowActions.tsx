@@ -19,6 +19,7 @@ import {
   Stop,
   Flag,
   Undo,
+  LockOpen,
 } from '@mui/icons-material'
 import { conventionsAPI } from '@/lib/api'
 import { colors } from '@/lib/designSystem'
@@ -49,6 +50,7 @@ const ConventionWorkflowActions = ({
   const [rejectMotif, setRejectMotif] = useState('')
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelMotif, setCancelMotif] = useState('')
+  const [devaliderDialogOpen, setDevaliderDialogOpen] = useState(false)
 
   const executeAction = async (action: () => Promise<void>, successMsg: string, errorMsg: string) => {
     try {
@@ -131,6 +133,26 @@ const ConventionWorkflowActions = ({
       'Convention remise en brouillon',
       'Erreur lors de la remise en brouillon'
     )
+
+  const handleDevalider = async () => {
+    try {
+      setLoading(true)
+      await conventionsAPI.devalider(conventionId)
+      const targetStatut = statut === 'EN_EXECUTION' || statut === 'EN_COURS' ? 'VALIDEE' : 'SOUMIS'
+      onSuccess(`Convention devalidee avec succes (retour a ${targetStatut})`)
+      setDevaliderDialogOpen(false)
+      onReload()
+    } catch {
+      onError('Erreur lors de la devalidation')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const canDevalider = isAdmin && (
+    statut === 'VALIDEE' || statut === 'VALIDE' ||
+    statut === 'EN_EXECUTION' || statut === 'EN_COURS'
+  )
 
   return (
     <>
@@ -270,6 +292,31 @@ const ConventionWorkflowActions = ({
               </Button>
             </Tooltip>
           </>
+        )}
+
+        {canDevalider && (
+          <Tooltip title="Devalider la convention (action admin)">
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<LockOpen />}
+              onClick={() => setDevaliderDialogOpen(true)}
+              disabled={loading}
+              sx={{
+                borderColor: colors.warning[400],
+                color: colors.warning[700],
+                bgcolor: colors.warning[50],
+                '&:hover': {
+                  borderColor: colors.warning[600],
+                  bgcolor: colors.warning[100],
+                },
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              Devalider (Admin)
+            </Button>
+          </Tooltip>
         )}
       </Box>
 

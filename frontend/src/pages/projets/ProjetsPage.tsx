@@ -35,6 +35,8 @@ import {
 import { GripVertical } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import StatusBadge from '../../components/core/StatusBadge'
+import ConfirmDialog from '../../components/core/ConfirmDialog'
+import { useToast } from '../../contexts/ToastContext'
 import { projetsAPI, Projet } from '../../lib/projetsAPI'
 import {
   useSortableTable,

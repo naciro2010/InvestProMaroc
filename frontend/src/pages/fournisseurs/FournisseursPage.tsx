@@ -3,17 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TablePagination, TextField, InputAdornment, Chip, Skeleton,
+  TableSortLabel,
 } from '@mui/material'
 import { Add, Search, Refresh } from '@mui/icons-material'
 import { fournisseursAPI } from '@/lib/api'
 import { useToast } from '@/contexts/ToastContext'
 import AppLayout from '@/components/layout/AppLayout'
-import { PageHeader } from '@/components/core'
+import { PageHeader, ExportButton } from '@/components/core'
 import StatusBadge from '@/components/core/StatusBadge'
+import { exportToExcel } from '@/lib/exportUtils'
 import { SortableTableRow, useSortableTable } from '@/components/core/SortableTable'
 import { DndContext, closestCenter } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { useTableSort } from '@/hooks/useTableSort'
 import type { Fournisseur } from '@/types/api'
 
 const styles = componentStyles.listPage
@@ -84,14 +87,43 @@ const FournisseursPage = () => {
     initialItems: filteredData, idKey: 'id', storageKey: 'fournisseurs-order',
   })
 
+  const { sortedItems, sortConfig, requestSort } = useTableSort<Fournisseur>(items, { key: 'code', direction: 'asc' })
+
   const paginatedData = useMemo(() => {
-    return items.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-  }, [items, page, rowsPerPage])
+    return sortedItems.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+  }, [sortedItems, page, rowsPerPage])
 
   const getFilterCount = (key: StatusFilter): number =>
     key === 'ALL' ? stats.total : key === 'ACTIF' ? stats.actif : stats.inactif
 
   const goToDetail = (id: number) => navigate(`/fournisseurs/${id}`)
+
+  // Export handler
+  const handleExport = () => {
+    const exportData: Record<string, unknown>[] = filteredData.map(f => ({
+      code: f.code,
+      raisonSociale: f.raisonSociale,
+      ice: f.ice || '-',
+      identifiantFiscal: f.identifiantFiscal || '-',
+      ville: f.ville || '-',
+      telephone: f.telephone || '-',
+      email: f.email || '-',
+    }))
+    exportToExcel({
+      filename: 'fournisseurs',
+      sheetName: 'Fournisseurs',
+      columns: [
+        { header: 'Code', key: 'code', width: 15 },
+        { header: 'Raison Sociale', key: 'raisonSociale', width: 30 },
+        { header: 'ICE', key: 'ice', width: 20 },
+        { header: 'IF', key: 'identifiantFiscal', width: 18 },
+        { header: 'Ville', key: 'ville', width: 18 },
+        { header: 'Téléphone', key: 'telephone', width: 18 },
+        { header: 'Email', key: 'email', width: 25 },
+      ],
+      data: exportData,
+    })
+  }
 
   return (
     <AppLayout>
@@ -106,6 +138,7 @@ const FournisseursPage = () => {
             ]}
             actions={
               <Box sx={{ display: 'flex', gap: 1 }}>
+                <ExportButton onClick={handleExport} />
                 <Button variant="outlined" size="small" startIcon={<Refresh />}
                   onClick={fetchFournisseurs} sx={{ textTransform: 'none' }}>
                   Actualiser
@@ -165,12 +198,20 @@ const FournisseursPage = () => {
                   <TableHead>
                     <TableRow sx={styles.tableHeader}>
                       <TableCell sx={{ width: 40 }} />
-                      <TableCell>Code</TableCell>
-                      <TableCell>Raison Sociale</TableCell>
+                      <TableCell sortDirection={sortConfig?.key === 'code' ? sortConfig.direction : false}>
+                        <TableSortLabel active={sortConfig?.key === 'code'} direction={sortConfig?.key === 'code' ? sortConfig.direction : 'asc'} onClick={() => requestSort('code')}>Code</TableSortLabel>
+                      </TableCell>
+                      <TableCell sortDirection={sortConfig?.key === 'raisonSociale' ? sortConfig.direction : false}>
+                        <TableSortLabel active={sortConfig?.key === 'raisonSociale'} direction={sortConfig?.key === 'raisonSociale' ? sortConfig.direction : 'asc'} onClick={() => requestSort('raisonSociale')}>Raison Sociale</TableSortLabel>
+                      </TableCell>
                       <TableCell>ICE</TableCell>
                       <TableCell>IF</TableCell>
-                      <TableCell>Ville</TableCell>
-                      <TableCell>Telephone</TableCell>
+                      <TableCell sortDirection={sortConfig?.key === 'ville' ? sortConfig.direction : false}>
+                        <TableSortLabel active={sortConfig?.key === 'ville'} direction={sortConfig?.key === 'ville' ? sortConfig.direction : 'asc'} onClick={() => requestSort('ville')}>Ville</TableSortLabel>
+                      </TableCell>
+                      <TableCell sortDirection={sortConfig?.key === 'telephone' ? sortConfig.direction : false}>
+                        <TableSortLabel active={sortConfig?.key === 'telephone'} direction={sortConfig?.key === 'telephone' ? sortConfig.direction : 'asc'} onClick={() => requestSort('telephone')}>Telephone</TableSortLabel>
+                      </TableCell>
                       <TableCell>Email</TableCell>
                       <TableCell align="center">Statut</TableCell>
                     </TableRow>

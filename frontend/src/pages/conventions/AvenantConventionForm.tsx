@@ -10,8 +10,8 @@ import {
   Chip,
 } from '@mui/material'
 import { Save, Close } from '@mui/icons-material'
-import { avenantConventionsAPI } from '../../lib/api'
-import { AvenantConventionRequest, AvenantConventionResponse } from '../../types/avenantConvention'
+import { avenantConventionsAPI } from '@/lib/api'
+import { AvenantConventionRequest, AvenantConventionResponse } from '@/types/avenantConvention'
 
 interface ConventionDataSnapshot {
   code?: string

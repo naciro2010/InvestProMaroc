@@ -41,7 +41,7 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import PageHeader from '../../components/common/PageHeader'
 import { projetsAPI, Projet as ProjetAPI } from '../../lib/projetsAPI'
-import { api, conventionsAPI, marchesAPI } from '../../lib/api'
+import { api, conventionsAPI, marchesAPI, projetConventionsAPI } from '../../lib/api'
 import { ProjetStatsCards, ProjetProgressBar, ProjetChartTab } from '../../components/projets/detail'
 
 interface TabPanelProps {
@@ -88,6 +88,15 @@ interface Convention {
   dateFin?: string
 }
 
+interface ProjetConventionAssociation {
+  conventionId: number
+  conventionCode: string
+  conventionNumero: string
+  conventionLibelle: string
+  conventionStatut: string
+  conventionBudget: number
+}
+
 interface Marche {
   id: number
   code: string
@@ -122,7 +131,7 @@ const ProjetDetailPageModern = () => {
 
       // Load related data in parallel
       Promise.all([
-        loadConventions(data.conventionId),
+        loadConventions(projetId, data.conventionId),
         loadMarches(projetId),
       ])
     } catch (err) {
@@ -133,12 +142,47 @@ const ProjetDetailPageModern = () => {
     }
   }
 
-  const loadConventions = async (conventionId?: number) => {
+  const loadConventions = async (projetId: number, directConventionId?: number) => {
     try {
-      if (conventionId) {
-        const convResponse = await conventionsAPI.getById(conventionId)
-        setConventions([convResponse.data?.data || convResponse.data])
+      const allConventions: Convention[] = []
+      const seenIds = new Set<number>()
+
+      // 1. Load conventions from junction table (many-to-many)
+      try {
+        const junctionRes = await projetConventionsAPI.getByProjet(projetId)
+        const associations: ProjetConventionAssociation[] = junctionRes.data.data || junctionRes.data || []
+        associations.forEach((assoc: ProjetConventionAssociation) => {
+          if (!seenIds.has(assoc.conventionId)) {
+            seenIds.add(assoc.conventionId)
+            allConventions.push({
+              id: assoc.conventionId,
+              code: assoc.conventionCode,
+              numero: assoc.conventionNumero,
+              libelle: assoc.conventionLibelle,
+              statut: assoc.conventionStatut,
+              budget: assoc.conventionBudget,
+              dateDebut: '',
+            })
+          }
+        })
+      } catch {
+        // Junction table query failed, continue with direct FK
       }
+
+      // 2. Also load direct FK convention if not already in the list
+      if (directConventionId && !seenIds.has(directConventionId)) {
+        try {
+          const convResponse = await conventionsAPI.getById(directConventionId)
+          const convData = convResponse.data?.data || convResponse.data
+          if (convData) {
+            allConventions.push(convData as Convention)
+          }
+        } catch {
+          // Direct convention load failed, ignore
+        }
+      }
+
+      setConventions(allConventions)
     } catch (err) {
       console.error('Error loading conventions:', err)
     }

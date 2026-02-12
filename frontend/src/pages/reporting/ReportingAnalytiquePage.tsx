@@ -55,7 +55,8 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import * as ExcelJS from 'exceljs'
-import { dimensionsAPI, imputationsAPI } from '../../lib/api'
+import { dimensionsAPI, imputationsAPI } from '@/lib/api'
+import { colors as dsColors } from '@/lib/designSystem'
 
 interface Dimension {
   id: number
@@ -75,7 +76,16 @@ interface SavedView {
   dateFin?: string
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D']
+const COLORS = [
+  dsColors.primary[600],
+  dsColors.success[600],
+  dsColors.warning[600],
+  dsColors.danger[500],
+  dsColors.purple[600],
+  dsColors.info[600],
+  dsColors.primary[400],
+  dsColors.danger[400],
+]
 
 interface Aggregation2DItem {
   dimension1: string
@@ -119,8 +129,9 @@ export default function ReportingAnalytiquePage() {
           setSelectedDim2(data[1].code)
         }
       }
-    } catch (error) {
-      console.error('Erreur chargement dimensions:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur chargement dimensions:', msg)
     }
   }
 
@@ -148,8 +159,9 @@ export default function ReportingAnalytiquePage() {
         })
         setAggregation2D(data.data || [])
       }
-    } catch (error) {
-      console.error('Erreur agrégation:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur agrégation:', msg)
     } finally {
       setLoading(false)
     }
@@ -514,10 +526,10 @@ export default function ReportingAnalytiquePage() {
                     <YAxis />
                     <Tooltip
                       formatter={(value: number | undefined) => formatMontant(value ?? 0)}
-                      labelStyle={{ color: '#000' }}
+                      labelStyle={{ color: dsColors.textPrimary }}
                     />
                     <Legend />
-                    <Bar dataKey="value" fill="#1976d2" name="Montant (MAD)" />
+                    <Bar dataKey="value" fill={dsColors.primary[600]} name="Montant (MAD)" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -537,7 +549,7 @@ export default function ReportingAnalytiquePage() {
                       labelLine={false}
                       label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''}: ${(((percent ?? 0)) * 100).toFixed(1)}%`}
                       outerRadius={120}
-                      fill="#8884d8"
+                      fill={dsColors.purple[600]}
                       dataKey="value"
                     >
                       {getChartData().map((_, index) => (

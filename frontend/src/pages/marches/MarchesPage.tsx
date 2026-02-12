@@ -14,6 +14,7 @@ import {
   TableHead,
   TableRow,
   TablePagination,
+  TableSortLabel,
   Chip,
   InputAdornment,
 } from '@mui/material'
@@ -29,8 +30,13 @@ import {
 import AppLayout from '../../components/layout/AppLayout'
 import MarchesMapView from '../../components/ui/MarchesMapView'
 import StatusBadge from '../../components/core/StatusBadge'
+import ConfirmDialog from '../../components/core/ConfirmDialog'
+import { ExportButton } from '../../components/core'
+import { useToast } from '../../contexts/ToastContext'
 import api from '../../lib/api'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
+import { exportToExcel, formatCurrencyForExport } from '../../lib/exportUtils'
+import { useTableSort } from '@/hooks/useTableSort'
 import {
   SortableTableRow,
   useSortableTable,
@@ -77,11 +83,13 @@ const styles = componentStyles.listPage
 
 export default function MarchesPage() {
   const navigate = useNavigate()
+  const { showSuccess, showError } = useToast()
   const [rawMarches, setRawMarches] = useState<MarcheListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatut, setSelectedStatut] = useState<string>('ALL')
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null })
 
   // Pagination
   const [page, setPage] = useState(0)
@@ -109,8 +117,8 @@ export default function MarchesPage() {
       // This follows micro-frontends pattern: each component loads only what it needs
       const response = await api.get('/marches/list')
       setRawMarches(response.data)
-    } catch (error) {
-      console.error('Erreur lors du chargement des marchés:', error)
+    } catch {
+      showError('Erreur lors du chargement des marches')
     } finally {
       setLoading(false)
     }
@@ -139,14 +147,22 @@ export default function MarchesPage() {
     return true
   })
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce marché ?')) return
+  const { sortedItems: sortedMarches, sortConfig, requestSort } = useTableSort<MarcheListItem>(filteredMarches, { key: 'numeroMarche', direction: 'asc' })
 
+  const handleDelete = (id: number) => {
+    setDeleteConfirm({ open: true, id })
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.id) return
     try {
-      await api.delete(`/marches/${id}`)
+      await api.delete(`/marches/${deleteConfirm.id}`)
+      showSuccess('Marche supprime avec succes')
       fetchMarches()
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
+    } catch {
+      showError('Erreur lors de la suppression')
+    } finally {
+      setDeleteConfirm({ open: false, id: null })
     }
   }
 
@@ -157,11 +173,36 @@ export default function MarchesPage() {
     }).format(amount)
   }
 
-  // Pagination des marchés filtrés
+  // Pagination des marchés filtrés et triés
   const paginatedMarches = useMemo(() => {
     const start = page * rowsPerPage
-    return filteredMarches.slice(start, start + rowsPerPage)
-  }, [filteredMarches, page, rowsPerPage])
+    return sortedMarches.slice(start, start + rowsPerPage)
+  }, [sortedMarches, page, rowsPerPage])
+
+  // Export handler
+  const handleExport = () => {
+    const exportData: Record<string, unknown>[] = filteredMarches.map(m => ({
+      numeroMarche: m.numeroMarche,
+      objet: m.objet,
+      montantHt: m.montantHt,
+      montantTtc: m.montantTtc,
+      convention: m.conventionNumero || m.conventionLibelle || '-',
+      statut: m.statut,
+    }))
+    exportToExcel({
+      filename: 'marches',
+      sheetName: 'Marchés',
+      columns: [
+        { header: 'Code', key: 'numeroMarche', width: 18 },
+        { header: 'Objet', key: 'objet', width: 35 },
+        { header: 'Montant HT (MAD)', key: 'montantHt', width: 22, formatter: formatCurrencyForExport },
+        { header: 'Montant TTC (MAD)', key: 'montantTtc', width: 22, formatter: formatCurrencyForExport },
+        { header: 'Convention', key: 'convention', width: 20 },
+        { header: 'Statut', key: 'statut', width: 14 },
+      ],
+      data: exportData,
+    })
+  }
 
   if (loading) {
     return (
@@ -185,14 +226,17 @@ export default function MarchesPage() {
                 {marches.length} marche{marches.length > 1 ? 's' : ''} • {formatCurrency(marches.reduce((s, m) => s + m.montantTtc, 0))} TTC
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/marches/nouveau')}
-              sx={componentStyles.buttonPrimary}
-            >
-              Nouveau Marché
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <ExportButton onClick={handleExport} />
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => navigate('/marches/nouveau')}
+                sx={componentStyles.buttonPrimary}
+              >
+                Nouveau Marché
+              </Button>
+            </Box>
           </Box>
         </Box>
 
@@ -312,14 +356,22 @@ export default function MarchesPage() {
                       <TableHead>
                         <TableRow sx={styles.tableHeader}>
                           <TableCell sx={{ width: 40 }} />
-                          <TableCell>N° Marché</TableCell>
+                          <TableCell sortDirection={sortConfig?.key === 'numeroMarche' ? sortConfig.direction : false}>
+                            <TableSortLabel active={sortConfig?.key === 'numeroMarche'} direction={sortConfig?.key === 'numeroMarche' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numeroMarche')}>N° Marché</TableSortLabel>
+                          </TableCell>
                           <TableCell>N° AO</TableCell>
-                          <TableCell>Objet</TableCell>
+                          <TableCell sortDirection={sortConfig?.key === 'objet' ? sortConfig.direction : false}>
+                            <TableSortLabel active={sortConfig?.key === 'objet'} direction={sortConfig?.key === 'objet' ? sortConfig.direction : 'asc'} onClick={() => requestSort('objet')}>Objet</TableSortLabel>
+                          </TableCell>
                           <TableCell>Fournisseur</TableCell>
                           <TableCell>Convention</TableCell>
-                          <TableCell align="right">Montant TTC</TableCell>
+                          <TableCell align="right" sortDirection={sortConfig?.key === 'montantTtc' ? sortConfig.direction : false}>
+                            <TableSortLabel active={sortConfig?.key === 'montantTtc'} direction={sortConfig?.key === 'montantTtc' ? sortConfig.direction : 'asc'} onClick={() => requestSort('montantTtc')}>Montant TTC</TableSortLabel>
+                          </TableCell>
                           <TableCell align="center">Lignes</TableCell>
-                          <TableCell align="center">Statut</TableCell>
+                          <TableCell align="center" sortDirection={sortConfig?.key === 'statut' ? sortConfig.direction : false}>
+                            <TableSortLabel active={sortConfig?.key === 'statut'} direction={sortConfig?.key === 'statut' ? sortConfig.direction : 'asc'} onClick={() => requestSort('statut')}>Statut</TableSortLabel>
+                          </TableCell>
                           <TableCell align="right">Actions</TableCell>
                         </TableRow>
                       </TableHead>
@@ -492,6 +544,16 @@ export default function MarchesPage() {
           )}
         </Box>
       </Box>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title="Supprimer le marche"
+        message="Cette action est irreversible. Voulez-vous continuer ?"
+        variant="danger"
+        confirmLabel="Supprimer"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false, id: null })}
+      />
     </AppLayout>
   )
 }

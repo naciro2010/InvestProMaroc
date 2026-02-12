@@ -31,8 +31,8 @@ import {
   Visibility,
   History,
 } from '@mui/icons-material'
-import { avenantConventionsAPI } from '../../lib/api'
-import { AvenantConventionResponse, StatutAvenantConvention } from '../../types/avenantConvention'
+import { avenantConventionsAPI } from '@/lib/api'
+import { AvenantConventionResponse, StatutAvenantConvention } from '@/types/avenantConvention'
 import AvenantConventionForm from './AvenantConventionForm'
 
 interface ConventionDataForAvenant {

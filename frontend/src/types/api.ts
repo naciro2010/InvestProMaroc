@@ -546,10 +546,10 @@ export interface ToastMessage {
   duration?: number
 }
 
-export interface LoadingState {
+export interface LoadingState<T = unknown> {
   isLoading: boolean
   error: string | null
-  data: unknown | null
+  data: T | null
 }
 
 // ============================================================================

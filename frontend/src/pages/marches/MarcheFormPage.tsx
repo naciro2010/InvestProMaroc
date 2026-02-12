@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FaPlus, FaTrash, FaSave, FaTimes } from 'react-icons/fa'
-import { Card, Button } from '../../components/ui'
-import AppLayout from '../../components/layout/AppLayout'
-import LocationPicker from '../../components/ui/LocationPicker'
-import api from '../../lib/api'
-import { MarcheLigne, DimensionAnalytique } from '../../types/entities'
+import { Card, Button } from '@/components/ui'
+import AppLayout from '@/components/layout/AppLayout'
+import LocationPicker from '@/components/ui/LocationPicker'
+import api from '@/lib/api'
+import { MarcheLigne, DimensionAnalytique } from '@/types/entities'
 
 // Dimension avec valeurs - étendu de DimensionAnalytique
 interface Dimension extends DimensionAnalytique {
@@ -72,8 +72,9 @@ export default function MarcheFormPage() {
       setConventions(convRes.data)
       setFournisseurs(fournRes.data)
       setDimensions(dimRes.data)
-    } catch (error) {
-      console.error('Erreur chargement données:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur chargement données:', msg)
     }
   }
 
@@ -104,8 +105,9 @@ export default function MarcheFormPage() {
       setLongitude(marche.longitude)
       setZoneGeographique(marche.zoneGeographique || '')
       setLignes(marche.lignes || [])
-    } catch (error) {
-      console.error('Erreur chargement marché:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur chargement marché:', msg)
     } finally {
       setLoading(false)
     }

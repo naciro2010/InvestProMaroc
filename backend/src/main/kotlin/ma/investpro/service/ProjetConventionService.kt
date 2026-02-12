@@ -21,6 +21,13 @@ class ProjetConventionService(
 ) : GenericCrudService<ProjetConvention, Long>(projetConventionRepository) {
 
     /**
+     * Récupère toutes les associations avec les entités chargées (FETCH JOIN)
+     */
+    override fun findAll(): List<ProjetConvention> {
+        return projetConventionRepository.findAllWithFetch()
+    }
+
+    /**
      * Crée une nouvelle association entre un projet et une convention
      */
     fun createAssociation(projetId: Long, conventionId: Long, ordre: Int = 0): ProjetConvention {

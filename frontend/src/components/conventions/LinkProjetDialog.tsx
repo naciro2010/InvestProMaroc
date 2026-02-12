@@ -15,16 +15,23 @@ import {
   ListItemText,
   Typography,
   InputAdornment,
+  Chip,
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
-import { conventionsAPI, projetsAPI } from '@/lib/api';
+import { conventionsAPI, projetConventionsAPI } from '@/lib/api';
+import { projetsAPI } from '@/lib/projetsAPI';
+import { colors, typography } from '@/lib/designSystem';
 
-interface Projet {
+interface ProjetListItem {
   id: number;
   code: string;
   nom: string;
   budgetTotal: number;
   statut: string;
+}
+
+interface ProjetConventionRecord {
+  projetId: number;
 }
 
 interface LinkProjetDialogProps {
@@ -35,8 +42,9 @@ interface LinkProjetDialogProps {
 }
 
 /**
- * Modal dialog for linking an existing projet to a convention
- * Displays list of available projets with search functionality
+ * Modal dialog for linking an existing projet to a convention.
+ * Displays list of available projets with search functionality.
+ * Filters out projets already linked to this convention.
  */
 export default function LinkProjetDialog({
   open,
@@ -44,43 +52,63 @@ export default function LinkProjetDialog({
   onClose,
   onSuccess,
 }: LinkProjetDialogProps): JSX.Element {
-  const [projets, setProjets] = useState<Projet[]>([]);
-  const [filteredProjets, setFilteredProjets] = useState<Projet[]>([]);
+  const [availableProjets, setAvailableProjets] = useState<ProjetListItem[]>([]);
+  const [filteredProjets, setFilteredProjets] = useState<ProjetListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedProjetId, setSelectedProjetId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingProjets, setLoadingProjets] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
-  // Fetch available projets on mount
+  // Fetch available projets on open (excluding already-linked ones)
   useEffect(() => {
     if (open) {
-      fetchProjets();
+      fetchAvailableProjets();
     }
-  }, [open]);
+  }, [open, conventionId]);
 
   // Filter projets based on search query
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setFilteredProjets(projets);
+      setFilteredProjets(availableProjets);
     } else {
       const query: string = searchQuery.toLowerCase();
-      const filtered: Projet[] = projets.filter((p: Projet) =>
+      const filtered: ProjetListItem[] = availableProjets.filter((p: ProjetListItem) =>
         p.code.toLowerCase().includes(query) ||
         p.nom.toLowerCase().includes(query)
       );
       setFilteredProjets(filtered);
     }
-  }, [searchQuery, projets]);
+  }, [searchQuery, availableProjets]);
 
-  const fetchProjets = async (): Promise<void> => {
+  const fetchAvailableProjets = async (): Promise<void> => {
     try {
       setLoadingProjets(true);
-      const response = await projetsAPI.getAll();
-      const data = response.data.data as Projet[];
-      setProjets(data);
-      setFilteredProjets(data);
-    } catch (err) {
+      setError('');
+
+      // Fetch all projets and already-linked associations in parallel
+      const [allProjetsRes, linkedRes] = await Promise.all([
+        projetsAPI.getAll(),
+        projetConventionsAPI.getByConvention(conventionId),
+      ]);
+
+      // Extract data - ProjetController returns raw list, projetConventionsAPI returns ApiResponse
+      const allProjets: ProjetListItem[] = (allProjetsRes.data as ProjetListItem[] | undefined) || [];
+      const linkedAssociations: ProjetConventionRecord[] = linkedRes.data.data || linkedRes.data || [];
+
+      // Build set of already-linked projet IDs
+      const linkedProjetIds = new Set<number>(
+        linkedAssociations.map((assoc: ProjetConventionRecord) => assoc.projetId)
+      );
+
+      // Filter out already-linked projets
+      const available = allProjets.filter(
+        (p: ProjetListItem) => p.id != null && !linkedProjetIds.has(p.id)
+      );
+
+      setAvailableProjets(available);
+      setFilteredProjets(available);
+    } catch (err: unknown) {
       console.error('Error fetching projets:', err);
       setError('Erreur lors du chargement des projets');
     } finally {
@@ -90,7 +118,7 @@ export default function LinkProjetDialog({
 
   const handleLink = async (): Promise<void> => {
     if (!selectedProjetId) {
-      setError('Veuillez sélectionner un projet');
+      setError('Veuillez selectionner un projet');
       return;
     }
 
@@ -135,7 +163,9 @@ export default function LinkProjetDialog({
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Lier un projet existant</DialogTitle>
+      <DialogTitle sx={{ fontWeight: typography.weights.semibold }}>
+        Lier un projet existant
+      </DialogTitle>
 
       <DialogContent>
         {error && (
@@ -166,19 +196,43 @@ export default function LinkProjetDialog({
           </Box>
         ) : filteredProjets.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-            {searchQuery ? 'Aucun projet trouvé pour cette recherche' : 'Aucun projet disponible'}
+            {searchQuery ? 'Aucun projet trouve pour cette recherche' : 'Aucun projet disponible a lier'}
           </Typography>
         ) : (
           <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-            {filteredProjets.map((projet: Projet) => (
+            {filteredProjets.map((projet: ProjetListItem) => (
               <ListItem key={projet.id} disablePadding>
                 <ListItemButton
                   selected={selectedProjetId === projet.id}
                   onClick={() => setSelectedProjetId(projet.id)}
+                  sx={{
+                    borderRadius: '8px',
+                    mb: 0.5,
+                    '&.Mui-selected': {
+                      bgcolor: colors.primary[50],
+                      borderLeft: `3px solid ${colors.primary[600]}`,
+                    },
+                  }}
                 >
                   <ListItemText
-                    primary={`${projet.code} - ${projet.nom}`}
-                    secondary={`Budget: ${formatBudget(projet.budgetTotal)} • Statut: ${projet.statut}`}
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>
+                          {projet.code}
+                        </Typography>
+                        <Typography sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>
+                          - {projet.nom}
+                        </Typography>
+                      </Box>
+                    }
+                    secondary={
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                        <Typography component="span" sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                          Budget: {formatBudget(projet.budgetTotal)}
+                        </Typography>
+                        <Chip label={projet.statut} size="small" sx={{ height: 20, fontSize: typography.sizes.xs }} />
+                      </Box>
+                    }
                   />
                 </ListItemButton>
               </ListItem>
@@ -187,7 +241,7 @@ export default function LinkProjetDialog({
         )}
       </DialogContent>
 
-      <DialogActions>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={handleClose} disabled={loading}>
           Annuler
         </Button>
@@ -195,6 +249,11 @@ export default function LinkProjetDialog({
           onClick={handleLink}
           variant="contained"
           disabled={loading || loadingProjets || !selectedProjetId}
+          sx={{
+            bgcolor: colors.primary[600],
+            '&:hover': { bgcolor: colors.primary[700] },
+            textTransform: 'none',
+          }}
         >
           {loading ? 'Liaison en cours...' : 'Lier'}
         </Button>

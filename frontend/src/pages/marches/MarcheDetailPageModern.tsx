@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Box, Paper, CircularProgress, Alert } from '@mui/material'
+import { Box, Alert } from '@mui/material'
 import AppLayout from '../../components/layout/AppLayout'
 import MarcheHeader from './components/MarcheHeader'
 import MarcheConventionCard from './components/MarcheConventionCard'
@@ -9,26 +9,30 @@ import MarcheStatsCard from './components/MarcheStatsCard'
 import MarcheLignesSection from './components/MarcheLignesSection'
 import MarcheDecomptesSection from './components/MarcheDecomptesSection'
 import MarcheAvenantsSection from './components/MarcheAvenantsSection'
+import MarcheSituationPaiementCard from './components/MarcheSituationPaiementCard'
+import MarchePaiementsSection from './components/MarchePaiementsSection'
 
 /**
  * MICRO-FRONTEND ARCHITECTURE
  * ===========================
- * Cette page utilise une architecture micro-frontend où:
- * - Chaque composant charge ses propres données via des micro-endpoints
- * - Les composants sont indépendants et peuvent se recharger séparément
+ * Cette page utilise une architecture micro-frontend ou:
+ * - Chaque composant charge ses propres donnees via des micro-endpoints
+ * - Les composants sont independants et peuvent se recharger separement
  * - Pas de "god object" qui charge tout d'un coup
- * - Meilleure performance et scalabilité
+ * - Meilleure performance et scalabilite
+ *
+ * Workflow visible: Marche -> Decomptes (avec statut paiement) -> Paiements
  */
 
 const MarcheDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(null)
 
   if (!id) {
     return (
       <AppLayout>
         <Box sx={{ p: 4 }}>
-          <Alert severity="error">ID du marché manquant</Alert>
+          <Alert severity="error">ID du marche manquant</Alert>
         </Box>
       </AppLayout>
     )
@@ -43,20 +47,26 @@ const MarcheDetailPageModern = () => {
           {/* Header - Charge uniquement les infos de base */}
           <MarcheHeader marcheId={marcheId} />
 
-          {/* Stats - Charge les métriques calculées */}
+          {/* Stats - Charge les metriques calculees */}
           <MarcheStatsCard marcheId={marcheId} />
 
-          {/* Convention rattachée - Charge les infos de la convention liée */}
+          {/* Convention rattachee - Charge les infos de la convention liee */}
           <MarcheConventionCard marcheId={marcheId} />
 
-          {/* Info Card - Charge les détails du marché */}
+          {/* Info Card - Charge les details du marche */}
           <MarcheInfoCard marcheId={marcheId} />
 
           {/* Lignes - Charge les lignes de prix */}
           <MarcheLignesSection marcheId={marcheId} />
 
-          {/* Décomptes - Charge les décomptes */}
+          {/* Situation Paiement - Resume des paiements avec progression */}
+          <MarcheSituationPaiementCard marcheId={marcheId} />
+
+          {/* Decomptes - Charge les decomptes avec statut paiement */}
           <MarcheDecomptesSection marcheId={marcheId} />
+
+          {/* Paiements - Charge les paiements via la chaine Decompte->OP->Paiement */}
+          <MarchePaiementsSection marcheId={marcheId} />
 
           {/* Avenants - Charge les avenants */}
           <MarcheAvenantsSection marcheId={marcheId} />

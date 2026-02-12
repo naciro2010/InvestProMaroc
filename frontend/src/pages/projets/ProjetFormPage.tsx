@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import AppLayout from '../../components/layout/AppLayout';
-import { projetsAPI, Projet } from '../../lib/projetsAPI';
+import AppLayout from '@/components/layout/AppLayout';
+import { projetsAPI, Projet } from '@/lib/projetsAPI';
 
 const ProjetFormPage = () => {
   const navigate = useNavigate();

@@ -26,7 +26,9 @@ import {
   Lock,
 } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
+import ConfirmDialog from '../../components/core/ConfirmDialog'
 import { api, conventionsAPI, avenantConventionsAPI, versementsPrevisionnelsAPI, projetConventionsAPI } from '../../lib/api'
 import {
   ConventionInfoCardLazy,
@@ -87,6 +89,7 @@ const ConventionDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user, isAdmin, isManager } = useAuth()
+  const { showSuccess, showError } = useToast()
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [convention, setConvention] = useState<Convention | null>(null)
@@ -108,6 +111,9 @@ const ConventionDetailPageModern = () => {
   const [editingSousConvention, setEditingSousConvention] = useState<SousConvention | null>(null)
   const [versementDialogOpen, setVersementDialogOpen] = useState(false)
   const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
+
+  // Confirm dialog state
+  const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | 'deleteVersement' | null; id: number | null }>({ open: false, type: null, id: null })
 
   const tabsRef = useRef<HTMLDivElement>(null)
 
@@ -149,22 +155,59 @@ const ConventionDetailPageModern = () => {
   const loadMarches = async (cid: number) => { try { const r = await api.get(`/marches/convention/${cid}`); setMarches(r.data.data || r.data || []) } catch { setMarches([]) } }
   const loadVersements = async (cid: number) => { try { const r = await versementsPrevisionnelsAPI.getByConvention(cid); setVersements(r.data.data || r.data || []) } catch { setVersements([]) } }
 
-  const handleUnlinkProjet = async (projetId: number) => {
-    if (!convention || !window.confirm('Delier ce projet de la convention ?')) return
-    try { await conventionsAPI.unlinkProjet(projetId, convention.id); setSuccessMessage('Projet delie'); loadProjets(convention.id) }
-    catch { setError('Erreur lors de la suppression du lien') }
+  const handleUnlinkProjet = (projetId: number) => {
+    if (!convention) return
+    setConfirmState({ open: true, type: 'unlinkProjet', id: projetId })
   }
 
-  const handleUnlinkMarche = async (marcheId: number) => {
-    if (!convention || !window.confirm('Delier ce marche de la convention ?')) return
-    try { await conventionsAPI.unlinkMarche(convention.id, marcheId); setSuccessMessage('Marche delie'); loadMarches(convention.id) }
-    catch { setError('Erreur lors de la suppression du lien') }
+  const handleUnlinkMarche = (marcheId: number) => {
+    if (!convention) return
+    setConfirmState({ open: true, type: 'unlinkMarche', id: marcheId })
   }
 
-  const handleDeleteVersement = async (versementId: number) => {
-    if (!convention || !window.confirm('Supprimer ce versement ?')) return
-    try { await versementsPrevisionnelsAPI.delete(versementId); setSuccessMessage('Versement supprime'); loadVersements(convention.id) }
-    catch { setError('Erreur lors de la suppression') }
+  const handleDeleteVersement = (versementId: number) => {
+    if (!convention) return
+    setConfirmState({ open: true, type: 'deleteVersement', id: versementId })
+  }
+
+  const handleConfirmAction = async () => {
+    if (!convention || !confirmState.id || !confirmState.type) return
+    try {
+      switch (confirmState.type) {
+        case 'unlinkProjet':
+          await conventionsAPI.unlinkProjet(confirmState.id, convention.id)
+          showSuccess('Projet delie avec succes')
+          loadProjets(convention.id)
+          break
+        case 'unlinkMarche':
+          await conventionsAPI.unlinkMarche(convention.id, confirmState.id)
+          showSuccess('Marche delie avec succes')
+          loadMarches(convention.id)
+          break
+        case 'deleteVersement':
+          await versementsPrevisionnelsAPI.delete(confirmState.id)
+          showSuccess('Versement supprime avec succes')
+          loadVersements(convention.id)
+          break
+      }
+    } catch {
+      showError('Erreur lors de l\'operation')
+    } finally {
+      setConfirmState({ open: false, type: null, id: null })
+    }
+  }
+
+  const getConfirmDialogProps = () => {
+    switch (confirmState.type) {
+      case 'unlinkProjet':
+        return { title: 'Delier le projet', message: 'Voulez-vous delier ce projet de la convention ?', variant: 'warning' as const, confirmLabel: 'Delier' }
+      case 'unlinkMarche':
+        return { title: 'Delier le marche', message: 'Voulez-vous delier ce marche de la convention ?', variant: 'warning' as const, confirmLabel: 'Delier' }
+      case 'deleteVersement':
+        return { title: 'Supprimer le versement', message: 'Cette action est irreversible. Voulez-vous continuer ?', variant: 'danger' as const, confirmLabel: 'Supprimer' }
+      default:
+        return { title: '', message: '', variant: 'info' as const, confirmLabel: 'Confirmer' }
+    }
   }
 
   // Auto-clear messages
@@ -225,8 +268,8 @@ const ConventionDetailPageModern = () => {
                   userId={user?.id}
                   isAdmin={isAdmin}
                   isManager={isManager}
-                  onSuccess={(msg) => setSuccessMessage(msg)}
-                  onError={(msg) => setError(msg)}
+                  onSuccess={(msg: string) => showSuccess(msg)}
+                  onError={(msg: string) => showError(msg)}
                   onReload={() => loadConvention(convention.id)}
                 />
                 <Divider orientation="vertical" flexItem sx={{ mx: 0.5, display: { xs: 'none', md: 'block' } }} />
@@ -383,6 +426,13 @@ const ConventionDetailPageModern = () => {
           <VersementFormDialog open={versementDialogOpen} conventionId={convention.id} onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }} onSuccess={() => { loadVersements(convention.id); setVersementDialogOpen(false); setEditingVersement(null) }} editingVersement={editingVersement} />
         </>
       )}
+
+      <ConfirmDialog
+        open={confirmState.open}
+        {...getConfirmDialogProps()}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmState({ open: false, type: null, id: null })}
+      />
     </AppLayout>
   )
 }

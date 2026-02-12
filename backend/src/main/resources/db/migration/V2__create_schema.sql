@@ -974,9 +974,35 @@ CREATE INDEX IF NOT EXISTS idx_convention_type_config_configuration ON conventio
 CREATE INDEX IF NOT EXISTS idx_convention_type_config_type_code ON convention_type_configurations(type_code);
 
 -- ============================================================================
+-- SECTION: CONVENTION BUDGET LIGNES (Répartition budget par catégorie)
+-- ============================================================================
+
+-- Lignes de répartition budgétaire par catégorie de dépense
+CREATE TABLE IF NOT EXISTS convention_budget_lignes (
+    id BIGSERIAL PRIMARY KEY,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    categorie_depense_id BIGINT NOT NULL REFERENCES categories_depenses(id),
+    designation VARCHAR(300),
+    montant DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    pourcentage DECIMAL(5,2) DEFAULT 0.00,
+    remarques TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN NOT NULL DEFAULT TRUE,
+    UNIQUE(convention_id, categorie_depense_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_conv_budget_lignes_conv ON convention_budget_lignes(convention_id);
+CREATE INDEX IF NOT EXISTS idx_conv_budget_lignes_cat ON convention_budget_lignes(categorie_depense_id);
+
+COMMENT ON TABLE convention_budget_lignes IS 'Répartition du budget d''une convention par catégorie de dépense';
+COMMENT ON COLUMN convention_budget_lignes.montant IS 'Montant alloué à cette catégorie de dépense';
+COMMENT ON COLUMN convention_budget_lignes.pourcentage IS 'Pourcentage du budget total (auto-calculé)';
+
+-- ============================================================================
 -- END OF SCHEMA DEFINITION
 -- ============================================================================
--- Total Tables: 41+
+-- Total Tables: 42+
 -- All entities from InvestPro Maroc fully mapped with:
 -- - Complete column definitions matching @Column annotations
 -- - Proper data types (DECIMAL for BigDecimal, JSONB for flexible storage)

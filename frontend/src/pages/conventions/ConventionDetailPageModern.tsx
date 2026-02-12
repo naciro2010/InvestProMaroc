@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLayout from '../../components/layout/AppLayout'
-import { api, conventionsAPI, avenantConventionsAPI, versementsPrevisionnelsAPI } from '../../lib/api'
+import { api, conventionsAPI, avenantConventionsAPI, versementsPrevisionnelsAPI, projetConventionsAPI } from '../../lib/api'
 import {
   ConventionInfoCardLazy,
   ConventionFinancesCard,
@@ -45,6 +45,7 @@ import {
 } from '../../components/conventions/detail'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import StatusBadge from '../../components/core/StatusBadge'
+import BudgetRepartitionCard from '../../components/conventions/BudgetRepartitionCard'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
 import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
@@ -62,7 +63,8 @@ interface SousConvention { id: number; code: string; numero: string; libelle: st
 interface Avenant { id: number; numeroAvenant: string; dateAvenant: string; statut: string; objet: string; type: string }
 interface Projet { id: number; code: string; designation: string; budgetTotal: number; statut: string }
 interface Marche { id: number; numeroMarche: string; objet: string; montantTtc: number; statut: string; fournisseurNom?: string }
-interface VersementPrevisionnel { id: number; partenaireId?: number; partenaireNom?: string; partenaireSigle?: string; volet?: string; dateVersement: string; montant: number; remarques?: string }
+interface VersementPrevisionnel { id: number; partenaireId?: number; partenaireNom?: string; partenaireSigle?: string; volet?: string; dateVersement: string; montant: number; montantPrevu?: number; remarques?: string }
+interface ProjetConventionAssociation { projetId: number; projetCode: string; projetNom: string; projetBudgetTotal: number; projetStatut: string }
 
 function TabPanel({ children, value, index }: { children?: React.ReactNode; value: number; index: number }) {
   return <div role="tabpanel" hidden={value !== index}>{value === index && <Box sx={{ py: 3 }}>{children}</Box>}</div>
@@ -130,7 +132,20 @@ const ConventionDetailPageModern = () => {
 
   const loadAvenants = async (cid: number) => { try { const r = await avenantConventionsAPI.getByConvention(cid); setAvenants(r.data.data || r.data || []) } catch { setAvenants([]) } }
   const loadSousConventions = async (cid: number) => { try { const r = await conventionsAPI.getSousConventions(cid); setSousConventions(r.data.data || []) } catch { /* ignored */ } }
-  const loadProjets = async (cid: number) => { try { const r = await api.get(`/projets/convention/${cid}`); setProjets(r.data.data || r.data || []) } catch { setProjets([]) } }
+  const loadProjets = async (cid: number) => {
+    try {
+      const r = await projetConventionsAPI.getByConvention(cid)
+      const associations: ProjetConventionAssociation[] = r.data.data || r.data || []
+      const mapped: Projet[] = associations.map((assoc: ProjetConventionAssociation) => ({
+        id: assoc.projetId,
+        code: assoc.projetCode,
+        designation: assoc.projetNom,
+        budgetTotal: assoc.projetBudgetTotal,
+        statut: assoc.projetStatut,
+      }))
+      setProjets(mapped)
+    } catch { setProjets([]) }
+  }
   const loadMarches = async (cid: number) => { try { const r = await api.get(`/marches/convention/${cid}`); setMarches(r.data.data || r.data || []) } catch { setMarches([]) } }
   const loadVersements = async (cid: number) => { try { const r = await versementsPrevisionnelsAPI.getByConvention(cid); setVersements(r.data.data || r.data || []) } catch { setVersements([]) } }
 
@@ -263,6 +278,11 @@ const ConventionDetailPageModern = () => {
             <ConventionFinancesCard conventionId={convention.id} />
           </Box>
 
+          {/* Budget Repartition */}
+          <Box sx={{ mb: 3 }}>
+            <BudgetRepartitionCard conventionId={convention.id} conventionBudget={convention.montant} />
+          </Box>
+
           {/* Stats */}
           <Box sx={{ mb: 3 }}>
             <ConventionStatsCard conventionId={convention.id} onStatClick={handleStatClick} />
@@ -356,10 +376,10 @@ const ConventionDetailPageModern = () => {
       {/* Dialogs */}
       {convention && (
         <>
-          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }} onSuccess={() => { setPartenairesRefreshKey((k: number) => k + 1); setEditPartenaireData(null) }} editData={editPartenaireData} />
+          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.montant} onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }} onSuccess={() => { setPartenairesRefreshKey((k: number) => k + 1); setEditPartenaireData(null) }} editData={editPartenaireData} />
           <LinkProjetDialog open={linkProjetDialogOpen} conventionId={convention.id} onClose={() => setLinkProjetDialogOpen(false)} onSuccess={() => loadProjets(convention.id)} />
           <LinkMarcheDialog open={linkMarcheDialogOpen} conventionId={convention.id} onClose={() => setLinkMarcheDialogOpen(false)} onSuccess={() => loadMarches(convention.id)} />
-          <SousConventionFormSimple open={sousConventionDialogOpen} onClose={() => { setSousConventionDialogOpen(false); setEditingSousConvention(null) }} onSuccess={() => { loadSousConventions(convention.id); setSousConventionDialogOpen(false); setEditingSousConvention(null) }} parentConvention={{ id: convention.id, numero: convention.numero, libelle: convention.libelle, tauxCommission: convention.tauxCommission, baseCalcul: convention.baseCalcul, tauxTva: convention.tauxTva }} editingSousConvention={editingSousConvention} />
+          <SousConventionFormSimple open={sousConventionDialogOpen} onClose={() => { setSousConventionDialogOpen(false); setEditingSousConvention(null) }} onSuccess={() => { loadSousConventions(convention.id); setSousConventionDialogOpen(false); setEditingSousConvention(null) }} parentConvention={{ id: convention.id, numero: convention.numero, libelle: convention.libelle, tauxCommission: convention.tauxCommission, baseCalcul: convention.baseCalcul, tauxTva: convention.tauxTva, montant: convention.montant }} editingSousConvention={editingSousConvention} />
           <VersementFormDialog open={versementDialogOpen} conventionId={convention.id} onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }} onSuccess={() => { loadVersements(convention.id); setVersementDialogOpen(false); setEditingVersement(null) }} editingVersement={editingVersement} />
         </>
       )}

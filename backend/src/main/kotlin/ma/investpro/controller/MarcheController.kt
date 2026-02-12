@@ -210,4 +210,32 @@ class MarcheController(
                 .body(ApiResponse.error(e.message ?: "Marché non trouvé"))
         }
     }
+
+    @GetMapping("/{id}/paiements")
+    @ReadAccess
+    fun getMarchePaiements(@PathVariable id: Long): ResponseEntity<ApiResponse<List<MarchePaiementDTO>>> {
+        logger.info { "🌐 API: GET /api/marches/$id/paiements (granular: payments via decomptes chain)" }
+        return try {
+            val paiements = marcheService.findPaiementsByMarcheId(id)
+            ResponseEntity.ok(ApiResponse.success(paiements))
+        } catch (e: IllegalArgumentException) {
+            logger.error { "❌ API ERROR: ${e.message}" }
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.message ?: "Marché non trouvé"))
+        }
+    }
+
+    @GetMapping("/{id}/situation-paiement")
+    @ReadAccess
+    fun getMarcheSituationPaiement(@PathVariable id: Long): ResponseEntity<ApiResponse<MarcheSituationPaiementDTO>> {
+        logger.info { "🌐 API: GET /api/marches/$id/situation-paiement (payment situation summary)" }
+        return try {
+            val situation = marcheService.getSituationPaiement(id)
+            ResponseEntity.ok(ApiResponse.success(situation))
+        } catch (e: IllegalArgumentException) {
+            logger.error { "❌ API ERROR: ${e.message}" }
+            ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.message ?: "Marché non trouvé"))
+        }
+    }
 }

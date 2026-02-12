@@ -269,6 +269,22 @@ class ConventionController(
         }
     }
 
+    /**
+     * Dévalider une convention (action admin uniquement).
+     * VALIDE → SOUMIS ou EN_EXECUTION → VALIDE
+     */
+    @PostMapping("/{id}/devalider")
+    @AdminOnly
+    fun devalider(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {
+        return try {
+            val convention = conventionService.devalider(id)
+            val dto = conventionMapper.toDTO(convention)
+            ResponseEntity.ok(ApiResponse.success(dto, "Convention dévalidée avec succès"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur lors de la dévalidation"))
+        }
+    }
+
     // ========== Sous-Conventions ==========
 
     @PostMapping("/{parentId}/sous-conventions")
@@ -391,6 +407,7 @@ class ConventionController(
                 volet = request["volet"] as? String
                 dateVersement = java.time.LocalDate.parse(request["dateVersement"] as String)
                 montant = (request["montant"] as? Number)?.let { java.math.BigDecimal(it.toString()) } ?: java.math.BigDecimal.ZERO
+                montantPrevu = (request["montantPrevu"] as? Number)?.let { java.math.BigDecimal(it.toString()) }
                 remarques = request["remarques"] as? String
 
                 // Partenaire bénéficiaire
@@ -412,6 +429,7 @@ class ConventionController(
                 volet = saved.volet,
                 dateVersement = saved.dateVersement,
                 montant = saved.montant,
+                montantPrevu = saved.montantPrevu,
                 partenaireId = saved.partenaire?.id ?: 0,
                 partenaireNom = saved.partenaire?.raisonSociale,
                 maitreOeuvreDelegueId = saved.maitreOeuvreDelegue?.id,

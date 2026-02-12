@@ -24,6 +24,7 @@ interface VersementPrevisionnel {
   volet?: string
   dateVersement: string
   montant: number
+  montantPrevu?: number
   remarques?: string
 }
 
@@ -47,6 +48,7 @@ const ConventionVersementsCard = ({
   onDelete,
 }: ConventionVersementsCardProps) => {
   const totalVersements = versements.reduce((sum, v) => sum + v.montant, 0)
+  const totalPrevu = versements.reduce((sum, v) => sum + (v.montantPrevu || 0), 0)
 
   return (
     <Paper sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
@@ -121,7 +123,13 @@ const ConventionVersementsCard = ({
                   Date versement
                 </TableCell>
                 <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Montant
+                  Montant prevu
+                </TableCell>
+                <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Montant reel
+                </TableCell>
+                <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Ecart
                 </TableCell>
                 <TableCell align="center" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em', width: 90 }}>
                   Actions
@@ -158,9 +166,31 @@ const ConventionVersementsCard = ({
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
+                    <Typography sx={{ fontSize: typography.sizes.sm, color: versement.montantPrevu ? colors.textPrimary : colors.textSecondary }}>
+                      {versement.montantPrevu ? formatCurrency(versement.montantPrevu) : '-'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
                     <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.sm, color: colors.success[600] }}>
                       {formatCurrency(versement.montant)}
                     </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    {versement.montantPrevu ? (
+                      <Typography sx={{
+                        fontSize: typography.sizes.sm,
+                        fontWeight: typography.weights.medium,
+                        color: versement.montant === versement.montantPrevu
+                          ? colors.success[600]
+                          : versement.montant > versement.montantPrevu
+                            ? colors.danger[600]
+                            : colors.info[600],
+                      }}>
+                        {formatCurrency(versement.montant - versement.montantPrevu)}
+                      </Typography>
+                    ) : (
+                      <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>-</Typography>
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
@@ -194,9 +224,29 @@ const ConventionVersementsCard = ({
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
+                  <Typography sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.textPrimary }}>
+                    {formatCurrency(totalPrevu)}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
                   <Typography sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.success[700] }}>
                     {formatCurrency(totalVersements)}
                   </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  {totalPrevu > 0 && (
+                    <Typography sx={{
+                      fontWeight: typography.weights.bold,
+                      fontSize: typography.sizes.sm,
+                      color: totalVersements === totalPrevu
+                        ? colors.success[700]
+                        : totalVersements > totalPrevu
+                          ? colors.danger[700]
+                          : colors.info[700],
+                    }}>
+                      {formatCurrency(totalVersements - totalPrevu)}
+                    </Typography>
+                  )}
                 </TableCell>
                 <TableCell />
               </TableRow>

@@ -12,14 +12,38 @@ import org.springframework.stereotype.Repository
 interface ProjetConventionRepository : JpaRepository<ProjetConvention, Long> {
 
     /**
-     * Trouve toutes les conventions associées à un projet
+     * Trouve toutes les conventions associées à un projet (sans fetch join)
      */
     fun findByProjetIdOrderByOrdre(projetId: Long): List<ProjetConvention>
 
     /**
-     * Trouve tous les projets associés à une convention
+     * Trouve tous les projets associés à une convention (sans fetch join)
      */
     fun findByConventionIdOrderByOrdre(conventionId: Long): List<ProjetConvention>
+
+    /**
+     * Trouve toutes les conventions associées à un projet avec les entités chargées
+     */
+    @Query(
+        "SELECT pc FROM ProjetConvention pc " +
+        "JOIN FETCH pc.projet p " +
+        "JOIN FETCH pc.convention c " +
+        "WHERE p.id = :projetId " +
+        "ORDER BY pc.ordre"
+    )
+    fun findByProjetIdWithFetch(projetId: Long): List<ProjetConvention>
+
+    /**
+     * Trouve tous les projets associés à une convention avec les entités chargées
+     */
+    @Query(
+        "SELECT pc FROM ProjetConvention pc " +
+        "JOIN FETCH pc.projet p " +
+        "JOIN FETCH pc.convention c " +
+        "WHERE c.id = :conventionId " +
+        "ORDER BY pc.ordre"
+    )
+    fun findByConventionIdWithFetch(conventionId: Long): List<ProjetConvention>
 
     /**
      * Vérifie si une association existe entre un projet et une convention

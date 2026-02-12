@@ -81,6 +81,7 @@ class VersementPrevisionnelController(
                 this.volet = request.volet
                 this.dateVersement = LocalDate.parse(request.dateVersement)
                 this.montant = request.montant
+                this.montantPrevu = request.montantPrevu
                 this.remarques = request.remarques
 
                 // Partenaire bénéficiaire
@@ -118,6 +119,7 @@ class VersementPrevisionnelController(
                 this.volet = request.volet
                 this.dateVersement = LocalDate.parse(request.dateVersement)
                 this.montant = request.montant
+                this.montantPrevu = request.montantPrevu
                 this.remarques = request.remarques
 
                 // Partenaire bénéficiaire
@@ -164,6 +166,7 @@ class VersementPrevisionnelController(
             volet = versement.volet,
             dateVersement = versement.dateVersement,
             montant = versement.montant,
+            montantPrevu = versement.montantPrevu,
             partenaireId = versement.partenaire?.id ?: 0,
             partenaireNom = versement.partenaire?.raisonSociale,
             maitreOeuvreDelegueId = versement.maitreOeuvreDelegue?.id,
@@ -183,6 +186,7 @@ data class VersementPrevisionnelRequest(
     val volet: String? = null,
     val dateVersement: String,
     val montant: BigDecimal,
+    val montantPrevu: BigDecimal? = null,
     val remarques: String? = null,
     val partenaireId: Long? = null,
     val modId: Long? = null,

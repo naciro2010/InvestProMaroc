@@ -36,7 +36,10 @@ class VersementPrevisionnel(
 
     @Column(nullable = false, precision = 15, scale = 2)
     @field:Positive
-    var montant: BigDecimal = BigDecimal.ZERO, // En DH
+    var montant: BigDecimal = BigDecimal.ZERO, // En DH (montant réel)
+
+    @Column(name = "montant_prevu", precision = 15, scale = 2)
+    var montantPrevu: BigDecimal? = null, // Montant prévu (planifié)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partenaire_id", nullable = false)

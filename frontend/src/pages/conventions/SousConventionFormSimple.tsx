@@ -13,26 +13,64 @@ import {
   Switch,
   FormControlLabel,
   Box,
+  Typography,
+  Chip,
+  CircularProgress,
 } from '@mui/material'
-import { Save, Close } from '@mui/icons-material'
+import { Save, Close, AccountBalance, People } from '@mui/icons-material'
 import DecimalInput from '../../components/ui/DecimalInput'
 import RichTextEditor from '../../components/ui/RichTextEditor'
 import { conventionsAPI } from '../../lib/api'
+import { colors, typography, borders } from '../../lib/designSystem'
+import { AxiosError } from 'axios'
+
+interface ParentConventionInfo {
+  id: number
+  numero: string
+  libelle: string
+  tauxCommission: number
+  baseCalcul: string
+  tauxTva: number
+  montant?: number
+}
+
+interface EditingSousConventionData {
+  id: number
+  code: string
+  numero: string
+  libelle: string
+  objet?: string
+  dateConvention?: string
+  dateDebut?: string
+  dateFin?: string | null
+  budget?: number
+  tauxCommission?: number
+  baseCalcul?: string
+  tauxTva?: number
+  heriteParametres?: boolean
+  statut?: string
+  montant?: number
+}
 
 interface SousConventionFormProps {
   open: boolean
   onClose: () => void
   onSuccess: () => void
-  parentConvention: {
-    id: number
-    numero: string
-    libelle: string
-    tauxCommission: number
-    baseCalcul: string
-    tauxTva: number
-  }
-  editingSousConvention?: any
+  parentConvention: ParentConventionInfo
+  editingSousConvention?: EditingSousConventionData | null
 }
+
+interface ParentPartenaireData {
+  id: number
+  partenaireCode: string
+  partenaireNom: string
+  partenaireSigle: string | null
+  budgetAlloue: number
+  pourcentage: number
+}
+
+const formatCurrency = (amount: number): string =>
+  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
 
 const SousConventionFormSimple = ({
   open,
@@ -44,6 +82,8 @@ const SousConventionFormSimple = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [heriteParametres, setHeriteParametres] = useState(true)
+  const [parentPartenaires, setParentPartenaires] = useState<ParentPartenaireData[]>([])
+  const [loadingPartenaires, setLoadingPartenaires] = useState(false)
 
   const [formData, setFormData] = useState({
     code: '',
@@ -93,6 +133,26 @@ const SousConventionFormSimple = ({
     }
   }, [editingSousConvention, parentConvention, open])
 
+  // Load parent partenaires when dialog opens
+  useEffect(() => {
+    if (open && parentConvention.id) {
+      loadParentPartenaires()
+    }
+  }, [open, parentConvention.id])
+
+  const loadParentPartenaires = async () => {
+    try {
+      setLoadingPartenaires(true)
+      const response = await conventionsAPI.getPartenaires(parentConvention.id)
+      const data = response.data.data || response.data || []
+      setParentPartenaires(Array.isArray(data) ? data : [])
+    } catch {
+      setParentPartenaires([])
+    } finally {
+      setLoadingPartenaires(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -117,18 +177,27 @@ const SousConventionFormSimple = ({
 
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement')
+    } catch (err: unknown) {
+      if (err instanceof AxiosError && err.response?.data?.message) {
+        setError(err.response.data.message as string)
+      } else if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Erreur lors de l\'enregistrement')
+      }
     } finally {
       setLoading(false)
     }
   }
 
+  const parentBudget = parentConvention.montant || 0
+  const hasBudgetInfo = parentBudget > 0
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {editingSousConvention ? 'Modifier' : 'Créer'} une Sous-Convention
-        <Box sx={{ mt: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>
+        {editingSousConvention ? 'Modifier' : 'Creer'} une Sous-Convention
+        <Box sx={{ mt: 0.5, fontSize: typography.sizes.sm, color: colors.textSecondary }}>
           Convention Parente: {parentConvention.numero} - {parentConvention.libelle}
         </Box>
       </DialogTitle>
@@ -137,6 +206,116 @@ const SousConventionFormSimple = ({
         <DialogContent dividers>
           <Stack spacing={3}>
             {error && <Alert severity="error">{error}</Alert>}
+
+            {/* Parent Convention Budget Info Box */}
+            {hasBudgetInfo && (
+              <Box sx={{
+                p: 2, borderRadius: borders.radius.md,
+                bgcolor: colors.success[25],
+                border: `1px solid ${colors.success[100]}`,
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                  <AccountBalance sx={{ fontSize: 18, color: colors.success[600] }} />
+                  <Typography sx={{
+                    fontSize: typography.sizes.sm,
+                    fontWeight: typography.weights.semibold,
+                    color: colors.success[700],
+                  }}>
+                    Budget Convention Principale
+                  </Typography>
+                </Box>
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' },
+                  gap: 1.5,
+                }}>
+                  <Box>
+                    <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                      Budget Total
+                    </Typography>
+                    <Typography sx={{
+                      fontSize: typography.sizes.md,
+                      fontWeight: typography.weights.bold,
+                      color: colors.success[700],
+                    }}>
+                      {formatCurrency(parentBudget)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                      Taux Commission
+                    </Typography>
+                    <Typography sx={{
+                      fontSize: typography.sizes.md,
+                      fontWeight: typography.weights.semibold,
+                      color: colors.textPrimary,
+                    }}>
+                      {parentConvention.tauxCommission}%
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                      Base de Calcul
+                    </Typography>
+                    <Typography sx={{
+                      fontSize: typography.sizes.md,
+                      fontWeight: typography.weights.semibold,
+                      color: colors.textPrimary,
+                    }}>
+                      {parentConvention.baseCalcul === 'DECAISSEMENTS_TTC' ? 'TTC' : 'HT'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+
+            {/* Parent's Partenaires - read-only reference */}
+            {parentPartenaires.length > 0 && (
+              <Box sx={{
+                p: 2, borderRadius: borders.radius.md,
+                bgcolor: colors.neutral[25],
+                border: `1px solid ${colors.neutral[200]}`,
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <People sx={{ fontSize: 18, color: colors.primary[600] }} />
+                  <Typography sx={{
+                    fontSize: typography.sizes.sm,
+                    fontWeight: typography.weights.semibold,
+                    color: colors.textPrimary,
+                  }}>
+                    Partenaires de la convention parente
+                  </Typography>
+                  <Chip
+                    label={parentPartenaires.length}
+                    size="small"
+                    sx={{
+                      height: 20, fontSize: typography.sizes.xs,
+                      bgcolor: colors.primary[100], color: colors.primary[700],
+                    }}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {parentPartenaires.map((p) => (
+                    <Chip
+                      key={p.id}
+                      label={`${p.partenaireSigle || p.partenaireCode} - ${formatCurrency(p.budgetAlloue)} (${p.pourcentage.toFixed(1)}%)`}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        fontSize: typography.sizes.xs,
+                        borderColor: colors.neutral[300],
+                        color: colors.textPrimary,
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+            {loadingPartenaires && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+                <CircularProgress size={20} />
+              </Box>
+            )}
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
@@ -148,7 +327,7 @@ const SousConventionFormSimple = ({
                 size="small"
               />
               <TextField
-                label="Numéro"
+                label="Numero"
                 value={formData.numero}
                 onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
                 required
@@ -158,7 +337,7 @@ const SousConventionFormSimple = ({
             </Stack>
 
             <TextField
-              label="Libellé"
+              label="Libelle"
               value={formData.libelle}
               onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
               required
@@ -170,7 +349,7 @@ const SousConventionFormSimple = ({
               label="Objet / Description"
               value={formData.objet}
               onChange={(content) => setFormData({ ...formData, objet: content })}
-              placeholder="Description détaillée de la sous-convention..."
+              placeholder="Description detaillee de la sous-convention..."
               minHeight="100px"
             />
 
@@ -186,7 +365,7 @@ const SousConventionFormSimple = ({
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label="Date Début"
+                label="Date Debut"
                 type="date"
                 value={formData.dateDebut}
                 onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
@@ -227,7 +406,7 @@ const SousConventionFormSimple = ({
                   onChange={(e) => setHeriteParametres(e.target.checked)}
                 />
               }
-              label="Hériter des paramètres de la convention parente"
+              label="Heriter des parametres de la convention parente"
             />
 
             {!heriteParametres && (
@@ -265,15 +444,15 @@ const SousConventionFormSimple = ({
                   fullWidth
                   size="small"
                 >
-                  <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC</MenuItem>
-                  <MenuItem value="DECAISSEMENTS_HT">Décaissements HT</MenuItem>
+                  <MenuItem value="DECAISSEMENTS_TTC">Decaissements TTC</MenuItem>
+                  <MenuItem value="DECAISSEMENTS_HT">Decaissements HT</MenuItem>
                 </TextField>
               </Stack>
             )}
 
             {heriteParametres && (
               <Alert severity="info">
-                Héritage: Taux commission {parentConvention.tauxCommission}%, Base {parentConvention.baseCalcul}, TVA {parentConvention.tauxTva}%
+                Heritage: Taux commission {parentConvention.tauxCommission}%, Base {parentConvention.baseCalcul}, TVA {parentConvention.tauxTva}%
               </Alert>
             )}
           </Stack>
@@ -284,7 +463,7 @@ const SousConventionFormSimple = ({
             Annuler
           </Button>
           <Button type="submit" variant="contained" startIcon={<Save />} disabled={loading}>
-            {loading ? 'Enregistrement...' : editingSousConvention ? 'Modifier' : 'Créer'}
+            {loading ? 'Enregistrement...' : editingSousConvention ? 'Modifier' : 'Creer'}
           </Button>
         </DialogActions>
       </form>

@@ -33,7 +33,7 @@ import {
   Visibility,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
+import { PageHeader } from '@/components/core'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
 import type { Budget, StatutBudget } from '../../types/entities'
 

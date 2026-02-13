@@ -14,6 +14,7 @@ class BudgetMapper {
         return BudgetDTO(
             id = entity.id,
             conventionId = entity.convention.id ?: 0,
+            conventionCode = entity.convention.code,
             conventionNumero = entity.convention.numero,
             conventionLibelle = entity.convention.libelle,
             version = entity.version,

@@ -18,6 +18,7 @@ import { Add } from '@mui/icons-material';
 interface VersementPrevisionnelForm {
   volet?: string;
   dateVersement: string;
+  montantPrevu?: number;
   montant: number;
   partenaireId?: number;
   modId?: number;
@@ -43,6 +44,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
   const [formData, setFormData] = useState<VersementPrevisionnelForm>({
     volet: '',
     dateVersement: new Date().toISOString().split('T')[0],
+    montantPrevu: 0,
     montant: 0,
     partenaireId: undefined,
     modId: undefined,
@@ -69,6 +71,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
       setFormData({
         volet: '',
         dateVersement: new Date().toISOString().split('T')[0],
+        montantPrevu: 0,
         montant: 0,
         partenaireId: undefined,
         modId: undefined,
@@ -113,12 +116,24 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
           <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
+              type="number"
+              label="Montant Prevu (MAD)"
+              value={formData.montantPrevu || ''}
+              onChange={(e) => handleChange('montantPrevu', parseFloat(e.target.value) || 0)}
+              inputProps={{ min: 0, step: 0.01 }}
+              helperText="Montant initialement planifie pour ce versement"
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              fullWidth
               required
               type="number"
-              label="Montant (DH)"
+              label="Montant Reel (MAD)"
               value={formData.montant}
               onChange={(e) => handleChange('montant', parseFloat(e.target.value) || 0)}
               inputProps={{ min: 0, step: 0.01 }}
+              helperText="Montant effectivement verse ou a verser"
             />
           </Grid>
           <Grid size={{ xs: 12 }}>

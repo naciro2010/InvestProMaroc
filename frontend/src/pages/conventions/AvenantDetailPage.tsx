@@ -29,8 +29,7 @@ import {
   History,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
-import StatusBadge from '../../components/core/StatusBadge'
+import { PageHeader, StatusBadge } from '@/components/core'
 import { avenantConventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { colors, componentStyles, typography, spacing } from '../../lib/designSystem'

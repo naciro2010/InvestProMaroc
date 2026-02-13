@@ -2,7 +2,9 @@ package ma.investpro.repository
 
 import ma.investpro.entity.Budget
 import ma.investpro.entity.StatutBudget
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 
 /**
@@ -10,6 +12,22 @@ import org.springframework.stereotype.Repository
  */
 @Repository
 interface BudgetRepository : JpaRepository<Budget, Long> {
+
+    /**
+     * Fetch all budgets with convention eagerly loaded to avoid N+1 and lazy init issues.
+     * Used by listing endpoints where convention info is displayed.
+     */
+    @EntityGraph(attributePaths = ["convention"])
+    @Query("SELECT b FROM Budget b")
+    fun findAllWithConvention(): List<Budget>
+
+    /**
+     * Fetch a single budget with convention eagerly loaded.
+     * Used by detail endpoint where convention info is displayed.
+     */
+    @EntityGraph(attributePaths = ["convention"])
+    @Query("SELECT b FROM Budget b WHERE b.id = :id")
+    fun findByIdWithConvention(id: Long): Budget?
 
     // Recherche par convention
     fun findByConventionId(conventionId: Long): List<Budget>

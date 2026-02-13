@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Container, Button, Skeleton, Alert, Chip } from '@mui/material'
 import { ArrowBack, Edit, Print, CheckCircle, Cancel } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import PageHeader from '../../components/common/PageHeader'
+import { PageHeader } from '@/components/core'
 import { api } from '../../lib/api'
 import { DecompteInfoCard, DecompteCalculsCard, DecompteRetentionsCard } from '../../components/decomptes/detail'
 

@@ -1,8 +1,10 @@
 package ma.investpro.service
 
+import ma.investpro.dto.BudgetDTO
 import ma.investpro.dto.BudgetStatistiques
 import ma.investpro.entity.Budget
 import ma.investpro.entity.StatutBudget
+import ma.investpro.mapper.BudgetMapper
 import ma.investpro.repository.BudgetRepository
 import ma.investpro.repository.ConventionRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -18,14 +20,33 @@ import java.time.LocalDate
 @Transactional
 class BudgetService(
     private val budgetRepository: BudgetRepository,
-    private val conventionRepository: ConventionRepository
+    private val conventionRepository: ConventionRepository,
+    private val budgetMapper: BudgetMapper
 ) {
 
     // ========== CRUD Operations ==========
 
     fun findAll(): List<Budget> = budgetRepository.findAll()
 
+    /**
+     * Fetch all budgets as DTOs with convention data eagerly loaded.
+     * Used by the listing endpoint to ensure convention info is always available.
+     */
+    fun findAllDTOs(): List<BudgetDTO> {
+        val budgets = budgetRepository.findAllWithConvention()
+        return budgetMapper.toDTOList(budgets)
+    }
+
     fun findById(id: Long): Budget? = budgetRepository.findByIdOrNull(id)
+
+    /**
+     * Fetch a single budget as DTO with convention data eagerly loaded.
+     * Used by the detail endpoint to ensure convention info is always available.
+     */
+    fun findByIdDTO(id: Long): BudgetDTO? {
+        val budget = budgetRepository.findByIdWithConvention(id)
+        return budget?.let { budgetMapper.toDTO(it) }
+    }
 
     fun findByConvention(conventionId: Long): List<Budget> =
         budgetRepository.findByConventionId(conventionId)

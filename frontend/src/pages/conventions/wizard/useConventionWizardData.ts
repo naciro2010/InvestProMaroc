@@ -1,0 +1,276 @@
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { conventionsAPI } from '@/lib/api'
+import { getEnabledConventionTypes } from '@/lib/settings/conventionSettings'
+import { useConventionConfiguration } from '@/hooks/useConventionConfiguration'
+import { incrementConventionCode } from '@/utils/conventionCode'
+import { addMonths, calculateDurationMonths, formatDateInput } from '@/utils/dateUtils'
+import {
+  calculateTotals,
+  type ConventionWizardFormData,
+  type ConventionTypeOptionDisplay,
+  type HandleChangeFunction,
+  type WizardTotals,
+} from './types'
+
+interface ConventionListItem {
+  id: number
+  code: string
+}
+
+interface UseConventionWizardDataResult {
+  id: string | undefined
+  isEditing: boolean
+  navigate: ReturnType<typeof useNavigate>
+  formData: ConventionWizardFormData
+  setFormData: React.Dispatch<React.SetStateAction<ConventionWizardFormData>>
+  autoDateFin: boolean
+  settings: ReturnType<typeof useConventionConfiguration>['configuration']
+  typeOptionsWithCurrent: ConventionTypeOptionDisplay[]
+  totals: WizardTotals
+  handleChange: HandleChangeFunction
+  handleSubmit: () => void
+  isLoadingConvention: boolean
+  isSubmitting: boolean
+  submitError: Error | null
+}
+
+export const useConventionWizardData = (): UseConventionWizardDataResult => {
+  const navigate = useNavigate()
+  const { id } = useParams<{ id?: string }>()
+  const isEditing = !!id
+  const { configuration: settings } = useConventionConfiguration()
+  const [autoDateFin, setAutoDateFin] = useState(true)
+
+  const defaultFormData: ConventionWizardFormData = {
+    code: '',
+    numeroConvention: '',
+    libelle: '',
+    libelleRich: '',
+    objet: '',
+    objetRich: '',
+    type: 'CADRE',
+    dateSignature: new Date().toISOString().split('T')[0],
+    dateDebut: new Date().toISOString().split('T')[0],
+    dateFin: formatDateInput(addMonths(new Date(), 12)),
+    dureeMois: 12,
+    budgetGlobal: 0,
+    lignesBudget: [],
+    tauxCommission: 2.5,
+    baseCalcul: 'DECAISSEMENTS_TTC',
+    tauxTva: 20,
+    partenaires: [],
+    subventions: [],
+    files: [],
+  }
+
+  const [formData, setFormData] = useState<ConventionWizardFormData>(defaultFormData)
+
+  // Load existing convention when in edit mode
+  const { data: existingConvention, isLoading: isLoadingConvention } = useQuery({
+    queryKey: ['convention', id],
+    queryFn: () => (id ? conventionsAPI.getById(parseInt(id)) : null),
+    enabled: isEditing,
+  })
+
+  // Initialize form with loaded data
+  useEffect(() => {
+    if (existingConvention?.data) {
+      const convention = existingConvention.data
+      const formatDate = (dateStr: string | Date | null | undefined) => {
+        if (!dateStr) return ''
+        return typeof dateStr === 'string'
+          ? dateStr.split('T')[0]
+          : new Date(dateStr).toISOString().split('T')[0]
+      }
+
+      setFormData({
+        code: convention.code || '',
+        numeroConvention: '',
+        libelle: convention.designation || '',
+        libelleRich: convention.designation || '',
+        objet: convention.objet || '',
+        objetRich: convention.objetRich || '',
+        type: convention.type || 'CADRE',
+        dateSignature: new Date().toISOString().split('T')[0],
+        dateDebut: formatDate(convention.dateDebut),
+        dateFin: formatDate(convention.dateFin),
+        dureeMois:
+          convention.dateFin && convention.dateDebut
+            ? calculateDurationMonths(new Date(convention.dateDebut), new Date(convention.dateFin))
+            : 12,
+        budgetGlobal: convention.budgetTotal || 0,
+        lignesBudget: [],
+        tauxCommission: convention.tauxCommission || 2.5,
+        baseCalcul:
+          (convention.baseCalcul as 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT') ||
+          'DECAISSEMENTS_TTC',
+        tauxTva: 20,
+        partenaires: [],
+        subventions: [],
+        files: [],
+      })
+    }
+  }, [existingConvention])
+
+  // Load next convention code
+  useEffect(() => {
+    const loadNextCode = async () => {
+      if (isEditing || formData.code) return
+      try {
+        const response = await conventionsAPI.getAll()
+        const conventions: ConventionListItem[] = response.data.data || response.data
+        if (Array.isArray(conventions) && conventions.length > 0) {
+          const latestConvention = conventions.reduce(
+            (latest: ConventionListItem, current: ConventionListItem) =>
+              current.id > latest.id ? current : latest
+          )
+          if (latestConvention?.code) {
+            setFormData((prev) => ({
+              ...prev,
+              code: incrementConventionCode(latestConvention.code),
+            }))
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement du code de convention', error)
+      }
+    }
+
+    loadNextCode()
+  }, [formData.code, isEditing])
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: ConventionWizardFormData) => {
+      const payload = {
+        code: data.code,
+        numero: data.numeroConvention,
+        dateConvention: data.dateSignature,
+        typeConvention: data.type,
+        libelle: data.libelle,
+        objet: data.objetRich || data.objet,
+        tauxCommission: data.tauxCommission,
+        budget: data.budgetGlobal,
+        baseCalcul: data.baseCalcul,
+        tauxTva: data.tauxTva,
+        dateDebut: data.dateDebut,
+        dateFin: data.dateFin || undefined,
+        description: undefined,
+      }
+      return await conventionsAPI.create(payload)
+    },
+    onSuccess: () => {
+      navigate('/conventions')
+    },
+  })
+
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async (data: ConventionWizardFormData) => {
+      const payload = {
+        code: data.code,
+        numero: data.numeroConvention,
+        dateConvention: data.dateSignature,
+        typeConvention: data.type,
+        libelle: data.libelle,
+        objet: data.objetRich || data.objet,
+        tauxCommission: data.tauxCommission,
+        budget: data.budgetGlobal,
+        baseCalcul: data.baseCalcul,
+        tauxTva: data.tauxTva,
+        dateDebut: data.dateDebut,
+        dateFin: data.dateFin || undefined,
+        description: undefined,
+      }
+      return await conventionsAPI.update(parseInt(id!), payload)
+    },
+    onSuccess: () => {
+      navigate(`/conventions/${id}`)
+    },
+  })
+
+  // Handle form field changes
+  const handleChange: HandleChangeFunction = (field) => (e) => {
+    const value = e.target.value
+
+    if (field === 'dateDebut') {
+      const nextDateDebut = value
+      setFormData((prev) => {
+        const updated = { ...prev, dateDebut: nextDateDebut }
+        if (autoDateFin && prev.dureeMois) {
+          updated.dateFin = formatDateInput(addMonths(new Date(nextDateDebut), prev.dureeMois))
+        }
+        return updated
+      })
+      return
+    }
+
+    if (field === 'dateFin') {
+      setAutoDateFin(false)
+      setFormData((prev) => ({
+        ...prev,
+        dateFin: value,
+        dureeMois:
+          prev.dateDebut && value
+            ? calculateDurationMonths(new Date(prev.dateDebut), new Date(value))
+            : prev.dureeMois,
+      }))
+      return
+    }
+
+    if (field === 'dureeMois') {
+      const duration = Number(value)
+      setAutoDateFin(true)
+      setFormData((prev) => ({
+        ...prev,
+        dureeMois: duration,
+        dateFin: prev.dateDebut
+          ? formatDateInput(addMonths(new Date(prev.dateDebut), duration))
+          : prev.dateFin,
+      }))
+      return
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  // Submit handler
+  const handleSubmit = () => {
+    if (isEditing) {
+      updateMutation.mutate(formData)
+    } else {
+      createMutation.mutate(formData)
+    }
+  }
+
+  // Type options
+  const typeOptions = getEnabledConventionTypes(settings)
+  const typeOptionsWithCurrent: ConventionTypeOptionDisplay[] = typeOptions.find(
+    (option) => option.value === formData.type
+  )
+    ? typeOptions
+    : [...typeOptions, { value: formData.type, label: formData.type, enabled: true }]
+
+  const totals = calculateTotals(formData)
+
+  return {
+    id,
+    isEditing,
+    navigate,
+    formData,
+    setFormData,
+    autoDateFin,
+    settings,
+    typeOptionsWithCurrent,
+    totals,
+    handleChange,
+    handleSubmit,
+    isLoadingConvention,
+    isSubmitting: createMutation.isPending || updateMutation.isPending,
+    submitError:
+      (createMutation.error instanceof Error ? createMutation.error : null) ||
+      (updateMutation.error instanceof Error ? updateMutation.error : null),
+  }
+}

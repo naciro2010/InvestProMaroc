@@ -398,17 +398,6 @@ export const marchesAPI = {
   getSituationPaiement: (marcheId: number) => api.get(`/marches/${marcheId}/situation-paiement`),
 }
 
-// Axes Analytiques API
-export const axesAnalytiquesAPI = {
-  getAll: () => api.get('/axes-analytiques'),
-  getActive: () => api.get('/axes-analytiques/active'),
-  getById: (id: number) => api.get(`/axes-analytiques/${id}`),
-  search: (q: string) => api.get(`/axes-analytiques/search?q=${q}`),
-  create: (data: Record<string, unknown>) => api.post('/axes-analytiques', data),
-  update: (id: number, data: Record<string, unknown>) => api.put(`/axes-analytiques/${id}`, data),
-  delete: (id: number) => api.delete(`/axes-analytiques/${id}`),
-}
-
 // Comptes Bancaires API
 export const comptesBancairesAPI = {
   getAll: () => api.get('/comptes-bancaires'),

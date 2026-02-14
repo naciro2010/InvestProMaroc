@@ -135,45 +135,60 @@ INSERT INTO projets (id, code, nom, budget_total, statut, date_debut, convention
 
 SELECT setval('projets_id_seq', 6);
 
--- Marchés avec géolocalisation
+-- Marchés avec géolocalisation, type et nature
 INSERT INTO marches (
     id, fournisseur_id, convention_id, numero_marche, objet,
     montant_ht, taux_tva, montant_tva, montant_ttc,
     date_marche, statut, date_debut, date_fin_prevue, delai_execution_mois,
-    adresse, latitude, longitude, zone_geographique
+    adresse, latitude, longitude, zone_geographique,
+    type_marche, nature_prestation, date_signature, date_notification, taux_penalite
 ) VALUES
 (
     1, 1, 1, 'M-2024-001', 'Travaux de voirie Boulevard Zerktouni',
     800000.00, 20.00, 160000.00, 960000.00,
     '2024-02-15', 'EN_COURS', '2024-02-20', '2024-08-20', 6,
-    'Boulevard Zerktouni, Casablanca', 33.5731, -7.6298, 'Casablanca-Settat'
+    'Boulevard Zerktouni, Casablanca', 33.5731, -7.6298, 'Casablanca-Settat',
+    'MARCHE', 'TRAVAUX', '2024-02-10', '2024-02-12', 0.05
 ),
 (
     2, 2, 1, 'M-2024-002', 'Amenagement Avenue Mohammed V, Rabat',
     1200000.00, 20.00, 240000.00, 1440000.00,
     '2024-03-01', 'EN_COURS', '2024-03-10', '2024-12-10', 9,
-    'Avenue Mohammed V, Rabat', 34.0209, -6.8416, 'Rabat-Sale-Kenitra'
+    'Avenue Mohammed V, Rabat', 34.0209, -6.8416, 'Rabat-Sale-Kenitra',
+    'CONTRAT', 'SERVICES', '2024-02-25', '2024-02-28', 0.05
 ),
 (
     3, 3, 2, 'M-2024-003', 'Construction Ecole Primaire Tanger',
     2500000.00, 20.00, 500000.00, 3000000.00,
     '2024-03-15', 'VALIDE', '2024-04-01', '2025-03-31', 12,
-    'Zone Industrielle, Tanger', 35.7595, -5.8340, 'Tanger-Tetouan-Al Hoceima'
+    'Zone Industrielle, Tanger', 35.7595, -5.8340, 'Tanger-Tetouan-Al Hoceima',
+    'BON_DE_COMMANDE', 'FOURNITURES', '2024-03-10', '2024-03-12', 0.05
 ),
 (
     4, 4, 1, 'M-2024-004', 'Rehabilitation Route Nationale N1, Agadir',
     3500000.00, 20.00, 700000.00, 4200000.00,
     '2024-04-01', 'EN_COURS', '2024-04-15', '2025-04-15', 12,
-    'Route Nationale N1, Agadir', 30.4278, -9.5981, 'Souss-Massa'
+    'Route Nationale N1, Agadir', 30.4278, -9.5981, 'Souss-Massa',
+    'MARCHE', 'TRAVAUX', '2024-03-28', '2024-03-30', 0.05
 ),
 (
     5, 1, 1, 'M-2024-005', 'Travaux assainissement Meknes',
     1800000.00, 20.00, 360000.00, 2160000.00,
     '2024-04-10', 'EN_ATTENTE', NULL, NULL, 10,
-    'Quartier Hamria, Meknes', 33.8730, -5.5540, 'Fes-Meknes'
+    'Quartier Hamria, Meknes', 33.8730, -5.5540, 'Fes-Meknes',
+    'LETTRE_DE_COMMANDE', 'ETUDES', NULL, NULL, 0.10
 );
 
 SELECT setval('marches_id_seq', 5);
+
+-- Ordres de service (commencement, arret, reprise)
+INSERT INTO ordres_service (id, marche_id, numero_ordre, type_ordre, date_ordre, date_effet, reference, motif, observations) VALUES
+(1, 1, 'OS-001-COM', 'COMMENCEMENT', '2024-02-20', '2024-02-20', 'REF-OS-001', NULL, 'Demarrage des travaux de voirie'),
+(2, 1, 'OS-001-ARR', 'ARRET', '2024-04-15', '2024-04-15', 'REF-OS-002', 'Intemperies - fortes pluies', 'Arret temporaire pour raisons climatiques'),
+(3, 1, 'OS-001-REP', 'REPRISE', '2024-05-01', '2024-05-01', 'REF-OS-003', NULL, 'Reprise apres fin des intemperies'),
+(4, 2, 'OS-002-COM', 'COMMENCEMENT', '2024-04-01', '2024-04-01', 'REF-OS-004', NULL, 'Demarrage de la mission de suivi');
+
+SELECT setval('ordres_service_id_seq', 4, true);
 
 -- Lignes de marché avec imputation analytique
 INSERT INTO marche_lignes (marche_id, numero_ligne, designation, quantite, unite, prix_unitaire_ht, montant_ht, taux_tva, montant_tva, montant_ttc, imputation_analytique) VALUES

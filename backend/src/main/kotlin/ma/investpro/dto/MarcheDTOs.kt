@@ -22,6 +22,12 @@ data class MarcheDTO(
     val montantTva: BigDecimal,
     val montantTtc: BigDecimal,
     val statut: String,
+    val typeMarche: String,
+    val naturePrestation: String,
+    val dateSignature: LocalDate?,
+    val dateNotification: LocalDate?,
+    val dateOrdreService: LocalDate?,
+    val tauxPenalite: BigDecimal,
     val dateDebut: LocalDate?,
     val dateFinPrevue: LocalDate?,
     val delaiExecutionMois: Int?,
@@ -42,6 +48,7 @@ data class MarcheSimpleDTO(
     val fournisseurNom: String,
     val montantTtc: BigDecimal,
     val statut: String,
+    val typeMarche: String,
     val actif: Boolean
 )
 
@@ -63,6 +70,8 @@ data class MarcheListDTO(
     val montantTva: BigDecimal,
     val montantTtc: BigDecimal,
     val statut: String,
+    val typeMarche: String,
+    val naturePrestation: String,
     val dateDebut: LocalDate?,
     val dateFinPrevue: LocalDate?,
     val delaiExecutionMois: Int?,

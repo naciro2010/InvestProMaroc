@@ -439,6 +439,12 @@ CREATE TABLE IF NOT EXISTS marches (
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
     zone_geographique VARCHAR(100),
+    type_marche VARCHAR(30) NOT NULL DEFAULT 'MARCHE',
+    nature_prestation VARCHAR(30) NOT NULL DEFAULT 'TRAVAUX',
+    date_signature DATE,
+    date_notification DATE,
+    date_ordre_service DATE,
+    taux_penalite DECIMAL(5,2) DEFAULT 0.05,
     description_rich JSONB,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -452,6 +458,8 @@ CREATE INDEX IF NOT EXISTS idx_marches_convention ON marches(convention_id);
 CREATE INDEX IF NOT EXISTS idx_marches_statut ON marches(statut);
 CREATE INDEX IF NOT EXISTS idx_marches_date ON marches(date_marche);
 CREATE INDEX IF NOT EXISTS idx_marches_zone ON marches(zone_geographique);
+CREATE INDEX IF NOT EXISTS idx_marches_type ON marches(type_marche);
+CREATE INDEX IF NOT EXISTS idx_marches_nature ON marches(nature_prestation);
 CREATE INDEX IF NOT EXISTS idx_marches_description_rich ON marches USING GIN(description_rich);
 
 -- Marché lignes (line items within a market)
@@ -537,6 +545,32 @@ CREATE INDEX IF NOT EXISTS idx_bons_commande_numero ON bons_commande(numero);
 CREATE INDEX IF NOT EXISTS idx_bons_commande_marche ON bons_commande(marche_id);
 CREATE INDEX IF NOT EXISTS idx_bons_commande_fournisseur ON bons_commande(fournisseur_id);
 CREATE INDEX IF NOT EXISTS idx_bons_commande_date ON bons_commande(date_bon_commande);
+
+-- Ordres de service (service orders for marches: commencement, arret, reprise, reception)
+CREATE TABLE IF NOT EXISTS ordres_service (
+    id BIGSERIAL PRIMARY KEY,
+    marche_id BIGINT NOT NULL REFERENCES marches(id) ON DELETE CASCADE,
+    numero_ordre VARCHAR(100) NOT NULL,
+    type_ordre VARCHAR(30) NOT NULL DEFAULT 'COMMENCEMENT',
+    date_ordre DATE NOT NULL DEFAULT CURRENT_DATE,
+    date_effet DATE,
+    reference VARCHAR(200),
+    motif TEXT,
+    observations TEXT,
+    duree_arret_jours INTEGER,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN DEFAULT TRUE NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_ordres_service_marche ON ordres_service(marche_id);
+CREATE INDEX IF NOT EXISTS idx_ordres_service_type ON ordres_service(type_ordre);
+CREATE INDEX IF NOT EXISTS idx_ordres_service_date ON ordres_service(date_ordre);
+
+COMMENT ON TABLE ordres_service IS 'Ordres de service des marches: commencement, arret, reprise, reception provisoire/definitive';
+COMMENT ON COLUMN ordres_service.type_ordre IS 'Type: COMMENCEMENT, ARRET, REPRISE, RECEPTION_PROVISOIRE, RECEPTION_DEFINITIVE';
+COMMENT ON COLUMN ordres_service.date_effet IS 'Date effective (peut differer de date_ordre)';
+COMMENT ON COLUMN ordres_service.duree_arret_jours IS 'Duree prevue d''arret en jours (pour ordres ARRET)';
 
 -- ============================================================================
 -- SECTION 7: INVESTMENT EXPENSES

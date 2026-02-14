@@ -92,8 +92,9 @@ export default function LinkProjetDialog({
         projetConventionsAPI.getByConvention(conventionId),
       ]);
 
-      // Extract data - ProjetController returns raw list, projetConventionsAPI returns ApiResponse
-      const allProjets: ProjetListItem[] = (allProjetsRes.data as ProjetListItem[] | undefined) || [];
+      // Extract data - both endpoints may wrap in ApiResponse
+      const rawProjets = allProjetsRes.data;
+      const allProjets: ProjetListItem[] = (rawProjets as { data?: ProjetListItem[] }).data || (Array.isArray(rawProjets) ? rawProjets : []);
       const linkedAssociations: ProjetConventionRecord[] = linkedRes.data.data || linkedRes.data || [];
 
       // Build set of already-linked projet IDs

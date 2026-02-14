@@ -28,7 +28,6 @@ import {
   WizardStepInformations,
   WizardStepBudget,
   WizardStepCommission,
-  WizardStepPartenaires,
   WizardStepSubventions,
   WizardStepRecapitulatif,
 } from './wizard'
@@ -80,11 +79,9 @@ const ConventionWizardComplete = () => {
         return formData.budgetGlobal > 0
       case 2: // Commission
         return formData.tauxCommission > 0
-      case 3: // Partenaires (optional)
+      case 3: // Subventions (optional)
         return true
-      case 4: // Subventions (optional)
-        return true
-      case 5: // Récapitulatif
+      case 4: // Récapitulatif
         return true
       default:
         return false
@@ -123,21 +120,13 @@ const ConventionWizardComplete = () => {
         )
       case 3:
         return (
-          <WizardStepPartenaires
-            formData={formData}
-            setFormData={setFormData}
-            totals={totals}
-          />
-        )
-      case 4:
-        return (
           <WizardStepSubventions
             formData={formData}
             setFormData={setFormData}
             totals={totals}
           />
         )
-      case 5:
+      case 4:
         return (
           <WizardStepRecapitulatif
             formData={formData}
@@ -166,8 +155,8 @@ const ConventionWizardComplete = () => {
         title={isEditing ? 'Modifier la Convention' : 'Nouvelle Convention'}
         subtitle={
           isEditing
-            ? 'Modifier la convention en 6 étapes'
-            : 'Créer une convention CADRE ou NON_CADRE en 6 étapes'
+            ? 'Modifier la convention en 5 étapes'
+            : 'Créer une convention CADRE ou NON_CADRE en 5 étapes'
         }
         actions={
           <Button
@@ -257,7 +246,7 @@ const ConventionWizardComplete = () => {
                 ℹ️{' '}
                 {isEditing
                   ? 'Après la modification, vous serez redirigé vers la page de détail.'
-                  : 'Après la création, vous pourrez ajouter des sous-conventions, des avenants, et gérer les allocations détaillées à partir de la page de détail.'}
+                  : 'Après la création, vous pourrez ajouter des partenaires, des sous-conventions, des avenants, et gérer les allocations détaillées à partir de la page de détail.'}
               </Alert>
             )}
 

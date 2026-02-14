@@ -3,6 +3,7 @@ package ma.investpro.entity
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
+import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
@@ -37,6 +38,9 @@ class ImputationPrevisionnelle(
 
     @Column(name = "date_fin_prevue")
     var dateFinPrevue: LocalDate? = null, // Calculé automatiquement: dateDemarrage + delaiMois
+
+    @Column(name = "montant_prevu", precision = 15, scale = 2)
+    var montantPrevu: BigDecimal? = null, // Montant prévu pour cette imputation
 
     @Column(columnDefinition = "TEXT")
     var remarques: String? = null

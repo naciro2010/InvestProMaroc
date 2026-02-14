@@ -33,6 +33,7 @@ interface ImputationPrevisionnelle {
   dateDemarrage: string
   delaiMois: number
   dateFinPrevue?: string
+  montantPrevu?: number
   remarques?: string
 }
 
@@ -46,6 +47,7 @@ interface ImputationFormData {
   volet: string
   dateDemarrage: string
   delaiMois: number
+  montantPrevu: string
   remarques: string
 }
 
@@ -64,6 +66,7 @@ const ConventionImputationsCard = ({
     volet: '',
     dateDemarrage: new Date().toISOString().split('T')[0],
     delaiMois: 12,
+    montantPrevu: '',
     remarques: '',
   })
 
@@ -122,6 +125,7 @@ const ConventionImputationsCard = ({
         volet: formData.volet || null,
         dateDemarrage: formData.dateDemarrage,
         delaiMois: formData.delaiMois,
+        montantPrevu: formData.montantPrevu ? parseFloat(formData.montantPrevu) : null,
         remarques: formData.remarques || null,
       }
 
@@ -134,6 +138,7 @@ const ConventionImputationsCard = ({
         volet: '',
         dateDemarrage: new Date().toISOString().split('T')[0],
         delaiMois: 12,
+        montantPrevu: '',
         remarques: '',
       })
       if (onRefresh) onRefresh()
@@ -205,6 +210,7 @@ const ConventionImputationsCard = ({
                 <TableCell sx={{ fontWeight: typography.weights.semibold }}>Date démarrage</TableCell>
                 <TableCell sx={{ fontWeight: typography.weights.semibold }}>Délai</TableCell>
                 <TableCell sx={{ fontWeight: typography.weights.semibold }}>Date fin prévue</TableCell>
+                <TableCell align="right" sx={{ fontWeight: typography.weights.semibold }}>Montant prévu</TableCell>
                 <TableCell sx={{ fontWeight: typography.weights.semibold }}>Remarques</TableCell>
                 <TableCell align="center" sx={{ fontWeight: typography.weights.semibold }}>Actions</TableCell>
               </TableRow>
@@ -247,6 +253,14 @@ const ConventionImputationsCard = ({
                       {imputation.dateFinPrevue
                         ? formatDate(imputation.dateFinPrevue)
                         : calculateEndDate(imputation.dateDemarrage, imputation.delaiMois)
+                      }
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" sx={{ fontWeight: typography.weights.medium }}>
+                      {imputation.montantPrevu
+                        ? new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(imputation.montantPrevu)
+                        : '-'
                       }
                     </Typography>
                   </TableCell>
@@ -333,6 +347,16 @@ const ConventionImputationsCard = ({
                   ? `Date fin prévue: ${calculateEndDate(formData.dateDemarrage, formData.delaiMois)}`
                   : ''
               }
+            />
+
+            <TextField
+              label="Montant prévu (MAD)"
+              type="number"
+              value={formData.montantPrevu}
+              onChange={(e) => handleFormChange('montantPrevu', e.target.value)}
+              inputProps={{ min: 0, step: '0.01' }}
+              size="small"
+              placeholder="0.00"
             />
 
             <TextField

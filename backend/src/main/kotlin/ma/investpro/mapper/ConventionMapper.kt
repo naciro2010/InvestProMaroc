@@ -138,6 +138,7 @@ class ConventionMapper(
             dateDemarrage = entity.dateDemarrage,
             delaiMois = entity.delaiMois,
             dateFinPrevue = entity.dateFinPrevue,
+            montantPrevu = entity.montantPrevu,
             remarques = entity.remarques,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,

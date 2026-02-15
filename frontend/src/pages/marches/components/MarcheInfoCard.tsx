@@ -15,10 +15,17 @@ interface MarcheDetails {
   dateMarche: string
   objet: string
   statut: string
+  typeMarche: string
+  naturePrestation: string
   montantHt: number
   tauxTva: number
   montantTva: number
   montantTtc: number
+  dateSignature: string | null
+  dateNotification: string | null
+  dateOrdreService: string | null
+  delaiExecutionMois: number | null
+  tauxPenalite: number
   fournisseurId: number
   fournisseurCode: string
   fournisseurNom: string
@@ -125,6 +132,24 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
               <InfoRow icon={<CalendarMonth />} label="Date Marché" value={formatDate(details.dateMarche)} />
               <InfoRow
                 icon={<Description />}
+                label="Type"
+                value={
+                  <Box sx={{ display: 'inline-flex', gap: 1 }}>
+                    <Box sx={{ display: 'inline-flex', px: 1.5, py: 0.25, borderRadius: borders.radius.sm, bgcolor: getStatusConfig(details.typeMarche).bgColor }}>
+                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: getStatusConfig(details.typeMarche).textColor }}>
+                        {getStatusConfig(details.typeMarche).label}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'inline-flex', px: 1.5, py: 0.25, borderRadius: borders.radius.sm, bgcolor: getStatusConfig(details.naturePrestation).bgColor }}>
+                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: getStatusConfig(details.naturePrestation).textColor }}>
+                        {getStatusConfig(details.naturePrestation).label}
+                      </Typography>
+                    </Box>
+                  </Box>
+                }
+              />
+              <InfoRow
+                icon={<Description />}
                 label="Statut"
                 value={
                   <Box
@@ -158,6 +183,15 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
                   </Box>
                 }
               />
+              {details.dateSignature && (
+                <InfoRow icon={<CalendarMonth />} label="Date Signature" value={formatDate(details.dateSignature)} />
+              )}
+              {details.dateNotification && (
+                <InfoRow icon={<CalendarMonth />} label="Date Notification" value={formatDate(details.dateNotification)} />
+              )}
+              {details.delaiExecutionMois && (
+                <InfoRow icon={<CalendarMonth />} label="Délai d'exécution" value={`${details.delaiExecutionMois} mois`} />
+              )}
             </Stack>
           </Box>
 

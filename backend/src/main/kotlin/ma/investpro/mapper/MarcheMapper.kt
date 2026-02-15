@@ -25,6 +25,12 @@ class MarcheMapper {
             montantTva = entity.montantTva,
             montantTtc = entity.montantTtc,
             statut = entity.statut.name,
+            typeMarche = entity.typeMarche.name,
+            naturePrestation = entity.naturePrestation.name,
+            dateSignature = entity.dateSignature,
+            dateNotification = entity.dateNotification,
+            dateOrdreService = entity.dateOrdreService,
+            tauxPenalite = entity.tauxPenalite,
             dateDebut = entity.dateDebut,
             dateFinPrevue = entity.dateFinPrevue,
             delaiExecutionMois = entity.delaiExecutionMois,
@@ -47,6 +53,7 @@ class MarcheMapper {
             fournisseurNom = entity.fournisseur?.raisonSociale ?: "",
             montantTtc = entity.montantTtc,
             statut = entity.statut.name,
+            typeMarche = entity.typeMarche.name,
             actif = entity.actif
         )
     }

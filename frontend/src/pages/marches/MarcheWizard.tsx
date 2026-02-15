@@ -51,12 +51,14 @@ interface MarcheFormData {
   numAO: string
   objet: string
   objetRich: string
-  type: 'TRAVAUX' | 'FOURNITURES' | 'SERVICES' | 'ETUDES'
+  typeMarche: 'MARCHE' | 'CONTRAT' | 'BON_DE_COMMANDE' | 'LETTRE_DE_COMMANDE'
+  naturePrestation: 'TRAVAUX' | 'FOURNITURES' | 'SERVICES' | 'ETUDES'
   fournisseurId: number | null
   conventionId: number | null
   montantHT: number
   montantTTC: number
   tauxTVA: number
+  tauxPenalite: number
   dateSignature: string
   dateNotification: string
   dateOrdreService: string
@@ -80,12 +82,14 @@ const MarcheWizard = () => {
     numAO: '',
     objet: '',
     objetRich: '',
-    type: 'TRAVAUX',
+    typeMarche: 'MARCHE',
+    naturePrestation: 'TRAVAUX',
     fournisseurId: null,
     conventionId: null,
     montantHT: 0,
     montantTTC: 0,
     tauxTVA: 20,
+    tauxPenalite: 0.05,
     dateSignature: new Date().toISOString().split('T')[0],
     dateNotification: new Date().toISOString().split('T')[0],
     dateOrdreService: '',
@@ -120,19 +124,21 @@ const MarcheWizard = () => {
       const payload = {
         code: data.code,
         numeroMarche: data.numeroMarche,
-        numAO: data.numAO || null,
+        numAo: data.numAO || null,
         objet: data.objet,
         objetRich: data.objetRich,
-        type: data.type,
+        typeMarche: data.typeMarche,
+        naturePrestation: data.naturePrestation,
         fournisseurId: data.fournisseurId,
         conventionId: data.conventionId,
-        montantHT: data.montantHT,
-        montantTTC: data.montantTTC,
-        tauxTVA: data.tauxTVA,
+        montantHt: data.montantHT,
+        montantTtc: data.montantTTC,
+        tauxTva: data.tauxTVA,
+        tauxPenalite: data.tauxPenalite,
         dateSignature: data.dateSignature,
         dateNotification: data.dateNotification,
         dateOrdreService: data.dateOrdreService || null,
-        delaiExecution: data.delaiExecution,
+        delaiExecutionMois: data.delaiExecution,
         adresse: data.adresse || null,
         latitude: data.latitude,
         longitude: data.longitude,
@@ -153,7 +159,7 @@ const MarcheWizard = () => {
       ...formData,
       [field]: field === 'fournisseurId' || field === 'conventionId' || field === 'delaiExecution'
         ? value ? Number(value) : null
-        : field === 'montantHT' || field === 'montantTTC' || field === 'tauxTVA'
+        : field === 'montantHT' || field === 'montantTTC' || field === 'tauxTVA' || field === 'tauxPenalite'
         ? parseFloat(value) || 0
         : field === 'latitude' || field === 'longitude'
         ? value ? parseFloat(value) : null
@@ -242,8 +248,24 @@ const MarcheWizard = () => {
                 select
                 label="Type de marché"
                 required
-                value={formData.type}
-                onChange={handleChange('type')}
+                value={formData.typeMarche}
+                onChange={handleChange('typeMarche')}
+              >
+                <MenuItem value="MARCHE">Marché</MenuItem>
+                <MenuItem value="CONTRAT">Contrat</MenuItem>
+                <MenuItem value="BON_DE_COMMANDE">Bon de commande</MenuItem>
+                <MenuItem value="LETTRE_DE_COMMANDE">Lettre de commande</MenuItem>
+              </TextField>
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+              <TextField
+                fullWidth
+                select
+                label="Nature de la prestation"
+                required
+                value={formData.naturePrestation}
+                onChange={handleChange('naturePrestation')}
               >
                 <MenuItem value="TRAVAUX">Travaux</MenuItem>
                 <MenuItem value="FOURNITURES">Fournitures</MenuItem>
@@ -393,6 +415,16 @@ const MarcheWizard = () => {
                 onChange={handleChange('delaiExecution')}
                 inputProps={{ min: 0, step: 1 }}
               />
+
+              <TextField
+                fullWidth
+                label="Taux pénalité / jour (ex: 1/2000 = 0.0005)"
+                type="number"
+                value={formData.tauxPenalite}
+                onChange={handleChange('tauxPenalite')}
+                inputProps={{ min: 0, max: 1, step: 0.0001 }}
+                helperText="Standard marchés publics: 1/2000 par jour = 0.0005"
+              />
             </Box>
           </Box>
         )
@@ -495,7 +527,7 @@ const MarcheWizard = () => {
                       Type
                     </Typography>
                     <Typography variant="body1">
-                      {formData.type}
+                      {formData.typeMarche} - {formData.naturePrestation}
                     </Typography>
                   </Box>
 

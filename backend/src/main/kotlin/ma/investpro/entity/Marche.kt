@@ -104,6 +104,28 @@ class Marche(
     @Column(name = "zone_geographique", length = 100)
     var zoneGeographique: String? = null, // Ex: "Casablanca", "Rabat-Salé-Kénitra"
 
+    // Type et nature du marché
+    @Column(name = "type_marche", length = 30)
+    @Enumerated(EnumType.STRING)
+    var typeMarche: TypeMarche = TypeMarche.MARCHE,
+
+    @Column(name = "nature_prestation", length = 30)
+    @Enumerated(EnumType.STRING)
+    var naturePrestation: NaturePrestation = NaturePrestation.TRAVAUX,
+
+    @Column(name = "date_signature")
+    var dateSignature: LocalDate? = null,
+
+    @Column(name = "date_notification")
+    var dateNotification: LocalDate? = null,
+
+    @Column(name = "date_ordre_service")
+    var dateOrdreService: LocalDate? = null,
+
+    @Column(name = "taux_penalite", precision = 5, scale = 2)
+    @field:DecimalMin("0.00")
+    var tauxPenalite: BigDecimal = BigDecimal("0.05"), // 1/2000 par jour par défaut
+
     // Relations inverses
     @OneToMany(mappedBy = "marche", cascade = [CascadeType.ALL], orphanRemoval = true)
     var lignes: MutableList<MarcheLigne> = mutableListOf(),
@@ -115,7 +137,10 @@ class Marche(
     var bonsCommande: MutableList<BonCommande> = mutableListOf(),
 
     @OneToMany(mappedBy = "marche", cascade = [CascadeType.ALL], orphanRemoval = true)
-    var decomptes: MutableList<Decompte> = mutableListOf()
+    var decomptes: MutableList<Decompte> = mutableListOf(),
+
+    @OneToMany(mappedBy = "marche", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var ordresService: MutableList<OrdreService> = mutableListOf()
 
 ) : BaseEntity() {
 
@@ -152,4 +177,18 @@ enum class StatutMarche {
     SUSPENDU,      // Marché suspendu temporairement
     ANNULE,        // Marché annulé
     EN_ATTENTE     // En attente de validation
+}
+
+enum class TypeMarche {
+    MARCHE,             // Marché public classique
+    CONTRAT,            // Contrat
+    BON_DE_COMMANDE,    // Bon de commande
+    LETTRE_DE_COMMANDE  // Lettre de commande (consultation directe)
+}
+
+enum class NaturePrestation {
+    TRAVAUX,      // Travaux
+    FOURNITURES,  // Fournitures
+    SERVICES,     // Services
+    ETUDES        // Études
 }

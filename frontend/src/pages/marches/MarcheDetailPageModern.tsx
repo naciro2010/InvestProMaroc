@@ -11,6 +11,7 @@ import MarcheDecomptesSection from './components/MarcheDecomptesSection'
 import MarcheAvenantsSection from './components/MarcheAvenantsSection'
 import MarcheSituationPaiementCard from './components/MarcheSituationPaiementCard'
 import MarchePaiementsSection from './components/MarchePaiementsSection'
+import MarcheOrdresServiceSection from './components/MarcheOrdresServiceSection'
 
 /**
  * MICRO-FRONTEND ARCHITECTURE
@@ -55,6 +56,9 @@ const MarcheDetailPageModern = () => {
 
           {/* Info Card - Charge les details du marche */}
           <MarcheInfoCard marcheId={marcheId} />
+
+          {/* Ordres de Service - Timeline, durées, pénalités */}
+          <MarcheOrdresServiceSection marcheId={marcheId} />
 
           {/* Lignes - Charge les lignes de prix */}
           <MarcheLignesSection marcheId={marcheId} />

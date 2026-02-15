@@ -105,6 +105,12 @@ class MarcheService(
             montantTva = marche.montantTva
             montantTtc = marche.montantTtc
             statut = marche.statut
+            typeMarche = marche.typeMarche
+            naturePrestation = marche.naturePrestation
+            dateSignature = marche.dateSignature
+            dateNotification = marche.dateNotification
+            dateOrdreService = marche.dateOrdreService
+            tauxPenalite = marche.tauxPenalite
             dateDebut = marche.dateDebut
             dateFinPrevue = marche.dateFinPrevue
             delaiExecutionMois = marche.delaiExecutionMois
@@ -220,6 +226,8 @@ class MarcheService(
             montantTva = marche.montantTva,
             montantTtc = marche.montantTtc,
             statut = marche.statut.toString(),
+            typeMarche = marche.typeMarche.name,
+            naturePrestation = marche.naturePrestation.name,
             dateDebut = marche.dateDebut,
             dateFinPrevue = marche.dateFinPrevue,
             delaiExecutionMois = marche.delaiExecutionMois,

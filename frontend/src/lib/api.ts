@@ -396,6 +396,12 @@ export const marchesAPI = {
   getDecomptes: (marcheId: number) => api.get(`/marches/${marcheId}/decomptes`),
   getPaiements: (marcheId: number) => api.get(`/marches/${marcheId}/paiements`),
   getSituationPaiement: (marcheId: number) => api.get(`/marches/${marcheId}/situation-paiement`),
+  // Ordres de service
+  getOrdresService: (marcheId: number) => api.get(`/marches/${marcheId}/ordres-service`),
+  getDureePenalites: (marcheId: number) => api.get(`/marches/${marcheId}/ordres-service/duree-penalites`),
+  createOrdreService: (marcheId: number, data: Record<string, unknown>) => api.post(`/marches/${marcheId}/ordres-service`, data),
+  updateOrdreService: (marcheId: number, osId: number, data: Record<string, unknown>) => api.put(`/marches/${marcheId}/ordres-service/${osId}`, data),
+  deleteOrdreService: (marcheId: number, osId: number) => api.delete(`/marches/${marcheId}/ordres-service/${osId}`),
 }
 
 // Comptes Bancaires API

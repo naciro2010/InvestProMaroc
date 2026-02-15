@@ -60,6 +60,8 @@ interface MarcheListItem {
   conventionNumero: string | null
   conventionLibelle: string | null
   objet: string
+  typeMarche: string
+  naturePrestation: string
   montantHt: number
   tauxTva: number
   montantTva: number
@@ -360,6 +362,7 @@ export default function MarchesPage() {
                             <TableSortLabel active={sortConfig?.key === 'numeroMarche'} direction={sortConfig?.key === 'numeroMarche' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numeroMarche')}>N° Marché</TableSortLabel>
                           </TableCell>
                           <TableCell>N° AO</TableCell>
+                          <TableCell>Type</TableCell>
                           <TableCell sortDirection={sortConfig?.key === 'objet' ? sortConfig.direction : false}>
                             <TableSortLabel active={sortConfig?.key === 'objet'} direction={sortConfig?.key === 'objet' ? sortConfig.direction : 'asc'} onClick={() => requestSort('objet')}>Objet</TableSortLabel>
                           </TableCell>
@@ -378,7 +381,7 @@ export default function MarchesPage() {
                       <TableBody>
                         {paginatedMarches.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                            <TableCell colSpan={11} align="center" sx={{ py: 8 }}>
                               <Typography sx={{ color: colors.textSecondary }}>Aucun marché trouvé</Typography>
                             </TableCell>
                           </TableRow>
@@ -400,6 +403,12 @@ export default function MarchesPage() {
                                 sx={{ cursor: 'pointer', color: colors.textSecondary }}
                               >
                                 {marche.numAo || '-'}
+                              </TableCell>
+                              <TableCell
+                                onClick={() => navigate(`/marches/${marche.id}`)}
+                                sx={{ cursor: 'pointer' }}
+                              >
+                                <StatusBadge status={marche.typeMarche || 'MARCHE'} size="small" />
                               </TableCell>
                               <TableCell
                                 onClick={() => navigate(`/marches/${marche.id}`)}

@@ -33,6 +33,77 @@ data class FournisseurSimpleDTO(
     val actif: Boolean
 )
 
+data class CreateFournisseurDTO(
+    @field:NotBlank(message = "Le code est requis")
+    @field:Size(max = 50, message = "Le code ne peut pas dépasser 50 caractères")
+    val code: String,
+
+    @field:NotBlank(message = "La raison sociale est requise")
+    @field:Size(max = 200, message = "La raison sociale ne peut pas dépasser 200 caractères")
+    val raisonSociale: String,
+
+    @field:Size(max = 20, message = "L'identifiant fiscal ne peut pas dépasser 20 caractères")
+    @field:Pattern(regexp = "^[0-9]*$", message = "L'identifiant fiscal doit contenir uniquement des chiffres")
+    val identifiantFiscal: String? = null,
+
+    @field:Pattern(regexp = "^[0-9]{15}$", message = "L'ICE doit contenir exactement 15 chiffres")
+    val ice: String? = null,
+
+    val adresse: String? = null,
+
+    @field:Size(max = 100, message = "La ville ne peut pas dépasser 100 caractères")
+    val ville: String? = null,
+
+    @field:Size(max = 20, message = "Le téléphone ne peut pas dépasser 20 caractères")
+    val telephone: String? = null,
+
+    @field:Size(max = 20, message = "Le fax ne peut pas dépasser 20 caractères")
+    val fax: String? = null,
+
+    @field:Email(message = "Email invalide")
+    @field:Size(max = 150, message = "L'email ne peut pas dépasser 150 caractères")
+    val email: String? = null,
+
+    @field:Size(max = 100, message = "Le contact ne peut pas dépasser 100 caractères")
+    val contact: String? = null,
+
+    val nonResident: Boolean = false,
+    val remarques: String? = null
+)
+
+data class UpdateFournisseurDTO(
+    @field:Size(max = 200, message = "La raison sociale ne peut pas dépasser 200 caractères")
+    val raisonSociale: String? = null,
+
+    @field:Size(max = 20, message = "L'identifiant fiscal ne peut pas dépasser 20 caractères")
+    @field:Pattern(regexp = "^[0-9]*$", message = "L'identifiant fiscal doit contenir uniquement des chiffres")
+    val identifiantFiscal: String? = null,
+
+    @field:Pattern(regexp = "^[0-9]{15}$", message = "L'ICE doit contenir exactement 15 chiffres")
+    val ice: String? = null,
+
+    val adresse: String? = null,
+
+    @field:Size(max = 100, message = "La ville ne peut pas dépasser 100 caractères")
+    val ville: String? = null,
+
+    @field:Size(max = 20, message = "Le téléphone ne peut pas dépasser 20 caractères")
+    val telephone: String? = null,
+
+    @field:Size(max = 20, message = "Le fax ne peut pas dépasser 20 caractères")
+    val fax: String? = null,
+
+    @field:Email(message = "Email invalide")
+    @field:Size(max = 150, message = "L'email ne peut pas dépasser 150 caractères")
+    val email: String? = null,
+
+    @field:Size(max = 100, message = "Le contact ne peut pas dépasser 100 caractères")
+    val contact: String? = null,
+
+    val nonResident: Boolean? = null,
+    val remarques: String? = null
+)
+
 // CompteBancaire DTOs
 data class CompteBancaireDTO(
     val id: Long?,

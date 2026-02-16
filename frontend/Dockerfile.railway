@@ -1,19 +1,19 @@
-# Dockerfile pour Railway
-FROM node:20-alpine
+# Multi-stage Dockerfile pour Railway
+# Stage 1: Build l'application avec toutes les dépendances
+FROM node:20-alpine AS build
 
-# Définir le répertoire de travail
 WORKDIR /app
 
 # Copier les fichiers de dépendances
 COPY package*.json ./
 
-# Installer les dépendances (y compris devDependencies nécessaires pour le build)
+# Installer TOUTES les dépendances (dev incluses pour tsc + vite)
 RUN npm ci
 
-# Copier le reste des fichiers
+# Copier le code source
 COPY . .
 
-# Définir les variables d'environnement pour le build Vite
+# Variables d'environnement pour le build Vite
 ARG VITE_API_URL
 ARG VITE_BASE_PATH
 ENV VITE_API_URL=$VITE_API_URL
@@ -22,5 +22,21 @@ ENV VITE_BASE_PATH=$VITE_BASE_PATH
 # Build de l'application
 RUN npm run build
 
-# Commande de démarrage
-CMD ["npm", "start"]
+# Stage 2: Image de production légère
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Installer serve globalement pour servir les fichiers statiques
+RUN npm install -g serve@14
+
+# Copier uniquement les fichiers buildés depuis le stage précédent
+COPY --from=build /app/dist ./dist
+
+# Variables d'environnement de production
+ENV NODE_ENV=production
+
+EXPOSE 3000
+
+# Servir l'application en mode SPA (fallback vers index.html)
+CMD ["serve", "-s", "dist", "-l", "3000"]

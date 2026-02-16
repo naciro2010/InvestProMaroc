@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS echeances_subvention CASCADE;
 DROP TABLE IF EXISTS subventions CASCADE;
 
 -- Budget
+DROP TABLE IF EXISTS convention_budget_lignes CASCADE;
 DROP TABLE IF EXISTS versements_previsionnels CASCADE;
 DROP TABLE IF EXISTS imputations_previsionnelles CASCADE;
 DROP TABLE IF EXISTS lignes_budget CASCADE;
@@ -61,3 +62,6 @@ DROP TABLE IF EXISTS projets CASCADE;
 -- Users
 DROP TABLE IF EXISTS user_roles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+
+-- Legacy/stale tables from previous migrations
+DROP TABLE IF EXISTS ordres_service CASCADE;

@@ -94,7 +94,8 @@ export default function LinkProjetDialog({
 
       // Extract data - both endpoints may wrap in ApiResponse
       const rawProjets = allProjetsRes.data;
-      const allProjets: ProjetListItem[] = (rawProjets as { data?: ProjetListItem[] }).data || (Array.isArray(rawProjets) ? rawProjets : []);
+      const unwrapped = (rawProjets as { data?: ProjetListItem[] }).data || (Array.isArray(rawProjets) ? rawProjets : []);
+      const allProjets: ProjetListItem[] = (unwrapped as ProjetListItem[]).filter((p): p is ProjetListItem => p.id != null);
       const linkedAssociations: ProjetConventionRecord[] = linkedRes.data.data || linkedRes.data || [];
 
       // Build set of already-linked projet IDs

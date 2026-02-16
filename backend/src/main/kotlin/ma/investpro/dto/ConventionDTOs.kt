@@ -86,6 +86,7 @@ data class ImputationPrevisionnelleDTO(
     val dateDemarrage: LocalDate,
     val delaiMois: Int,
     val dateFinPrevue: LocalDate?,
+    val montantPrevu: BigDecimal?,
     val remarques: String?,
     val actif: Boolean,
     val createdAt: LocalDateTime?,

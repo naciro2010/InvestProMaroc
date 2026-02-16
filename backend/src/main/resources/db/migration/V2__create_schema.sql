@@ -384,6 +384,7 @@ CREATE TABLE IF NOT EXISTS imputations_previsionnelles (
     date_demarrage DATE NOT NULL DEFAULT CURRENT_DATE,
     delai_mois INTEGER NOT NULL DEFAULT 12,
     date_fin_prevue DATE,
+    montant_prevu NUMERIC(15,2),
     remarques TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

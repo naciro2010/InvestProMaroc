@@ -22,6 +22,7 @@ import { conventionsAPI, avenantConventionsAPI } from '@/lib/api'
 import AppLayout from '@/components/layout/AppLayout'
 import { Convention } from '@/types/entities'
 import FileUpload from '@/components/ui/FileUpload'
+import { colors, typography } from '@/lib/designSystem'
 
 const steps = ['Sélection des modifications', 'Nouvelles valeurs', 'Pièces jointes', 'Récapitulatif']
 
@@ -33,6 +34,15 @@ const AvenantForm = () => {
   const [convention, setConvention] = useState<Convention | null>(null)
   const [activeStep, setActiveStep] = useState(0)
   const [createdAvenantId, setCreatedAvenantId] = useState<number | null>(null)
+
+  // Budget répartition (partenaires)
+  interface PartenaireAllocation {
+    partenaireNom: string
+    partenaireSigle: string | null
+    budgetAlloue: number
+    pourcentage: number
+  }
+  const [partenaires, setPartenaires] = useState<PartenaireAllocation[]>([])
 
   // Champs modifiables
   const [selectedFields, setSelectedFields] = useState({
@@ -79,6 +89,14 @@ const AvenantForm = () => {
         dateFin: data.data.dateFin || '',
         objetModifie: data.data.objet || '',
       }))
+      // Charger la répartition du budget (partenaires)
+      try {
+        const partRes = await conventionsAPI.getPartenaires(Number(conventionId))
+        const partData = partRes.data.data || partRes.data || []
+        setPartenaires(Array.isArray(partData) ? partData : [])
+      } catch {
+        setPartenaires([])
+      }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Erreur inconnue'
       console.error('Erreur chargement convention:', msg)
@@ -316,6 +334,41 @@ const AvenantForm = () => {
               }}
             />
           </Stack>
+
+          {/* Répartition actuelle du budget */}
+          {partenaires.length > 0 && (
+            <Paper sx={{ mt: 2, p: 2, bgcolor: colors.neutral[25], border: `1px solid ${colors.neutral[200]}`, borderRadius: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+                Répartition actuelle du budget par partenaire
+              </Typography>
+              <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', '& th, & td': { px: 1.5, py: 0.75, fontSize: typography.sizes.sm, borderBottom: `1px solid ${colors.neutral[100]}` } }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', fontWeight: 600, color: colors.textSecondary }}>Partenaire</th>
+                    <th style={{ textAlign: 'right', fontWeight: 600, color: colors.textSecondary }}>Budget alloué</th>
+                    <th style={{ textAlign: 'right', fontWeight: 600, color: colors.textSecondary }}>%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {partenaires.map((p, idx) => (
+                    <tr key={idx}>
+                      <td>{p.partenaireSigle || p.partenaireNom}</td>
+                      <td style={{ textAlign: 'right' }}>{p.budgetAlloue?.toLocaleString('fr-FR')} MAD</td>
+                      <td style={{ textAlign: 'right' }}>{p.pourcentage?.toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                  <tr style={{ fontWeight: 600 }}>
+                    <td>Total alloué</td>
+                    <td style={{ textAlign: 'right' }}>{partenaires.reduce((s, p) => s + (p.budgetAlloue || 0), 0).toLocaleString('fr-FR')} MAD</td>
+                    <td style={{ textAlign: 'right' }}>{partenaires.reduce((s, p) => s + (p.pourcentage || 0), 0).toFixed(1)}%</td>
+                  </tr>
+                </tbody>
+              </Box>
+              <Alert severity="info" sx={{ mt: 1.5 }}>
+                Apres validation de l'avenant, pensez a mettre a jour la répartition du budget entre les partenaires depuis la page de détail de la convention.
+              </Alert>
+            </Paper>
+          )}
         </Box>
       )}
 

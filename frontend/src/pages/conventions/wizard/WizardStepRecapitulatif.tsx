@@ -133,33 +133,7 @@ const WizardStepRecapitulatif = ({
         )}
       </Paper>
 
-      {/* Section 3: Partenaires */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>
-          🤝 Partenaires
-        </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-              Nombre de partenaires
-            </Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-              {formData.partenaires.length}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-              Total alloué
-            </Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-              {formatCurrency(totals.totalPartenaires)} (
-              {((totals.totalPartenaires / formData.budgetGlobal) * 100 || 0).toFixed(1)}%)
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-
-      {/* Section 4: Subventions */}
+      {/* Section 3: Subventions */}
       {formData.subventions.length > 0 && (
         <Paper sx={{ p: 3, bgcolor: '#f0fdf4' }}>
           <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>

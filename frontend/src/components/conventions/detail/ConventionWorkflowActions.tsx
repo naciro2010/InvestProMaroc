@@ -393,6 +393,38 @@ const ConventionWorkflowActions = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Devalidation Dialog (Admin only) */}
+      <Dialog open={devaliderDialogOpen} onClose={() => setDevaliderDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ color: colors.warning[700], fontWeight: 600 }}>
+          Devalider la convention
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2, mt: 1 }}>
+            {statut === 'EN_EXECUTION' || statut === 'EN_COURS'
+              ? 'La convention passera de EN_EXECUTION a VALIDEE. Cette action est reservee aux administrateurs.'
+              : 'La convention passera de VALIDEE a SOUMIS. Cette action est reservee aux administrateurs.'
+            }
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDevaliderDialogOpen(false)} disabled={loading}>
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDevalider}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={16} /> : <LockOpen />}
+            sx={{
+              bgcolor: colors.warning[600],
+              '&:hover': { bgcolor: colors.warning[700] },
+            }}
+          >
+            Confirmer la devalidation
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }

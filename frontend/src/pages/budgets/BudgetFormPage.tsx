@@ -2,7 +2,16 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AppLayout from '../../components/layout/AppLayout'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
-import type { Budget, Convention } from '../../types/entities'
+import type { Convention } from '../../types/entities'
+
+const extractList = <T,>(responseData: unknown): T[] => {
+  if (Array.isArray(responseData)) return responseData as T[]
+  if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+    const nested = (responseData as { data?: unknown }).data
+    if (Array.isArray(nested)) return nested as T[]
+  }
+  return []
+}
 
 export default function BudgetFormPage() {
   const navigate = useNavigate()
@@ -33,7 +42,7 @@ export default function BudgetFormPage() {
   const fetchConventions = async () => {
     try {
       const response = await conventionsAPI.getAll()
-      setConventions(response.data.data || response.data || [])
+      setConventions(extractList<Convention>(response.data))
     } catch (error) {
       console.error('Erreur chargement conventions:', error)
     }
@@ -53,7 +62,7 @@ export default function BudgetFormPage() {
         statut: budget.statut,
         observations: budget.observations || '',
       })
-    } catch (err: unknown) {
+    } catch {
       setError('Erreur lors du chargement du budget')
     } finally {
       setLoading(false)

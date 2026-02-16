@@ -39,13 +39,18 @@ const defaultMenuGroups: MenuGroup[] = [
     { icon: <FileText className="w-[18px] h-[18px]" />, label: 'Conventions', path: '/conventions', implemented: true },
     { icon: <Wallet className="w-[18px] h-[18px]" />, label: 'Budgets', path: '/budgets', implemented: true },
   ]},
-  { key: 'marches-decomptes', label: 'Marchés & Décomptes', items: [
+  { key: 'execution-marches', label: 'Exécution des marchés', items: [
     { icon: <ShoppingCart className="w-[18px] h-[18px]" />, label: 'Marchés', path: '/marches', implemented: true },
     { icon: <FileCheck className="w-[18px] h-[18px]" />, label: 'Décomptes', path: '/decomptes', implemented: true },
-  ]},
-  { key: 'paiements', label: 'Paiements', items: [
-    { icon: <ClipboardCheck className="w-[18px] h-[18px]" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
     { icon: <Banknote className="w-[18px] h-[18px]" />, label: 'Paiements', path: '/paiements', implemented: true },
+    { icon: <ClipboardCheck className="w-[18px] h-[18px]" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
+  ]},
+  { key: 'contrats-documents', label: 'Contrats & Documents', items: [
+    { icon: <Briefcase className="w-[18px] h-[18px]" />, label: 'Contrats', path: '/marches', implemented: true },
+    { icon: <Receipt className="w-[18px] h-[18px]" />, label: 'Bons de commande', path: '/marches', implemented: true },
+    { icon: <FileText className="w-[18px] h-[18px]" />, label: 'Lettres de commande', path: '/marches', implemented: true },
+  ]},
+  { key: 'finances', label: 'Finances', items: [
     { icon: <Receipt className="w-[18px] h-[18px]" />, label: 'Dépenses', path: '/depenses', implemented: false },
     { icon: <DollarSign className="w-[18px] h-[18px]" />, label: 'Commissions', path: '/commissions', implemented: false },
   ]},
@@ -145,8 +150,8 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
 
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'conventions-budgets': true, 'marches-decomptes': true, 'paiements': true,
-    'projets-tiers': false, 'parametrage': false, 'administration': false,
+    'conventions-budgets': true, 'execution-marches': true, 'contrats-documents': true,
+    'finances': true, 'projets-tiers': false, 'parametrage': false, 'administration': false,
   })
 
   const [menuGroups, setMenuGroups] = useState<MenuGroup[]>(() => {

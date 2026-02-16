@@ -30,21 +30,30 @@ import {
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import { PageHeader, StatusBadge } from '@/components/core'
-import { avenantConventionsAPI } from '../../lib/api'
+import { avenantConventionsAPI, conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
-import { colors, componentStyles, typography, spacing } from '../../lib/designSystem'
+import { colors, componentStyles, typography } from '../../lib/designSystem'
 import { AvenantConventionResponse } from '../../types/avenantConvention'
+
+interface ConventionPartenaireAllocation {
+  id: number
+  partenaireNom: string
+  partenaireSigle?: string | null
+  budgetAlloue: number
+  pourcentage: number
+}
 
 const AvenantDetailPage = () => {
   const { conventionId, avenantId } = useParams<{ conventionId: string; avenantId: string }>()
   const navigate = useNavigate()
-  const { user, isAdmin, isManager } = useAuth()
+  const { isAdmin, isManager } = useAuth()
 
   const [avenant, setAvenant] = useState<AvenantConventionResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [workflowLoading, setWorkflowLoading] = useState(false)
+  const [partenaires, setPartenaires] = useState<ConventionPartenaireAllocation[]>([])
 
   // Reject dialog
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
@@ -61,7 +70,17 @@ const AvenantDetailPage = () => {
       setLoading(true)
       setError(null)
       const response = await avenantConventionsAPI.getById(id)
-      setAvenant(response.data.data || response.data)
+      const avenantData = response.data.data || response.data
+      setAvenant(avenantData)
+
+      try {
+        const partRes = await conventionsAPI.getPartenaires(avenantData.conventionId)
+        const partData = partRes.data.data || partRes.data || []
+        setPartenaires(Array.isArray(partData) ? partData : [])
+      } catch (partErr) {
+        console.warn('Impossible de charger la répartition des partenaires:', partErr)
+        setPartenaires([])
+      }
     } catch (err) {
       console.error('Error loading avenant:', err)
       setError('Erreur lors du chargement de l\'avenant')
@@ -191,6 +210,14 @@ const AvenantDetailPage = () => {
   }
 
   if (!avenant) return null
+
+  const budgetChangeRequested = Boolean(
+    avenant.nouveauBudget !== undefined ||
+    avenant.deltaBudget !== undefined ||
+    (avenant.modifications && Object.prototype.hasOwnProperty.call(avenant.modifications, 'budget'))
+  )
+  const totalBudgetAlloue = partenaires.reduce((sum, p) => sum + (p.budgetAlloue || 0), 0)
+  const totalPourcentage = partenaires.reduce((sum, p) => sum + (p.pourcentage || 0), 0)
 
   const canEdit = avenant.isEditable
   const canSoumettre = avenant.canSoumettre
@@ -569,6 +596,56 @@ const AvenantDetailPage = () => {
                 </Box>
               </Paper>
             </Box>
+
+            {/* Budget allocation snapshot for budget-changing avenants */}
+            {budgetChangeRequested && (
+              <Box>
+                <Paper sx={{ ...componentStyles.card, p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Person sx={{ color: colors.info[600] }} />
+                    <Typography variant="h6" sx={{ fontWeight: typography.weights.semibold }}>
+                      Répartition du budget (partenaires)
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+
+                  {partenaires.length === 0 ? (
+                    <Alert severity="info">
+                      Aucune répartition partenaire n'est disponible pour cette convention.
+                    </Alert>
+                  ) : (
+                    <>
+                      <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', '& th, & td': { px: 1.5, py: 0.9, textAlign: 'left', borderBottom: `1px solid ${colors.border}` } }}>
+                        <thead>
+                          <tr>
+                            <th>Partenaire</th>
+                            <th style={{ textAlign: 'right' }}>Budget alloué</th>
+                            <th style={{ textAlign: 'right' }}>%</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {partenaires.map((p) => (
+                            <tr key={p.id}>
+                              <td>{p.partenaireSigle || p.partenaireNom}</td>
+                              <td style={{ textAlign: 'right' }}>{formatCurrency(p.budgetAlloue)}</td>
+                              <td style={{ textAlign: 'right' }}>{formatPercentage(p.pourcentage)}</td>
+                            </tr>
+                          ))}
+                          <tr>
+                            <td><strong>Total alloué</strong></td>
+                            <td style={{ textAlign: 'right' }}><strong>{formatCurrency(totalBudgetAlloue)}</strong></td>
+                            <td style={{ textAlign: 'right' }}><strong>{formatPercentage(totalPourcentage)}</strong></td>
+                          </tr>
+                        </tbody>
+                      </Box>
+                      <Alert severity="info" sx={{ mt: 2 }}>
+                        Cette section aide à vérifier la cohérence de la répartition lors des avenants qui modifient le budget.
+                      </Alert>
+                    </>
+                  )}
+                </Paper>
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>

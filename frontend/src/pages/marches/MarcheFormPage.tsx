@@ -1,15 +1,40 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { FaPlus, FaTrash, FaSave, FaTimes } from 'react-icons/fa'
-import { Card, Button } from '@/components/ui'
+import {
+  Box,
+  TextField,
+  MenuItem,
+  Button,
+  Typography,
+  IconButton,
+  Autocomplete,
+  CircularProgress,
+  Alert,
+} from '@mui/material'
+import { Add, Delete, PersonAdd } from '@mui/icons-material'
 import AppLayout from '@/components/layout/AppLayout'
+import { StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField } from '@/components/core'
 import LocationPicker from '@/components/ui/LocationPicker'
-import api from '@/lib/api'
+import FournisseurDialog from '@/components/marches/FournisseurDialog'
+import { fournisseursAPI, conventionsAPI, dimensionsAPI } from '@/lib/api'
+import { colors, typography, componentStyles, borders, spacing } from '@/lib/designSystem'
 import { MarcheLigne, DimensionAnalytique } from '@/types/entities'
 
-// Dimension avec valeurs - étendu de DimensionAnalytique
 interface Dimension extends DimensionAnalytique {
   valeurs: { code: string; libelle: string }[]
+}
+
+interface ConventionOption {
+  id: number
+  code: string
+  libelle: string
+}
+
+interface FournisseurOption {
+  id: number
+  code: string
+  raisonSociale: string
+  ice: string | null
 }
 
 export default function MarcheFormPage() {
@@ -17,13 +42,19 @@ export default function MarcheFormPage() {
   const navigate = useNavigate()
   const isEdit = !!id
 
-  // État principal
+  // Loading and error state
   const [loading, setLoading] = useState(false)
-  const [conventions, setConventions] = useState<{ id: number; code: string; libelle: string }[]>([])
-  const [fournisseurs, setFournisseurs] = useState<{ id: number; raisonSociale: string }[]>([])
+  const [error, setError] = useState('')
+
+  // Reference data
+  const [conventions, setConventions] = useState<ConventionOption[]>([])
+  const [fournisseurs, setFournisseurs] = useState<FournisseurOption[]>([])
   const [dimensions, setDimensions] = useState<Dimension[]>([])
 
-  // État du marché
+  // Fournisseur dialog
+  const [fournisseurDialogOpen, setFournisseurDialogOpen] = useState(false)
+
+  // Form state
   const [numeroMarche, setNumeroMarche] = useState('')
   const [numAo, setNumAo] = useState('')
   const [dateMarche, setDateMarche] = useState(new Date().toISOString().split('T')[0])
@@ -41,15 +72,14 @@ export default function MarcheFormPage() {
   const [retenueGarantie, setRetenueGarantie] = useState(0)
   const [remarques, setRemarques] = useState('')
 
-  // État de la géolocalisation
+  // Geolocation state
   const [adresse, setAdresse] = useState('')
   const [latitude, setLatitude] = useState<number | undefined>(undefined)
   const [longitude, setLongitude] = useState<number | undefined>(undefined)
   const [zoneGeographique, setZoneGeographique] = useState('')
 
-  // État des lignes
+  // Line items state
   const [lignes, setLignes] = useState<MarcheLigne[]>([])
-  const [showLigneForm, setShowLigneForm] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -65,36 +95,47 @@ export default function MarcheFormPage() {
   const fetchData = async () => {
     try {
       const [convRes, fournRes, dimRes] = await Promise.all([
-        api.get('/conventions'),
-        api.get('/fournisseurs'),
-        api.get('/dimensions')
+        conventionsAPI.getAll(),
+        fournisseursAPI.getAll(),
+        dimensionsAPI.getAll()
       ])
-      setConventions(convRes.data)
-      setFournisseurs(fournRes.data)
-      setDimensions(dimRes.data)
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur chargement données:', msg)
+      const convData = convRes.data.data || convRes.data || []
+      setConventions(Array.isArray(convData) ? convData : [])
+
+      const fournData = fournRes.data.data || fournRes.data || []
+      setFournisseurs(Array.isArray(fournData) ? fournData.map((f: FournisseurOption) => ({
+        id: f.id,
+        code: f.code,
+        raisonSociale: f.raisonSociale,
+        ice: f.ice || null,
+      })) : [])
+
+      const dimData = dimRes.data.data || dimRes.data || []
+      setDimensions(Array.isArray(dimData) ? dimData : [])
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue'
+      setError(`Erreur chargement données: ${msg}`)
     }
   }
 
   const fetchMarche = async () => {
     try {
       setLoading(true)
-      const res = await api.get(`/api/marches/${id}`)
-      const marche = res.data
+      const api = (await import('@/lib/api')).default
+      const res = await api.get(`/marches/${id}`)
+      const marche = res.data.data || res.data
 
-      setNumeroMarche(marche.numeroMarche)
+      setNumeroMarche(marche.numeroMarche || '')
       setNumAo(marche.numAO || '')
-      setDateMarche(marche.dateMarche)
-      setConventionId(marche.convention?.id || null)
-      setFournisseurId(marche.fournisseur?.id || null)
-      setObjet(marche.objet)
-      setMontantHt(marche.montantHt)
-      setTauxTva(marche.tauxTva)
-      setMontantTva(marche.montantTva)
-      setMontantTtc(marche.montantTtc)
-      setStatut(marche.statut)
+      setDateMarche(marche.dateMarche || '')
+      setConventionId(marche.convention?.id || marche.conventionId || null)
+      setFournisseurId(marche.fournisseur?.id || marche.fournisseurId || null)
+      setObjet(marche.objet || '')
+      setMontantHt(marche.montantHT || marche.montantHt || 0)
+      setTauxTva(marche.tauxTVA || marche.tauxTva || 20)
+      setMontantTva(marche.montantTVA || marche.montantTva || 0)
+      setMontantTtc(marche.montantTTC || marche.montantTtc || 0)
+      setStatut(marche.statut || 'EN_COURS')
       setDateDebut(marche.dateDebut || '')
       setDateFinPrevue(marche.dateFinPrevue || '')
       setDelaiExecutionMois(marche.delaiExecutionMois)
@@ -105,19 +146,18 @@ export default function MarcheFormPage() {
       setLongitude(marche.longitude)
       setZoneGeographique(marche.zoneGeographique || '')
       setLignes(marche.lignes || [])
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur chargement marché:', msg)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue'
+      setError(`Erreur chargement marché: ${msg}`)
     } finally {
       setLoading(false)
     }
   }
 
   const calculerMontants = () => {
-    const totalHT = lignes.reduce((sum, l) => sum + l.montantHT, 0)
-    const totalTVA = lignes.reduce((sum, l) => sum + l.montantTVA, 0)
-    const totalTTC = lignes.reduce((sum, l) => sum + l.montantTTC, 0)
-
+    const totalHT = lignes.reduce((sum, l) => sum + (l.montantHT || 0), 0)
+    const totalTVA = lignes.reduce((sum, l) => sum + (l.montantTVA || 0), 0)
+    const totalTTC = lignes.reduce((sum, l) => sum + (l.montantTTC || 0), 0)
     setMontantHt(totalHT)
     setMontantTva(totalTVA)
     setMontantTtc(totalTTC)
@@ -137,12 +177,10 @@ export default function MarcheFormPage() {
       imputationAnalytique: {}
     }
     setLignes([...lignes, nouvelleLigne])
-    setShowLigneForm(true)
   }
 
   const supprimerLigne = (index: number) => {
     const newLignes = lignes.filter((_, i) => i !== index)
-    // Renuméroter
     newLignes.forEach((l, i) => l.numeroLigne = i + 1)
     setLignes(newLignes)
   }
@@ -151,7 +189,6 @@ export default function MarcheFormPage() {
     const newLignes = [...lignes]
     newLignes[index] = { ...newLignes[index], [field]: value }
 
-    // Recalculer montants si besoin
     if (['quantite', 'prixUnitaireHT', 'tauxTVA'].includes(field)) {
       const ligne = newLignes[index]
       const qte = ligne.quantite || 1
@@ -159,7 +196,6 @@ export default function MarcheFormPage() {
       ligne.montantTVA = ligne.montantHT * ligne.tauxTVA / 100
       ligne.montantTTC = ligne.montantHT + ligne.montantTVA
     }
-
     setLignes(newLignes)
   }
 
@@ -174,9 +210,11 @@ export default function MarcheFormPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
 
     try {
       setLoading(true)
+      const api = (await import('@/lib/api')).default
 
       const data = {
         numeroMarche,
@@ -209,10 +247,13 @@ export default function MarcheFormPage() {
       }
 
       navigate('/marches')
-    } catch (error: unknown) {
-      console.error('Erreur sauvegarde:', error)
-      const axiosErr = error as { response?: { data?: { message?: string } } }
-      alert(axiosErr.response?.data?.message || 'Erreur lors de la sauvegarde')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        const axiosErr = err as { response?: { data?: { message?: string } } }
+        setError(axiosErr.response?.data?.message || err.message)
+      } else {
+        setError('Erreur lors de la sauvegarde')
+      }
     } finally {
       setLoading(false)
     }
@@ -225,428 +266,567 @@ export default function MarcheFormPage() {
     }).format(amount)
   }
 
+  const selectedFournisseur = fournisseurs.find(f => f.id === fournisseurId) || null
+
   if (loading && isEdit) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-info"></div>
-        </div>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+          <CircularProgress />
+        </Box>
       </AppLayout>
     )
   }
 
   return (
     <AppLayout>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* En-tête */}
-        <Card
-          title={isEdit ? 'Modifier Marché' : 'Nouveau Marché'}
-          actions={
-            <div className="flex gap-2">
-              <Button type="submit" variant="success" icon={<FaSave />} disabled={loading}>
-                Enregistrer
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                icon={<FaTimes />}
-                onClick={() => navigate('/marches')}
-              >
-                Annuler
-              </Button>
-            </div>
-          }
-        >
-          {/* Informations générales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                N° Marché *
-              </label>
-              <input
-                type="text"
-                required
-                value={numeroMarche}
-                onChange={(e) => setNumeroMarche(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
+      <form onSubmit={handleSubmit}>
+        <StickyActionBar
+          title={isEdit ? 'Modifier le Marché' : 'Nouveau Marché'}
+          showBack
+          backUrl="/marches"
+          isSubmitting={loading}
+          submitType="submit"
+        />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                N° Appel d'Offres
-              </label>
-              <input
-                type="text"
-                value={numAo}
-                onChange={(e) => setNumAo(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
+        <FormLayout maxWidth={1100}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date Marché *
-              </label>
-              <input
-                type="date"
-                required
-                value={dateMarche}
-                onChange={(e) => setDateMarche(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
+          {/* Section 1: Informations Générales */}
+          <FormPageSection title="Informations Générales" divider={false}>
+            <FormGroup columns={3}>
+              <FormField>
+                <TextField
+                  label="N° Marché"
+                  value={numeroMarche}
+                  onChange={(e) => setNumeroMarche(e.target.value)}
+                  required
+                  fullWidth
+                  size="small"
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+              <FormField>
+                <TextField
+                  label="N° Appel d'Offres"
+                  value={numAo}
+                  onChange={(e) => setNumAo(e.target.value)}
+                  fullWidth
+                  size="small"
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+              <FormField>
+                <TextField
+                  label="Date Marché"
+                  type="date"
+                  value={dateMarche}
+                  onChange={(e) => setDateMarche(e.target.value)}
+                  required
+                  fullWidth
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+            </FormGroup>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Convention
-              </label>
-              <select
-                value={conventionId || ''}
-                onChange={(e) => setConventionId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              >
-                <option value="">-- Sélectionner --</option>
-                {conventions.map(c => (
-                  <option key={c.id} value={c.id}>{c.code} - {c.libelle}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fournisseur *
-              </label>
-              <select
-                required
-                value={fournisseurId || ''}
-                onChange={(e) => setFournisseurId(Number(e.target.value))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              >
-                <option value="">-- Sélectionner --</option>
-                {fournisseurs.map(f => (
-                  <option key={f.id} value={f.id}>{f.raisonSociale}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Statut *
-              </label>
-              <select
-                required
-                value={statut}
-                onChange={(e) => setStatut(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              >
-                <option value="EN_COURS">En cours</option>
-                <option value="VALIDE">Validé</option>
-                <option value="TERMINE">Terminé</option>
-                <option value="SUSPENDU">Suspendu</option>
-                <option value="ANNULE">Annulé</option>
-                <option value="EN_ATTENTE">En attente</option>
-              </select>
-            </div>
-
-            <div className="md:col-span-2 lg:col-span-3">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Objet du Marché *
-              </label>
-              <textarea
-                required
-                rows={3}
-                value={objet}
-                onChange={(e) => setObjet(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date Début
-              </label>
-              <input
-                type="date"
-                value={dateDebut}
-                onChange={(e) => setDateDebut(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date Fin Prévue
-              </label>
-              <input
-                type="date"
-                value={dateFinPrevue}
-                onChange={(e) => setDateFinPrevue(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Délai Exécution (mois)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={delaiExecutionMois || ''}
-                onChange={(e) => setDelaiExecutionMois(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Retenue Garantie (MAD)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={retenueGarantie}
-                onChange={(e) => setRetenueGarantie(Number(e.target.value))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Remarques
-              </label>
-              <textarea
-                rows={2}
-                value={remarques}
-                onChange={(e) => setRemarques(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-            </div>
-          </div>
-        </Card>
-
-        {/* Géolocalisation */}
-        <Card title="📍 Localisation du Marché">
-          <div className="space-y-4">
-            <LocationPicker
-              latitude={latitude}
-              longitude={longitude}
-              adresse={adresse}
-              onLocationChange={(location) => {
-                setLatitude(location.latitude)
-                setLongitude(location.longitude)
-                setAdresse(location.adresse)
-              }}
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Zone Géographique
-              </label>
-              <input
-                type="text"
-                value={zoneGeographique}
-                onChange={(e) => setZoneGeographique(e.target.value)}
-                placeholder="Ex: Casablanca, Rabat-Salé-Kénitra, Région du Nord..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-info"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Indiquez la région ou zone administrative du marché pour faciliter les recherches géographiques.
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Lignes du marché */}
-        <Card
-          title={`Lignes du Marché (${lignes.length})`}
-          actions={
-            <Button
-              type="button"
-              variant="primary"
-              icon={<FaPlus />}
-              onClick={ajouterLigne}
-            >
-              Ajouter Ligne
-            </Button>
-          }
-        >
-          <div className="space-y-4">
-            {lignes.map((ligne, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <div className="flex justify-between items-start mb-4">
-                  <h4 className="font-semibold text-gray-900">Ligne #{ligne.numeroLigne}</h4>
-                  <button
-                    type="button"
-                    onClick={() => supprimerLigne(index)}
-                    className="text-danger hover:text-red-700"
+            <FormGroup columns={3}>
+              <FormField>
+                <TextField
+                  label="Convention"
+                  select
+                  value={conventionId || ''}
+                  onChange={(e) => setConventionId(e.target.value ? Number(e.target.value) : null)}
+                  fullWidth
+                  size="small"
+                  sx={componentStyles.inputField}
+                >
+                  <MenuItem value="">
+                    <Typography sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>
+                      -- Aucune --
+                    </Typography>
+                  </MenuItem>
+                  {conventions.map(c => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.code} - {c.libelle}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </FormField>
+              <FormField>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                  <Autocomplete
+                    options={fournisseurs}
+                    value={selectedFournisseur}
+                    onChange={(_, newValue) => setFournisseurId(newValue?.id || null)}
+                    getOptionLabel={(option) =>
+                      `${option.raisonSociale}${option.ice ? ` (ICE: ${option.ice})` : ''}`
+                    }
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Fournisseur"
+                        required
+                        size="small"
+                        sx={componentStyles.inputField}
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <Box component="li" {...props} key={option.id}>
+                        <Box>
+                          <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>
+                            {option.raisonSociale}
+                          </Typography>
+                          {option.ice && (
+                            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                              ICE: {option.ice}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    )}
+                    noOptionsText="Aucun fournisseur trouvé"
+                    sx={{ flex: 1 }}
+                  />
+                  <IconButton
+                    onClick={() => setFournisseurDialogOpen(true)}
+                    size="small"
+                    title="Créer un nouveau fournisseur"
+                    sx={{
+                      mt: 0.5,
+                      bgcolor: colors.primary[50],
+                      color: colors.primary[600],
+                      border: `1px solid ${colors.primary[200]}`,
+                      borderRadius: borders.radius.base,
+                      width: 38,
+                      height: 38,
+                      '&:hover': {
+                        bgcolor: colors.primary[100],
+                      },
+                    }}
                   >
-                    <FaTrash />
-                  </button>
-                </div>
+                    <PersonAdd sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Box>
+              </FormField>
+              <FormField>
+                <TextField
+                  label="Statut"
+                  select
+                  required
+                  value={statut}
+                  onChange={(e) => setStatut(e.target.value)}
+                  fullWidth
+                  size="small"
+                  sx={componentStyles.inputField}
+                >
+                  <MenuItem value="EN_COURS">En cours</MenuItem>
+                  <MenuItem value="VALIDE">Validé</MenuItem>
+                  <MenuItem value="TERMINE">Terminé</MenuItem>
+                  <MenuItem value="SUSPENDU">Suspendu</MenuItem>
+                  <MenuItem value="ANNULE">Annulé</MenuItem>
+                  <MenuItem value="EN_ATTENTE">En attente</MenuItem>
+                </TextField>
+              </FormField>
+            </FormGroup>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="lg:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Désignation *
-                    </label>
-                    <input
-                      type="text"
-                      required
+            <FormGroup columns={1}>
+              <FormField fullWidth>
+                <TextField
+                  label="Objet du Marché"
+                  value={objet}
+                  onChange={(e) => setObjet(e.target.value)}
+                  required
+                  fullWidth
+                  size="small"
+                  multiline
+                  rows={3}
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+            </FormGroup>
+          </FormPageSection>
+
+          {/* Section 2: Délais et Paramètres */}
+          <FormPageSection title="Délais et Paramètres">
+            <FormGroup columns={3}>
+              <FormField>
+                <TextField
+                  label="Date Début"
+                  type="date"
+                  value={dateDebut}
+                  onChange={(e) => setDateDebut(e.target.value)}
+                  fullWidth
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+              <FormField>
+                <TextField
+                  label="Date Fin Prévue"
+                  type="date"
+                  value={dateFinPrevue}
+                  onChange={(e) => setDateFinPrevue(e.target.value)}
+                  fullWidth
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+              <FormField>
+                <TextField
+                  label="Délai Exécution (mois)"
+                  type="number"
+                  value={delaiExecutionMois ?? ''}
+                  onChange={(e) => setDelaiExecutionMois(e.target.value ? Number(e.target.value) : null)}
+                  fullWidth
+                  size="small"
+                  inputProps={{ min: 0 }}
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+            </FormGroup>
+
+            <FormGroup columns={2}>
+              <FormField>
+                <TextField
+                  label="Retenue Garantie (MAD)"
+                  type="number"
+                  value={retenueGarantie}
+                  onChange={(e) => setRetenueGarantie(Number(e.target.value))}
+                  fullWidth
+                  size="small"
+                  inputProps={{ min: 0, step: '0.01' }}
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+              <FormField>
+                <TextField
+                  label="Remarques"
+                  value={remarques}
+                  onChange={(e) => setRemarques(e.target.value)}
+                  fullWidth
+                  size="small"
+                  multiline
+                  rows={2}
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+            </FormGroup>
+          </FormPageSection>
+
+          {/* Section 3: Localisation */}
+          <FormPageSection title="Localisation">
+            <Box sx={{ mb: spacing.mui.lg }}>
+              <LocationPicker
+                latitude={latitude}
+                longitude={longitude}
+                adresse={adresse}
+                onLocationChange={(location) => {
+                  setLatitude(location.latitude)
+                  setLongitude(location.longitude)
+                  setAdresse(location.adresse)
+                }}
+              />
+            </Box>
+            <FormGroup columns={1}>
+              <FormField fullWidth>
+                <TextField
+                  label="Zone Géographique"
+                  value={zoneGeographique}
+                  onChange={(e) => setZoneGeographique(e.target.value)}
+                  fullWidth
+                  size="small"
+                  placeholder="Ex: Casablanca, Rabat-Salé-Kénitra, Région du Nord..."
+                  helperText="Indiquez la région ou zone administrative du marché"
+                  sx={componentStyles.inputField}
+                />
+              </FormField>
+            </FormGroup>
+          </FormPageSection>
+
+          {/* Section 4: Lignes du Marché */}
+          <FormPageSection title={`Lignes du Marché (${lignes.length})`}>
+            <Box sx={{ mb: spacing.mui.lg }}>
+              <Button
+                variant="outlined"
+                startIcon={<Add />}
+                onClick={ajouterLigne}
+                sx={componentStyles.buttonSecondary}
+              >
+                Ajouter une Ligne
+              </Button>
+            </Box>
+
+            {lignes.map((ligne, index) => (
+              <Box
+                key={index}
+                sx={{
+                  mb: spacing.mui.lg,
+                  p: { xs: 2, sm: 2.5 },
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: borders.radius.lg,
+                  bgcolor: colors.neutral[25],
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography sx={{
+                    fontWeight: typography.weights.semibold,
+                    color: colors.textPrimary,
+                    fontSize: typography.sizes.sm,
+                  }}>
+                    Ligne #{ligne.numeroLigne}
+                  </Typography>
+                  <IconButton
+                    onClick={() => supprimerLigne(index)}
+                    size="small"
+                    sx={{ color: colors.danger[500], '&:hover': { bgcolor: colors.danger[50] } }}
+                  >
+                    <Delete sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Box>
+
+                <FormGroup columns={1}>
+                  <FormField fullWidth>
+                    <TextField
+                      label="Désignation"
                       value={ligne.designation}
                       onChange={(e) => updateLigne(index, 'designation', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Unité
-                    </label>
-                    <select
-                      value={ligne.unite || 'u'}
-                      onChange={(e) => updateLigne(index, 'unite', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="u">Unité (u)</option>
-                      <option value="m²">m²</option>
-                      <option value="ml">ml</option>
-                      <option value="kg">kg</option>
-                      <option value="forfait">Forfait</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Quantité
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.001"
-                      value={ligne.quantite || 1}
-                      onChange={(e) => updateLigne(index, 'quantite', Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Prix Unit. HT (MAD)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
                       required
-                      value={ligne.prixUnitaireHT}
-                      onChange={(e) => updateLigne(index, 'prixUnitaireHT', Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      fullWidth
+                      size="small"
+                      sx={componentStyles.inputField}
                     />
-                  </div>
+                  </FormField>
+                </FormGroup>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Montant HT
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formatCurrency(ligne.montantHT)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100"
-                    />
-                  </div>
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
+                  gap: spacing.mui.md,
+                  mb: spacing.mui.md,
+                }}>
+                  <TextField
+                    label="Unité"
+                    select
+                    value={ligne.unite || 'u'}
+                    onChange={(e) => updateLigne(index, 'unite', e.target.value)}
+                    fullWidth
+                    size="small"
+                    sx={componentStyles.inputField}
+                  >
+                    <MenuItem value="u">Unité (u)</MenuItem>
+                    <MenuItem value="m²">m²</MenuItem>
+                    <MenuItem value="ml">ml</MenuItem>
+                    <MenuItem value="kg">kg</MenuItem>
+                    <MenuItem value="forfait">Forfait</MenuItem>
+                  </TextField>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      TVA %
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={ligne.tauxTVA}
-                      onChange={(e) => updateLigne(index, 'tauxTVA', Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    />
-                  </div>
+                  <TextField
+                    label="Quantité"
+                    type="number"
+                    value={ligne.quantite || 1}
+                    onChange={(e) => updateLigne(index, 'quantite', Number(e.target.value))}
+                    fullWidth
+                    size="small"
+                    inputProps={{ min: 0, step: '0.001' }}
+                    sx={componentStyles.inputField}
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Montant TTC
-                    </label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formatCurrency(ligne.montantTTC)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 font-semibold"
-                    />
-                  </div>
-                </div>
+                  <TextField
+                    label="Prix Unit. HT (MAD)"
+                    type="number"
+                    value={ligne.prixUnitaireHT}
+                    onChange={(e) => updateLigne(index, 'prixUnitaireHT', Number(e.target.value))}
+                    required
+                    fullWidth
+                    size="small"
+                    inputProps={{ min: 0, step: '0.01' }}
+                    sx={componentStyles.inputField}
+                  />
+
+                  <TextField
+                    label="TVA %"
+                    type="number"
+                    value={ligne.tauxTVA}
+                    onChange={(e) => updateLigne(index, 'tauxTVA', Number(e.target.value))}
+                    fullWidth
+                    size="small"
+                    inputProps={{ min: 0, step: '0.01' }}
+                    sx={componentStyles.inputField}
+                  />
+                </Box>
+
+                {/* Montants calculés */}
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                  gap: spacing.mui.md,
+                  mb: dimensions.length > 0 ? spacing.mui.md : 0,
+                }}>
+                  <TextField
+                    label="Montant HT"
+                    value={formatCurrency(ligne.montantHT)}
+                    fullWidth
+                    size="small"
+                    disabled
+                    sx={componentStyles.inputField}
+                  />
+                  <TextField
+                    label="Montant TVA"
+                    value={formatCurrency(ligne.montantTVA)}
+                    fullWidth
+                    size="small"
+                    disabled
+                    sx={componentStyles.inputField}
+                  />
+                  <TextField
+                    label="Montant TTC"
+                    value={formatCurrency(ligne.montantTTC)}
+                    fullWidth
+                    size="small"
+                    disabled
+                    sx={{
+                      ...componentStyles.inputField,
+                      '& .MuiOutlinedInput-root': {
+                        ...componentStyles.inputField['& .MuiOutlinedInput-root'],
+                        fontWeight: typography.weights.semibold,
+                      },
+                    }}
+                  />
+                </Box>
 
                 {/* Imputation Analytique */}
                 {dimensions.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <h5 className="text-sm font-medium text-gray-700 mb-3">Imputation Analytique</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <Box sx={{
+                    pt: spacing.mui.md,
+                    borderTop: `1px solid ${colors.divider}`,
+                  }}>
+                    <Typography sx={{
+                      fontSize: typography.sizes.xs,
+                      fontWeight: typography.weights.semibold,
+                      color: colors.textSecondary,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      mb: spacing.mui.sm,
+                    }}>
+                      Imputation Analytique
+                    </Typography>
+                    <Box sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(3, 1fr)' },
+                      gap: spacing.mui.sm,
+                    }}>
                       {dimensions.map(dim => (
-                        <div key={dim.code}>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">
-                            {dim.libelle} {dim.obligatoire && <span className="text-red-500">*</span>}
-                          </label>
-                          <select
-                            required={dim.obligatoire}
-                            value={ligne.imputationAnalytique?.[dim.code] || ''}
-                            onChange={(e) => updateImputationLigne(index, dim.code, e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
-                          >
-                            <option value="">-- Sélectionner --</option>
-                            {dim.valeurs.map(val => (
-                              <option key={val.code} value={val.code}>
-                                {val.code} - {val.libelle}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        <TextField
+                          key={dim.code}
+                          label={dim.libelle}
+                          select
+                          required={dim.obligatoire}
+                          value={ligne.imputationAnalytique?.[dim.code] || ''}
+                          onChange={(e) => updateImputationLigne(index, dim.code, e.target.value)}
+                          fullWidth
+                          size="small"
+                          sx={componentStyles.inputField}
+                        >
+                          <MenuItem value="">
+                            <Typography sx={{ color: colors.textSecondary, fontSize: typography.sizes.xs }}>
+                              -- Sélectionner --
+                            </Typography>
+                          </MenuItem>
+                          {dim.valeurs.map(val => (
+                            <MenuItem key={val.code} value={val.code}>
+                              {val.code} - {val.libelle}
+                            </MenuItem>
+                          ))}
+                        </TextField>
                       ))}
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
-              </div>
+              </Box>
             ))}
 
             {lignes.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Aucune ligne ajoutée. Cliquez sur "Ajouter Ligne" pour commencer.
-              </div>
+              <Box sx={{
+                textAlign: 'center',
+                py: spacing.mui['4xl'],
+                color: colors.textSecondary,
+              }}>
+                <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textDisabled }}>
+                  Aucune ligne ajoutée. Cliquez sur "Ajouter une Ligne" pour commencer.
+                </Typography>
+              </Box>
             )}
-          </div>
 
-          {/* Totaux */}
-          {lignes.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="flex justify-end">
-                <div className="w-full md:w-1/2 lg:w-1/3 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">Total HT:</span>
-                    <span className="font-semibold">{formatCurrency(montantHt)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">Total TVA:</span>
-                    <span className="font-semibold">{formatCurrency(montantTva)}</span>
-                  </div>
-                  <div className="flex justify-between text-lg border-t pt-2">
-                    <span className="font-bold">Total TTC:</span>
-                    <span className="font-bold text-info">{formatCurrency(montantTtc)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </Card>
+            {/* Totaux */}
+            {lignes.length > 0 && (
+              <Box sx={{
+                mt: spacing.mui.lg,
+                pt: spacing.mui.lg,
+                borderTop: `2px solid ${colors.border}`,
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}>
+                <Box sx={{
+                  width: { xs: '100%', md: '50%', lg: '35%' },
+                  bgcolor: colors.neutral[25],
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: borders.radius.lg,
+                  p: 2,
+                }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+                      Total HT
+                    </Typography>
+                    <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold }}>
+                      {formatCurrency(montantHt)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+                      Total TVA
+                    </Typography>
+                    <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold }}>
+                      {formatCurrency(montantTva)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    pt: 1,
+                    borderTop: `1px solid ${colors.border}`,
+                  }}>
+                    <Typography sx={{ fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary }}>
+                      Total TTC
+                    </Typography>
+                    <Typography sx={{ fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.primary[600] }}>
+                      {formatCurrency(montantTtc)}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+          </FormPageSection>
+        </FormLayout>
       </form>
+
+      {/* Fournisseur Creation Dialog */}
+      <FournisseurDialog
+        open={fournisseurDialogOpen}
+        onClose={() => setFournisseurDialogOpen(false)}
+        onSuccess={(newFournisseur) => {
+          setFournisseurs(prev => [...prev, newFournisseur])
+          setFournisseurId(newFournisseur.id)
+        }}
+      />
     </AppLayout>
   )
 }

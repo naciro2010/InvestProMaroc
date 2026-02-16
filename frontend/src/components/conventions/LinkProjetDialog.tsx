@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { conventionsAPI, projetConventionsAPI } from '@/lib/api';
-import { projetsAPI } from '@/lib/projetsAPI';
+import { projetsAPI, Projet } from '@/lib/projetsAPI';
 import { colors, typography } from '@/lib/designSystem';
 
 interface ProjetListItem {
@@ -94,8 +94,7 @@ export default function LinkProjetDialog({
 
       // Extract data - both endpoints may wrap in ApiResponse
       const rawProjets = allProjetsRes.data;
-      const unwrapped = (rawProjets as { data?: ProjetListItem[] }).data || (Array.isArray(rawProjets) ? rawProjets : []);
-      const allProjets: ProjetListItem[] = (unwrapped as ProjetListItem[]).filter((p): p is ProjetListItem => p.id != null);
+      const unwrapped = (rawProjets as { data?: Projet[] }).data ?? (Array.isArray(rawProjets) ? rawProjets : []);
       const linkedAssociations: ProjetConventionRecord[] = linkedRes.data.data || linkedRes.data || [];
 
       // Build set of already-linked projet IDs
@@ -103,10 +102,10 @@ export default function LinkProjetDialog({
         linkedAssociations.map((assoc: ProjetConventionRecord) => assoc.projetId)
       );
 
-      // Filter out already-linked projets
-      const available = allProjets.filter(
-        (p: ProjetListItem) => p.id != null && !linkedProjetIds.has(p.id)
-      );
+      // Filter out already-linked projets and map to ProjetListItem (Projet.id is optional)
+      const available: ProjetListItem[] = unwrapped
+        .filter((p) => p.id != null && !linkedProjetIds.has(p.id!))
+        .map((p) => ({ id: p.id!, code: p.code, nom: p.nom, budgetTotal: p.budgetTotal, statut: p.statut }));
 
       setAvailableProjets(available);
       setFilteredProjets(available);

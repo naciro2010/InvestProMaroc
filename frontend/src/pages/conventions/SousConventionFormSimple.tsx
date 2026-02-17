@@ -37,7 +37,7 @@ interface ParentConventionInfo {
   tauxCommission: number
   baseCalcul: string
   tauxTva: number
-  montant?: number
+  budget?: number
 }
 
 interface EditingSousConventionData {
@@ -198,7 +198,7 @@ const SousConventionFormSimple = ({
     }
   }
 
-  const parentBudget = parentConvention.montant || 0
+  const parentBudget = parentConvention.budget || 0
   const hasBudgetInfo = parentBudget > 0
 
   return (

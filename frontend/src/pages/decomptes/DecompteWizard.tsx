@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   Box,
   Container,
@@ -67,12 +67,14 @@ interface DecompteFormData {
 
 const DecompteWizard = () => {
   const navigate = useNavigate()
+  const { marcheId: routeMarcheId } = useParams<{ marcheId: string }>()
+  const prefilledMarcheId = routeMarcheId ? parseInt(routeMarcheId) : null
   const [activeStep, setActiveStep] = useState(0)
   const [marches, setMarches] = useState<Marche[]>([])
 
   const [formData, setFormData] = useState<DecompteFormData>({
     numeroDecompte: '',
-    marcheId: null,
+    marcheId: prefilledMarcheId,
     dateDecompte: new Date().toISOString().split('T')[0],
     periodeDebut: '',
     periodeFin: '',
@@ -134,7 +136,11 @@ const DecompteWizard = () => {
       return await decomptesAPI.create(payload)
     },
     onSuccess: () => {
-      navigate('/decomptes')
+      if (prefilledMarcheId) {
+        navigate(`/marches/${prefilledMarcheId}`)
+      } else {
+        navigate('/marches')
+      }
     },
   })
 
@@ -242,21 +248,33 @@ const DecompteWizard = () => {
               />
             </Box>
 
-            <TextField
-              fullWidth
-              select
-              label="Marché"
-              required
-              value={formData.marcheId || ''}
-              onChange={handleChange('marcheId')}
-            >
-              <MenuItem value="">-- Sélectionner un marché --</MenuItem>
-              {marches.map((m) => (
-                <MenuItem key={m.id} value={m.id}>
-                  {m.code} - {m.objet.substring(0, 50)}...
-                </MenuItem>
-              ))}
-            </TextField>
+            {prefilledMarcheId ? (
+              <TextField
+                fullWidth
+                label="Marché"
+                value={marches.find(m => m.id === prefilledMarcheId)?.code
+                  ? `${marches.find(m => m.id === prefilledMarcheId)?.code} - ${marches.find(m => m.id === prefilledMarcheId)?.objet?.substring(0, 50) ?? ''}`
+                  : `Marché #${prefilledMarcheId}`}
+                InputProps={{ readOnly: true }}
+                sx={{ '& .MuiInputBase-input': { bgcolor: '#f9fafb' } }}
+              />
+            ) : (
+              <TextField
+                fullWidth
+                select
+                label="Marché"
+                required
+                value={formData.marcheId || ''}
+                onChange={handleChange('marcheId')}
+              >
+                <MenuItem value="">-- Sélectionner un marché --</MenuItem>
+                {marches.map((m) => (
+                  <MenuItem key={m.id} value={m.id}>
+                    {m.code} - {m.objet.substring(0, 50)}...
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
 
             <Typography variant="subtitle2" gutterBottom fontWeight={600}>
               Période couverte
@@ -658,7 +676,7 @@ const DecompteWizard = () => {
               <Button
                 variant="outlined"
                 startIcon={<ArrowBack />}
-                onClick={() => navigate('/decomptes')}
+                onClick={() => prefilledMarcheId ? navigate(`/marches/${prefilledMarcheId}`) : navigate('/marches')}
               >
                 Retour
               </Button>

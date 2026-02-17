@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings, Briefcase, ChevronDown,
-  ShoppingCart, UserCog, Wallet, FileCheck, Banknote, ClipboardCheck,
+  ShoppingCart, UserCog, Wallet,
   Tags, Handshake, BarChart3
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -41,9 +41,6 @@ const defaultMenuGroups: MenuGroup[] = [
   ]},
   { key: 'execution-marches', label: 'Exécution des marchés', items: [
     { icon: <ShoppingCart className="w-[18px] h-[18px]" />, label: 'Marchés', path: '/marches', implemented: true },
-    { icon: <FileCheck className="w-[18px] h-[18px]" />, label: 'Décomptes', path: '/decomptes', implemented: true },
-    { icon: <Banknote className="w-[18px] h-[18px]" />, label: 'Paiements', path: '/paiements', implemented: true },
-    { icon: <ClipboardCheck className="w-[18px] h-[18px]" />, label: 'Ordres de Paiement', path: '/ordres-paiement', implemented: true },
   ]},
   { key: 'contrats-documents', label: 'Contrats & Documents', items: [
     { icon: <Briefcase className="w-[18px] h-[18px]" />, label: 'Contrats', path: '/marches', implemented: true },

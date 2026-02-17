@@ -46,12 +46,8 @@ const BudgetDetailPageModern = lazy(() => import('./pages/budgets/BudgetDetailPa
 // Fournisseurs
 const FournisseursPage = lazy(() => import('./pages/fournisseurs/FournisseursPage'))
 
-// Décomptes & Paiements
-const DecomptesPage = lazy(() => import('./pages/decomptes/DecomptesPageComplete'))
+// Décomptes (marché-scoped)
 const DecompteWizard = lazy(() => import('./pages/decomptes/DecompteWizard'))
-const OrdresPaiementPage = lazy(() => import('./pages/paiements/OrdresPaiementPageComplete'))
-const PaiementsPage = lazy(() => import('./pages/paiements/PaiementsPageComplete'))
-const VersementsPrevisionnelsPage = lazy(() => import('./pages/versements/VersementsPrevisionnelsPage'))
 
 // Settings & Parametrage
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
@@ -251,6 +247,14 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/marches/:marcheId/decomptes/nouveau"
+                      element={
+                        <ProtectedRoute>
+                          <DecompteWizard />
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* Projets */}
                     <Route
@@ -316,54 +320,6 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <BudgetDetailPageModern />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Décomptes */}
-                    <Route
-                      path="/decomptes"
-                      element={
-                        <ProtectedRoute>
-                          <DecomptesPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/decomptes/nouveau"
-                      element={
-                        <ProtectedRoute>
-                          <DecompteWizard />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Ordres de Paiement */}
-                    <Route
-                      path="/ordres-paiement"
-                      element={
-                        <ProtectedRoute>
-                          <OrdresPaiementPage />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Paiements */}
-                    <Route
-                      path="/paiements"
-                      element={
-                        <ProtectedRoute>
-                          <PaiementsPage />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    {/* Versements Prévisionnels */}
-                    <Route
-                      path="/versements-previsionnels"
-                      element={
-                        <ProtectedRoute>
-                          <VersementsPrevisionnelsPage />
                         </ProtectedRoute>
                       }
                     />

@@ -201,7 +201,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
         <Button
           variant="contained"
           startIcon={<Add />}
-          onClick={() => navigate('/decomptes/nouveau')}
+          onClick={() => navigate(`/marches/${marcheId}/decomptes/nouveau`)}
           sx={componentStyles.buttonPrimary}
           size="small"
         >

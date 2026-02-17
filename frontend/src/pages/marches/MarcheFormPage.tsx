@@ -18,6 +18,7 @@ import LocationPicker from '@/components/ui/LocationPicker'
 import FournisseurDialog from '@/components/marches/FournisseurDialog'
 import { fournisseursAPI, conventionsAPI, dimensionsAPI } from '@/lib/api'
 import { colors, typography, componentStyles, borders, spacing } from '@/lib/designSystem'
+import RichTextEditor from '@/components/common/RichTextEditor'
 import { MarcheLigne, DimensionAnalytique } from '@/types/entities'
 
 interface Dimension extends DimensionAnalytique {
@@ -438,16 +439,13 @@ export default function MarcheFormPage() {
 
             <FormGroup columns={1}>
               <FormField fullWidth>
-                <TextField
+                <RichTextEditor
                   label="Objet du Marché"
                   value={objet}
-                  onChange={(e) => setObjet(e.target.value)}
+                  onChange={setObjet}
                   required
-                  fullWidth
-                  size="small"
-                  multiline
-                  rows={3}
-                  sx={componentStyles.inputField}
+                  placeholder="Description de l'objet du marché..."
+                  minHeight={120}
                 />
               </FormField>
             </FormGroup>
@@ -508,15 +506,12 @@ export default function MarcheFormPage() {
                 />
               </FormField>
               <FormField>
-                <TextField
+                <RichTextEditor
                   label="Remarques"
                   value={remarques}
-                  onChange={(e) => setRemarques(e.target.value)}
-                  fullWidth
-                  size="small"
-                  multiline
-                  rows={2}
-                  sx={componentStyles.inputField}
+                  onChange={setRemarques}
+                  placeholder="Remarques ou observations..."
+                  minHeight={100}
                 />
               </FormField>
             </FormGroup>

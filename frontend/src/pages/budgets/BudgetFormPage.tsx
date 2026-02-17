@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import AppLayout from '../../components/layout/AppLayout'
+import RichTextEditor from '../../components/common/RichTextEditor'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
 import type { Convention } from '../../types/entities'
 
@@ -228,15 +229,12 @@ export default function BudgetFormPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Observations
-                </label>
-                <textarea
-                  rows={4}
+                <RichTextEditor
+                  label="Observations"
                   value={formData.observations || ''}
-                  onChange={(e) => handleChange('observations', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(value) => handleChange('observations', value)}
                   placeholder="Observations ou notes concernant ce budget..."
+                  minHeight={120}
                 />
               </div>
 

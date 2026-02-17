@@ -146,7 +146,29 @@ const ConventionInfoCardLazy = ({ conventionId, canEdit }: ConventionInfoCardLaz
 
         <InfoRow label="Code" value={convention.code} />
         <InfoRow label="Numero" value={convention.numero} />
-        <InfoRow label="Libelle" value={convention.libelle} />
+
+        {convention.libelle && (
+          <Box sx={{ mt: 1.5 }}>
+            <Typography sx={{
+              fontSize: typography.sizes.xs,
+              color: colors.textSecondary,
+              fontWeight: typography.weights.medium,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              mb: 0.5,
+            }}>
+              Libelle
+            </Typography>
+            <Box sx={{
+              p: 1.5,
+              bgcolor: colors.neutral[25],
+              borderRadius: '6px',
+              border: `1px solid ${colors.borderSubtle}`,
+            }}>
+              <RichTextDisplay html={convention.libelle} />
+            </Box>
+          </Box>
+        )}
 
         {convention.objet && (
           <Box sx={{ mt: 1.5 }}>

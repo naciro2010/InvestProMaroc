@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
+import RichTextEditor from '@/components/common/RichTextEditor';
 import { projetsAPI, Projet } from '@/lib/projetsAPI';
 
 const ProjetFormPage = () => {
@@ -135,14 +136,12 @@ const ProjetFormPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  rows={4}
+                <RichTextEditor
+                  label="Description"
                   value={formData.description || ''}
-                  onChange={(e) => handleChange('description', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(value) => handleChange('description', value)}
+                  placeholder="Description du projet..."
+                  minHeight={120}
                 />
               </div>
 
@@ -201,26 +200,22 @@ const ProjetFormPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Objectifs
-                </label>
-                <textarea
-                  rows={3}
+                <RichTextEditor
+                  label="Objectifs"
                   value={formData.objectifs || ''}
-                  onChange={(e) => handleChange('objectifs', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(value) => handleChange('objectifs', value)}
+                  placeholder="Objectifs du projet..."
+                  minHeight={100}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Remarques
-                </label>
-                <textarea
-                  rows={2}
+                <RichTextEditor
+                  label="Remarques"
                   value={formData.remarques || ''}
-                  onChange={(e) => handleChange('remarques', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onChange={(value) => handleChange('remarques', value)}
+                  placeholder="Remarques ou observations..."
+                  minHeight={80}
                 />
               </div>
 

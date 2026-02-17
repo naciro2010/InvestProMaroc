@@ -9,4 +9,6 @@ export {
   FormSection,
 } from './FormFields'
 
+export { FormRichTextField } from './FormRichTextField'
+
 export type { FC } from 'react'

@@ -8,7 +8,7 @@ interface SousConvention {
   numero: string
   libelle: string
   statut: string
-  montant: number
+  budget: number
   dateDebut: string
 }
 
@@ -72,7 +72,7 @@ const ConventionSousConventionsCard = ({
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" fontWeight={600}>
-                          {formatCurrency(sc.montant)}
+                          {formatCurrency(sc.budget)}
                         </Typography>
                       </TableCell>
                     </TableRow>

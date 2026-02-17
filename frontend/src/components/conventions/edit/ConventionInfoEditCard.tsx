@@ -19,7 +19,7 @@ import { FormTextField, FormSelectField } from '../../form'
 import RichTextEditor from '../../common/RichTextEditor'
 import { getEnabledConventionTypes } from '../../../lib/settings/conventionSettings'
 import { useConventionConfiguration } from '../../../hooks/useConventionConfiguration'
-import { getPlainTextLength, stripHtml } from '../../../utils/textUtils'
+import { getPlainTextLength } from '../../../utils/textUtils'
 
 // Schema validation
 const infoSchema = z.object({
@@ -96,12 +96,8 @@ const ConventionInfoEditCard = ({ conventionId }: Props) => {
   const handleSave = async (data: InfoFormData) => {
     try {
       setSaving(true)
-      // Micro-endpoint: only update basic info
-      await api.patch(`/conventions/${conventionId}/basic`, {
-        ...data,
-        libelle: stripHtml(data.libelle),
-        objet: stripHtml(data.objet),
-      })
+      // Micro-endpoint: only update basic info (preserve rich text HTML)
+      await api.patch(`/conventions/${conventionId}/basic`, data)
       showToast('Informations mises à jour', 'success')
       setEditing(false)
       reset(data) // Reset form to mark as not dirty

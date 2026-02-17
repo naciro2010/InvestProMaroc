@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -16,12 +16,16 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  Autocomplete,
+  CircularProgress,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
   Add as AddIcon,
 } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
+import { categoriesDepensesAPI } from '@/lib/api'
+import type { CategorieDepenseListDTO, ApiResponse } from '@/types/api'
 import {
   formatCurrency,
   type ConventionWizardFormData,
@@ -41,6 +45,9 @@ const WizardStepBudget = ({
   setFormData,
   totals,
 }: WizardStepBudgetProps) => {
+  const [categories, setCategories] = useState<CategorieDepenseListDTO[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
+  const [selectedCategorie, setSelectedCategorie] = useState<CategorieDepenseListDTO | null>(null)
   const [newLigne, setNewLigne] = useState<BudgetLigne>({
     designation: '',
     montantHT: 0,
@@ -48,15 +55,29 @@ const WizardStepBudget = ({
     montantTTC: 0,
   })
 
+  useEffect(() => {
+    categoriesDepensesAPI.getList()
+      .then((res: { data: ApiResponse<CategorieDepenseListDTO[]> }) => {
+        setCategories(res.data.data ?? [])
+      })
+      .catch(() => {
+        setCategories([])
+      })
+      .finally(() => {
+        setLoadingCategories(false)
+      })
+  }, [])
+
   const handleAddLigne = () => {
     if (newLigne.designation && newLigne.montantHT > 0) {
       const montantTTC = newLigne.montantHT * (1 + newLigne.tauxTVA / 100)
-      const ligneToAdd = { ...newLigne, montantTTC }
+      const ligneToAdd: BudgetLigne = { ...newLigne, montantTTC }
       setFormData((prev) => ({
         ...prev,
         lignesBudget: [...prev.lignesBudget, ligneToAdd],
       }))
       setNewLigne({ designation: '', montantHT: 0, tauxTVA: 20, montantTTC: 0 })
+      setSelectedCategorie(null)
     }
   }
 
@@ -67,11 +88,19 @@ const WizardStepBudget = ({
     }))
   }
 
+  const usedCategoryIds = formData.lignesBudget
+    .map((l) => l.categorieDepenseId)
+    .filter((id): id is number => id !== undefined)
+
+  const availableCategories = categories.filter(
+    (cat) => !usedCategoryIds.includes(cat.id)
+  )
+
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
       <Box>
         <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-          💰 Budget & Montants
+          Budget & Montants
         </Typography>
         <Divider sx={{ mb: 3 }} />
       </Box>
@@ -101,7 +130,7 @@ const WizardStepBudget = ({
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="subtitle2" fontWeight={600}>
-            Détail par Lignes (Optionnel)
+            Répartition par Catégories de Dépenses (Optionnel)
           </Typography>
           <Chip
             label={`${formData.lignesBudget.length} ligne(s)`}
@@ -121,12 +150,40 @@ const WizardStepBudget = ({
               alignItems: 'flex-end',
             }}
           >
-            <TextField
+            <Autocomplete
               size="small"
-              label="Désignation"
-              value={newLigne.designation}
-              onChange={(e) => setNewLigne({ ...newLigne, designation: e.target.value })}
-              placeholder="Travaux, Fournitures, etc."
+              options={availableCategories}
+              loading={loadingCategories}
+              value={selectedCategorie}
+              getOptionLabel={(option) => `${option.code} - ${option.libelle}`}
+              groupBy={(option) => option.categorie ?? 'Autre'}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onChange={(_event, value) => {
+                setSelectedCategorie(value)
+                setNewLigne((prev) => ({
+                  ...prev,
+                  categorieDepenseId: value?.id,
+                  designation: value ? value.libelle : '',
+                }))
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Catégorie de dépense"
+                  placeholder="Sélectionner une catégorie"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loadingCategories ? <CircularProgress size={18} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              noOptionsText="Aucune catégorie disponible"
+              loadingText="Chargement..."
             />
             <DecimalInput
               size="small"
@@ -164,6 +221,7 @@ const WizardStepBudget = ({
               size="small"
               startIcon={<AddIcon />}
               onClick={handleAddLigne}
+              disabled={!newLigne.designation || newLigne.montantHT <= 0}
               sx={{ height: 40 }}
             >
               Ajouter
@@ -177,7 +235,7 @@ const WizardStepBudget = ({
             <Table size="small">
               <TableHead sx={{ bgcolor: '#f5f5f5' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Désignation</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Catégorie</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
                     Montant HT
                   </TableCell>
@@ -193,21 +251,33 @@ const WizardStepBudget = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {formData.lignesBudget.map((ligne, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>{ligne.designation}</TableCell>
-                    <TableCell align="right">{formatCurrency(ligne.montantHT)}</TableCell>
-                    <TableCell align="right">{ligne.tauxTVA}%</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>
-                      {formatCurrency(ligne.montantTTC)}
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton size="small" color="error" onClick={() => handleDeleteLigne(idx)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {formData.lignesBudget.map((ligne, idx) => {
+                  const cat = categories.find((c) => c.id === ligne.categorieDepenseId)
+                  return (
+                    <TableRow key={idx}>
+                      <TableCell>
+                        {cat ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip label={cat.code} size="small" variant="outlined" color="primary" />
+                            <span>{cat.libelle}</span>
+                          </Box>
+                        ) : (
+                          ligne.designation
+                        )}
+                      </TableCell>
+                      <TableCell align="right">{formatCurrency(ligne.montantHT)}</TableCell>
+                      <TableCell align="right">{ligne.tauxTVA}%</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        {formatCurrency(ligne.montantTTC)}
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton size="small" color="error" onClick={() => handleDeleteLigne(idx)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </TableContainer>
@@ -226,7 +296,7 @@ const WizardStepBudget = ({
       {/* Résumé de la Convention */}
       <Card sx={{ p: 3, bgcolor: '#f0f9ff', border: '2px solid #0ea5e9' }}>
         <Typography variant="h6" fontWeight={700} color="primary" sx={{ mb: 2 }}>
-          📊 Résumé de la Convention
+          Résumé de la Convention
         </Typography>
         <Divider sx={{ mb: 2 }} />
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
@@ -261,7 +331,7 @@ const WizardStepBudget = ({
               </Typography>
               {totals.differenceGlobalVsLignes < 0 && (
                 <Alert severity="warning" sx={{ mt: 1 }}>
-                  ⚠️ Le total des lignes dépasse le budget global !
+                  Le total des lignes dépasse le budget global !
                 </Alert>
               )}
             </Box>

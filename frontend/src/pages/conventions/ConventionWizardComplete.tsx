@@ -76,7 +76,7 @@ const ConventionWizardComplete = () => {
           formData.objetRich
         )
       case 1: // Budget
-        return formData.budgetGlobal > 0
+        return formData.budgetGlobal > 0 && totals.differenceGlobalVsLignes >= 0
       case 2: // Commission
         return formData.tauxCommission > 0
       case 3: // Subventions (optional)

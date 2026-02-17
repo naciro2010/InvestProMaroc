@@ -12,6 +12,7 @@ export interface UploadedFile {
 
 export interface BudgetLigne {
   id?: string
+  categorieDepenseId?: number
   designation: string
   montantHT: number
   tauxTVA: number

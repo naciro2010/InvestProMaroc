@@ -16,3 +16,6 @@ export { default as ConventionImputationsCard } from './ConventionImputationsCar
 export { default as ConventionWorkflowActions } from './ConventionWorkflowActions'
 export { default as ConventionVersementsCard } from './ConventionVersementsCard'
 export { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedTab'
+
+// Parent convention banner (sous-convention detail)
+export { default as ParentConventionBanner } from './ParentConventionBanner'

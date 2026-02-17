@@ -148,6 +148,9 @@ export interface ConventionBasicDTO {
   typeConvention: ConventionType
   statut: ConventionStatus
   createdBy: string | null
+  parentConventionId: number | null
+  parentConventionNumero: string | null
+  heriteParametres: boolean
 }
 
 export interface ConventionFinancesDTO {

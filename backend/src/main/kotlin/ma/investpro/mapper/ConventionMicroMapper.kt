@@ -40,7 +40,10 @@ class ConventionMicroMapper(
             objet = convention.objet,
             typeConvention = convention.typeConvention,
             statut = convention.statut,
-            createdBy = null // Convention entity does not have createdBy field
+            createdBy = null, // Convention entity does not have createdBy field
+            parentConventionId = convention.parentConvention?.id,
+            parentConventionNumero = convention.parentConvention?.numero,
+            heriteParametres = convention.heriteParametres
         )
     }
 

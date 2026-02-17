@@ -19,6 +19,7 @@ import {
 import { ArrowBack, ArrowForward, Check, Add, Delete } from '@mui/icons-material'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
+import DecimalInput from '@/components/ui/DecimalInput'
 import { PageHeader } from '@/components/core'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
@@ -172,7 +173,7 @@ const DecompteWizard = () => {
     const newRetenues = [...formData.retenues]
     newRetenues[index] = {
       ...newRetenues[index],
-      [field]: field === 'montant' ? parseFloat(value as string) || 0 : value
+      [field]: field === 'montant' ? (typeof value === 'number' ? value : parseFloat(value) || 0) : value
     }
     setFormData({ ...formData, retenues: newRetenues })
   }
@@ -342,31 +343,33 @@ const DecompteWizard = () => {
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Montant brut HT (DH)"
-                type="number"
                 required
                 value={formData.montantBrutHT}
-                onChange={handleChange('montantBrutHT')}
-                inputProps={{ min: 0, step: 0.01 }}
+                onChange={(value) => setFormData({ ...formData, montantBrutHT: value })}
+                min={0}
+                decimalPlaces={2}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Taux TVA (%)"
-                type="number"
                 required
                 value={formData.tauxTVA}
-                onChange={handleChange('tauxTVA')}
-                inputProps={{ min: 0, max: 100, step: 0.1 }}
+                onChange={(value) => setFormData({ ...formData, tauxTVA: value })}
+                min={0}
+                max={100}
+                decimalPlaces={2}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Montant TTC (DH)"
-                type="number"
                 value={formData.montantTTC}
+                onChange={() => {}}
+                decimalPlaces={2}
                 InputProps={{ readOnly: true }}
                 sx={{
                   '& .MuiInputBase-input': {
@@ -426,14 +429,14 @@ const DecompteWizard = () => {
                       <MenuItem value="AUTRE">Autre</MenuItem>
                     </TextField>
 
-                    <TextField
+                    <DecimalInput
                       fullWidth
                       label="Montant (DH)"
-                      type="number"
                       size="small"
                       value={retenue.montant}
-                      onChange={(e) => updateRetenue(index, 'montant', e.target.value)}
-                      inputProps={{ min: 0, step: 0.01 }}
+                      onChange={(value) => updateRetenue(index, 'montant', value)}
+                      min={0}
+                      decimalPlaces={2}
                     />
 
                     <TextField

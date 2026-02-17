@@ -17,6 +17,7 @@ import { Save, Edit, Cancel as CancelIcon } from '@mui/icons-material'
 import { api } from '../../../lib/api'
 import { useToast } from '../../../contexts/ToastContext'
 import { FormDateField } from '../../form'
+import DecimalInput from '../../ui/DecimalInput'
 import { addMonths, calculateDurationMonths, formatDateInput } from '../../../utils/dateUtils'
 
 // Schema validation avec cross-field validation
@@ -242,10 +243,13 @@ const ConventionDatesEditCard = ({ conventionId }: Props) => {
             name="dureeMois"
             control={control}
             render={({ field }) => (
-              <TextField
-                {...field}
+              <DecimalInput
+                value={field.value ?? 0}
+                onChange={(value) => {
+                  setAutoDateFin(true)
+                  field.onChange(value)
+                }}
                 label="Durée (mois)"
-                type="number"
                 fullWidth
                 disabled={!editing}
                 error={!!errors.dureeMois}
@@ -257,12 +261,8 @@ const ConventionDatesEditCard = ({ conventionId }: Props) => {
                 }
                 variant="outlined"
                 size="small"
-                inputProps={{ min: 0 }}
-                onChange={(event) => {
-                  const nextValue = Number(event.target.value)
-                  setAutoDateFin(true)
-                  field.onChange(Number.isNaN(nextValue) ? 0 : nextValue)
-                }}
+                decimalPlaces={0}
+                min={0}
               />
             )}
           />

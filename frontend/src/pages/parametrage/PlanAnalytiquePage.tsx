@@ -27,6 +27,7 @@ import {
   DragIndicator as DragIcon,
 } from '@mui/icons-material'
 import { dimensionsAPI } from '../../lib/api'
+import DecimalInput from '@/components/ui/DecimalInput'
 
 interface Dimension {
   id: number
@@ -333,11 +334,12 @@ export default function PlanAnalytiquePage() {
               multiline
               rows={2}
             />
-            <TextField
+            <DecimalInput
               label="Ordre"
-              type="number"
               value={formData.ordre}
-              onChange={(e) => setFormData({ ...formData, ordre: parseInt(e.target.value) })}
+              onChange={(value) => setFormData({ ...formData, ordre: value })}
+              decimalPlaces={0}
+              min={0}
             />
             <FormControlLabel
               control={
@@ -390,13 +392,12 @@ export default function PlanAnalytiquePage() {
               multiline
               rows={2}
             />
-            <TextField
+            <DecimalInput
               label="Ordre"
-              type="number"
               value={valeurFormData.ordre}
-              onChange={(e) =>
-                setValeurFormData({ ...valeurFormData, ordre: parseInt(e.target.value) })
-              }
+              onChange={(value) => setValeurFormData({ ...valeurFormData, ordre: value })}
+              decimalPlaces={0}
+              min={0}
             />
           </Stack>
         </DialogContent>

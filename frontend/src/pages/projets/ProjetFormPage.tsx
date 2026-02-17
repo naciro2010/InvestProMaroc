@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import RichTextEditor from '@/components/common/RichTextEditor';
 import { projetsAPI, Projet } from '@/lib/projetsAPI';
+import DecimalInput from '@/components/ui/DecimalInput';
 
 const ProjetFormPage = () => {
   const navigate = useNavigate();
@@ -147,30 +148,27 @@ const ProjetFormPage = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Budget Total (DH) *
-                  </label>
-                  <input
-                    type="number"
+                  <DecimalInput
+                    value={formData.budgetTotal || 0}
+                    onChange={(value) => handleChange('budgetTotal', value)}
+                    min={0}
+                    decimalPlaces={2}
+                    label="Budget Total (DH)"
                     required
-                    min="0"
-                    step="0.01"
-                    value={formData.budgetTotal}
-                    onChange={(e) => handleChange('budgetTotal', parseFloat(e.target.value) || 0)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    fullWidth
+                    size="small"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Durée (mois)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.dureeMois || ''}
-                    onChange={(e) => handleChange('dureeMois', parseInt(e.target.value) || 0)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  <DecimalInput
+                    value={formData.dureeMois || 0}
+                    onChange={(value) => handleChange('dureeMois', value)}
+                    min={1}
+                    decimalPlaces={0}
+                    label="Durée (mois)"
+                    fullWidth
+                    size="small"
                   />
                 </div>
 

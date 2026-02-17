@@ -1,7 +1,5 @@
-import React from 'react';
 import {
   Box,
-  TextField,
   FormControl,
   InputLabel,
   Select,
@@ -10,6 +8,7 @@ import {
   Stack,
   InputAdornment,
 } from '@mui/material';
+import DecimalInput from '../../ui/DecimalInput';
 
 interface ConventionFormData {
   tauxCommission: number;
@@ -36,11 +35,6 @@ interface EditStep2FinancesProps {
  * Composant micro-frontend pour l'édition
  */
 export default function EditStep2Finances({ formData, onChange, errors = {} }: EditStep2FinancesProps): JSX.Element {
-  const handleNumberChange = (field: keyof ConventionFormData, value: string): void => {
-    const numericValue: number = parseFloat(value) || 0;
-    onChange({ [field]: numericValue });
-  };
-
   const handleSelectChange = (field: keyof ConventionFormData, value: string | null): void => {
     onChange({ [field]: value });
   };
@@ -54,43 +48,33 @@ export default function EditStep2Finances({ formData, onChange, errors = {} }: E
       <Stack spacing={3}>
         {/* Budget et Taux de commission */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-          <TextField
+          <DecimalInput
             fullWidth
             required
-            type="number"
             label="Budget"
             value={formData.budget}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              handleNumberChange('budget', e.target.value)
-            }
+            onChange={(value) => onChange({ budget: value })}
             InputProps={{
               endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
             }}
-            inputProps={{
-              min: 0,
-              step: 1000,
-            }}
+            decimalPlaces={2}
+            min={0}
             error={Boolean(errors.budget)}
             helperText={errors.budget || 'Budget total de la convention'}
           />
 
-          <TextField
+          <DecimalInput
             fullWidth
             required
-            type="number"
             label="Taux de commission"
             value={formData.tauxCommission}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              handleNumberChange('tauxCommission', e.target.value)
-            }
+            onChange={(value) => onChange({ tauxCommission: value })}
             InputProps={{
               endAdornment: <InputAdornment position="end">%</InputAdornment>,
             }}
-            inputProps={{
-              min: 0,
-              max: 100,
-              step: 0.01,
-            }}
+            decimalPlaces={2}
+            min={0}
+            max={100}
             error={Boolean(errors.tauxCommission)}
             helperText={errors.tauxCommission || 'Taux de commission (0-100%)'}
           />
@@ -121,23 +105,18 @@ export default function EditStep2Finances({ formData, onChange, errors = {} }: E
             )}
           </FormControl>
 
-          <TextField
+          <DecimalInput
             fullWidth
             required
-            type="number"
             label="Taux TVA"
             value={formData.tauxTva}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              handleNumberChange('tauxTva', e.target.value)
-            }
+            onChange={(value) => onChange({ tauxTva: value })}
             InputProps={{
               endAdornment: <InputAdornment position="end">%</InputAdornment>,
             }}
-            inputProps={{
-              min: 0,
-              max: 20,
-              step: 0.1,
-            }}
+            decimalPlaces={2}
+            min={0}
+            max={20}
             error={Boolean(errors.tauxTva)}
             helperText={errors.tauxTva || 'Taux de TVA applicable'}
           />

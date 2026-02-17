@@ -19,6 +19,7 @@ import {
 import { Save, Cancel } from '@mui/icons-material'
 import { versementsPrevisionnelsAPI, partenairesAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
+import DecimalInput from '@/components/ui/DecimalInput'
 
 interface VersementPrevisionnel {
   id: number
@@ -210,28 +211,28 @@ const VersementFormDialog = ({
             size="small"
           />
 
-          <TextField
+          <DecimalInput
             label="Montant Prevu"
-            type="number"
-            value={formData.montantPrevu || ''}
-            onChange={(e) => handleChange('montantPrevu', parseFloat(e.target.value) || 0)}
+            value={formData.montantPrevu || 0}
+            onChange={(value) => handleChange('montantPrevu', value)}
+            decimalPlaces={2}
+            min={0}
             InputProps={{
               endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
             }}
-            inputProps={{ min: 0, step: 0.01 }}
             size="small"
             helperText="Montant initialement planifie pour ce versement"
           />
 
-          <TextField
+          <DecimalInput
             label="Montant Reel"
-            type="number"
             value={formData.montant}
-            onChange={(e) => handleChange('montant', parseFloat(e.target.value) || 0)}
+            onChange={(value) => handleChange('montant', value)}
+            decimalPlaces={2}
+            min={0}
             InputProps={{
               endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
             }}
-            inputProps={{ min: 0, step: 0.01 }}
             required
             size="small"
             helperText="Montant effectivement verse ou a verser"

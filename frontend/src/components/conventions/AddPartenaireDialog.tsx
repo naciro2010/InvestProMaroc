@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { conventionsAPI, partenairesAPI } from '@/lib/api';
 import { colors, typography, borders } from '@/lib/designSystem';
+import DecimalInput from '@/components/ui/DecimalInput';
 
 interface PartenaireSimple {
   id: number;
@@ -395,28 +396,29 @@ export default function AddPartenaireDialog({
               gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
               gap: 2
             }}>
-              <TextField
+              <DecimalInput
                 fullWidth
                 required
                 label="Budget alloue (MAD)"
-                type="number"
-                value={formData.budgetAlloue}
-                onChange={(e) => handleBudgetChange(e.target.value)}
+                value={parseFloat(formData.budgetAlloue) || 0}
+                onChange={(value) => handleBudgetChange(value.toString())}
+                decimalPlaces={2}
+                min={0}
                 error={Boolean(validationErrors.budgetAlloue)}
                 helperText={validationErrors.budgetAlloue || (hasBudgetInfo ? 'Calcul auto du %' : 'Montant en dirhams')}
-                inputProps={{ min: 0, step: 0.01 }}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 required
                 label="Pourcentage (%)"
-                type="number"
-                value={formData.pourcentage}
-                onChange={(e) => handlePourcentageChange(e.target.value)}
+                value={parseFloat(formData.pourcentage) || 0}
+                onChange={(value) => handlePourcentageChange(value.toString())}
+                decimalPlaces={2}
+                min={0}
+                max={100}
                 error={Boolean(validationErrors.pourcentage)}
                 helperText={validationErrors.pourcentage || (hasBudgetInfo ? 'Calcul auto du budget' : '% du budget total')}
-                inputProps={{ min: 0, max: 100, step: 0.01 }}
               />
             </Box>
 

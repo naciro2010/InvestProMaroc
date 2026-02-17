@@ -24,6 +24,7 @@ import { Convention } from '@/types/entities'
 import FileUpload from '@/components/ui/FileUpload'
 import RichTextEditor from '@/components/common/RichTextEditor'
 import { colors, typography } from '@/lib/designSystem'
+import DecimalInput from '@/components/ui/DecimalInput'
 
 const steps = ['Sélection des modifications', 'Nouvelles valeurs', 'Pièces jointes', 'Récapitulatif']
 
@@ -319,17 +320,17 @@ const AvenantForm = () => {
               }}
             />
             <Typography>→</Typography>
-            <TextField
+            <DecimalInput
               required
-              type="number"
               label="Nouvelle valeur"
-              value={formData.budget}
-              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+              value={Number(formData.budget) || 0}
+              onChange={(value) => setFormData({ ...formData, budget: String(value) })}
+              decimalPlaces={2}
+              min={0}
               size="small"
               sx={{ flex: 1 }}
               InputProps={{
                 endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                inputProps: { step: '0.01', min: '0' }
               }}
             />
           </Stack>
@@ -389,17 +390,18 @@ const AvenantForm = () => {
               }}
             />
             <Typography>→</Typography>
-            <TextField
+            <DecimalInput
               required
-              type="number"
               label="Nouvelle valeur"
-              value={formData.tauxCommission}
-              onChange={(e) => setFormData({ ...formData, tauxCommission: e.target.value })}
+              value={Number(formData.tauxCommission) || 0}
+              onChange={(value) => setFormData({ ...formData, tauxCommission: String(value) })}
+              decimalPlaces={2}
+              min={0}
+              max={100}
               size="small"
               sx={{ flex: 1 }}
               InputProps={{
                 endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                inputProps: { step: '0.01', min: '0', max: '100' }
               }}
             />
           </Stack>

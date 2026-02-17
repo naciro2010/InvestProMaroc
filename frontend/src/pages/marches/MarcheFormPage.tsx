@@ -15,6 +15,7 @@ import { Add, Delete, PersonAdd } from '@mui/icons-material'
 import AppLayout from '@/components/layout/AppLayout'
 import { StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField } from '@/components/core'
 import LocationPicker from '@/components/ui/LocationPicker'
+import DecimalInput from '@/components/ui/DecimalInput'
 import FournisseurDialog from '@/components/marches/FournisseurDialog'
 import { fournisseursAPI, conventionsAPI, dimensionsAPI } from '@/lib/api'
 import { colors, typography, componentStyles, borders, spacing } from '@/lib/designSystem'
@@ -479,14 +480,14 @@ export default function MarcheFormPage() {
                 />
               </FormField>
               <FormField>
-                <TextField
+                <DecimalInput
                   label="Délai Exécution (mois)"
-                  type="number"
-                  value={delaiExecutionMois ?? ''}
-                  onChange={(e) => setDelaiExecutionMois(e.target.value ? Number(e.target.value) : null)}
+                  value={delaiExecutionMois || 0}
+                  onChange={(value) => setDelaiExecutionMois(value || null)}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0 }}
+                  min={0}
+                  decimalPlaces={0}
                   sx={componentStyles.inputField}
                 />
               </FormField>
@@ -494,14 +495,14 @@ export default function MarcheFormPage() {
 
             <FormGroup columns={2}>
               <FormField>
-                <TextField
+                <DecimalInput
                   label="Retenue Garantie (MAD)"
-                  type="number"
                   value={retenueGarantie}
-                  onChange={(e) => setRetenueGarantie(Number(e.target.value))}
+                  onChange={(value) => setRetenueGarantie(value)}
                   fullWidth
                   size="small"
-                  inputProps={{ min: 0, step: '0.01' }}
+                  min={0}
+                  decimalPlaces={2}
                   sx={componentStyles.inputField}
                 />
               </FormField>
@@ -624,37 +625,37 @@ export default function MarcheFormPage() {
                     <MenuItem value="forfait">Forfait</MenuItem>
                   </TextField>
 
-                  <TextField
+                  <DecimalInput
                     label="Quantité"
-                    type="number"
                     value={ligne.quantite || 1}
-                    onChange={(e) => updateLigne(index, 'quantite', Number(e.target.value))}
+                    onChange={(value) => updateLigne(index, 'quantite', value)}
                     fullWidth
                     size="small"
-                    inputProps={{ min: 0, step: '0.001' }}
+                    min={0}
+                    decimalPlaces={3}
                     sx={componentStyles.inputField}
                   />
 
-                  <TextField
+                  <DecimalInput
                     label="Prix Unit. HT (MAD)"
-                    type="number"
                     value={ligne.prixUnitaireHT}
-                    onChange={(e) => updateLigne(index, 'prixUnitaireHT', Number(e.target.value))}
+                    onChange={(value) => updateLigne(index, 'prixUnitaireHT', value)}
                     required
                     fullWidth
                     size="small"
-                    inputProps={{ min: 0, step: '0.01' }}
+                    min={0}
+                    decimalPlaces={2}
                     sx={componentStyles.inputField}
                   />
 
-                  <TextField
+                  <DecimalInput
                     label="TVA %"
-                    type="number"
                     value={ligne.tauxTVA}
-                    onChange={(e) => updateLigne(index, 'tauxTVA', Number(e.target.value))}
+                    onChange={(value) => updateLigne(index, 'tauxTVA', value)}
                     fullWidth
                     size="small"
-                    inputProps={{ min: 0, step: '0.01' }}
+                    min={0}
+                    decimalPlaces={2}
                     sx={componentStyles.inputField}
                   />
                 </Box>

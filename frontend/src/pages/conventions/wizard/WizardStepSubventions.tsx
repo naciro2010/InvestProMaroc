@@ -20,6 +20,7 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
 } from '@mui/icons-material'
+import DecimalInput from '@/components/ui/DecimalInput'
 import {
   formatCurrency,
   type ConventionWizardFormData,
@@ -101,31 +102,32 @@ const WizardStepSubventions = ({
             onChange={(e) => setNewSubvention({ ...newSubvention, organisme: e.target.value })}
             placeholder="Nom de l'organisme"
           />
-          <TextField
+          <DecimalInput
             size="small"
-            type="number"
             label="Montant"
             value={newSubvention.montant}
-            onChange={(e) =>
+            onChange={(value) =>
               setNewSubvention({
                 ...newSubvention,
-                montant: parseFloat(e.target.value) || 0,
+                montant: value,
               })
             }
-            inputProps={{ min: 0 }}
+            decimalPlaces={2}
+            min={0}
           />
-          <TextField
+          <DecimalInput
             size="small"
-            type="number"
             label="%"
             value={newSubvention.pourcentage}
-            onChange={(e) =>
+            onChange={(value) =>
               setNewSubvention({
                 ...newSubvention,
-                pourcentage: parseFloat(e.target.value) || 0,
+                pourcentage: value,
               })
             }
-            inputProps={{ min: 0, max: 100 }}
+            decimalPlaces={2}
+            min={0}
+            max={100}
           />
           <TextField
             size="small"

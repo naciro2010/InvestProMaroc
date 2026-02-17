@@ -23,6 +23,7 @@ import {
   TextField,
 } from '@mui/material'
 import { Add, Delete, TrendingUp, Schedule, Save, Cancel } from '@mui/icons-material'
+import DecimalInput from '@/components/ui/DecimalInput'
 import { conventionsAPI } from '@/lib/api'
 import { colors, componentStyles, typography } from '@/lib/designSystem'
 
@@ -334,12 +335,12 @@ const ConventionImputationsCard = ({
               size="small"
             />
 
-            <TextField
+            <DecimalInput
               label="Délai (mois)"
-              type="number"
               value={formData.delaiMois}
-              onChange={(e) => handleFormChange('delaiMois', parseInt(e.target.value) || 0)}
-              inputProps={{ min: 1 }}
+              onChange={(value) => handleFormChange('delaiMois', value)}
+              decimalPlaces={0}
+              min={1}
               required
               size="small"
               helperText={
@@ -349,14 +350,13 @@ const ConventionImputationsCard = ({
               }
             />
 
-            <TextField
+            <DecimalInput
               label="Montant prévu (MAD)"
-              type="number"
-              value={formData.montantPrevu}
-              onChange={(e) => handleFormChange('montantPrevu', e.target.value)}
-              inputProps={{ min: 0, step: '0.01' }}
+              value={parseFloat(formData.montantPrevu) || 0}
+              onChange={(value) => handleFormChange('montantPrevu', value.toString())}
+              decimalPlaces={2}
+              min={0}
               size="small"
-              placeholder="0.00"
             />
 
             <TextField

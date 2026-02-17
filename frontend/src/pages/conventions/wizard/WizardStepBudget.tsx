@@ -208,11 +208,13 @@ const WizardStepBudget = ({
               min={0}
               max={100}
             />
-            <TextField
+            <DecimalInput
               size="small"
-              type="number"
               label="Montant TTC"
-              value={newLigne.montantTTC.toFixed(2)}
+              value={newLigne.montantTTC}
+              onChange={() => {}}
+              decimalPlaces={2}
+              min={0}
               InputProps={{ readOnly: true }}
               sx={{ bgcolor: '#f5f5f5' }}
             />

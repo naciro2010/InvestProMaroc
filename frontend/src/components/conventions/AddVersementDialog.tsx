@@ -14,6 +14,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import DecimalInput from '@/components/ui/DecimalInput';
 
 interface VersementPrevisionnelForm {
   volet?: string;
@@ -114,25 +115,25 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <TextField
+            <DecimalInput
               fullWidth
-              type="number"
               label="Montant Prevu (MAD)"
-              value={formData.montantPrevu || ''}
-              onChange={(e) => handleChange('montantPrevu', parseFloat(e.target.value) || 0)}
-              inputProps={{ min: 0, step: 0.01 }}
+              value={formData.montantPrevu || 0}
+              onChange={(value) => handleChange('montantPrevu', value)}
+              decimalPlaces={2}
+              min={0}
               helperText="Montant initialement planifie pour ce versement"
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <TextField
+            <DecimalInput
               fullWidth
               required
-              type="number"
               label="Montant Reel (MAD)"
               value={formData.montant}
-              onChange={(e) => handleChange('montant', parseFloat(e.target.value) || 0)}
-              inputProps={{ min: 0, step: 0.01 }}
+              onChange={(value) => handleChange('montant', value)}
+              decimalPlaces={2}
+              min={0}
               helperText="Montant effectivement verse ou a verser"
             />
           </Grid>

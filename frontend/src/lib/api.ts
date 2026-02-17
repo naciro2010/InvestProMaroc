@@ -681,4 +681,99 @@ export const conventionConfigurationAPI = {
   update: (data: ConventionConfigurationPayload) => api.put('/parametrage/conventions', data),
 }
 
+// Reporting API
+export const reportingAPI = {
+  getDashboard: () =>
+    api.get<ApiResponse<DashboardStatsDTO>>('/reporting/dashboard'),
+  getCommissionStatsByPeriod: (annee?: number, mois?: number) =>
+    api.get<ApiResponse<CommissionStatsDTO[]>>('/reporting/commissions/stats/periode', {
+      params: { annee, mois },
+    }),
+  getCommissionStatsByFournisseur: (fournisseurId?: number) =>
+    api.get<ApiResponse<CommissionStatsDTO[]>>('/reporting/commissions/stats/fournisseur', {
+      params: { fournisseurId },
+    }),
+  getCommissionStatsByConvention: (conventionId?: number) =>
+    api.get<ApiResponse<CommissionStatsDTO[]>>('/reporting/commissions/stats/convention', {
+      params: { conventionId },
+    }),
+  getDepenseStatsByPeriod: (annee?: number, mois?: number) =>
+    api.get<ApiResponse<DepenseStatsDTO[]>>('/reporting/depenses/stats/periode', {
+      params: { annee, mois },
+    }),
+  getDepenseStatsByFournisseur: (fournisseurId?: number) =>
+    api.get<ApiResponse<DepenseStatsDTO[]>>('/reporting/depenses/stats/fournisseur', {
+      params: { fournisseurId },
+    }),
+  getPaiementStats: () =>
+    api.get<ApiResponse<PaiementStatsDTO>>('/reporting/paiements/stats'),
+}
+
+// Reporting DTO types (matching backend ReportingDTOs.kt)
+export interface CommissionStatsDTO {
+  periode: string | null
+  fournisseurId: number | null
+  fournisseurNom: string | null
+  conventionId: number | null
+  conventionLibelle: string | null
+  nombreCommissions: number
+  totalCommissionHt: number
+  totalTvaCommission: number
+  totalCommissionTtc: number
+}
+
+export interface DepenseStatsDTO {
+  periode: string | null
+  fournisseurId: number | null
+  fournisseurNom: string | null
+  compteBancaireId: number | null
+  compteBancaireNom: string | null
+  nombreDepenses: number
+  totalMontantHt: number
+  totalMontantTva: number
+  totalMontantTtc: number
+  totalRetenueTva: number
+  totalRetenueIs: number
+  totalRetenueNonResident: number
+  totalRetenueGarantie: number
+}
+
+export interface PaiementStatsDTO {
+  nombrePaiements: number
+  nombreEnAttente: number
+  totalPaye: number
+  totalEnAttente: number
+  tauxPaiement: number
+}
+
+export interface DepenseGlobalStatsDTO {
+  total: number
+  totalHt: number
+  totalTtc: number
+  anneeEnCours: number
+  moisEnCours: number
+}
+
+export interface CommissionGlobalStatsDTO {
+  total: number
+  totalHt: number
+  totalTtc: number
+  anneeEnCours: number
+  moisEnCours: number
+}
+
+export interface TopFournisseurStatsDTO {
+  fournisseurId: number
+  fournisseurNom: string
+  montantTotal: number
+  nombreDepenses: number
+}
+
+export interface DashboardStatsDTO {
+  depenses: DepenseGlobalStatsDTO
+  commissions: CommissionGlobalStatsDTO
+  paiements: PaiementStatsDTO
+  topFournisseurs: TopFournisseurStatsDTO[]
+}
+
 export default api

@@ -22,5 +22,8 @@ data class ConventionBasicDTO(
     val objet: String?,
     val typeConvention: TypeConvention,
     val statut: StatutConvention,
-    val createdBy: String?
+    val createdBy: String?,
+    val parentConventionId: Long? = null,
+    val parentConventionNumero: String? = null,
+    val heriteParametres: Boolean = false
 )

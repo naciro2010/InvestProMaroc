@@ -44,6 +44,7 @@ import {
   ConventionVersementsCard,
   ConventionProjetsTab,
   ConventionMarchesTab,
+  ParentConventionBanner,
 } from '../../components/conventions/detail'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import StatusBadge from '../../components/core/StatusBadge'
@@ -59,6 +60,8 @@ interface Convention {
   typeConvention: 'CADRE' | 'SPECIFIQUE'; statut: string
   tauxCommission: number; baseCalcul: string; montant: number
   dateSignature: string; dateDebut: string; dateFin?: string; tauxTva: number
+  parentConventionId?: number | null; parentConventionNumero?: string | null
+  heriteParametres?: boolean
 }
 
 interface SousConvention { id: number; code: string; numero: string; libelle: string; statut: string; montant: number; dateDebut: string }
@@ -315,6 +318,17 @@ const ConventionDetailPageModern = () => {
 
         {/* Content */}
         <Container maxWidth="xl" sx={{ py: 3 }}>
+          {/* Parent Convention Banner - shown only for sous-conventions */}
+          {convention.parentConventionId && convention.parentConventionNumero && (
+            <Box sx={{ mb: 3 }}>
+              <ParentConventionBanner
+                parentConventionId={convention.parentConventionId}
+                parentConventionNumero={convention.parentConventionNumero}
+                heriteParametres={convention.heriteParametres ?? false}
+              />
+            </Box>
+          )}
+
           {/* Info + Finances cards */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
             <ConventionInfoCardLazy conventionId={convention.id} canEdit={canEdit} getStatusColor={getStatusColor} />
@@ -357,7 +371,7 @@ const ConventionDetailPageModern = () => {
             <TabPanel value={activeTab} index={0}>
               <Box sx={{ px: { xs: 2, md: 3 } }}>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                  <ConventionPartenairesCard key={partenairesRefreshKey} conventionId={convention.id} onAddClick={() => setAddPartenaireDialogOpen(true)} onEditClick={(p) => { setEditPartenaireData({ id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom, budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage, estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue, remarques: p.remarques || undefined }); setAddPartenaireDialogOpen(true) }} />
+                  <ConventionPartenairesCard key={partenairesRefreshKey} conventionId={convention.id} parentConventionId={convention.parentConventionId ?? undefined} onAddClick={() => setAddPartenaireDialogOpen(true)} onEditClick={(p) => { setEditPartenaireData({ id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom, budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage, estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue, remarques: p.remarques || undefined }); setAddPartenaireDialogOpen(true) }} />
                   <ConventionSubventionsCard conventionId={convention.id} />
                 </Box>
                 <Box sx={{ mt: 3 }}>

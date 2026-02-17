@@ -34,6 +34,7 @@ import { CreditCard } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import { paiementsAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
+import DecimalInput from '@/components/ui/DecimalInput'
 import StatusBadge from '../../components/core/StatusBadge'
 import { colors, typography, componentStyles, getStatusConfig, borders } from '../../lib/designSystem'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -55,12 +56,12 @@ interface Paiement {
 interface PaiementFormData {
   numeroPaiement: string
   datePaiement: string
-  montant: string
+  montant: number
   modeReglement: string
   referenceBancaire: string
   beneficiaire: string
   observation: string
-  ordrePaiementId: string
+  ordrePaiementId: number
 }
 
 const styles = componentStyles.listPage
@@ -85,12 +86,12 @@ const PaiementsPage = () => {
   const [formData, setFormData] = useState<PaiementFormData>({
     numeroPaiement: '',
     datePaiement: new Date().toISOString().split('T')[0],
-    montant: '',
+    montant: 0,
     modeReglement: 'VIREMENT',
     referenceBancaire: '',
     beneficiaire: '',
     observation: '',
-    ordrePaiementId: '',
+    ordrePaiementId: 0,
   })
 
   useEffect(() => {
@@ -140,24 +141,24 @@ const PaiementsPage = () => {
       setFormData({
         numeroPaiement: paiement.numeroPaiement,
         datePaiement: paiement.datePaiement,
-        montant: paiement.montant.toString(),
+        montant: paiement.montant,
         modeReglement: paiement.modeReglement || 'VIREMENT',
         referenceBancaire: paiement.referenceBancaire || '',
         beneficiaire: paiement.beneficiaire || '',
         observation: paiement.observation || '',
-        ordrePaiementId: paiement.ordrePaiementId?.toString() || '',
+        ordrePaiementId: paiement.ordrePaiementId || 0,
       })
     } else {
       setSelectedPaiement(null)
       setFormData({
         numeroPaiement: '',
         datePaiement: new Date().toISOString().split('T')[0],
-        montant: '',
+        montant: 0,
         modeReglement: 'VIREMENT',
         referenceBancaire: '',
         beneficiaire: '',
         observation: '',
-        ordrePaiementId: '',
+        ordrePaiementId: 0,
       })
     }
     setOpenDialog(true)
@@ -172,8 +173,8 @@ const PaiementsPage = () => {
     try {
       const payload = {
         ...formData,
-        montant: parseFloat(formData.montant),
-        ordrePaiementId: parseInt(formData.ordrePaiementId),
+        montant: formData.montant,
+        ordrePaiementId: formData.ordrePaiementId,
       }
       if (selectedPaiement) {
         await paiementsAPI.update(selectedPaiement.id, payload)
@@ -418,17 +419,17 @@ const PaiementsPage = () => {
               </Stack>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <TextField
+                <DecimalInput
                   fullWidth
                   required
-                  type="number"
                   label="Montant"
                   value={formData.montant}
-                  onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
+                  onChange={(value) => setFormData({ ...formData, montant: value })}
+                  decimalPlaces={2}
+                  min={0}
                   InputProps={{
                     startAdornment: <InputAdornment position="start"><AttachMoney /></InputAdornment>,
                     endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                    inputProps: { step: '0.01', min: '0' }
                   }}
                 />
                 <TextField
@@ -462,13 +463,14 @@ const PaiementsPage = () => {
                 onChange={(e) => setFormData({ ...formData, referenceBancaire: e.target.value })}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
-                type="number"
                 required
                 label="Ordre de Paiement (ID)"
                 value={formData.ordrePaiementId}
-                onChange={(e) => setFormData({ ...formData, ordrePaiementId: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, ordrePaiementId: value })}
+                decimalPlaces={0}
+                min={0}
               />
 
               <TextField

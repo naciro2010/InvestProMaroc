@@ -1,5 +1,6 @@
-import { useState, useEffect, FocusEvent } from 'react'
+import { useState, useEffect, useRef, FocusEvent } from 'react'
 import { TextField, TextFieldProps } from '@mui/material'
+import { componentStyles } from '@/lib/designSystem'
 
 interface DecimalInputProps extends Omit<TextFieldProps, 'value' | 'onChange'> {
   value: number
@@ -7,18 +8,23 @@ interface DecimalInputProps extends Omit<TextFieldProps, 'value' | 'onChange'> {
   decimalPlaces?: number
   min?: number
   max?: number
+  selectOnFocus?: boolean
 }
 
 /**
- * Smart decimal input component that behaves like Odoo/Excel cells
+ * Smart decimal input - Odoo/Excel-style numeric field
  *
- * Features:
- * - Accepts both comma (,) and dot (.) as decimal separator
- * - Automatically formats to 2 decimal places on blur
- * - Allows natural typing experience (no forced formatting while typing)
- * - Handles copy/paste from Excel
- * - Clean visual feedback
- * - Validates min/max ranges
+ * Design System component for ALL numeric inputs in InvestPro.
+ *
+ * Behavior:
+ * - Displays formatted value: "1 234 567,89" (French locale)
+ * - On focus: clears "0,00" to empty, or shows raw value for editing
+ * - Selects all text on focus for quick replacement
+ * - Accepts comma (,) and dot (.) as decimal separator
+ * - Accepts formulas: "=100+50*2"
+ * - Right-aligned with tabular-nums for column alignment
+ * - On blur: parses, validates min/max, rounds, formats, updates parent
+ * - Enter key triggers blur (commit value)
  */
 const DecimalInput = ({
   value,
@@ -26,36 +32,31 @@ const DecimalInput = ({
   decimalPlaces = 2,
   min,
   max,
+  selectOnFocus = true,
   ...props
 }: DecimalInputProps) => {
-  // Internal state for the displayed string (allows natural typing)
   const [displayValue, setDisplayValue] = useState<string>('')
   const [isFocused, setIsFocused] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  // Initialize display value from prop value
   useEffect(() => {
     if (!isFocused) {
       setDisplayValue(formatNumber(value, decimalPlaces))
     }
   }, [value, decimalPlaces, isFocused])
 
-  /**
-   * Format number for display (French format with spaces and comma)
-   * Example: 1234567.89 → "1 234 567,89"
-   */
   const formatNumber = (num: number, decimals: number): string => {
-    if (isNaN(num)) return '0' + ',00'.substring(0, decimals + 1)
-
+    if (isNaN(num)) {
+      return decimals > 0
+        ? '0,' + '0'.repeat(decimals)
+        : '0'
+    }
     return num.toLocaleString('fr-FR', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     })
   }
 
-  /**
-   * Parse string to number (accepts both comma and dot)
-   * Handles: "1 234,56", "1234.56", "1,234.56", etc.
-   */
   const parseNumber = (str: string): number => {
     if (!str || str.trim() === '') return 0
 
@@ -65,14 +66,9 @@ const DecimalInput = ({
       return Number.isNaN(computed) ? 0 : computed
     }
 
-    // Remove all spaces
     let cleaned = trimmed.replace(/\s/g, '')
-
-    // Replace comma with dot for parsing
     cleaned = cleaned.replace(',', '.')
-
-    // Remove any non-numeric characters except dot and minus
-    cleaned = cleaned.replace(/[^\d.-]/g, '')
+    cleaned = cleaned.replace(/[^\d.\-]/g, '')
 
     const parsed = parseFloat(cleaned)
     return isNaN(parsed) ? 0 : parsed
@@ -80,95 +76,78 @@ const DecimalInput = ({
 
   const evaluateExpression = (expression: string): number => {
     const cleaned = expression.replace(/\s/g, '').replace(',', '.')
-    if (!/^[\\d+*/().-]+$/.test(cleaned)) {
+    if (!/^[\d+*/().\-]+$/.test(cleaned)) {
       return NaN
     }
-
     try {
       // eslint-disable-next-line no-new-func
-      return Function(`\"use strict\"; return (${cleaned});`)() as number
-    } catch (error) {
+      return Function(`"use strict"; return (${cleaned});`)() as number
+    } catch {
       return NaN
     }
   }
 
-  /**
-   * Validate and constrain number to min/max
-   */
   const constrainNumber = (num: number): number => {
     if (min !== undefined && num < min) return min
     if (max !== undefined && num > max) return max
     return num
   }
 
-  /**
-   * Handle input change while typing
-   * Allow natural typing without forced formatting
-   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value
-
-    // Allow empty input
     if (inputValue === '') {
       setDisplayValue('')
       return
     }
-
-    // Allow natural typing: digits, comma, dot, spaces, minus, operators, equal sign
     if (/^[=\d\s,.\-+*/()]*$/.test(inputValue)) {
       setDisplayValue(inputValue)
     }
   }
 
-  /**
-   * Handle focus - show raw editable value
-   */
   const handleFocus = () => {
     setIsFocused(true)
-    // Convert formatted value back to simple decimal for editing
+
     const numValue = parseNumber(displayValue)
-    setDisplayValue(numValue.toString().replace('.', ','))
+
+    // If value is 0, clear the field for fresh input (Odoo behavior)
+    if (numValue === 0) {
+      setDisplayValue('')
+    } else {
+      // Show raw value without thousand separators, comma as decimal
+      const raw = decimalPlaces > 0
+        ? numValue.toFixed(decimalPlaces).replace('.', ',')
+        : numValue.toString()
+      setDisplayValue(raw)
+    }
+
+    // Select all text after state update
+    if (selectOnFocus) {
+      requestAnimationFrame(() => {
+        inputRef.current?.select()
+      })
+    }
   }
 
-  /**
-   * Handle blur - parse, validate, format, and update parent
-   */
   const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
     setIsFocused(false)
 
-    // Parse the input value
     const parsed = parseNumber(displayValue)
-
-    // Constrain to min/max
     const constrained = constrainNumber(parsed)
+    const factor = Math.pow(10, decimalPlaces)
+    const rounded = Math.round(constrained * factor) / factor
 
-    // Round to specified decimal places
-    const rounded = Math.round(constrained * Math.pow(10, decimalPlaces)) / Math.pow(10, decimalPlaces)
-
-    // Update parent component
     onChange(rounded)
-
-    // Format for display
     setDisplayValue(formatNumber(rounded, decimalPlaces))
 
-    // Call original onBlur if provided
     if (props.onBlur) {
       props.onBlur(e)
     }
   }
 
-  /**
-   * Handle keyboard shortcuts
-   */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Enter key - blur to trigger formatting
     if (e.key === 'Enter') {
       e.currentTarget.blur()
     }
-
-    // Tab key - let default behavior handle blur
-
-    // Call original onKeyDown if provided
     if (props.onKeyDown) {
       props.onKeyDown(e)
     }
@@ -182,11 +161,16 @@ const DecimalInput = ({
       onFocus={handleFocus}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
+      inputRef={inputRef}
+      sx={{
+        ...componentStyles.numericInput,
+        ...props.sx,
+      }}
       inputProps={{
         ...props.inputProps,
-        inputMode: 'decimal',
+        inputMode: 'decimal' as const,
         style: {
-          textAlign: 'right',
+          textAlign: 'right' as const,
           fontVariantNumeric: 'tabular-nums',
           ...props.inputProps?.style,
         },

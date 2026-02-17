@@ -20,6 +20,7 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
 } from '@mui/icons-material'
+import DecimalInput from '@/components/ui/DecimalInput'
 import {
   formatCurrency,
   type ConventionWizardFormData,
@@ -95,44 +96,45 @@ const WizardStepPartenaires = ({
             value={newPartenaire.designation}
             onChange={(e) => setNewPartenaire({ ...newPartenaire, designation: e.target.value })}
           />
-          <TextField
+          <DecimalInput
             size="small"
-            type="number"
             label="Budget"
             value={newPartenaire.budget}
-            onChange={(e) =>
+            onChange={(value) =>
               setNewPartenaire({
                 ...newPartenaire,
-                budget: parseFloat(e.target.value) || 0,
+                budget: value,
               })
             }
-            inputProps={{ min: 0 }}
+            decimalPlaces={2}
+            min={0}
           />
-          <TextField
+          <DecimalInput
             size="small"
-            type="number"
             label="%"
             value={newPartenaire.pourcentage}
-            onChange={(e) =>
+            onChange={(value) =>
               setNewPartenaire({
                 ...newPartenaire,
-                pourcentage: parseFloat(e.target.value) || 0,
+                pourcentage: value,
               })
             }
-            inputProps={{ min: 0, max: 100 }}
+            decimalPlaces={2}
+            min={0}
+            max={100}
           />
-          <TextField
+          <DecimalInput
             size="small"
-            type="number"
             label="CI (%)"
             value={newPartenaire.ci}
-            onChange={(e) =>
+            onChange={(value) =>
               setNewPartenaire({
                 ...newPartenaire,
-                ci: parseFloat(e.target.value) || 0,
+                ci: value,
               })
             }
-            inputProps={{ min: 0 }}
+            decimalPlaces={2}
+            min={0}
           />
           <Button
             variant="contained"

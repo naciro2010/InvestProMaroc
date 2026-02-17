@@ -15,6 +15,7 @@ import {
 import { Save, Cancel } from '@mui/icons-material'
 import { subventionsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
+import DecimalInput from '@/components/ui/DecimalInput'
 
 interface Subvention {
   id: number
@@ -191,12 +192,12 @@ const SubventionFormDialog = ({
           </TextField>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
+            <DecimalInput
               label="Montant"
-              type="number"
               value={formData.montantTotal}
-              onChange={(e) => handleChange('montantTotal', parseFloat(e.target.value) || 0)}
-              inputProps={{ min: 0, step: 0.01 }}
+              onChange={(value) => handleChange('montantTotal', value)}
+              decimalPlaces={2}
+              min={0}
               required
               size="small"
               sx={{ flex: 2 }}
@@ -218,15 +219,15 @@ const SubventionFormDialog = ({
           </Box>
 
           {formData.devise !== 'MAD' && (
-            <TextField
+            <DecimalInput
               label="Taux de change"
-              type="number"
               value={formData.tauxChange}
-              onChange={(e) => handleChange('tauxChange', parseFloat(e.target.value) || 1)}
+              onChange={(value) => handleChange('tauxChange', value || 1)}
+              decimalPlaces={4}
+              min={0.0001}
               InputProps={{
                 endAdornment: <InputAdornment position="end">= 1 MAD</InputAdornment>,
               }}
-              inputProps={{ min: 0.0001, step: 0.0001 }}
               size="small"
               helperText={`Équivalent: ${(formData.montantTotal * formData.tauxChange).toLocaleString('fr-FR')} MAD`}
             />

@@ -1082,6 +1082,34 @@ export const componentStyles = {
   },
 
   /**
+   * Numeric input field - Odoo/Excel-style
+   * Right-aligned, tabular-nums, French formatting
+   * Used by DecimalInput component for ALL numeric fields
+   */
+  numericInput: {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: colors.surface,
+      borderRadius: borders.radius.base,
+      fontSize: typography.sizes.base,
+      '& fieldset': {
+        borderColor: colors.neutral[300],
+      },
+      '&:hover fieldset': {
+        borderColor: colors.neutral[400],
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: colors.primary[500],
+        borderWidth: '2px',
+      },
+    },
+    '& .MuiOutlinedInput-input': {
+      textAlign: 'right',
+      fontVariantNumeric: 'tabular-nums',
+      fontFamily: typography.fontFamily,
+    },
+  },
+
+  /**
    * Modern action menu item
    */
   menuItem: {

@@ -38,6 +38,7 @@ import {
   AccountBalanceWallet,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
+import DecimalInput from '@/components/ui/DecimalInput'
 import { versementsPrevisionnelsAPI, conventionsAPI } from '../../lib/api'
 import { colors, componentStyles, borders, typography, spacing } from '@/lib/designSystem'
 
@@ -630,32 +631,32 @@ const VersementsPrevisionnelsPage = () => {
                 InputLabelProps={{ shrink: true }}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 size="small"
-                type="number"
                 label="Montant Prevu (MAD)"
-                value={formData.montantPrevu || ''}
-                onChange={(e) => setFormData({ ...formData, montantPrevu: parseFloat(e.target.value) || 0 })}
+                value={formData.montantPrevu}
+                onChange={(value) => setFormData({ ...formData, montantPrevu: value })}
+                decimalPlaces={2}
+                min={0}
                 helperText="Montant initialement planifie pour ce versement"
                 InputProps={{
                   endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                  inputProps: { min: 0, step: 0.01 },
                 }}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 required
                 size="small"
-                type="number"
                 label="Montant Reel (MAD)"
                 value={formData.montant}
-                onChange={(e) => setFormData({ ...formData, montant: parseFloat(e.target.value) || 0 })}
+                onChange={(value) => setFormData({ ...formData, montant: value })}
+                decimalPlaces={2}
+                min={0}
                 helperText="Montant effectivement verse ou a verser"
                 InputProps={{
                   endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                  inputProps: { min: 0, step: 0.01 },
                 }}
               />
 

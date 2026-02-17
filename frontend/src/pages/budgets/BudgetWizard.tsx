@@ -18,6 +18,7 @@ import { ArrowBack, ArrowForward, Check } from '@mui/icons-material'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
 import { PageHeader } from '@/components/core'
+import DecimalInput from '@/components/ui/DecimalInput'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
@@ -219,23 +220,23 @@ const BudgetWizard = () => {
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Total budget (DH)"
-                type="number"
                 required
                 value={formData.totalBudget}
-                onChange={handleChange('totalBudget')}
-                inputProps={{ min: 0, step: 0.01 }}
+                onChange={(value) => setFormData({ ...formData, totalBudget: value })}
+                min={0}
+                decimalPlaces={2}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Plafond convention (DH)"
-                type="number"
                 value={formData.plafondConvention}
-                onChange={handleChange('plafondConvention')}
-                inputProps={{ min: 0, step: 0.01 }}
+                onChange={(value) => setFormData({ ...formData, plafondConvention: value })}
+                min={0}
+                decimalPlaces={2}
                 helperText="Limite budgétaire de la convention"
               />
 

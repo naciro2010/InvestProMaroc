@@ -1,10 +1,5 @@
-import {
-  Stack,
-  TextField,
-  MenuItem,
-  Typography,
-  InputAdornment,
-} from '@mui/material'
+import { Stack, TextField, MenuItem, Typography } from '@mui/material'
+import DecimalInput from '@/components/ui/DecimalInput'
 import { ConventionFormData } from '../types'
 
 interface Step2Props {
@@ -53,18 +48,14 @@ const Step2DatesEtBudget = ({ formData, setFormData }: Step2Props) => {
         />
       </Stack>
 
-      <TextField
+      <DecimalInput
         fullWidth
         required
-        type="number"
-        label="Budget Total"
-        value={formData.budget}
-        onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-        placeholder="1000000"
-        InputProps={{
-          endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-          inputProps: { step: '0.01', min: '0' }
-        }}
+        label="Budget Total (MAD)"
+        value={Number(formData.budget) || 0}
+        onChange={(value) => setFormData({ ...formData, budget: String(value) })}
+        decimalPlaces={2}
+        min={0}
         helperText="Budget total de la convention en dirhams"
       />
 
@@ -73,17 +64,15 @@ const Step2DatesEtBudget = ({ formData, setFormData }: Step2Props) => {
       </Typography>
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-        <TextField
+        <DecimalInput
           fullWidth
           required
-          type="number"
-          label="Taux de Commission"
-          value={formData.tauxCommission}
-          onChange={(e) => setFormData({ ...formData, tauxCommission: e.target.value })}
-          InputProps={{
-            endAdornment: <InputAdornment position="end">%</InputAdornment>,
-            inputProps: { step: '0.01', min: '0', max: '100' }
-          }}
+          label="Taux de Commission (%)"
+          value={Number(formData.tauxCommission) || 0}
+          onChange={(value) => setFormData({ ...formData, tauxCommission: String(value) })}
+          decimalPlaces={2}
+          min={0}
+          max={100}
           helperText="Taux de commission en pourcentage"
         />
 
@@ -101,16 +90,14 @@ const Step2DatesEtBudget = ({ formData, setFormData }: Step2Props) => {
         </TextField>
       </Stack>
 
-      <TextField
+      <DecimalInput
         fullWidth
-        type="number"
-        label="Taux de TVA"
-        value={formData.tauxTva}
-        onChange={(e) => setFormData({ ...formData, tauxTva: e.target.value })}
-        InputProps={{
-          endAdornment: <InputAdornment position="end">%</InputAdornment>,
-          inputProps: { step: '0.01', min: '0', max: '100' }
-        }}
+        label="Taux de TVA (%)"
+        value={Number(formData.tauxTva) || 0}
+        onChange={(value) => setFormData({ ...formData, tauxTva: String(value) })}
+        decimalPlaces={2}
+        min={0}
+        max={100}
         helperText="Taux de TVA applicable"
       />
     </Stack>

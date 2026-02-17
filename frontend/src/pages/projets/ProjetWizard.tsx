@@ -20,6 +20,7 @@ import AppLayout from '../../components/layout/AppLayout'
 import { PageHeader } from '@/components/core'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
+import DecimalInput from '@/components/ui/DecimalInput'
 import { projetsAPI } from '../../lib/api'
 
 const steps = ['Informations générales', 'Budget & Planning', 'Pièces jointes & Confirmation']
@@ -202,24 +203,24 @@ const ProjetWizard = () => {
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Budget total (DH)"
-                type="number"
                 required
                 value={formData.budgetTotal}
-                onChange={handleChange('budgetTotal')}
-                inputProps={{ min: 0, step: 0.01 }}
+                onChange={(value) => setFormData({ ...formData, budgetTotal: value })}
+                min={0}
+                decimalPlaces={2}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Durée (mois)"
-                type="number"
                 required
                 value={formData.dureeMois}
-                onChange={handleChange('dureeMois')}
-                inputProps={{ min: 1, step: 1 }}
+                onChange={(value) => setFormData({ ...formData, dureeMois: value })}
+                min={1}
+                decimalPlaces={0}
               />
             </Box>
 
@@ -248,13 +249,14 @@ const ProjetWizard = () => {
               />
             </Box>
 
-            <TextField
+            <DecimalInput
               fullWidth
               label="Avancement (%)"
-              type="number"
               value={formData.pourcentageAvancement}
-              onChange={handleChange('pourcentageAvancement')}
-              inputProps={{ min: 0, max: 100, step: 1 }}
+              onChange={(value) => setFormData({ ...formData, pourcentageAvancement: value })}
+              min={0}
+              max={100}
+              decimalPlaces={0}
               helperText="Pourcentage d'avancement actuel du projet"
             />
           </Box>

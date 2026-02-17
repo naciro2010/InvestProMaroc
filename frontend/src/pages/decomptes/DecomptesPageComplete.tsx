@@ -33,6 +33,7 @@ import {
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import api, { decomptesAPI } from '../../lib/api'
+import DecimalInput from '@/components/ui/DecimalInput'
 import FileUpload from '../../components/ui/FileUpload'
 import StatusBadge from '../../components/core/StatusBadge'
 import { ExportButton } from '../../components/core'
@@ -67,11 +68,11 @@ const DecomptesPage = () => {
   const [formData, setFormData] = useState({
     numero: '',
     dateDecompte: new Date().toISOString().split('T')[0],
-    montant: '',
-    montantRetenue: '',
-    netAPayer: '',
+    montant: 0,
+    montantRetenue: 0,
+    netAPayer: 0,
     observation: '',
-    marcheId: '',
+    marcheId: 0,
   })
 
   // Pagination
@@ -132,22 +133,22 @@ const DecomptesPage = () => {
       setFormData({
         numero: decompte.numero,
         dateDecompte: decompte.dateDecompte,
-        montant: decompte.montant.toString(),
-        montantRetenue: decompte.montantRetenue.toString(),
-        netAPayer: decompte.netAPayer.toString(),
+        montant: decompte.montant,
+        montantRetenue: decompte.montantRetenue,
+        netAPayer: decompte.netAPayer,
         observation: decompte.observation || '',
-        marcheId: decompte.marcheId.toString(),
+        marcheId: decompte.marcheId,
       })
     } else {
       setSelectedDecompte(null)
       setFormData({
         numero: '',
         dateDecompte: new Date().toISOString().split('T')[0],
-        montant: '',
-        montantRetenue: '0',
-        netAPayer: '',
+        montant: 0,
+        montantRetenue: 0,
+        netAPayer: 0,
         observation: '',
-        marcheId: '',
+        marcheId: 0,
       })
     }
     setOpenDialog(true)
@@ -162,10 +163,6 @@ const DecomptesPage = () => {
     try {
       const payload = {
         ...formData,
-        montant: parseFloat(formData.montant),
-        montantRetenue: parseFloat(formData.montantRetenue),
-        netAPayer: parseFloat(formData.netAPayer),
-        marcheId: parseInt(formData.marcheId),
       }
 
       if (selectedDecompte) {
@@ -193,10 +190,10 @@ const DecomptesPage = () => {
   }
 
   const calculateNetAPayer = () => {
-    const montant = parseFloat(formData.montant) || 0
-    const retenue = parseFloat(formData.montantRetenue) || 0
-    const net = montant - retenue
-    setFormData({ ...formData, netAPayer: net.toFixed(2) })
+    const montant = formData.montant || 0
+    const retenue = formData.montantRetenue || 0
+    const net = Math.round((montant - retenue) * 100) / 100
+    setFormData({ ...formData, netAPayer: net })
   }
 
   const formatCurrency = (amount: number) => {
@@ -435,31 +432,31 @@ const DecomptesPage = () => {
                 />
               </Stack>
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 required
-                type="number"
                 label="Montant"
                 value={formData.montant}
-                onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, montant: value })}
                 onBlur={calculateNetAPayer}
+                min={0}
+                decimalPlaces={2}
                 InputProps={{
                   startAdornment: <InputAdornment position="start"><AttachMoney /></InputAdornment>,
                   endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                  inputProps: { step: '0.01', min: '0' }
                 }}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
-                type="number"
                 label="Montant Retenue"
                 value={formData.montantRetenue}
-                onChange={(e) => setFormData({ ...formData, montantRetenue: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, montantRetenue: value })}
                 onBlur={calculateNetAPayer}
+                min={0}
+                decimalPlaces={2}
                 InputProps={{
                   endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                  inputProps: { step: '0.01', min: '0' }
                 }}
                 helperText="Retenues: garantie, pénalités, RAS..."
               />
@@ -475,13 +472,14 @@ const DecomptesPage = () => {
                 sx={{ bgcolor: colors.neutral[50] }}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
-                type="number"
                 required
                 label="Marché (ID)"
                 value={formData.marcheId}
-                onChange={(e) => setFormData({ ...formData, marcheId: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, marcheId: value })}
+                min={0}
+                decimalPlaces={0}
                 helperText="ID du marché associé"
               />
 

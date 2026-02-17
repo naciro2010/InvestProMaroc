@@ -33,6 +33,7 @@ import {
 import AppLayout from '@/components/layout/AppLayout'
 import { ordresPaiementAPI } from '@/lib/api'
 import FileUpload from '@/components/ui/FileUpload'
+import DecimalInput from '@/components/ui/DecimalInput'
 import { colors } from '@/lib/designSystem'
 
 interface OrdrePaiementItem {
@@ -60,12 +61,12 @@ const OrdresPaiementPage = () => {
     numeroOrdre: '',
     dateEmission: new Date().toISOString().split('T')[0],
     dateExecution: '',
-    montant: '',
+    montant: 0,
     beneficiaire: '',
     compteBancaire: '',
     reference: '',
     observation: '',
-    decompteId: '',
+    decompteId: 0,
   })
 
   useEffect(() => {
@@ -92,12 +93,12 @@ const OrdresPaiementPage = () => {
         numeroOrdre: ordre.numeroOrdre,
         dateEmission: ordre.dateEmission,
         dateExecution: ordre.dateExecution || '',
-        montant: String(ordre.montant),
+        montant: ordre.montant,
         beneficiaire: ordre.beneficiaire || '',
         compteBancaire: ordre.compteBancaire || '',
         reference: ordre.reference || '',
         observation: ordre.observation || '',
-        decompteId: String(ordre.decompteId),
+        decompteId: ordre.decompteId,
       })
     } else {
       setSelectedOrdre(null)
@@ -105,12 +106,12 @@ const OrdresPaiementPage = () => {
         numeroOrdre: '',
         dateEmission: new Date().toISOString().split('T')[0],
         dateExecution: '',
-        montant: '',
+        montant: 0,
         beneficiaire: '',
         compteBancaire: '',
         reference: '',
         observation: '',
-        decompteId: '',
+        decompteId: 0,
       })
     }
     setOpenDialog(true)
@@ -125,8 +126,8 @@ const OrdresPaiementPage = () => {
     try {
       const payload = {
         ...formData,
-        montant: parseFloat(formData.montant),
-        decompteId: parseInt(formData.decompteId),
+        montant: formData.montant,
+        decompteId: formData.decompteId,
       }
 
       if (selectedOrdre) {
@@ -322,17 +323,17 @@ const OrdresPaiementPage = () => {
                   onChange={(e) => setFormData({ ...formData, dateExecution: e.target.value })}
                   InputLabelProps={{ shrink: true }}
                 />
-                <TextField
+                <DecimalInput
                   fullWidth
                   required
-                  type="number"
                   label="Montant"
                   value={formData.montant}
-                  onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
+                  onChange={(value) => setFormData({ ...formData, montant: value })}
+                  decimalPlaces={2}
+                  min={0}
                   InputProps={{
                     startAdornment: <InputAdornment position="start"><AttachMoney /></InputAdornment>,
                     endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                    inputProps: { step: '0.01', min: '0' }
                   }}
                 />
               </Stack>
@@ -362,13 +363,14 @@ const OrdresPaiementPage = () => {
                 placeholder="Référence interne"
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
-                type="number"
                 required
                 label="Décompte (ID)"
                 value={formData.decompteId}
-                onChange={(e) => setFormData({ ...formData, decompteId: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, decompteId: value })}
+                decimalPlaces={0}
+                min={0}
                 helperText="ID du décompte associé"
               />
 

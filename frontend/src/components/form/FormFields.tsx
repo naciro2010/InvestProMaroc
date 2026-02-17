@@ -19,6 +19,7 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material'
+import DecimalInput from '@/components/ui/DecimalInput'
 
 /**
  * Reusable form components integrated with react-hook-form
@@ -97,7 +98,7 @@ interface FormNumberFieldProps<T extends FieldValues> {
   placeholder?: string
   min?: number
   max?: number
-  step?: number
+  decimalPlaces?: number
   fullWidth?: boolean
   required?: boolean
   disabled?: boolean
@@ -111,7 +112,7 @@ export function FormNumberField<T extends FieldValues>({
   placeholder,
   min,
   max,
-  step = 0.01,
+  decimalPlaces = 2,
   fullWidth = true,
   required = false,
   disabled = false,
@@ -122,12 +123,14 @@ export function FormNumberField<T extends FieldValues>({
       name={name}
       control={control}
       render={({ field, fieldState }) => (
-        <TextField
-          {...field}
+        <DecimalInput
+          value={typeof field.value === 'number' ? field.value : 0}
+          onChange={(val) => field.onChange(val)}
           label={label}
           placeholder={placeholder}
-          type="number"
-          inputProps={{ min, max, step }}
+          decimalPlaces={decimalPlaces}
+          min={min}
+          max={max}
           fullWidth={fullWidth}
           required={required}
           disabled={disabled}
@@ -135,10 +138,6 @@ export function FormNumberField<T extends FieldValues>({
           helperText={fieldState.error?.message || error}
           variant="outlined"
           size="small"
-          onChange={(e) => {
-            const value = e.target.value ? Number(e.target.value) : ''
-            field.onChange(value)
-          }}
         />
       )}
     />

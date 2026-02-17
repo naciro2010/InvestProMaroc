@@ -158,7 +158,7 @@ const ConventionFinancesEditCard = ({ conventionId }: Props) => {
               label="Taux Commission (%)"
               min={0}
               max={100}
-              step={0.01}
+              decimalPlaces={2}
               required
               disabled={!editing}
             />
@@ -193,7 +193,7 @@ const ConventionFinancesEditCard = ({ conventionId }: Props) => {
             label="Taux TVA (%)"
             min={0}
             max={100}
-            step={0.01}
+            decimalPlaces={2}
             disabled={!editing}
           />
 

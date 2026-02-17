@@ -6,6 +6,7 @@ import {
   Divider,
   Alert,
 } from '@mui/material'
+import DecimalInput from '@/components/ui/DecimalInput'
 import RichTextEditor from '@/components/common/RichTextEditor'
 import { getPlainTextLength, stripHtml } from '@/utils/textUtils'
 import type { ConventionSettings } from '@/lib/settings/conventionSettings'
@@ -177,13 +178,18 @@ const WizardStepInformations = ({
           />
         </Box>
         <Box sx={{ mt: 2, maxWidth: 260 }}>
-          <TextField
+          <DecimalInput
             fullWidth
             label="Durée (mois)"
-            type="number"
-            value={formData.dureeMois}
-            onChange={handleChange('dureeMois')}
-            inputProps={{ min: 0 }}
+            value={Number(formData.dureeMois) || 0}
+            onChange={(value) => {
+              setFormData((prev) => ({
+                ...prev,
+                dureeMois: value,
+              }))
+            }}
+            decimalPlaces={0}
+            min={0}
             helperText={
               autoDateFin
                 ? 'La date de fin est calculée automatiquement.'

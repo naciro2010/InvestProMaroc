@@ -21,6 +21,7 @@ import AppLayout from '../../components/layout/AppLayout'
 import { PageHeader } from '@/components/core'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
+import DecimalInput from '@/components/ui/DecimalInput'
 import { marchesAPI, conventionsAPI, fournisseursAPI } from '../../lib/api'
 
 const steps = ['Informations générales', 'Montants & Dates', 'Localisation & Confirmation']
@@ -335,32 +336,34 @@ const MarcheWizard = () => {
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Montant HT (DH)"
-                type="number"
                 required
                 value={formData.montantHT}
-                onChange={handleChange('montantHT')}
-                inputProps={{ min: 0, step: 0.01 }}
+                onChange={(value) => setFormData({ ...formData, montantHT: value })}
+                min={0}
+                decimalPlaces={2}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Taux TVA (%)"
-                type="number"
                 required
                 value={formData.tauxTVA}
-                onChange={handleChange('tauxTVA')}
-                inputProps={{ min: 0, max: 100, step: 0.1 }}
+                onChange={(value) => setFormData({ ...formData, tauxTVA: value })}
+                min={0}
+                max={100}
+                decimalPlaces={2}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Montant TTC (DH)"
-                type="number"
                 required
                 value={formData.montantTTC}
+                onChange={() => {}}
+                decimalPlaces={2}
                 InputProps={{ readOnly: true }}
                 sx={{
                   '& .MuiInputBase-input': {
@@ -406,23 +409,24 @@ const MarcheWizard = () => {
                 InputLabelProps={{ shrink: true }}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Délai d'exécution (mois)"
-                type="number"
                 required
                 value={formData.delaiExecution}
-                onChange={handleChange('delaiExecution')}
-                inputProps={{ min: 0, step: 1 }}
+                onChange={(value) => setFormData({ ...formData, delaiExecution: value })}
+                min={0}
+                decimalPlaces={0}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Taux pénalité / jour (ex: 1/2000 = 0.0005)"
-                type="number"
                 value={formData.tauxPenalite}
-                onChange={handleChange('tauxPenalite')}
-                inputProps={{ min: 0, max: 1, step: 0.0001 }}
+                onChange={(value) => setFormData({ ...formData, tauxPenalite: value })}
+                min={0}
+                max={1}
+                decimalPlaces={4}
                 helperText="Standard marchés publics: 1/2000 par jour = 0.0005"
               />
             </Box>
@@ -450,24 +454,22 @@ const MarcheWizard = () => {
             />
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Latitude"
-                type="number"
-                value={formData.latitude || ''}
-                onChange={handleChange('latitude')}
+                value={formData.latitude || 0}
+                onChange={(value) => setFormData({ ...formData, latitude: value || null })}
                 placeholder="33.5731"
-                inputProps={{ step: 0.000001 }}
+                decimalPlaces={6}
               />
 
-              <TextField
+              <DecimalInput
                 fullWidth
                 label="Longitude"
-                type="number"
-                value={formData.longitude || ''}
-                onChange={handleChange('longitude')}
+                value={formData.longitude || 0}
+                onChange={(value) => setFormData({ ...formData, longitude: value || null })}
                 placeholder="-7.5898"
-                inputProps={{ step: 0.000001 }}
+                decimalPlaces={6}
               />
 
               <TextField

@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import { Add, Cancel } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
+import DecimalInput from '@/components/ui/DecimalInput'
 
 interface ImputationPrevisionnelleForm {
   volet?: string
@@ -96,14 +97,14 @@ const AddImputationDialog = ({ open, onClose, onAdd }: AddImputationDialogProps)
             InputLabelProps={{ shrink: true }}
             size="small"
           />
-          <TextField
+          <DecimalInput
             fullWidth
             required
-            type="number"
             label="Délai (mois)"
             value={formData.delaiMois}
-            onChange={(e) => handleChange('delaiMois', parseInt(e.target.value) || 0)}
-            inputProps={{ min: 1 }}
+            onChange={(value) => handleChange('delaiMois', value)}
+            decimalPlaces={0}
+            min={1}
             size="small"
           />
           <TextField

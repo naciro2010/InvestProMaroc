@@ -30,6 +30,7 @@ import {
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import { PageHeader } from '@/components/core'
+import DecimalInput from '@/components/ui/DecimalInput'
 import { categoriesDepensesAPI } from '../../lib/api'
 import { useToast } from '../../contexts/ToastContext'
 import type { CategorieDepense } from '../../types/api'
@@ -279,11 +280,12 @@ const CategoriesDepensesPage = () => {
                 fullWidth
               />
 
-              <TextField
+              <DecimalInput
                 label="Ordre d'affichage"
-                type="number"
                 value={formData.ordreAffichage}
-                onChange={(e) => setFormData({ ...formData, ordreAffichage: parseInt(e.target.value) || 0 })}
+                onChange={(value) => setFormData({ ...formData, ordreAffichage: value })}
+                decimalPlaces={0}
+                min={0}
                 fullWidth
                 helperText="Ordre de tri dans les listes déroulantes"
               />

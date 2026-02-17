@@ -15,6 +15,7 @@ import {
   Skeleton,
 } from '@mui/material'
 import { Visibility } from '@mui/icons-material'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { api } from '../../../lib/api'
 import { Marche, formatCurrency, getStatusColor } from './projetDetailTypes'
 
@@ -70,7 +71,7 @@ const ProjetMarchesTab = ({ projetId }: ProjetMarchesTabProps) => {
             {marches.map((marche) => (
               <TableRow key={marche.id} hover>
                 <TableCell>{marche.code}</TableCell>
-                <TableCell>{marche.objet}</TableCell>
+                <TableCell><RichTextDisplay html={marche.objet} variant="inline" /></TableCell>
                 <TableCell>{marche.fournisseurNom || '-'}</TableCell>
                 <TableCell align="right">{formatCurrency(marche.montantTTC)}</TableCell>
                 <TableCell>

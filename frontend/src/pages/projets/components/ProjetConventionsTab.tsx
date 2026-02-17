@@ -15,6 +15,7 @@ import {
   Skeleton,
 } from '@mui/material'
 import { Visibility } from '@mui/icons-material'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { conventionsAPI, projetConventionsAPI } from '../../../lib/api'
 import { projetsAPI } from '../../../lib/projetsAPI'
 import { Convention, ProjetConventionAssociation, Projet, formatCurrency, formatDate } from './projetDetailTypes'
@@ -120,7 +121,7 @@ const ProjetConventionsTab = ({ projetId }: ProjetConventionsTabProps) => {
               <TableRow key={conv.id} hover>
                 <TableCell>{conv.code}</TableCell>
                 <TableCell>{conv.numero}</TableCell>
-                <TableCell sx={{ fontWeight: 500 }}>{conv.libelle}</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}><RichTextDisplay html={conv.libelle} variant="inline" /></TableCell>
                 <TableCell>
                   <Chip label={conv.statut} size="small" color="info" />
                 </TableCell>

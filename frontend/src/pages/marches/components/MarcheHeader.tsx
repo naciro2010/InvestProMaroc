@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Button, Typography, CircularProgress, Alert } from '@mui/material'
 import { ArrowBack, Edit } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { colors, typography, borders, shadows, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 interface MarcheHeaderProps {
@@ -167,15 +168,14 @@ const MarcheHeader = ({ marcheId }: MarcheHeaderProps) => {
             </Typography>
 
             {/* Objet */}
-            <Typography
-              sx={{
-                fontSize: typography.sizes.base,
-                color: colors.textSecondary,
-                maxWidth: 600,
-              }}
-            >
-              {marche.objet}
-            </Typography>
+            <Box sx={{ maxWidth: 600 }}>
+              <RichTextDisplay
+                html={marche.objet}
+                variant="compact"
+                collapseLength={200}
+                sx={{ color: colors.textSecondary }}
+              />
+            </Box>
           </Box>
         </Box>
       </Box>

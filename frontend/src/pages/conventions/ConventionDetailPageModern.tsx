@@ -48,6 +48,7 @@ import {
 } from '../../components/conventions/detail'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import StatusBadge from '../../components/core/StatusBadge'
+import RichTextDisplay from '../../components/ui/RichTextDisplay'
 import BudgetRepartitionCard from '../../components/conventions/BudgetRepartitionCard'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
@@ -305,7 +306,9 @@ const ConventionDetailPageModern = () => {
               </Box>
             </Box>
             {convention.libelle && (
-              <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mt: 0.5 }}>{convention.libelle}</Typography>
+              <Box sx={{ mt: 0.5, maxWidth: 700 }}>
+                <RichTextDisplay html={convention.libelle} variant="compact" collapseLength={200} sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }} />
+              </Box>
             )}
           </Container>
         </Box>
@@ -468,7 +471,7 @@ function SousConventionsTable({ sousConventions, navigate, setSousConventionDial
         {sousConventions.map((sc) => (
           <tr key={sc.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/conventions/${sc.id}`)}>
             <td><Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.primary[600] }}>{sc.code}</Typography></td>
-            <td><Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary }}>{sc.libelle}</Typography></td>
+            <td><RichTextDisplay html={sc.libelle} variant="inline" /></td>
             <td><StatusBadge status={sc.statut} size="small" /></td>
             <td style={{ textAlign: 'right' }}><Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>{formatCurrency(sc.budget)}</Typography></td>
             <td style={{ textAlign: 'center' }} onClick={(e: React.MouseEvent) => e.stopPropagation()}>

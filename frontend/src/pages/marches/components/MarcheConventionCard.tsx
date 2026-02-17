@@ -4,6 +4,7 @@ import { Box, Typography, Stack, CircularProgress, Button } from '@mui/material'
 import { OpenInNew, Description, Gavel } from '@mui/icons-material'
 import { marchesAPI, conventionsAPI } from '@/lib/api'
 import StatusBadge from '@/components/core/StatusBadge'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
 
 interface MarcheConventionCardProps {
@@ -196,14 +197,7 @@ const MarcheConventionCard = ({ marcheId }: MarcheConventionCardProps) => {
             >
               Libellé
             </Typography>
-            <Typography
-              sx={{
-                fontSize: typography.sizes.base,
-                color: colors.textPrimary,
-              }}
-            >
-              {convention.libelle}
-            </Typography>
+            <RichTextDisplay html={convention.libelle} variant="compact" collapseLength={200} />
           </Box>
 
           {/* Objet (if exists) */}
@@ -221,15 +215,7 @@ const MarcheConventionCard = ({ marcheId }: MarcheConventionCardProps) => {
               >
                 Objet
               </Typography>
-              <Typography
-                sx={{
-                  fontSize: typography.sizes.sm,
-                  color: colors.textSecondary,
-                  lineHeight: 1.5,
-                }}
-              >
-                {convention.objet}
-              </Typography>
+              <RichTextDisplay html={convention.objet} variant="compact" collapseLength={200} sx={{ color: colors.textSecondary }} />
             </Box>
           )}
 

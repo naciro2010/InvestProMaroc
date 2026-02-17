@@ -51,6 +51,7 @@ import StatusBadge from '../../components/core/StatusBadge'
 import ConfirmDialog from '../../components/core/ConfirmDialog'
 import { ExportButton, PageHeader } from '../../components/core'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
+import RichTextDisplay from '../../components/ui/RichTextDisplay'
 import { FileText } from 'lucide-react'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '../../lib/exportUtils'
 
@@ -483,19 +484,7 @@ const ConventionsTableModern = () => {
                               >
                                 {conv.code}
                               </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: colors.textSecondary,
-                                  display: 'block',
-                                  maxWidth: 300,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {conv.libelle}
-                              </Typography>
+                              <RichTextDisplay html={conv.libelle} variant="inline" sx={{ maxWidth: 300, display: 'block', color: colors.textSecondary }} />
                             </Box>
                             {conv.sousConventions && conv.sousConventions.length > 0 && (
                               <Chip
@@ -564,9 +553,7 @@ const ConventionsTableModern = () => {
                                             <Typography variant="body2" sx={{ fontWeight: typography.weights.medium }}>
                                               {sc.code}
                                             </Typography>
-                                            <Typography variant="caption" sx={{ color: colors.textSecondary }}>
-                                              {sc.libelle}
-                                            </Typography>
+                                            <RichTextDisplay html={sc.libelle} variant="inline" sx={{ color: colors.textSecondary }} />
                                           </Box>
                                         </Box>
                                       </TableCell>

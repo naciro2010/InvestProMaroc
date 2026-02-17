@@ -30,6 +30,8 @@ import {
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import { PageHeader, StatusBadge } from '@/components/core'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
+import { stripHtml } from '@/utils/textUtils'
 import { avenantConventionsAPI, conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { colors, componentStyles, typography } from '../../lib/designSystem'
@@ -242,7 +244,7 @@ const AvenantDetailPage = () => {
           {/* Header */}
           <PageHeader
             title={`Avenant ${avenant.numeroAvenant}`}
-            subtitle={avenant.objet}
+            subtitle={stripHtml(avenant.objet || '')}
             actions={
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 {workflowLoading && <CircularProgress size={24} />}
@@ -368,9 +370,9 @@ const AvenantDetailPage = () => {
                   <Typography variant="caption" sx={{ color: colors.textSecondary }}>
                     Objet de l'avenant
                   </Typography>
-                  <Typography variant="body1" sx={{ mt: 0.5 }}>
-                    {avenant.objet}
-                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>
+                    <RichTextDisplay html={avenant.objet} variant="compact" collapseLength={200} />
+                  </Box>
                 </Box>
 
                 {avenant.motif && (

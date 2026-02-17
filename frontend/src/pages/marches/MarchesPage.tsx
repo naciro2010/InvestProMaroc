@@ -357,7 +357,7 @@ export default function MarchesPage() {
                     <Table size="small">
                       <TableHead>
                         <TableRow sx={styles.tableHeader}>
-                          <TableCell sx={{ width: 40 }} />
+                          <TableCell sx={{ width: 40, p: '8px' }} />
                           <TableCell sortDirection={sortConfig?.key === 'numeroMarche' ? sortConfig.direction : false}>
                             <TableSortLabel active={sortConfig?.key === 'numeroMarche'} direction={sortConfig?.key === 'numeroMarche' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numeroMarche')}>N° Marché</TableSortLabel>
                           </TableCell>

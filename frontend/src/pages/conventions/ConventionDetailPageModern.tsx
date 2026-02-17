@@ -58,13 +58,13 @@ import VersementFormDialog from '../../components/conventions/VersementFormDialo
 interface Convention {
   id: number; code: string; numero: string; libelle: string; objet: string
   typeConvention: 'CADRE' | 'SPECIFIQUE'; statut: string
-  tauxCommission: number; baseCalcul: string; montant: number
+  tauxCommission: number; baseCalcul: string; budget: number
   dateSignature: string; dateDebut: string; dateFin?: string; tauxTva: number
   parentConventionId?: number | null; parentConventionNumero?: string | null
   heriteParametres?: boolean
 }
 
-interface SousConvention { id: number; code: string; numero: string; libelle: string; statut: string; montant: number; dateDebut: string }
+interface SousConvention { id: number; code: string; numero: string; libelle: string; statut: string; budget: number; dateDebut: string }
 interface Avenant { id: number; numeroAvenant: string; dateAvenant: string; statut: string; objet: string; type: string }
 interface Projet { id: number; code: string; designation: string; budgetTotal: number; statut: string }
 interface Marche { id: number; numeroMarche: string; objet: string; montantTtc: number; statut: string; fournisseurNom?: string }
@@ -337,7 +337,7 @@ const ConventionDetailPageModern = () => {
 
           {/* Budget Repartition */}
           <Box sx={{ mb: 3 }}>
-            <BudgetRepartitionCard conventionId={convention.id} conventionBudget={convention.montant} />
+            <BudgetRepartitionCard conventionId={convention.id} conventionBudget={convention.budget} />
           </Box>
 
           {/* Stats */}
@@ -433,10 +433,10 @@ const ConventionDetailPageModern = () => {
       {/* Dialogs */}
       {convention && (
         <>
-          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.montant} onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }} onSuccess={() => { setPartenairesRefreshKey((k: number) => k + 1); setEditPartenaireData(null) }} editData={editPartenaireData} />
+          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget} onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }} onSuccess={() => { setPartenairesRefreshKey((k: number) => k + 1); setEditPartenaireData(null) }} editData={editPartenaireData} />
           <LinkProjetDialog open={linkProjetDialogOpen} conventionId={convention.id} onClose={() => setLinkProjetDialogOpen(false)} onSuccess={() => loadProjets(convention.id)} />
           <LinkMarcheDialog open={linkMarcheDialogOpen} conventionId={convention.id} onClose={() => setLinkMarcheDialogOpen(false)} onSuccess={() => loadMarches(convention.id)} />
-          <SousConventionFormSimple open={sousConventionDialogOpen} onClose={() => { setSousConventionDialogOpen(false); setEditingSousConvention(null) }} onSuccess={() => { loadSousConventions(convention.id); setSousConventionDialogOpen(false); setEditingSousConvention(null) }} parentConvention={{ id: convention.id, numero: convention.numero, libelle: convention.libelle, tauxCommission: convention.tauxCommission, baseCalcul: convention.baseCalcul, tauxTva: convention.tauxTva, montant: convention.montant }} editingSousConvention={editingSousConvention} />
+          <SousConventionFormSimple open={sousConventionDialogOpen} onClose={() => { setSousConventionDialogOpen(false); setEditingSousConvention(null) }} onSuccess={() => { loadSousConventions(convention.id); setSousConventionDialogOpen(false); setEditingSousConvention(null) }} parentConvention={{ id: convention.id, numero: convention.numero, libelle: convention.libelle, tauxCommission: convention.tauxCommission, baseCalcul: convention.baseCalcul, tauxTva: convention.tauxTva, budget: convention.budget }} editingSousConvention={editingSousConvention} />
           <VersementFormDialog open={versementDialogOpen} conventionId={convention.id} onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }} onSuccess={() => { loadVersements(convention.id); setVersementDialogOpen(false); setEditingVersement(null) }} editingVersement={editingVersement} />
         </>
       )}
@@ -470,7 +470,7 @@ function SousConventionsTable({ sousConventions, navigate, setSousConventionDial
             <td><Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.primary[600] }}>{sc.code}</Typography></td>
             <td><Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary }}>{sc.libelle}</Typography></td>
             <td><StatusBadge status={sc.statut} size="small" /></td>
-            <td style={{ textAlign: 'right' }}><Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>{formatCurrency(sc.montant)}</Typography></td>
+            <td style={{ textAlign: 'right' }}><Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>{formatCurrency(sc.budget)}</Typography></td>
             <td style={{ textAlign: 'center' }} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
               {sc.statut === 'BROUILLON' && (
                 <Button size="small" onClick={() => { setEditingSousConvention(sc); setSousConventionDialogOpen(true) }}

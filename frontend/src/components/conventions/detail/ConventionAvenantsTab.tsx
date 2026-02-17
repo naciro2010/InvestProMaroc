@@ -7,7 +7,7 @@ interface Convention {
   id: number
   numero: string
   dateSignature: string
-  montant: number
+  budget: number
 }
 
 interface Avenant {
@@ -38,7 +38,7 @@ const ConventionAvenantsTab = ({ convention, avenants, formatCurrency, formatDat
             Convention initiale : {convention.numero}
           </Typography>
           <Typography variant="caption">
-            Signée le {formatDate(convention.dateSignature)} • Montant : {formatCurrency(convention.montant)}
+            Signée le {formatDate(convention.dateSignature)} • Montant : {formatCurrency(convention.budget)}
           </Typography>
         </Alert>
       </Box>

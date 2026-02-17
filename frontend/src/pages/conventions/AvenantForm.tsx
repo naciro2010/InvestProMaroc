@@ -22,6 +22,7 @@ import { conventionsAPI, avenantConventionsAPI } from '@/lib/api'
 import AppLayout from '@/components/layout/AppLayout'
 import { Convention } from '@/types/entities'
 import FileUpload from '@/components/ui/FileUpload'
+import RichTextEditor from '@/components/common/RichTextEditor'
 import { colors, typography } from '@/lib/designSystem'
 
 const steps = ['Sélection des modifications', 'Nouvelles valeurs', 'Pièces jointes', 'Récapitulatif']
@@ -289,15 +290,13 @@ const AvenantForm = () => {
         />
       </Stack>
 
-      <TextField
-        fullWidth
-        required
-        multiline
-        rows={2}
+      <RichTextEditor
         label="Objet de l'Avenant"
         value={formData.objet}
-        onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
+        onChange={(value) => setFormData({ ...formData, objet: value })}
         placeholder="Description de l'avenant..."
+        required
+        minHeight={100}
       />
 
       <Divider />
@@ -468,24 +467,21 @@ const AvenantForm = () => {
       )}
 
       {selectedFields.objet && (
-        <TextField
-          fullWidth
-          multiline
-          rows={3}
+        <RichTextEditor
           label="Nouvel Objet de la Convention"
           value={formData.objetModifie}
-          onChange={(e) => setFormData({ ...formData, objetModifie: e.target.value })}
+          onChange={(value) => setFormData({ ...formData, objetModifie: value })}
+          placeholder="Nouvel objet de la convention..."
+          minHeight={120}
         />
       )}
 
-      <TextField
-        fullWidth
-        multiline
-        rows={3}
+      <RichTextEditor
         label="Justification"
         value={formData.justification}
-        onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
+        onChange={(value) => setFormData({ ...formData, justification: value })}
         placeholder="Justification des modifications..."
+        minHeight={120}
       />
     </Stack>
   )

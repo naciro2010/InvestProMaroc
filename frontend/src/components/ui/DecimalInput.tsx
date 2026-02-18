@@ -12,7 +12,7 @@ interface DecimalInputProps extends Omit<TextFieldProps, 'value' | 'onChange'> {
 }
 
 /**
- * Smart decimal input - Odoo/Excel-style numeric field
+ * Smart decimal input - ERP/Excel-style numeric field
  *
  * Design System component for ALL numeric inputs in InvestPro.
  *
@@ -109,7 +109,7 @@ const DecimalInput = ({
 
     const numValue = parseNumber(displayValue)
 
-    // If value is 0, clear the field for fresh input (Odoo behavior)
+    // If value is 0, clear the field for fresh input (ERP behavior)
     if (numValue === 0) {
       setDisplayValue('')
     } else {

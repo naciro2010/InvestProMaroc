@@ -2,15 +2,14 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TablePagination, TextField, InputAdornment, Chip, Skeleton,
+  TableHead, TableRow, TablePagination, Chip, Skeleton,
   TableSortLabel,
 } from '@mui/material'
-import { Add, Search, Refresh } from '@mui/icons-material'
+import { Add, Refresh } from '@mui/icons-material'
 import { fournisseursAPI } from '@/lib/api'
 import { useToast } from '@/contexts/ToastContext'
 import AppLayout from '@/components/layout/AppLayout'
-import { PageHeader, ExportButton } from '@/components/core'
-import StatusBadge from '@/components/core/StatusBadge'
+import { ControlPanel, ExportButton, StatusBadge } from '@/components/core'
 import { exportToExcel } from '@/lib/exportUtils'
 import { SortableTableRow, useSortableTable } from '@/components/core/SortableTable'
 import { DndContext, closestCenter } from '@dnd-kit/core'
@@ -128,49 +127,27 @@ const FournisseursPage = () => {
   return (
     <AppLayout>
       <Box sx={styles.container}>
-        {/* Header */}
-        <Box sx={styles.header}>
-          <PageHeader
-            title="Fournisseurs"
-            breadcrumbs={[
-              { label: 'Accueil', path: '/dashboard' },
-              { label: 'Fournisseurs' },
-            ]}
-            actions={
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <ExportButton onClick={handleExport} />
-                <Button variant="outlined" size="small" startIcon={<Refresh />}
-                  onClick={fetchFournisseurs} sx={{ textTransform: 'none' }}>
-                  Actualiser
-                </Button>
-                <Button variant="contained" size="small" startIcon={<Add />}
-                  onClick={() => navigate('/fournisseurs/nouveau')} sx={{ textTransform: 'none' }}>
-                  Nouveau Fournisseur
-                </Button>
-              </Box>
-            }
-          />
-          <Typography sx={styles.subtitle}>
-            {stats.total} fournisseur{stats.total !== 1 ? 's' : ''} au total
-          </Typography>
-        </Box>
-
-        {/* Toolbar */}
-        <Box sx={styles.toolbar}>
-          <TextField
-            placeholder="Rechercher par code, raison sociale, ville, ICE..."
-            size="small"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={styles.searchField}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: colors.neutral[400], fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
+        <ControlPanel
+          breadcrumbs={[
+            { label: 'Fournisseurs' },
+          ]}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Rechercher par code, raison sociale, ville, ICE..."
+          actions={
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <ExportButton onClick={handleExport} />
+              <Button variant="outlined" size="small" startIcon={<Refresh />}
+                onClick={fetchFournisseurs} sx={{ textTransform: 'none' }}>
+                Actualiser
+              </Button>
+              <Button variant="contained" size="small" startIcon={<Add />}
+                onClick={() => navigate('/fournisseurs/nouveau')} sx={{ textTransform: 'none' }}>
+                Nouveau Fournisseur
+              </Button>
+            </Box>
+          }
+        >
           {FILTER_OPTIONS.map(({ key, label }) => {
             const isActive = statusFilter === key
             return (
@@ -187,7 +164,7 @@ const FournisseursPage = () => {
               />
             )
           })}
-        </Box>
+        </ControlPanel>
 
         {/* Table */}
         <Box sx={{ px: { xs: 2, md: 3 }, py: 2 }}>

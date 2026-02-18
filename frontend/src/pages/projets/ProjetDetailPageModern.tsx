@@ -3,28 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
   Box,
   Container,
-  Paper,
   Button,
-  Chip,
-  Tabs,
-  Tab,
   Skeleton,
   Alert,
 } from '@mui/material'
 import {
-  ArrowBack,
   Edit,
   PlayArrow,
   Pause,
   Done,
-  AccountBalance,
-  TrendingUp,
-  Timeline,
-  Business,
-  Description,
 } from '@mui/icons-material'
+import { Pencil } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { PageHeader } from '@/components/core'
+import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge } from '../../components/core'
+import type { StatusStep } from '../../components/core'
 import { projetsAPI } from '../../lib/projetsAPI'
 import { ProjetStatsCards, ProjetProgressBar, ProjetChartTab } from '../../components/projets/detail'
 import {
@@ -37,26 +29,18 @@ import {
   formatCurrency,
   getStatusColor,
 } from './components'
+import { colors, typography, componentStyles } from '../../lib/designSystem'
 
-interface TabPanelProps {
-  children?: React.ReactNode
-  index: number
-  value: number
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props
-  return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  )
-}
+const STATUS_STEPS: StatusStep[] = [
+  { value: 'EN_PREPARATION', label: 'Preparation' },
+  { value: 'EN_COURS', label: 'En cours' },
+  { value: 'SUSPENDU', label: 'Suspendu' },
+  { value: 'TERMINE', label: 'Termine' },
+]
 
 const ProjetDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [projet, setProjet] = useState<Projet | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -64,9 +48,7 @@ const ProjetDetailPageModern = () => {
   const projetId = id ? parseInt(id) : 0
 
   useEffect(() => {
-    if (projetId) {
-      loadProjet(projetId)
-    }
+    if (projetId) loadProjet(projetId)
   }, [projetId])
 
   const loadProjet = async (pid: number) => {
@@ -84,12 +66,12 @@ const ProjetDetailPageModern = () => {
 
   const handleDemarrer = async () => {
     if (!projet?.id) return
-    if (!window.confirm('\u00cates-vous s\u00fbr de vouloir d\u00e9marrer ce projet ?')) return
+    if (!window.confirm('Etes-vous sur de vouloir demarrer ce projet ?')) return
     try {
       await projetsAPI.demarrer(projet.id)
       loadProjet(projet.id)
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erreur lors du d\u00e9marrage'
+      const message = err instanceof Error ? err.message : 'Erreur lors du demarrage'
       alert(message)
     }
   }
@@ -109,7 +91,7 @@ const ProjetDetailPageModern = () => {
 
   const handleReprendre = async () => {
     if (!projet?.id) return
-    if (!window.confirm('\u00cates-vous s\u00fbr de vouloir reprendre ce projet ?')) return
+    if (!window.confirm('Etes-vous sur de vouloir reprendre ce projet ?')) return
     try {
       await projetsAPI.reprendre(projet.id)
       loadProjet(projet.id)
@@ -121,7 +103,7 @@ const ProjetDetailPageModern = () => {
 
   const handleTerminer = async () => {
     if (!projet?.id) return
-    if (!window.confirm('\u00cates-vous s\u00fbr de vouloir terminer ce projet ?')) return
+    if (!window.confirm('Etes-vous sur de vouloir terminer ce projet ?')) return
     try {
       await projetsAPI.terminer(projet.id)
       loadProjet(projet.id)
@@ -133,7 +115,7 @@ const ProjetDetailPageModern = () => {
 
   const generateProgressData = () => {
     if (!projet) return []
-    const months = ['Jan', 'F\u00e9v', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Ao\u00fb', 'Sep', 'Oct', 'Nov', 'D\u00e9c']
+    const months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec']
     const data = []
     const currentMonth = new Date().getMonth()
     for (let i = 0; i <= currentMonth; i++) {
@@ -147,52 +129,56 @@ const ProjetDetailPageModern = () => {
   }
 
   const getWorkflowActions = () => {
-    if (!projet) return []
-    const actions: React.ReactNode[] = []
-
-    if (projet.statut === 'EN_PREPARATION') {
-      actions.push(
-        <Button key="demarrer" variant="contained" color="success" startIcon={<PlayArrow />} onClick={handleDemarrer}>
-          D\u00e9marrer
-        </Button>,
-        <Button key="modifier" variant="outlined" startIcon={<Edit />} onClick={() => navigate(`/projets/${projet.id}/modifier`)}>
-          Modifier
-        </Button>,
-      )
-    }
-    if (projet.statut === 'EN_COURS') {
-      actions.push(
-        <Button key="suspendre" variant="outlined" color="warning" startIcon={<Pause />} onClick={handleSuspendre}>
-          Suspendre
-        </Button>,
-        <Button key="terminer" variant="contained" color="success" startIcon={<Done />} onClick={handleTerminer}>
-          Terminer
-        </Button>,
-      )
-    }
-    if (projet.statut === 'SUSPENDU') {
-      actions.push(
-        <Button key="reprendre" variant="contained" color="info" startIcon={<PlayArrow />} onClick={handleReprendre}>
-          Reprendre
-        </Button>,
-      )
-    }
-    actions.push(
-      <Button key="retour" variant="outlined" startIcon={<ArrowBack />} onClick={() => navigate('/projets')}>
-        Retour
-      </Button>,
+    if (!projet) return null
+    return (
+      <>
+        {projet.statut === 'EN_PREPARATION' && (
+          <>
+            <Button key="demarrer" variant="contained" size="small" color="success" startIcon={<PlayArrow />} onClick={handleDemarrer}
+              sx={{ fontSize: typography.sizes.sm, py: 0.5 }}>
+              Demarrer
+            </Button>
+            <Button key="modifier" variant="outlined" size="small" startIcon={<Pencil size={14} />} onClick={() => navigate(`/projets/${projet.id}/modifier`)}
+              sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}>
+              Modifier
+            </Button>
+          </>
+        )}
+        {projet.statut === 'EN_COURS' && (
+          <>
+            <Button key="suspendre" variant="outlined" size="small" color="warning" startIcon={<Pause />} onClick={handleSuspendre}
+              sx={{ fontSize: typography.sizes.sm, py: 0.5 }}>
+              Suspendre
+            </Button>
+            <Button key="terminer" variant="contained" size="small" color="success" startIcon={<Done />} onClick={handleTerminer}
+              sx={{ fontSize: typography.sizes.sm, py: 0.5 }}>
+              Terminer
+            </Button>
+          </>
+        )}
+        {projet.statut === 'SUSPENDU' && (
+          <Button key="reprendre" variant="contained" size="small" color="info" startIcon={<PlayArrow />} onClick={handleReprendre}
+            sx={{ fontSize: typography.sizes.sm, py: 0.5 }}>
+            Reprendre
+          </Button>
+        )}
+      </>
     )
-    return actions
   }
 
   if (loading) {
     return (
       <AppLayout>
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Skeleton variant="rectangular" height={60} sx={{ mb: 3 }} />
-          <Skeleton variant="rectangular" height={200} sx={{ mb: 3 }} />
-          <Skeleton variant="rectangular" height={400} />
-        </Container>
+        <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+          <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
+            <Skeleton variant="text" width={300} height={32} />
+          </Box>
+          <Container maxWidth="xl" sx={{ py: 3 }}>
+            <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
+            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
+            <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+          </Container>
+        </Box>
       </AppLayout>
     )
   }
@@ -201,73 +187,109 @@ const ProjetDetailPageModern = () => {
     return (
       <AppLayout>
         <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Alert severity="error">{error || 'Projet non trouv\u00e9'}</Alert>
-          <Button startIcon={<ArrowBack />} onClick={() => navigate('/projets')} sx={{ mt: 2 }}>
-            Retour \u00e0 la liste
-          </Button>
+          <Alert severity="error">{error || 'Projet non trouve'}</Alert>
         </Container>
       </AppLayout>
     )
   }
 
+  const breadcrumbs = [
+    { label: 'Projets', path: '/projets' },
+    { label: projet.code || `#${projet.id}` },
+  ]
+
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="xl">
-          <PageHeader
-            title={projet.nom}
-            subtitle={`Code: ${projet.code}${projet.conventionNumero ? ` \u2022 Convention: ${projet.conventionNumero}` : ''}`}
-            actions={
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <Chip label={projet.statut.replace('_', ' ')} color={getStatusColor(projet.statut)} size="medium" />
-                {projet.estEnRetard && <Chip label="En retard" color="error" size="small" />}
-                {getWorkflowActions()}
-              </Box>
-            }
-          />
+      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+        {/* Control Panel - breadcrumbs + workflow actions */}
+        <ControlPanel
+          breadcrumbs={breadcrumbs}
+          actions={getWorkflowActions()}
+          hideBottomRow
+        />
 
-          <ProjetStatsCards
-            budgetTotal={projet.budgetTotal}
-            pourcentageAvancement={projet.pourcentageAvancement}
-            budgetConsomme={projet.budgetConsomme}
-            estEnRetard={projet.estEnRetard}
-            formatCurrency={formatCurrency}
-          />
+        {/* Main content */}
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          <FormView
+            isEditing={false}
+            statusSteps={STATUS_STEPS}
+            currentStatus={projet.statut}
+          >
+            {/* Title */}
+            <Box sx={{
+              fontSize: typography.sizes['2xl'],
+              fontWeight: typography.weights.bold,
+              color: colors.textPrimary,
+              mb: 0.5,
+            }}>
+              {projet.nom}
+            </Box>
+            <Box sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 3 }}>
+              Code: {projet.code}{projet.conventionNumero ? ` · Convention: ${projet.conventionNumero}` : ''}
+            </Box>
 
-          <ProjetProgressBar pourcentageAvancement={projet.pourcentageAvancement} />
+            {/* Field Groups */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
+              <FieldGroup title="Informations generales">
+                <Field label="Code" value={projet.code} />
+                <Field label="Statut" value={<StatusBadge status={projet.statut} />} />
+                <Field label="Avancement" value={`${projet.pourcentageAvancement}%`} />
+                {projet.estEnRetard && (
+                  <Field label="Retard" value={<StatusBadge status="REJETE" />} />
+                )}
+              </FieldGroup>
 
-          <Paper>
-            <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
-              <Tab label="Informations G\u00e9n\u00e9rales" icon={<Description />} iconPosition="start" />
-              <Tab label="Conventions" icon={<AccountBalance />} iconPosition="start" />
-              <Tab label="March\u00e9s li\u00e9s" icon={<Business />} iconPosition="start" />
-              <Tab label="Graphique d'Avancement" icon={<TrendingUp />} iconPosition="start" />
-              <Tab label="Historique" icon={<Timeline />} iconPosition="start" />
-            </Tabs>
+              <FieldGroup title="Budget">
+                <Field label="Budget total" value={formatCurrency(projet.budgetTotal)} isMoney />
+                <Field label="Budget consomme" value={formatCurrency(projet.budgetConsomme)} isMoney />
+              </FieldGroup>
+            </Box>
 
-            <TabPanel value={activeTab} index={0}>
-              <ProjetInfoCard projetId={projetId} />
-              <Box sx={{ px: 3, mt: 3 }}>
-                <ProjetBudgetSection projetId={projetId} />
-              </Box>
-            </TabPanel>
+            {/* Stats and Progress */}
+            <ProjetStatsCards
+              budgetTotal={projet.budgetTotal}
+              pourcentageAvancement={projet.pourcentageAvancement}
+              budgetConsomme={projet.budgetConsomme}
+              estEnRetard={projet.estEnRetard}
+              formatCurrency={formatCurrency}
+            />
+            <ProjetProgressBar pourcentageAvancement={projet.pourcentageAvancement} />
 
-            <TabPanel value={activeTab} index={1}>
-              <ProjetConventionsTab projetId={projetId} />
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={2}>
-              <ProjetMarchesTab projetId={projetId} />
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={3}>
-              <ProjetChartTab chartData={generateProgressData()} />
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={4}>
-              <ProjetHistoriqueTab projetId={projetId} />
-            </TabPanel>
-          </Paper>
+            {/* Notebook tabs */}
+            <Box sx={{ mt: 3 }}>
+              <Notebook
+                tabs={[
+                  {
+                    label: 'Informations',
+                    content: (
+                      <Box>
+                        <ProjetInfoCard projetId={projetId} />
+                        <Box sx={{ mt: 3 }}>
+                          <ProjetBudgetSection projetId={projetId} />
+                        </Box>
+                      </Box>
+                    ),
+                  },
+                  {
+                    label: 'Conventions',
+                    content: <ProjetConventionsTab projetId={projetId} />,
+                  },
+                  {
+                    label: 'Marches lies',
+                    content: <ProjetMarchesTab projetId={projetId} />,
+                  },
+                  {
+                    label: 'Avancement',
+                    content: <ProjetChartTab chartData={generateProgressData()} />,
+                  },
+                  {
+                    label: 'Historique',
+                    content: <ProjetHistoriqueTab projetId={projetId} />,
+                  },
+                ]}
+              />
+            </Box>
+          </FormView>
         </Container>
       </Box>
     </AppLayout>

@@ -40,7 +40,7 @@ interface ConventionFinancesSectionProps {
  * - Taux de commission
  * - Taux TVA
  *
- * Uses DecimalInput for Odoo/Excel-like number editing
+ * Uses DecimalInput for ERP/Excel-like number editing
  */
 const ConventionFinancesSection = ({ control, errors }: ConventionFinancesSectionProps) => {
   return (

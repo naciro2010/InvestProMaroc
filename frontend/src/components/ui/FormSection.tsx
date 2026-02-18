@@ -9,7 +9,7 @@ interface FormSectionProps {
 }
 
 /**
- * Odoo-style Form Section Component
+ * ERP-style Form Section Component
  *
  * Clean section divider for forms and detail pages:
  * - Section title with optional description

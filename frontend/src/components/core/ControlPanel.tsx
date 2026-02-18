@@ -7,7 +7,7 @@ import {
   Typography,
   Chip,
 } from '@mui/material'
-import { Search, ChevronLeft, ChevronRight, List, LayoutGrid, X } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, List, LayoutGrid, MapPin, X } from 'lucide-react'
 import { componentStyles, colors, typography } from '@/lib/designSystem'
 import ModernBreadcrumb, { BreadcrumbSegment } from './ModernBreadcrumb'
 
@@ -97,6 +97,15 @@ const ControlPanel = ({
                   sx={viewMode === 'kanban' ? styles.viewSwitcherButtonActive : styles.viewSwitcherButton}
                 >
                   <LayoutGrid size={16} />
+                </IconButton>
+              )}
+              {availableViews.includes('map') && (
+                <IconButton
+                  size="small"
+                  onClick={() => onViewModeChange?.('map')}
+                  sx={viewMode === 'map' ? styles.viewSwitcherButtonActive : styles.viewSwitcherButton}
+                >
+                  <MapPin size={16} />
                 </IconButton>
               )}
             </Box>

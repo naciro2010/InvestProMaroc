@@ -3,8 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings, Briefcase, ChevronDown,
-  ShoppingCart, UserCog, Wallet,
-  Tags, Handshake, BarChart3
+  ShoppingCart, UserCog, Wallet, Tags, Handshake, BarChart3, Search, X,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { colors, typography, borders, transitions, shadows, spacing } from '@/lib/designSystem'
@@ -18,9 +17,8 @@ import {
 } from '@dnd-kit/sortable'
 import SortableGroup, { MenuGroup } from './SortableGroup'
 
-export const SIDEBAR_WIDTH = '264px'
-
-const MENU_ORDER_KEY = 'investpro_menu_order'
+export const SIDEBAR_WIDTH = '256px'
+const MENU_ORDER_KEY = 'investpro_menu_order_v2'
 
 const getSavedMenuOrder = (): string[] | null => {
   try {
@@ -31,108 +29,32 @@ const getSavedMenuOrder = (): string[] | null => {
 
 const saveMenuOrder = (order: string[]) => {
   try { localStorage.setItem(MENU_ORDER_KEY, JSON.stringify(order)) }
-  catch { console.error('Failed to save menu order') }
+  catch { /* ignore */ }
 }
 
 const defaultMenuGroups: MenuGroup[] = [
-  { key: 'conventions-budgets', label: 'Conventions & Budgets', items: [
-    { icon: <FileText className="w-[18px] h-[18px]" />, label: 'Conventions', path: '/conventions', implemented: true },
-    { icon: <Wallet className="w-[18px] h-[18px]" />, label: 'Budgets', path: '/budgets', implemented: true },
-  ]},
-  { key: 'execution-marches', label: 'Exécution des marchés', items: [
-    { icon: <ShoppingCart className="w-[18px] h-[18px]" />, label: 'Marchés', path: '/marches', implemented: true },
-  ]},
-  { key: 'contrats-documents', label: 'Contrats & Documents', items: [
-    { icon: <Briefcase className="w-[18px] h-[18px]" />, label: 'Contrats', path: '/marches', implemented: true },
-    { icon: <Receipt className="w-[18px] h-[18px]" />, label: 'Bons de commande', path: '/marches', implemented: true },
-    { icon: <FileText className="w-[18px] h-[18px]" />, label: 'Lettres de commande', path: '/marches', implemented: true },
+  { key: 'operations', label: 'Operations', items: [
+    { icon: <FileText className="w-4 h-4" />, label: 'Conventions', path: '/conventions', implemented: true },
+    { icon: <ShoppingCart className="w-4 h-4" />, label: 'Marches', path: '/marches', implemented: true },
+    { icon: <Building2 className="w-4 h-4" />, label: 'Projets', path: '/projets', implemented: true },
+    { icon: <Receipt className="w-4 h-4" />, label: 'Decomptes', path: '/decomptes', implemented: true },
   ]},
   { key: 'finances', label: 'Finances', items: [
-    { icon: <Receipt className="w-[18px] h-[18px]" />, label: 'Dépenses', path: '/depenses', implemented: false },
-    { icon: <DollarSign className="w-[18px] h-[18px]" />, label: 'Commissions', path: '/commissions', implemented: false },
+    { icon: <Wallet className="w-4 h-4" />, label: 'Budgets', path: '/budgets', implemented: true },
+    { icon: <CreditCard className="w-4 h-4" />, label: 'Paiements', path: '/paiements', implemented: true },
+    { icon: <DollarSign className="w-4 h-4" />, label: 'Commissions', path: '/commissions', implemented: false },
   ]},
-  { key: 'projets-tiers', label: 'Projets & Tiers', items: [
-    { icon: <Building2 className="w-[18px] h-[18px]" />, label: 'Projets', path: '/projets', implemented: true },
-    { icon: <Users className="w-[18px] h-[18px]" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: false },
-    { icon: <CreditCard className="w-[18px] h-[18px]" />, label: 'Comptes Bancaires', path: '/comptes-bancaires', implemented: false },
+  { key: 'referentiel', label: 'Referentiel', items: [
+    { icon: <Users className="w-4 h-4" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: true },
+    { icon: <Handshake className="w-4 h-4" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
   ]},
-  { key: 'parametrage', label: 'Paramétrage', items: [
-    { icon: <Settings className="w-[18px] h-[18px]" />, label: 'Paramétrage des conventions', path: '/parametrage/conventions', implemented: true },
-    { icon: <Map className="w-[18px] h-[18px]" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
-    { icon: <Tags className="w-[18px] h-[18px]" />, label: 'Catégories de dépenses', path: '/parametrage/categories-depenses', implemented: true },
-    { icon: <Handshake className="w-[18px] h-[18px]" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
-  ]},
-  { key: 'administration', label: 'Administration', items: [
-    { icon: <UserCog className="w-[18px] h-[18px]" />, label: 'Utilisateurs', path: '/users', implemented: true },
+  { key: 'configuration', label: 'Configuration', items: [
+    { icon: <Settings className="w-4 h-4" />, label: 'Parametrage', path: '/parametrage/conventions', implemented: true },
+    { icon: <Map className="w-4 h-4" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
+    { icon: <Tags className="w-4 h-4" />, label: 'Categories', path: '/parametrage/categories-depenses', implemented: true },
+    { icon: <UserCog className="w-4 h-4" />, label: 'Utilisateurs', path: '/users', implemented: true },
   ]},
 ]
-
-// Static styles (module-level to reduce component size)
-const staticStyles = {
-  logo: {
-    display: 'flex', alignItems: 'center', gap: spacing.md,
-    padding: `${spacing.xl} ${spacing.xl}`, borderBottom: `1px solid ${colors.border}`,
-  },
-  logoIcon: {
-    width: 34, height: 34, backgroundColor: colors.primary[600],
-    borderRadius: borders.radius.md, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', flexShrink: 0,
-  },
-  nav: { flex: 1, overflowY: 'auto' as const, padding: `${spacing.sm} 0` },
-  badge: {
-    display: 'inline-flex', alignItems: 'center', gap: spacing.xs,
-    padding: `2px ${spacing.sm}`, backgroundColor: colors.neutral[100],
-    color: colors.neutral[500], fontSize: typography.sizes['2xs'],
-    fontWeight: typography.weights.medium, borderRadius: borders.radius.full,
-  },
-  userSection: { borderTop: `1px solid ${colors.border}`, padding: spacing.md },
-  userButton: {
-    display: 'flex', alignItems: 'center', gap: spacing.md, width: '100%',
-    padding: `${spacing.sm} ${spacing.md}`, borderRadius: borders.radius.base,
-    cursor: 'pointer', transition: `background-color ${transitions.fast}`,
-  },
-  avatar: {
-    width: 34, height: 34, backgroundColor: colors.primary[600],
-    borderRadius: borders.radius.full, display: 'flex', alignItems: 'center',
-    justifyContent: 'center', color: colors.textOnColor,
-    fontWeight: typography.weights.semibold, fontSize: typography.sizes.sm, flexShrink: 0,
-  },
-  dropdown: {
-    position: 'absolute' as const, bottom: '100%', left: 0, right: 0,
-    marginBottom: spacing.sm, backgroundColor: colors.surface,
-    borderRadius: borders.radius.lg, border: `1px solid ${colors.border}`,
-    boxShadow: shadows.lg, overflow: 'hidden',
-  },
-  dropdownButton: {
-    display: 'flex', alignItems: 'center', gap: spacing.md, width: '100%',
-    padding: `${spacing.sm} ${spacing.lg}`, backgroundColor: 'transparent',
-    border: 'none', cursor: 'pointer', textAlign: 'left' as const,
-    fontSize: typography.sizes.sm, transition: `background-color ${transitions.fast}`,
-  },
-  truncatedText: { overflow: 'hidden' as const, textOverflow: 'ellipsis' as const, whiteSpace: 'nowrap' as const, margin: 0 },
-}
-
-const getMenuItemStyle = (active: boolean): React.CSSProperties => ({
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: `10px ${spacing.xl}`, paddingLeft: spacing['2xl'], minHeight: '40px',
-  color: active ? colors.primary[700] : colors.textSecondary,
-  fontSize: typography.sizes.sm,
-  fontWeight: active ? typography.weights.semibold : typography.weights.medium,
-  textDecoration: 'none', transition: `all ${transitions.fast}`, cursor: 'pointer',
-  borderLeft: active ? `3px solid ${colors.primary[600]}` : '3px solid transparent',
-  backgroundColor: active ? colors.primary[25] : 'transparent',
-})
-
-const getTopNavStyle = (active: boolean): React.CSSProperties => ({
-  display: 'flex', alignItems: 'center', gap: spacing.md,
-  padding: `10px ${spacing.xl}`, minHeight: '42px',
-  color: active ? colors.primary[700] : colors.textPrimary,
-  fontSize: typography.sizes.base,
-  fontWeight: active ? typography.weights.semibold : typography.weights.medium,
-  textDecoration: 'none', transition: `all ${transitions.fast}`, cursor: 'pointer',
-  borderLeft: active ? `3px solid ${colors.primary[600]}` : '3px solid transparent',
-  backgroundColor: active ? colors.primary[25] : 'transparent',
-})
 
 interface SidebarProps {
   isOpen: boolean
@@ -146,9 +68,9 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
   const { user, logout } = useAuth()
 
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    'conventions-budgets': true, 'execution-marches': true, 'contrats-documents': true,
-    'finances': true, 'projets-tiers': false, 'parametrage': false, 'administration': false,
+    operations: true, finances: true, referentiel: false, configuration: false,
   })
 
   const [menuGroups, setMenuGroups] = useState<MenuGroup[]>(() => {
@@ -206,19 +128,15 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/')
 
-  const hoverBg = (bg: string, leave: string) => ({
-    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = bg },
-    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.backgroundColor = leave },
-  })
-
-  const topLinkHover = (path: string) => ({
-    onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>) => {
-      if (!isActive(path)) { e.currentTarget.style.backgroundColor = colors.neutral[50]; e.currentTarget.style.color = colors.textPrimary }
-    },
-    onMouseLeave: (e: React.MouseEvent<HTMLAnchorElement>) => {
-      if (!isActive(path)) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.textPrimary }
-    },
-  })
+  // Filter menu items by search
+  const filteredGroups = searchQuery
+    ? menuGroups.map(group => ({
+        ...group,
+        items: group.items.filter(item =>
+          item.label.toLowerCase().includes(searchQuery.toLowerCase())
+        ),
+      })).filter(group => group.items.length > 0)
+    : menuGroups
 
   const containerStyle: React.CSSProperties = {
     position: 'fixed', left: 0, top: 0, height: '100vh', width: SIDEBAR_WIDTH,
@@ -231,67 +149,98 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
 
   return (
     <aside style={containerStyle}>
-      {/* Logo */}
-      <div style={staticStyles.logo}>
-        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: spacing.md, textDecoration: 'none' }}>
-          <div style={staticStyles.logoIcon}>
-            <Briefcase className="w-5 h-5 text-white" />
+      {/* Header - Logo + close button (mobile) */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '16px 20px', borderBottom: `1px solid ${colors.border}`,
+      }}>
+        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+          <div style={{
+            width: 30, height: 30, backgroundColor: colors.primary[600],
+            borderRadius: borders.radius.md, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', flexShrink: 0,
+          }}>
+            <Briefcase className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <span style={{ color: colors.textPrimary, fontWeight: typography.weights.bold, fontSize: typography.sizes.lg, letterSpacing: typography.letterSpacing.tight }}>
-              InvestPro
-            </span>
-            <span style={{ color: colors.neutral[400], fontWeight: typography.weights.normal, fontSize: typography.sizes.lg }}> Maroc</span>
-          </div>
+          <span style={{
+            color: colors.textPrimary, fontWeight: typography.weights.bold,
+            fontSize: typography.sizes.base, letterSpacing: typography.letterSpacing.tight,
+          }}>
+            InvestPro
+          </span>
         </Link>
+        {isMobile && (
+          <button onClick={onClose} style={{
+            padding: '4px', backgroundColor: 'transparent', border: 'none',
+            cursor: 'pointer', borderRadius: borders.radius.sm, display: 'flex',
+          }}>
+            <X className="w-5 h-5" style={{ color: colors.textSecondary }} />
+          </button>
+        )}
+      </div>
+
+      {/* Search box */}
+      <div style={{ padding: '8px 12px' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          padding: '6px 10px', backgroundColor: colors.neutral[50],
+          borderRadius: borders.radius.base, border: `1px solid ${colors.border}`,
+        }}>
+          <Search className="w-3.5 h-3.5" style={{ color: colors.neutral[400], flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              border: 'none', outline: 'none', backgroundColor: 'transparent',
+              fontSize: typography.sizes.sm, color: colors.textPrimary,
+              width: '100%', padding: 0,
+            }}
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} style={{
+              padding: '2px', backgroundColor: 'transparent', border: 'none',
+              cursor: 'pointer', display: 'flex',
+            }}>
+              <X className="w-3 h-3" style={{ color: colors.neutral[400] }} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav style={staticStyles.nav}>
-        <Link to="/dashboard" style={getTopNavStyle(isActive('/dashboard'))} {...topLinkHover('/dashboard')}>
-          <LayoutDashboard className="w-[18px] h-[18px]" />
-          <span>Dashboard</span>
-        </Link>
-        <Link to="/reporting" style={getTopNavStyle(isActive('/reporting'))} {...topLinkHover('/reporting')}>
-          <BarChart3 className="w-[18px] h-[18px]" />
-          <span>Reporting</span>
-        </Link>
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+        {/* Top-level items */}
+        <SidebarLink path="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" isActive={isActive} />
+        <SidebarLink path="/reporting" icon={<BarChart3 className="w-4 h-4" />} label="Reporting" isActive={isActive} />
+
+        <div style={{ height: '1px', backgroundColor: colors.divider, margin: '6px 16px' }} />
 
         {/* Grouped Menu Items with Drag & Drop */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={menuGroups.map(g => g.key)} strategy={verticalListSortingStrategy}>
-            {menuGroups.map((group) => (
+          <SortableContext items={filteredGroups.map(g => g.key)} strategy={verticalListSortingStrategy}>
+            {filteredGroups.map((group) => (
               <SortableGroup
                 key={group.key}
                 group={group}
-                isExpanded={expandedGroups[group.key]}
+                isExpanded={expandedGroups[group.key] || !!searchQuery}
                 hasActiveItem={group.items.some(item => isActive(item.path))}
                 onToggle={() => toggleGroup(group.key)}
                 isActive={isActive}
               >
-                <div style={{ paddingBottom: spacing.xs }}>
-                  {group.items.map((item, itemIndex) => {
-                    const itemActive = isActive(item.path)
-                    return (
-                      <Link
-                        key={itemIndex}
-                        to={item.path}
-                        style={getMenuItemStyle(itemActive)}
-                        onMouseEnter={(e) => {
-                          if (!itemActive) { e.currentTarget.style.backgroundColor = colors.neutral[50]; e.currentTarget.style.color = colors.textPrimary }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!itemActive) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.textSecondary }
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </div>
-                        {!item.implemented && <span style={staticStyles.badge}>Bientôt</span>}
-                      </Link>
-                    )
-                  })}
+                <div style={{ paddingBottom: '2px' }}>
+                  {group.items.map((item, itemIndex) => (
+                    <SidebarLink
+                      key={itemIndex}
+                      path={item.path}
+                      icon={item.icon}
+                      label={item.label}
+                      isActive={isActive}
+                      indent
+                      badge={!item.implemented ? 'Bientot' : undefined}
+                    />
+                  ))}
                 </div>
               </SortableGroup>
             ))}
@@ -300,41 +249,56 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
       </nav>
 
       {/* User Section */}
-      <div style={staticStyles.userSection}>
+      <div style={{ borderTop: `1px solid ${colors.border}`, padding: '8px' }}>
         <div style={{ position: 'relative' }}>
-          <div onClick={() => setUserMenuOpen(!userMenuOpen)} style={staticStyles.userButton} {...hoverBg(colors.neutral[100], 'transparent')}>
-            <div style={staticStyles.avatar}>
+          <button
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+              padding: '8px 10px', borderRadius: borders.radius.base,
+              cursor: 'pointer', backgroundColor: 'transparent', border: 'none',
+              textAlign: 'left', transition: `background-color ${transitions.fast}`,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.neutral[50] }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+          >
+            <div style={{
+              width: 30, height: 30, backgroundColor: colors.primary[600],
+              borderRadius: borders.radius.full, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', color: colors.textOnColor,
+              fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, flexShrink: 0,
+            }}>
               {user?.fullName?.charAt(0).toUpperCase() || 'U'}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...staticStyles.truncatedText, fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.textPrimary }}>
+              <p style={{
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                margin: 0, fontSize: typography.sizes.sm,
+                fontWeight: typography.weights.medium, color: colors.textPrimary,
+              }}>
                 {user?.fullName || 'User'}
               </p>
-              <p style={{ ...staticStyles.truncatedText, fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+              <p style={{
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                margin: 0, fontSize: typography.sizes.xs, color: colors.textSecondary,
+              }}>
                 {user?.email || ''}
               </p>
             </div>
-            <ChevronDown className="w-4 h-4" style={{ color: colors.textSecondary, flexShrink: 0 }} />
-          </div>
+            <ChevronDown className="w-3.5 h-3.5" style={{ color: colors.textSecondary, flexShrink: 0 }} />
+          </button>
 
           {userMenuOpen && (
-            <div style={staticStyles.dropdown}>
-              <button onClick={() => { navigate('/profile'); setUserMenuOpen(false) }}
-                style={{ ...staticStyles.dropdownButton, color: colors.textPrimary }} {...hoverBg(colors.neutral[50], 'transparent')}>
-                <User className="w-4 h-4" style={{ color: colors.textSecondary }} />
-                <span>Mon profil</span>
-              </button>
-              <button onClick={() => { navigate('/parametrage/conventions'); setUserMenuOpen(false) }}
-                style={{ ...staticStyles.dropdownButton, color: colors.textPrimary }} {...hoverBg(colors.neutral[50], 'transparent')}>
-                <Settings className="w-4 h-4" style={{ color: colors.textSecondary }} />
-                <span>Paramètres</span>
-              </button>
+            <div style={{
+              position: 'absolute', bottom: '100%', left: 0, right: 0,
+              marginBottom: '4px', backgroundColor: colors.surface,
+              borderRadius: borders.radius.lg, border: `1px solid ${colors.border}`,
+              boxShadow: shadows.lg, overflow: 'hidden',
+            }}>
+              <DropdownItem icon={<User className="w-4 h-4" />} label="Mon profil" onClick={() => { navigate('/profile'); setUserMenuOpen(false) }} />
+              <DropdownItem icon={<Settings className="w-4 h-4" />} label="Parametres" onClick={() => { navigate('/parametrage/conventions'); setUserMenuOpen(false) }} />
               <div style={{ height: '1px', backgroundColor: colors.divider }} />
-              <button onClick={() => { handleLogout(); setUserMenuOpen(false) }}
-                style={{ ...staticStyles.dropdownButton, color: colors.danger[600] }} {...hoverBg(colors.danger[50], 'transparent')}>
-                <LogOut className="w-4 h-4" />
-                <span>Déconnexion</span>
-              </button>
+              <DropdownItem icon={<LogOut className="w-4 h-4" />} label="Deconnexion" onClick={() => { handleLogout(); setUserMenuOpen(false) }} danger />
             </div>
           )}
         </div>
@@ -342,5 +306,84 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
     </aside>
   )
 }
+
+// Micro-component: Single sidebar link
+interface SidebarLinkProps {
+  path: string
+  icon: JSX.Element
+  label: string
+  isActive: (path: string) => boolean
+  indent?: boolean
+  badge?: string
+}
+
+const SidebarLink = ({ path, icon, label, isActive, indent, badge }: SidebarLinkProps) => {
+  const active = isActive(path)
+  return (
+    <Link
+      to={path}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: indent ? '7px 16px 7px 36px' : '7px 16px',
+        minHeight: '34px',
+        color: active ? colors.primary[700] : colors.textSecondary,
+        fontSize: typography.sizes.sm,
+        fontWeight: active ? typography.weights.semibold : typography.weights.medium,
+        textDecoration: 'none',
+        transition: `all ${transitions.fast}`,
+        borderLeft: active ? `3px solid ${colors.primary[600]}` : '3px solid transparent',
+        backgroundColor: active ? colors.primary[25] : 'transparent',
+      }}
+      onMouseEnter={(e) => {
+        if (!active) { e.currentTarget.style.backgroundColor = colors.neutral[50]; e.currentTarget.style.color = colors.textPrimary }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.textSecondary }
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {icon}
+        <span>{label}</span>
+      </div>
+      {badge && (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center',
+          padding: '1px 6px', backgroundColor: colors.neutral[100],
+          color: colors.neutral[500], fontSize: typography.sizes['2xs'],
+          fontWeight: typography.weights.medium, borderRadius: borders.radius.full,
+        }}>
+          {badge}
+        </span>
+      )}
+    </Link>
+  )
+}
+
+// Micro-component: Dropdown menu item
+interface DropdownItemProps {
+  icon: JSX.Element
+  label: string
+  onClick: () => void
+  danger?: boolean
+}
+
+const DropdownItem = ({ icon, label, onClick, danger }: DropdownItemProps) => (
+  <button
+    onClick={onClick}
+    style={{
+      display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+      padding: '8px 16px', backgroundColor: 'transparent', border: 'none',
+      cursor: 'pointer', textAlign: 'left',
+      fontSize: typography.sizes.sm,
+      color: danger ? colors.danger[600] : colors.textPrimary,
+      transition: `background-color ${transitions.fast}`,
+    }}
+    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = danger ? colors.danger[50] : colors.neutral[50] }}
+    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+  >
+    <span style={{ color: danger ? undefined : colors.textSecondary, display: 'flex' }}>{icon}</span>
+    <span>{label}</span>
+  </button>
+)
 
 export default Sidebar

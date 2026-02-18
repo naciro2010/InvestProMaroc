@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
-import { odooTheme } from '../theme/odooTheme'
+import { erpTheme } from '../theme/odooTheme'
 
 /**
  * Theme Mode Type
@@ -67,7 +67,7 @@ export function ThemeContextProvider({ children }: ThemeContextProviderProps): R
 
   return (
     <ThemeContext.Provider value={{ mode, toggleTheme, isDark: false }}>
-      <ThemeProvider theme={odooTheme}>
+      <ThemeProvider theme={erpTheme}>
         <CssBaseline />
         {children}
       </ThemeProvider>

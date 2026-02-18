@@ -26,10 +26,10 @@ import {
   Edit,
   Delete,
   Close,
-  Category,
+  Refresh,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import { PageHeader } from '@/components/core'
+import { ControlPanel } from '@/components/core'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { categoriesDepensesAPI } from '../../lib/api'
 import { useToast } from '../../contexts/ToastContext'
@@ -49,6 +49,18 @@ const CategoriesDepensesPage = () => {
     ordreAffichage: 0,
   })
   const [saving, setSaving] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredCategories = categories.filter((c) => {
+    if (!searchQuery) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      c.code.toLowerCase().includes(q) ||
+      c.libelle.toLowerCase().includes(q) ||
+      (c.categorie && c.categorie.toLowerCase().includes(q)) ||
+      (c.description && c.description.toLowerCase().includes(q))
+    )
+  })
 
   useEffect(() => {
     loadCategories()
@@ -127,26 +139,35 @@ const CategoriesDepensesPage = () => {
 
   return (
     <AppLayout>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageHeader
-          title="Catégories de dépenses"
-          subtitle="Gestion du référentiel des catégories de dépenses"
+      <Box>
+        <ControlPanel
+          breadcrumbs={[
+            { label: 'Configuration', path: '/parametrage/conventions' },
+            { label: 'Categories de depenses' },
+          ]}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Rechercher par code, libelle, categorie..."
           actions={
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => handleOpenModal()}
-            >
-              Nouvelle catégorie
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button variant="outlined" size="small" startIcon={<Refresh />}
+                onClick={loadCategories} sx={{ textTransform: 'none' }}>
+                Actualiser
+              </Button>
+              <Button variant="contained" size="small" startIcon={<Add />}
+                onClick={() => handleOpenModal()} sx={{ textTransform: 'none' }}>
+                Nouvelle categorie
+              </Button>
+            </Box>
           }
         />
 
+        <Container maxWidth="xl" sx={{ py: 4 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress />
           </Box>
-        ) : categories.length === 0 ? (
+        ) : filteredCategories.length === 0 ? (
           <Alert severity="info">
             Aucune catégorie de dépense. Cliquez sur "Nouvelle catégorie" pour en créer une.
           </Alert>
@@ -165,7 +186,7 @@ const CategoriesDepensesPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {categories.map((category) => (
+                {filteredCategories.map((category) => (
                   <TableRow key={category.id} hover>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
@@ -306,7 +327,8 @@ const CategoriesDepensesPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Container>
+        </Container>
+      </Box>
     </AppLayout>
   )
 }

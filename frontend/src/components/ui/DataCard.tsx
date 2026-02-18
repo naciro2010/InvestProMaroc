@@ -53,7 +53,7 @@ export const DataRow = ({ label, value, fullWidth = false }: DataRowProps) => {
 }
 
 /**
- * Odoo-style Data Card Component
+ * ERP-style Data Card Component
  *
  * Clean card for displaying read-only data:
  * - Optional title with actions

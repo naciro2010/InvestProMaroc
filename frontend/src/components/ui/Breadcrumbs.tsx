@@ -12,7 +12,7 @@ interface BreadcrumbsProps {
 }
 
 /**
- * Odoo-style Breadcrumbs Component
+ * ERP-style Breadcrumbs Component
  *
  * Simple, clean breadcrumbs with subtle separators
  * - No emojis, no flashy colors

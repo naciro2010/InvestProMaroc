@@ -14,9 +14,9 @@ interface PageHeaderOdooProps {
 }
 
 /**
- * Odoo-style Page Header Component
+ * ERP-style Page Header Component
  *
- * Clean, professional page header following Odoo design principles:
+ * Clean, professional page header following ERP design principles:
  * - Breadcrumbs at top (always visible for navigation hierarchy)
  * - Title with optional status badge
  * - Subtitle for additional context

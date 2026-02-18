@@ -2,12 +2,12 @@ import { useState } from 'react'
 import {
   Box,
   Typography,
-  Stack,
-  Tooltip,
   IconButton,
+  Tooltip,
 } from '@mui/material'
 import { RefreshCw } from 'lucide-react'
 import AppLayout from '../components/layout/AppLayout'
+import { ControlPanel } from '../components/core'
 import { colors, typography } from '../lib/designSystem'
 import { useAuth } from '../contexts/AuthContext'
 import {
@@ -27,55 +27,51 @@ const DashboardModern = () => {
   const handleRefresh = () => {
     setRefreshing(true)
     setRefreshKey(prev => prev + 1)
-    // Reset the spinning indicator after a short delay
     setTimeout(() => setRefreshing(false), 1500)
   }
 
   return (
     <AppLayout>
       <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
-        {/* Welcome Header */}
-        <Box sx={{
-          bgcolor: colors.surface,
-          borderBottom: `1px solid ${colors.border}`,
-          px: { xs: 2, md: 3 },
-          py: 3,
-        }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-            <Box>
-              <Typography sx={{
-                fontSize: typography.sizes['2xl'],
-                fontWeight: typography.weights.bold,
-                color: colors.textPrimary,
-                letterSpacing: '-0.01em',
-                mb: 0.5,
-              }}>
-                {getGreeting()}, {user?.fullName || 'Utilisateur'}
-              </Typography>
-              <Typography sx={{
-                fontSize: typography.sizes.base,
-                color: colors.textSecondary,
-              }}>
-                Vue d'ensemble de vos investissements et operations
-              </Typography>
-            </Box>
+        {/* Control Panel */}
+        <ControlPanel
+          breadcrumbs={[{ label: 'Dashboard' }]}
+          actions={
             <Tooltip title="Actualiser les donnees">
               <IconButton
                 onClick={handleRefresh}
                 disabled={refreshing}
-                sx={{
-                  color: colors.textSecondary,
-                  '&:hover': { bgcolor: colors.neutral[100] },
-                }}
+                size="small"
+                sx={{ color: colors.textSecondary, '&:hover': { bgcolor: colors.neutral[100] } }}
               >
-                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
               </IconButton>
             </Tooltip>
-          </Stack>
+          }
+          hideBottomRow
+        />
+
+        {/* Welcome */}
+        <Box sx={{ px: { xs: 2, md: 3 }, pt: 3, pb: 1 }}>
+          <Typography sx={{
+            fontSize: typography.sizes['2xl'],
+            fontWeight: typography.weights.bold,
+            color: colors.textPrimary,
+            letterSpacing: '-0.01em',
+            mb: 0.5,
+          }}>
+            {getGreeting()}, {user?.fullName || 'Utilisateur'}
+          </Typography>
+          <Typography sx={{
+            fontSize: typography.sizes.base,
+            color: colors.textSecondary,
+          }}>
+            Vue d'ensemble de vos investissements et operations
+          </Typography>
         </Box>
 
         <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
-          {/* KPI Cards + Budget Utilization Bar */}
+          {/* KPI Cards */}
           <DashboardKPICards refreshKey={refreshKey} />
 
           {/* Charts Row */}
@@ -90,7 +86,7 @@ const DashboardModern = () => {
             <DashboardMarcheChart refreshKey={refreshKey} />
           </Box>
 
-          {/* Bottom Row: Activity + Alerts + Actions */}
+          {/* Activity */}
           <DashboardRecentActivity refreshKey={refreshKey} />
         </Box>
       </Box>

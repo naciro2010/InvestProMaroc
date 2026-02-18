@@ -1,33 +1,73 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { Box, Alert } from '@mui/material'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Box, Alert, Skeleton, Typography, Button, Container } from '@mui/material'
+import { Pencil, Lock } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import MarcheHeader from './components/MarcheHeader'
+import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge } from '../../components/core'
+import type { StatusStep } from '../../components/core'
+import { marchesAPI } from '../../lib/api'
+import { colors, typography, componentStyles } from '../../lib/designSystem'
+import MarcheStatsCard from './components/MarcheStatsCard'
 import MarcheConventionCard from './components/MarcheConventionCard'
 import MarcheInfoCard from './components/MarcheInfoCard'
-import MarcheStatsCard from './components/MarcheStatsCard'
-import MarcheLignesSection from './components/MarcheLignesSection'
-import MarcheDecomptesSection from './components/MarcheDecomptesSection'
-import MarcheAvenantsSection from './components/MarcheAvenantsSection'
-import MarcheSituationPaiementCard from './components/MarcheSituationPaiementCard'
-import MarchePaiementsSection from './components/MarchePaiementsSection'
 import MarcheOrdresServiceSection from './components/MarcheOrdresServiceSection'
+import MarcheLignesSection from './components/MarcheLignesSection'
+import MarcheSituationPaiementCard from './components/MarcheSituationPaiementCard'
+import MarcheDecomptesSection from './components/MarcheDecomptesSection'
+import MarchePaiementsSection from './components/MarchePaiementsSection'
+import MarcheAvenantsSection from './components/MarcheAvenantsSection'
 
-/**
- * MICRO-FRONTEND ARCHITECTURE
- * ===========================
- * Cette page utilise une architecture micro-frontend ou:
- * - Chaque composant charge ses propres donnees via des micro-endpoints
- * - Les composants sont independants et peuvent se recharger separement
- * - Pas de "god object" qui charge tout d'un coup
- * - Meilleure performance et scalabilite
- *
- * Workflow visible: Marche -> Decomptes (avec statut paiement) -> Paiements
- */
+interface MarcheBasicInfo {
+  id: number
+  numeroMarche: string
+  objet: string
+  statut: string
+  dateMarche: string
+  conventionId?: number
+  conventionCode?: string
+  fournisseurNom?: string
+  montantHt?: number
+  montantTtc?: number
+  typeMarche?: string
+  natureMarche?: string
+  delaiExecution?: number
+}
+
+const STATUS_STEPS: StatusStep[] = [
+  { value: 'BROUILLON', label: 'Brouillon' },
+  { value: 'EN_COURS', label: 'En cours' },
+  { value: 'VALIDE', label: 'Valide' },
+  { value: 'TERMINE', label: 'Termine' },
+]
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
 
 const MarcheDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
-  const [error] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const [marche, setMarche] = useState<MarcheBasicInfo | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const marcheId = id ? parseInt(id) : 0
+
+  useEffect(() => {
+    if (marcheId) loadMarche(marcheId)
+  }, [marcheId])
+
+  const loadMarche = async (mid: number) => {
+    try {
+      setLoading(true)
+      const res = await marchesAPI.getById(mid)
+      const data = res.data?.data || res.data
+      setMarche(data)
+    } catch {
+      setError('Erreur lors du chargement du marche')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!id) {
     return (
@@ -39,42 +79,159 @@ const MarcheDetailPageModern = () => {
     )
   }
 
-  const marcheId = parseInt(id)
+  if (loading) {
+    return (
+      <AppLayout>
+        <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+          <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
+            <Skeleton variant="text" width={300} height={32} />
+          </Box>
+          <Container maxWidth="xl" sx={{ py: 3 }}>
+            <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+              <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+              <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+            </Box>
+          </Container>
+        </Box>
+      </AppLayout>
+    )
+  }
+
+  if (error || !marche) {
+    return (
+      <AppLayout>
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+          <Alert severity="error">{error || 'Marche non trouve'}</Alert>
+        </Container>
+      </AppLayout>
+    )
+  }
+
+  const canEdit = marche.statut === 'BROUILLON'
+
+  const breadcrumbs = [
+    { label: 'Marches', path: '/marches' },
+    { label: marche.numeroMarche || `#${marche.id}` },
+  ]
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5', py: 4 }}>
-        <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3, md: 4 } }}>
-          {/* Header - Charge uniquement les infos de base */}
-          <MarcheHeader marcheId={marcheId} />
+      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+        {/* Control Panel - breadcrumbs + actions */}
+        <ControlPanel
+          breadcrumbs={breadcrumbs}
+          actions={
+            <Button
+              variant="outlined"
+              size="small"
+              disabled={!canEdit}
+              onClick={() => navigate(`/marches/${id}/modifier`)}
+              sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}
+            >
+              {canEdit
+                ? <Pencil size={14} style={{ marginRight: 4 }} />
+                : <Lock size={14} style={{ marginRight: 4 }} />
+              }
+              Modifier
+            </Button>
+          }
+          hideBottomRow
+        />
 
-          {/* Stats - Charge les metriques calculees */}
-          <MarcheStatsCard marcheId={marcheId} />
+        {/* Main content */}
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          <FormView
+            isEditing={false}
+            statusSteps={STATUS_STEPS}
+            currentStatus={marche.statut}
+          >
+            {/* Title */}
+            <Typography sx={{
+              fontSize: typography.sizes['2xl'],
+              fontWeight: typography.weights.bold,
+              color: colors.textPrimary,
+              mb: 0.5,
+            }}>
+              {marche.objet || marche.numeroMarche}
+            </Typography>
+            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 3 }}>
+              {marche.numeroMarche}
+            </Typography>
 
-          {/* Convention rattachee - Charge les infos de la convention liee */}
-          <MarcheConventionCard marcheId={marcheId} />
+            {/* Field Groups */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
+              <FieldGroup title="Informations generales">
+                <Field label="Numero" value={marche.numeroMarche} />
+                <Field label="Statut" value={<StatusBadge status={marche.statut} />} />
+                <Field label="Type" value={marche.typeMarche || '-'} />
+                <Field label="Nature" value={marche.natureMarche || '-'} />
+                {marche.conventionId && marche.conventionCode && (
+                  <Field
+                    label="Convention"
+                    value={marche.conventionCode}
+                    isLink
+                    onLinkClick={() => navigate(`/conventions/${marche.conventionId}`)}
+                  />
+                )}
+              </FieldGroup>
 
-          {/* Info Card - Charge les details du marche */}
-          <MarcheInfoCard marcheId={marcheId} />
+              <FieldGroup title="Finances">
+                <Field label="Montant HT" value={marche.montantHt ? formatCurrency(marche.montantHt) : '-'} isMoney />
+                <Field label="Montant TTC" value={marche.montantTtc ? formatCurrency(marche.montantTtc) : '-'} isMoney />
+                <Field label="Fournisseur" value={marche.fournisseurNom || '-'} />
+                <Field label="Delai execution" value={marche.delaiExecution ? `${marche.delaiExecution} jours` : '-'} />
+              </FieldGroup>
+            </Box>
 
-          {/* Ordres de Service - Timeline, durées, pénalités */}
-          <MarcheOrdresServiceSection marcheId={marcheId} />
+            {/* Stats Card */}
+            <MarcheStatsCard marcheId={marcheId} />
 
-          {/* Lignes - Charge les lignes de prix */}
-          <MarcheLignesSection marcheId={marcheId} />
-
-          {/* Situation Paiement - Resume des paiements avec progression */}
-          <MarcheSituationPaiementCard marcheId={marcheId} />
-
-          {/* Decomptes - Charge les decomptes avec statut paiement */}
-          <MarcheDecomptesSection marcheId={marcheId} />
-
-          {/* Paiements - Charge les paiements via la chaine Decompte->OP->Paiement */}
-          <MarchePaiementsSection marcheId={marcheId} />
-
-          {/* Avenants - Charge les avenants */}
-          <MarcheAvenantsSection marcheId={marcheId} />
-        </Box>
+            {/* Notebook tabs */}
+            <Box sx={{ mt: 3 }}>
+              <Notebook
+                tabs={[
+                  {
+                    label: 'Detail',
+                    content: (
+                      <Box>
+                        <MarcheConventionCard marcheId={marcheId} />
+                        <Box sx={{ mt: 3 }}>
+                          <MarcheInfoCard marcheId={marcheId} />
+                        </Box>
+                        <Box sx={{ mt: 3 }}>
+                          <MarcheOrdresServiceSection marcheId={marcheId} />
+                        </Box>
+                      </Box>
+                    ),
+                  },
+                  {
+                    label: 'Lignes',
+                    content: <MarcheLignesSection marcheId={marcheId} />,
+                  },
+                  {
+                    label: 'Situation Paiement',
+                    content: (
+                      <Box>
+                        <MarcheSituationPaiementCard marcheId={marcheId} />
+                        <Box sx={{ mt: 3 }}>
+                          <MarcheDecomptesSection marcheId={marcheId} />
+                        </Box>
+                        <Box sx={{ mt: 3 }}>
+                          <MarchePaiementsSection marcheId={marcheId} />
+                        </Box>
+                      </Box>
+                    ),
+                  },
+                  {
+                    label: 'Avenants',
+                    content: <MarcheAvenantsSection marcheId={marcheId} />,
+                  },
+                ]}
+              />
+            </Box>
+          </FormView>
+        </Container>
       </Box>
     </AppLayout>
   )

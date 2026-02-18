@@ -1,6 +1,7 @@
 import { Box, Paper, Typography, Chip, Divider, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Alert } from '@mui/material'
 import { Visibility } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 
 interface SousConvention {
   id: number
@@ -63,9 +64,7 @@ const ConventionSousConventionsCard = ({
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
-                          {sc.libelle}
-                        </Typography>
+                        <RichTextDisplay html={sc.libelle} variant="inline" sx={{ maxWidth: 200 }} />
                       </TableCell>
                       <TableCell>
                         <Chip label={sc.statut} size="small" color={getStatusColor(sc.statut)} />

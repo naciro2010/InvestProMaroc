@@ -14,6 +14,7 @@ import {
 } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 interface MarcheAvenantsSectionProps {
@@ -166,7 +167,7 @@ const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
                       {formatDate(avenant.dateAvenant)}
                     </TableCell>
                     <TableCell sx={{ color: colors.textPrimary }}>
-                      {avenant.objet}
+                      <RichTextDisplay html={avenant.objet} variant="inline" />
                     </TableCell>
                     <TableCell align="right">
                       <Typography

@@ -35,6 +35,7 @@ import { ExportButton } from '../../components/core'
 import { useToast } from '../../contexts/ToastContext'
 import api from '../../lib/api'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
+import RichTextDisplay from '../../components/ui/RichTextDisplay'
 import { exportToExcel, formatCurrencyForExport } from '../../lib/exportUtils'
 import { useTableSort } from '@/hooks/useTableSort'
 import {
@@ -412,9 +413,9 @@ export default function MarchesPage() {
                               </TableCell>
                               <TableCell
                                 onClick={() => navigate(`/marches/${marche.id}`)}
-                                sx={{ cursor: 'pointer', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                sx={{ cursor: 'pointer', maxWidth: 280 }}
                               >
-                                {marche.objet}
+                                <RichTextDisplay html={marche.objet} variant="inline" sx={{ maxWidth: 280 }} />
                               </TableCell>
                               <TableCell
                                 onClick={() => navigate(`/marches/${marche.id}`)}

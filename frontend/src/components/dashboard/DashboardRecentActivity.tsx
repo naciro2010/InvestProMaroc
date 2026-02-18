@@ -21,6 +21,7 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { conventionsAPI, marchesAPI } from '@/lib/api'
+import { stripHtml } from '@/utils/textUtils'
 import { colors, typography, componentStyles, borders, transitions, getStatusConfig } from '@/lib/designSystem'
 import {
   ConventionData,
@@ -80,14 +81,14 @@ const DashboardRecentActivity = ({ refreshKey }: DashboardSectionProps) => {
     const items: RecentItem[] = []
     conventions.slice(0, 5).forEach(c => {
       items.push({
-        id: c.id, code: c.code || `CONV-${c.id}`, label: c.objet || 'Convention',
+        id: c.id, code: c.code || `CONV-${c.id}`, label: stripHtml(c.objet || '') || 'Convention',
         status: c.statut || 'BROUILLON', date: c.updatedAt || c.createdAt || '',
         type: 'convention', path: `/conventions/${c.id}`,
       })
     })
     marches.slice(0, 3).forEach(m => {
       items.push({
-        id: m.id, code: m.code || `M-${m.id}`, label: m.objet || 'Marche',
+        id: m.id, code: m.code || `M-${m.id}`, label: stripHtml(m.objet || '') || 'Marche',
         status: m.statut || 'BROUILLON', date: m.createdAt || '',
         type: 'marche', path: `/marches/${m.id}`,
       })

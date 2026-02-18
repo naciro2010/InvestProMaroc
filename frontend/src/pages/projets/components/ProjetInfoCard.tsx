@@ -8,6 +8,7 @@ import {
   Skeleton,
 } from '@mui/material'
 import { projetsAPI } from '../../../lib/projetsAPI'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { Projet, formatDate } from './projetDetailTypes'
 
 interface ProjetInfoCardProps {
@@ -68,7 +69,7 @@ const ProjetInfoCard = ({ projetId }: ProjetInfoCardProps) => {
             {projet.description && (
               <Box>
                 <Typography variant="caption" color="text.secondary">Description</Typography>
-                <Typography variant="body1">{projet.description}</Typography>
+                <RichTextDisplay html={projet.description} variant="block" />
               </Box>
             )}
             {projet.responsableNom && (

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Box, Typography, Stack, CircularProgress, Divider } from '@mui/material'
-import { Business, CalendarMonth, AttachMoney, Description, LocationOn } from '@mui/icons-material'
+import { Box, Typography, CircularProgress, Divider } from '@mui/material'
 import { marchesAPI } from '../../../lib/api'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
+import StatusBadge from '@/components/core/StatusBadge'
 import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 interface MarcheInfoCardProps {
@@ -39,7 +40,7 @@ interface MarcheDetails {
 
 /**
  * MICRO-COMPONENT: MarcheInfoCard
- * Design: Atlassian/Confluence style - flat, professional
+ * Design: Compact 2-column grid, Atlassian-style
  * Charge les détails complets du marché
  */
 const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
@@ -109,250 +110,141 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
         </Typography>
       </Box>
 
-      {/* Content */}
+      {/* Content - Optimized layout */}
       <Box sx={{ p: 3 }}>
-        <Stack spacing={3}>
-          {/* Section Identité */}
-          <Box>
-            <Typography
-              sx={{
-                fontSize: typography.sizes.xs,
-                fontWeight: typography.weights.semibold,
-                color: colors.textSecondary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                mb: 2,
-              }}
-            >
-              Identité du Marché
-            </Typography>
-            <Stack spacing={1.5}>
-              <InfoRow icon={<Description />} label="Numéro Marché" value={details.numeroMarche} />
-              <InfoRow icon={<Description />} label="Numéro AO" value={details.numAo || '-'} />
-              <InfoRow icon={<CalendarMonth />} label="Date Marché" value={formatDate(details.dateMarche)} />
-              <InfoRow
-                icon={<Description />}
-                label="Type"
-                value={
-                  <Box sx={{ display: 'inline-flex', gap: 1 }}>
-                    <Box sx={{ display: 'inline-flex', px: 1.5, py: 0.25, borderRadius: borders.radius.sm, bgcolor: getStatusConfig(details.typeMarche).bgColor }}>
-                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: getStatusConfig(details.typeMarche).textColor }}>
-                        {getStatusConfig(details.typeMarche).label}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'inline-flex', px: 1.5, py: 0.25, borderRadius: borders.radius.sm, bgcolor: getStatusConfig(details.naturePrestation).bgColor }}>
-                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: getStatusConfig(details.naturePrestation).textColor }}>
-                        {getStatusConfig(details.naturePrestation).label}
-                      </Typography>
-                    </Box>
-                  </Box>
-                }
-              />
-              <InfoRow
-                icon={<Description />}
-                label="Statut"
-                value={
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 0.75,
-                      px: 1.5,
-                      py: 0.25,
-                      borderRadius: borders.radius.sm,
-                      bgcolor: statusConfig.bgColor,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        bgcolor: statusConfig.dotColor,
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: typography.sizes.xs,
-                        fontWeight: typography.weights.semibold,
-                        color: statusConfig.textColor,
-                      }}
-                    >
-                      {statusConfig.label}
-                    </Typography>
-                  </Box>
-                }
-              />
-              {details.dateSignature && (
-                <InfoRow icon={<CalendarMonth />} label="Date Signature" value={formatDate(details.dateSignature)} />
-              )}
-              {details.dateNotification && (
-                <InfoRow icon={<CalendarMonth />} label="Date Notification" value={formatDate(details.dateNotification)} />
-              )}
-              {details.delaiExecutionMois && (
-                <InfoRow icon={<CalendarMonth />} label="Délai d'exécution" value={`${details.delaiExecutionMois} mois`} />
-              )}
-            </Stack>
-          </Box>
-
-          <Divider sx={{ borderColor: colors.divider }} />
-
-          {/* Section Objet */}
-          <Box>
-            <Typography
-              sx={{
-                fontSize: typography.sizes.xs,
-                fontWeight: typography.weights.semibold,
-                color: colors.textSecondary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                mb: 1,
-              }}
-            >
-              Objet
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: typography.sizes.base,
-                color: colors.textPrimary,
-              }}
-            >
-              {details.objet}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ borderColor: colors.divider }} />
-
-          {/* Section Financière */}
-          <Box>
-            <Typography
-              sx={{
-                fontSize: typography.sizes.xs,
-                fontWeight: typography.weights.semibold,
-                color: colors.textSecondary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                mb: 2,
-              }}
-            >
-              Montants
-            </Typography>
-            <Stack spacing={1.5}>
-              <InfoRow
-                icon={<AttachMoney />}
-                label="Montant HT"
-                value={`${formatCurrency(details.montantHt)} DH`}
-              />
-              <InfoRow
-                icon={<AttachMoney />}
-                label={`TVA (${details.tauxTva || 20}%)`}
-                value={`${formatCurrency(details.montantTva)} DH`}
-              />
-              <InfoRow
-                icon={<AttachMoney />}
-                label="Montant TTC"
-                value={
-                  <Typography
-                    sx={{
-                      fontSize: typography.sizes.base,
-                      fontWeight: typography.weights.bold,
-                      color: colors.primary[700],
-                    }}
-                  >
-                    {formatCurrency(details.montantTtc)} DH
-                  </Typography>
-                }
-              />
-            </Stack>
-          </Box>
-
-          <Divider sx={{ borderColor: colors.divider }} />
-
-          {/* Section Relations */}
-          <Box>
-            <Typography
-              sx={{
-                fontSize: typography.sizes.xs,
-                fontWeight: typography.weights.semibold,
-                color: colors.textSecondary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                mb: 2,
-              }}
-            >
-              Relations
-            </Typography>
-            <Stack spacing={1.5}>
-              <InfoRow icon={<Business />} label="Fournisseur" value={details.fournisseurNom || '-'} />
-              <InfoRow icon={<Description />} label="Convention" value={details.conventionNumero || '-'} />
-            </Stack>
-          </Box>
-
-          {/* Section Géolocalisation */}
-          {details.adresse && (
-            <>
-              <Divider sx={{ borderColor: colors.divider }} />
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: typography.sizes.xs,
-                    fontWeight: typography.weights.semibold,
-                    color: colors.textSecondary,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    mb: 2,
-                  }}
-                >
-                  Localisation
-                </Typography>
-                <Stack spacing={1.5}>
-                  <InfoRow icon={<LocationOn />} label="Adresse" value={details.adresse} />
-                  {details.latitude && details.longitude && (
-                    <InfoRow
-                      icon={<LocationOn />}
-                      label="Coordonnées"
-                      value={`${details.latitude}, ${details.longitude}`}
-                    />
-                  )}
-                </Stack>
-              </Box>
-            </>
+        {/* Section: Identité + Dates - 2 columns */}
+        <SectionTitle>Identité du Marché</SectionTitle>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 0 }}>
+          <InfoRow label="Numéro Marché" value={details.numeroMarche} />
+          <InfoRow label="Numéro AO" value={details.numAo || '-'} />
+          <InfoRow label="Date Marché" value={formatDate(details.dateMarche)} />
+          {details.dateSignature && (
+            <InfoRow label="Date Signature" value={formatDate(details.dateSignature)} />
           )}
-        </Stack>
+          {details.dateNotification && (
+            <InfoRow label="Date Notification" value={formatDate(details.dateNotification)} />
+          )}
+          {details.delaiExecutionMois && (
+            <InfoRow label="Délai d'exécution" value={`${details.delaiExecutionMois} mois`} />
+          )}
+        </Box>
+
+        {/* Type + Status row */}
+        <Box sx={{ display: 'flex', gap: 1.5, mt: 1.5, mb: 1, flexWrap: 'wrap' }}>
+          <StatusBadge status={details.typeMarche} size="small" />
+          <StatusBadge status={details.naturePrestation} size="small" />
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.75,
+              px: 1.5,
+              py: 0.25,
+              borderRadius: borders.radius.sm,
+              bgcolor: statusConfig.bgColor,
+            }}
+          >
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: statusConfig.dotColor }} />
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: statusConfig.textColor }}>
+              {statusConfig.label}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider sx={{ borderColor: colors.divider, my: 2 }} />
+
+        {/* Section: Objet - full width with rich text */}
+        <SectionTitle>Objet</SectionTitle>
+        <Box sx={componentStyles.richTextDisplay.container}>
+          <RichTextDisplay html={details.objet} variant="block" collapseLength={500} />
+        </Box>
+
+        <Divider sx={{ borderColor: colors.divider, my: 2 }} />
+
+        {/* Section: Montants - 2 columns */}
+        <SectionTitle>Montants</SectionTitle>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 0 }}>
+          <InfoRow label="Montant HT" value={`${formatCurrency(details.montantHt)} DH`} />
+          <InfoRow label={`TVA (${details.tauxTva || 20}%)`} value={`${formatCurrency(details.montantTva)} DH`} />
+          <InfoRow
+            label="Montant TTC"
+            value={
+              <Typography sx={{ fontSize: typography.sizes.base, fontWeight: typography.weights.bold, color: colors.primary[700] }}>
+                {formatCurrency(details.montantTtc)} DH
+              </Typography>
+            }
+          />
+        </Box>
+
+        <Divider sx={{ borderColor: colors.divider, my: 2 }} />
+
+        {/* Section: Relations - 2 columns */}
+        <SectionTitle>Relations</SectionTitle>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 0 }}>
+          <InfoRow label="Fournisseur" value={details.fournisseurNom || '-'} />
+          <InfoRow label="Convention" value={details.conventionNumero || '-'} />
+        </Box>
+
+        {/* Section: Géolocalisation */}
+        {details.adresse && (
+          <>
+            <Divider sx={{ borderColor: colors.divider, my: 2 }} />
+            <SectionTitle>Localisation</SectionTitle>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 0 }}>
+              <InfoRow label="Adresse" value={details.adresse} />
+              {details.latitude && details.longitude && (
+                <InfoRow label="Coordonnées" value={`${details.latitude}, ${details.longitude}`} />
+              )}
+            </Box>
+          </>
+        )}
       </Box>
     </Box>
   )
 }
 
+/** Section title - small uppercase label */
+const SectionTitle = ({ children }: { children: string }) => (
+  <Typography
+    sx={{
+      fontSize: typography.sizes.xs,
+      fontWeight: typography.weights.semibold,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
+      mb: 1.5,
+    }}
+  >
+    {children}
+  </Typography>
+)
+
 interface InfoRowProps {
-  icon: React.ReactNode
   label: string
   value: React.ReactNode
 }
 
-const InfoRow = ({ icon, label, value }: InfoRowProps) => {
+/** Compact info row without icons - saves horizontal space */
+const InfoRow = ({ label, value }: InfoRowProps) => {
   return (
-    <Stack direction="row" spacing={2} alignItems="center">
-      <Box sx={{ color: colors.neutral[400], display: 'flex' }}>{icon}</Box>
+    <Box sx={{ py: 0.75, pr: 2 }}>
       <Typography
         sx={{
-          fontSize: typography.sizes.sm,
+          fontSize: typography.sizes.xs,
           color: colors.textSecondary,
-          minWidth: 140,
+          mb: 0.25,
         }}
       >
         {label}
       </Typography>
-      <Box sx={{ flex: 1 }}>
-        {typeof value === 'string' ? (
-          <Typography sx={{ fontSize: typography.sizes.base, color: colors.textPrimary }}>
-            {value}
-          </Typography>
-        ) : (
-          value
-        )}
-      </Box>
-    </Stack>
+      {typeof value === 'string' ? (
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary, fontWeight: typography.weights.medium }}>
+          {value}
+        </Typography>
+      ) : (
+        value
+      )}
+    </Box>
   )
 }
 

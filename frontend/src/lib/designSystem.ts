@@ -1110,6 +1110,73 @@ export const componentStyles = {
   },
 
   /**
+   * Rich text display - renders HTML content from RichTextEditor
+   * Use for libellé, objet, description fields that may contain rich HTML
+   */
+  richTextDisplay: {
+    /** Full block display for detail pages */
+    block: {
+      fontSize: typography.sizes.base,
+      color: colors.textPrimary,
+      lineHeight: typography.lineHeights.relaxed,
+      wordBreak: 'break-word' as const,
+      '& p': { margin: '0.25em 0' },
+      '& p:first-of-type': { marginTop: 0 },
+      '& p:last-of-type': { marginBottom: 0 },
+      '& ul, & ol': { marginLeft: '1.5em', marginTop: '0.25em', marginBottom: '0.25em' },
+      '& li': { marginBottom: '0.15em' },
+      '& strong': { fontWeight: typography.weights.semibold },
+      '& em': { fontStyle: 'italic' },
+      '& a': { color: colors.link, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } },
+      '& h1, & h2, & h3': { fontWeight: typography.weights.bold, margin: '0.5em 0 0.25em' },
+      '& blockquote': {
+        borderLeft: `3px solid ${colors.neutral[300]}`,
+        paddingLeft: '1em',
+        margin: '0.5em 0',
+        color: colors.textSecondary,
+      },
+      '& pre, & code': {
+        fontFamily: typography.fontFamilyMono,
+        fontSize: '0.9em',
+        backgroundColor: colors.neutral[50],
+        borderRadius: borders.radius.sm,
+      },
+      '& pre': { padding: '0.75em', margin: '0.5em 0', overflow: 'auto' },
+      '& code': { padding: '0.15em 0.3em' },
+    },
+    /** Inline display for tables - strips to single line, plain text */
+    inline: {
+      fontSize: typography.sizes.sm,
+      color: colors.textPrimary,
+      overflow: 'hidden' as const,
+      textOverflow: 'ellipsis' as const,
+      whiteSpace: 'nowrap' as const,
+      maxWidth: 300,
+    },
+    /** Compact display for cards - limited height */
+    compact: {
+      fontSize: typography.sizes.sm,
+      color: colors.textPrimary,
+      lineHeight: typography.lineHeights.normal,
+      wordBreak: 'break-word' as const,
+      '& p': { margin: '0.15em 0' },
+      '& p:first-of-type': { marginTop: 0 },
+      '& p:last-of-type': { marginBottom: 0 },
+      '& ul, & ol': { marginLeft: '1.25em', marginTop: '0.15em', marginBottom: '0.15em' },
+      '& strong': { fontWeight: typography.weights.semibold },
+      '& em': { fontStyle: 'italic' },
+      '& a': { color: colors.link, textDecoration: 'none' },
+    },
+    /** Container box for rich text in detail pages */
+    container: {
+      p: 1.5,
+      bgcolor: colors.neutral[25],
+      borderRadius: borders.radius.md,
+      border: `1px solid ${colors.borderSubtle}`,
+    },
+  },
+
+  /**
    * Modern action menu item
    */
   menuItem: {

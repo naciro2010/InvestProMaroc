@@ -3,6 +3,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { MapPin, ExternalLink } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { stripHtml } from '@/utils/textUtils'
 
 // Fix for default marker icon
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,7 +161,7 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
 
                   {marche.objet && (
                     <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-                      {marche.objet}
+                      {stripHtml(marche.objet)}
                     </p>
                   )}
 

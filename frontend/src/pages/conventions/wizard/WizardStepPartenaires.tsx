@@ -15,6 +15,7 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  LinearProgress,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
@@ -47,6 +48,18 @@ const WizardStepPartenaires = ({
     ci: 0,
   })
 
+  const budgetGlobal = formData.budgetGlobal
+
+  const handleBudgetChange = (value: number) => {
+    const pourcentage = budgetGlobal > 0 ? (value / budgetGlobal) * 100 : 0
+    setNewPartenaire({ ...newPartenaire, budget: value, pourcentage })
+  }
+
+  const handlePourcentageChange = (value: number) => {
+    const budget = (value / 100) * budgetGlobal
+    setNewPartenaire({ ...newPartenaire, pourcentage: value, budget })
+  }
+
   const handleAddPartenaire = () => {
     if (newPartenaire.designation && newPartenaire.budget > 0) {
       setFormData((prev) => ({
@@ -64,17 +77,22 @@ const WizardStepPartenaires = ({
     }))
   }
 
+  const reliquat = budgetGlobal - totals.totalPartenaires
+  const reliquatAvecNouveau = reliquat - newPartenaire.budget
+  const allocationPct = budgetGlobal > 0 ? (totals.totalPartenaires / budgetGlobal) * 100 : 0
+
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
       <Box>
         <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-          🤝 Allocation aux partenaires
+          Allocation aux partenaires
         </Typography>
         <Divider sx={{ mb: 3 }} />
       </Box>
 
       <Alert severity="info">
-        💡 Ajouter les partenaires et allouer des budgets. Le total ne doit pas dépasser le budget global.
+        Ajouter les partenaires et allouer des budgets. Le total ne doit pas dépasser le budget global
+        de {formatCurrency(budgetGlobal)}.
       </Alert>
 
       {/* Add partenaire form */}
@@ -98,27 +116,17 @@ const WizardStepPartenaires = ({
           />
           <DecimalInput
             size="small"
-            label="Budget"
+            label="Budget (MAD)"
             value={newPartenaire.budget}
-            onChange={(value) =>
-              setNewPartenaire({
-                ...newPartenaire,
-                budget: value,
-              })
-            }
+            onChange={handleBudgetChange}
             decimalPlaces={2}
             min={0}
           />
           <DecimalInput
             size="small"
-            label="%"
+            label="% du budget"
             value={newPartenaire.pourcentage}
-            onChange={(value) =>
-              setNewPartenaire({
-                ...newPartenaire,
-                pourcentage: value,
-              })
-            }
+            onChange={handlePourcentageChange}
             decimalPlaces={2}
             min={0}
             max={100}
@@ -128,10 +136,7 @@ const WizardStepPartenaires = ({
             label="CI (%)"
             value={newPartenaire.ci}
             onChange={(value) =>
-              setNewPartenaire({
-                ...newPartenaire,
-                ci: value,
-              })
+              setNewPartenaire({ ...newPartenaire, ci: value })
             }
             decimalPlaces={2}
             min={0}
@@ -141,11 +146,17 @@ const WizardStepPartenaires = ({
             size="small"
             startIcon={<AddIcon />}
             onClick={handleAddPartenaire}
+            disabled={!newPartenaire.designation || newPartenaire.budget <= 0}
             sx={{ height: 40 }}
           >
             Ajouter
           </Button>
         </Box>
+        {newPartenaire.budget > 0 && (
+          <Typography variant="caption" color={reliquatAvecNouveau >= 0 ? 'text.secondary' : 'error'} sx={{ mt: 1, display: 'block' }}>
+            Reliquat après ajout : {formatCurrency(reliquatAvecNouveau)}
+          </Typography>
+        )}
       </Card>
 
       {/* Partenaires table */}
@@ -190,12 +201,12 @@ const WizardStepPartenaires = ({
 
       {/* Summary */}
       <Card sx={{ p: 2, bgcolor: '#f0f9ff' }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
           <Box>
             <Typography variant="caption" color="text.secondary">
-              Budget total
+              Budget global
             </Typography>
-            <Typography variant="h6">{formatCurrency(formData.budgetGlobal)}</Typography>
+            <Typography variant="h6">{formatCurrency(budgetGlobal)}</Typography>
           </Box>
           <Box>
             <Typography variant="caption" color="text.secondary">
@@ -207,18 +218,35 @@ const WizardStepPartenaires = ({
           </Box>
           <Box>
             <Typography variant="caption" color="text.secondary">
-              Restant
+              Reliquat
             </Typography>
             <Typography
               variant="h6"
-              color={
-                formData.budgetGlobal - totals.totalPartenaires >= 0 ? 'success.main' : 'error.main'
-              }
+              color={reliquat >= 0 ? 'success.main' : 'error.main'}
             >
-              {formatCurrency(formData.budgetGlobal - totals.totalPartenaires)}
+              {formatCurrency(reliquat)}
             </Typography>
           </Box>
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Allocation
+            </Typography>
+            <Typography variant="h6">{allocationPct.toFixed(1)}%</Typography>
+          </Box>
         </Box>
+        {budgetGlobal > 0 && (
+          <LinearProgress
+            variant="determinate"
+            value={Math.min(allocationPct, 100)}
+            color={reliquat >= 0 ? 'primary' : 'error'}
+            sx={{ mt: 2, height: 8, borderRadius: 1 }}
+          />
+        )}
+        {reliquat < 0 && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            Le total alloué dépasse le budget global de {formatCurrency(Math.abs(reliquat))} !
+          </Alert>
+        )}
       </Card>
     </Box>
   )

@@ -18,6 +18,9 @@ import {
   IconButton,
   Autocomplete,
   CircularProgress,
+  MenuItem,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
@@ -30,6 +33,7 @@ import {
   formatCurrency,
   type ConventionWizardFormData,
   type SetFormDataFunction,
+  type HandleChangeFunction,
   type WizardTotals,
   type BudgetLigne,
 } from './types'
@@ -37,12 +41,14 @@ import {
 interface WizardStepBudgetProps {
   formData: ConventionWizardFormData
   setFormData: SetFormDataFunction
+  handleChange: HandleChangeFunction
   totals: WizardTotals
 }
 
 const WizardStepBudget = ({
   formData,
   setFormData,
+  handleChange,
   totals,
 }: WizardStepBudgetProps) => {
   const [categories, setCategories] = useState<CategorieDepenseListDTO[]>([])
@@ -53,6 +59,8 @@ const WizardStepBudget = ({
     montantHT: 0,
     tauxTVA: 20,
     montantTTC: 0,
+    plafond: 0,
+    tauxCommissionLigne: formData.tauxCommission || 2.5,
   })
 
   useEffect(() => {
@@ -76,7 +84,14 @@ const WizardStepBudget = ({
         ...prev,
         lignesBudget: [...prev.lignesBudget, ligneToAdd],
       }))
-      setNewLigne({ designation: '', montantHT: 0, tauxTVA: 20, montantTTC: 0 })
+      setNewLigne({
+        designation: '',
+        montantHT: 0,
+        tauxTVA: 20,
+        montantTTC: 0,
+        plafond: 0,
+        tauxCommissionLigne: formData.tauxCommission || 2.5,
+      })
       setSelectedCategorie(null)
     }
   }
@@ -96,11 +111,13 @@ const WizardStepBudget = ({
     (cat) => !usedCategoryIds.includes(cat.id)
   )
 
+  const isParCategorie = formData.commissionMode === 'PAR_CATEGORIE'
+
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
       <Box>
         <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-          Budget & Montants
+          Budget & Commission
         </Typography>
         <Divider sx={{ mb: 3 }} />
       </Box>
@@ -114,10 +131,7 @@ const WizardStepBudget = ({
           fullWidth
           value={formData.budgetGlobal}
           onChange={(value) => {
-            setFormData((prev) => ({
-              ...prev,
-              budgetGlobal: value,
-            }))
+            setFormData((prev) => ({ ...prev, budgetGlobal: value }))
           }}
           decimalPlaces={2}
           min={0}
@@ -126,11 +140,77 @@ const WizardStepBudget = ({
         />
       </Card>
 
-      {/* Détail par lignes (Optionnel) */}
+      {/* Commission Configuration */}
+      <Card sx={{ p: 2 }}>
+        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+          Configuration de la Commission
+        </Typography>
+
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            Mode de calcul
+          </Typography>
+          <ToggleButtonGroup
+            value={formData.commissionMode}
+            exclusive
+            onChange={(_e, val) => {
+              if (val) setFormData((prev) => ({ ...prev, commissionMode: val }))
+            }}
+            size="small"
+          >
+            <ToggleButton value="GLOBAL">Taux global (sans plafond)</ToggleButton>
+            <ToggleButton value="PAR_CATEGORIE">Par catégorie (avec plafond)</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+          {!isParCategorie && (
+            <DecimalInput
+              fullWidth
+              label="Taux de commission (%)"
+              value={formData.tauxCommission}
+              onChange={(value) => setFormData((prev) => ({ ...prev, tauxCommission: value }))}
+              decimalPlaces={2}
+              min={0}
+              max={100}
+              size="small"
+            />
+          )}
+          <TextField
+            fullWidth
+            select
+            label="Base de calcul"
+            value={formData.baseCalcul}
+            onChange={handleChange('baseCalcul')}
+            size="small"
+          >
+            <MenuItem value="DECAISSEMENTS_HT">Décaissements HT</MenuItem>
+            <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC</MenuItem>
+          </TextField>
+          <DecimalInput
+            fullWidth
+            label="Taux TVA commission (%)"
+            value={formData.tauxTva}
+            onChange={(value) => setFormData((prev) => ({ ...prev, tauxTva: value }))}
+            decimalPlaces={2}
+            min={0}
+            max={100}
+            size="small"
+          />
+        </Box>
+
+        {isParCategorie && formData.lignesBudget.length === 0 && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Ajoutez des lignes de budget ci-dessous pour configurer le taux et plafond par catégorie.
+          </Alert>
+        )}
+      </Card>
+
+      {/* Détail par lignes */}
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="subtitle2" fontWeight={600}>
-            Répartition par Catégories de Dépenses (Optionnel)
+            Répartition par Catégories de Dépenses {isParCategorie ? '*' : '(Optionnel)'}
           </Typography>
           <Chip
             label={`${formData.lignesBudget.length} ligne(s)`}
@@ -145,7 +225,12 @@ const WizardStepBudget = ({
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr 1fr auto' },
+              gridTemplateColumns: {
+                xs: '1fr',
+                md: isParCategorie
+                  ? '2fr 1fr 0.7fr 1fr 0.8fr 0.8fr auto'
+                  : '2fr 1fr 1fr 1fr auto',
+              },
               gap: 1,
               alignItems: 'flex-end',
             }}
@@ -170,7 +255,7 @@ const WizardStepBudget = ({
                 <TextField
                   {...params}
                   label="Catégorie de dépense"
-                  placeholder="Sélectionner une catégorie"
+                  placeholder="Sélectionner"
                   InputProps={{
                     ...params.InputProps,
                     endAdornment: (
@@ -218,6 +303,28 @@ const WizardStepBudget = ({
               InputProps={{ readOnly: true }}
               sx={{ bgcolor: '#f5f5f5' }}
             />
+            {isParCategorie && (
+              <>
+                <DecimalInput
+                  size="small"
+                  label="Plafond"
+                  value={newLigne.plafond}
+                  onChange={(plafond) => setNewLigne({ ...newLigne, plafond })}
+                  decimalPlaces={2}
+                  min={0}
+                  helperText="0 = sans plafond"
+                />
+                <DecimalInput
+                  size="small"
+                  label="Taux (%)"
+                  value={newLigne.tauxCommissionLigne}
+                  onChange={(tauxCommissionLigne) => setNewLigne({ ...newLigne, tauxCommissionLigne })}
+                  decimalPlaces={2}
+                  min={0}
+                  max={100}
+                />
+              </>
+            )}
             <Button
               variant="contained"
               size="small"
@@ -238,23 +345,25 @@ const WizardStepBudget = ({
               <TableHead sx={{ bgcolor: '#f5f5f5' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Catégorie</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>
-                    Montant HT
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>
-                    TVA (%)
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 600 }}>
-                    Montant TTC
-                  </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 600 }}>
-                    Actions
-                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>Montant HT</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>TVA (%)</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>Montant TTC</TableCell>
+                  {isParCategorie && (
+                    <>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Plafond</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Taux (%)</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>Commission</TableCell>
+                    </>
+                  )}
+                  <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {formData.lignesBudget.map((ligne, idx) => {
                   const cat = categories.find((c) => c.id === ligne.categorieDepenseId)
+                  const base = formData.baseCalcul === 'DECAISSEMENTS_HT' ? ligne.montantHT : ligne.montantTTC
+                  const assiette = ligne.plafond > 0 ? Math.min(base, ligne.plafond) : base
+                  const lineCommission = (assiette * ligne.tauxCommissionLigne) / 100
                   return (
                     <TableRow key={idx}>
                       <TableCell>
@@ -269,9 +378,18 @@ const WizardStepBudget = ({
                       </TableCell>
                       <TableCell align="right">{formatCurrency(ligne.montantHT)}</TableCell>
                       <TableCell align="right">{ligne.tauxTVA}%</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
-                        {formatCurrency(ligne.montantTTC)}
-                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(ligne.montantTTC)}</TableCell>
+                      {isParCategorie && (
+                        <>
+                          <TableCell align="right">
+                            {ligne.plafond > 0 ? formatCurrency(ligne.plafond) : 'Illimité'}
+                          </TableCell>
+                          <TableCell align="right">{ligne.tauxCommissionLigne}%</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, color: 'success.main' }}>
+                            {formatCurrency(lineCommission)}
+                          </TableCell>
+                        </>
+                      )}
                       <TableCell align="center">
                         <IconButton size="small" color="error" onClick={() => handleDeleteLigne(idx)}>
                           <DeleteIcon fontSize="small" />
@@ -295,30 +413,40 @@ const WizardStepBudget = ({
         )}
       </Box>
 
-      {/* Résumé de la Convention */}
+      {/* Barre d'info / Résumé */}
       <Card sx={{ p: 3, bgcolor: '#f0f9ff', border: '2px solid #0ea5e9' }}>
         <Typography variant="h6" fontWeight={700} color="primary" sx={{ mb: 2 }}>
-          Résumé de la Convention
+          Résumé Budget & Commission
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(5, 1fr)' }, gap: 2 }}>
           <Box>
             <Typography variant="caption" color="text.secondary" fontWeight={600}>Budget Global</Typography>
             <Typography variant="h6" color="primary" sx={{ mt: 0.5 }}>{formatCurrency(formData.budgetGlobal)}</Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Taux Commission</Typography>
-            <Typography variant="h6" sx={{ mt: 0.5 }}>{formData.tauxCommission}%</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Commission Estimée</Typography>
-            <Typography variant="h6" color="success.main" sx={{ mt: 0.5 }}>{formatCurrency(totals.commissionEstimee)}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Partenaires</Typography>
-            <Typography variant="h6" sx={{ mt: 0.5 }}>
-              {formData.partenaires.length} ({((totals.totalPartenaires / formData.budgetGlobal) * 100 || 0).toFixed(1)}%)
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>Mode Commission</Typography>
+            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+              {isParCategorie ? 'Par catégorie' : 'Taux global'}
             </Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              {isParCategorie ? 'Taux par ligne' : 'Taux Commission'}
+            </Typography>
+            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
+              {isParCategorie ? 'Variable' : `${formData.tauxCommission}%`}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>Commission HT</Typography>
+            <Typography variant="h6" color="info.main" sx={{ mt: 0.5 }}>{formatCurrency(totals.commissionHT)}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              Commission TTC ({formData.tauxTva}% TVA)
+            </Typography>
+            <Typography variant="h6" color="success.main" sx={{ mt: 0.5 }}>{formatCurrency(totals.commissionTTC)}</Typography>
           </Box>
         </Box>
         {formData.lignesBudget.length > 0 && (
@@ -337,9 +465,6 @@ const WizardStepBudget = ({
                 </Alert>
               )}
             </Box>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
-              Lignes de budget : {formData.lignesBudget.length} ligne(s) | Total : {formatCurrency(totals.totalLignesTTC)}
-            </Typography>
           </>
         )}
       </Card>

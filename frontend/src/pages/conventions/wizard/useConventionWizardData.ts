@@ -30,6 +30,7 @@ interface UseConventionWizardDataResult {
   typeOptionsWithCurrent: ConventionTypeOptionDisplay[]
   totals: WizardTotals
   handleChange: HandleChangeFunction
+  onDureeMoisChange: (value: number) => void
   handleSubmit: () => void
   isLoadingConvention: boolean
   isSubmitting: boolean
@@ -57,6 +58,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
     dureeMois: 12,
     budgetGlobal: 0,
     lignesBudget: [],
+    commissionMode: 'GLOBAL',
     tauxCommission: 2.5,
     baseCalcul: 'DECAISSEMENTS_TTC',
     tauxTva: 20,
@@ -102,6 +104,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
             : 12,
         budgetGlobal: convention.budgetTotal || 0,
         lignesBudget: [],
+        commissionMode: 'GLOBAL',
         tauxCommission: convention.tauxCommission || 2.5,
         baseCalcul:
           (convention.baseCalcul as 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT') ||
@@ -236,6 +239,18 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  // Handler for dureeMois (DecimalInput provides number, not ChangeEvent)
+  const onDureeMoisChange = (duration: number) => {
+    setAutoDateFin(true)
+    setFormData((prev) => ({
+      ...prev,
+      dureeMois: duration,
+      dateFin: prev.dateDebut
+        ? formatDateInput(addMonths(new Date(prev.dateDebut), duration))
+        : prev.dateFin,
+    }))
+  }
+
   // Submit handler
   const handleSubmit = () => {
     if (isEditing) {
@@ -266,6 +281,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
     typeOptionsWithCurrent,
     totals,
     handleChange,
+    onDureeMoisChange,
     handleSubmit,
     isLoadingConvention,
     isSubmitting: createMutation.isPending || updateMutation.isPending,

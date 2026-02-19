@@ -8,7 +8,7 @@ import {
   useConventionWizardData,
   WizardStepInformations,
   WizardStepBudget,
-  WizardStepCommission,
+  WizardStepPartenaires,
   WizardStepSubventions,
   WizardStepRecapitulatif,
 } from './wizard'
@@ -27,6 +27,7 @@ const ConventionWizardComplete = () => {
     typeOptionsWithCurrent,
     totals,
     handleChange,
+    onDureeMoisChange,
     handleSubmit,
     isLoadingConvention,
     isSubmitting,
@@ -55,9 +56,15 @@ const ConventionWizardComplete = () => {
           formData.objetRich
         )
       case 1:
-        return formData.budgetGlobal > 0 && totals.differenceGlobalVsLignes >= 0
+        return (
+          formData.budgetGlobal > 0 &&
+          totals.differenceGlobalVsLignes >= 0 &&
+          (formData.commissionMode === 'GLOBAL'
+            ? formData.tauxCommission > 0
+            : formData.lignesBudget.length > 0)
+        )
       case 2:
-        return formData.tauxCommission > 0
+        return true
       case 3:
         return true
       case 4:
@@ -77,6 +84,7 @@ const ConventionWizardComplete = () => {
             handleChange={handleChange}
             settings={settings}
             autoDateFin={autoDateFin}
+            onDureeMoisChange={onDureeMoisChange}
             typeOptionsWithCurrent={typeOptionsWithCurrent}
           />
         )
@@ -85,15 +93,15 @@ const ConventionWizardComplete = () => {
           <WizardStepBudget
             formData={formData}
             setFormData={setFormData}
+            handleChange={handleChange}
             totals={totals}
           />
         )
       case 2:
         return (
-          <WizardStepCommission
+          <WizardStepPartenaires
             formData={formData}
             setFormData={setFormData}
-            handleChange={handleChange}
             totals={totals}
           />
         )
@@ -152,7 +160,7 @@ const ConventionWizardComplete = () => {
           <Alert severity="info" sx={{ mt: 3 }}>
             {isEditing
               ? 'Apres la modification, vous serez redirige vers la page de detail.'
-              : 'Apres la creation, vous pourrez ajouter des partenaires, des sous-conventions, des avenants, et gerer les allocations detaillees a partir de la page de detail.'}
+              : 'Apres la creation, vous pourrez ajouter des sous-conventions, des avenants, et gerer les allocations detaillees a partir de la page de detail.'}
           </Alert>
         )}
 

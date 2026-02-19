@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material'
 import { Assignment } from '@mui/icons-material'
 import { FieldGroup, Field, StatusBadge } from '@/components/core'
 import ConventionBudgetExecutionCard from './ConventionBudgetExecutionCard'
+import ConventionBudgetDetailCard from './ConventionBudgetDetailCard'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
@@ -116,6 +117,14 @@ const ConventionPrevisionnelSection = ({
           tauxCommission={convention.tauxCommission}
           tauxTva={convention.tauxTva}
           baseCalcul={convention.baseCalcul}
+        />
+      </Box>
+
+      {/* Budget Detail: per-marche tracking (prevu, engage, decompte, reste) */}
+      <Box sx={{ mb: 2 }}>
+        <ConventionBudgetDetailCard
+          conventionId={convention.id}
+          conventionBudget={convention.budget}
         />
       </Box>
 

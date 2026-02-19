@@ -284,7 +284,7 @@ const InlineTable = ({
   footerCells,
 }: InlineTableProps) => {
   return (
-    <Box sx={{ border: `1px solid ${colors.border}`, borderRadius: borders.radius.md, overflow: 'hidden' }}>
+    <Box sx={{ border: `1px solid ${colors.border}`, borderRadius: borders.radius.md, overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ backgroundColor: colors.neutral[50] }}>

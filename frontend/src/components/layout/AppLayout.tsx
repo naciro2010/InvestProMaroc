@@ -30,31 +30,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} isMobile={isCompact} onClose={() => setSidebarOpen(false)} />
 
-      {/* Mobile hamburger - floating button */}
-      {isCompact && !sidebarOpen && (
-        <button
-          onClick={toggleSidebar}
-          style={{
-            position: 'fixed',
-            top: 10,
-            left: 10,
-            zIndex: 50,
-            width: 36,
-            height: 36,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: colors.surface,
-            border: `1px solid ${colors.border}`,
-            borderRadius: borders.radius.base,
-            boxShadow: shadows.md,
-            cursor: 'pointer',
-            transition: `background-color ${transitions.fast}`,
-          }}
-        >
-          <Menu className="w-5 h-5" style={{ color: colors.textSecondary }} />
-        </button>
-      )}
+      {/* Mobile hamburger - inline button inside content flow */}
 
       {/* Main content - no header, no padding */}
       <div style={{
@@ -64,6 +40,37 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         transition: `margin-left ${transitions.normal}`,
         minHeight: '100vh',
       }}>
+        {/* Mobile top bar with hamburger */}
+        {isCompact && !sidebarOpen && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '8px 12px',
+            backgroundColor: colors.surface,
+            borderBottom: `1px solid ${colors.border}`,
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+          }}>
+            <button
+              onClick={toggleSidebar}
+              aria-label="Ouvrir le menu"
+              style={{
+                width: 36,
+                height: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'transparent',
+                border: `1px solid ${colors.border}`,
+                borderRadius: borders.radius.base,
+                cursor: 'pointer',
+              }}
+            >
+              <Menu className="w-5 h-5" style={{ color: colors.textPrimary }} />
+            </button>
+          </div>
+        )}
         {children}
       </div>
     </div>

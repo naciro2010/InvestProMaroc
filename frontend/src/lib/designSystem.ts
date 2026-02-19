@@ -1206,11 +1206,12 @@ export const componentStyles = {
     /** Top row: breadcrumbs + actions */
     topRow: {
       display: 'flex',
-      alignItems: 'center',
+      alignItems: { xs: 'flex-start', sm: 'center' },
       justifyContent: 'space-between',
+      flexDirection: { xs: 'column', sm: 'row' },
       py: 1.5,
       minHeight: 48,
-      gap: 2,
+      gap: { xs: 1, sm: 2 },
     },
     /** Bottom row: search + filters + group by */
     bottomRow: {
@@ -1259,6 +1260,7 @@ export const componentStyles = {
       alignItems: 'center',
       gap: 1,
       flexShrink: 0,
+      flexWrap: 'wrap' as const,
     },
     /** View switcher (list/kanban/map) */
     viewSwitcher: {
@@ -1350,10 +1352,12 @@ export const componentStyles = {
     /** Status bar (top of form with status pills) */
     statusBar: {
       display: 'flex',
-      alignItems: 'center',
+      alignItems: { xs: 'flex-start', sm: 'center' },
       justifyContent: 'space-between',
-      px: 3,
+      flexDirection: { xs: 'column', sm: 'row' },
+      px: { xs: 2, sm: 3 },
       py: 1.5,
+      gap: { xs: 1, sm: 0 },
       bgcolor: colors.neutral[25],
       borderBottom: `1px solid ${colors.border}`,
     },
@@ -1368,6 +1372,9 @@ export const componentStyles = {
       display: 'flex',
       alignItems: 'center',
       gap: 0,
+      overflowX: 'auto' as const,
+      maxWidth: '100%',
+      '&::-webkit-scrollbar': { display: 'none' },
     },
     statusPipelineStep: {
       px: 1.5,
@@ -1422,7 +1429,7 @@ export const componentStyles = {
     },
     /** Sheet (main content area of form) */
     sheet: {
-      p: 3,
+      p: { xs: 2, sm: 3 },
     },
     /** Title field (editable h1) */
     titleField: {
@@ -1469,21 +1476,23 @@ export const componentStyles = {
     /** Field row (label + value in form) */
     fieldRow: {
       display: 'flex',
-      alignItems: 'baseline',
+      flexDirection: { xs: 'column', sm: 'row' },
+      alignItems: { xs: 'flex-start', sm: 'baseline' },
       py: 0.75,
-      minHeight: 36,
+      minHeight: { xs: 'auto', sm: 36 },
+      gap: { xs: 0.25, sm: 0 },
       '&:not(:last-child)': {
         borderBottom: `1px solid ${colors.divider}`,
       },
     },
     /** Field label */
     fieldLabel: {
-      width: 180,
+      width: { xs: '100%', sm: 180 },
       flexShrink: 0,
       fontSize: typography.sizes.sm,
       fontWeight: typography.weights.medium,
       color: colors.textSecondary,
-      pr: 2,
+      pr: { xs: 0, sm: 2 },
     },
     /** Field value (view mode) */
     fieldValue: {
@@ -1579,11 +1588,12 @@ export const componentStyles = {
     },
     /** Chatter (right side panel / activity log) */
     chatter: {
-      borderLeft: `1px solid ${colors.border}`,
+      borderLeft: { xs: 'none', md: `1px solid ${colors.border}` },
+      borderTop: { xs: `1px solid ${colors.border}`, md: 'none' },
       bgcolor: colors.neutral[25],
       p: 2,
-      minWidth: 320,
-      maxWidth: 400,
+      minWidth: { xs: '100%', md: 320 },
+      maxWidth: { xs: '100%', md: 400 },
     },
   },
 
@@ -1722,8 +1732,10 @@ export const componentStyles = {
       py: 1.25,
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
+      justifyContent: { xs: 'flex-start', sm: 'center' },
       gap: 0,
+      overflowX: 'auto' as const,
+      '&::-webkit-scrollbar': { display: 'none' },
     },
     /** Step pill (default / future) */
     step: {

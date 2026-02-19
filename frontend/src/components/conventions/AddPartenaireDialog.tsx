@@ -17,6 +17,7 @@ import {
   CircularProgress,
   Typography,
   LinearProgress,
+  Divider,
 } from '@mui/material';
 import { conventionsAPI, partenairesAPI } from '@/lib/api';
 import { colors, typography, borders } from '@/lib/designSystem';
@@ -57,6 +58,11 @@ interface FormData {
   estMaitreOeuvre: boolean;
   estMaitreOeuvreDelegue: boolean;
   remarques: string;
+  versementDate: string;
+  versementMontant: string;
+  versementVolet: string;
+  imputationPoste: string;
+  imputationMontant: string;
 }
 
 interface ValidationErrors {
@@ -72,7 +78,7 @@ const formatCurrency = (amount: number): string =>
 
 /**
  * Modal dialog for adding/editing a partenaire in a convention.
- * Auto-calculates percentage from budget and vice versa when conventionBudget is provided.
+ * Includes versement previsionnel and imputation previsionnelle fields.
  */
 export default function AddPartenaireDialog({
   open,
@@ -90,19 +96,26 @@ export default function AddPartenaireDialog({
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const syncSourceRef = useRef<SyncSource>('none');
 
-  const [formData, setFormData] = useState<FormData>({
+  const defaultFormData: FormData = {
     partenaireId: 0,
     budgetAlloue: '',
     pourcentage: '',
     estMaitreOeuvre: false,
     estMaitreOeuvreDelegue: false,
     remarques: '',
-  });
+    versementDate: '',
+    versementMontant: '',
+    versementVolet: '',
+    imputationPoste: '',
+    imputationMontant: '',
+  };
 
-  // Initialize form data when editing
+  const [formData, setFormData] = useState<FormData>(defaultFormData);
+
   useEffect(() => {
     if (open && editData) {
       setFormData({
+        ...defaultFormData,
         partenaireId: editData.partenaireId,
         budgetAlloue: editData.budgetAlloue.toString(),
         pourcentage: editData.pourcentage.toString(),
@@ -113,7 +126,6 @@ export default function AddPartenaireDialog({
     }
   }, [open, editData]);
 
-  // Fetch available partenaires on mount
   useEffect(() => {
     if (open) {
       fetchPartenaires();
@@ -204,14 +216,7 @@ export default function AddPartenaireDialog({
   };
 
   const handleClose = (): void => {
-    setFormData({
-      partenaireId: 0,
-      budgetAlloue: '',
-      pourcentage: '',
-      estMaitreOeuvre: false,
-      estMaitreOeuvreDelegue: false,
-      remarques: '',
-    });
+    setFormData(defaultFormData);
     setValidationErrors({});
     setError('');
     syncSourceRef.current = 'none';
@@ -222,7 +227,6 @@ export default function AddPartenaireDialog({
     syncSourceRef.current = 'budget';
     const newFormData: FormData = { ...formData, budgetAlloue: value };
 
-    // Auto-calculate pourcentage from budget if conventionBudget is available
     if (conventionBudget && conventionBudget > 0) {
       const budgetNum = parseFloat(value);
       if (!isNaN(budgetNum) && budgetNum >= 0) {
@@ -239,7 +243,6 @@ export default function AddPartenaireDialog({
     syncSourceRef.current = 'pourcentage';
     const newFormData: FormData = { ...formData, pourcentage: value };
 
-    // Auto-calculate budget from pourcentage if conventionBudget is available
     if (conventionBudget && conventionBudget > 0) {
       const pctNum = parseFloat(value);
       if (!isNaN(pctNum) && pctNum >= 0) {
@@ -273,11 +276,18 @@ export default function AddPartenaireDialog({
     return p.sigle ? `${p.code} - ${p.sigle}` : `${p.code} - ${p.raisonSociale}`;
   };
 
-  // Remaining budget indicator
   const budgetNum = parseFloat(formData.budgetAlloue) || 0;
   const hasBudgetInfo = conventionBudget !== undefined && conventionBudget > 0;
   const remainingAfterAllocation = hasBudgetInfo ? conventionBudget - budgetNum : 0;
   const allocationPct = hasBudgetInfo ? (budgetNum / conventionBudget) * 100 : 0;
+
+  const sectionTitleSx = {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.semibold,
+    color: colors.textSecondary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.04em',
+  };
 
   return (
     <Dialog
@@ -293,7 +303,7 @@ export default function AddPartenaireDialog({
         }
       }}
     >
-      <DialogTitle sx={{ pb: 1 }}>
+      <DialogTitle sx={{ pb: 1, fontSize: typography.sizes.lg }}>
         {isEditMode ? 'Modifier le partenaire' : 'Ajouter un partenaire'}
       </DialogTitle>
 
@@ -309,11 +319,11 @@ export default function AddPartenaireDialog({
             <CircularProgress />
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 3 }, mt: 2 }}>
-            {/* Convention budget info banner */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1.5 }}>
+            {/* Budget info banner */}
             {hasBudgetInfo && (
               <Box sx={{
-                p: 2, borderRadius: borders.radius.md,
+                p: 1.5, borderRadius: borders.radius.md,
                 bgcolor: colors.primary[25],
                 border: `1px solid ${colors.primary[100]}`,
               }}>
@@ -334,7 +344,7 @@ export default function AddPartenaireDialog({
                       variant="determinate"
                       value={Math.min(allocationPct, 100)}
                       sx={{
-                        height: 4, borderRadius: borders.radius.full, mb: 0.5,
+                        height: 3, borderRadius: borders.radius.full, mb: 0.5,
                         bgcolor: colors.neutral[100],
                         '& .MuiLinearProgress-bar': {
                           borderRadius: borders.radius.full,
@@ -343,11 +353,11 @@ export default function AddPartenaireDialog({
                       }}
                     />
                     <Typography sx={{
-                      fontSize: typography.sizes.xs,
+                      fontSize: '11px',
                       color: remainingAfterAllocation < 0 ? colors.danger[600] : colors.textSecondary,
                     }}>
                       {remainingAfterAllocation >= 0
-                        ? `Restant apres allocation: ${formatCurrency(remainingAfterAllocation)}`
+                        ? `Restant: ${formatCurrency(remainingAfterAllocation)}`
                         : `Depassement: ${formatCurrency(Math.abs(remainingAfterAllocation))}`
                       }
                     </Typography>
@@ -356,17 +366,19 @@ export default function AddPartenaireDialog({
               </Box>
             )}
 
-            {/* Partenaire Selection - Disabled in edit mode */}
+            {/* Section: Partenaire */}
+            <Typography sx={sectionTitleSx}>Partenaire</Typography>
+
             {isEditMode ? (
               <TextField
-                fullWidth
+                fullWidth size="small"
                 label="Partenaire"
                 value={editData?.partenaireNom || ''}
                 disabled
                 helperText="Le partenaire ne peut pas etre modifie"
               />
             ) : (
-              <FormControl fullWidth required error={Boolean(validationErrors.partenaireId)}>
+              <FormControl fullWidth size="small" required error={Boolean(validationErrors.partenaireId)}>
                 <InputLabel>Partenaire</InputLabel>
                 <Select
                   value={formData.partenaireId}
@@ -390,27 +402,20 @@ export default function AddPartenaireDialog({
               </FormControl>
             )}
 
-            {/* Budget and Pourcentage - Bidirectional sync */}
-            <Box sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-              gap: 2
-            }}>
+            {/* Budget & % */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <DecimalInput
-                fullWidth
-                required
+                fullWidth size="small" required
                 label="Budget alloue (MAD)"
                 value={parseFloat(formData.budgetAlloue) || 0}
                 onChange={(value) => handleBudgetChange(value.toString())}
                 decimalPlaces={2}
                 min={0}
                 error={Boolean(validationErrors.budgetAlloue)}
-                helperText={validationErrors.budgetAlloue || (hasBudgetInfo ? 'Calcul auto du %' : 'Montant en dirhams')}
+                helperText={validationErrors.budgetAlloue || (hasBudgetInfo ? 'Auto-calcul du %' : '')}
               />
-
               <DecimalInput
-                fullWidth
-                required
+                fullWidth size="small" required
                 label="Pourcentage (%)"
                 value={parseFloat(formData.pourcentage) || 0}
                 onChange={(value) => handlePourcentageChange(value.toString())}
@@ -418,65 +423,108 @@ export default function AddPartenaireDialog({
                 min={0}
                 max={100}
                 error={Boolean(validationErrors.pourcentage)}
-                helperText={validationErrors.pourcentage || (hasBudgetInfo ? 'Calcul auto du budget' : '% du budget total')}
+                helperText={validationErrors.pourcentage || (hasBudgetInfo ? 'Auto-calcul du budget' : '')}
               />
             </Box>
 
-            {/* Roles (MO/MOD) */}
-            <Box sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 1, sm: 3 }
-            }}>
+            {/* Roles */}
+            <Box sx={{ display: 'flex', gap: 3 }}>
               <FormControlLabel
                 control={
-                  <Checkbox
+                  <Checkbox size="small"
                     checked={formData.estMaitreOeuvre}
                     onChange={(e) => handleFieldChange('estMaitreOeuvre', e.target.checked)}
                   />
                 }
-                label="Maitre d'oeuvre (MO)"
+                label={<Typography sx={{ fontSize: typography.sizes.sm }}>Maitre d'oeuvre (MO)</Typography>}
               />
               <FormControlLabel
                 control={
-                  <Checkbox
+                  <Checkbox size="small"
                     checked={formData.estMaitreOeuvreDelegue}
                     onChange={(e) => handleFieldChange('estMaitreOeuvreDelegue', e.target.checked)}
                   />
                 }
-                label="Maitre d'oeuvre delegue (MOD)"
+                label={<Typography sx={{ fontSize: typography.sizes.sm }}>Maitre d'oeuvre delegue (MOD)</Typography>}
+              />
+            </Box>
+
+            <Divider sx={{ borderColor: colors.borderSubtle }} />
+
+            {/* Section: Versement previsionnel */}
+            <Typography sx={sectionTitleSx}>Versement previsionnel (optionnel)</Typography>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+              <TextField
+                fullWidth size="small"
+                label="Date versement"
+                type="date"
+                value={formData.versementDate}
+                onChange={(e) => handleFieldChange('versementDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+              />
+              <DecimalInput
+                fullWidth size="small"
+                label="Montant (MAD)"
+                value={parseFloat(formData.versementMontant) || 0}
+                onChange={(value) => handleFieldChange('versementMontant', value.toString())}
+                decimalPlaces={2}
+                min={0}
+              />
+              <TextField
+                fullWidth size="small"
+                label="Volet"
+                value={formData.versementVolet}
+                onChange={(e) => handleFieldChange('versementVolet', e.target.value)}
+                placeholder="Ex: Tranche 1"
+              />
+            </Box>
+
+            <Divider sx={{ borderColor: colors.borderSubtle }} />
+
+            {/* Section: Imputation previsionnelle */}
+            <Typography sx={sectionTitleSx}>Imputation previsionnelle (optionnel)</Typography>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                fullWidth size="small"
+                label="Poste / Compte"
+                value={formData.imputationPoste}
+                onChange={(e) => handleFieldChange('imputationPoste', e.target.value)}
+                placeholder="Ex: 6141 - Fournitures"
+              />
+              <DecimalInput
+                fullWidth size="small"
+                label="Montant (MAD)"
+                value={parseFloat(formData.imputationMontant) || 0}
+                onChange={(value) => handleFieldChange('imputationMontant', value.toString())}
+                decimalPlaces={2}
+                min={0}
               />
             </Box>
 
             {/* Remarques */}
             <TextField
-              fullWidth
-              multiline
-              rows={3}
+              fullWidth size="small"
+              multiline rows={2}
               label="Remarques"
               value={formData.remarques}
               onChange={(e) => handleFieldChange('remarques', e.target.value)}
-              helperText="Observations ou notes complementaires (optionnel)"
+              placeholder="Notes complementaires (optionnel)"
             />
           </Box>
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
-        <Button
-          onClick={handleClose}
-          disabled={loading}
-          fullWidth
-          sx={{ width: { xs: '100%', sm: 'auto' }, order: { xs: 2, sm: 1 } }}
-        >
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={handleClose} disabled={loading} size="small">
           Annuler
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={loading || (loadingPartenaires && !isEditMode)}
-          fullWidth
-          sx={{ width: { xs: '100%', sm: 'auto' }, order: { xs: 1, sm: 2 } }}
+          size="small"
         >
           {loading
             ? (isEditMode ? 'Modification...' : 'Ajout en cours...')

@@ -1,56 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Box,
   Container,
   Typography,
   Button,
-  Chip,
   Alert,
   Skeleton,
   Tooltip,
   Divider,
 } from '@mui/material'
-import {
-  Edit,
-  Add,
-  Lock,
-} from '@mui/icons-material'
-import { Plus, Pencil, ArrowLeft } from 'lucide-react'
+import { Lock } from '@mui/icons-material'
+import { Plus, Pencil } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
 import {
   ConfirmDialog,
-  StatusBadge,
   ControlPanel,
   FormView,
-  FieldGroup,
-  Field,
-  Notebook,
-  InlineTable,
 } from '../../components/core'
 import type { StatusStep } from '../../components/core'
 import { api, conventionsAPI, avenantConventionsAPI, versementsPrevisionnelsAPI, projetConventionsAPI } from '../../lib/api'
 import {
-  ConventionInfoCardLazy,
-  ConventionFinancesCard,
-  ConventionStatsCard,
-  ConventionSousConventionsCard,
-  ConventionAvenantsTab,
-  ConventionHistoryCard,
-  ConventionPartenairesCard,
-  ConventionSubventionsCard,
-  ConventionImputationsCard,
   ConventionWorkflowActions,
-  ConventionVersementsCard,
-  ConventionProjetsTab,
-  ConventionMarchesTab,
+  ConventionPrevisionnelSection,
+  ConventionRealisationSection,
   ParentConventionBanner,
 } from '../../components/conventions/detail'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
-import RichTextDisplay from '../../components/ui/RichTextDisplay'
-import BudgetRepartitionCard from '../../components/conventions/BudgetRepartitionCard'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
 import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
@@ -73,20 +51,6 @@ interface Marche { id: number; numeroMarche: string; objet: string; montantTtc: 
 interface VersementPrevisionnel { id: number; partenaireId?: number; partenaireNom?: string; partenaireSigle?: string; volet?: string; dateVersement: string; montant: number; montantPrevu?: number; remarques?: string }
 interface ProjetConventionAssociation { projetId: number; projetCode: string; projetNom: string; projetBudgetTotal: number; projetStatut: string }
 
-const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-  if (!statut) return 'default'
-  const map: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
-    BROUILLON: 'default', SOUMIS: 'info', VALIDEE: 'success', VALIDE: 'success',
-    EN_COURS: 'primary', EN_EXECUTION: 'primary', ACHEVE: 'secondary', TERMINE: 'secondary',
-    REJETE: 'error', ANNULE: 'error',
-  }
-  return map[statut.toUpperCase()] || 'default'
-}
-
-const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
-const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
-
-// Status pipeline steps for conventions
 const STATUS_STEPS: StatusStep[] = [
   { value: 'BROUILLON', label: 'Brouillon' },
   { value: 'SOUMIS', label: 'Soumis' },
@@ -100,6 +64,8 @@ const ConventionDetailPageModern = () => {
   const navigate = useNavigate()
   const { user, isAdmin, isManager } = useAuth()
   const { showSuccess, showError } = useToast()
+
+  // Data state
   const [loading, setLoading] = useState(true)
   const [convention, setConvention] = useState<Convention | null>(null)
   const [avenants, setAvenants] = useState<Avenant[]>([])
@@ -109,7 +75,7 @@ const ConventionDetailPageModern = () => {
   const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  // Dialog states
+  // Dialog state
   const [addPartenaireDialogOpen, setAddPartenaireDialogOpen] = useState(false)
   const [editPartenaireData, setEditPartenaireData] = useState<{ id: number; partenaireId: number; partenaireNom: string; budgetAlloue: number; pourcentage: number; estMaitreOeuvre: boolean; estMaitreOeuvreDelegue: boolean; remarques?: string } | null>(null)
   const [linkProjetDialogOpen, setLinkProjetDialogOpen] = useState(false)
@@ -120,12 +86,6 @@ const ConventionDetailPageModern = () => {
   const [versementDialogOpen, setVersementDialogOpen] = useState(false)
   const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
   const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | 'deleteVersement' | null; id: number | null }>({ open: false, type: null, id: null })
-
-  const tabsRef = useRef<HTMLDivElement>(null)
-
-  const handleStatClick = (statType: 'projets' | 'marches' | 'sousConventions') => {
-    setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
-  }
 
   // Data loading
   useEffect(() => { if (id) loadConvention(parseInt(id)) }, [id])
@@ -152,10 +112,7 @@ const ConventionDetailPageModern = () => {
   const loadMarches = async (cid: number) => { try { const r = await api.get(`/marches/convention/${cid}`); setMarches(r.data.data || r.data || []) } catch { setMarches([]) } }
   const loadVersements = async (cid: number) => { try { const r = await versementsPrevisionnelsAPI.getByConvention(cid); setVersements(r.data.data || r.data || []) } catch { setVersements([]) } }
 
-  const handleUnlinkProjet = (projetId: number) => { if (convention) setConfirmState({ open: true, type: 'unlinkProjet', id: projetId }) }
-  const handleUnlinkMarche = (marcheId: number) => { if (convention) setConfirmState({ open: true, type: 'unlinkMarche', id: marcheId }) }
-  const handleDeleteVersement = (versementId: number) => { if (convention) setConfirmState({ open: true, type: 'deleteVersement', id: versementId }) }
-
+  // Confirm actions
   const handleConfirmAction = async () => {
     if (!convention || !confirmState.id || !confirmState.type) return
     try {
@@ -179,6 +136,7 @@ const ConventionDetailPageModern = () => {
 
   useEffect(() => { if (error) { const t = setTimeout(() => setError(null), 5000); return () => clearTimeout(t) } }, [error])
 
+  // Loading state
   if (loading) return (
     <AppLayout>
       <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
@@ -187,10 +145,8 @@ const ConventionDetailPageModern = () => {
         </Box>
         <Container maxWidth="xl" sx={{ py: 3 }}>
           <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-            <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
-          </Box>
+          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
+          <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
         </Container>
       </Box>
     </AppLayout>
@@ -206,7 +162,6 @@ const ConventionDetailPageModern = () => {
 
   const canEdit = convention.statut === 'BROUILLON'
 
-  // Build breadcrumbs - always show full navigation path
   const breadcrumbs = [
     { label: 'Conventions', path: '/conventions' },
     ...(convention.parentConventionId && convention.parentConventionNumero
@@ -218,17 +173,14 @@ const ConventionDetailPageModern = () => {
   return (
     <AppLayout>
       <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-        {/* Control Panel - Always visible breadcrumbs + actions */}
+        {/* Control Panel */}
         <ControlPanel
           breadcrumbs={breadcrumbs}
           actions={
             <>
               <ConventionWorkflowActions
-                conventionId={convention.id}
-                statut={convention.statut}
-                userId={user?.id}
-                isAdmin={isAdmin}
-                isManager={isManager}
+                conventionId={convention.id} statut={convention.statut} userId={user?.id}
+                isAdmin={isAdmin} isManager={isManager}
                 onSuccess={(msg: string) => showSuccess(msg)}
                 onError={(msg: string) => showError(msg)}
                 onReload={() => loadConvention(convention.id)}
@@ -259,7 +211,6 @@ const ConventionDetailPageModern = () => {
           hideBottomRow
         />
 
-        {/* Messages */}
         {error && (
           <Container maxWidth="xl" sx={{ mt: 2 }}>
             <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
@@ -267,8 +218,7 @@ const ConventionDetailPageModern = () => {
         )}
 
         {/* Main Content */}
-        <Container maxWidth="xl" sx={{ py: 3 }}>
-          {/* Form View - with status pipeline */}
+        <Container maxWidth="xl" sx={{ py: 2 }}>
           <FormView
             isEditing={false}
             onToggleEdit={canEdit ? () => navigate(`/conventions/${id}/edit`) : undefined}
@@ -276,21 +226,18 @@ const ConventionDetailPageModern = () => {
             currentStatus={convention.statut}
           >
             {/* Title */}
-            <Typography sx={{
-              fontSize: typography.sizes['2xl'],
-              fontWeight: typography.weights.bold,
-              color: colors.textPrimary,
-              mb: 0.5,
-            }}>
+            <Typography sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.25 }}>
               {convention.libelle || convention.code}
             </Typography>
-            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 3 }}>
-              {convention.objet}
-            </Typography>
+            {convention.objet && (
+              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, mb: 2, lineHeight: 1.4 }}>
+                {convention.objet}
+              </Typography>
+            )}
 
             {/* Parent Convention Banner */}
             {convention.parentConventionId && convention.parentConventionNumero && (
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
                 <ParentConventionBanner
                   parentConventionId={convention.parentConventionId}
                   parentConventionNumero={convention.parentConventionNumero}
@@ -299,140 +246,45 @@ const ConventionDetailPageModern = () => {
               </Box>
             )}
 
-            {/* Field Groups */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
-              <FieldGroup title="Informations generales">
-                <Field label="Code" value={convention.code} />
-                <Field label="Numero" value={convention.numero} />
-                <Field label="Type" value={<StatusBadge status={convention.typeConvention} />} />
-                <Field label="Statut" value={<StatusBadge status={convention.statut} />} />
-                {convention.parentConventionId && convention.parentConventionNumero && (
-                  <Field
-                    label="Convention parent"
-                    value={convention.parentConventionNumero}
-                    isLink
-                    onLinkClick={() => navigate(`/conventions/${convention.parentConventionId}`)}
-                  />
-                )}
-              </FieldGroup>
+            {/* ===== SECTION 1: PREVISIONNEL ===== */}
+            <ConventionPrevisionnelSection
+              convention={convention}
+              partenairesRefreshKey={partenairesRefreshKey}
+              versements={versements}
+              onAddPartenaire={() => setAddPartenaireDialogOpen(true)}
+              onEditPartenaire={(p) => {
+                setEditPartenaireData({
+                  id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
+                  budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
+                  estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
+                  remarques: p.remarques || undefined,
+                })
+                setAddPartenaireDialogOpen(true)
+              }}
+              onAddVersement={() => { setEditingVersement(null); setVersementDialogOpen(true) }}
+              onEditVersement={(v) => { setEditingVersement(v); setVersementDialogOpen(true) }}
+              onDeleteVersement={(vid) => setConfirmState({ open: true, type: 'deleteVersement', id: vid })}
+              onRefresh={() => loadConvention(convention.id)}
+            />
 
-              <FieldGroup title="Finances">
-                <Field label="Budget" value={formatCurrency(convention.budget)} isMoney />
-                <Field label="Taux commission" value={`${convention.tauxCommission}%`} />
-                <Field label="Base de calcul" value={convention.baseCalcul} />
-                <Field label="TVA" value={`${convention.tauxTva}%`} />
-              </FieldGroup>
-            </Box>
+            {/* Section Divider */}
+            <Divider sx={{ my: 3, borderColor: colors.border }} />
 
-            <FieldGroup title="Dates" columns={1}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 0 }}>
-                <Field label="Date signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
-                <Field label="Date debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
-                <Field label="Date fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
-              </Box>
-            </FieldGroup>
-
-            {/* Micro-component cards */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mt: 3, mb: 3 }}>
-              <ConventionInfoCardLazy conventionId={convention.id} canEdit={canEdit} getStatusColor={getStatusColor} />
-              <ConventionFinancesCard conventionId={convention.id} />
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-              <BudgetRepartitionCard conventionId={convention.id} conventionBudget={convention.budget} />
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-              <ConventionStatsCard conventionId={convention.id} onStatClick={handleStatClick} />
-            </Box>
-
-            {/* Notebook (tabs) */}
-            <Box ref={tabsRef}>
-              <Notebook
-                tabs={[
-                  {
-                    label: 'Detail',
-                    content: (
-                      <Box>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-                          <ConventionPartenairesCard
-                            key={partenairesRefreshKey}
-                            conventionId={convention.id}
-                            parentConventionId={convention.parentConventionId ?? undefined}
-                            onAddClick={() => setAddPartenaireDialogOpen(true)}
-                            onEditClick={(p) => {
-                              setEditPartenaireData({ id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom, budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage, estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue, remarques: p.remarques || undefined })
-                              setAddPartenaireDialogOpen(true)
-                            }}
-                          />
-                          <ConventionSubventionsCard conventionId={convention.id} />
-                        </Box>
-                        <Box sx={{ mt: 3 }}>
-                          <ConventionImputationsCard conventionId={convention.id} onRefresh={() => loadConvention(convention.id)} />
-                        </Box>
-                        <Box sx={{ mt: 3 }}>
-                          <ConventionVersementsCard versements={versements} onAdd={() => { setEditingVersement(null); setVersementDialogOpen(true) }} onEdit={(v) => { setEditingVersement(v); setVersementDialogOpen(true) }} onDelete={handleDeleteVersement} />
-                        </Box>
-                      </Box>
-                    ),
-                  },
-                  {
-                    label: 'Sous-conventions',
-                    count: sousConventions.length,
-                    content: (
-                      <Box>
-                        <InlineTable
-                          headers={[
-                            { label: 'Code', width: '20%' },
-                            { label: 'Libelle' },
-                            { label: 'Statut', width: 120 },
-                            { label: 'Budget', width: 150, align: 'right' },
-                            { label: 'Actions', width: 100, align: 'center' },
-                          ]}
-                          rows={sousConventions.map(sc => [
-                            <Typography sx={{ color: colors.primary[600], fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>{sc.code}</Typography>,
-                            <Typography sx={{ fontSize: typography.sizes.sm }}>{sc.libelle}</Typography>,
-                            <StatusBadge status={sc.statut} size="small" />,
-                            <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(sc.budget)}</Typography>,
-                            sc.statut === 'BROUILLON' ? (
-                              <Button size="small" onClick={(e) => { e.stopPropagation(); setEditingSousConvention(sc); setSousConventionDialogOpen(true) }}
-                                sx={{ textTransform: 'none', fontSize: typography.sizes.xs, color: colors.primary[600], minWidth: 0 }}>
-                                Modifier
-                              </Button>
-                            ) : null,
-                          ])}
-                          onRowClick={(idx) => navigate(`/conventions/${sousConventions[idx].id}`)}
-                          emptyMessage="Aucune sous-convention"
-                          showAddLine={convention.typeConvention === 'CADRE'}
-                          onAddLine={() => { setEditingSousConvention(null); setSousConventionDialogOpen(true) }}
-                        />
-                      </Box>
-                    ),
-                  },
-                  {
-                    label: 'Avenants',
-                    count: avenants.length,
-                    content: (
-                      <ConventionAvenantsTab convention={convention} avenants={avenants} formatCurrency={formatCurrency} formatDate={formatDate} getStatusColor={getStatusColor} />
-                    ),
-                  },
-                  {
-                    label: 'Projets',
-                    count: projets.length,
-                    content: (
-                      <ConventionProjetsTab projets={projets} onLinkProjet={() => setLinkProjetDialogOpen(true)} onUnlinkProjet={handleUnlinkProjet} />
-                    ),
-                  },
-                  {
-                    label: 'Marches',
-                    count: marches.length,
-                    content: (
-                      <ConventionMarchesTab marches={marches} onLinkMarche={() => setLinkMarcheDialogOpen(true)} onUnlinkMarche={handleUnlinkMarche} />
-                    ),
-                  },
-                ]}
-              />
-            </Box>
+            {/* ===== SECTION 2: REALISATION ===== */}
+            <ConventionRealisationSection
+              convention={convention}
+              projets={projets}
+              marches={marches}
+              sousConventions={sousConventions}
+              avenants={avenants}
+              onLinkProjet={() => setLinkProjetDialogOpen(true)}
+              onUnlinkProjet={(pid) => setConfirmState({ open: true, type: 'unlinkProjet', id: pid })}
+              onLinkMarche={() => setLinkMarcheDialogOpen(true)}
+              onUnlinkMarche={(mid) => setConfirmState({ open: true, type: 'unlinkMarche', id: mid })}
+              onAddSousConvention={() => { setEditingSousConvention(null); setSousConventionDialogOpen(true) }}
+              onEditSousConvention={(sc) => { setEditingSousConvention(sc); setSousConventionDialogOpen(true) }}
+              onNavigateToConvention={(cid) => navigate(`/conventions/${cid}`)}
+            />
           </FormView>
         </Container>
       </Box>

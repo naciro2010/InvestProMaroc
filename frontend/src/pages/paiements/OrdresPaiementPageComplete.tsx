@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Button,
@@ -11,7 +10,6 @@ import {
   TableHead,
   TableRow,
   Typography,
-  Chip,
   IconButton,
   TextField,
   InputAdornment,
@@ -20,21 +18,19 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  MenuItem,
 } from '@mui/material'
 import {
-  Add,
-  Search,
   Visibility,
   Edit,
   Delete,
   AttachMoney,
 } from '@mui/icons-material'
+import { Plus, RefreshCw } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
+import { ControlPanel, StatusBadge, ExportButton } from '@/components/core'
 import { ordresPaiementAPI } from '@/lib/api'
 import FileUpload from '@/components/ui/FileUpload'
 import DecimalInput from '@/components/ui/DecimalInput'
-import { colors } from '@/lib/designSystem'
 
 interface OrdrePaiementItem {
   id: number
@@ -51,7 +47,6 @@ interface OrdrePaiementItem {
 }
 
 const OrdresPaiementPage = () => {
-  const navigate = useNavigate()
   const [ordres, setOrdres] = useState<OrdrePaiementItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -68,6 +63,10 @@ const OrdresPaiementPage = () => {
     observation: '',
     decompteId: 0,
   })
+
+  // Pagination
+  const [page, setPage] = useState(0)
+  const rowsPerPage = 25
 
   useEffect(() => {
     loadOrdres()
@@ -157,10 +156,29 @@ const OrdresPaiementPage = () => {
   }
 
 
-  const filteredOrdres = ordres.filter(o =>
-    o.numeroOrdre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.beneficiaire?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredOrdres = useMemo(() => {
+    return ordres.filter(o =>
+      o.numeroOrdre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.beneficiaire?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [ordres, searchTerm])
+
+  const paginatedOrdres = useMemo(() => {
+    const start = page * rowsPerPage
+    return filteredOrdres.slice(start, start + rowsPerPage)
+  }, [filteredOrdres, page, rowsPerPage])
+
+  const paginationInfo = useMemo(() => {
+    const total = filteredOrdres.length
+    if (total === 0) return undefined
+    const currentStart = page * rowsPerPage + 1
+    const currentEnd = Math.min((page + 1) * rowsPerPage, total)
+    return { currentStart, currentEnd, total }
+  }, [filteredOrdres.length, page, rowsPerPage])
+
+  const handleExport = () => {
+    // TODO: Implement export logic for ordres de paiement
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -169,49 +187,42 @@ const OrdresPaiementPage = () => {
     }).format(amount) + ' MAD'
   }
 
-  const getStatusColor = (statut: string) => {
-    const colors: Record<string, 'warning' | 'info' | 'success' | 'error' | 'default'> = {
-      'EN_ATTENTE': 'warning',
-      'VALIDE': 'info',
-      'EXECUTE': 'success',
-      'ANNULE': 'error',
-    }
-    return colors[statut] || 'default'
-  }
-
   return (
     <AppLayout>
+      <ControlPanel
+        breadcrumbs={[{ label: 'Ordres de paiement' }]}
+        actions={
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshCw size={16} />}
+              onClick={loadOrdres}
+              sx={{ textTransform: 'none' }}
+            >
+              Actualiser
+            </Button>
+            <ExportButton onClick={handleExport} />
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<Plus size={16} />}
+              onClick={() => handleOpenDialog()}
+              sx={{ textTransform: 'none' }}
+            >
+              Nouveau
+            </Button>
+          </Box>
+        }
+        searchValue={searchTerm}
+        onSearchChange={(value) => { setSearchTerm(value); setPage(0) }}
+        searchPlaceholder="Rechercher..."
+        paginationInfo={paginationInfo}
+        onPreviousPage={() => setPage((p) => Math.max(0, p - 1))}
+        onNextPage={() => setPage((p) => p + 1)}
+      />
+
       <Box sx={{ p: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" fontWeight="bold">
-            Gestion des Ordres de Paiement
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            sx={{ bgcolor: colors.primary[700], '&:hover': { bgcolor: colors.primary[800] } }}
-          >
-            Nouvel Ordre de Paiement
-          </Button>
-        </Stack>
-
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <TextField
-            fullWidth
-            placeholder="Rechercher un ordre de paiement..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Paper>
-
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -230,14 +241,14 @@ const OrdresPaiementPage = () => {
                 <TableRow>
                   <TableCell colSpan={7} align="center">Chargement...</TableCell>
                 </TableRow>
-              ) : filteredOrdres.length === 0 ? (
+              ) : paginatedOrdres.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
                     Aucun ordre de paiement trouvé
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredOrdres.map((ordre) => (
+                paginatedOrdres.map((ordre) => (
                   <TableRow key={ordre.id} hover>
                     <TableCell>{ordre.numeroOrdre}</TableCell>
                     <TableCell>
@@ -253,9 +264,8 @@ const OrdresPaiementPage = () => {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={ordre.statut || 'EN_ATTENTE'}
-                        color={getStatusColor(ordre.statut || 'EN_ATTENTE')}
+                      <StatusBadge
+                        status={ordre.statut || 'EN_ATTENTE'}
                         size="small"
                       />
                     </TableCell>

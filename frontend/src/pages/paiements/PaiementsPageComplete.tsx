@@ -25,17 +25,17 @@ import {
 } from '@mui/material'
 import {
   Add,
-  Search,
   Edit,
   Delete,
   AttachMoney,
+  Refresh,
 } from '@mui/icons-material'
 import { CreditCard } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import { paiementsAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
 import DecimalInput from '@/components/ui/DecimalInput'
-import StatusBadge from '../../components/core/StatusBadge'
+import { ControlPanel, StatusBadge, ExportButton } from '../../components/core'
 import { colors, typography, componentStyles, getStatusConfig, borders } from '../../lib/designSystem'
 import { useTableSort } from '@/hooks/useTableSort'
 
@@ -65,6 +65,7 @@ interface PaiementFormData {
 }
 
 const styles = componentStyles.listPage
+const listStyles = componentStyles.listView
 
 const modeReglementLabels: Record<string, string> = {
   'VIREMENT': 'Virement',
@@ -218,42 +219,41 @@ const PaiementsPage = () => {
   return (
     <AppLayout>
       <Box sx={styles.container}>
-        {/* Header */}
-        <Box sx={styles.header}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography sx={styles.title}>Paiements</Typography>
-              <Typography sx={styles.subtitle}>
-                Gestion des paiements et reglements
-              </Typography>
+        {/* Control Panel */}
+        <ControlPanel
+          breadcrumbs={[{ label: 'Paiements' }]}
+          actions={
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <ExportButton onClick={() => { /* TODO: implement export */ }} label="Exporter" />
+              <IconButton
+                size="small"
+                onClick={() => loadPaiements()}
+                sx={{ color: colors.textSecondary }}
+              >
+                <Refresh fontSize="small" />
+              </IconButton>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => handleOpenDialog()}
+                sx={componentStyles.buttonPrimary}
+              >
+                Nouveau Paiement
+              </Button>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => handleOpenDialog()}
-              sx={componentStyles.buttonPrimary}
-            >
-              Nouveau Paiement
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Toolbar */}
-        <Box sx={styles.toolbar}>
-          <TextField
-            placeholder="Rechercher par numero ou beneficiaire..."
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setPage(0) }}
-            size="small"
-            sx={styles.searchField}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
+          }
+          searchValue={searchTerm}
+          onSearchChange={(value) => { setSearchTerm(value); setPage(0) }}
+          searchPlaceholder="Rechercher par numero, fournisseur..."
+          paginationInfo={{
+            currentStart: filteredPaiements.length === 0 ? 0 : page * rowsPerPage + 1,
+            currentEnd: Math.min((page + 1) * rowsPerPage, filteredPaiements.length),
+            total: filteredPaiements.length,
+          }}
+          onPreviousPage={() => setPage((prev) => Math.max(0, prev - 1))}
+          onNextPage={() => setPage((prev) => prev + 1)}
+        >
+          {/* Status filter chips */}
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {['ALL', 'EN_ATTENTE', 'EFFECTUE', 'ANNULE'].map((statut) => {
               const count = statut === 'ALL' ? paiements.length : (stats[statut as keyof typeof stats] || 0)
@@ -275,15 +275,15 @@ const PaiementsPage = () => {
               )
             })}
           </Box>
-        </Box>
+        </ControlPanel>
 
         {/* Table */}
         <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
-          <Box sx={styles.tableContainer}>
+          <Box sx={listStyles.container}>
             <TableContainer>
-              <Table size="small">
+              <Table size="small" sx={listStyles.table}>
                 <TableHead>
-                  <TableRow sx={styles.tableHeader}>
+                  <TableRow sx={listStyles.headerRow}>
                     <TableCell sortDirection={sortConfig?.key === 'numeroPaiement' ? sortConfig.direction : false}>
                       <TableSortLabel active={sortConfig?.key === 'numeroPaiement'} direction={sortConfig?.key === 'numeroPaiement' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numeroPaiement')}>Numero</TableSortLabel>
                     </TableCell>
@@ -319,7 +319,7 @@ const PaiementsPage = () => {
                     paginatedPaiements.map((paiement) => (
                       <TableRow
                         key={paiement.id}
-                        sx={styles.tableRowClickable}
+                        sx={listStyles.dataRow}
                         onClick={() => handleOpenDialog(paiement)}
                       >
                         <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>

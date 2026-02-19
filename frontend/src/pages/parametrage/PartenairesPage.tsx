@@ -27,10 +27,10 @@ import {
   Edit,
   Delete,
   Close,
-  Business,
+  Refresh,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
-import { PageHeader } from '@/components/core'
+import { ControlPanel } from '@/components/core'
 import { partenairesAPI } from '../../lib/api'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -66,6 +66,19 @@ const PartenairesPage = () => {
     description: '',
   })
   const [saving, setSaving] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredPartenaires = partenaires.filter((p) => {
+    if (!searchQuery) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      p.code.toLowerCase().includes(q) ||
+      p.raisonSociale.toLowerCase().includes(q) ||
+      (p.sigle && p.sigle.toLowerCase().includes(q)) ||
+      (p.email && p.email.toLowerCase().includes(q)) ||
+      (p.typePartenaire && p.typePartenaire.toLowerCase().includes(q))
+    )
+  })
 
   useEffect(() => {
     loadPartenaires()
@@ -150,26 +163,35 @@ const PartenairesPage = () => {
 
   return (
     <AppLayout>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageHeader
-          title="Partenaires"
-          subtitle="Gestion du référentiel des partenaires (organismes, ministères, agences)"
+      <Box>
+        <ControlPanel
+          breadcrumbs={[
+            { label: 'Configuration', path: '/parametrage/conventions' },
+            { label: 'Partenaires' },
+          ]}
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Rechercher par code, raison sociale, sigle..."
           actions={
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => handleOpenModal()}
-            >
-              Nouveau partenaire
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button variant="outlined" size="small" startIcon={<Refresh />}
+                onClick={loadPartenaires} sx={{ textTransform: 'none' }}>
+                Actualiser
+              </Button>
+              <Button variant="contained" size="small" startIcon={<Add />}
+                onClick={() => handleOpenModal()} sx={{ textTransform: 'none' }}>
+                Nouveau partenaire
+              </Button>
+            </Box>
           }
         />
 
+        <Container maxWidth="xl" sx={{ py: 4 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
             <CircularProgress />
           </Box>
-        ) : partenaires.length === 0 ? (
+        ) : filteredPartenaires.length === 0 ? (
           <Alert severity="info">
             Aucun partenaire. Cliquez sur "Nouveau partenaire" pour en créer un.
           </Alert>
@@ -188,7 +210,7 @@ const PartenairesPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {partenaires.map((partenaire) => (
+                {filteredPartenaires.map((partenaire) => (
                   <TableRow key={partenaire.id} hover>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
@@ -358,7 +380,8 @@ const PartenairesPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-      </Container>
+        </Container>
+      </Box>
     </AppLayout>
   )
 }

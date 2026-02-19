@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import {
   Box,
   Button,
-  TextField,
   IconButton,
   CircularProgress,
   Typography,
@@ -16,22 +15,18 @@ import {
   TablePagination,
   TableSortLabel,
   Chip,
-  InputAdornment,
 } from '@mui/material'
 import {
   Add,
-  Search,
-  ViewList,
-  Map as MapIcon,
   Visibility,
   Edit,
   Delete,
+  Refresh,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import MarchesMapView from '../../components/ui/MarchesMapView'
-import StatusBadge from '../../components/core/StatusBadge'
+import { ControlPanel, StatusBadge, ExportButton } from '../../components/core'
 import ConfirmDialog from '../../components/core/ConfirmDialog'
-import { ExportButton } from '../../components/core'
 import { useToast } from '../../contexts/ToastContext'
 import api from '../../lib/api'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
@@ -82,7 +77,7 @@ interface MarcheListItem {
 }
 
 // Styles from design system
-const styles = componentStyles.listPage
+const listStyles = componentStyles.listView
 
 export default function MarchesPage() {
   const navigate = useNavigate()
@@ -210,7 +205,7 @@ export default function MarchesPage() {
   if (loading) {
     return (
       <AppLayout>
-        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <CircularProgress size={40} />
         </Box>
       </AppLayout>
@@ -219,129 +214,88 @@ export default function MarchesPage() {
 
   return (
     <AppLayout>
-      <Box sx={styles.container}>
-        {/* Header */}
-        <Box sx={styles.header}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography sx={styles.title}>Marchés</Typography>
-              <Typography sx={styles.subtitle}>
-                {marches.length} marche{marches.length > 1 ? 's' : ''} • {formatCurrency(marches.reduce((s, m) => s + m.montantTtc, 0))} TTC
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <ExportButton onClick={handleExport} />
+      <Box sx={{ minHeight: '100vh', bgcolor: colors.neutral[50] }}>
+        <ControlPanel
+          breadcrumbs={[{ label: 'Marches' }]}
+          actions={
+            <>
               <Button
                 variant="contained"
                 startIcon={<Add />}
                 onClick={() => navigate('/marches/nouveau')}
                 sx={componentStyles.buttonPrimary}
               >
-                Nouveau Marché
+                Nouveau Marche
               </Button>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Toolbar avec filtres */}
-        <Box sx={styles.toolbar}>
-          <TextField
-            placeholder="Rechercher par numéro, objet, fournisseur..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            size="small"
-            sx={styles.searchField}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {['ALL', 'EN_COURS', 'VALIDE', 'TERMINE', 'SUSPENDU', 'ANNULE'].map((statut) => {
-              const count = statut === 'ALL' ? marches.length : marches.filter(m => m.statut === statut).length
-              const isActive = selectedStatut === statut
-              return (
-                <Chip
-                  key={statut}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
-                      <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
+              <ExportButton onClick={handleExport} />
+              <IconButton size="small" onClick={fetchMarches} sx={{ color: colors.textSecondary }}>
+                <Refresh fontSize="small" />
+              </IconButton>
+            </>
+          }
+          searchValue={searchTerm}
+          onSearchChange={(value) => { setSearchTerm(value); setPage(0); }}
+          searchPlaceholder="Rechercher par code, objet..."
+          paginationInfo={{
+            currentStart: filteredMarches.length === 0 ? 0 : page * rowsPerPage + 1,
+            currentEnd: Math.min((page + 1) * rowsPerPage, filteredMarches.length),
+            total: filteredMarches.length,
+          }}
+          onPreviousPage={() => setPage((prev) => Math.max(0, prev - 1))}
+          onNextPage={() => setPage((prev) => prev + 1)}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => setViewMode(mode as 'list' | 'map')}
+          availableViews={['list', 'map']}
+        >
+          {/* Status filter chips */}
+          {['ALL', 'EN_COURS', 'VALIDE', 'TERMINE', 'SUSPENDU', 'ANNULE'].map((statut) => {
+            const count = statut === 'ALL' ? marches.length : marches.filter(m => m.statut === statut).length
+            const isActive = selectedStatut === statut
+            return (
+              <Chip
+                key={statut}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: 20,
+                        height: 18,
+                        borderRadius: '9px',
+                        fontSize: typography.sizes.xs,
+                        fontWeight: typography.weights.bold,
+                        px: 0.5,
+                        bgcolor: isActive ? 'rgba(255,255,255,0.3)' : colors.neutral[200],
+                        color: isActive ? 'inherit' : colors.textSecondary,
+                      }}
+                    >
+                      {count}
                     </Box>
-                  }
-                  onClick={() => { setSelectedStatut(statut); setPage(0); }}
-                  sx={isActive ? styles.filterPillActive : styles.filterPill}
-                />
-              )
-            })}
-          </Box>
-          <Box sx={{
-            ml: 'auto',
-            display: 'flex',
-            bgcolor: colors.neutral[100],
-            borderRadius: '8px',
-            p: '3px',
-          }}>
-            <Button
-              startIcon={<ViewList sx={{ fontSize: '16px !important' }} />}
-              onClick={() => setViewMode('list')}
-              size="small"
-              sx={{
-                textTransform: 'none',
-                fontWeight: typography.weights.medium,
-                fontSize: typography.sizes.sm,
-                borderRadius: '5px',
-                px: 1.5,
-                minWidth: 0,
-                ...(viewMode === 'list' ? {
-                  bgcolor: colors.surface,
-                  color: colors.textPrimary,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-                } : {
-                  bgcolor: 'transparent',
-                  color: colors.textDisabled,
-                }),
-                '&:hover': {
-                  bgcolor: viewMode === 'list' ? colors.surface : colors.neutral[50],
-                },
-              }}
-            >
-              Liste
-            </Button>
-            <Button
-              startIcon={<MapIcon sx={{ fontSize: '16px !important' }} />}
-              onClick={() => setViewMode('map')}
-              size="small"
-              sx={{
-                textTransform: 'none',
-                fontWeight: typography.weights.medium,
-                fontSize: typography.sizes.sm,
-                borderRadius: '5px',
-                px: 1.5,
-                minWidth: 0,
-                ...(viewMode === 'map' ? {
-                  bgcolor: colors.surface,
-                  color: colors.textPrimary,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-                } : {
-                  bgcolor: 'transparent',
-                  color: colors.textDisabled,
-                }),
-                '&:hover': {
-                  bgcolor: viewMode === 'map' ? colors.surface : colors.neutral[50],
-                },
-              }}
-            >
-              Carte
-            </Button>
-          </Box>
-        </Box>
+                  </Box>
+                }
+                size="small"
+                onClick={() => { setSelectedStatut(statut); setPage(0); }}
+                sx={isActive ? componentStyles.controlPanel.filterTag : {
+                  bgcolor: colors.neutral[50],
+                  color: colors.textSecondary,
+                  border: `1px solid ${colors.neutral[300]}`,
+                  borderRadius: '6px',
+                  fontSize: typography.sizes.sm,
+                  fontWeight: typography.weights.medium,
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: colors.neutral[100] },
+                }}
+              />
+            )
+          })}
+        </ControlPanel>
 
         {/* Main Content Area */}
-        <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
+        <Box sx={{ px: { xs: 2, md: 3 }, pb: 3, pt: 2 }}>
           {/* Map View */}
           {viewMode === 'map' && (
             <Box sx={{ mt: 2 }}>
@@ -352,12 +306,12 @@ export default function MarchesPage() {
           {/* Table View */}
           {viewMode === 'list' && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <Box sx={styles.tableContainer}>
+              <Box sx={listStyles.container}>
                 <TableContainer>
                   <SortableContext items={paginatedMarches.map(m => m.id)} strategy={verticalListSortingStrategy}>
-                    <Table size="small">
+                    <Table size="small" sx={listStyles.table}>
                       <TableHead>
-                        <TableRow sx={styles.tableHeader}>
+                        <TableRow sx={listStyles.headerRow}>
                           <TableCell sx={{ width: 40, p: '8px' }} />
                           <TableCell sortDirection={sortConfig?.key === 'numeroMarche' ? sortConfig.direction : false}>
                             <TableSortLabel active={sortConfig?.key === 'numeroMarche'} direction={sortConfig?.key === 'numeroMarche' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numeroMarche')}>N° Marché</TableSortLabel>
@@ -391,7 +345,7 @@ export default function MarchesPage() {
                             <SortableTableRow
                               key={marche.id}
                               id={marche.id}
-                              sx={styles.tableRowClickable}
+                              sx={listStyles.dataRow}
                             >
                               <TableCell
                                 onClick={() => navigate(`/marches/${marche.id}`)}

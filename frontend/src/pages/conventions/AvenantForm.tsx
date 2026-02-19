@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Box,
-  Button,
   TextField,
   MenuItem,
-  Paper,
   Typography,
   Stack,
   InputAdornment,
@@ -13,20 +11,30 @@ import {
   Checkbox,
   FormControlLabel,
   Alert,
-  Stepper,
-  Step,
-  StepLabel,
 } from '@mui/material'
-import { ArrowBack, Save, CompareArrows } from '@mui/icons-material'
+import { CompareArrows } from '@mui/icons-material'
 import { conventionsAPI, avenantConventionsAPI } from '@/lib/api'
 import AppLayout from '@/components/layout/AppLayout'
+import { WizardView } from '@/components/core'
 import { Convention } from '@/types/entities'
 import FileUpload from '@/components/ui/FileUpload'
 import RichTextEditor from '@/components/common/RichTextEditor'
 import { colors, typography } from '@/lib/designSystem'
 import DecimalInput from '@/components/ui/DecimalInput'
 
-const steps = ['Sélection des modifications', 'Nouvelles valeurs', 'Pièces jointes', 'Récapitulatif']
+const steps = [
+  { label: 'Sélection des modifications' },
+  { label: 'Nouvelles valeurs' },
+  { label: 'Pièces jointes' },
+  { label: 'Récapitulatif' },
+]
+
+interface PartenaireAllocation {
+  partenaireNom: string
+  partenaireSigle: string | null
+  budgetAlloue: number
+  pourcentage: number
+}
 
 const AvenantForm = () => {
   const { conventionId } = useParams<{ conventionId: string }>()
@@ -37,13 +45,7 @@ const AvenantForm = () => {
   const [activeStep, setActiveStep] = useState(0)
   const [createdAvenantId, setCreatedAvenantId] = useState<number | null>(null)
 
-  // Budget répartition (partenaires)
-  interface PartenaireAllocation {
-    partenaireNom: string
-    partenaireSigle: string | null
-    budgetAlloue: number
-    pourcentage: number
-  }
+  // Budget repartition (partenaires)
   const [partenaires, setPartenaires] = useState<PartenaireAllocation[]>([])
 
   // Champs modifiables
@@ -81,7 +83,7 @@ const AvenantForm = () => {
     try {
       const { data } = await conventionsAPI.getById(Number(conventionId))
       setConvention(data.data)
-      // Pré-remplir avec valeurs actuelles
+      // Pre-remplir avec valeurs actuelles
       setFormData(prev => ({
         ...prev,
         budget: data.data.budget?.toString() || '',
@@ -91,7 +93,7 @@ const AvenantForm = () => {
         dateFin: data.data.dateFin || '',
         objetModifie: data.data.objet || '',
       }))
-      // Charger la répartition du budget (partenaires)
+      // Charger la repartition du budget (partenaires)
       try {
         const partRes = await conventionsAPI.getPartenaires(Number(conventionId))
         const partData = partRes.data.data || partRes.data || []
@@ -104,14 +106,6 @@ const AvenantForm = () => {
       console.error('Erreur chargement convention:', msg)
       setError('Impossible de charger la convention')
     }
-  }
-
-  const handleNext = () => {
-    setActiveStep((prev) => prev + 1)
-  }
-
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1)
   }
 
   const handleSubmit = async () => {
@@ -139,19 +133,55 @@ const AvenantForm = () => {
 
       const { data } = await avenantConventionsAPI.create(payload)
       setCreatedAvenantId(data.data.id)
-      handleNext()
+      setActiveStep(prev => prev + 1)
     } catch (err: unknown) {
-      console.error('Erreur création avenant:', err)
+      console.error('Erreur creation avenant:', err)
       const axiosErr = err as { response?: { data?: { message?: string } } }
-      setError(axiosErr.response?.data?.message || 'Erreur lors de la création')
+      setError(axiosErr.response?.data?.message || 'Erreur lors de la creation')
     } finally {
       setLoading(false)
     }
   }
 
+  const canProceed = (): boolean => {
+    if (activeStep === 0) {
+      return Object.values(selectedFields).some(v => v)
+    }
+    if (activeStep === 1) {
+      return Boolean(formData.numeroAvenant && formData.objet)
+    }
+    return true
+  }
+
+  const handleNext = () => {
+    // Step 2 (Pieces jointes): submit if not yet created, otherwise advance
+    if (activeStep === 2) {
+      if (!createdAvenantId) {
+        handleSubmit()
+        return
+      }
+      setActiveStep(prev => prev + 1)
+      return
+    }
+    // Step 3 (Recap / final): navigate back to convention
+    if (activeStep === 3) {
+      navigate(`/conventions/${conventionId}`)
+      return
+    }
+    // Default: advance to next step
+    setActiveStep(prev => prev + 1)
+  }
+
+  // Determine the submit label based on current step state
+  const getSubmitLabel = (): string => {
+    if (activeStep === 2 && !createdAvenantId) return "Creer l'avenant"
+    if (activeStep === 3) return 'Terminer'
+    return 'Suivant'
+  }
+
   const renderStep1 = () => (
     <Stack spacing={3}>
-      <Typography variant="h6">Sélectionnez les articles à modifier</Typography>
+      <Typography variant="h6">Selectionnez les articles a modifier</Typography>
 
       {convention && (
         <Alert severity="info">
@@ -159,7 +189,7 @@ const AvenantForm = () => {
         </Alert>
       )}
 
-      <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
         <Stack spacing={2}>
           <FormControlLabel
             control={
@@ -240,7 +270,7 @@ const AvenantForm = () => {
               <Box>
                 <Typography variant="body1">Date de Fin</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Valeur actuelle: {convention?.dateFin || 'Non définie'}
+                  Valeur actuelle: {convention?.dateFin || 'Non definie'}
                 </Typography>
               </Box>
             }
@@ -263,7 +293,7 @@ const AvenantForm = () => {
             }
           />
         </Stack>
-      </Paper>
+      </Box>
     </Stack>
   )
 
@@ -275,7 +305,7 @@ const AvenantForm = () => {
         <TextField
           fullWidth
           required
-          label="Numéro de l'Avenant"
+          label="Numero de l'Avenant"
           value={formData.numeroAvenant}
           onChange={(e) => setFormData({ ...formData, numeroAvenant: e.target.value })}
           placeholder="AV-001"
@@ -335,17 +365,17 @@ const AvenantForm = () => {
             />
           </Stack>
 
-          {/* Répartition actuelle du budget */}
+          {/* Repartition actuelle du budget */}
           {partenaires.length > 0 && (
-            <Paper sx={{ mt: 2, p: 2, bgcolor: colors.neutral[25], border: `1px solid ${colors.neutral[200]}`, borderRadius: 1 }}>
+            <Box sx={{ mt: 2, p: 2, bgcolor: colors.neutral[25], border: `1px solid ${colors.neutral[200]}`, borderRadius: 1 }}>
               <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
-                Répartition actuelle du budget par partenaire
+                Repartition actuelle du budget par partenaire
               </Typography>
               <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', '& th, & td': { px: 1.5, py: 0.75, fontSize: typography.sizes.sm, borderBottom: `1px solid ${colors.neutral[100]}` } }}>
                 <thead>
                   <tr>
                     <th style={{ textAlign: 'left', fontWeight: 600, color: colors.textSecondary }}>Partenaire</th>
-                    <th style={{ textAlign: 'right', fontWeight: 600, color: colors.textSecondary }}>Budget alloué</th>
+                    <th style={{ textAlign: 'right', fontWeight: 600, color: colors.textSecondary }}>Budget alloue</th>
                     <th style={{ textAlign: 'right', fontWeight: 600, color: colors.textSecondary }}>%</th>
                   </tr>
                 </thead>
@@ -358,16 +388,16 @@ const AvenantForm = () => {
                     </tr>
                   ))}
                   <tr style={{ fontWeight: 600 }}>
-                    <td>Total alloué</td>
+                    <td>Total alloue</td>
                     <td style={{ textAlign: 'right' }}>{partenaires.reduce((s, p) => s + (p.budgetAlloue || 0), 0).toLocaleString('fr-FR')} MAD</td>
                     <td style={{ textAlign: 'right' }}>{partenaires.reduce((s, p) => s + (p.pourcentage || 0), 0).toFixed(1)}%</td>
                   </tr>
                 </tbody>
               </Box>
               <Alert severity="info" sx={{ mt: 1.5 }}>
-                Apres validation de l'avenant, pensez a mettre a jour la répartition du budget entre les partenaires depuis la page de détail de la convention.
+                Apres validation de l'avenant, pensez a mettre a jour la repartition du budget entre les partenaires depuis la page de detail de la convention.
               </Alert>
-            </Paper>
+            </Box>
           )}
         </Box>
       )}
@@ -432,8 +462,8 @@ const AvenantForm = () => {
               size="small"
               sx={{ flex: 1 }}
             >
-              <MenuItem value="DECAISSEMENTS_TTC">Décaissements TTC</MenuItem>
-              <MenuItem value="DECAISSEMENTS_HT">Décaissements HT</MenuItem>
+              <MenuItem value="DECAISSEMENTS_TTC">Decaissements TTC</MenuItem>
+              <MenuItem value="DECAISSEMENTS_HT">Decaissements HT</MenuItem>
             </TextField>
           </Stack>
         </Box>
@@ -448,7 +478,7 @@ const AvenantForm = () => {
           <Stack direction="row" spacing={2} alignItems="center">
             <TextField
               label="Valeur actuelle"
-              value={convention?.dateFin || 'Non définie'}
+              value={convention?.dateFin || 'Non definie'}
               disabled
               size="small"
               sx={{ flex: 1 }}
@@ -491,10 +521,10 @@ const AvenantForm = () => {
   const renderStep3 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Pièces jointes de l'avenant
+        Pieces jointes de l'avenant
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Ajoutez les documents justificatifs de l'avenant (signatures, décisions, etc.)
+        Ajoutez les documents justificatifs de l'avenant (signatures, decisions, etc.)
       </Typography>
       <FileUpload
         typeEntite="AVENANT"
@@ -508,14 +538,14 @@ const AvenantForm = () => {
   const renderStep4 = () => (
     <Box>
       <Alert severity="success" sx={{ mb: 3 }}>
-        Avenant créé avec succès !
+        Avenant cree avec succes !
       </Alert>
       <Typography variant="h6" gutterBottom>
-        Récapitulatif
+        Recapitulatif
       </Typography>
-      <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
         <Typography variant="body2">
-          <strong>Numéro:</strong> {formData.numeroAvenant}
+          <strong>Numero:</strong> {formData.numeroAvenant}
         </Typography>
         <Typography variant="body2">
           <strong>Date:</strong> {new Date(formData.dateAvenant).toLocaleDateString('fr-FR')}
@@ -523,7 +553,7 @@ const AvenantForm = () => {
         <Typography variant="body2">
           <strong>Objet:</strong> {formData.objet}
         </Typography>
-      </Paper>
+      </Box>
     </Box>
   )
 
@@ -542,89 +572,32 @@ const AvenantForm = () => {
     }
   }
 
-  const canProceed = () => {
-    if (activeStep === 0) {
-      return Object.values(selectedFields).some(v => v)
-    }
-    if (activeStep === 1) {
-      return formData.numeroAvenant && formData.objet
-    }
-    return true
-  }
-
   return (
     <AppLayout>
-      <Box sx={{ maxWidth: 1000, mx: 'auto', p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate(`/conventions/${conventionId}`)}
-            sx={{ mr: 2 }}
-          >
-            Retour
-          </Button>
-          <Typography variant="h5" fontWeight="bold">
-            Nouvel Avenant
-          </Typography>
-        </Box>
+      {error && (
+        <Alert severity="error" sx={{ mx: 3, mt: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Stepper activeStep={activeStep} alternativeLabel>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </Paper>
-
-        <Paper sx={{ p: 4, mb: 3 }}>
-          {renderStepContent()}
-        </Paper>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            disabled={activeStep === 0 || loading}
-            onClick={handleBack}
-          >
-            Précédent
-          </Button>
-
-          <Box>
-            {activeStep === steps.length - 1 ? (
-              <Button
-                variant="contained"
-                onClick={() => navigate(`/conventions/${conventionId}`)}
-              >
-                Terminer
-              </Button>
-            ) : activeStep === steps.length - 2 ? (
-              <Button
-                variant="contained"
-                onClick={createdAvenantId ? handleNext : handleSubmit}
-                disabled={!canProceed() || loading}
-                startIcon={<Save />}
-              >
-                {loading ? 'Enregistrement...' : createdAvenantId ? 'Suivant' : 'Créer l\'avenant'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={!canProceed()}
-              >
-                Suivant
-              </Button>
-            )}
-          </Box>
-        </Box>
-      </Box>
+      <WizardView
+        breadcrumbs={[
+          { label: 'Conventions', path: '/conventions' },
+          { label: convention?.code || '', path: `/conventions/${conventionId}` },
+          { label: 'Nouvel Avenant' },
+        ]}
+        steps={steps}
+        activeStep={activeStep}
+        onStepClick={setActiveStep}
+        onBack={() => setActiveStep(s => s - 1)}
+        onNext={handleNext}
+        onCancel={() => navigate(`/conventions/${conventionId}`)}
+        isNextDisabled={!canProceed()}
+        isSubmitting={loading}
+        submitLabel={getSubmitLabel()}
+      >
+        {renderStepContent()}
+      </WizardView>
     </AppLayout>
   )
 }

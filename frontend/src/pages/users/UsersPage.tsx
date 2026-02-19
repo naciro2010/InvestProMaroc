@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
-import { FaPlus, FaSearch, FaEdit, FaTrash, FaUserShield, FaUser } from 'react-icons/fa'
+import { Box, Button as MuiButton } from '@mui/material'
+import { Add, Refresh } from '@mui/icons-material'
+import { FaEdit, FaTrash, FaUserShield, FaUser } from 'react-icons/fa'
 import AppLayout from '../../components/layout/AppLayout'
-import { Card, Button } from '../../components/ui'
+import { ControlPanel } from '../../components/core'
+import { Card } from '../../components/ui'
 import api from '../../lib/api'
 
 interface User {
@@ -161,22 +164,27 @@ export default function UsersPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        {/* En-tête */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-rubik text-neutral-800">
-              Gestion des Utilisateurs
-            </h1>
-            <p className="text-neutral-600 mt-1">Gérer les comptes et les permissions</p>
-          </div>
-          <Button
-            variant="success"
-            icon={<FaPlus />}
-            onClick={() => handleOpenModal()}
-          >
-            Nouvel Utilisateur
-          </Button>
-        </div>
+        <ControlPanel
+          breadcrumbs={[
+            { label: 'Utilisateurs' },
+          ]}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Rechercher par nom, email ou username..."
+          actions={
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <MuiButton variant="outlined" size="small" startIcon={<Refresh />}
+                onClick={fetchUsers} sx={{ textTransform: 'none' }}>
+                Actualiser
+              </MuiButton>
+              <MuiButton variant="contained" size="small" startIcon={<Add />}
+                onClick={() => handleOpenModal()} sx={{ textTransform: 'none' }}>
+                Nouvel Utilisateur
+              </MuiButton>
+            </Box>
+          }
+          hideBottomRow={false}
+        />
 
         {/* Stats rapides */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -199,26 +207,15 @@ export default function UsersPage() {
           </Card>
         </div>
 
-        {/* Filtres et recherche */}
-        <Card title="Recherche et Filtres">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
-              <input
-                type="text"
-                placeholder="Rechercher par nom, email ou username..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue focus:border-transparent transition-all"
-              />
-            </div>
-
+        {/* Filtre par role */}
+        <Card title="Filtres">
+          <div className="flex items-center gap-4">
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
               className="px-4 py-2.5 bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue focus:border-transparent transition-all"
             >
-              <option value="ALL">Tous les rôles</option>
+              <option value="ALL">Tous les roles</option>
               <option value="ADMIN">Administrateurs</option>
               <option value="MANAGER">Gestionnaires</option>
               <option value="USER">Utilisateurs</option>

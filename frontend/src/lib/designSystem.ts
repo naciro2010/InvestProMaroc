@@ -2,7 +2,7 @@
  * Design System v3.0 - InvestPro Maroc
  *
  * STYLE: Epure, sobre, professionnel
- * Mix Jira (functional density, muted tones) + Odoo (clean whitespace, subtle accents)
+ * Professional design system: functional density + clean whitespace + subtle accents
  *
  * PRINCIPES:
  * - Couleurs desaturees et douces (pas de couleurs "flashy")
@@ -900,7 +900,7 @@ export const componentStyles = {
   },
 
   /**
-   * List Page - Style moderne inspiré Odoo/Confluence
+   * List Page - Modern listing style
    * Utiliser pour toutes les pages de listing
    */
   listPage: {
@@ -1082,7 +1082,7 @@ export const componentStyles = {
   },
 
   /**
-   * Numeric input field - Odoo/Excel-style
+   * Numeric input field - Excel-style
    * Right-aligned, tabular-nums, French formatting
    * Used by DecimalInput component for ALL numeric fields
    */
@@ -1188,6 +1188,662 @@ export const componentStyles = {
     mx: 0.5,
     '&:hover': {
       bgcolor: colors.neutral[50],
+    },
+  },
+
+  // ==================== MODERN PANEL STYLES ====================
+
+  /**
+   * Control panel (top bar with breadcrumb, search, actions)
+   */
+  controlPanel: {
+    container: {
+      bgcolor: colors.surface,
+      borderBottom: `1px solid ${colors.border}`,
+      px: { xs: 2, md: 3 },
+      py: 0,
+    },
+    /** Top row: breadcrumbs + actions */
+    topRow: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      py: 1.5,
+      minHeight: 48,
+      gap: 2,
+    },
+    /** Bottom row: search + filters + group by */
+    bottomRow: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      py: 1,
+      borderTop: `1px solid ${colors.divider}`,
+      flexWrap: 'wrap' as const,
+    },
+    /** Breadcrumb trail */
+    breadcrumb: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.5,
+      minWidth: 0,
+      flex: 1,
+    },
+    breadcrumbLink: {
+      fontSize: typography.sizes.base,
+      fontWeight: typography.weights.medium,
+      color: colors.textPrimary,
+      textDecoration: 'none',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap' as const,
+      '&:hover': {
+        color: colors.primary[600],
+      },
+    },
+    breadcrumbCurrent: {
+      fontSize: typography.sizes.base,
+      fontWeight: typography.weights.bold,
+      color: colors.textPrimary,
+      whiteSpace: 'nowrap' as const,
+      overflow: 'hidden' as const,
+      textOverflow: 'ellipsis' as const,
+    },
+    breadcrumbSeparator: {
+      color: colors.neutral[400],
+      mx: 0.25,
+      flexShrink: 0,
+    },
+    /** Action buttons group */
+    actions: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      flexShrink: 0,
+    },
+    /** View switcher (list/kanban/map) */
+    viewSwitcher: {
+      display: 'flex',
+      border: `1px solid ${colors.neutral[300]}`,
+      borderRadius: borders.radius.base,
+      overflow: 'hidden',
+    },
+    viewSwitcherButton: {
+      p: 0.75,
+      borderRadius: 0,
+      minWidth: 36,
+      color: colors.textSecondary,
+      '&:hover': {
+        bgcolor: colors.neutral[50],
+      },
+    },
+    viewSwitcherButtonActive: {
+      p: 0.75,
+      borderRadius: 0,
+      minWidth: 36,
+      bgcolor: colors.primary[50],
+      color: colors.primary[700],
+      '&:hover': {
+        bgcolor: colors.primary[100],
+      },
+    },
+    /** Search bar */
+    searchBar: {
+      flex: 1,
+      maxWidth: 480,
+      '& .MuiOutlinedInput-root': {
+        bgcolor: colors.surface,
+        borderRadius: borders.radius.base,
+        fontSize: typography.sizes.base,
+        height: 36,
+        '& fieldset': {
+          borderColor: colors.neutral[300],
+        },
+        '&:hover fieldset': {
+          borderColor: colors.neutral[400],
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: colors.primary[500],
+          borderWidth: '2px',
+        },
+      },
+    },
+    /** Filter tag */
+    filterTag: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 0.5,
+      px: 1.25,
+      py: 0.5,
+      bgcolor: colors.primary[50],
+      color: colors.primary[700],
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      borderRadius: borders.radius.base,
+      border: `1px solid ${colors.primary[200]}`,
+      cursor: 'pointer',
+      '&:hover': {
+        bgcolor: colors.primary[100],
+      },
+    },
+    /** Pager (1-20 / 55) */
+    pager: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.5,
+      fontSize: typography.sizes.sm,
+      color: colors.textSecondary,
+      whiteSpace: 'nowrap' as const,
+    },
+  },
+
+  /**
+   * Form view (view mode + inline edit)
+   */
+  formView: {
+    /** Container */
+    container: {
+      bgcolor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.lg,
+      overflow: 'hidden',
+    },
+    /** Status bar (top of form with status pills) */
+    statusBar: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      px: 3,
+      py: 1.5,
+      bgcolor: colors.neutral[25],
+      borderBottom: `1px solid ${colors.border}`,
+    },
+    /** Status bar buttons */
+    statusBarButtons: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+    },
+    /** Status pipeline (connected dots) */
+    statusPipeline: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0,
+    },
+    statusPipelineStep: {
+      px: 1.5,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      color: colors.textSecondary,
+      bgcolor: colors.neutral[100],
+      borderRight: `1px solid ${colors.border}`,
+      cursor: 'default',
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    statusPipelineStepActive: {
+      px: 1.5,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.semibold,
+      color: colors.primary[700],
+      bgcolor: colors.primary[100],
+      borderRight: `1px solid ${colors.primary[200]}`,
+      cursor: 'default',
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    statusPipelineStepDone: {
+      px: 1.5,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      color: colors.success[700],
+      bgcolor: colors.success[50],
+      borderRight: `1px solid ${colors.success[100]}`,
+      cursor: 'default',
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    /** Sheet (main content area of form) */
+    sheet: {
+      p: 3,
+    },
+    /** Title field (editable h1) */
+    titleField: {
+      fontSize: typography.sizes['2xl'],
+      fontWeight: typography.weights.bold,
+      color: colors.textPrimary,
+      border: 'none',
+      outline: 'none',
+      width: '100%',
+      p: 0,
+      mb: 1,
+      '&:hover': {
+        bgcolor: colors.primary[25],
+      },
+      '&:focus': {
+        bgcolor: colors.primary[25],
+        outline: `2px solid ${colors.primary[400]}`,
+        borderRadius: borders.radius.sm,
+      },
+    },
+    /** Group (bordered section inside sheet) */
+    group: {
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.md,
+      overflow: 'hidden',
+      mb: 2,
+    },
+    /** Group header */
+    groupTitle: {
+      bgcolor: colors.neutral[50],
+      px: 2,
+      py: 1.25,
+      borderBottom: `1px solid ${colors.border}`,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.semibold,
+      color: colors.textPrimary,
+      textTransform: 'uppercase' as const,
+      letterSpacing: typography.letterSpacing.wide,
+    },
+    /** Group body */
+    groupBody: {
+      p: 2,
+    },
+    /** Field row (label + value in form) */
+    fieldRow: {
+      display: 'flex',
+      alignItems: 'baseline',
+      py: 0.75,
+      minHeight: 36,
+      '&:not(:last-child)': {
+        borderBottom: `1px solid ${colors.divider}`,
+      },
+    },
+    /** Field label */
+    fieldLabel: {
+      width: 180,
+      flexShrink: 0,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      color: colors.textSecondary,
+      pr: 2,
+    },
+    /** Field value (view mode) */
+    fieldValue: {
+      flex: 1,
+      fontSize: typography.sizes.base,
+      color: colors.textPrimary,
+      fontWeight: typography.weights.medium,
+      minHeight: 24,
+      display: 'flex',
+      alignItems: 'center',
+    },
+    /** Editable field value (hover to show editable) */
+    fieldValueEditable: {
+      flex: 1,
+      fontSize: typography.sizes.base,
+      color: colors.textPrimary,
+      fontWeight: typography.weights.medium,
+      minHeight: 24,
+      display: 'flex',
+      alignItems: 'center',
+      px: 0.75,
+      py: 0.25,
+      mx: -0.75,
+      borderRadius: borders.radius.sm,
+      cursor: 'text',
+      transition: `background-color ${transitions.fast}`,
+      '&:hover': {
+        bgcolor: colors.primary[25],
+      },
+    },
+    /** Field value as link (navigable) */
+    fieldValueLink: {
+      flex: 1,
+      fontSize: typography.sizes.base,
+      color: colors.primary[600],
+      fontWeight: typography.weights.medium,
+      cursor: 'pointer',
+      textDecoration: 'none',
+      '&:hover': {
+        color: colors.primary[700],
+        textDecoration: 'underline',
+      },
+    },
+    /** Monetary field */
+    fieldValueMoney: {
+      flex: 1,
+      fontSize: typography.sizes.base,
+      color: colors.textPrimary,
+      fontWeight: typography.weights.semibold,
+      fontVariantNumeric: 'tabular-nums',
+      textAlign: 'right' as const,
+    },
+    /** Inline edit input */
+    inlineInput: {
+      '& .MuiOutlinedInput-root': {
+        fontSize: typography.sizes.base,
+        '& fieldset': {
+          borderColor: colors.primary[300],
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: colors.primary[500],
+          borderWidth: '2px',
+        },
+      },
+      '& .MuiOutlinedInput-input': {
+        py: 0.5,
+        px: 0.75,
+      },
+    },
+    /** Notebook (tabbed sections) */
+    notebook: {
+      mt: 2,
+    },
+    notebookTabs: {
+      borderBottom: `1px solid ${colors.border}`,
+      minHeight: 40,
+      '& .MuiTab-root': {
+        textTransform: 'none' as const,
+        fontWeight: typography.weights.medium,
+        fontSize: typography.sizes.sm,
+        color: colors.textSecondary,
+        minHeight: 40,
+        py: 1,
+        '&.Mui-selected': {
+          color: colors.primary[700],
+          fontWeight: typography.weights.semibold,
+        },
+      },
+      '& .MuiTabs-indicator': {
+        backgroundColor: colors.primary[600],
+        height: 2,
+      },
+    },
+    /** Chatter (right side panel / activity log) */
+    chatter: {
+      borderLeft: `1px solid ${colors.border}`,
+      bgcolor: colors.neutral[25],
+      p: 2,
+      minWidth: 320,
+      maxWidth: 400,
+    },
+  },
+
+  /**
+   * List view with inline editing
+   */
+  listView: {
+    container: {
+      bgcolor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.lg,
+      overflow: 'hidden',
+    },
+    /** Table in list view */
+    table: {
+      '& .MuiTableCell-root': {
+        py: 0.75,
+        px: 1.5,
+        fontSize: typography.sizes.base,
+        borderBottom: `1px solid ${colors.divider}`,
+      },
+    },
+    /** Header row */
+    headerRow: {
+      bgcolor: colors.neutral[50],
+      '& .MuiTableCell-head': {
+        fontWeight: typography.weights.semibold,
+        fontSize: typography.sizes.xs,
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.04em',
+        color: colors.textSecondary,
+        py: 1,
+        px: 1.5,
+        borderBottom: `2px solid ${colors.border}`,
+        whiteSpace: 'nowrap' as const,
+        userSelect: 'none' as const,
+        cursor: 'pointer',
+        '&:hover': {
+          bgcolor: colors.neutral[100],
+        },
+      },
+    },
+    /** Data row */
+    dataRow: {
+      transition: `background-color ${transitions.fast}`,
+      cursor: 'pointer',
+      '&:hover': {
+        bgcolor: colors.primary[25],
+      },
+      '& .MuiTableCell-body': {
+        color: colors.textPrimary,
+      },
+    },
+    /** Selected row */
+    dataRowSelected: {
+      bgcolor: colors.primary[50],
+      '&:hover': {
+        bgcolor: colors.primary[100],
+      },
+    },
+    /** Checkbox column */
+    checkboxCell: {
+      width: 42,
+      px: 0.5,
+    },
+    /** Editable cell (click to edit inline) */
+    editableCell: {
+      cursor: 'text',
+      '&:hover': {
+        bgcolor: colors.primary[25],
+        outline: `1px solid ${colors.primary[200]}`,
+        borderRadius: borders.radius.sm,
+      },
+    },
+    /** Quick create row (bottom of table) */
+    quickCreateRow: {
+      bgcolor: colors.neutral[25],
+      borderTop: `2px solid ${colors.border}`,
+      '& .MuiTableCell-body': {
+        py: 1,
+        color: colors.textSecondary,
+      },
+    },
+    /** Optional group header row */
+    groupHeaderRow: {
+      bgcolor: colors.neutral[50],
+      cursor: 'pointer',
+      '&:hover': {
+        bgcolor: colors.neutral[100],
+      },
+      '& .MuiTableCell-body': {
+        fontWeight: typography.weights.semibold,
+        fontSize: typography.sizes.sm,
+        color: colors.textPrimary,
+        py: 0.75,
+      },
+    },
+    /** Aggregation footer */
+    footerRow: {
+      bgcolor: colors.neutral[50],
+      borderTop: `2px solid ${colors.border}`,
+      '& .MuiTableCell-body': {
+        fontWeight: typography.weights.semibold,
+        fontSize: typography.sizes.sm,
+        color: colors.textPrimary,
+        py: 1,
+      },
+    },
+  },
+
+  /**
+   * Wizard view – multi-step form creation flow
+   */
+  wizardView: {
+    /** Outer container */
+    container: {
+      bgcolor: colors.background,
+      minHeight: '100vh',
+    },
+    /** Header bar (breadcrumbs + cancel) */
+    header: {
+      bgcolor: colors.surface,
+      borderBottom: `1px solid ${colors.border}`,
+      px: { xs: 2, md: 3 },
+      py: 1.5,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 2,
+    },
+    /** Step indicator bar */
+    stepBar: {
+      bgcolor: colors.neutral[25],
+      borderBottom: `1px solid ${colors.border}`,
+      px: { xs: 2, md: 3 },
+      py: 1.25,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 0,
+    },
+    /** Step pill (default / future) */
+    step: {
+      px: 2,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      color: colors.textSecondary,
+      bgcolor: colors.neutral[100],
+      borderRight: `1px solid ${colors.border}`,
+      cursor: 'default',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.75,
+      whiteSpace: 'nowrap' as const,
+      transition: `all ${transitions.fast}`,
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    /** Active step pill */
+    stepActive: {
+      px: 2,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.semibold,
+      color: colors.primary[700],
+      bgcolor: colors.primary[100],
+      borderRight: `1px solid ${colors.primary[200]}`,
+      cursor: 'default',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.75,
+      whiteSpace: 'nowrap' as const,
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    /** Done step pill */
+    stepDone: {
+      px: 2,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      color: colors.success[700],
+      bgcolor: colors.success[50],
+      borderRight: `1px solid ${colors.success[100]}`,
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.75,
+      whiteSpace: 'nowrap' as const,
+      transition: `all ${transitions.fast}`,
+      '&:hover': {
+        bgcolor: colors.success[100],
+      },
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    /** Step number badge */
+    stepNumber: {
+      width: 20,
+      height: 20,
+      borderRadius: borders.radius.full,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: typography.sizes['2xs'],
+      fontWeight: typography.weights.bold,
+      flexShrink: 0,
+    },
+    stepNumberDefault: {
+      bgcolor: colors.neutral[300],
+      color: colors.surface,
+    },
+    stepNumberActive: {
+      bgcolor: colors.primary[600],
+      color: colors.surface,
+    },
+    stepNumberDone: {
+      bgcolor: colors.success[600],
+      color: colors.surface,
+    },
+    /** Content sheet */
+    sheet: {
+      maxWidth: 960,
+      mx: 'auto',
+      my: 3,
+      px: { xs: 2, md: 0 },
+    },
+    /** Inner card */
+    card: {
+      bgcolor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.lg,
+      p: { xs: 2, md: 3 },
+    },
+    /** Navigation bar (bottom) */
+    navBar: {
+      maxWidth: 960,
+      mx: 'auto',
+      px: { xs: 2, md: 0 },
+      pb: 4,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 2,
     },
   },
 } as const

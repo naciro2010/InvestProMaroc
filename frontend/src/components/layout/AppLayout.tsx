@@ -1,7 +1,7 @@
-import { ReactNode, useState, useEffect } from 'react'
-import { Menu, X } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
-import { colors, typography, borders, transitions, spacing } from '@/lib/designSystem'
+import { ReactNode } from 'react'
+import { Menu } from 'lucide-react'
+import { useLayout } from '@/contexts/LayoutContext'
+import { colors, borders, transitions, shadows } from '@/lib/designSystem'
 import Sidebar, { SIDEBAR_WIDTH } from './Sidebar'
 
 interface AppLayoutProps {
@@ -9,150 +9,62 @@ interface AppLayoutProps {
 }
 
 /**
- * AppLayout - Main application shell
- * Design: Clean, professional, Confluence/Jira-inspired
- * Orchestrates: Sidebar + Header + Main content area
+ * AppLayout - Clean ERP-inspired application shell.
+ * No header bar - content goes edge-to-edge, ControlPanel serves as page header.
+ * Mobile: floating hamburger button to open sidebar.
  */
 const AppLayout = ({ children }: AppLayoutProps) => {
-  const { user } = useAuth()
-
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-
-  // Detect screen size
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 1024
-      setIsMobile(mobile)
-      if (!mobile) {
-        setSidebarOpen(true)
-      } else {
-        setSidebarOpen(false)
-      }
-    }
-
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
-  const avatarStyle: React.CSSProperties = {
-    width: 34,
-    height: 34,
-    backgroundColor: colors.primary[600],
-    borderRadius: borders.radius.full,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: colors.textOnColor,
-    fontWeight: typography.weights.semibold,
-    fontSize: typography.sizes.sm,
-    flexShrink: 0,
-  }
+  const { sidebarOpen, setSidebarOpen, toggleSidebar, isMobile, isTablet } = useLayout()
+  const isCompact = isMobile || isTablet
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: colors.background }}>
-      {/* Backdrop overlay for mobile */}
-      {isMobile && sidebarOpen && (
+      {/* Mobile/tablet backdrop */}
+      {isCompact && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 30,
-          }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 30 }}
         />
       )}
 
       {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        isMobile={isMobile}
-        onClose={() => setSidebarOpen(false)}
-      />
+      <Sidebar isOpen={sidebarOpen} isMobile={isCompact} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main Content Area */}
+      {/* Mobile hamburger - floating button */}
+      {isCompact && !sidebarOpen && (
+        <button
+          onClick={toggleSidebar}
+          style={{
+            position: 'fixed',
+            top: 10,
+            left: 10,
+            zIndex: 50,
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
+            borderRadius: borders.radius.base,
+            boxShadow: shadows.md,
+            cursor: 'pointer',
+            transition: `background-color ${transitions.fast}`,
+          }}
+        >
+          <Menu className="w-5 h-5" style={{ color: colors.textSecondary }} />
+        </button>
+      )}
+
+      {/* Main content - no header, no padding */}
       <div style={{
         flex: 1,
         width: '100%',
-        marginLeft: isMobile ? 0 : SIDEBAR_WIDTH,
+        marginLeft: isCompact ? 0 : SIDEBAR_WIDTH,
         transition: `margin-left ${transitions.normal}`,
+        minHeight: '100vh',
       }}>
-        {/* Header */}
-        <header style={{
-          backgroundColor: colors.surface,
-          borderBottom: `1px solid ${colors.border}`,
-          position: 'sticky',
-          top: 0,
-          zIndex: 30,
-        }}>
-          <div style={{
-            padding: `${spacing.md} ${spacing.xl}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              style={{
-                padding: spacing.sm,
-                borderRadius: borders.radius.base,
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: `background-color ${transitions.fast}`,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colors.neutral[100]
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              {sidebarOpen && isMobile ? (
-                <X className="w-5 h-5" style={{ color: colors.textSecondary }} />
-              ) : (
-                <Menu className="w-5 h-5" style={{ color: colors.textSecondary }} />
-              )}
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: spacing.lg }}>
-              <span style={{
-                fontSize: typography.sizes.sm,
-                color: colors.textSecondary,
-                display: isMobile ? 'none' : 'block',
-              }}>
-                {new Date().toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </span>
-              {/* Mobile: Show only avatar */}
-              <div
-                className="lg:hidden"
-                style={{
-                  ...avatarStyle,
-                  display: isMobile ? 'flex' : 'none',
-                }}
-              >
-                {user?.fullName?.charAt(0).toUpperCase() || 'U'}
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Content */}
-        <main style={{
-          padding: isMobile ? spacing.lg : spacing.xl,
-        }}>
-          {children}
-        </main>
+        {children}
       </div>
     </div>
   )

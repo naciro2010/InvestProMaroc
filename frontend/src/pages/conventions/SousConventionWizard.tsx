@@ -2,29 +2,35 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Box,
-  Button,
-  Stepper,
-  Step,
-  StepLabel,
-  Paper,
   Typography,
   FormControlLabel,
   Switch,
+  Alert,
 } from '@mui/material'
-import { ArrowBack, ArrowForward, Save } from '@mui/icons-material'
 import { conventionsAPI } from '../../lib/api'
 import AppLayout from '../../components/layout/AppLayout'
+import { WizardView } from '@/components/core'
 import Step1Informations from './wizard/Step1Informations'
 import Step2DatesEtBudget from './wizard/Step2DatesEtBudget'
 import Step3PiecesJointes from './wizard/Step3PiecesJointes'
 import Step4Recapitulatif from './wizard/Step4Recapitulatif'
 import { ConventionFormData } from './types'
+import { colors, typography } from '@/lib/designSystem'
+
+interface ParentConventionInfo {
+  id: number
+  code: string
+  libelle: string
+  tauxCommission: number
+  baseCalcul: string
+  tauxTva: number
+}
 
 const steps = [
-  'Informations générales',
-  'Dates et Budget',
-  'Pièces jointes',
-  'Récapitulatif'
+  { label: 'Informations générales' },
+  { label: 'Dates et Budget' },
+  { label: 'Pièces jointes' },
+  { label: 'Récapitulatif' },
 ]
 
 const SousConventionWizard = () => {
@@ -34,7 +40,7 @@ const SousConventionWizard = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [createdId, setCreatedId] = useState<number | null>(null)
-  const [parentConvention, setParentConvention] = useState<any>(null)
+  const [parentConvention, setParentConvention] = useState<ParentConventionInfo | null>(null)
   const [heriteParametres, setHeriteParametres] = useState(true)
 
   const [formData, setFormData] = useState<ConventionFormData>({
@@ -61,29 +67,23 @@ const SousConventionWizard = () => {
   const loadParentConvention = async () => {
     try {
       const { data } = await conventionsAPI.getById(Number(parentId))
-      setParentConvention(data.data)
+      const parent = data.data as ParentConventionInfo
+      setParentConvention(parent)
 
       // Préremplir avec les données du parent si héritage
       if (heriteParametres) {
         setFormData(prev => ({
           ...prev,
-          tauxCommission: data.data.tauxCommission.toString(),
-          baseCalcul: data.data.baseCalcul,
-          tauxTva: data.data.tauxTva.toString(),
+          tauxCommission: parent.tauxCommission.toString(),
+          baseCalcul: parent.baseCalcul,
+          tauxTva: parent.tauxTva.toString(),
         }))
       }
-    } catch (error) {
-      console.error('Erreur chargement convention parent:', error)
-      setError('Impossible de charger la convention parente')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Impossible de charger la convention parente'
+      console.error('Erreur chargement convention parent:', message)
+      setError(message)
     }
-  }
-
-  const handleNext = () => {
-    setActiveStep((prev) => prev + 1)
-  }
-
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1)
   }
 
   const parseNumber = (value: string): number => {
@@ -114,10 +114,15 @@ const SousConventionWizard = () => {
 
       const { data } = await conventionsAPI.createSousConvention(Number(parentId), payload)
       setCreatedId(data.data.id)
-      handleNext()
-    } catch (err: any) {
-      console.error('Erreur création sous-convention:', err)
-      setError(err.response?.data?.message || 'Erreur lors de la création')
+      setActiveStep(prev => prev + 1)
+    } catch (err: unknown) {
+      interface ApiError {
+        response?: { data?: { message?: string } }
+      }
+      const apiErr = err as ApiError
+      const message = apiErr.response?.data?.message || 'Erreur lors de la création'
+      console.error('Erreur création sous-convention:', message)
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -127,17 +132,42 @@ const SousConventionWizard = () => {
     navigate(`/conventions/${parentId}`)
   }
 
+  const isStepValid = (): boolean => {
+    switch (activeStep) {
+      case 0:
+        return !!(formData.code && formData.numero && formData.libelle && formData.objet)
+      case 1:
+        return !!(formData.dateConvention && formData.dateDebut && formData.budget)
+      case 2:
+        return createdId !== null
+      default:
+        return true
+    }
+  }
+
+  const handleNext = () => {
+    if (activeStep === steps.length - 2) {
+      // Step before Récapitulatif -- submit the form
+      handleSubmit()
+    } else if (activeStep === steps.length - 1) {
+      // Last step (Récapitulatif) -- finish
+      handleFinish()
+    } else {
+      setActiveStep(prev => prev + 1)
+    }
+  }
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
         return (
           <Box>
             {parentConvention && (
-              <Paper sx={{ p: 2, mb: 3, bgcolor: 'info.light', color: 'info.contrastText' }}>
+              <Alert severity="info" sx={{ mb: 3 }}>
                 <Typography variant="body2">
                   <strong>Convention parente:</strong> {parentConvention.code} - {parentConvention.libelle}
                 </Typography>
-              </Paper>
+              </Alert>
             )}
             <FormControlLabel
               control={
@@ -147,7 +177,13 @@ const SousConventionWizard = () => {
                 />
               }
               label="Hériter les paramètres de commission de la convention parente"
-              sx={{ mb: 3 }}
+              sx={{
+                mb: 3,
+                '& .MuiFormControlLabel-label': {
+                  fontSize: typography.sizes.sm,
+                  color: colors.neutral[700],
+                },
+              }}
             />
             <Step1Informations formData={formData} setFormData={setFormData} />
           </Box>
@@ -156,11 +192,11 @@ const SousConventionWizard = () => {
         return (
           <Box>
             {heriteParametres && parentConvention && (
-              <Paper sx={{ p: 2, mb: 3, bgcolor: 'warning.light' }}>
+              <Alert severity="warning" sx={{ mb: 3 }}>
                 <Typography variant="body2">
                   Les paramètres de commission seront hérités de la convention parente
                 </Typography>
-              </Paper>
+              </Alert>
             )}
             <Step2DatesEtBudget
               formData={formData}
@@ -183,101 +219,31 @@ const SousConventionWizard = () => {
     }
   }
 
-  const canProceed = () => {
-    switch (activeStep) {
-      case 0:
-        return formData.code && formData.numero && formData.libelle && formData.objet
-      case 1:
-        return formData.dateConvention && formData.dateDebut && formData.budget
-      case 2:
-        return createdId !== null
-      default:
-        return true
-    }
-  }
-
   return (
     <AppLayout>
-      <Box sx={{ maxWidth: 1000, mx: 'auto', p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate(`/conventions/${parentId}`)}
-            sx={{ mr: 2 }}
-          >
-            Retour
-          </Button>
-          <Typography variant="h5" fontWeight="bold">
-            Nouvelle Sous-Convention
-          </Typography>
-        </Box>
-
-        {error && (
-          <Paper sx={{ p: 2, mb: 3, bgcolor: 'error.light', color: 'error.contrastText' }}>
-            {error}
-          </Paper>
-        )}
-
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Stepper activeStep={activeStep} alternativeLabel>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </Paper>
-
-        <Paper sx={{ p: 4, mb: 3 }}>
-          {renderStepContent()}
-        </Paper>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            disabled={activeStep === 0 || loading}
-            onClick={handleBack}
-            startIcon={<ArrowBack />}
-          >
-            Précédent
-          </Button>
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {activeStep === steps.length - 1 ? (
-              <Button
-                variant="contained"
-                onClick={handleFinish}
-                startIcon={<Save />}
-              >
-                Terminer
-              </Button>
-            ) : activeStep === steps.length - 2 ? (
-              createdId ? (
-                <Button variant="outlined" onClick={handleFinish}>
-                  Passer cette étape
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  onClick={handleSubmit}
-                  disabled={!canProceed() || loading}
-                  startIcon={<Save />}
-                >
-                  {loading ? 'Enregistrement...' : 'Créer la sous-convention'}
-                </Button>
-              )
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={!canProceed()}
-                endIcon={<ArrowForward />}
-              >
-                Suivant
-              </Button>
-            )}
-          </Box>
-        </Box>
-      </Box>
+      {error && (
+        <Alert severity="error" sx={{ mx: 3, mt: 2 }}>
+          {error}
+        </Alert>
+      )}
+      <WizardView
+        breadcrumbs={[
+          { label: 'Conventions', path: '/conventions' },
+          { label: parentConvention?.code || '', path: `/conventions/${parentId}` },
+          { label: 'Nouvelle Sous-Convention' },
+        ]}
+        steps={steps}
+        activeStep={activeStep}
+        onStepClick={setActiveStep}
+        onBack={() => setActiveStep(s => s - 1)}
+        onNext={handleNext}
+        onCancel={() => navigate(`/conventions/${parentId}`)}
+        isNextDisabled={!isStepValid()}
+        isSubmitting={loading}
+        submitLabel="Créer la sous-convention"
+      >
+        {renderStepContent()}
+      </WizardView>
     </AppLayout>
   )
 }

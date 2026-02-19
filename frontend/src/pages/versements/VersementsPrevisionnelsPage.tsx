@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Button,
-  Paper,
   Typography,
   TextField,
   Table,
@@ -12,7 +10,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   IconButton,
   Chip,
   Stack,
@@ -26,21 +23,21 @@ import {
   FormControl,
   InputLabel,
   Card,
+  Paper,
 } from '@mui/material'
 import {
-  Add,
-  Search,
   Edit,
   Delete,
-  FilterList,
   TrendingUp,
   CalendarMonth,
   AccountBalanceWallet,
 } from '@mui/icons-material'
+import { RefreshCw, Plus, Layers } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
+import { ControlPanel } from '@/components/core'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { versementsPrevisionnelsAPI, conventionsAPI } from '../../lib/api'
-import { colors, componentStyles, borders, typography, spacing } from '@/lib/designSystem'
+import { colors, componentStyles, borders, typography } from '@/lib/designSystem'
 
 interface VersementPrevisionnel {
   id: number
@@ -72,12 +69,10 @@ interface Convention {
 }
 
 const VersementsPrevisionnelsPage = () => {
-  const navigate = useNavigate()
   const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
-  const [filteredVersements, setFilteredVersements] = useState<VersementPrevisionnel[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterConventionId, setFilterConventionId] = useState<number | ''>('')
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -104,9 +99,38 @@ const VersementsPrevisionnelsPage = () => {
     loadData()
   }, [])
 
+  const filteredVersements = useMemo(() => {
+    let filtered = versements
+
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase()
+      filtered = filtered.filter(
+        (v) =>
+          v.convention.code.toLowerCase().includes(lower) ||
+          v.convention.objet.toLowerCase().includes(lower) ||
+          v.partenaire.designation.toLowerCase().includes(lower)
+      )
+    }
+
+    if (filterConventionId) {
+      filtered = filtered.filter((v) => v.convention.id === filterConventionId)
+    }
+
+    return filtered
+  }, [versements, searchTerm, filterConventionId])
+
+  // Reset page when filters change
   useEffect(() => {
-    filterVersements()
-  }, [searchTerm, filterConventionId, versements])
+    setPage(0)
+  }, [searchTerm, filterConventionId])
+
+  const paginationInfo = useMemo(() => {
+    const total = filteredVersements.length
+    if (total === 0) return undefined
+    const currentStart = page * rowsPerPage + 1
+    const currentEnd = Math.min((page + 1) * rowsPerPage, total)
+    return { currentStart, currentEnd, total }
+  }, [filteredVersements.length, page, rowsPerPage])
 
   const loadData = async () => {
     try {
@@ -153,26 +177,6 @@ const VersementsPrevisionnelsPage = () => {
     } finally {
       setLoading(false)
     }
-  }
-
-  const filterVersements = () => {
-    let filtered = versements
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (v) =>
-          v.convention.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          v.convention.objet.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          v.partenaire.designation.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    if (filterConventionId) {
-      filtered = filtered.filter((v) => v.convention.id === filterConventionId)
-    }
-
-    setFilteredVersements(filtered)
-    setPage(0)
   }
 
   const handleOpenDialog = (versement?: VersementPrevisionnel) => {
@@ -235,7 +239,7 @@ const VersementsPrevisionnelsPage = () => {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce versement ?')) return
+    if (!confirm('Etes-vous sur de vouloir supprimer ce versement ?')) return
 
     try {
       await versementsPrevisionnelsAPI.delete(id)
@@ -265,7 +269,7 @@ const VersementsPrevisionnelsPage = () => {
     return vDate >= today && vDate <= thirtyDaysLater
   }
 
-  // Stat card configurations with semantic colors (Atlassian-style)
+  // Stat card configurations with semantic colors
   const statCards = [
     {
       label: 'Total Versements',
@@ -288,7 +292,7 @@ const VersementsPrevisionnelsPage = () => {
     {
       label: 'Conventions',
       value: stats.conventionsCount.toString(),
-      icon: FilterList,
+      icon: Layers,
       bgColor: colors.warning[50],
       iconBgColor: colors.warning[100],
       iconColor: colors.warning[600],
@@ -307,34 +311,64 @@ const VersementsPrevisionnelsPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ p: { xs: 2, md: 4 }, minHeight: '100vh', bgcolor: colors.background }}>
-        {/* Header */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: typography.weights.bold,
-              color: colors.textPrimary,
-              mb: 1,
-            }}
+      <ControlPanel
+        breadcrumbs={[{ label: 'Versements Previsionnels' }]}
+        actions={
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RefreshCw size={16} />}
+              onClick={loadData}
+              sx={{ textTransform: 'none' }}
+            >
+              Actualiser
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<Plus size={16} />}
+              onClick={() => handleOpenDialog()}
+              sx={{ textTransform: 'none' }}
+            >
+              Nouveau Versement
+            </Button>
+          </Box>
+        }
+        searchValue={searchTerm}
+        onSearchChange={(value) => { setSearchTerm(value); setPage(0) }}
+        searchPlaceholder="Rechercher par convention, partenaire..."
+        paginationInfo={paginationInfo}
+        onPreviousPage={() => setPage((p) => Math.max(0, p - 1))}
+        onNextPage={() => setPage((p) => p + 1)}
+      >
+        {/* Convention filter in the ControlPanel bottom row */}
+        <FormControl size="small" sx={{ minWidth: 220 }}>
+          <InputLabel sx={{ fontSize: typography.sizes.sm }}>Convention</InputLabel>
+          <Select
+            value={filterConventionId}
+            onChange={(e) => setFilterConventionId(e.target.value as number | '')}
+            label="Convention"
+            sx={{ fontSize: typography.sizes.sm }}
           >
-            Versements Prévisionnels
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: colors.textSecondary,
-              fontSize: typography.sizes.base,
-            }}
-          >
-            Planification et suivi des paiements prévisionnels pour les conventions
-          </Typography>
-        </Box>
+            <MenuItem value="">
+              <em>Toutes</em>
+            </MenuItem>
+            {conventions.map((conv) => (
+              <MenuItem key={conv.id} value={conv.id}>
+                {conv.code} - {conv.objet}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </ControlPanel>
 
-        {/* Stats Cards - Atlassian Style */}
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 4 }}>
+      <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: colors.background }}>
+        {/* Stats Cards */}
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 3 }}>
           {statCards.map((card, index) => {
             const IconComponent = card.icon
+            const isLucide = IconComponent === Layers
             return (
               <Box key={index} sx={{ flex: 1 }}>
                 <Card
@@ -356,7 +390,11 @@ const VersementsPrevisionnelsPage = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <IconComponent sx={{ fontSize: 24, color: card.iconColor }} />
+                      {isLucide ? (
+                        <IconComponent size={24} color={card.iconColor} />
+                      ) : (
+                        <IconComponent sx={{ fontSize: 24, color: card.iconColor }} />
+                      )}
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography
@@ -390,62 +428,6 @@ const VersementsPrevisionnelsPage = () => {
           })}
         </Stack>
 
-        {/* Filters & Actions */}
-        <Paper
-          sx={{
-            ...componentStyles.card,
-            p: 3,
-            mb: 3,
-          }}
-        >
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
-            <TextField
-              placeholder="Rechercher..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              size="small"
-              sx={{ flex: 1, ...componentStyles.inputField }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ color: colors.textSecondary }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <FormControl sx={{ minWidth: 250 }} size="small">
-              <InputLabel>Filtrer par Convention</InputLabel>
-              <Select
-                value={filterConventionId}
-                onChange={(e) => setFilterConventionId(e.target.value as number | '')}
-                label="Filtrer par Convention"
-              >
-                <MenuItem value="">
-                  <em>Toutes les conventions</em>
-                </MenuItem>
-                {conventions.map((conv) => (
-                  <MenuItem key={conv.id} value={conv.id}>
-                    {conv.code} - {conv.objet}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => handleOpenDialog()}
-              sx={{
-                ...componentStyles.buttonPrimary,
-                minWidth: 200,
-              }}
-            >
-              Nouveau Versement
-            </Button>
-          </Stack>
-        </Paper>
-
         {/* Table */}
         <TableContainer component={Paper} sx={componentStyles.table.container}>
           <Table>
@@ -471,7 +453,7 @@ const VersementsPrevisionnelsPage = () => {
               ) : filteredVersements.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} sx={componentStyles.emptyState}>
-                    <Typography color="textSecondary">Aucun versement trouvé</Typography>
+                    <Typography color="textSecondary">Aucun versement trouve</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -572,26 +554,12 @@ const VersementsPrevisionnelsPage = () => {
               )}
             </TableBody>
           </Table>
-          <TablePagination
-            component="div"
-            count={filteredVersements.length}
-            page={page}
-            onPageChange={(_, newPage) => setPage(newPage)}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(e) => {
-              setRowsPerPage(parseInt(e.target.value, 10))
-              setPage(0)
-            }}
-            labelRowsPerPage="Lignes par page"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
-            sx={{ borderTop: `1px solid ${colors.divider}` }}
-          />
         </TableContainer>
 
         {/* Add/Edit Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
           <DialogTitle sx={{ fontWeight: typography.weights.semibold }}>
-            {editingId ? 'Modifier' : 'Ajouter'} un Versement Prévisionnel
+            {editingId ? 'Modifier' : 'Ajouter'} un Versement Previsionnel
           </DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>

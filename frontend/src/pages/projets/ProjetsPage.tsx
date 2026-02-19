@@ -17,8 +17,6 @@ import {
   DialogActions,
   TextField,
   LinearProgress,
-  TablePagination,
-  InputAdornment,
 } from '@mui/material'
 import {
   Add,
@@ -30,11 +28,11 @@ import {
   Edit,
   Delete,
   Visibility,
-  Search,
+  Refresh,
 } from '@mui/icons-material'
 import { GripVertical } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import StatusBadge from '../../components/core/StatusBadge'
+import { ControlPanel, StatusBadge } from '../../components/core'
 import ConfirmDialog from '../../components/core/ConfirmDialog'
 import { useToast } from '../../contexts/ToastContext'
 import { projetsAPI, Projet } from '../../lib/projetsAPI'
@@ -397,42 +395,40 @@ const ProjetsPage = () => {
   return (
     <AppLayout>
       <Box sx={styles.container}>
-        {/* Header */}
-        <Box sx={styles.header}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography sx={styles.title}>Projets</Typography>
-              <Typography sx={styles.subtitle}>
-                Gestion des projets d'investissement et programmes budgétaires
-              </Typography>
+        {/* Control Panel */}
+        <ControlPanel
+          breadcrumbs={[{ label: 'Projets' }]}
+          actions={
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <IconButton
+                size="small"
+                onClick={() => { loadProjets(); loadStats(); }}
+                sx={{ color: colors.textSecondary }}
+              >
+                <Refresh fontSize="small" />
+              </IconButton>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => navigate('/projets/nouveau')}
+                sx={componentStyles.buttonPrimary}
+              >
+                Nouveau Projet
+              </Button>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/projets/nouveau')}
-              sx={componentStyles.buttonPrimary}
-            >
-              Nouveau Projet
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Toolbar avec filtres */}
-        <Box sx={styles.toolbar}>
-          <TextField
-            placeholder="Rechercher par code, nom, description..."
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
-            size="small"
-            sx={styles.searchField}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
+          }
+          searchValue={searchTerm}
+          onSearchChange={(value) => { setSearchTerm(value); setPage(0); }}
+          searchPlaceholder="Rechercher par code, designation..."
+          paginationInfo={{
+            currentStart: filteredProjets.length === 0 ? 0 : page * rowsPerPage + 1,
+            currentEnd: Math.min((page + 1) * rowsPerPage, filteredProjets.length),
+            total: filteredProjets.length,
+          }}
+          onPreviousPage={() => setPage((prev) => Math.max(0, prev - 1))}
+          onNextPage={() => setPage((prev) => prev + 1)}
+        >
+          {/* Status filter chips */}
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {['ALL', 'EN_PREPARATION', 'EN_COURS', 'SUSPENDU', 'TERMINE', 'ANNULE'].map((statut) => {
               const count = statut === 'ALL' ? projets.length : (stats[statut] || 0)
@@ -452,7 +448,7 @@ const ProjetsPage = () => {
               )
             })}
           </Box>
-        </Box>
+        </ControlPanel>
 
         {/* Main Content Area */}
         <Box sx={{ px: 3, pb: 3 }}>
@@ -489,23 +485,6 @@ const ProjetsPage = () => {
             </SortableContext>
           </DndContext>
 
-          {/* Pagination */}
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-            <TablePagination
-              component="div"
-              count={filteredProjets.length}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10))
-                setPage(0)
-              }}
-              rowsPerPageOptions={[8, 12, 24, 48]}
-              labelRowsPerPage="Projets par page"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
-            />
-          </Box>
         </Box>
 
         {/* Menu contextuel */}

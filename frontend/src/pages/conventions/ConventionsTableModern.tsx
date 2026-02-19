@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -21,10 +20,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  InputAdornment,
   Collapse,
-  Skeleton,
-  Tooltip,
   Divider,
 } from '@mui/material'
 import {
@@ -36,23 +32,24 @@ import {
   Delete,
   Send,
   Visibility,
-  Search,
   KeyboardArrowDown,
   KeyboardArrowRight,
   FolderOpen,
   Description,
-  Refresh,
 } from '@mui/icons-material'
+import { Plus, RefreshCw } from 'lucide-react'
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
-import StatusBadge from '../../components/core/StatusBadge'
-import ConfirmDialog from '../../components/core/ConfirmDialog'
-import { ExportButton, PageHeader } from '../../components/core'
+import {
+  StatusBadge,
+  ConfirmDialog,
+  ExportButton,
+  ControlPanel,
+} from '../../components/core'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import RichTextDisplay from '../../components/ui/RichTextDisplay'
-import { FileText } from 'lucide-react'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '../../lib/exportUtils'
 
 // Types
@@ -79,8 +76,7 @@ interface ConventionWithChildren extends Convention {
   sousConventions: Convention[]
 }
 
-// Styles from design system
-const styles = componentStyles.listPage
+const listStyles = componentStyles.listView
 
 const ConventionsTableModern = () => {
   const navigate = useNavigate()
@@ -126,7 +122,6 @@ const ConventionsTableModern = () => {
   const groupedData = useMemo((): ConventionWithChildren[] => {
     const parents = conventions.filter(c => !c.parentConventionId)
     const children = conventions.filter(c => c.parentConventionId)
-
     return parents.map(parent => ({
       ...parent,
       sousConventions: children.filter(c => c.parentConventionId === parent.id),
@@ -137,7 +132,6 @@ const ConventionsTableModern = () => {
   const filteredData = useMemo(() => {
     return groupedData.filter(conv => {
       if (statusFilter !== 'ALL' && conv.statut !== statusFilter) return false
-
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
         const matchParent =
@@ -145,9 +139,7 @@ const ConventionsTableModern = () => {
           conv.libelle?.toLowerCase().includes(query) ||
           conv.numero?.toLowerCase().includes(query)
         const matchChildren = conv.sousConventions?.some(
-          sc =>
-            sc.code?.toLowerCase().includes(query) ||
-            sc.libelle?.toLowerCase().includes(query)
+          sc => sc.code?.toLowerCase().includes(query) || sc.libelle?.toLowerCase().includes(query)
         )
         return matchParent || matchChildren
       }
@@ -179,24 +171,17 @@ const ConventionsTableModern = () => {
     })
   }
 
-  const handleRowClick = (id: number) => {
-    navigate(`/conventions/${id}`)
-  }
-
   const handleMenuOpen = (e: React.MouseEvent<HTMLElement>, conv: Convention) => {
     e.stopPropagation()
     setAnchorEl(e.currentTarget)
     setSelectedConvention(conv)
   }
 
-  const handleMenuClose = () => {
-    setAnchorEl(null)
-  }
+  const handleMenuClose = () => { setAnchorEl(null) }
 
   const handleAction = async (action: string) => {
     if (!selectedConvention) return
     handleMenuClose()
-
     try {
       switch (action) {
         case 'view':
@@ -213,7 +198,7 @@ const ConventionsTableModern = () => {
         case 'validate':
           if (user?.id) {
             await conventionsAPI.valider(selectedConvention.id, user.id)
-            showToast('Convention validée', 'success')
+            showToast('Convention validee', 'success')
             fetchConventions()
           }
           break
@@ -224,7 +209,7 @@ const ConventionsTableModern = () => {
           setDeleteConfirmOpen(true)
           break
       }
-    } catch (error) {
+    } catch {
       showToast('Erreur lors de l\'action', 'error')
     }
   }
@@ -233,7 +218,7 @@ const ConventionsTableModern = () => {
     if (!selectedConvention || !motifRejet.trim()) return
     try {
       await conventionsAPI.rejeter(selectedConvention.id, motifRejet)
-      showToast('Convention rejetée', 'success')
+      showToast('Convention rejetee', 'success')
       setRejectDialogOpen(false)
       setMotifRejet('')
       fetchConventions()
@@ -246,7 +231,7 @@ const ConventionsTableModern = () => {
     if (!selectedConvention) return
     try {
       await conventionsAPI.delete(selectedConvention.id)
-      showToast('Convention supprimée avec succès', 'success')
+      showToast('Convention supprimee', 'success')
       fetchConventions()
     } catch {
       showToast('Erreur lors de la suppression', 'error')
@@ -270,20 +255,12 @@ const ConventionsTableModern = () => {
   const handleExport = () => {
     const exportData = filteredData.flatMap(conv => {
       const parent: Record<string, unknown> = {
-        code: conv.code,
-        type: conv.type || '-',
-        libelle: conv.libelle,
-        budget: conv.budget,
-        statut: conv.statut,
-        dateDebut: conv.dateDebut,
+        code: conv.code, type: conv.type || '-', libelle: conv.libelle,
+        budget: conv.budget, statut: conv.statut, dateDebut: conv.dateDebut,
       }
       const children = (conv.sousConventions || []).map(sc => ({
-        code: sc.code,
-        type: sc.type || 'SPECIFIQUE',
-        libelle: sc.libelle,
-        budget: sc.budget,
-        statut: sc.statut,
-        dateDebut: sc.dateDebut,
+        code: sc.code, type: sc.type || 'SPECIFIQUE', libelle: sc.libelle,
+        budget: sc.budget, statut: sc.statut, dateDebut: sc.dateDebut,
       }))
       return [parent, ...children]
     })
@@ -293,328 +270,170 @@ const ConventionsTableModern = () => {
       columns: [
         { header: 'Code', key: 'code', width: 18 },
         { header: 'Type', key: 'type', width: 14 },
-        { header: 'Libellé', key: 'libelle', width: 35 },
+        { header: 'Libelle', key: 'libelle', width: 35 },
         { header: 'Budget (MAD)', key: 'budget', width: 22, formatter: formatCurrencyForExport },
         { header: 'Statut', key: 'statut', width: 14 },
-        { header: 'Date Début', key: 'dateDebut', width: 16, formatter: formatDateForExport },
+        { header: 'Date Debut', key: 'dateDebut', width: 16, formatter: formatDateForExport },
       ],
       data: exportData,
     })
   }
 
-  // Filter pill component
-  const FilterPill = ({
-    label,
-    count,
-    active,
-    onClick,
-  }: {
-    label: string
-    count: number
-    active: boolean
-    onClick: () => void
-  }) => (
-    <Chip
-      label={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <span>{label}</span>
-          <Box component="span" sx={active ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
-        </Box>
-      }
-      onClick={onClick}
-      sx={active ? styles.filterPillActive : styles.filterPill}
-    />
-  )
+  // Build active filters for control panel
+  const activeFilters = statusFilter !== 'ALL' ? [
+    { key: 'status', label: 'Statut', value: statusFilter === 'BROUILLON' ? 'Brouillon' : statusFilter === 'SOUMIS' ? 'Soumis' : 'Valide' }
+  ] : []
+
+  // Pagination info for pager
+  const paginationStart = filteredData.length > 0 ? page * rowsPerPage + 1 : 0
+  const paginationEnd = Math.min((page + 1) * rowsPerPage, filteredData.length)
 
   return (
     <AppLayout>
-      <Box sx={styles.container}>
-        {/* Header */}
-        <Box sx={styles.header}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box>
-              <Typography variant="h5" sx={styles.title}>
-                Conventions
-              </Typography>
-              <Typography variant="body2" sx={styles.subtitle}>
-                {stats.total} convention{stats.total > 1 ? 's' : ''} • {stats.valide} validée{stats.valide > 1 ? 's' : ''}
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/conventions/nouvelle')}
-              sx={{
-                ...componentStyles.buttonPrimary,
-                px: 3,
-              }}
-            >
-              Nouvelle Convention
-            </Button>
-          </Box>
+      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+        {/* Control Panel */}
+        <ControlPanel
+          breadcrumbs={[
+            { label: 'Conventions' },
+          ]}
+          actions={
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<Plus size={16} />}
+                onClick={() => navigate('/conventions/nouvelle')}
+                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
+              >
+                Nouveau
+              </Button>
+              <ExportButton onClick={handleExport} />
+              <IconButton size="small" onClick={fetchConventions} sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </>
+          }
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Rechercher par code, libelle..."
+          filters={activeFilters}
+          onRemoveFilter={() => setStatusFilter('ALL')}
+          paginationInfo={filteredData.length > 0 ? {
+            currentStart: paginationStart,
+            currentEnd: paginationEnd,
+            total: filteredData.length,
+          } : undefined}
+          onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
+          onNextPage={() => setPage(p => p + 1)}
+        >
+          {/* Status filter chips */}
+          {(['ALL', 'BROUILLON', 'SOUMIS', 'VALIDE'] as const).map((status) => {
+            const labelMap: Record<string, string> = {
+              ALL: 'Tous', BROUILLON: 'Brouillon', SOUMIS: 'Soumis', VALIDE: 'Valide'
+            }
+            const countMap: Record<string, number> = {
+              ALL: stats.total, BROUILLON: stats.brouillon, SOUMIS: stats.soumis, VALIDE: stats.valide
+            }
+            const isActive = statusFilter === status
+            return (
+              <Chip
+                key={status}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <span>{labelMap[status]}</span>
+                    <Box component="span" sx={{
+                      bgcolor: isActive ? colors.primary[200] : colors.neutral[200],
+                      color: isActive ? colors.primary[800] : colors.neutral[600],
+                      fontSize: typography.sizes['2xs'],
+                      fontWeight: typography.weights.bold,
+                      borderRadius: '9999px',
+                      px: 0.75,
+                      minWidth: 18,
+                      height: 18,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      {countMap[status]}
+                    </Box>
+                  </Box>
+                }
+                size="small"
+                onClick={() => setStatusFilter(status)}
+                sx={isActive ? componentStyles.listPage.filterPillActive : componentStyles.listPage.filterPill}
+              />
+            )
+          })}
+        </ControlPanel>
 
-          {/* Filter Pills */}
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <FilterPill
-              label="Tous"
-              count={stats.total}
-              active={statusFilter === 'ALL'}
-              onClick={() => setStatusFilter('ALL')}
-            />
-            <FilterPill
-              label="Brouillon"
-              count={stats.brouillon}
-              active={statusFilter === 'BROUILLON'}
-              onClick={() => setStatusFilter('BROUILLON')}
-            />
-            <FilterPill
-              label="En attente"
-              count={stats.soumis}
-              active={statusFilter === 'SOUMIS'}
-              onClick={() => setStatusFilter('SOUMIS')}
-            />
-            <FilterPill
-              label="Validées"
-              count={stats.valide}
-              active={statusFilter === 'VALIDE'}
-              onClick={() => setStatusFilter('VALIDE')}
-            />
-          </Box>
-        </Box>
-
-        {/* Toolbar */}
-        <Box sx={styles.toolbar}>
-          <TextField
-            size="small"
-            placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={styles.searchField}
-          />
-          <Box sx={{ flex: 1 }} />
-          <ExportButton onClick={handleExport} />
-          <Tooltip title="Rafraîchir">
-            <IconButton onClick={fetchConventions} size="small">
-              <Refresh />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        {/* Table */}
-        <Box sx={{ p: 3 }}>
-          <TableContainer component={Paper} sx={styles.tableContainer}>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={styles.tableHeader}>
-                  <TableCell sx={{ width: 40, pl: 1 }} />
-                  <TableCell>Convention</TableCell>
-                  <TableCell>Statut</TableCell>
-                  <TableCell align="right">Budget</TableCell>
-                  <TableCell align="center">Commission</TableCell>
-                  <TableCell>Période</TableCell>
-                  <TableCell>Créé par</TableCell>
-                  <TableCell align="center" sx={{ width: 60 }} />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={8}>
-                        <Skeleton variant="rectangular" height={40} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : paginatedData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
-                      <Description sx={{ fontSize: 48, color: colors.neutral[300], mb: 1 }} />
-                      <Typography color="text.secondary">Aucune convention trouvée</Typography>
-                    </TableCell>
+        {/* List Table */}
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={listStyles.container}>
+            <TableContainer>
+              <Table size="small" sx={listStyles.table}>
+                <TableHead>
+                  <TableRow sx={listStyles.headerRow}>
+                    <TableCell sx={{ width: 40, pl: 1 }} />
+                    <TableCell>Convention</TableCell>
+                    <TableCell>Statut</TableCell>
+                    <TableCell align="right">Budget</TableCell>
+                    <TableCell align="center">Commission</TableCell>
+                    <TableCell>Periode</TableCell>
+                    <TableCell>Cree par</TableCell>
+                    <TableCell align="center" sx={{ width: 60 }} />
                   </TableRow>
-                ) : (
-                  paginatedData.map((conv) => (
-                    <>
-                      {/* Parent Row */}
-                      <TableRow
-                        key={conv.id}
-                        hover
-                        onClick={() => handleRowClick(conv.id)}
-                        sx={{
-                          ...styles.tableRowClickable,
-                          borderLeft: conv.type === 'CADRE' ? `3px solid ${colors.primary[600]}` : 'none',
-                        }}
-                      >
-                        <TableCell sx={{ pl: 1 }}>
-                          {conv.sousConventions && conv.sousConventions.length > 0 && (
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                toggleGroup(conv.id)
-                              }}
-                            >
-                              {expandedGroups.has(conv.id) ? (
-                                <KeyboardArrowDown fontSize="small" />
-                              ) : (
-                                <KeyboardArrowRight fontSize="small" />
-                              )}
-                            </IconButton>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <FolderOpen
-                              sx={{
-                                fontSize: 18,
-                                color: conv.type === 'CADRE' ? colors.primary[600] : colors.neutral[400],
-                              }}
-                            />
-                            <Box>
-                              <Typography
-                                variant="body2"
-                                sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}
-                              >
-                                {conv.code}
-                              </Typography>
-                              <RichTextDisplay html={conv.libelle} variant="inline" sx={{ maxWidth: 300, display: 'block', color: colors.textSecondary }} />
-                            </Box>
-                            {conv.sousConventions && conv.sousConventions.length > 0 && (
-                              <Chip
-                                label={`${conv.sousConventions.length} sous-conv.`}
-                                size="small"
-                                sx={styles.countBadge}
-                              />
-                            )}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={conv.statut} />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold }}>
-                            {formatCurrency(conv.budget)} MAD
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={`${conv.tauxCommission}%`}
-                            size="small"
-                            sx={{
-                              bgcolor: colors.neutral[100],
-                              fontWeight: typography.weights.semibold,
-                              fontSize: typography.sizes.xs,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                            {formatDate(conv.dateDebut)} → {formatDate(conv.dateFin)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                            {conv.createdByNom || '-'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton size="small" onClick={(e) => handleMenuOpen(e, conv)}>
-                            <MoreVert fontSize="small" />
-                          </IconButton>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={`skel-${i}`}>
+                        <TableCell colSpan={8} sx={{ py: 1.5 }}>
+                          <Box sx={{ height: 36, bgcolor: colors.neutral[100], borderRadius: 1, animation: 'pulse 1.5s infinite' }} />
                         </TableCell>
                       </TableRow>
+                    ))
+                  ) : paginatedData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                        <Description sx={{ fontSize: 48, color: colors.neutral[300], mb: 1 }} />
+                        <Typography sx={{ color: colors.textSecondary }}>Aucune convention trouvee</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedData.map((conv) => (
+                      <ConventionRow
+                        key={conv.id}
+                        conv={conv}
+                        expanded={expandedGroups.has(conv.id)}
+                        onToggle={() => toggleGroup(conv.id)}
+                        onRowClick={(id) => navigate(`/conventions/${id}`)}
+                        onMenuOpen={handleMenuOpen}
+                        formatCurrency={formatCurrency}
+                        formatDate={formatDate}
+                      />
+                    ))
+                  )}
+                </TableBody>
+              </Table>
 
-                      {/* Sous-conventions (collapsed rows) */}
-                      {conv.sousConventions && conv.sousConventions.length > 0 && (
-                        <TableRow>
-                          <TableCell colSpan={8} sx={{ p: 0, border: 0 }}>
-                            <Collapse in={expandedGroups.has(conv.id)} timeout="auto" unmountOnExit>
-                              <Table size="small">
-                                <TableBody>
-                                  {conv.sousConventions.map((sc) => (
-                                    <TableRow
-                                      key={sc.id}
-                                      hover
-                                      onClick={() => handleRowClick(sc.id)}
-                                      sx={styles.tableRowChild}
-                                    >
-                                      <TableCell sx={{ width: 40 }} />
-                                      <TableCell sx={{ pl: 6 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                          <Description sx={{ fontSize: 16, color: colors.neutral[400] }} />
-                                          <Box>
-                                            <Typography variant="body2" sx={{ fontWeight: typography.weights.medium }}>
-                                              {sc.code}
-                                            </Typography>
-                                            <RichTextDisplay html={sc.libelle} variant="inline" sx={{ color: colors.textSecondary }} />
-                                          </Box>
-                                        </Box>
-                                      </TableCell>
-                                      <TableCell>
-                                        <StatusBadge status={sc.statut} />
-                                      </TableCell>
-                                      <TableCell align="right">
-                                        <Typography variant="body2">
-                                          {formatCurrency(sc.budget)} MAD
-                                        </Typography>
-                                      </TableCell>
-                                      <TableCell align="center">
-                                        <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                                          {sc.tauxCommission}%
-                                        </Typography>
-                                      </TableCell>
-                                      <TableCell>
-                                        <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                                          {formatDate(sc.dateDebut)}
-                                        </Typography>
-                                      </TableCell>
-                                      <TableCell />
-                                      <TableCell align="center">
-                                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, sc)}>
-                                          <MoreVert fontSize="small" />
-                                        </IconButton>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </Collapse>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-
-            {/* Pagination */}
-            <TablePagination
-              component="div"
-              count={filteredData.length}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10))
-                setPage(0)
-              }}
-              rowsPerPageOptions={[10, 25, 50, 100]}
-              labelRowsPerPage="Lignes par page:"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
-              sx={{
-                borderTop: `1px solid ${colors.divider}`,
-                '.MuiTablePagination-select': { fontWeight: typography.weights.semibold },
-              }}
-            />
-          </TableContainer>
+              {/* Pagination */}
+              <TablePagination
+                component="div"
+                count={filteredData.length}
+                page={page}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0) }}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+                labelRowsPerPage="Par page:"
+                labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
+                sx={{
+                  borderTop: `1px solid ${colors.divider}`,
+                  '.MuiTablePagination-select': { fontWeight: typography.weights.semibold },
+                }}
+              />
+            </TableContainer>
+          </Box>
         </Box>
       </Box>
 
@@ -625,39 +444,37 @@ const ConventionsTableModern = () => {
         onClose={handleMenuClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{
-          sx: { minWidth: 180, borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
-        }}
+        PaperProps={{ sx: { minWidth: 180, borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' } }}
       >
-        <MenuItem onClick={() => handleAction('view')}>
-          <Visibility fontSize="small" sx={{ mr: 1.5, color: colors.textSecondary }} />
-          Voir détails
+        <MenuItem onClick={() => handleAction('view')} sx={componentStyles.menuItem}>
+          <Visibility fontSize="small" sx={{ color: colors.textSecondary }} />
+          Voir details
         </MenuItem>
         {selectedConvention?.statut === 'BROUILLON' && (
           <>
-            <MenuItem onClick={() => handleAction('edit')}>
-              <Edit fontSize="small" sx={{ mr: 1.5, color: colors.textSecondary }} />
+            <MenuItem onClick={() => handleAction('edit')} sx={componentStyles.menuItem}>
+              <Edit fontSize="small" sx={{ color: colors.textSecondary }} />
               Modifier
             </MenuItem>
-            <MenuItem onClick={() => handleAction('submit')}>
-              <Send fontSize="small" sx={{ mr: 1.5, color: colors.info[600] }} />
+            <MenuItem onClick={() => handleAction('submit')} sx={componentStyles.menuItem}>
+              <Send fontSize="small" sx={{ color: colors.info[600] }} />
               Soumettre
             </MenuItem>
             <Divider />
-            <MenuItem onClick={() => handleAction('delete')} sx={{ color: colors.danger[600] }}>
-              <Delete fontSize="small" sx={{ mr: 1.5 }} />
+            <MenuItem onClick={() => handleAction('delete')} sx={{ ...componentStyles.menuItem, color: colors.danger[600] }}>
+              <Delete fontSize="small" />
               Supprimer
             </MenuItem>
           </>
         )}
         {selectedConvention?.statut === 'SOUMIS' && user?.roles?.includes('ADMIN') && (
           <>
-            <MenuItem onClick={() => handleAction('validate')}>
-              <CheckCircle fontSize="small" sx={{ mr: 1.5, color: colors.success[600] }} />
+            <MenuItem onClick={() => handleAction('validate')} sx={componentStyles.menuItem}>
+              <CheckCircle fontSize="small" sx={{ color: colors.success[600] }} />
               Valider
             </MenuItem>
-            <MenuItem onClick={() => handleAction('reject')}>
-              <Cancel fontSize="small" sx={{ mr: 1.5, color: colors.danger[600] }} />
+            <MenuItem onClick={() => handleAction('reject')} sx={componentStyles.menuItem}>
+              <Cancel fontSize="small" sx={{ color: colors.danger[600] }} />
               Rejeter
             </MenuItem>
           </>
@@ -669,26 +486,14 @@ const ConventionsTableModern = () => {
         <DialogTitle sx={componentStyles.dialog.title}>Rejeter la convention</DialogTitle>
         <DialogContent>
           <TextField
-            fullWidth
-            multiline
-            rows={4}
-            label="Motif du rejet"
-            value={motifRejet}
-            onChange={(e) => setMotifRejet(e.target.value)}
-            placeholder="Expliquez pourquoi cette convention est rejetée..."
-            sx={{ mt: 1 }}
+            fullWidth multiline rows={4} label="Motif du rejet"
+            value={motifRejet} onChange={(e) => setMotifRejet(e.target.value)}
+            placeholder="Expliquez pourquoi cette convention est rejetee..." sx={{ mt: 1 }}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setRejectDialogOpen(false)} sx={componentStyles.buttonSecondary}>Annuler</Button>
-          <Button
-            onClick={handleReject}
-            variant="contained"
-            disabled={!motifRejet.trim()}
-            sx={componentStyles.buttonDanger}
-          >
-            Rejeter
-          </Button>
+          <Button onClick={handleReject} variant="contained" disabled={!motifRejet.trim()} sx={componentStyles.buttonDanger}>Rejeter</Button>
         </DialogActions>
       </Dialog>
 
@@ -702,6 +507,148 @@ const ConventionsTableModern = () => {
         onCancel={() => setDeleteConfirmOpen(false)}
       />
     </AppLayout>
+  )
+}
+
+// ==================== CONVENTION ROW MICRO-COMPONENT ====================
+
+interface ConventionRowProps {
+  conv: ConventionWithChildren
+  expanded: boolean
+  onToggle: () => void
+  onRowClick: (id: number) => void
+  onMenuOpen: (e: React.MouseEvent<HTMLElement>, conv: Convention) => void
+  formatCurrency: (amount: number) => string
+  formatDate: (date?: string) => string
+}
+
+const ConventionRow = ({
+  conv, expanded, onToggle, onRowClick, onMenuOpen, formatCurrency, formatDate,
+}: ConventionRowProps) => {
+  const hasSousConventions = conv.sousConventions && conv.sousConventions.length > 0
+
+  return (
+    <>
+      {/* Parent Row */}
+      <TableRow
+        hover
+        onClick={() => onRowClick(conv.id)}
+        sx={{
+          ...componentStyles.listView.dataRow,
+          borderLeft: conv.type === 'CADRE' ? `3px solid ${colors.primary[600]}` : 'none',
+        }}
+      >
+        <TableCell sx={{ pl: 1, width: 40 }}>
+          {hasSousConventions && (
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onToggle() }}>
+              {expanded ? <KeyboardArrowDown fontSize="small" /> : <KeyboardArrowRight fontSize="small" />}
+            </IconButton>
+          )}
+        </TableCell>
+        <TableCell>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <FolderOpen sx={{ fontSize: 18, color: conv.type === 'CADRE' ? colors.primary[600] : colors.neutral[400] }} />
+            <Box>
+              <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.base, color: colors.textPrimary }}>
+                {conv.code}
+              </Typography>
+              <RichTextDisplay html={conv.libelle} variant="inline" sx={{ maxWidth: 300, display: 'block', color: colors.textSecondary }} />
+            </Box>
+            {hasSousConventions && (
+              <Chip
+                label={`${conv.sousConventions.length}`}
+                size="small"
+                sx={{
+                  bgcolor: colors.neutral[100], fontSize: typography.sizes['2xs'],
+                  fontWeight: typography.weights.bold, height: 20, minWidth: 20,
+                }}
+              />
+            )}
+          </Box>
+        </TableCell>
+        <TableCell><StatusBadge status={conv.statut} /></TableCell>
+        <TableCell align="right">
+          <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.base, fontVariantNumeric: 'tabular-nums' }}>
+            {formatCurrency(conv.budget)} MAD
+          </Typography>
+        </TableCell>
+        <TableCell align="center">
+          <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>{conv.tauxCommission}%</Typography>
+        </TableCell>
+        <TableCell>
+          <Typography sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>
+            {formatDate(conv.dateDebut)}
+          </Typography>
+        </TableCell>
+        <TableCell>
+          <Typography sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>
+            {conv.createdByNom || '-'}
+          </Typography>
+        </TableCell>
+        <TableCell align="center">
+          <IconButton size="small" onClick={(e) => onMenuOpen(e, conv)}>
+            <MoreVert fontSize="small" />
+          </IconButton>
+        </TableCell>
+      </TableRow>
+
+      {/* Sous-conventions (collapsed rows) */}
+      {hasSousConventions && (
+        <TableRow>
+          <TableCell colSpan={8} sx={{ p: 0, border: 0 }}>
+            <Collapse in={expanded} timeout="auto" unmountOnExit>
+              <Table size="small">
+                <TableBody>
+                  {conv.sousConventions.map((sc) => (
+                    <TableRow
+                      key={sc.id}
+                      hover
+                      onClick={() => onRowClick(sc.id)}
+                      sx={{
+                        ...componentStyles.listView.dataRow,
+                        bgcolor: colors.neutral[25],
+                        '&:hover': { bgcolor: colors.primary[25] },
+                      }}
+                    >
+                      <TableCell sx={{ width: 40 }} />
+                      <TableCell sx={{ pl: 6 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Description sx={{ fontSize: 16, color: colors.neutral[400] }} />
+                          <Box>
+                            <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.base }}>
+                              {sc.code}
+                            </Typography>
+                            <RichTextDisplay html={sc.libelle} variant="inline" sx={{ color: colors.textSecondary }} />
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell><StatusBadge status={sc.statut} /></TableCell>
+                      <TableCell align="right">
+                        <Typography sx={{ fontSize: typography.sizes.base, fontVariantNumeric: 'tabular-nums' }}>
+                          {formatCurrency(sc.budget)} MAD
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>{sc.tauxCommission}%</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>{formatDate(sc.dateDebut)}</Typography>
+                      </TableCell>
+                      <TableCell />
+                      <TableCell align="center">
+                        <IconButton size="small" onClick={(e) => onMenuOpen(e, sc)}>
+                          <MoreVert fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   )
 }
 

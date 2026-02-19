@@ -25,18 +25,17 @@ import {
 } from '@mui/material'
 import {
   Add,
-  Search,
   Visibility,
   Edit,
   Delete,
   AttachMoney,
+  Refresh,
 } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import api, { decomptesAPI } from '../../lib/api'
 import DecimalInput from '@/components/ui/DecimalInput'
 import FileUpload from '../../components/ui/FileUpload'
-import StatusBadge from '../../components/core/StatusBadge'
-import { ExportButton } from '../../components/core'
+import { ControlPanel, StatusBadge, ExportButton } from '../../components/core'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '../../lib/exportUtils'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -55,7 +54,7 @@ interface Decompte {
 }
 
 // Styles from design system
-const styles = componentStyles.listPage
+const listViewStyles = componentStyles.listView
 
 const DecomptesPage = () => {
   // const navigate = useNavigate() // TODO: use when detail page navigation is ready
@@ -229,7 +228,7 @@ const DecomptesPage = () => {
   if (loading) {
     return (
       <AppLayout>
-        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ minHeight: '100vh', bgcolor: colors.neutral[50], display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <CircularProgress size={40} />
         </Box>
       </AppLayout>
@@ -238,74 +237,67 @@ const DecomptesPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={styles.container}>
-        {/* Header */}
-        <Box sx={styles.header}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography sx={styles.title}>Décomptes</Typography>
-              <Typography sx={styles.subtitle}>
-                Gestion des décomptes et facturations
-              </Typography>
-            </Box>
+      <Box sx={{ minHeight: '100vh', bgcolor: colors.neutral[50] }}>
+        {/* Control Panel */}
+        <ControlPanel
+          breadcrumbs={[{ label: 'Decomptes' }]}
+          actions={
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <ExportButton onClick={handleExport} />
               <Button
                 variant="contained"
                 startIcon={<Add />}
                 onClick={() => handleOpenDialog()}
                 sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
               >
-                Nouveau Décompte
+                Nouveau Decompte
               </Button>
+              <ExportButton onClick={handleExport} />
+              <IconButton size="small" onClick={loadDecomptes} title="Rafraîchir">
+                <Refresh fontSize="small" />
+              </IconButton>
             </Box>
-          </Box>
-        </Box>
-
-        {/* Toolbar avec filtres */}
-        <Box sx={styles.toolbar}>
-          <TextField
-            placeholder="Rechercher par numéro..."
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
-            size="small"
-            sx={styles.searchField}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
+          }
+          searchValue={searchTerm}
+          onSearchChange={(value: string) => { setSearchTerm(value); setPage(0); }}
+          searchPlaceholder="Rechercher par numero, marche..."
+          paginationInfo={{
+            currentStart: filteredDecomptes.length === 0 ? 0 : page * rowsPerPage + 1,
+            currentEnd: Math.min((page + 1) * rowsPerPage, filteredDecomptes.length),
+            total: filteredDecomptes.length,
+          }}
+          onPreviousPage={() => setPage((prev) => Math.max(0, prev - 1))}
+          onNextPage={() => setPage((prev) => prev + 1)}
+        >
+          {/* Status filter chips */}
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {['ALL', 'EN_ATTENTE', 'VALIDE', 'REJETE', 'PAYE'].map((statut) => {
               const count = statut === 'ALL' ? decomptes.length : (stats[statut as keyof typeof stats] || 0)
               const isActive = statutFilter === statut
+              const listPageStyles = componentStyles.listPage
               return (
                 <Chip
                   key={statut}
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
-                      <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
+                      <Box component="span" sx={isActive ? listPageStyles.countBadge : listPageStyles.countBadgeInactive}>{count}</Box>
                     </Box>
                   }
                   onClick={() => { setStatutFilter(statut); setPage(0); }}
-                  sx={isActive ? styles.filterPillActive : styles.filterPill}
+                  sx={isActive ? listPageStyles.filterPillActive : listPageStyles.filterPill}
                 />
               )
             })}
           </Box>
-        </Box>
+        </ControlPanel>
 
         {/* Main Content Area */}
-        <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
-          <Box sx={styles.tableContainer}>
+        <Box sx={{ px: { xs: 2, md: 3 }, py: 2 }}>
+          <Box sx={listViewStyles.container}>
             <TableContainer>
-              <Table size="small">
+              <Table size="small" sx={listViewStyles.table}>
                 <TableHead>
-                  <TableRow sx={styles.tableHeader}>
+                  <TableRow sx={listViewStyles.headerRow}>
                     <TableCell sortDirection={sortConfig?.key === 'numero' ? sortConfig.direction : false}>
                       <TableSortLabel active={sortConfig?.key === 'numero'} direction={sortConfig?.key === 'numero' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numero')}>Numéro</TableSortLabel>
                     </TableCell>
@@ -336,7 +328,7 @@ const DecomptesPage = () => {
                     paginatedDecomptes.map((decompte) => (
                       <TableRow
                         key={decompte.id}
-                        sx={styles.tableRowClickable}
+                        sx={listViewStyles.dataRow}
                         onClick={() => handleOpenDialog(decompte)}
                       >
                         <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>

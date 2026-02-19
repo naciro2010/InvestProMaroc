@@ -2,22 +2,15 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Container,
-  Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  Button,
   Typography,
   TextField,
   MenuItem,
   Alert,
   Divider,
 } from '@mui/material'
-import { ArrowBack, ArrowForward, Check } from '@mui/icons-material'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
-import { PageHeader } from '@/components/core'
+import { WizardView } from '@/components/core'
 import DecimalInput from '@/components/ui/DecimalInput'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
@@ -123,10 +116,6 @@ const BudgetWizard = () => {
     }
   }
 
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1)
-  }
-
   const isStepValid = () => {
     switch (activeStep) {
       case 0:
@@ -144,8 +133,8 @@ const BudgetWizard = () => {
     }
   }
 
-  const renderStepContent = (step: number) => {
-    switch (step) {
+  const renderStepContent = () => {
+    switch (activeStep) {
       case 0:
         return (
           <Box sx={{ display: 'grid', gap: 3 }}>
@@ -282,7 +271,7 @@ const BudgetWizard = () => {
               <Divider sx={{ mb: 3 }} />
             </Box>
 
-            <Paper sx={{ p: 3, bgcolor: 'background.default' }}>
+            <Box sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               <Box sx={{ display: 'grid', gap: 2 }}>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
                   <Box>
@@ -357,12 +346,13 @@ const BudgetWizard = () => {
                   </Typography>
                 </Box>
               </Box>
-            </Paper>
+            </Box>
 
             {createMutation.error && (
               <Alert severity="error">
-                {(createMutation.error as any)?.response?.data?.message ||
-                  'Erreur lors de la création du budget'}
+                {createMutation.error instanceof Error
+                  ? createMutation.error.message
+                  : 'Erreur lors de la création du budget'}
               </Alert>
             )}
           </Box>
@@ -375,70 +365,20 @@ const BudgetWizard = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="lg">
-          <PageHeader
-            title="Nouveau Budget"
-            subtitle="Créer un nouveau budget en 3 étapes"
-            actions={
-              <Button
-                variant="outlined"
-                startIcon={<ArrowBack />}
-                onClick={() => navigate('/budgets')}
-              >
-                Retour
-              </Button>
-            }
-          />
-
-          <Paper sx={{ p: 4 }}>
-            {/* Stepper */}
-            <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-
-            {/* Step Content */}
-            <Box sx={{ minHeight: 400, mb: 4 }}>{renderStepContent(activeStep)}</Box>
-
-            {/* Navigation Buttons */}
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                pt: 3,
-                borderTop: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Button
-                variant="outlined"
-                onClick={handleBack}
-                disabled={activeStep === 0}
-                startIcon={<ArrowBack />}
-              >
-                Précédent
-              </Button>
-
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={!isStepValid() || createMutation.isPending}
-                endIcon={activeStep === steps.length - 1 ? <Check /> : <ArrowForward />}
-              >
-                {createMutation.isPending
-                  ? 'Création...'
-                  : activeStep === steps.length - 1
-                  ? 'Créer le budget'
-                  : 'Suivant'}
-              </Button>
-            </Box>
-          </Paper>
-        </Container>
-      </Box>
+      <WizardView
+        breadcrumbs={[{ label: 'Budgets', path: '/budgets' }, { label: 'Nouveau' }]}
+        steps={steps.map(label => ({ label }))}
+        activeStep={activeStep}
+        onStepClick={setActiveStep}
+        onBack={() => setActiveStep(s => s - 1)}
+        onNext={handleNext}
+        onCancel={() => navigate('/budgets')}
+        isNextDisabled={!isStepValid()}
+        isSubmitting={createMutation.isPending}
+        submitLabel="Créer le budget"
+      >
+        {renderStepContent()}
+      </WizardView>
     </AppLayout>
   )
 }

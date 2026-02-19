@@ -38,3 +38,24 @@ export { default as SortableHeaderCell } from './SortableHeaderCell'
 
 // Export Button (téléchargement Excel)
 export { default as ExportButton } from './ExportButton'
+
+// Modern components (control panel, form view, list view, breadcrumb)
+export { default as ModernBreadcrumb } from './ModernBreadcrumb'
+export type { BreadcrumbSegment } from './ModernBreadcrumb'
+
+export { default as ControlPanel } from './ControlPanel'
+
+export {
+  FormView,
+  FieldGroup,
+  Field,
+  Notebook,
+  InlineTable,
+} from './FormView'
+export type { StatusStep } from './FormView'
+
+export { default as ListView } from './ListView'
+export type { ColumnDef } from './ListView'
+
+export { WizardView } from './WizardView'
+export type { WizardStep } from './WizardView'

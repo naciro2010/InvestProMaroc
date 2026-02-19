@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   Button,
-  TextField,
   Table,
   TableBody,
   TableCell,
@@ -16,16 +15,15 @@ import {
   Chip,
   IconButton,
   CircularProgress,
-  InputAdornment,
 } from '@mui/material'
 import {
-  Add,
-  Search,
   Visibility,
   Edit,
   Delete,
 } from '@mui/icons-material'
+import { Plus, RefreshCw } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
+import { ControlPanel, StatusBadge, ExportButton } from '@/components/core'
 import { budgetsAPI } from '@/lib/api'
 import type { Budget, StatutBudget } from '@/types/entities'
 import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
@@ -33,28 +31,7 @@ import { useTableSort } from '@/hooks/useTableSort'
 
 // Styles from design system
 const styles = componentStyles.listPage
-
-// Status Badge utilisant le design system
-const StatusBadge = ({ status }: { status: string }) => {
-  const config = getStatusConfig(status)
-  return (
-    <Box
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        px: 1.5,
-        py: 0.5,
-        borderRadius: '4px',
-        bgcolor: config.bgColor,
-        color: config.textColor,
-        fontSize: typography.sizes.xs,
-        fontWeight: typography.weights.semibold,
-      }}
-    >
-      {config.label}
-    </Box>
-  )
-}
+const listStyles = componentStyles.listView
 
 export default function BudgetsPage() {
   const navigate = useNavigate()
@@ -151,73 +128,84 @@ export default function BudgetsPage() {
     )
   }
 
+  const paginationStart = sortedBudgets.length > 0 ? page * rowsPerPage + 1 : 0
+  const paginationEnd = Math.min((page + 1) * rowsPerPage, sortedBudgets.length)
+
   return (
     <AppLayout>
-      <Box sx={styles.container}>
-        {/* Header */}
-        <Box sx={styles.header}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography sx={styles.title}>Budgets</Typography>
-              <Typography sx={styles.subtitle}>
-                Gestion des budgets avec versions (V0, V1, V2...)
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/budgets/nouveau')}
-              sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
-            >
-              Nouveau Budget
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Toolbar avec filtres */}
-        <Box sx={styles.toolbar}>
-          <TextField
-            placeholder="Rechercher par version, convention..."
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
-            size="small"
-            sx={styles.searchField}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: colors.textSecondary, fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {['ALL', 'BROUILLON', 'SOUMIS', 'VALIDE', 'REJETE', 'ARCHIVE'].map((statut) => {
-              const count = statut === 'ALL' ? budgets.length : (stats[statut as keyof typeof stats] || 0)
-              const isActive = statutFilter === statut
-              return (
-                <Chip
-                  key={statut}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
-                      <Box component="span" sx={styles.countBadge}>{count}</Box>
+      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+        {/* Control Panel */}
+        <ControlPanel
+          breadcrumbs={[{ label: 'Budgets' }]}
+          actions={
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<Plus size={16} />}
+                onClick={() => navigate('/budgets/nouveau')}
+                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
+              >
+                Nouveau Budget
+              </Button>
+              <IconButton size="small" onClick={fetchBudgets} sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </>
+          }
+          searchValue={searchTerm}
+          onSearchChange={(value: string) => { setSearchTerm(value); setPage(0); }}
+          searchPlaceholder="Rechercher par convention, exercice..."
+          paginationInfo={sortedBudgets.length > 0 ? {
+            currentStart: paginationStart,
+            currentEnd: paginationEnd,
+            total: sortedBudgets.length,
+          } : undefined}
+          onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
+          onNextPage={() => setPage(p => p + 1)}
+        >
+          {/* Status filter chips */}
+          {(['ALL', 'BROUILLON', 'SOUMIS', 'VALIDE', 'REJETE', 'ARCHIVE'] as const).map((statut) => {
+            const count = statut === 'ALL' ? budgets.length : (stats[statut as keyof typeof stats] || 0)
+            const isActive = statutFilter === statut
+            return (
+              <Chip
+                key={statut}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
+                    <Box component="span" sx={{
+                      bgcolor: isActive ? colors.primary[200] : colors.neutral[200],
+                      color: isActive ? colors.primary[800] : colors.neutral[600],
+                      fontSize: typography.sizes['2xs'],
+                      fontWeight: typography.weights.bold,
+                      borderRadius: '9999px',
+                      px: 0.75,
+                      minWidth: 18,
+                      height: 18,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      {count}
                     </Box>
-                  }
-                  onClick={() => { setStatutFilter(statut); setPage(0); }}
-                  sx={isActive ? styles.filterPillActive : styles.filterPill}
-                />
-              )
-            })}
-          </Box>
-        </Box>
+                  </Box>
+                }
+                size="small"
+                onClick={() => { setStatutFilter(statut); setPage(0); }}
+                sx={isActive ? styles.filterPillActive : styles.filterPill}
+              />
+            )
+          })}
+        </ControlPanel>
 
         {/* Main Content Area */}
-        <Box sx={{ px: 3, pb: 3 }}>
-          <Box sx={styles.tableContainer}>
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={listStyles.container}>
             <TableContainer>
-              <Table size="small">
+              <Table size="small" sx={listStyles.table}>
                 <TableHead>
-                  <TableRow sx={styles.tableHeader}>
+                  <TableRow sx={listStyles.headerRow}>
                     <TableCell sortDirection={sortConfig?.key === 'version' ? sortConfig.direction : false}>
                       <TableSortLabel active={sortConfig?.key === 'version'} direction={sortConfig?.key === 'version' ? sortConfig.direction : 'asc'} onClick={() => requestSort('version')}>Version</TableSortLabel>
                     </TableCell>
@@ -249,7 +237,7 @@ export default function BudgetsPage() {
                     paginatedBudgets.map((budget) => (
                       <TableRow
                         key={budget.id}
-                        sx={styles.tableRowClickable}
+                        sx={listStyles.dataRow}
                         onClick={() => navigate(`/budgets/${budget.id}`)}
                       >
                         <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>

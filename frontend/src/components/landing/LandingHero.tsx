@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fa'
 import { Box, Container, Button, Chip } from '@mui/material'
 
-// Animation variants (subtils, Odoo-style)
+// Animation variants (subtils, ERP-style)
 const fadeIn = {
   hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0 },

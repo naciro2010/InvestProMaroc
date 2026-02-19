@@ -14,7 +14,7 @@ import {
   CircularProgress,
 } from '@mui/material'
 import AppLayout from '../../components/layout/AppLayout'
-import { PageHeaderOdoo } from '../../components/ui'
+import { ControlPanel } from '../../components/core'
 import { conventionConfigurationAPI } from '../../lib/api'
 import { ConventionSettings } from '../../lib/settings/conventionSettings'
 import { useConventionConfiguration } from '../../hooks/useConventionConfiguration'
@@ -72,14 +72,12 @@ const ParametrageConventionsPage = () => {
 
   return (
     <AppLayout>
-      <PageHeaderOdoo
-        title="Paramétrage des conventions"
-        subtitle="Gérez les masques et types utilisés pour les conventions"
+      <ControlPanel
         breadcrumbs={[
-          { label: 'Accueil', path: '/dashboard' },
-          { label: 'Paramétrage' },
+          { label: 'Configuration' },
           { label: 'Conventions' },
         ]}
+        hideBottomRow
       />
 
       <Container maxWidth="lg" sx={{ pb: 6 }}>

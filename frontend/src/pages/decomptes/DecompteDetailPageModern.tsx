@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Box, Container, Button, Skeleton, Alert, Chip } from '@mui/material'
-import { ArrowBack, Edit, Print, CheckCircle, Cancel } from '@mui/icons-material'
+import { Box, Container, Button, Skeleton, Alert, Typography, CircularProgress } from '@mui/material'
+import { Pencil, Lock, Printer, CheckCircle, XCircle } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { PageHeader } from '@/components/core'
+import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge } from '@/components/core'
+import type { StatusStep } from '@/components/core'
 import { api } from '../../lib/api'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { DecompteInfoCard, DecompteCalculsCard, DecompteRetentionsCard } from '../../components/decomptes/detail'
 
 interface Retenue {
@@ -36,17 +38,30 @@ interface Decompte {
   retenues: Retenue[]
 }
 
+const STATUS_STEPS: StatusStep[] = [
+  { value: 'BROUILLON', label: 'Brouillon' },
+  { value: 'SOUMIS', label: 'Soumis' },
+  { value: 'VALIDE', label: 'Valide' },
+  { value: 'PAYE_PARTIEL', label: 'Paye partiel' },
+  { value: 'PAYE_TOTAL', label: 'Paye total' },
+]
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
+
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString('fr-FR')
+
 const DecompteDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [decompte, setDecompte] = useState<Decompte | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [workflowLoading, setWorkflowLoading] = useState(false)
 
   useEffect(() => {
-    if (id) {
-      loadDecompte(parseInt(id))
-    }
+    if (id) loadDecompte(parseInt(id))
   }, [id])
 
   const loadDecompte = async (decompteId: number) => {
@@ -55,7 +70,7 @@ const DecompteDetailPageModern = () => {
       const res = await api.get(`/decomptes/${decompteId}`)
       setDecompte(res.data.data || res.data)
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erreur lors du chargement du décompte'
+      const message = err instanceof Error ? err.message : 'Erreur lors du chargement du decompte'
       setError(message)
       console.error(err)
     } finally {
@@ -63,47 +78,17 @@ const DecompteDetailPageModern = () => {
     }
   }
 
-  const getStatusColor = (statut: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-    switch (statut.toUpperCase()) {
-      case 'BROUILLON':
-        return 'default'
-      case 'SOUMIS':
-        return 'info'
-      case 'VALIDE':
-        return 'success'
-      case 'REJETE':
-        return 'error'
-      case 'PAYE_PARTIEL':
-        return 'warning'
-      case 'PAYE_TOTAL':
-        return 'secondary'
-      default:
-        return 'default'
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-MA', {
-      style: 'currency',
-      currency: 'MAD',
-    }).format(amount)
-  }
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('fr-FR')
-  }
-
-  const canEdit = decompte?.statut === 'BROUILLON'
-
   const handleValider = async () => {
     if (!decompte) return
     try {
+      setWorkflowLoading(true)
       await api.post(`/decomptes/${decompte.id}/valider`)
-      alert('Décompte validé avec succès')
       loadDecompte(decompte.id)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erreur lors de la validation'
       alert(message)
+    } finally {
+      setWorkflowLoading(false)
     }
   }
 
@@ -111,24 +96,43 @@ const DecompteDetailPageModern = () => {
     if (!decompte) return
     const motif = prompt('Motif du rejet:')
     if (!motif) return
-
     try {
+      setWorkflowLoading(true)
       await api.post(`/decomptes/${decompte.id}/rejeter`, { motif })
-      alert('Décompte rejeté')
       loadDecompte(decompte.id)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erreur lors du rejet'
       alert(message)
+    } finally {
+      setWorkflowLoading(false)
     }
+  }
+
+  if (!id) {
+    return (
+      <AppLayout>
+        <Box sx={{ p: 4 }}>
+          <Alert severity="error">ID du decompte manquant</Alert>
+        </Box>
+      </AppLayout>
+    )
   }
 
   if (loading) {
     return (
       <AppLayout>
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Skeleton variant="rectangular" height={60} sx={{ mb: 3 }} />
-          <Skeleton variant="rectangular" height={400} />
-        </Container>
+        <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+          <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
+            <Skeleton variant="text" width={300} height={32} />
+          </Box>
+          <Container maxWidth="xl" sx={{ py: 3 }}>
+            <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 3 }}>
+              <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+              <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+            </Box>
+          </Container>
+        </Box>
       </AppLayout>
     )
   }
@@ -137,76 +141,162 @@ const DecompteDetailPageModern = () => {
     return (
       <AppLayout>
         <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Alert severity="error">{error || 'Décompte non trouvé'}</Alert>
-          <Button startIcon={<ArrowBack />} onClick={() => navigate('/decomptes')} sx={{ mt: 2 }}>
-            Retour à la liste
-          </Button>
+          <Alert severity="error">{error || 'Decompte non trouve'}</Alert>
         </Container>
       </AppLayout>
     )
   }
 
+  const canEdit = decompte.statut === 'BROUILLON'
+
+  const breadcrumbs = [
+    { label: 'Decomptes', path: '/decomptes' },
+    ...(decompte.marcheId ? [{ label: decompte.marcheCode || 'Marche', path: `/marches/${decompte.marcheId}` }] : []),
+    { label: decompte.numeroDecompte },
+  ]
+
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="xl">
-          {/* Header */}
-          <PageHeader
-            title={`Décompte ${decompte.numeroDecompte}`}
-            subtitle={`Marché: ${decompte.marcheCode || 'N/A'}`}
-            actions={
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                {/* Statut Badge */}
-                <Chip label={decompte.statut} color={getStatusColor(decompte.statut)} sx={{ fontWeight: 600, fontSize: '0.875rem' }} />
+      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+        <ControlPanel
+          breadcrumbs={breadcrumbs}
+          actions={
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              {workflowLoading && <CircularProgress size={20} />}
 
-                {/* Workflow Actions */}
-                {decompte.statut === 'SOUMIS' && (
-                  <>
-                    <Button variant="contained" color="success" startIcon={<CheckCircle />} onClick={handleValider}>
-                      Valider
-                    </Button>
-                    <Button variant="outlined" color="error" startIcon={<Cancel />} onClick={handleRejeter}>
-                      Rejeter
-                    </Button>
-                  </>
-                )}
-
-                {/* Edit & Print */}
-                {canEdit && (
-                  <Button variant="outlined" startIcon={<Edit />} onClick={() => navigate(`/decomptes/${id}/modifier`)}>
-                    Modifier
+              {decompte.statut === 'SOUMIS' && (
+                <>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="success"
+                    onClick={handleValider}
+                    disabled={workflowLoading}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    <CheckCircle size={14} style={{ marginRight: 4 }} />
+                    Valider
                   </Button>
-                )}
-                <Button variant="outlined" startIcon={<Print />} onClick={() => window.print()}>
-                  Imprimer
-                </Button>
-                <Button variant="outlined" startIcon={<ArrowBack />} onClick={() => navigate('/decomptes')}>
-                  Retour
-                </Button>
-              </Box>
-            }
-          />
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    onClick={handleRejeter}
+                    disabled={workflowLoading}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    <XCircle size={14} style={{ marginRight: 4 }} />
+                    Rejeter
+                  </Button>
+                </>
+              )}
 
-          {/* Main Content - 3 Micro-Components */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
-            {/* Left Column */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <DecompteInfoCard decompteId={decompte.id} />
-              <DecompteRetentionsCard retenues={decompte.retenues || []} totalRetenues={decompte.totalRetenues} formatCurrency={formatCurrency} />
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={!canEdit}
+                onClick={() => navigate(`/decomptes/${id}/modifier`)}
+                sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}
+              >
+                {canEdit
+                  ? <Pencil size={14} style={{ marginRight: 4 }} />
+                  : <Lock size={14} style={{ marginRight: 4 }} />
+                }
+                Modifier
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => window.print()}
+                sx={{ fontSize: typography.sizes.sm, py: 0.5, textTransform: 'none' }}
+              >
+                <Printer size={14} style={{ marginRight: 4 }} />
+                Imprimer
+              </Button>
+            </Box>
+          }
+          hideBottomRow
+        />
+
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          <FormView
+            isEditing={false}
+            statusSteps={STATUS_STEPS}
+            currentStatus={decompte.statut}
+          >
+            <Typography sx={{
+              fontSize: typography.sizes['2xl'],
+              fontWeight: typography.weights.bold,
+              color: colors.textPrimary,
+              mb: 0.5,
+            }}>
+              Decompte {decompte.numeroDecompte}
+            </Typography>
+            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 3 }}>
+              Marche: {decompte.marcheCode || 'N/A'} - {decompte.marcheObjet || ''}
+            </Typography>
+
+            {/* Field Groups */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
+              <FieldGroup title="Informations generales">
+                <Field label="Numero" value={decompte.numeroDecompte} />
+                <Field label="Statut" value={<StatusBadge status={decompte.statut} />} />
+                <Field label="Date" value={formatDate(decompte.dateDecompte)} />
+                <Field label="Periode" value={`${formatDate(decompte.periodeDebut)} - ${formatDate(decompte.periodeFin)}`} />
+                {decompte.marcheId && (
+                  <Field
+                    label="Marche"
+                    value={decompte.marcheCode || 'N/A'}
+                    isLink
+                    onLinkClick={() => navigate(`/marches/${decompte.marcheId}`)}
+                  />
+                )}
+              </FieldGroup>
+
+              <FieldGroup title="Montants">
+                <Field label="Montant Brut HT" value={formatCurrency(decompte.montantBrutHT)} isMoney />
+                <Field label="TVA" value={formatCurrency(decompte.montantTVA)} isMoney />
+                <Field label="Montant TTC" value={formatCurrency(decompte.montantTTC)} isMoney />
+                <Field label="Retenues" value={formatCurrency(decompte.totalRetenues)} isMoney />
+                <Field label="Net a payer" value={formatCurrency(decompte.netAPayer)} isMoney />
+              </FieldGroup>
             </Box>
 
-            {/* Right Column */}
-            <Box>
-              <DecompteCalculsCard
-                montantBrutHT={decompte.montantBrutHT}
-                montantTVA={decompte.montantTVA}
-                montantTTC={decompte.montantTTC}
-                totalRetenues={decompte.totalRetenues}
-                netAPayer={decompte.netAPayer}
-                formatCurrency={formatCurrency}
+            {/* Notebook tabs */}
+            <Box sx={{ mt: 3 }}>
+              <Notebook
+                tabs={[
+                  {
+                    label: 'Detail',
+                    content: <DecompteInfoCard decompteId={decompte.id} />,
+                  },
+                  {
+                    label: 'Retenues',
+                    content: (
+                      <DecompteRetentionsCard
+                        retenues={decompte.retenues || []}
+                        totalRetenues={decompte.totalRetenues}
+                        formatCurrency={formatCurrency}
+                      />
+                    ),
+                  },
+                  {
+                    label: 'Calculs',
+                    content: (
+                      <DecompteCalculsCard
+                        montantBrutHT={decompte.montantBrutHT}
+                        montantTVA={decompte.montantTVA}
+                        montantTTC={decompte.montantTTC}
+                        totalRetenues={decompte.totalRetenues}
+                        netAPayer={decompte.netAPayer}
+                        formatCurrency={formatCurrency}
+                      />
+                    ),
+                  },
+                ]}
               />
             </Box>
-          </Box>
+          </FormView>
         </Container>
       </Box>
     </AppLayout>

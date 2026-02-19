@@ -1,26 +1,7 @@
 import { useState } from 'react'
-import {
-  Box,
-  Container,
-  Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  Button,
-  Typography,
-  Stack,
-  Alert,
-  Divider,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material'
-import {
-  ArrowBack,
-  ArrowForward,
-  Check,
-} from '@mui/icons-material'
+import { Alert, Box, CircularProgress, Typography } from '@mui/material'
 import AppLayout from '../../components/layout/AppLayout'
-import { SimplePageLayout } from '../../components/layout/PageLayout'
+import { WizardView } from '@/components/core'
 import { getPlainTextLength } from '../../utils/textUtils'
 import {
   WIZARD_STEPS,
@@ -34,8 +15,6 @@ import {
 
 const ConventionWizardComplete = () => {
   const [activeStep, setActiveStep] = useState(0)
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   const {
     id,
@@ -68,20 +47,20 @@ const ConventionWizardComplete = () => {
 
   const isStepValid = () => {
     switch (activeStep) {
-      case 0: // Informations
+      case 0:
         return (
           formData.code &&
           formData.libelle &&
           getPlainTextLength(formData.libelleRich) <= 200 &&
           formData.objetRich
         )
-      case 1: // Budget
+      case 1:
         return formData.budgetGlobal > 0 && totals.differenceGlobalVsLignes >= 0
-      case 2: // Commission
+      case 2:
         return formData.tauxCommission > 0
-      case 3: // Subventions (optional)
+      case 3:
         return true
-      case 4: // Récapitulatif
+      case 4:
         return true
       default:
         return false
@@ -142,8 +121,9 @@ const ConventionWizardComplete = () => {
   if (isLoadingConvention) {
     return (
       <AppLayout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-          <Typography variant="h6">Chargement...</Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', gap: 2 }}>
+          <CircularProgress size={24} />
+          <Typography>Chargement...</Typography>
         </Box>
       </AppLayout>
     )
@@ -151,117 +131,40 @@ const ConventionWizardComplete = () => {
 
   return (
     <AppLayout>
-      <SimplePageLayout
-        title={isEditing ? 'Modifier la Convention' : 'Nouvelle Convention'}
-        subtitle={
-          isEditing
-            ? 'Modifier la convention en 5 étapes'
-            : 'Créer une convention CADRE ou NON_CADRE en 5 étapes'
-        }
-        actions={
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBack />}
-            onClick={() => (isEditing ? navigate(`/conventions/${id}`) : navigate('/conventions'))}
-            size={isMobile ? 'small' : 'medium'}
-          >
-            Retour
-          </Button>
-        }
+      <WizardView
+        breadcrumbs={[
+          { label: 'Conventions', path: '/conventions' },
+          { label: isEditing ? `Modifier ${formData.code || ''}` : 'Nouvelle Convention' },
+        ]}
+        steps={WIZARD_STEPS.map((label) => ({ label }))}
+        activeStep={activeStep}
+        onStepClick={setActiveStep}
+        onBack={handleBack}
+        onNext={handleNext}
+        onCancel={() => isEditing ? navigate(`/conventions/${id}`) : navigate('/conventions')}
+        isNextDisabled={!isStepValid()}
+        isSubmitting={isSubmitting}
+        submitLabel={isEditing ? 'Modifier la convention' : 'Créer la convention'}
       >
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Paper
-            elevation={8}
-            sx={{
-              p: { xs: 2, sm: 3, md: 4 },
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: 'divider',
-              background: 'linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%)',
-            }}
-          >
-            {/* Stepper */}
-            <Stepper
-              activeStep={activeStep}
-              sx={{
-                mb: 4,
-                '& .MuiStepLabel-label': {
-                  fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
-                },
-              }}
-              orientation={isMobile ? 'vertical' : 'horizontal'}
-            >
-              {WIZARD_STEPS.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+        {renderStepContent(activeStep)}
 
-            <Divider sx={{ mb: 4 }} />
+        {activeStep === WIZARD_STEPS.length - 1 && (
+          <Alert severity="info" sx={{ mt: 3 }}>
+            {isEditing
+              ? 'Apres la modification, vous serez redirige vers la page de detail.'
+              : 'Apres la creation, vous pourrez ajouter des partenaires, des sous-conventions, des avenants, et gerer les allocations detaillees a partir de la page de detail.'}
+          </Alert>
+        )}
 
-            {/* Step Content */}
-            <Box sx={{ minHeight: { xs: 300, md: 450 }, mb: 4 }}>{renderStepContent(activeStep)}</Box>
-
-            <Divider sx={{ mb: 3 }} />
-
-            {/* Navigation Buttons */}
-            <Stack
-              direction={{ xs: 'column-reverse', sm: 'row' }}
-              spacing={2}
-              justifyContent="space-between"
-            >
-              <Button
-                variant="outlined"
-                onClick={handleBack}
-                disabled={activeStep === 0}
-                startIcon={<ArrowBack />}
-                fullWidth={isMobile}
-              >
-                Précédent
-              </Button>
-
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={!isStepValid() || isSubmitting}
-                endIcon={activeStep === WIZARD_STEPS.length - 1 ? <Check /> : <ArrowForward />}
-                fullWidth={isMobile}
-              >
-                {isSubmitting
-                  ? isEditing
-                    ? 'Modification...'
-                    : 'Création...'
-                  : activeStep === WIZARD_STEPS.length - 1
-                  ? isEditing
-                    ? 'Modifier la convention'
-                    : 'Créer la convention'
-                  : 'Suivant'}
-              </Button>
-            </Stack>
-
-            {/* Info Alert */}
-            {activeStep === WIZARD_STEPS.length - 1 && (
-              <Alert severity="info" sx={{ mt: 3 }}>
-                ℹ️{' '}
-                {isEditing
-                  ? 'Après la modification, vous serez redirigé vers la page de détail.'
-                  : 'Après la création, vous pourrez ajouter des partenaires, des sous-conventions, des avenants, et gérer les allocations détaillées à partir de la page de détail.'}
-              </Alert>
-            )}
-
-            {/* Error Alert */}
-            {submitError && (
-              <Alert severity="error" sx={{ mt: 3 }}>
-                {submitError.message ||
-                  (isEditing
-                    ? 'Erreur lors de la modification de la convention'
-                    : 'Erreur lors de la création de la convention')}
-              </Alert>
-            )}
-          </Paper>
-        </Container>
-      </SimplePageLayout>
+        {submitError && (
+          <Alert severity="error" sx={{ mt: 3 }}>
+            {submitError.message ||
+              (isEditing
+                ? 'Erreur lors de la modification de la convention'
+                : 'Erreur lors de la creation de la convention')}
+          </Alert>
+        )}
+      </WizardView>
     </AppLayout>
   )
 }

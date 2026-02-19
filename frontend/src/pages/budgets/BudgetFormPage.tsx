@@ -1,10 +1,27 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import {
+  TextField,
+  MenuItem,
+  Alert,
+  Box,
+  CircularProgress,
+  Typography,
+} from '@mui/material'
 import AppLayout from '../../components/layout/AppLayout'
+import {
+  StickyActionBar,
+  FormLayout,
+  FormPageSection,
+  FormGroup,
+  FormField,
+  ControlPanel,
+} from '@/components/core'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
 import type { Convention } from '../../types/entities'
+import { colors } from '../../lib/designSystem'
 
 const extractList = <T,>(responseData: unknown): T[] => {
   if (Array.isArray(responseData)) return responseData as T[]
@@ -45,8 +62,8 @@ export default function BudgetFormPage() {
     try {
       const response = await conventionsAPI.getAll()
       setConventions(extractList<Convention>(response.data))
-    } catch (error) {
-      console.error('Erreur chargement conventions:', error)
+    } catch (err: unknown) {
+      console.error('Erreur chargement conventions:', err)
     }
   }
 
@@ -83,10 +100,8 @@ export default function BudgetFormPage() {
     try {
       if (isEdit && id) {
         await budgetsAPI.update(parseInt(id), formData)
-        alert('Budget modifié avec succès !')
       } else {
         await budgetsAPI.create(formData)
-        alert('Budget créé avec succès !')
       }
       navigate('/budgets')
     } catch (err: unknown) {
@@ -100,105 +115,109 @@ export default function BudgetFormPage() {
   if (loading && isEdit) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', gap: 2 }}>
+          <CircularProgress size={24} />
+          <Typography>Chargement...</Typography>
+        </Box>
       </AppLayout>
     )
   }
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/budgets')}
-            className="mb-4 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            ← Retour
-          </button>
-
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {isEdit ? 'Modifier le budget' : 'Nouveau budget'}
-          </h1>
+      <ControlPanel
+        breadcrumbs={[
+          { label: 'Budgets', path: '/budgets' },
+          { label: isEdit ? 'Modifier' : 'Nouveau' },
+        ]}
+        hideBottomRow
+      />
+      <Box sx={{ bgcolor: colors.background, minHeight: 'calc(100vh - 48px)' }}>
+        <form onSubmit={handleSubmit}>
+          <StickyActionBar
+            title={isEdit ? 'Modifier le budget' : 'Nouveau budget'}
+            showBack
+            backUrl="/budgets"
+            isSubmitting={loading}
+            submitType="submit"
+          />
 
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-md">
-              {error}
-            </div>
+            <Box sx={{ maxWidth: 900, mx: 'auto', px: { xs: 2, md: 0 }, pt: 2 }}>
+              <Alert severity="error">{error}</Alert>
+            </Box>
           )}
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Version *
-                  </label>
-                  <input
-                    type="text"
+          <FormLayout maxWidth={900}>
+            <FormPageSection title="Informations generales" divider={false}>
+              <FormGroup columns={2}>
+                <FormField>
+                  <TextField
+                    label="Version"
                     required
+                    fullWidth
+                    size="small"
                     value={formData.version}
                     onChange={(e) => handleChange('version', e.target.value)}
                     placeholder="V0, V1, V2..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    helperText="Format: V0 (budget initial), V1, V2... (revisions)"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Format: V0 (budget initial), V1, V2... (révisions)
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Convention *
-                  </label>
-                  <select
+                </FormField>
+                <FormField>
+                  <TextField
+                    label="Convention"
                     required
+                    fullWidth
+                    size="small"
+                    select
                     value={formData.conventionId || ''}
                     onChange={(e) => handleChange('conventionId', e.target.value ? parseInt(e.target.value) : undefined)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">-- Sélectionner une convention --</option>
+                    <MenuItem value="">-- Selectionner une convention --</MenuItem>
                     {conventions.map((conv) => (
-                      <option key={conv.id} value={conv.id}>
+                      <MenuItem key={conv.id} value={conv.id}>
                         {conv.code} - {conv.objet}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date du budget *
-                  </label>
-                  <input
+                  </TextField>
+                </FormField>
+              </FormGroup>
+              <FormGroup columns={2}>
+                <FormField>
+                  <TextField
+                    label="Date du budget"
                     type="date"
                     required
+                    fullWidth
+                    size="small"
                     value={formData.dateBudget}
                     onChange={(e) => handleChange('dateBudget', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    InputLabelProps={{ shrink: true }}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Statut *
-                  </label>
-                  <select
+                </FormField>
+                <FormField>
+                  <TextField
+                    label="Statut"
                     required
+                    fullWidth
+                    size="small"
+                    select
                     value={formData.statut}
                     onChange={(e) => handleChange('statut', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="BROUILLON">Brouillon</option>
-                    <option value="SOUMIS">Soumis</option>
-                    <option value="VALIDE">Validé</option>
-                    <option value="REJETE">Rejeté</option>
-                    <option value="ARCHIVE">Archivé</option>
-                  </select>
-                </div>
+                    <MenuItem value="BROUILLON">Brouillon</MenuItem>
+                    <MenuItem value="SOUMIS">Soumis</MenuItem>
+                    <MenuItem value="VALIDE">Valide</MenuItem>
+                    <MenuItem value="REJETE">Rejete</MenuItem>
+                    <MenuItem value="ARCHIVE">Archive</MenuItem>
+                  </TextField>
+                </FormField>
+              </FormGroup>
+            </FormPageSection>
 
-                <div>
+            <FormPageSection title="Montants">
+              <FormGroup columns={2}>
+                <FormField>
                   <DecimalInput
                     value={formData.plafondConvention}
                     onChange={(value) => handleChange('plafondConvention', value)}
@@ -209,9 +228,8 @@ export default function BudgetFormPage() {
                     fullWidth
                     size="small"
                   />
-                </div>
-
-                <div>
+                </FormField>
+                <FormField>
                   <DecimalInput
                     value={formData.totalBudget}
                     onChange={(value) => handleChange('totalBudget', value)}
@@ -222,39 +240,26 @@ export default function BudgetFormPage() {
                     fullWidth
                     size="small"
                   />
-                </div>
-              </div>
+                </FormField>
+              </FormGroup>
+            </FormPageSection>
 
-              <div>
-                <RichTextEditor
-                  label="Observations"
-                  value={formData.observations || ''}
-                  onChange={(value) => handleChange('observations', value)}
-                  placeholder="Observations ou notes concernant ce budget..."
-                  minHeight={120}
-                />
-              </div>
-
-              <div className="flex gap-4 justify-end pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => navigate('/budgets')}
-                  className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-6 py-2 text-sm font-medium text-white bg-blue-700 rounded-md hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Enregistrement...' : '💾 Enregistrer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+            <FormPageSection title="Observations">
+              <FormGroup columns={1}>
+                <FormField>
+                  <RichTextEditor
+                    label="Observations"
+                    value={formData.observations || ''}
+                    onChange={(value) => handleChange('observations', value)}
+                    placeholder="Observations ou notes concernant ce budget..."
+                    minHeight={120}
+                  />
+                </FormField>
+              </FormGroup>
+            </FormPageSection>
+          </FormLayout>
+        </form>
+      </Box>
     </AppLayout>
   )
 }

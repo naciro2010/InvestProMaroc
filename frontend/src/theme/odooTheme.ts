@@ -1,7 +1,7 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles'
 
 /**
- * Odoo-inspired Theme
+ * ERP-inspired Theme
  *
  * Design principles:
  * - Minimaliste et épuré
@@ -12,7 +12,7 @@ import { createTheme, ThemeOptions } from '@mui/material/styles'
  * - Couleurs naturelles
  */
 
-// Palette Odoo-style
+// Professional ERP-style palette
 const colors = {
   // Neutrals
   gray50: '#f8f9fa',
@@ -167,7 +167,7 @@ const themeOptions: ThemeOptions = {
   spacing: 8, // Base unit: 8px
 
   shape: {
-    borderRadius: 4, // Odoo uses subtle rounded corners
+    borderRadius: 4, // Subtle rounded corners
   },
 
   shadows: [
@@ -243,7 +243,7 @@ const themeOptions: ThemeOptions = {
             },
             '&.Mui-focused fieldset': {
               borderColor: colors.primary,
-              borderWidth: '1px', // Odoo uses thin borders
+              borderWidth: '1px', // Thin borders
             },
           },
         },
@@ -364,6 +364,8 @@ const themeOptions: ThemeOptions = {
   },
 }
 
-export const odooTheme = createTheme(themeOptions)
+export const erpTheme = createTheme(themeOptions)
+/** @deprecated Use erpTheme instead */
+export const odooTheme = erpTheme
 
 export { colors }

@@ -45,7 +45,6 @@ interface PartenaireCallbackData {
   partenaireSigle: string | null
   budgetAlloue: number
   pourcentage: number
-  commissionIntervention: number | null
   estMaitreOeuvre: boolean
   estMaitreOeuvreDelegue: boolean
   remarques: string | null

@@ -123,7 +123,6 @@ const ConventionPartenairesCard = ({
   }
 
   const totalBudget = partenaires.reduce((sum, p) => sum + p.budgetAlloue, 0)
-  const totalCI = partenaires.reduce((sum, p) => sum + (p.commissionIntervention || 0), 0)
 
   // For sous-conventions: find which own partenaires also exist in parent
   const parentPartenaireIds = new Set(parentPartenaires.map(p => p.partenaireId))
@@ -270,9 +269,6 @@ const ConventionPartenairesCard = ({
                   <TableCell align="right" sx={{ fontWeight: typography.weights.semibold }}>
                     %
                   </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: typography.weights.semibold }}>
-                    CI (M)
-                  </TableCell>
                   <TableCell sx={{ fontWeight: typography.weights.semibold }}>Role</TableCell>
                   {isSousConvention && (
                     <TableCell sx={{ fontWeight: typography.weights.semibold }}>Source</TableCell>
@@ -308,14 +304,6 @@ const ConventionPartenairesCard = ({
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2">{formatPercentage(p.pourcentage)}</Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography
-                          variant="body2"
-                          sx={{ color: colors.success[600], fontWeight: typography.weights.medium }}
-                        >
-                          {p.commissionIntervention ? formatCurrency(p.commissionIntervention) : '-'}
-                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -411,12 +399,6 @@ const ConventionPartenairesCard = ({
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: typography.weights.bold }}>
                     100%
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sx={{ fontWeight: typography.weights.bold, color: colors.success[600] }}
-                  >
-                    {formatCurrency(totalCI)}
                   </TableCell>
                   <TableCell colSpan={isSousConvention ? 3 : 2} />
                 </TableRow>

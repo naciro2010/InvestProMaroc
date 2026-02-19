@@ -176,7 +176,6 @@ const ConventionBudgetExecutionCard = ({
                 <TableCell sx={thStyle}>Partenaire</TableCell>
                 <TableCell align="right" sx={thStyle}>Budget alloue</TableCell>
                 <TableCell align="right" sx={thStyle}>%</TableCell>
-                <TableCell align="right" sx={thStyle}>CI</TableCell>
                 <TableCell sx={thStyle}>Role</TableCell>
               </TableRow>
             </TableHead>
@@ -201,11 +200,6 @@ const ConventionBudgetExecutionCard = ({
                       {p.pourcentage.toFixed(1)}%
                     </Typography>
                   </TableCell>
-                  <TableCell align="right" sx={tdStyle}>
-                    <Typography sx={{ fontSize: typography.sizes.xs, color: colors.success[600], fontVariantNumeric: 'tabular-nums' }}>
-                      {p.commissionIntervention ? formatCurrency(p.commissionIntervention) : '-'}
-                    </Typography>
-                  </TableCell>
                   <TableCell sx={tdStyle}>
                     <Box sx={{ display: 'flex', gap: 0.5 }}>
                       {p.estMaitreOeuvre && <RoleBadge label="MO" color={colors.info[600]} bg={colors.info[50]} />}
@@ -228,7 +222,6 @@ const ConventionBudgetExecutionCard = ({
                 <TableCell align="right" sx={{ ...tdStyle, fontWeight: typography.weights.medium }}>
                   {formatPct(allocationPct)}
                 </TableCell>
-                <TableCell align="right" sx={tdStyle} />
                 <TableCell sx={tdStyle} />
               </TableRow>
             </TableBody>

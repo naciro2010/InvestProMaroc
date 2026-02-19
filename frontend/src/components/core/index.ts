@@ -56,3 +56,6 @@ export type { StatusStep } from './FormView'
 
 export { default as ListView } from './ListView'
 export type { ColumnDef } from './ListView'
+
+export { WizardView } from './WizardView'
+export type { WizardStep } from './WizardView'

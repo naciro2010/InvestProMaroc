@@ -1693,6 +1693,159 @@ export const componentStyles = {
       },
     },
   },
+
+  /**
+   * Wizard view – multi-step form creation flow
+   */
+  wizardView: {
+    /** Outer container */
+    container: {
+      bgcolor: colors.background,
+      minHeight: '100vh',
+    },
+    /** Header bar (breadcrumbs + cancel) */
+    header: {
+      bgcolor: colors.surface,
+      borderBottom: `1px solid ${colors.border}`,
+      px: { xs: 2, md: 3 },
+      py: 1.5,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 2,
+    },
+    /** Step indicator bar */
+    stepBar: {
+      bgcolor: colors.neutral[25],
+      borderBottom: `1px solid ${colors.border}`,
+      px: { xs: 2, md: 3 },
+      py: 1.25,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 0,
+    },
+    /** Step pill (default / future) */
+    step: {
+      px: 2,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      color: colors.textSecondary,
+      bgcolor: colors.neutral[100],
+      borderRight: `1px solid ${colors.border}`,
+      cursor: 'default',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.75,
+      whiteSpace: 'nowrap' as const,
+      transition: `all ${transitions.fast}`,
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    /** Active step pill */
+    stepActive: {
+      px: 2,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.semibold,
+      color: colors.primary[700],
+      bgcolor: colors.primary[100],
+      borderRight: `1px solid ${colors.primary[200]}`,
+      cursor: 'default',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.75,
+      whiteSpace: 'nowrap' as const,
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    /** Done step pill */
+    stepDone: {
+      px: 2,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      color: colors.success[700],
+      bgcolor: colors.success[50],
+      borderRight: `1px solid ${colors.success[100]}`,
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.75,
+      whiteSpace: 'nowrap' as const,
+      transition: `all ${transitions.fast}`,
+      '&:hover': {
+        bgcolor: colors.success[100],
+      },
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
+    /** Step number badge */
+    stepNumber: {
+      width: 20,
+      height: 20,
+      borderRadius: borders.radius.full,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: typography.sizes['2xs'],
+      fontWeight: typography.weights.bold,
+      flexShrink: 0,
+    },
+    stepNumberDefault: {
+      bgcolor: colors.neutral[300],
+      color: colors.surface,
+    },
+    stepNumberActive: {
+      bgcolor: colors.primary[600],
+      color: colors.surface,
+    },
+    stepNumberDone: {
+      bgcolor: colors.success[600],
+      color: colors.surface,
+    },
+    /** Content sheet */
+    sheet: {
+      maxWidth: 960,
+      mx: 'auto',
+      my: 3,
+      px: { xs: 2, md: 0 },
+    },
+    /** Inner card */
+    card: {
+      bgcolor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.lg,
+      p: { xs: 2, md: 3 },
+    },
+    /** Navigation bar (bottom) */
+    navBar: {
+      maxWidth: 960,
+      mx: 'auto',
+      px: { xs: 2, md: 0 },
+      pb: 4,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 2,
+    },
+  },
 } as const
 
 // ==================== STATUTS - Mapping couleurs ====================

@@ -2,12 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Box,
-  Container,
-  Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  Button,
   Typography,
   TextField,
   MenuItem,
@@ -15,17 +9,19 @@ import {
   Divider,
   Chip,
   IconButton,
+  Button,
 } from '@mui/material'
-import { ArrowBack, ArrowForward, Check, Add, Delete } from '@mui/icons-material'
+import { Add, Delete } from '@mui/icons-material'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
 import DecimalInput from '@/components/ui/DecimalInput'
-import { PageHeader } from '@/components/core'
+import { WizardView } from '@/components/core'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { decomptesAPI, marchesAPI } from '../../lib/api'
+import { colors } from '@/lib/designSystem'
 
-const steps = ['Informations générales', 'Montants & Retenues', 'Pièces jointes & Confirmation']
+const steps = ['Informations generales', 'Montants & Retenues', 'Pieces jointes & Confirmation']
 
 interface UploadedFile {
   id: string
@@ -121,7 +117,7 @@ const DecompteWizard = () => {
     }))
   }, [formData.montantBrutHT, formData.tauxTVA, formData.retenues])
 
-  // React Query mutation pour la création
+  // React Query mutation pour la creation
   const createMutation = useMutation({
     mutationFn: async (data: DecompteFormData) => {
       const payload = {
@@ -193,10 +189,6 @@ const DecompteWizard = () => {
     }
   }
 
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1)
-  }
-
   const isStepValid = () => {
     switch (activeStep) {
       case 0:
@@ -216,8 +208,8 @@ const DecompteWizard = () => {
     }
   }
 
-  const renderStepContent = (step: number) => {
-    switch (step) {
+  const renderStepContent = () => {
+    switch (activeStep) {
       case 0:
         return (
           <Box sx={{ display: 'grid', gap: 3 }}>
@@ -231,7 +223,7 @@ const DecompteWizard = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
               <TextField
                 fullWidth
-                label="Numéro de décompte"
+                label="Numero de decompte"
                 required
                 value={formData.numeroDecompte}
                 onChange={handleChange('numeroDecompte')}
@@ -240,7 +232,7 @@ const DecompteWizard = () => {
 
               <TextField
                 fullWidth
-                label="Date du décompte"
+                label="Date du decompte"
                 type="date"
                 required
                 value={formData.dateDecompte}
@@ -252,23 +244,23 @@ const DecompteWizard = () => {
             {prefilledMarcheId ? (
               <TextField
                 fullWidth
-                label="Marché"
+                label="Marche"
                 value={marches.find(m => m.id === prefilledMarcheId)?.code
                   ? `${marches.find(m => m.id === prefilledMarcheId)?.code} - ${marches.find(m => m.id === prefilledMarcheId)?.objet?.substring(0, 50) ?? ''}`
-                  : `Marché #${prefilledMarcheId}`}
+                  : `Marche #${prefilledMarcheId}`}
                 InputProps={{ readOnly: true }}
-                sx={{ '& .MuiInputBase-input': { bgcolor: '#f9fafb' } }}
+                sx={{ '& .MuiInputBase-input': { bgcolor: colors.neutral[50] } }}
               />
             ) : (
               <TextField
                 fullWidth
                 select
-                label="Marché"
+                label="Marche"
                 required
                 value={formData.marcheId || ''}
                 onChange={handleChange('marcheId')}
               >
-                <MenuItem value="">-- Sélectionner un marché --</MenuItem>
+                <MenuItem value="">-- Selectionner un marche --</MenuItem>
                 {marches.map((m) => (
                   <MenuItem key={m.id} value={m.id}>
                     {m.code} - {m.objet.substring(0, 50)}...
@@ -278,13 +270,13 @@ const DecompteWizard = () => {
             )}
 
             <Typography variant="subtitle2" gutterBottom fontWeight={600}>
-              Période couverte
+              Periode couverte
             </Typography>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
               <TextField
                 fullWidth
-                label="Début de période"
+                label="Debut de periode"
                 type="date"
                 required
                 value={formData.periodeDebut}
@@ -294,7 +286,7 @@ const DecompteWizard = () => {
 
               <TextField
                 fullWidth
-                label="Fin de période"
+                label="Fin de periode"
                 type="date"
                 required
                 value={formData.periodeFin}
@@ -313,7 +305,7 @@ const DecompteWizard = () => {
                   observations: value.replace(/<[^>]*>/g, '').substring(0, 500),
                 })
               }}
-              placeholder="Observations sur ce décompte..."
+              placeholder="Observations sur ce decompte..."
               minHeight={150}
             />
 
@@ -326,8 +318,8 @@ const DecompteWizard = () => {
               onChange={handleChange('statut')}
             >
               <MenuItem value="BROUILLON">Brouillon</MenuItem>
-              <MenuItem value="VALIDE">Validé</MenuItem>
-              <MenuItem value="PAYE">Payé</MenuItem>
+              <MenuItem value="VALIDE">Valide</MenuItem>
+              <MenuItem value="PAYE">Paye</MenuItem>
             </TextField>
           </Box>
         )
@@ -373,9 +365,9 @@ const DecompteWizard = () => {
                 InputProps={{ readOnly: true }}
                 sx={{
                   '& .MuiInputBase-input': {
-                    bgcolor: '#f9fafb',
+                    bgcolor: colors.neutral[50],
                     fontWeight: 600,
-                    color: '#3b82f6',
+                    color: colors.primary[600],
                   },
                 }}
               />
@@ -399,7 +391,7 @@ const DecompteWizard = () => {
             </Box>
 
             {formData.retenues.map((retenue, index) => (
-              <Paper key={index} sx={{ p: 2, bgcolor: '#f9fafb' }}>
+              <Box key={index} sx={{ p: 2, bgcolor: colors.neutral[50], borderRadius: 1, border: `1px solid ${colors.neutral[200]}` }}>
                 <Box sx={{ display: 'grid', gap: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="subtitle2" fontWeight={600}>
@@ -424,7 +416,7 @@ const DecompteWizard = () => {
                       onChange={(e) => updateRetenue(index, 'type', e.target.value)}
                     >
                       <MenuItem value="RG">Retenue de garantie</MenuItem>
-                      <MenuItem value="PENALITE">Pénalité</MenuItem>
+                      <MenuItem value="PENALITE">Penalite</MenuItem>
                       <MenuItem value="AVANCE">Avance</MenuItem>
                       <MenuItem value="AUTRE">Autre</MenuItem>
                     </TextField>
@@ -448,17 +440,17 @@ const DecompteWizard = () => {
                     />
                   </Box>
                 </Box>
-              </Paper>
+              </Box>
             ))}
 
             <Box>
               <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 2 }}>
-                Résumé financier
+                Resume financier
               </Typography>
               <Divider sx={{ mb: 2 }} />
             </Box>
 
-            <Paper sx={{ p: 3, bgcolor: 'background.default' }}>
+            <Box sx={{ p: 3, bgcolor: colors.neutral[50], borderRadius: 1, border: `1px solid ${colors.neutral[200]}` }}>
               <Box sx={{ display: 'grid', gap: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body1" color="text.secondary">
@@ -514,7 +506,7 @@ const DecompteWizard = () => {
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="h6">
-                    Net à payer
+                    Net a payer
                   </Typography>
                   <Typography variant="h5" color="success.main" fontWeight={700}>
                     {new Intl.NumberFormat('fr-MA', {
@@ -524,7 +516,7 @@ const DecompteWizard = () => {
                   </Typography>
                 </Box>
               </Box>
-            </Paper>
+            </Box>
           </Box>
         )
 
@@ -533,7 +525,7 @@ const DecompteWizard = () => {
           <Box sx={{ display: 'grid', gap: 3 }}>
             <Box>
               <Typography variant="h6" gutterBottom fontWeight={600}>
-                Pièces jointes
+                Pieces jointes
               </Typography>
               <Divider sx={{ mb: 3 }} />
             </Box>
@@ -543,22 +535,22 @@ const DecompteWizard = () => {
               onFilesChange={(files) => setFormData({ ...formData, files })}
               maxFiles={10}
               maxSizeMB={10}
-              label="Documents du décompte"
+              label="Documents du decompte"
             />
 
             <Box>
               <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 3 }}>
-                Récapitulatif
+                Recapitulatif
               </Typography>
               <Divider sx={{ mb: 3 }} />
             </Box>
 
-            <Paper sx={{ p: 3, bgcolor: 'background.default' }}>
+            <Box sx={{ p: 3, bgcolor: colors.neutral[50], borderRadius: 1, border: `1px solid ${colors.neutral[200]}` }}>
               <Box sx={{ display: 'grid', gap: 2 }}>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Numéro de décompte
+                      Numero de decompte
                     </Typography>
                     <Typography variant="body1" fontWeight={600}>
                       {formData.numeroDecompte}
@@ -577,7 +569,7 @@ const DecompteWizard = () => {
 
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Marché
+                    Marche
                   </Typography>
                   <Typography variant="body1">
                     {marches.find(m => m.id === formData.marcheId)?.code || '-'}
@@ -586,7 +578,7 @@ const DecompteWizard = () => {
 
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Période
+                    Periode
                   </Typography>
                   <Typography variant="body1">
                     Du {new Date(formData.periodeDebut).toLocaleDateString('fr-FR')}
@@ -612,7 +604,7 @@ const DecompteWizard = () => {
 
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Net à payer
+                      Net a payer
                     </Typography>
                     <Typography variant="h6" color="success.main">
                       {new Intl.NumberFormat('fr-MA', {
@@ -645,19 +637,20 @@ const DecompteWizard = () => {
 
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Pièces jointes
+                    Pieces jointes
                   </Typography>
                   <Typography variant="body1">
                     {formData.files.length} fichier(s)
                   </Typography>
                 </Box>
               </Box>
-            </Paper>
+            </Box>
 
             {createMutation.error && (
               <Alert severity="error">
-                {(createMutation.error as any)?.response?.data?.message ||
-                  'Erreur lors de la création du décompte'}
+                {createMutation.error instanceof Error
+                  ? createMutation.error.message
+                  : 'Erreur lors de la creation du decompte'}
               </Alert>
             )}
           </Box>
@@ -670,70 +663,20 @@ const DecompteWizard = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="lg">
-          <PageHeader
-            title="Nouveau Décompte"
-            subtitle="Créer un nouveau décompte en 3 étapes"
-            actions={
-              <Button
-                variant="outlined"
-                startIcon={<ArrowBack />}
-                onClick={() => prefilledMarcheId ? navigate(`/marches/${prefilledMarcheId}`) : navigate('/marches')}
-              >
-                Retour
-              </Button>
-            }
-          />
-
-          <Paper sx={{ p: 4 }}>
-            {/* Stepper */}
-            <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-
-            {/* Step Content */}
-            <Box sx={{ minHeight: 400, mb: 4 }}>{renderStepContent(activeStep)}</Box>
-
-            {/* Navigation Buttons */}
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                pt: 3,
-                borderTop: 1,
-                borderColor: 'divider',
-              }}
-            >
-              <Button
-                variant="outlined"
-                onClick={handleBack}
-                disabled={activeStep === 0}
-                startIcon={<ArrowBack />}
-              >
-                Précédent
-              </Button>
-
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={!isStepValid() || createMutation.isPending}
-                endIcon={activeStep === steps.length - 1 ? <Check /> : <ArrowForward />}
-              >
-                {createMutation.isPending
-                  ? 'Création...'
-                  : activeStep === steps.length - 1
-                  ? 'Créer le décompte'
-                  : 'Suivant'}
-              </Button>
-            </Box>
-          </Paper>
-        </Container>
-      </Box>
+      <WizardView
+        breadcrumbs={[{ label: 'Decomptes', path: '/decomptes' }, { label: 'Nouveau' }]}
+        steps={steps.map(label => ({ label }))}
+        activeStep={activeStep}
+        onStepClick={setActiveStep}
+        onBack={() => setActiveStep(s => s - 1)}
+        onNext={handleNext}
+        onCancel={() => prefilledMarcheId ? navigate(`/marches/${prefilledMarcheId}`) : navigate('/decomptes')}
+        isNextDisabled={!isStepValid() || createMutation.isPending}
+        isSubmitting={createMutation.isPending}
+        submitLabel="Creer le decompte"
+      >
+        {renderStepContent()}
+      </WizardView>
     </AppLayout>
   )
 }

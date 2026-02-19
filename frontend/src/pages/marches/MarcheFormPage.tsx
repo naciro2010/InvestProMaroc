@@ -13,7 +13,7 @@ import {
 } from '@mui/material'
 import { Add, Delete, PersonAdd } from '@mui/icons-material'
 import AppLayout from '@/components/layout/AppLayout'
-import { StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField } from '@/components/core'
+import { StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField, ControlPanel } from '@/components/core'
 import LocationPicker from '@/components/ui/LocationPicker'
 import DecimalInput from '@/components/ui/DecimalInput'
 import FournisseurDialog from '@/components/marches/FournisseurDialog'
@@ -282,6 +282,13 @@ export default function MarcheFormPage() {
 
   return (
     <AppLayout>
+      <ControlPanel
+        breadcrumbs={[
+          { label: 'Marches', path: '/marches' },
+          { label: isEdit ? 'Modifier' : 'Nouveau' },
+        ]}
+        hideBottomRow
+      />
       <form onSubmit={handleSubmit}>
         <StickyActionBar
           title={isEdit ? 'Modifier le Marché' : 'Nouveau Marché'}

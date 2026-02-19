@@ -5,18 +5,12 @@ import {
   Container,
   Typography,
   Button,
-  Chip,
   Alert,
   Skeleton,
   Tooltip,
-  Divider,
 } from '@mui/material'
-import {
-  Edit,
-  Add,
-  Lock,
-} from '@mui/icons-material'
-import { Plus, Pencil, ArrowLeft } from 'lucide-react'
+import { Lock } from '@mui/icons-material'
+import { Plus, Pencil } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
@@ -33,12 +27,8 @@ import {
 import type { StatusStep } from '../../components/core'
 import { api, conventionsAPI, avenantConventionsAPI, versementsPrevisionnelsAPI, projetConventionsAPI } from '../../lib/api'
 import {
-  ConventionInfoCardLazy,
-  ConventionFinancesCard,
   ConventionStatsCard,
-  ConventionSousConventionsCard,
   ConventionAvenantsTab,
-  ConventionHistoryCard,
   ConventionPartenairesCard,
   ConventionSubventionsCard,
   ConventionImputationsCard,
@@ -46,11 +36,10 @@ import {
   ConventionVersementsCard,
   ConventionProjetsTab,
   ConventionMarchesTab,
+  ConventionBudgetExecutionCard,
   ParentConventionBanner,
 } from '../../components/conventions/detail'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
-import RichTextDisplay from '../../components/ui/RichTextDisplay'
-import BudgetRepartitionCard from '../../components/conventions/BudgetRepartitionCard'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
 import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
@@ -86,7 +75,6 @@ const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'se
 const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
 const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
 
-// Status pipeline steps for conventions
 const STATUS_STEPS: StatusStep[] = [
   { value: 'BROUILLON', label: 'Brouillon' },
   { value: 'SOUMIS', label: 'Soumis' },
@@ -122,10 +110,6 @@ const ConventionDetailPageModern = () => {
   const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | 'deleteVersement' | null; id: number | null }>({ open: false, type: null, id: null })
 
   const tabsRef = useRef<HTMLDivElement>(null)
-
-  const handleStatClick = (statType: 'projets' | 'marches' | 'sousConventions') => {
-    setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
-  }
 
   // Data loading
   useEffect(() => { if (id) loadConvention(parseInt(id)) }, [id])
@@ -187,10 +171,8 @@ const ConventionDetailPageModern = () => {
         </Box>
         <Container maxWidth="xl" sx={{ py: 3 }}>
           <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-            <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
-            <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
-          </Box>
+          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
+          <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
         </Container>
       </Box>
     </AppLayout>
@@ -206,7 +188,6 @@ const ConventionDetailPageModern = () => {
 
   const canEdit = convention.statut === 'BROUILLON'
 
-  // Build breadcrumbs - always show full navigation path
   const breadcrumbs = [
     { label: 'Conventions', path: '/conventions' },
     ...(convention.parentConventionId && convention.parentConventionNumero
@@ -218,7 +199,7 @@ const ConventionDetailPageModern = () => {
   return (
     <AppLayout>
       <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-        {/* Control Panel - Always visible breadcrumbs + actions */}
+        {/* Control Panel */}
         <ControlPanel
           breadcrumbs={breadcrumbs}
           actions={
@@ -259,7 +240,6 @@ const ConventionDetailPageModern = () => {
           hideBottomRow
         />
 
-        {/* Messages */}
         {error && (
           <Container maxWidth="xl" sx={{ mt: 2 }}>
             <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
@@ -267,30 +247,31 @@ const ConventionDetailPageModern = () => {
         )}
 
         {/* Main Content */}
-        <Container maxWidth="xl" sx={{ py: 3 }}>
-          {/* Form View - with status pipeline */}
+        <Container maxWidth="xl" sx={{ py: 2 }}>
           <FormView
             isEditing={false}
             onToggleEdit={canEdit ? () => navigate(`/conventions/${id}/edit`) : undefined}
             statusSteps={STATUS_STEPS}
             currentStatus={convention.statut}
           >
-            {/* Title */}
+            {/* Title - compact */}
             <Typography sx={{
-              fontSize: typography.sizes['2xl'],
+              fontSize: typography.sizes.xl,
               fontWeight: typography.weights.bold,
               color: colors.textPrimary,
-              mb: 0.5,
+              mb: 0.25,
             }}>
               {convention.libelle || convention.code}
             </Typography>
-            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 3 }}>
-              {convention.objet}
-            </Typography>
+            {convention.objet && (
+              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, mb: 2, lineHeight: 1.4 }}>
+                {convention.objet}
+              </Typography>
+            )}
 
             {/* Parent Convention Banner */}
             {convention.parentConventionId && convention.parentConventionNumero && (
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
                 <ParentConventionBanner
                   parentConventionId={convention.parentConventionId}
                   parentConventionNumero={convention.parentConventionNumero}
@@ -299,13 +280,26 @@ const ConventionDetailPageModern = () => {
               </Box>
             )}
 
-            {/* Field Groups */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
-              <FieldGroup title="Informations generales">
+            {/* Compact Field Groups - Odoo style (3 columns) */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 2 }}>
+              <FieldGroup title="Informations">
                 <Field label="Code" value={convention.code} />
                 <Field label="Numero" value={convention.numero} />
                 <Field label="Type" value={<StatusBadge status={convention.typeConvention} />} />
                 <Field label="Statut" value={<StatusBadge status={convention.statut} />} />
+              </FieldGroup>
+
+              <FieldGroup title="Finances">
+                <Field label="Budget" value={formatCurrency(convention.budget)} isMoney />
+                <Field label="Commission" value={`${convention.tauxCommission}%`} />
+                <Field label="Base" value={convention.baseCalcul === 'DECAISSEMENTS_HT' ? 'HT' : 'TTC'} />
+                <Field label="TVA" value={`${convention.tauxTva}%`} />
+              </FieldGroup>
+
+              <FieldGroup title="Dates">
+                <Field label="Signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
+                <Field label="Debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
+                <Field label="Fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
                 {convention.parentConventionId && convention.parentConventionNumero && (
                   <Field
                     label="Convention parent"
@@ -315,35 +309,24 @@ const ConventionDetailPageModern = () => {
                   />
                 )}
               </FieldGroup>
-
-              <FieldGroup title="Finances">
-                <Field label="Budget" value={formatCurrency(convention.budget)} isMoney />
-                <Field label="Taux commission" value={`${convention.tauxCommission}%`} />
-                <Field label="Base de calcul" value={convention.baseCalcul} />
-                <Field label="TVA" value={`${convention.tauxTva}%`} />
-              </FieldGroup>
             </Box>
 
-            <FieldGroup title="Dates" columns={1}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 0 }}>
-                <Field label="Date signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
-                <Field label="Date debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
-                <Field label="Date fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
-              </Box>
-            </FieldGroup>
-
-            {/* Micro-component cards */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mt: 3, mb: 3 }}>
-              <ConventionInfoCardLazy conventionId={convention.id} canEdit={canEdit} getStatusColor={getStatusColor} />
-              <ConventionFinancesCard conventionId={convention.id} />
+            {/* Financial Synthesis - Budget Execution Card */}
+            <Box sx={{ mb: 2 }} key={partenairesRefreshKey}>
+              <ConventionBudgetExecutionCard
+                conventionId={convention.id}
+                conventionBudget={convention.budget}
+                tauxCommission={convention.tauxCommission}
+                tauxTva={convention.tauxTva}
+                baseCalcul={convention.baseCalcul}
+              />
             </Box>
 
-            <Box sx={{ mb: 3 }}>
-              <BudgetRepartitionCard conventionId={convention.id} conventionBudget={convention.budget} />
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-              <ConventionStatsCard conventionId={convention.id} onStatClick={handleStatClick} />
+            {/* Stats - compact inline */}
+            <Box sx={{ mb: 2 }}>
+              <ConventionStatsCard conventionId={convention.id} onStatClick={() => {
+                setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+              }} />
             </Box>
 
             {/* Notebook (tabs) */}
@@ -354,7 +337,7 @@ const ConventionDetailPageModern = () => {
                     label: 'Detail',
                     content: (
                       <Box>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
                           <ConventionPartenairesCard
                             key={partenairesRefreshKey}
                             conventionId={convention.id}
@@ -367,10 +350,10 @@ const ConventionDetailPageModern = () => {
                           />
                           <ConventionSubventionsCard conventionId={convention.id} />
                         </Box>
-                        <Box sx={{ mt: 3 }}>
+                        <Box sx={{ mt: 2 }}>
                           <ConventionImputationsCard conventionId={convention.id} onRefresh={() => loadConvention(convention.id)} />
                         </Box>
-                        <Box sx={{ mt: 3 }}>
+                        <Box sx={{ mt: 2 }}>
                           <ConventionVersementsCard versements={versements} onAdd={() => { setEditingVersement(null); setVersementDialogOpen(true) }} onEdit={(v) => { setEditingVersement(v); setVersementDialogOpen(true) }} onDelete={handleDeleteVersement} />
                         </Box>
                       </Box>

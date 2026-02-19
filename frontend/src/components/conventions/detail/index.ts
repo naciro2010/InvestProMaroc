@@ -20,3 +20,7 @@ export { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedT
 
 // Parent convention banner (sous-convention detail)
 export { default as ParentConventionBanner } from './ParentConventionBanner'
+
+// Main sections: Previsionnel & Realisation
+export { default as ConventionPrevisionnelSection } from './ConventionPrevisionnelSection'
+export { default as ConventionRealisationSection } from './ConventionRealisationSection'

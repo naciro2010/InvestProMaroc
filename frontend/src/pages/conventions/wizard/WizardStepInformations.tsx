@@ -23,6 +23,7 @@ interface WizardStepInformationsProps {
   handleChange: HandleChangeFunction
   settings: ConventionSettings
   autoDateFin: boolean
+  onDureeMoisChange: (value: number) => void
   typeOptionsWithCurrent: ConventionTypeOptionDisplay[]
 }
 
@@ -32,6 +33,7 @@ const WizardStepInformations = ({
   handleChange,
   settings,
   autoDateFin,
+  onDureeMoisChange,
   typeOptionsWithCurrent,
 }: WizardStepInformationsProps) => {
   return (
@@ -182,12 +184,7 @@ const WizardStepInformations = ({
             fullWidth
             label="Durée (mois)"
             value={Number(formData.dureeMois) || 0}
-            onChange={(value) => {
-              setFormData((prev) => ({
-                ...prev,
-                dureeMois: value,
-              }))
-            }}
+            onChange={onDureeMoisChange}
             decimalPlaces={0}
             min={0}
             helperText={

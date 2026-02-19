@@ -17,6 +17,8 @@ export interface BudgetLigne {
   montantHT: number
   tauxTVA: number
   montantTTC: number
+  plafond: number
+  tauxCommissionLigne: number
 }
 
 export interface Partenaire {
@@ -53,15 +55,16 @@ export interface ConventionWizardFormData {
   budgetGlobal: number
   lignesBudget: BudgetLigne[]
 
-  // Step 3: Commission
+  // Commission (integrated in Budget step)
+  commissionMode: 'GLOBAL' | 'PAR_CATEGORIE'
   tauxCommission: number
   baseCalcul: 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT'
   tauxTva: number
 
-  // Step 4: Partenaires
+  // Step 3: Partenaires
   partenaires: Partenaire[]
 
-  // Step 5: Subventions
+  // Step 4: Subventions
   subventions: Subvention[]
 
   // Files
@@ -74,6 +77,8 @@ export interface WizardTotals {
   differenceGlobalVsLignes: number
   totalPartenaires: number
   totalSubventions: number
+  commissionHT: number
+  commissionTTC: number
   commissionEstimee: number
 }
 
@@ -95,8 +100,8 @@ export type SetFormDataFunction = Dispatch<SetStateAction<ConventionWizardFormDa
 
 export const WIZARD_STEPS = [
   'Informations',
-  'Budget',
-  'Commission',
+  'Budget & Commission',
+  'Partenaires',
   'Subventions',
   'Récapitulatif',
 ]
@@ -117,11 +122,22 @@ export const calculateTotals = (formData: ConventionWizardFormData): WizardTotal
   const totalPartenaires = formData.partenaires.reduce((sum, p) => sum + p.budget, 0)
   const totalSubventions = formData.subventions.reduce((sum, s) => sum + s.montant, 0)
 
-  const baseAmount =
-    formData.baseCalcul === 'DECAISSEMENTS_HT'
-      ? totalLignesHT || formData.budgetGlobal
-      : totalLignesTTC || formData.budgetGlobal
-  const commissionEstimee = (baseAmount * formData.tauxCommission) / 100
+  let commissionHT = 0
+  if (formData.commissionMode === 'PAR_CATEGORIE' && formData.lignesBudget.length > 0) {
+    commissionHT = formData.lignesBudget.reduce((sum, ligne) => {
+      const base = formData.baseCalcul === 'DECAISSEMENTS_HT' ? ligne.montantHT : ligne.montantTTC
+      const assiette = ligne.plafond > 0 ? Math.min(base, ligne.plafond) : base
+      return sum + (assiette * ligne.tauxCommissionLigne) / 100
+    }, 0)
+  } else {
+    const baseAmount =
+      formData.baseCalcul === 'DECAISSEMENTS_HT'
+        ? totalLignesHT || formData.budgetGlobal
+        : totalLignesTTC || formData.budgetGlobal
+    commissionHT = (baseAmount * formData.tauxCommission) / 100
+  }
+
+  const commissionTTC = commissionHT * (1 + formData.tauxTva / 100)
 
   return {
     totalLignesHT,
@@ -129,6 +145,8 @@ export const calculateTotals = (formData: ConventionWizardFormData): WizardTotal
     differenceGlobalVsLignes,
     totalPartenaires,
     totalSubventions,
-    commissionEstimee,
+    commissionHT,
+    commissionTTC,
+    commissionEstimee: commissionTTC,
   }
 }

@@ -184,7 +184,12 @@ function ListView<T>({
                   {columns.map((col) => <TableCell key={col.key} align={col.align || 'left'}>{col.render(row, sortedData.indexOf(row))}</TableCell>)}
                   {rowActions && (
                     <TableCell sx={{ width: 80 }} onClick={(e) => e.stopPropagation()}>
-                      <Box sx={{ display: 'flex', gap: 0.5, opacity: isHovered ? 1 : 0, transition: `opacity ${transitions.fast}` }}>
+                      <Box sx={{
+                        display: 'flex',
+                        gap: 0.5,
+                        opacity: { xs: 1, md: isHovered ? 1 : 0 },
+                        transition: `opacity ${transitions.fast}`,
+                      }}>
                         {rowActions(row)}
                       </Box>
                     </TableCell>

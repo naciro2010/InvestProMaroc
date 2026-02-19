@@ -33,7 +33,6 @@ import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialo
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
 import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
 import SousConventionFormSimple from './SousConventionFormSimple'
-import VersementFormDialog from '../../components/conventions/VersementFormDialog'
 
 interface Convention {
   id: number; code: string; numero: string; libelle: string; objet: string
@@ -83,9 +82,7 @@ const ConventionDetailPageModern = () => {
   const [partenairesRefreshKey, setPartenairesRefreshKey] = useState(0)
   const [sousConventionDialogOpen, setSousConventionDialogOpen] = useState(false)
   const [editingSousConvention, setEditingSousConvention] = useState<SousConvention | null>(null)
-  const [versementDialogOpen, setVersementDialogOpen] = useState(false)
-  const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
-  const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | 'deleteVersement' | null; id: number | null }>({ open: false, type: null, id: null })
+  const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | null; id: number | null }>({ open: false, type: null, id: null })
 
   // Data loading
   useEffect(() => { if (id) loadConvention(parseInt(id)) }, [id])
@@ -119,7 +116,6 @@ const ConventionDetailPageModern = () => {
       switch (confirmState.type) {
         case 'unlinkProjet': await conventionsAPI.unlinkProjet(confirmState.id, convention.id); showSuccess('Projet delie'); loadProjets(convention.id); break
         case 'unlinkMarche': await conventionsAPI.unlinkMarche(convention.id, confirmState.id); showSuccess('Marche delie'); loadMarches(convention.id); break
-        case 'deleteVersement': await versementsPrevisionnelsAPI.delete(confirmState.id); showSuccess('Versement supprime'); loadVersements(convention.id); break
       }
     } catch { showError('Erreur lors de l\'operation') }
     finally { setConfirmState({ open: false, type: null, id: null }) }
@@ -129,7 +125,6 @@ const ConventionDetailPageModern = () => {
     switch (confirmState.type) {
       case 'unlinkProjet': return { title: 'Delier le projet', message: 'Voulez-vous delier ce projet ?', variant: 'warning' as const, confirmLabel: 'Delier' }
       case 'unlinkMarche': return { title: 'Delier le marche', message: 'Voulez-vous delier ce marche ?', variant: 'warning' as const, confirmLabel: 'Delier' }
-      case 'deleteVersement': return { title: 'Supprimer le versement', message: 'Action irreversible. Continuer ?', variant: 'danger' as const, confirmLabel: 'Supprimer' }
       default: return { title: '', message: '', variant: 'info' as const, confirmLabel: 'Confirmer' }
     }
   }
@@ -261,9 +256,6 @@ const ConventionDetailPageModern = () => {
                 })
                 setAddPartenaireDialogOpen(true)
               }}
-              onAddVersement={() => { setEditingVersement(null); setVersementDialogOpen(true) }}
-              onEditVersement={(v) => { setEditingVersement(v); setVersementDialogOpen(true) }}
-              onDeleteVersement={(vid) => setConfirmState({ open: true, type: 'deleteVersement', id: vid })}
               onRefresh={() => loadConvention(convention.id)}
             />
 
@@ -296,7 +288,6 @@ const ConventionDetailPageModern = () => {
           <LinkProjetDialog open={linkProjetDialogOpen} conventionId={convention.id} onClose={() => setLinkProjetDialogOpen(false)} onSuccess={() => loadProjets(convention.id)} />
           <LinkMarcheDialog open={linkMarcheDialogOpen} conventionId={convention.id} onClose={() => setLinkMarcheDialogOpen(false)} onSuccess={() => loadMarches(convention.id)} />
           <SousConventionFormSimple open={sousConventionDialogOpen} onClose={() => { setSousConventionDialogOpen(false); setEditingSousConvention(null) }} onSuccess={() => { loadSousConventions(convention.id); setSousConventionDialogOpen(false); setEditingSousConvention(null) }} parentConvention={{ id: convention.id, numero: convention.numero, libelle: convention.libelle, tauxCommission: convention.tauxCommission, baseCalcul: convention.baseCalcul, tauxTva: convention.tauxTva, budget: convention.budget }} editingSousConvention={editingSousConvention} />
-          <VersementFormDialog open={versementDialogOpen} conventionId={convention.id} onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }} onSuccess={() => { loadVersements(convention.id); setVersementDialogOpen(false); setEditingVersement(null) }} editingVersement={editingVersement} />
         </>
       )}
 

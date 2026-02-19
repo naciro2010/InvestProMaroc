@@ -1,12 +1,11 @@
 import React from 'react'
-import { Box, Typography, Divider } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { Assignment } from '@mui/icons-material'
 import { FieldGroup, Field, StatusBadge } from '@/components/core'
 import ConventionBudgetExecutionCard from './ConventionBudgetExecutionCard'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
-import ConventionVersementsCard from './ConventionVersementsCard'
 import { colors, typography } from '@/lib/designSystem'
 
 interface ConventionData {
@@ -56,9 +55,6 @@ interface ConventionPrevisionnelSectionProps {
   versements: VersementPrevisionnel[]
   onAddPartenaire: () => void
   onEditPartenaire: (p: PartenaireCallbackData) => void
-  onAddVersement: () => void
-  onEditVersement: (v: VersementPrevisionnel) => void
-  onDeleteVersement: (id: number) => void
   onRefresh: () => void
 }
 
@@ -70,7 +66,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
 /**
  * SECTION: Previsionnel
  * All planned/budgeted data: info, finances, dates, budget synthesis,
- * partenaires, subventions, imputations, versements previsionnels
+ * partenaires (with versements prev. column), imputations, subventions
  */
 const ConventionPrevisionnelSection = ({
   convention,
@@ -78,9 +74,6 @@ const ConventionPrevisionnelSection = ({
   versements,
   onAddPartenaire,
   onEditPartenaire,
-  onAddVersement,
-  onEditVersement,
-  onDeleteVersement,
   onRefresh,
 }: ConventionPrevisionnelSectionProps) => {
   return (
@@ -126,16 +119,16 @@ const ConventionPrevisionnelSection = ({
         />
       </Box>
 
-      {/* Partenaires + Subventions (2 columns) */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2, mb: 2 }}>
+      {/* Partenaires (with Vers. Prev. column) + Imputations — unified block */}
+      <Box sx={{ mb: 2 }}>
         <ConventionPartenairesCard
           key={partenairesRefreshKey}
           conventionId={convention.id}
           parentConventionId={convention.parentConventionId ?? undefined}
+          versements={versements}
           onAddClick={onAddPartenaire}
           onEditClick={onEditPartenaire}
         />
-        <ConventionSubventionsCard conventionId={convention.id} />
       </Box>
 
       {/* Imputations previsionnelles */}
@@ -143,13 +136,8 @@ const ConventionPrevisionnelSection = ({
         <ConventionImputationsCard conventionId={convention.id} onRefresh={onRefresh} />
       </Box>
 
-      {/* Versements previsionnels */}
-      <ConventionVersementsCard
-        versements={versements}
-        onAdd={onAddVersement}
-        onEdit={onEditVersement}
-        onDelete={onDeleteVersement}
-      />
+      {/* Subventions */}
+      <ConventionSubventionsCard conventionId={convention.id} />
     </Box>
   )
 }

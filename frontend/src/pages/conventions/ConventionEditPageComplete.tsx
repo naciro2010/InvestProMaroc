@@ -1,116 +1,227 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Box,
-  Container,
-  Button,
   Alert,
   Skeleton,
   Typography,
+  Button,
 } from '@mui/material'
 import { Eye, ArrowLeft } from 'lucide-react'
-import AppLayout from '../../components/layout/AppLayout'
-import { conventionsAPI } from '../../lib/api'
-import {
-  ConventionInfoEditCard,
-  ConventionFinancesEditCard,
-  ConventionDatesEditCard,
-} from '../../components/conventions/edit'
-import { colors, typography, componentStyles } from '../../lib/designSystem'
+import AppLayout from '@/components/layout/AppLayout'
+import { conventionsAPI } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { ControlPanel, FormView, Notebook, StatusBadge } from '@/components/core'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { calculateDurationMonths } from '@/utils/dateUtils'
+import EditGeneralFields from '@/components/conventions/edit/EditGeneralFields'
+import EditBudgetFields from '@/components/conventions/edit/EditBudgetFields'
+import EditDatesFields from '@/components/conventions/edit/EditDatesFields'
+import EditInfoPanel from '@/components/conventions/edit/EditInfoPanel'
+import {
+  conventionEditSchema,
+  CONVENTION_STATUS_STEPS,
+  type ConventionEditFormData,
+  type ConventionMetadata,
+} from '@/components/conventions/edit/editTypes'
 
-const CONVENTION_STATUS_STEPS = [
-  { value: 'BROUILLON', label: 'Brouillon' },
-  { value: 'SOUMIS', label: 'Soumis' },
-  { value: 'VALIDEE', label: 'Validee' },
-  { value: 'EN_EXECUTION', label: 'En execution' },
-  { value: 'ACHEVE', label: 'Acheve' },
-]
+interface ConventionApiResponse {
+  id: number
+  code: string
+  numero: string
+  typeConvention: string
+  type: string
+  statut: string
+  libelle: string
+  designation: string
+  objet: string
+  objetRich: string
+  budget: number
+  budgetTotal: number
+  tauxCommission: number
+  baseCalcul: string
+  tauxTva: number
+  dateConvention: string
+  dateDebut: string
+  dateFin: string
+  dureeMois: number
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+  dateSoumission: string | null
+  dateValidation: string | null
+  isLocked: boolean
+  motifVerrouillage: string | null
+  parentConvention: { code: string } | null
+  sousConventions: unknown[] | null
+}
+
+const toIsoDate = (val: string | Date | null | undefined): string => {
+  if (!val) return ''
+  return typeof val === 'string' ? val.split('T')[0] : new Date(val).toISOString().split('T')[0]
+}
 
 const ConventionEditPageComplete = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [convention, setConvention] = useState<{ code: string; statut: string; libelle?: string } | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [autoDateFin, setAutoDateFin] = useState(true)
+  const [metadata, setMetadata] = useState<ConventionMetadata | null>(null)
 
-  useEffect(() => {
-    if (id) loadConventionMetadata(parseInt(id))
-  }, [id])
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isDirty },
+  } = useForm<ConventionEditFormData>({
+    resolver: zodResolver(conventionEditSchema),
+  })
 
-  const loadConventionMetadata = async (conventionId: number) => {
+  const watchValues = watch()
+
+  const loadConvention = useCallback(async (conventionId: number) => {
     try {
       setLoading(true)
-      const response = await conventionsAPI.getBasic(conventionId)
-      const data = response.data.data || response.data
-      setConvention({ code: data.code, statut: data.statut, libelle: data.libelle })
+      setError(null)
+      const response = await conventionsAPI.getById(conventionId)
+      const data: ConventionApiResponse = response.data.data || response.data
+
+      const dateDebut = toIsoDate(data.dateDebut)
+      const dateFin = toIsoDate(data.dateFin)
+      const dureeMois = dateDebut && dateFin
+        ? calculateDurationMonths(new Date(dateDebut), new Date(dateFin))
+        : (data.dureeMois || 12)
+
+      reset({
+        code: data.code || '',
+        numero: data.numero || '',
+        typeConvention: (data.typeConvention || data.type || 'CADRE') as ConventionEditFormData['typeConvention'],
+        libelle: data.libelle || data.designation || '',
+        objet: data.objetRich || data.objet || '',
+        budget: data.budget || data.budgetTotal || 0,
+        tauxCommission: data.tauxCommission || 0,
+        baseCalcul: data.baseCalcul || 'DECAISSEMENTS_TTC',
+        tauxTva: data.tauxTva || 20,
+        dateConvention: toIsoDate(data.dateConvention),
+        dateDebut,
+        dateFin,
+        dureeMois,
+      })
+
+      setMetadata({
+        id: data.id,
+        statut: data.statut,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        createdBy: data.createdBy || '',
+        dateSoumission: data.dateSoumission,
+        dateValidation: data.dateValidation,
+        parentConventionCode: data.parentConvention?.code || null,
+        isLocked: data.isLocked || false,
+        sousConventionsCount: data.sousConventions?.length || 0,
+      })
     } catch {
-      setError('Convention non trouvee')
+      setError('Convention introuvable ou erreur de chargement.')
     } finally {
       setLoading(false)
     }
+  }, [reset])
+
+  useEffect(() => {
+    if (id) loadConvention(parseInt(id))
+  }, [id, loadConvention])
+
+  const handleSave = async (formData: ConventionEditFormData) => {
+    try {
+      setSaving(true)
+      const payload = {
+        code: formData.code,
+        numero: formData.numero,
+        typeConvention: formData.typeConvention,
+        libelle: formData.libelle,
+        objet: formData.objet,
+        budget: formData.budget,
+        tauxCommission: formData.tauxCommission,
+        baseCalcul: formData.baseCalcul,
+        tauxTva: formData.tauxTva,
+        dateConvention: formData.dateConvention,
+        dateDebut: formData.dateDebut,
+        dateFin: formData.dateFin || undefined,
+      }
+      await conventionsAPI.update(parseInt(id!), payload)
+      showToast('Convention mise a jour avec succes', 'success')
+      setIsEditing(false)
+      // Reload to get fresh data including updated metadata
+      await loadConvention(parseInt(id!))
+    } catch {
+      showToast('Erreur lors de la mise a jour', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+    if (id) loadConvention(parseInt(id))
+  }
+
+  const handleToggleEdit = () => {
+    setIsEditing(true)
   }
 
   if (loading) {
     return (
       <AppLayout>
         <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-          <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: { xs: 2, md: 3 }, py: 1.5 }}>
-            <Skeleton variant="text" width={200} height={28} />
+          <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
+            <Skeleton variant="text" width={300} height={28} />
           </Box>
-          <Container maxWidth="lg" sx={{ py: 3 }}>
-            <Skeleton variant="rectangular" height={400} sx={{ borderRadius: '12px' }} />
-          </Container>
+          <Box sx={{ p: 3, display: 'flex', gap: 3 }}>
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="rectangular" height={500} sx={{ borderRadius: '8px' }} />
+            </Box>
+            <Box sx={{ width: 280 }}>
+              <Skeleton variant="rectangular" height={350} sx={{ borderRadius: '8px' }} />
+            </Box>
+          </Box>
         </Box>
       </AppLayout>
     )
   }
 
-  if (error || !convention || !id) {
+  if (error || !metadata || !id) {
     return (
       <AppLayout>
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Alert severity="error">{error || 'Convention non trouvee'}</Alert>
-        </Container>
+        <Box sx={{ p: 4 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>{error || 'Convention introuvable'}</Alert>
+          <Button onClick={() => navigate('/conventions')} sx={componentStyles.buttonSecondary}>
+            Retour aux conventions
+          </Button>
+        </Box>
       </AppLayout>
     )
   }
-
-  const conventionId = parseInt(id)
-
-  const placeholderTab = (icon: string, title: string, description: string) => (
-    <Box sx={{ py: 6, textAlign: 'center' }}>
-      <Typography sx={{ fontSize: 48, mb: 2 }}>{icon}</Typography>
-      <Typography sx={{ fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, color: colors.textPrimary, mb: 1 }}>
-        {title}
-      </Typography>
-      <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 3, maxWidth: 400, mx: 'auto' }}>
-        {description}
-      </Typography>
-      <Button
-        variant="contained"
-        size="small"
-        startIcon={<Eye size={16} />}
-        onClick={() => navigate(`/conventions/${id}`)}
-        sx={{ ...componentStyles.buttonPrimary, textTransform: 'none' }}
-      >
-        Aller a la page de visualisation
-      </Button>
-    </Box>
-  )
 
   return (
     <AppLayout>
       <ControlPanel
         breadcrumbs={[
           { label: 'Conventions', path: '/conventions' },
-          { label: convention.code, path: `/conventions/${id}` },
+          { label: watchValues.code || '...', path: `/conventions/${id}` },
           { label: 'Modifier' },
         ]}
         actions={
           <>
-            <StatusBadge status={convention.statut} size="small" />
+            <StatusBadge status={metadata.statut} size="small" />
             <Button
               size="small"
               startIcon={<Eye size={14} />}
@@ -122,10 +233,10 @@ const ConventionEditPageComplete = () => {
             <Button
               size="small"
               startIcon={<ArrowLeft size={14} />}
-              onClick={() => navigate(`/conventions/${id}`)}
+              onClick={() => navigate('/conventions')}
               sx={{ ...componentStyles.buttonGhost, textTransform: 'none', fontSize: typography.sizes.sm }}
             >
-              Retour
+              Liste
             </Button>
           </>
         }
@@ -133,71 +244,112 @@ const ConventionEditPageComplete = () => {
       />
 
       <Box sx={{ bgcolor: colors.background, minHeight: 'calc(100vh - 48px)' }}>
-        <Container maxWidth="lg" sx={{ py: 3 }}>
-          <Alert
-            severity="info"
-            sx={{
-              mb: 3,
-              bgcolor: colors.primary[25],
-              border: `1px solid ${colors.primary[100]}`,
-              '& .MuiAlert-icon': { color: colors.primary[600] },
-              '& .MuiAlert-message': { color: colors.textPrimary },
-            }}
-          >
-            <strong>Edition granulaire</strong> - Chaque section se sauvegarde independamment. Cliquez sur "Modifier" dans une section, puis "Enregistrer" pour sauvegarder.
-          </Alert>
+        <Box sx={{ display: 'flex', gap: 3, p: 3, maxWidth: 1280, mx: 'auto' }}>
+          {/* Main form area */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <FormView
+              isEditing={isEditing}
+              onToggleEdit={handleToggleEdit}
+              onSave={handleSubmit(handleSave)}
+              onCancel={handleCancel}
+              isSaving={saving}
+              statusSteps={CONVENTION_STATUS_STEPS}
+              currentStatus={metadata.statut}
+            >
+              {/* Validation errors summary */}
+              {isEditing && Object.keys(errors).length > 0 && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  Veuillez corriger les erreurs avant d'enregistrer.
+                </Alert>
+              )}
 
-          <FormView
-            isEditing={false}
-            statusSteps={CONVENTION_STATUS_STEPS}
-            currentStatus={convention.statut}
-          >
-            <Notebook
-              tabs={[
-                {
-                  label: 'Informations',
-                  content: (
-                    <Container maxWidth="md" disableGutters>
-                      <ConventionInfoEditCard conventionId={conventionId} />
-                    </Container>
-                  ),
-                },
-                {
-                  label: 'Finances',
-                  content: (
-                    <Container maxWidth="md" disableGutters>
-                      <ConventionFinancesEditCard conventionId={conventionId} />
-                    </Container>
-                  ),
-                },
-                {
-                  label: 'Dates',
-                  content: (
-                    <Container maxWidth="md" disableGutters>
-                      <ConventionDatesEditCard conventionId={conventionId} />
-                    </Container>
-                  ),
-                },
-                {
-                  label: 'Partenaires',
-                  content: placeholderTab(
-                    '\ud83e\udd1d',
-                    'Gestion des partenaires',
-                    'Les partenaires et imputations analytiques se gerent depuis la page de visualisation de la convention.'
-                  ),
-                },
-                {
-                  label: 'Versements',
-                  content: placeholderTab(
-                    '\ud83c\udfe6',
-                    'Versements previsionnels',
-                    'Le calendrier previsionnel des versements se gere depuis la page de visualisation de la convention.'
-                  ),
-                },
-              ]}
-            />
-          </FormView>
-        </Container>
+              {/* General info + description with RichText */}
+              <EditGeneralFields
+                control={control}
+                errors={errors}
+                isEditing={isEditing}
+                watchValues={watchValues as ConventionEditFormData}
+              />
+
+              {/* Tabbed sections */}
+              <Notebook
+                tabs={[
+                  {
+                    label: 'Budget & Commission',
+                    content: (
+                      <EditBudgetFields
+                        control={control}
+                        errors={errors}
+                        isEditing={isEditing}
+                        watchValues={watchValues as ConventionEditFormData}
+                        setValue={setValue}
+                      />
+                    ),
+                  },
+                  {
+                    label: 'Dates & Duree',
+                    content: (
+                      <EditDatesFields
+                        control={control}
+                        errors={errors}
+                        isEditing={isEditing}
+                        watchValues={watchValues as ConventionEditFormData}
+                        setValue={setValue}
+                        autoDateFin={autoDateFin}
+                        onAutoDateFinChange={setAutoDateFin}
+                      />
+                    ),
+                  },
+                  {
+                    label: 'Partenaires',
+                    content: (
+                      <Box sx={{ py: 4, textAlign: 'center' }}>
+                        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 2 }}>
+                          Les partenaires se gerent depuis la page de visualisation.
+                        </Typography>
+                        <Button
+                          size="small"
+                          startIcon={<Eye size={14} />}
+                          onClick={() => navigate(`/conventions/${id}`)}
+                          sx={{ ...componentStyles.buttonPrimary, textTransform: 'none' }}
+                        >
+                          Voir la convention
+                        </Button>
+                      </Box>
+                    ),
+                  },
+                ]}
+              />
+
+              {/* Save reminder in edit mode */}
+              {isEditing && isDirty && (
+                <Alert
+                  severity="warning"
+                  sx={{
+                    mt: 2,
+                    bgcolor: colors.warning[50],
+                    border: `1px solid ${colors.warning[200]}`,
+                    '& .MuiAlert-icon': { color: colors.warning[600] },
+                  }}
+                >
+                  Vous avez des modifications non enregistrees. Cliquez sur "Enregistrer" pour sauvegarder.
+                </Alert>
+              )}
+            </FormView>
+          </Box>
+
+          {/* Info sidebar */}
+          <Box sx={{ width: 280, flexShrink: 0, display: { xs: 'none', lg: 'block' } }}>
+            <Box sx={{ position: 'sticky', top: 16 }}>
+              <EditInfoPanel
+                metadata={metadata}
+                budget={watchValues.budget || 0}
+                tauxCommission={watchValues.tauxCommission || 0}
+                tauxTva={watchValues.tauxTva || 0}
+              />
+            </Box>
+          </Box>
+        </Box>
       </Box>
     </AppLayout>
   )

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 import { Box, Typography, Button } from '@mui/material'
-import { TrendingUp } from '@mui/icons-material'
-import { StatusBadge, InlineTable, Notebook } from '@/components/core'
+import { TrendingUp, Assessment, ListAlt } from '@mui/icons-material'
+import { StatusBadge, InlineTable, Notebook, ResizableSection } from '@/components/core'
 import ConventionStatsCard from './ConventionStatsCard'
 import ConventionAvenantsTab from './ConventionAvenantsTab'
 import { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedTab'
@@ -83,7 +83,10 @@ const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'se
 
 /**
  * SECTION: Realisation
- * Execution data: stats/KPIs, projects, marches, sous-conventions, avenants
+ * Execution data: stats/KPIs, projects, marches, sous-conventions, avenants.
+ *
+ * Each sub-section is wrapped in a ResizableSection for collapsible
+ * and resizable layout control.
  */
 const ConventionRealisationSection = ({
   convention,
@@ -113,90 +116,100 @@ const ConventionRealisationSection = ({
       />
 
       {/* Stats Card */}
-      <Box sx={{ mb: 2 }}>
+      <ResizableSection
+        title="Indicateurs cles"
+        storageKey="conv-real-stats"
+        icon={<Assessment sx={{ color: colors.info[500], fontSize: 16 }} />}
+      >
         <ConventionStatsCard
           conventionId={convention.id}
           onStatClick={() => {
             setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
           }}
         />
-      </Box>
+      </ResizableSection>
 
       {/* Notebook with tabs */}
-      <Box ref={tabsRef}>
-        <Notebook
-          tabs={[
-            {
-              label: 'Projets',
-              count: projets.length,
-              content: (
-                <ConventionProjetsTab
-                  projets={projets}
-                  onLinkProjet={onLinkProjet}
-                  onUnlinkProjet={onUnlinkProjet}
-                />
-              ),
-            },
-            {
-              label: 'Marches',
-              count: marches.length,
-              content: (
-                <ConventionMarchesTab
-                  marches={marches}
-                  onLinkMarche={onLinkMarche}
-                  onUnlinkMarche={onUnlinkMarche}
-                />
-              ),
-            },
-            {
-              label: 'Sous-conventions',
-              count: sousConventions.length,
-              content: (
-                <Box>
-                  <InlineTable
-                    headers={[
-                      { label: 'Code', width: '20%' },
-                      { label: 'Libelle' },
-                      { label: 'Statut', width: 120 },
-                      { label: 'Budget', width: 150, align: 'right' },
-                      { label: 'Actions', width: 100, align: 'center' },
-                    ]}
-                    rows={sousConventions.map(sc => [
-                      <Typography key="code" sx={{ color: colors.primary[600], fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>{sc.code}</Typography>,
-                      <Typography key="lib" sx={{ fontSize: typography.sizes.sm }}>{sc.libelle}</Typography>,
-                      <StatusBadge key="stat" status={sc.statut} size="small" />,
-                      <Typography key="bud" sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(sc.budget)}</Typography>,
-                      sc.statut === 'BROUILLON' ? (
-                        <Button key="act" size="small" onClick={(e) => { e.stopPropagation(); onEditSousConvention(sc) }}
-                          sx={{ textTransform: 'none', fontSize: typography.sizes.xs, color: colors.primary[600], minWidth: 0 }}>
-                          Modifier
-                        </Button>
-                      ) : null,
-                    ])}
-                    onRowClick={(idx) => onNavigateToConvention(sousConventions[idx].id)}
-                    emptyMessage="Aucune sous-convention"
-                    showAddLine={convention.typeConvention === 'CADRE'}
-                    onAddLine={onAddSousConvention}
+      <ResizableSection
+        title="Projets, marches et avenants"
+        storageKey="conv-real-notebook"
+        icon={<ListAlt sx={{ color: colors.success[500], fontSize: 16 }} />}
+      >
+        <Box ref={tabsRef}>
+          <Notebook
+            tabs={[
+              {
+                label: 'Projets',
+                count: projets.length,
+                content: (
+                  <ConventionProjetsTab
+                    projets={projets}
+                    onLinkProjet={onLinkProjet}
+                    onUnlinkProjet={onUnlinkProjet}
                   />
-                </Box>
-              ),
-            },
-            {
-              label: 'Avenants',
-              count: avenants.length,
-              content: (
-                <ConventionAvenantsTab
-                  convention={convention}
-                  avenants={avenants}
-                  formatCurrency={formatCurrency}
-                  formatDate={formatDate}
-                  getStatusColor={getStatusColor}
-                />
-              ),
-            },
-          ]}
-        />
-      </Box>
+                ),
+              },
+              {
+                label: 'Marches',
+                count: marches.length,
+                content: (
+                  <ConventionMarchesTab
+                    marches={marches}
+                    onLinkMarche={onLinkMarche}
+                    onUnlinkMarche={onUnlinkMarche}
+                  />
+                ),
+              },
+              {
+                label: 'Sous-conventions',
+                count: sousConventions.length,
+                content: (
+                  <Box>
+                    <InlineTable
+                      headers={[
+                        { label: 'Code', width: '20%' },
+                        { label: 'Libelle' },
+                        { label: 'Statut', width: 120 },
+                        { label: 'Budget', width: 150, align: 'right' },
+                        { label: 'Actions', width: 100, align: 'center' },
+                      ]}
+                      rows={sousConventions.map(sc => [
+                        <Typography key="code" sx={{ color: colors.primary[600], fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>{sc.code}</Typography>,
+                        <Typography key="lib" sx={{ fontSize: typography.sizes.sm }}>{sc.libelle}</Typography>,
+                        <StatusBadge key="stat" status={sc.statut} size="small" />,
+                        <Typography key="bud" sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(sc.budget)}</Typography>,
+                        sc.statut === 'BROUILLON' ? (
+                          <Button key="act" size="small" onClick={(e) => { e.stopPropagation(); onEditSousConvention(sc) }}
+                            sx={{ textTransform: 'none', fontSize: typography.sizes.xs, color: colors.primary[600], minWidth: 0 }}>
+                            Modifier
+                          </Button>
+                        ) : null,
+                      ])}
+                      onRowClick={(idx) => onNavigateToConvention(sousConventions[idx].id)}
+                      emptyMessage="Aucune sous-convention"
+                      showAddLine={convention.typeConvention === 'CADRE'}
+                      onAddLine={onAddSousConvention}
+                    />
+                  </Box>
+                ),
+              },
+              {
+                label: 'Avenants',
+                count: avenants.length,
+                content: (
+                  <ConventionAvenantsTab
+                    convention={convention}
+                    avenants={avenants}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                    getStatusColor={getStatusColor}
+                  />
+                ),
+              },
+            ]}
+          />
+        </Box>
+      </ResizableSection>
     </Box>
   )
 }

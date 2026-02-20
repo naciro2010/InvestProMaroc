@@ -59,3 +59,6 @@ export type { ColumnDef } from './ListView'
 
 export { WizardView } from './WizardView'
 export type { WizardStep } from './WizardView'
+
+// Resizable Section (collapsible + resizable panels for detail pages)
+export { default as ResizableSection } from './ResizableSection'

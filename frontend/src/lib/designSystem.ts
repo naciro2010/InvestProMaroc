@@ -1858,6 +1858,114 @@ export const componentStyles = {
       gap: 2,
     },
   },
+
+  /**
+   * Resizable Section - Collapsible & resizable content panels.
+   * Used to wrap detail page sections so users can collapse, resize,
+   * and arrange visible content. Persists state in localStorage.
+   *
+   * Usage:
+   *   import { ResizableSection } from '@/components/core'
+   *   <ResizableSection title="Budget" storageKey="conv-budget">
+   *     <MyCardContent />
+   *   </ResizableSection>
+   */
+  resizableSection: {
+    /** Outer container */
+    container: {
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.lg,
+      bgcolor: colors.surface,
+      overflow: 'hidden',
+      mb: 2,
+      transition: `border-color ${transitions.normal}`,
+      '&:hover': {
+        borderColor: colors.neutral[300],
+      },
+    },
+    /** Clickable header bar */
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      px: 2,
+      py: 1,
+      cursor: 'pointer',
+      userSelect: 'none' as const,
+      bgcolor: colors.neutral[25],
+      borderBottom: `1px solid ${colors.divider}`,
+      transition: `background-color ${transitions.fast}`,
+      '&:hover': {
+        bgcolor: colors.neutral[50],
+      },
+    },
+    /** Collapsed header (no bottom border) */
+    headerCollapsed: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1,
+      px: 2,
+      py: 1,
+      cursor: 'pointer',
+      userSelect: 'none' as const,
+      bgcolor: colors.neutral[25],
+      transition: `background-color ${transitions.fast}`,
+      '&:hover': {
+        bgcolor: colors.neutral[50],
+      },
+    },
+    /** Chevron icon area */
+    chevron: {
+      display: 'flex',
+      alignItems: 'center',
+      color: colors.textSecondary,
+      flexShrink: 0,
+      transition: `transform ${transitions.fast}`,
+    },
+    /** Section icon */
+    icon: {
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+    },
+    /** Section title */
+    title: {
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.semibold,
+      color: colors.textPrimary,
+      flex: 1,
+      textTransform: 'uppercase' as const,
+      letterSpacing: typography.letterSpacing.wide,
+    },
+    /** Actions slot (right side of header) */
+    actions: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.5,
+      flexShrink: 0,
+    },
+    /** Scrollable content area */
+    content: {
+      p: 2,
+    },
+    /** Bottom resize handle */
+    resizeHandle: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: 10,
+      cursor: 'row-resize',
+      color: colors.neutral[300],
+      bgcolor: colors.neutral[25],
+      borderTop: `1px solid ${colors.divider}`,
+      transition: `all ${transitions.fast}`,
+      '&:hover': {
+        bgcolor: colors.neutral[100],
+        color: colors.neutral[500],
+        height: 14,
+      },
+    },
+  },
 } as const
 
 // ==================== STATUTS - Mapping couleurs ====================

@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react'
 import { colors, typography, spacing, borders, transitions } from '@/lib/designSystem'
 
 export interface MenuItem {
-  icon: JSX.Element
+  icon: React.ReactElement
   label: string
   path: string
   implemented: boolean

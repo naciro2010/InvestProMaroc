@@ -70,7 +70,7 @@ class ConventionPartenaireService(
         }
 
         // Calculer la commission d'intervention
-        val commissionIntervention: BigDecimal = budgetAlloue.multiply(convention.tauxCommission).divide(BigDecimal(100))
+        val commissionIntervention: BigDecimal = budgetAlloue.multiply(convention.tauxCommission).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
         // Créer le lien
         val conventionPartenaire = ConventionPartenaire(
@@ -124,7 +124,7 @@ class ConventionPartenaireService(
 
         // Recalculer la commission
         val tauxCommission: BigDecimal = conventionPartenaire.convention?.tauxCommission ?: BigDecimal.ZERO
-        val commissionIntervention: BigDecimal = budgetAlloue.multiply(tauxCommission).divide(BigDecimal(100))
+        val commissionIntervention: BigDecimal = budgetAlloue.multiply(tauxCommission).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
         conventionPartenaire.apply {
             this.budgetAlloue = budgetAlloue

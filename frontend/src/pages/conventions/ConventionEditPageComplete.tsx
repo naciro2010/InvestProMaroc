@@ -18,6 +18,7 @@ import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { calculateDurationMonths } from '@/utils/dateUtils'
 import EditGeneralFields from '@/components/conventions/edit/EditGeneralFields'
 import EditBudgetFields from '@/components/conventions/edit/EditBudgetFields'
+import EditBudgetLinesSection from '@/components/conventions/edit/EditBudgetLinesSection'
 import EditDatesFields from '@/components/conventions/edit/EditDatesFields'
 import EditInfoPanel from '@/components/conventions/edit/EditInfoPanel'
 import {
@@ -277,13 +278,19 @@ const ConventionEditPageComplete = () => {
                   {
                     label: 'Budget & Commission',
                     content: (
-                      <EditBudgetFields
-                        control={control}
-                        errors={errors}
-                        isEditing={isEditing}
-                        watchValues={watchValues as ConventionEditFormData}
-                        setValue={setValue}
-                      />
+                      <>
+                        <EditBudgetFields
+                          control={control}
+                          errors={errors}
+                          isEditing={isEditing}
+                          watchValues={watchValues as ConventionEditFormData}
+                          setValue={setValue}
+                        />
+                        <EditBudgetLinesSection
+                          conventionId={parseInt(id)}
+                          isEditing={isEditing}
+                        />
+                      </>
                     ),
                   },
                   {

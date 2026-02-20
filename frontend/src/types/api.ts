@@ -208,6 +208,21 @@ export interface ConventionSimpleDTO {
   tauxCommission: number
 }
 
+export interface ConventionBudgetLigneDTO {
+  id: number
+  conventionId: number
+  categorieDepenseId: number
+  categorieDepenseCode: string
+  categorieDepenseLibelle: string
+  designation: string | null
+  montant: number
+  pourcentage: number
+  remarques: string | null
+  actif: boolean
+  createdAt: string | null
+  updatedAt: string | null
+}
+
 // ============================================================================
 // CategorieDepense Types (Référentiel)
 // ============================================================================

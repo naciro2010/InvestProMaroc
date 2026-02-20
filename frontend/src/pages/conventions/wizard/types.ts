@@ -124,17 +124,15 @@ export const calculateTotals = (formData: ConventionWizardFormData): WizardTotal
 
   let commissionHT = 0
   if (formData.commissionMode === 'PAR_CATEGORIE' && formData.lignesBudget.length > 0) {
+    // Per-category: sum of individual line commissions with plafond logic
     commissionHT = formData.lignesBudget.reduce((sum, ligne) => {
       const base = formData.baseCalcul === 'DECAISSEMENTS_HT' ? ligne.montantHT : ligne.montantTTC
       const assiette = ligne.plafond > 0 ? Math.min(base, ligne.plafond) : base
       return sum + (assiette * ligne.tauxCommissionLigne) / 100
     }, 0)
   } else {
-    const baseAmount =
-      formData.baseCalcul === 'DECAISSEMENTS_HT'
-        ? totalLignesHT || formData.budgetGlobal
-        : totalLignesTTC || formData.budgetGlobal
-    commissionHT = (baseAmount * formData.tauxCommission) / 100
+    // Global mode: commission always based on budgetGlobal
+    commissionHT = (formData.budgetGlobal * formData.tauxCommission) / 100
   }
 
   const commissionTTC = commissionHT * (1 + formData.tauxTva / 100)

@@ -6,6 +6,7 @@ export { default as ConventionDatesEditCard } from './ConventionDatesEditCard'
 // New Odoo-style edit components
 export { default as EditGeneralFields } from './EditGeneralFields'
 export { default as EditBudgetFields } from './EditBudgetFields'
+export { default as EditBudgetLinesSection } from './EditBudgetLinesSection'
 export { default as EditDatesFields } from './EditDatesFields'
 export { default as EditInfoPanel } from './EditInfoPanel'
 export type { ConventionEditFormData, ConventionMetadata } from './editTypes'

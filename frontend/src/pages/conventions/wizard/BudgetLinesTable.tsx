@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import {
   Box, Typography, Chip, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, IconButton, Paper, Tooltip,
@@ -41,6 +41,12 @@ const BudgetLinesTable = ({
     designation: '', montantHT: 0, tauxTVA: 20, montantTTC: 0, plafond: 0, tauxCommissionLigne: 0,
   })
 
+  // Ref keeps the latest editingLigne value accessible across async boundaries
+  // (fixes Enter key race condition where DecimalInput blur commits value
+  //  but saveEditing reads stale closure state before React re-renders)
+  const editingLigneRef = useRef(editingLigne)
+  editingLigneRef.current = editingLigne
+
   const findCategory = (ligne: BudgetLigne): CategorieDepenseListDTO | undefined =>
     categories.find((c) => c.id === ligne.categorieDepenseId)
 
@@ -49,17 +55,23 @@ const BudgetLinesTable = ({
     setEditingLigne({ ...lignes[index] })
   }
 
-  const saveEditing = () => {
+  const saveEditing = useCallback(() => {
     if (editingIndex === null) return
-    const montantTTC = editingLigne.montantHT * (1 + editingLigne.tauxTVA / 100)
-    onUpdateLigne(editingIndex, { ...editingLigne, montantTTC })
+    const current = editingLigneRef.current
+    const montantTTC = current.montantHT * (1 + current.tauxTVA / 100)
+    onUpdateLigne(editingIndex, { ...current, montantTTC })
     setEditingIndex(null)
-  }
+  }, [editingIndex, onUpdateLigne])
 
   const cancelEditing = () => setEditingIndex(null)
 
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter') saveEditing()
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      // Defer save to next tick so DecimalInput blur has time to commit its value
+      // and React processes the state update before we read from the ref
+      setTimeout(saveEditing, 0)
+    }
     if (e.key === 'Escape') cancelEditing()
   }
 

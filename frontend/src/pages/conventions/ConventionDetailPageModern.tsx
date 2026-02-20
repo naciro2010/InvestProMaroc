@@ -92,7 +92,7 @@ const ConventionDetailPageModern = () => {
       setLoading(true)
       const res = await conventionsAPI.getById(cid)
       setConvention(res.data.data || res.data)
-      Promise.all([loadAvenants(cid), loadSousConventions(cid), loadProjets(cid), loadMarches(cid), loadVersements(cid)])
+      await Promise.all([loadAvenants(cid), loadSousConventions(cid), loadProjets(cid), loadMarches(cid), loadVersements(cid)])
     } catch { setError('Erreur lors du chargement de la convention') }
     finally { setLoading(false) }
   }

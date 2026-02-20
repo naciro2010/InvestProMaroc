@@ -7,6 +7,7 @@ import ma.investpro.service.DimensionAnalytiqueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -58,7 +59,7 @@ class DimensionAnalytiqueController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun create(@RequestBody dimension: DimensionAnalytique): ResponseEntity<DimensionAnalytique> {
+    fun create(@Valid @RequestBody dimension: DimensionAnalytique): ResponseEntity<DimensionAnalytique> {
         return try {
             val created = dimensionService.create(dimension)
             ResponseEntity.status(HttpStatus.CREATED).body(created)
@@ -71,7 +72,7 @@ class DimensionAnalytiqueController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun update(
         @PathVariable id: Long,
-        @RequestBody dimension: DimensionAnalytique
+        @Valid @RequestBody dimension: DimensionAnalytique
     ): ResponseEntity<DimensionAnalytique> {
         return try {
             val updated = dimensionService.update(id, dimension)
@@ -121,7 +122,7 @@ class DimensionAnalytiqueController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun createValeur(
         @PathVariable id: Long,
-        @RequestBody valeur: ValeurDimension
+        @Valid @RequestBody valeur: ValeurDimension
     ): ResponseEntity<ValeurDimension> {
         return try {
             val created = dimensionService.createValeur(id, valeur)
@@ -135,7 +136,7 @@ class DimensionAnalytiqueController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun updateValeur(
         @PathVariable id: Long,
-        @RequestBody valeur: ValeurDimension
+        @Valid @RequestBody valeur: ValeurDimension
     ): ResponseEntity<ValeurDimension> {
         return try {
             val updated = dimensionService.updateValeur(id, valeur)

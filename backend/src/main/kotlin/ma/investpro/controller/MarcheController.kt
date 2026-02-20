@@ -11,6 +11,7 @@ import ma.investpro.security.annotations.AdminOnly
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 private val logger = KotlinLogging.logger {}
@@ -72,7 +73,7 @@ class MarcheController(
 
     @PostMapping
     @WriteAccess
-    fun createMarche(@RequestBody marche: Marche): ResponseEntity<ApiResponse<MarcheDTO>> {
+    fun createMarche(@Valid @RequestBody marche: Marche): ResponseEntity<ApiResponse<MarcheDTO>> {
         logger.info { "🌐 API: POST /api/marches - Création marché ${marche.numeroMarche}" }
         return try {
             val createdMarche = marcheService.create(marche)
@@ -88,7 +89,7 @@ class MarcheController(
 
     @PutMapping("/{id}")
     @WriteAccess
-    fun updateMarche(@PathVariable id: Long, @RequestBody marche: Marche): ResponseEntity<ApiResponse<MarcheDTO>> {
+    fun updateMarche(@PathVariable id: Long, @Valid @RequestBody marche: Marche): ResponseEntity<ApiResponse<MarcheDTO>> {
         logger.info { "🌐 API: PUT /api/marches/$id" }
         return try {
             val updatedMarche = marcheService.update(id, marche)

@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
@@ -155,7 +156,7 @@ class PieceJointeController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun updatePieceJointe(
         @PathVariable id: Long,
-        @RequestBody request: PieceJointeUpdateRequest
+        @Valid @RequestBody request: PieceJointeUpdateRequest
     ): ResponseEntity<ApiResponse<PieceJointeDTO>> {
         return try {
             val result = pieceJointeService.updatePieceJointe(id, request)

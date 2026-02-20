@@ -10,6 +10,7 @@ import ma.investpro.security.annotations.ReadAccess
 import ma.investpro.security.annotations.WriteAccess
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -69,7 +70,7 @@ class VersementPrevisionnelController(
     @WriteAccess
     fun create(
         @PathVariable conventionId: Long,
-        @RequestBody request: VersementPrevisionnelRequest
+        @Valid @RequestBody request: VersementPrevisionnelRequest
     ): ResponseEntity<ApiResponse<VersementPrevisionnelDTO>> {
         return try {
             val convention = conventionRepository.findById(conventionId).orElse(null)
@@ -108,7 +109,7 @@ class VersementPrevisionnelController(
     @WriteAccess
     fun update(
         @PathVariable id: Long,
-        @RequestBody request: VersementPrevisionnelRequest
+        @Valid @RequestBody request: VersementPrevisionnelRequest
     ): ResponseEntity<ApiResponse<VersementPrevisionnelDTO>> {
         return try {
             val versement = versementRepository.findById(id).orElse(null)

@@ -8,6 +8,7 @@ import ma.investpro.service.ImputationAnalytiqueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
@@ -48,7 +49,7 @@ class ImputationAnalytiqueController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun create(@RequestBody imputation: ImputationAnalytique): ResponseEntity<ImputationAnalytique> {
+    fun create(@Valid @RequestBody imputation: ImputationAnalytique): ResponseEntity<ImputationAnalytique> {
         return try {
             val created = imputationService.create(imputation)
             ResponseEntity.status(HttpStatus.CREATED).body(created)
@@ -61,7 +62,7 @@ class ImputationAnalytiqueController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun update(
         @PathVariable id: Long,
-        @RequestBody imputation: ImputationAnalytique
+        @Valid @RequestBody imputation: ImputationAnalytique
     ): ResponseEntity<ImputationAnalytique> {
         return try {
             val updated = imputationService.update(id, imputation)

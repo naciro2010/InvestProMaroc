@@ -54,8 +54,21 @@ class OrdrePaiementService(
             throw IllegalArgumentException("Un ordre de paiement avec le numéro ${ordrePaiement.numeroOP} existe déjà")
         }
 
-        // Déterminer si c'est un paiement partiel
-        ordrePaiement.estPaiementPartiel = ordrePaiement.montantAPayer < decompte.netAPayer
+        // Valider le montant à payer
+        require(ordrePaiement.montantAPayer.compareTo(BigDecimal.ZERO) > 0) {
+            "Le montant à payer doit être supérieur à zéro"
+        }
+
+        require(decompte.netAPayer.compareTo(BigDecimal.ZERO) > 0) {
+            "Le net à payer du décompte doit être supérieur à zéro"
+        }
+
+        require(ordrePaiement.montantAPayer.compareTo(decompte.netAPayer) <= 0) {
+            "Le montant à payer (${ordrePaiement.montantAPayer}) ne peut pas dépasser le net à payer du décompte (${decompte.netAPayer})"
+        }
+
+        // Déterminer si c'est un paiement partiel (use compareTo for BigDecimal)
+        ordrePaiement.estPaiementPartiel = ordrePaiement.montantAPayer.compareTo(decompte.netAPayer) < 0
 
         return ordrePaiementRepository.save(ordrePaiement)
     }
@@ -69,6 +82,15 @@ class OrdrePaiementService(
             "Seuls les ordres de paiement en BROUILLON peuvent être modifiés"
         }
 
+        // Valider le montant à payer
+        require(ordrePaiement.montantAPayer.compareTo(BigDecimal.ZERO) > 0) {
+            "Le montant à payer doit être supérieur à zéro"
+        }
+
+        require(ordrePaiement.montantAPayer.compareTo(existing.decompte.netAPayer) <= 0) {
+            "Le montant à payer (${ordrePaiement.montantAPayer}) ne peut pas dépasser le net à payer du décompte (${existing.decompte.netAPayer})"
+        }
+
         existing.apply {
             numeroOP = ordrePaiement.numeroOP
             dateOP = ordrePaiement.dateOP
@@ -79,8 +101,8 @@ class OrdrePaiementService(
             observations = ordrePaiement.observations
         }
 
-        // Recalculer si c'est partiel
-        existing.estPaiementPartiel = existing.montantAPayer < existing.decompte.netAPayer
+        // Recalculer si c'est partiel (use compareTo for BigDecimal)
+        existing.estPaiementPartiel = existing.montantAPayer.compareTo(existing.decompte.netAPayer) < 0
 
         return ordrePaiementRepository.save(existing)
     }

@@ -9,6 +9,7 @@ import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 private val logger = KotlinLogging.logger {}
@@ -61,7 +62,7 @@ class BudgetController(private val budgetService: BudgetService) {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun createBudget(@RequestBody budget: Budget): ResponseEntity<ApiResponse<Budget>> {
+    fun createBudget(@Valid @RequestBody budget: Budget): ResponseEntity<ApiResponse<Budget>> {
         logger.info { "POST /api/budgets - Creation budget ${budget.version}" }
         return try {
             val createdBudget = budgetService.create(budget)
@@ -89,7 +90,7 @@ class BudgetController(private val budgetService: BudgetService) {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun updateBudget(@PathVariable id: Long, @RequestBody budget: Budget): ResponseEntity<ApiResponse<Budget>> {
+    fun updateBudget(@PathVariable id: Long, @Valid @RequestBody budget: Budget): ResponseEntity<ApiResponse<Budget>> {
         logger.info { "PUT /api/budgets/$id" }
         return try {
             val updatedBudget = budgetService.update(id, budget)
@@ -173,7 +174,7 @@ class BudgetController(private val budgetService: BudgetService) {
 
     @PostMapping("/{id}/valider")
     @PreAuthorize("hasRole('ADMIN')")
-    fun validerBudget(@PathVariable id: Long, @RequestBody body: Map<String, Long>): ResponseEntity<ApiResponse<Budget>> {
+    fun validerBudget(@PathVariable id: Long, @Valid @RequestBody body: Map<String, Long>): ResponseEntity<ApiResponse<Budget>> {
         logger.info { "POST /api/budgets/$id/valider" }
         return try {
             val valideParId = body["valideParId"] ?: throw IllegalArgumentException("valideParId requis")

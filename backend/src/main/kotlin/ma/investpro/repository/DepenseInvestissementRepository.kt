@@ -79,4 +79,52 @@ interface DepenseInvestissementRepository : JpaRepository<DepenseInvestissement,
         WHERE d.convention.id = :conventionId
     """)
     fun getTotalByConvention(@Param("conventionId") conventionId: Long): java.math.BigDecimal
+
+    /**
+     * Recherche étendue avec relations pré-chargées (évite N+1)
+     */
+    @Query("""
+        SELECT d FROM DepenseInvestissement d
+        LEFT JOIN FETCH d.fournisseur
+        LEFT JOIN FETCH d.convention
+        LEFT JOIN FETCH d.compteBancaire
+        WHERE (:fournisseurId IS NULL OR d.fournisseur.id = :fournisseurId)
+        AND (:conventionId IS NULL OR d.convention.id = :conventionId)
+        AND (:statut IS NULL OR d.statut = :statut)
+        AND (:paye IS NULL OR d.paye = :paye)
+        AND (:dateDebut IS NULL OR d.dateFacture >= :dateDebut)
+        AND (:dateFin IS NULL OR d.dateFacture <= :dateFin)
+        ORDER BY d.dateFacture DESC
+    """)
+    fun searchFull(
+        @Param("fournisseurId") fournisseurId: Long?,
+        @Param("conventionId") conventionId: Long?,
+        @Param("statut") statut: StatutDepense?,
+        @Param("paye") paye: Boolean?,
+        @Param("dateDebut") dateDebut: LocalDate?,
+        @Param("dateFin") dateFin: LocalDate?
+    ): List<DepenseInvestissement>
+
+    /**
+     * Toutes les dépenses avec relations pré-chargées (évite N+1)
+     */
+    @Query("""
+        SELECT d FROM DepenseInvestissement d
+        LEFT JOIN FETCH d.fournisseur
+        LEFT JOIN FETCH d.convention
+        LEFT JOIN FETCH d.compteBancaire
+        ORDER BY d.dateFacture DESC
+    """)
+    fun findAllWithRelations(): List<DepenseInvestissement>
+
+    /**
+     * Comptage par statut payé
+     */
+    fun countByPaye(paye: Boolean): Long
+
+    /**
+     * Somme montant TTC par statut payé
+     */
+    @Query("SELECT COALESCE(SUM(d.montantTtc), 0) FROM DepenseInvestissement d WHERE d.paye = :paye")
+    fun sumMontantTtcByPaye(@Param("paye") paye: Boolean): java.math.BigDecimal
 }

@@ -54,4 +54,50 @@ interface CommissionRepository : JpaRepository<Commission, Long> {
         WHERE c.convention.id = :conventionId
     """)
     fun getTotalByConvention(@Param("conventionId") conventionId: Long): java.math.BigDecimal
+
+    /**
+     * Recherche multi-critères étendue (inclut fournisseur via dépense, année, mois)
+     */
+    @Query("""
+        SELECT c FROM Commission c
+        LEFT JOIN FETCH c.depense d
+        LEFT JOIN FETCH d.fournisseur
+        LEFT JOIN FETCH c.convention
+        WHERE (:conventionId IS NULL OR c.convention.id = :conventionId)
+        AND (:fournisseurId IS NULL OR d.fournisseur.id = :fournisseurId)
+        AND (:dateDebut IS NULL OR c.dateCalcul >= :dateDebut)
+        AND (:dateFin IS NULL OR c.dateCalcul <= :dateFin)
+        ORDER BY c.dateCalcul DESC
+    """)
+    fun searchFull(
+        @Param("conventionId") conventionId: Long?,
+        @Param("fournisseurId") fournisseurId: Long?,
+        @Param("dateDebut") dateDebut: LocalDate?,
+        @Param("dateFin") dateFin: LocalDate?
+    ): List<Commission>
+
+    /**
+     * Toutes les commissions avec relations pré-chargées (évite N+1)
+     */
+    @Query("""
+        SELECT c FROM Commission c
+        LEFT JOIN FETCH c.depense d
+        LEFT JOIN FETCH d.fournisseur
+        LEFT JOIN FETCH c.convention
+        ORDER BY c.dateCalcul DESC
+    """)
+    fun findAllWithRelations(): List<Commission>
+
+    /**
+     * Commissions par convention avec relations pré-chargées
+     */
+    @Query("""
+        SELECT c FROM Commission c
+        LEFT JOIN FETCH c.depense d
+        LEFT JOIN FETCH d.fournisseur
+        LEFT JOIN FETCH c.convention
+        WHERE c.convention.id = :conventionId
+        ORDER BY c.dateCalcul DESC
+    """)
+    fun findByConventionIdWithRelations(@Param("conventionId") conventionId: Long): List<Commission>
 }

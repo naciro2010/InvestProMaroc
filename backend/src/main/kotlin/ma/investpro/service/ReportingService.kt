@@ -1,8 +1,6 @@
 package ma.investpro.service
 
 import ma.investpro.dto.*
-import ma.investpro.entity.Commission
-import ma.investpro.entity.DepenseInvestissement
 import ma.investpro.repository.CommissionRepository
 import ma.investpro.repository.DepenseInvestissementRepository
 import mu.KotlinLogging
@@ -23,89 +21,73 @@ class ReportingService(
 
     // ==================== RECHERCHE AVANCÉE ====================
 
-    fun searchDepenses(criteria: DepenseSearchCriteria): List<DepenseInvestissement> {
+    fun searchDepenses(criteria: DepenseSearchCriteria): List<ma.investpro.entity.DepenseInvestissement> {
         logger.info { "Recherche dépenses avec critères: $criteria" }
 
-        var depenses = depenseRepository.findAll()
-
-        criteria.dateDebut?.let { dateDebut ->
-            depenses = depenses.filter { it.dateFacture >= dateDebut }
+        // Build date range from year/month if provided
+        val dateDebut = criteria.dateDebut ?: criteria.annee?.let { annee ->
+            criteria.mois?.let { mois -> LocalDate.of(annee, mois, 1) }
+                ?: LocalDate.of(annee, 1, 1)
+        }
+        val dateFin = criteria.dateFin ?: criteria.annee?.let { annee ->
+            criteria.mois?.let { mois -> LocalDate.of(annee, mois, 1).plusMonths(1).minusDays(1) }
+                ?: LocalDate.of(annee, 12, 31)
         }
 
-        criteria.dateFin?.let { dateFin ->
-            depenses = depenses.filter { it.dateFacture <= dateFin }
+        return depenseRepository.searchFull(
+            fournisseurId = criteria.fournisseurId,
+            conventionId = criteria.conventionId,
+            statut = null,
+            paye = criteria.paye,
+            dateDebut = dateDebut,
+            dateFin = dateFin
+        ).let { results ->
+            // compteBancaireId filter applied post-query (already fetched via JOIN FETCH)
+            if (criteria.compteBancaireId != null) {
+                results.filter { it.compteBancaire?.id == criteria.compteBancaireId }
+            } else {
+                results
+            }
         }
-
-        criteria.fournisseurId?.let { fournisseurId ->
-            depenses = depenses.filter { it.fournisseur?.id == fournisseurId }
-        }
-
-        criteria.conventionId?.let { conventionId ->
-            depenses = depenses.filter { it.convention?.id == conventionId }
-        }
-
-        criteria.compteBancaireId?.let { compteId ->
-            depenses = depenses.filter { it.compteBancaire?.id == compteId }
-        }
-
-        criteria.paye?.let { paye ->
-            depenses = depenses.filter { it.paye == paye }
-        }
-
-        criteria.annee?.let { annee ->
-            depenses = depenses.filter { it.dateFacture.year == annee }
-        }
-
-        criteria.mois?.let { mois ->
-            depenses = depenses.filter { it.dateFacture.monthValue == mois }
-        }
-
-        return depenses
     }
 
-    fun searchCommissions(criteria: CommissionSearchCriteria): List<Commission> {
+    fun searchCommissions(criteria: CommissionSearchCriteria): List<ma.investpro.entity.Commission> {
         logger.info { "Recherche commissions avec critères: $criteria" }
 
-        var commissions = commissionRepository.findAll()
-
-        criteria.dateDebut?.let { dateDebut ->
-            commissions = commissions.filter { it.dateCalcul >= dateDebut }
+        // Build date range from year/month if provided
+        val dateDebut = criteria.dateDebut ?: criteria.annee?.let { annee ->
+            criteria.mois?.let { mois -> LocalDate.of(annee, mois, 1) }
+                ?: LocalDate.of(annee, 1, 1)
+        }
+        val dateFin = criteria.dateFin ?: criteria.annee?.let { annee ->
+            criteria.mois?.let { mois -> LocalDate.of(annee, mois, 1).plusMonths(1).minusDays(1) }
+                ?: LocalDate.of(annee, 12, 31)
         }
 
-        criteria.dateFin?.let { dateFin ->
-            commissions = commissions.filter { it.dateCalcul <= dateFin }
-        }
-
-        criteria.conventionId?.let { conventionId ->
-            commissions = commissions.filter { it.convention?.id == conventionId }
-        }
-
-        criteria.fournisseurId?.let { fournisseurId ->
-            commissions = commissions.filter { it.depense?.fournisseur?.id == fournisseurId }
-        }
-
-        criteria.annee?.let { annee ->
-            commissions = commissions.filter { it.dateCalcul.year == annee }
-        }
-
-        criteria.mois?.let { mois ->
-            commissions = commissions.filter { it.dateCalcul.monthValue == mois }
-        }
-
-        return commissions
+        return commissionRepository.searchFull(
+            conventionId = criteria.conventionId,
+            fournisseurId = criteria.fournisseurId,
+            dateDebut = dateDebut,
+            dateFin = dateFin
+        )
     }
 
     // ==================== STATISTIQUES COMMISSIONS ====================
 
     fun getCommissionStatsByPeriod(annee: Int? = null, mois: Int? = null): List<CommissionStats> {
-        var commissions = commissionRepository.findAll()
-
-        if (annee != null) {
-            commissions = commissions.filter { it.dateCalcul.year == annee }
-            if (mois != null) {
-                commissions = commissions.filter { it.dateCalcul.monthValue == mois }
-            }
+        val dateDebut = annee?.let { y ->
+            mois?.let { m -> LocalDate.of(y, m, 1) } ?: LocalDate.of(y, 1, 1)
         }
+        val dateFin = annee?.let { y ->
+            mois?.let { m -> LocalDate.of(y, m, 1).plusMonths(1).minusDays(1) } ?: LocalDate.of(y, 12, 31)
+        }
+
+        val commissions = commissionRepository.searchFull(
+            conventionId = null,
+            fournisseurId = null,
+            dateDebut = dateDebut,
+            dateFin = dateFin
+        )
 
         val grouped = commissions.groupBy {
             "${it.dateCalcul.year}-${it.dateCalcul.monthValue.toString().padStart(2, '0')}"
@@ -123,8 +105,16 @@ class ReportingService(
     }
 
     fun getCommissionStatsByFournisseur(fournisseurId: Long? = null): List<CommissionStats> {
-        val commissions = commissionRepository.findAll()
-            .filter { fournisseurId == null || it.depense?.fournisseur?.id == fournisseurId }
+        val commissions = if (fournisseurId != null) {
+            commissionRepository.searchFull(
+                conventionId = null,
+                fournisseurId = fournisseurId,
+                dateDebut = null,
+                dateFin = null
+            )
+        } else {
+            commissionRepository.findAllWithRelations()
+        }
 
         val grouped = commissions.groupBy { it.depense?.fournisseur }
 
@@ -144,9 +134,9 @@ class ReportingService(
 
     fun getCommissionStatsByConvention(conventionId: Long? = null): List<CommissionStats> {
         val commissions = if (conventionId != null) {
-            commissionRepository.findByConventionId(conventionId)
+            commissionRepository.findByConventionIdWithRelations(conventionId)
         } else {
-            commissionRepository.findAll()
+            commissionRepository.findAllWithRelations()
         }
 
         val grouped = commissions.groupBy { it.convention }
@@ -168,14 +158,21 @@ class ReportingService(
     // ==================== STATISTIQUES DÉPENSES ====================
 
     fun getDepenseStatsByPeriod(annee: Int? = null, mois: Int? = null): List<DepenseStats> {
-        var depenses = depenseRepository.findAll()
-
-        if (annee != null) {
-            depenses = depenses.filter { it.dateFacture.year == annee }
-            if (mois != null) {
-                depenses = depenses.filter { it.dateFacture.monthValue == mois }
-            }
+        val dateDebut = annee?.let { y ->
+            mois?.let { m -> LocalDate.of(y, m, 1) } ?: LocalDate.of(y, 1, 1)
         }
+        val dateFin = annee?.let { y ->
+            mois?.let { m -> LocalDate.of(y, m, 1).plusMonths(1).minusDays(1) } ?: LocalDate.of(y, 12, 31)
+        }
+
+        val depenses = depenseRepository.searchFull(
+            fournisseurId = null,
+            conventionId = null,
+            statut = null,
+            paye = null,
+            dateDebut = dateDebut,
+            dateFin = dateFin
+        )
 
         val grouped = depenses.groupBy {
             "${it.dateFacture.year}-${it.dateFacture.monthValue.toString().padStart(2, '0')}"
@@ -198,9 +195,16 @@ class ReportingService(
 
     fun getDepenseStatsByFournisseur(fournisseurId: Long? = null): List<DepenseStats> {
         val depenses = if (fournisseurId != null) {
-            depenseRepository.findByFournisseurId(fournisseurId)
+            depenseRepository.searchFull(
+                fournisseurId = fournisseurId,
+                conventionId = null,
+                statut = null,
+                paye = null,
+                dateDebut = null,
+                dateFin = null
+            )
         } else {
-            depenseRepository.findAll()
+            depenseRepository.findAllWithRelations()
         }
 
         val grouped = depenses.groupBy { it.fournisseur }
@@ -224,12 +228,10 @@ class ReportingService(
     }
 
     fun getPaiementStats(): PaiementStats {
-        val allDepenses = depenseRepository.findAll()
-        val payes = allDepenses.filter { it.paye }
-        val enAttente = allDepenses.filter { !it.paye }
-
-        val totalPaye = payes.sumOf { it.montantTtc }
-        val totalEnAttente = enAttente.sumOf { it.montantTtc }
+        val countPayes = depenseRepository.countByPaye(true)
+        val countEnAttente = depenseRepository.countByPaye(false)
+        val totalPaye = depenseRepository.sumMontantTtcByPaye(true)
+        val totalEnAttente = depenseRepository.sumMontantTtcByPaye(false)
         val total = totalPaye.add(totalEnAttente)
 
         val tauxPaiement = if (total > BigDecimal.ZERO) {
@@ -241,8 +243,8 @@ class ReportingService(
         }
 
         return PaiementStats(
-            nombrePaiements = payes.size.toLong(),
-            nombreEnAttente = enAttente.size.toLong(),
+            nombrePaiements = countPayes,
+            nombreEnAttente = countEnAttente,
             totalPaye = totalPaye,
             totalEnAttente = totalEnAttente,
             tauxPaiement = tauxPaiement
@@ -256,27 +258,33 @@ class ReportingService(
         val currentYear = now.year
         val currentMonth = now.monthValue
 
-        // Statistiques dépenses
-        val allDepenses = depenseRepository.findAll()
-        val depensesAnnee = allDepenses.filter { it.dateFacture.year == currentYear }
-        val depensesMois = allDepenses.filter {
-            it.dateFacture.year == currentYear && it.dateFacture.monthValue == currentMonth
-        }
+        val yearStart = LocalDate.of(currentYear, 1, 1)
+        val yearEnd = LocalDate.of(currentYear, 12, 31)
+        val monthStart = LocalDate.of(currentYear, currentMonth, 1)
+        val monthEnd = monthStart.plusMonths(1).minusDays(1)
+
+        // All depenses with relations pre-loaded (single query)
+        val allDepenses = depenseRepository.findAllWithRelations()
+        val totalHt = allDepenses.sumOf { it.montantHt }
+        val totalTtc = allDepenses.sumOf { it.montantTtc }
+
+        // Year and month filtered from already-loaded data (no extra queries)
+        val depensesAnnee = allDepenses.filter { it.dateFacture in yearStart..yearEnd }
+        val depensesMois = allDepenses.filter { it.dateFacture in monthStart..monthEnd }
 
         val depenseStats = DepenseGlobalStats(
             total = allDepenses.size.toLong(),
-            totalHt = allDepenses.sumOf { it.montantHt },
-            totalTtc = allDepenses.sumOf { it.montantTtc },
+            totalHt = totalHt,
+            totalTtc = totalTtc,
             anneeEnCours = depensesAnnee.sumOf { it.montantTtc },
             moisEnCours = depensesMois.sumOf { it.montantTtc }
         )
 
-        // Statistiques commissions
-        val allCommissions = commissionRepository.findAll()
-        val commissionsAnnee = allCommissions.filter { it.dateCalcul.year == currentYear }
-        val commissionsMois = allCommissions.filter {
-            it.dateCalcul.year == currentYear && it.dateCalcul.monthValue == currentMonth
-        }
+        // All commissions with relations pre-loaded (single query)
+        val allCommissions = commissionRepository.findAllWithRelations()
+
+        val commissionsAnnee = allCommissions.filter { it.dateCalcul in yearStart..yearEnd }
+        val commissionsMois = allCommissions.filter { it.dateCalcul in monthStart..monthEnd }
 
         val commissionStats = CommissionGlobalStats(
             total = allCommissions.size.toLong(),
@@ -286,7 +294,7 @@ class ReportingService(
             moisEnCours = commissionsMois.sumOf { it.montantCommissionTtc }
         )
 
-        // Top fournisseurs
+        // Top fournisseurs (relations already fetched, no N+1)
         val topFournisseurs = allDepenses
             .groupBy { it.fournisseur }
             .mapNotNull { (fournisseur, depenses) ->

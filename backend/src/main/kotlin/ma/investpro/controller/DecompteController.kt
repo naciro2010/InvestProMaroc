@@ -13,6 +13,7 @@ import ma.investpro.security.annotations.AdminOnly
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
@@ -72,7 +73,7 @@ class DecompteController(
 
     @PostMapping
     @WriteAccess
-    fun createDecompte(@RequestBody decompte: Decompte): ResponseEntity<ApiResponse<DecompteDTO>> {
+    fun createDecompte(@Valid @RequestBody decompte: Decompte): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: POST /api/decomptes - Création décompte ${decompte.numeroDecompte}" }
         return try {
             val createdDecompte = decompteService.create(decompte)
@@ -86,7 +87,7 @@ class DecompteController(
 
     @PutMapping("/{id}")
     @WriteAccess
-    fun updateDecompte(@PathVariable id: Long, @RequestBody decompte: Decompte): ResponseEntity<ApiResponse<DecompteDTO>> {
+    fun updateDecompte(@PathVariable id: Long, @Valid @RequestBody decompte: Decompte): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: PUT /api/decomptes/$id" }
         return try {
             val updatedDecompte = decompteService.update(id, decompte)
@@ -177,7 +178,7 @@ class DecompteController(
     @WriteAccess
     fun rejeterDecompte(
         @PathVariable id: Long,
-        @RequestBody request: RejetRequest
+        @Valid @RequestBody request: RejetRequest
     ): ResponseEntity<ApiResponse<DecompteDTO>> {
         logger.info { "🌐 API: POST /api/decomptes/$id/rejeter - Rejet du décompte: ${request.motif}" }
         return try {

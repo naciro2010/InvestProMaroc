@@ -8,6 +8,7 @@ import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 private val logger = KotlinLogging.logger {}
@@ -60,7 +61,7 @@ class PaiementController(private val paiementService: PaiementService) {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun createPaiement(@RequestBody paiement: Paiement): ResponseEntity<ApiResponse<Paiement>> {
+    fun createPaiement(@Valid @RequestBody paiement: Paiement): ResponseEntity<ApiResponse<Paiement>> {
         logger.info { "POST /api/paiements - Creation paiement ${paiement.referencePaiement}" }
         return try {
             val createdPaiement = paiementService.create(paiement)
@@ -88,7 +89,7 @@ class PaiementController(private val paiementService: PaiementService) {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun updatePaiement(@PathVariable id: Long, @RequestBody paiement: Paiement): ResponseEntity<ApiResponse<Paiement>> {
+    fun updatePaiement(@PathVariable id: Long, @Valid @RequestBody paiement: Paiement): ResponseEntity<ApiResponse<Paiement>> {
         logger.info { "PUT /api/paiements/$id" }
         return try {
             val updatedPaiement = paiementService.update(id, paiement)

@@ -116,7 +116,7 @@ class ConventionController(
 
     @PostMapping
     @WriteAccess
-    fun create(@RequestBody convention: Convention): ResponseEntity<ConventionDTO> {
+    fun create(@Valid @RequestBody convention: Convention): ResponseEntity<ConventionDTO> {
         return try {
             // Capturer l'utilisateur créateur depuis le contexte de sécurité
             val authentication = SecurityContextHolder.getContext().authentication
@@ -135,7 +135,7 @@ class ConventionController(
     @WriteAccess
     fun update(
         @PathVariable id: Long,
-        @RequestBody convention: Convention
+        @Valid @RequestBody convention: Convention
     ): ResponseEntity<ConventionDTO> {
         return try {
             val updated = conventionService.update(id, convention)
@@ -175,7 +175,7 @@ class ConventionController(
     @WriteAccess
     fun valider(
         @PathVariable id: Long,
-        @RequestBody request: Map<String, Long>
+        @Valid @RequestBody request: Map<String, Long>
     ): ResponseEntity<ConventionDTO> {
         return try {
             val valideParId = request["valideParId"]
@@ -193,7 +193,7 @@ class ConventionController(
     @WriteAccess
     fun rejeter(
         @PathVariable id: Long,
-        @RequestBody request: Map<String, String>
+        @Valid @RequestBody request: Map<String, String>
     ): ResponseEntity<ConventionDTO> {
         return try {
             val motif = request["motif"] ?: "Aucun motif fourni"
@@ -221,7 +221,7 @@ class ConventionController(
     @WriteAccess
     fun annuler(
         @PathVariable id: Long,
-        @RequestBody request: Map<String, String>
+        @Valid @RequestBody request: Map<String, String>
     ): ResponseEntity<ConventionDTO> {
         return try {
             val motif = request["motif"] ?: "Aucun motif fourni"
@@ -291,7 +291,7 @@ class ConventionController(
     @WriteAccess
     fun creerSousConvention(
         @PathVariable parentId: Long,
-        @RequestBody sousConvention: Convention
+        @Valid @RequestBody sousConvention: Convention
     ): ResponseEntity<ConventionDTO> {
         return try {
             val created = conventionService.creerSousConvention(parentId, sousConvention)
@@ -343,7 +343,7 @@ class ConventionController(
     @WriteAccess
     fun ajouterImputation(
         @PathVariable conventionId: Long,
-        @RequestBody imputation: ImputationPrevisionnelle
+        @Valid @RequestBody imputation: ImputationPrevisionnelle
     ): ResponseEntity<ImputationPrevisionnelleDTO> {
         return try {
             val convention = conventionService.findById(conventionId)
@@ -398,7 +398,7 @@ class ConventionController(
     @WriteAccess
     fun ajouterVersement(
         @PathVariable conventionId: Long,
-        @RequestBody request: Map<String, Any?>
+        @Valid @RequestBody request: Map<String, Any?>
     ): ResponseEntity<VersementPrevisionnelDTO> {
         return try {
             val convention = conventionService.findById(conventionId)

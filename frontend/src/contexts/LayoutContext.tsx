@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react'
 
 /**
  * Layout Context Interface
@@ -50,35 +50,64 @@ export function LayoutContextProvider({ children }: LayoutContextProviderProps):
   const [isTablet, setIsTablet] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
 
-  // Initialize sidebar state from localStorage
+  // Initialize sidebar state from localStorage (closed on mobile)
   useEffect(() => {
-    const savedSidebarState = localStorage.getItem('sidebar-open')
-    if (savedSidebarState !== null) {
-      setSidebarOpen(JSON.parse(savedSidebarState))
+    const width = window.innerWidth
+    if (width < 1024) {
+      // Always start closed on mobile/tablet
+      setSidebarOpen(false)
+    } else {
+      const savedSidebarState = localStorage.getItem('sidebar-open')
+      if (savedSidebarState !== null) {
+        setSidebarOpen(JSON.parse(savedSidebarState))
+      }
     }
     setIsHydrated(true)
   }, [])
 
-  // Update localStorage when sidebar state changes
+  // Update localStorage when sidebar state changes (desktop only)
   useEffect(() => {
-    if (isHydrated) {
+    if (isHydrated && window.innerWidth >= 1024) {
       localStorage.setItem('sidebar-open', JSON.stringify(sidebarOpen))
     }
   }, [sidebarOpen, isHydrated])
 
+  // Track previous width to detect actual crossings of the 1024px breakpoint
+  const prevWidthRef = useRef<number>(window.innerWidth)
+  const isHydratedRef = useRef(isHydrated)
+  useEffect(() => { isHydratedRef.current = isHydrated }, [isHydrated])
+
+  // Update breakpoint flags (runs on mount + resize, no sidebar dependency)
+  const updateBreakpoints = useCallback(() => {
+    const width = window.innerWidth
+    setIsMobile(width < 640)
+    setIsTablet(width >= 640 && width < 1024)
+  }, [])
+
   // Handle responsive breakpoints
   useEffect(() => {
+    // Set initial breakpoints
+    updateBreakpoints()
+
     const handleResize = (): void => {
       const width = window.innerWidth
-      // Mobile: < 640px
-      setIsMobile(width < 640)
-      // Tablet: 640px - 1024px
-      setIsTablet(width >= 640 && width < 1024)
+      const prevWidth = prevWidthRef.current
+      prevWidthRef.current = width
 
-      // Auto-close sidebar on mobile, open on desktop
-      if (width < 1024 && sidebarOpen && isHydrated) {
+      // Update breakpoint flags
+      updateBreakpoints()
+
+      if (!isHydratedRef.current) return
+
+      // Only auto-toggle sidebar when crossing the 1024px breakpoint
+      const wasDesktop = prevWidth >= 1024
+      const isNowDesktop = width >= 1024
+
+      if (wasDesktop && !isNowDesktop) {
+        // Crossed from desktop to mobile/tablet: close sidebar
         setSidebarOpen(false)
-      } else if (width >= 1024 && !sidebarOpen && isHydrated) {
+      } else if (!wasDesktop && isNowDesktop) {
+        // Crossed from mobile/tablet to desktop: restore sidebar
         const saved = localStorage.getItem('sidebar-open')
         if (saved === null || JSON.parse(saved)) {
           setSidebarOpen(true)
@@ -86,13 +115,9 @@ export function LayoutContextProvider({ children }: LayoutContextProviderProps):
       }
     }
 
-    // Initial check
-    handleResize()
-
-    // Add resize listener
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [sidebarOpen, isHydrated])
+  }, [updateBreakpoints])
 
   const toggleSidebar = (): void => {
     setSidebarOpen((prev) => !prev)

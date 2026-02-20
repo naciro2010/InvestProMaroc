@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
@@ -6,7 +6,7 @@ import {
   ShoppingCart, UserCog, Wallet, Tags, Handshake, BarChart3, Search, X,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { colors, typography, borders, transitions, shadows, spacing } from '@/lib/designSystem'
+import { colors, typography, borders, transitions, shadows } from '@/lib/designSystem'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
   useSensor, useSensors, DragEndEvent,
@@ -107,8 +107,18 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
     }
   }, [])
 
+  // Track whether this is the initial mount to avoid closing sidebar on first render
+  const isInitialMount = useRef(true)
+
   useEffect(() => {
-    if (isMobile) onClose()
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+    } else if (isMobile) {
+      // Close sidebar on navigation (not on initial mount)
+      onClose()
+    }
+
+    // Auto-expand the group containing the active route
     const activeGroup = menuGroups.find(group =>
       group.items.some(item =>
         location.pathname === item.path || location.pathname.startsWith(item.path + '/')
@@ -117,13 +127,16 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
     if (activeGroup && !expandedGroups[activeGroup.key]) {
       setExpandedGroups(prev => ({ ...prev, [activeGroup.key]: true }))
     }
-  }, [location.pathname, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleGroup = (groupKey: string) => {
     setExpandedGroups(prev => ({ ...prev, [groupKey]: !prev[groupKey] }))
   }
 
   const handleLogout = () => { logout(); navigate('/login') }
+
+  // Close sidebar on mobile after navigation
+  const handleMobileNavigate = isMobile ? onClose : undefined
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/')
@@ -212,8 +225,8 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
       {/* Navigation */}
       <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
         {/* Top-level items */}
-        <SidebarLink path="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" isActive={isActive} />
-        <SidebarLink path="/reporting" icon={<BarChart3 className="w-4 h-4" />} label="Reporting" isActive={isActive} />
+        <SidebarLink path="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" isActive={isActive} onNavigate={handleMobileNavigate} />
+        <SidebarLink path="/reporting" icon={<BarChart3 className="w-4 h-4" />} label="Reporting" isActive={isActive} onNavigate={handleMobileNavigate} />
 
         <div style={{ height: '1px', backgroundColor: colors.divider, margin: '6px 16px' }} />
 
@@ -239,6 +252,7 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
                       isActive={isActive}
                       indent
                       badge={!item.implemented ? 'Bientot' : undefined}
+                      onNavigate={handleMobileNavigate}
                     />
                   ))}
                 </div>
@@ -310,18 +324,20 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
 // Micro-component: Single sidebar link
 interface SidebarLinkProps {
   path: string
-  icon: JSX.Element
+  icon: React.ReactElement
   label: string
   isActive: (path: string) => boolean
   indent?: boolean
   badge?: string
+  onNavigate?: () => void
 }
 
-const SidebarLink = ({ path, icon, label, isActive, indent, badge }: SidebarLinkProps) => {
+const SidebarLink = ({ path, icon, label, isActive, indent, badge, onNavigate }: SidebarLinkProps) => {
   const active = isActive(path)
   return (
     <Link
       to={path}
+      onClick={onNavigate}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: indent ? '7px 16px 7px 36px' : '7px 16px',
@@ -361,7 +377,7 @@ const SidebarLink = ({ path, icon, label, isActive, indent, badge }: SidebarLink
 
 // Micro-component: Dropdown menu item
 interface DropdownItemProps {
-  icon: JSX.Element
+  icon: React.ReactElement
   label: string
   onClick: () => void
   danger?: boolean

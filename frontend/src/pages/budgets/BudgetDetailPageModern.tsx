@@ -195,12 +195,19 @@ const BudgetDetailPageModern = () => {
               Date: {formatDate(budget.dateBudget)}
             </Typography>
 
-            {/* Field Groups */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
-              <FieldGroup title="Informations generales">
+            {/* Fields - single flat block */}
+            <Box sx={{ mb: 3 }}>
+              <FieldGroup title="Informations" columns={3}>
                 <Field label="Version" value={budget.version} />
                 <Field label="Statut" value={<StatusBadge status={budget.statut} />} />
                 <Field label="Date du budget" value={formatDate(budget.dateBudget)} />
+                <Field label="Plafond Convention" value={formatCurrency(budget.plafondConvention)} isMoney />
+                <Field label="Total Budget" value={formatCurrency(budget.totalBudget)} isMoney />
+                <Field
+                  label="Delta"
+                  value={`${deltaMontant > 0 ? '+' : ''}${formatCurrency(deltaMontant)}`}
+                  isMoney
+                />
                 {convention && (
                   <Field
                     label="Convention"
@@ -209,16 +216,6 @@ const BudgetDetailPageModern = () => {
                     onLinkClick={() => navigate(`/conventions/${convention.id}`)}
                   />
                 )}
-              </FieldGroup>
-
-              <FieldGroup title="Montants">
-                <Field label="Plafond Convention" value={formatCurrency(budget.plafondConvention)} isMoney />
-                <Field label="Total Budget" value={formatCurrency(budget.totalBudget)} isMoney />
-                <Field
-                  label="Delta"
-                  value={`${deltaMontant > 0 ? '+' : ''}${formatCurrency(deltaMontant)}`}
-                  isMoney
-                />
               </FieldGroup>
             </Box>
 

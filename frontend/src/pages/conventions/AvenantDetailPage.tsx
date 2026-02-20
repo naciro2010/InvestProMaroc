@@ -383,37 +383,32 @@ const AvenantDetailPage = () => {
               </Alert>
             )}
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
-              <FieldGroup title="Informations generales">
+            <Box sx={{ mb: 3 }}>
+              <FieldGroup title="Informations" columns={3}>
                 <Field label="Numero" value={avenant.numeroAvenant} />
                 <Field label="Statut" value={<StatusBadge status={avenant.statut} />} />
+                <Field label="Date" value={formatDate(avenant.dateAvenant)} />
                 <Field
                   label="Convention"
                   value={`${avenant.conventionNumero} - ${avenant.conventionLibelle}`}
                   isLink
                   onLinkClick={() => navigate(`/conventions/${conventionId}`)}
                 />
-                <Field label="Date" value={formatDate(avenant.dateAvenant)} />
-                <Field label="Objet" value={avenant.objet} fullWidth />
-                {avenant.motif && <Field label="Motif" value={avenant.motif} fullWidth />}
-              </FieldGroup>
-
-              <FieldGroup title="Impact financier">
                 <Field label="Budget avant" value={formatCurrency(avenant.ancienBudget)} isMoney />
                 <Field label="Budget apres" value={formatCurrency(avenant.nouveauBudget)} isMoney />
                 <Field
                   label="Variation"
                   value={`${(avenant.deltaBudget || 0) >= 0 ? '+' : ''}${formatCurrency(avenant.deltaBudget)}`}
                   isMoney
-                  fullWidth
                 />
                 {(avenant.ancienTauxCommission !== undefined || avenant.nouveauTauxCommission !== undefined) && (
                   <Field
                     label="Taux commission"
                     value={`${formatPercentage(avenant.ancienTauxCommission)} \u2192 ${formatPercentage(avenant.nouveauTauxCommission)}`}
-                    fullWidth
                   />
                 )}
+                <Field label="Objet" value={avenant.objet} fullWidth />
+                {avenant.motif && <Field label="Motif" value={avenant.motif} fullWidth />}
               </FieldGroup>
             </Box>
 

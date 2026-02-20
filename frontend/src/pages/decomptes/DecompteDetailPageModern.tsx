@@ -236,13 +236,18 @@ const DecompteDetailPageModern = () => {
               Marche: {decompte.marcheCode || 'N/A'} - {decompte.marcheObjet || ''}
             </Typography>
 
-            {/* Field Groups */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
-              <FieldGroup title="Informations generales">
+            {/* Fields - single flat block */}
+            <Box sx={{ mb: 3 }}>
+              <FieldGroup title="Informations" columns={3}>
                 <Field label="Numero" value={decompte.numeroDecompte} />
                 <Field label="Statut" value={<StatusBadge status={decompte.statut} />} />
                 <Field label="Date" value={formatDate(decompte.dateDecompte)} />
                 <Field label="Periode" value={`${formatDate(decompte.periodeDebut)} - ${formatDate(decompte.periodeFin)}`} />
+                <Field label="Montant Brut HT" value={formatCurrency(decompte.montantBrutHT)} isMoney />
+                <Field label="TVA" value={formatCurrency(decompte.montantTVA)} isMoney />
+                <Field label="Montant TTC" value={formatCurrency(decompte.montantTTC)} isMoney />
+                <Field label="Retenues" value={formatCurrency(decompte.totalRetenues)} isMoney />
+                <Field label="Net a payer" value={formatCurrency(decompte.netAPayer)} isMoney />
                 {decompte.marcheId && (
                   <Field
                     label="Marche"
@@ -251,14 +256,6 @@ const DecompteDetailPageModern = () => {
                     onLinkClick={() => navigate(`/marches/${decompte.marcheId}`)}
                   />
                 )}
-              </FieldGroup>
-
-              <FieldGroup title="Montants">
-                <Field label="Montant Brut HT" value={formatCurrency(decompte.montantBrutHT)} isMoney />
-                <Field label="TVA" value={formatCurrency(decompte.montantTVA)} isMoney />
-                <Field label="Montant TTC" value={formatCurrency(decompte.montantTTC)} isMoney />
-                <Field label="Retenues" value={formatCurrency(decompte.totalRetenues)} isMoney />
-                <Field label="Net a payer" value={formatCurrency(decompte.netAPayer)} isMoney />
               </FieldGroup>
             </Box>
 

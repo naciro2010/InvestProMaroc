@@ -243,7 +243,7 @@ const VersementFormDialog = ({
               severity={formData.montant === formData.montantPrevu ? 'success' : formData.montant > formData.montantPrevu ? 'warning' : 'info'}
               sx={{ py: 0.5 }}
             >
-              Ecart : {new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(formData.montant - formData.montantPrevu)}
+              Ecart : {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(formData.montant - formData.montantPrevu)}
               {formData.montant > formData.montantPrevu ? ' (depassement)' : formData.montant < formData.montantPrevu ? ' (economie)' : ' (conforme)'}
             </Alert>
           )}

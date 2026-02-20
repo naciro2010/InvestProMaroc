@@ -22,7 +22,7 @@ const SousConventionWizard = lazy(() => import('./pages/conventions/SousConventi
 const AvenantForm = lazy(() => import('./pages/conventions/AvenantForm'))
 const AvenantDetailPage = lazy(() => import('./pages/conventions/AvenantDetailPage'))
 const ConventionDetailPageModern = lazy(() => import('./pages/conventions/ConventionDetailPageModern'))
-const ConventionEditPageComplete = lazy(() => import('./pages/conventions/ConventionEditPageComplete'))
+// ConventionEditPageComplete replaced by ConventionWizardComplete for unified edit experience
 const ParametrageConventionsPage = lazy(() => import('./pages/settings/ParametrageConventionsPage'))
 
 // Marchés
@@ -177,7 +177,7 @@ function App() {
                       path="/conventions/:id/edit"
                       element={
                         <ProtectedRoute>
-                          <ConventionEditPageComplete />
+                          <ConventionWizardComplete />
                         </ProtectedRoute>
                       }
                     />

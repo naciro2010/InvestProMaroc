@@ -19,7 +19,7 @@ import StatusBadge from '@/components/core/StatusBadge'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 
 const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
 // ============ PROJETS TAB ============
 

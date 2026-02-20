@@ -12,7 +12,7 @@ const ConventionFinancesCard = ({ conventionId }: ConventionFinancesCardProps) =
   const { data: finances, loading, error } = useConventionFinances(conventionId)
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
   const formatPercent = (value: number) => `${value.toFixed(2)}%`
 

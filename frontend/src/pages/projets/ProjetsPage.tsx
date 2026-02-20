@@ -379,7 +379,7 @@ const ProjetsPage = () => {
     if (montant >= 1000000) {
       return `${(montant / 1000000).toFixed(2)} M DH`
     }
-    return `${montant.toLocaleString('fr-MA')} DH`
+    return `${montant.toLocaleString('fr-FR')} DH`
   }
 
   if (loading) {

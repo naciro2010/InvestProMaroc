@@ -84,7 +84,7 @@ export default function CommissionsPage() {
   })
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-MA', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'MAD',
       minimumFractionDigits: 2,
@@ -93,7 +93,7 @@ export default function CommissionsPage() {
 
   const formatDate = (date?: string) => {
     if (!date) return '-'
-    return new Date(date).toLocaleDateString('fr-MA')
+    return new Date(date).toLocaleDateString('fr-FR')
   }
 
   const currentYear = new Date().getFullYear()

@@ -124,7 +124,7 @@ const ConventionPartenairesCard = ({
   }
 
   const formatCurrencyFull = (amount: number): string =>
-    new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
   const formatPercentage = (pct: number): string => `${pct.toFixed(2)}%`
 

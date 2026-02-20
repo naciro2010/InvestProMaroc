@@ -53,7 +53,7 @@ interface ParentConventionBannerProps {
 }
 
 const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
 const formatCurrencyShort = (amount: number): string => {
   const millions = amount / 1_000_000

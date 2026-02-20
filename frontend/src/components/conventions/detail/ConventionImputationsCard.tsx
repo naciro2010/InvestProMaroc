@@ -260,7 +260,7 @@ const ConventionImputationsCard = ({
                   <TableCell align="right">
                     <Typography variant="body2" sx={{ fontWeight: typography.weights.medium }}>
                       {imputation.montantPrevu
-                        ? new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(imputation.montantPrevu)
+                        ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(imputation.montantPrevu)
                         : '-'
                       }
                     </Typography>

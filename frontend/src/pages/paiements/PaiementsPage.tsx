@@ -36,7 +36,7 @@ export default function PaiementsPage() {
   })
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-MA', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'MAD',
       minimumFractionDigits: 0,
@@ -45,7 +45,7 @@ export default function PaiementsPage() {
 
   const formatDate = (date?: string) => {
     if (!date) return '-'
-    return new Date(date).toLocaleDateString('fr-MA')
+    return new Date(date).toLocaleDateString('fr-FR')
   }
 
   const getModeBadge = (mode: ModePaiement) => {

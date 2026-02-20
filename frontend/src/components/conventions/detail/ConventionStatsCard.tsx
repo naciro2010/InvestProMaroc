@@ -13,7 +13,7 @@ const ConventionStatsCard = ({ conventionId, onStatClick }: ConventionStatsCardP
   const { data: stats, loading, error } = useConventionStats(conventionId)
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', notation: 'compact', maximumFractionDigits: 1 }).format(amount)
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', notation: 'compact', maximumFractionDigits: 1 }).format(amount)
 
   if (loading) {
     return (

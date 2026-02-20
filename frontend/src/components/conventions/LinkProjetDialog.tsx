@@ -154,7 +154,7 @@ export default function LinkProjetDialog({
   };
 
   const formatBudget = (amount: number): string => {
-    return new Intl.NumberFormat('fr-MA', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'MAD',
       minimumFractionDigits: 0,

@@ -40,7 +40,7 @@ interface ConventionBudgetExecutionCardProps {
 }
 
 const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat('fr-MA', {
+  new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'MAD',
     minimumFractionDigits: 2,

@@ -88,7 +88,7 @@ const ConventionSubventionsCard = ({ conventionId }: ConventionSubventionsCardPr
   }
 
   const formatCurrency = (amount: number, devise = 'MAD') => {
-    return new Intl.NumberFormat('fr-MA', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: devise,
     }).format(amount)

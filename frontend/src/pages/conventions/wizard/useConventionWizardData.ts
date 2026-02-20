@@ -19,6 +19,27 @@ interface ConventionListItem {
   code: string
 }
 
+interface ConventionApiData {
+  id: number
+  code: string
+  numero: string
+  typeConvention: string
+  type?: string
+  libelle: string
+  designation?: string
+  objet: string
+  objetRich?: string
+  budget: number
+  budgetTotal?: number
+  tauxCommission: number
+  baseCalcul: string
+  tauxTva: number
+  dateConvention: string
+  dateDebut: string
+  dateFin: string | null
+  dureeMois?: number
+}
+
 interface UseConventionWizardDataResult {
   id: string | undefined
   isEditing: boolean
@@ -79,37 +100,44 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
   // Initialize form with loaded data
   useEffect(() => {
     if (existingConvention?.data) {
-      const convention = existingConvention.data
-      const formatDate = (dateStr: string | Date | null | undefined) => {
+      // Handle ApiResponse wrapper: data may be at .data.data or .data
+      const responseData = existingConvention.data
+      const convention: ConventionApiData =
+        (responseData as { data?: ConventionApiData }).data ?? (responseData as ConventionApiData)
+
+      const formatDate = (dateStr: string | Date | null | undefined): string => {
         if (!dateStr) return ''
         return typeof dateStr === 'string'
           ? dateStr.split('T')[0]
           : new Date(dateStr).toISOString().split('T')[0]
       }
 
+      const dateDebut = formatDate(convention.dateDebut)
+      const dateFin = formatDate(convention.dateFin)
+      const dureeMois = dateDebut && dateFin
+        ? calculateDurationMonths(new Date(dateDebut), new Date(dateFin))
+        : (convention.dureeMois || 12)
+
       setFormData({
         code: convention.code || '',
-        numeroConvention: '',
-        libelle: convention.designation || '',
-        libelleRich: convention.designation || '',
+        numeroConvention: convention.numero || '',
+        libelle: convention.libelle || convention.designation || '',
+        libelleRich: convention.libelle || convention.designation || '',
         objet: convention.objet || '',
-        objetRich: convention.objetRich || '',
-        type: convention.type || 'CADRE',
-        dateSignature: new Date().toISOString().split('T')[0],
-        dateDebut: formatDate(convention.dateDebut),
-        dateFin: formatDate(convention.dateFin),
-        dureeMois:
-          convention.dateFin && convention.dateDebut
-            ? calculateDurationMonths(new Date(convention.dateDebut), new Date(convention.dateFin))
-            : 12,
-        budgetGlobal: convention.budgetTotal || 0,
+        objetRich: convention.objetRich || convention.objet || '',
+        type: (convention.typeConvention || convention.type || 'CADRE') as ConventionWizardFormData['type'],
+        dateSignature: formatDate(convention.dateConvention) || new Date().toISOString().split('T')[0],
+        dateDebut,
+        dateFin,
+        dureeMois,
+        budgetGlobal: convention.budget || convention.budgetTotal || 0,
         lignesBudget: [],
         commissionMode: 'GLOBAL',
         tauxCommission: convention.tauxCommission || 2.5,
         baseCalcul:
           (convention.baseCalcul as 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT') ||
           'DECAISSEMENTS_TTC',
-        tauxTva: 20,
+        tauxTva: convention.tauxTva || 20,
         partenaires: [],
         subventions: [],
         files: [],

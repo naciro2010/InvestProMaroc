@@ -308,7 +308,7 @@ const BudgetWizard = () => {
                       Total budget
                     </Typography>
                     <Typography variant="h6" color="primary">
-                      {new Intl.NumberFormat('fr-MA', {
+                      {new Intl.NumberFormat('fr-FR', {
                         style: 'currency',
                         currency: 'MAD',
                       }).format(formData.totalBudget)}
@@ -320,7 +320,7 @@ const BudgetWizard = () => {
                       Plafond convention
                     </Typography>
                     <Typography variant="h6" color="text.secondary">
-                      {new Intl.NumberFormat('fr-MA', {
+                      {new Intl.NumberFormat('fr-FR', {
                         style: 'currency',
                         currency: 'MAD',
                       }).format(formData.plafondConvention)}

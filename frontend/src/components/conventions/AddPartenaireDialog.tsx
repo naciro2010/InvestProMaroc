@@ -74,7 +74,7 @@ interface ValidationErrors {
 type SyncSource = 'budget' | 'pourcentage' | 'none';
 
 const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount);
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount);
 
 /**
  * Modal dialog for adding/editing a partenaire in a convention.

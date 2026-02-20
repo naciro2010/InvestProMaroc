@@ -457,7 +457,7 @@ const DecompteWizard = () => {
                     Montant brut HT
                   </Typography>
                   <Typography variant="body1" fontWeight={600}>
-                    {new Intl.NumberFormat('fr-MA', {
+                    {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'MAD',
                     }).format(formData.montantBrutHT)}
@@ -469,7 +469,7 @@ const DecompteWizard = () => {
                     TVA ({formData.tauxTVA}%)
                   </Typography>
                   <Typography variant="body1" fontWeight={600}>
-                    {new Intl.NumberFormat('fr-MA', {
+                    {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'MAD',
                     }).format(formData.montantTVA)}
@@ -483,7 +483,7 @@ const DecompteWizard = () => {
                     Montant TTC
                   </Typography>
                   <Typography variant="h6" color="primary">
-                    {new Intl.NumberFormat('fr-MA', {
+                    {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'MAD',
                     }).format(formData.montantTTC)}
@@ -495,7 +495,7 @@ const DecompteWizard = () => {
                     Total retenues
                   </Typography>
                   <Typography variant="body1" fontWeight={600} color="error">
-                    {new Intl.NumberFormat('fr-MA', {
+                    {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'MAD',
                     }).format(formData.totalRetenues)}
@@ -509,7 +509,7 @@ const DecompteWizard = () => {
                     Net a payer
                   </Typography>
                   <Typography variant="h5" color="success.main" fontWeight={700}>
-                    {new Intl.NumberFormat('fr-MA', {
+                    {new Intl.NumberFormat('fr-FR', {
                       style: 'currency',
                       currency: 'MAD',
                     }).format(formData.netAPayer)}
@@ -595,7 +595,7 @@ const DecompteWizard = () => {
                       Montant TTC
                     </Typography>
                     <Typography variant="h6" color="primary">
-                      {new Intl.NumberFormat('fr-MA', {
+                      {new Intl.NumberFormat('fr-FR', {
                         style: 'currency',
                         currency: 'MAD',
                       }).format(formData.montantTTC)}
@@ -607,7 +607,7 @@ const DecompteWizard = () => {
                       Net a payer
                     </Typography>
                     <Typography variant="h6" color="success.main">
-                      {new Intl.NumberFormat('fr-MA', {
+                      {new Intl.NumberFormat('fr-FR', {
                         style: 'currency',
                         currency: 'MAD',
                       }).format(formData.netAPayer)}

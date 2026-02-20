@@ -550,7 +550,7 @@ const MarcheWizard = () => {
                       Montant HT
                     </Typography>
                     <Typography variant="h6" color="text.secondary">
-                      {new Intl.NumberFormat('fr-MA', {
+                      {new Intl.NumberFormat('fr-FR', {
                         style: 'currency',
                         currency: 'MAD',
                       }).format(formData.montantHT)}
@@ -562,7 +562,7 @@ const MarcheWizard = () => {
                       Montant TTC
                     </Typography>
                     <Typography variant="h6" color="primary">
-                      {new Intl.NumberFormat('fr-MA', {
+                      {new Intl.NumberFormat('fr-FR', {
                         style: 'currency',
                         currency: 'MAD',
                       }).format(formData.montantTTC)}

@@ -55,7 +55,7 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-MA', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'MAD',
       notation: 'compact',

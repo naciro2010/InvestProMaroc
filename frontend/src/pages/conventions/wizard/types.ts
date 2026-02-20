@@ -109,7 +109,7 @@ export const WIZARD_STEPS = [
 // --- Utility functions ---
 
 export const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('fr-MA', {
+  return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'MAD',
   }).format(value)

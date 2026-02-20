@@ -47,7 +47,7 @@ export default function EditStep4Review({
   errors = {},
 }: EditStep4ReviewProps): JSX.Element {
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('fr-MA', {
+    return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'MAD',
       minimumFractionDigits: 2,

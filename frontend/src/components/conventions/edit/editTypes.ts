@@ -73,7 +73,7 @@ export const conventionEditSchema = z.object({
 })
 
 export const formatCurrencyMAD = (value: number): string =>
-  new Intl.NumberFormat('fr-MA', {
+  new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'MAD',
   }).format(value)

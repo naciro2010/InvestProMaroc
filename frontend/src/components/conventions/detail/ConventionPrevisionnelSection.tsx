@@ -60,7 +60,7 @@ interface ConventionPrevisionnelSectionProps {
 }
 
 const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount)
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
 const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
 

@@ -327,7 +327,7 @@ const ProjetWizard = () => {
                       Budget total
                     </Typography>
                     <Typography variant="h6" color="primary">
-                      {new Intl.NumberFormat('fr-MA', {
+                      {new Intl.NumberFormat('fr-FR', {
                         style: 'currency',
                         currency: 'MAD',
                       }).format(formData.budgetTotal)}

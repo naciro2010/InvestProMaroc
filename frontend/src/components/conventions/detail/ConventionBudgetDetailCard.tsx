@@ -52,7 +52,7 @@ interface ConventionBudgetDetailCardProps {
 }
 
 const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(amount)
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(amount)
 
 const formatPct = (val: number): string => `${val.toFixed(1)}%`
 

@@ -91,31 +91,25 @@ const ConventionPrevisionnelSection = ({
         borderColor={colors.primary[200]}
       />
 
-      {/* Info Fields - 3 collapsible FieldGroups */}
+      {/* Info Fields - single flat block, 4 columns */}
       <ResizableSection
         title="Informations generales"
         storageKey="conv-prev-info"
         icon={<Assignment sx={{ color: colors.primary[500], fontSize: 16 }} />}
       >
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
-          <FieldGroup title="Informations" collapsible storageKey="conv-info">
-            <Field label="Code" value={convention.code} />
-            <Field label="Numero" value={convention.numero} />
-            <Field label="Type" value={<StatusBadge status={convention.typeConvention} />} />
-            <Field label="Statut" value={<StatusBadge status={convention.statut} />} />
-          </FieldGroup>
-          <FieldGroup title="Finances" collapsible storageKey="conv-finances">
-            <Field label="Budget" value={formatCurrency(convention.budget)} isMoney />
-            <Field label="Commission" value={`${convention.tauxCommission}%`} />
-            <Field label="Base" value={convention.baseCalcul === 'DECAISSEMENTS_HT' ? 'HT' : 'TTC'} />
-            <Field label="TVA" value={`${convention.tauxTva}%`} />
-          </FieldGroup>
-          <FieldGroup title="Dates" collapsible storageKey="conv-dates">
-            <Field label="Signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
-            <Field label="Debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
-            <Field label="Fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
-          </FieldGroup>
-        </Box>
+        <FieldGroup title="Convention" columns={4} collapsible storageKey="conv-info-all">
+          <Field label="Code" value={convention.code} />
+          <Field label="Numero" value={convention.numero} />
+          <Field label="Type" value={<StatusBadge status={convention.typeConvention} />} />
+          <Field label="Statut" value={<StatusBadge status={convention.statut} />} />
+          <Field label="Budget" value={formatCurrency(convention.budget)} isMoney />
+          <Field label="Commission" value={`${convention.tauxCommission}%`} />
+          <Field label="Base" value={convention.baseCalcul === 'DECAISSEMENTS_HT' ? 'HT' : 'TTC'} />
+          <Field label="TVA" value={`${convention.tauxTva}%`} />
+          <Field label="Signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
+          <Field label="Debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
+          <Field label="Fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
+        </FieldGroup>
       </ResizableSection>
 
       {/* Financial Synthesis */}

@@ -228,20 +228,17 @@ const ProjetDetailPageModern = () => {
               Code: {projet.code}{projet.conventionNumero ? ` · Convention: ${projet.conventionNumero}` : ''}
             </Box>
 
-            {/* Field Groups */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
-              <FieldGroup title="Informations generales">
+            {/* Fields - single flat block */}
+            <Box sx={{ mb: 3 }}>
+              <FieldGroup title="Informations" columns={3}>
                 <Field label="Code" value={projet.code} />
                 <Field label="Statut" value={<StatusBadge status={projet.statut} />} />
                 <Field label="Avancement" value={`${projet.pourcentageAvancement}%`} />
+                <Field label="Budget total" value={formatCurrency(projet.budgetTotal)} isMoney />
+                <Field label="Budget consomme" value={formatCurrency(projet.budgetConsomme)} isMoney />
                 {projet.estEnRetard && (
                   <Field label="Retard" value={<StatusBadge status="REJETE" />} />
                 )}
-              </FieldGroup>
-
-              <FieldGroup title="Budget">
-                <Field label="Budget total" value={formatCurrency(projet.budgetTotal)} isMoney />
-                <Field label="Budget consomme" value={formatCurrency(projet.budgetConsomme)} isMoney />
               </FieldGroup>
             </Box>
 

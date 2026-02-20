@@ -159,13 +159,17 @@ const MarcheDetailPageModern = () => {
               {marche.numeroMarche}
             </Typography>
 
-            {/* Field Groups */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
-              <FieldGroup title="Informations generales">
+            {/* Fields - single flat block */}
+            <Box sx={{ mb: 3 }}>
+              <FieldGroup title="Informations" columns={3}>
                 <Field label="Numero" value={marche.numeroMarche} />
                 <Field label="Statut" value={<StatusBadge status={marche.statut} />} />
                 <Field label="Type" value={marche.typeMarche || '-'} />
                 <Field label="Nature" value={marche.natureMarche || '-'} />
+                <Field label="Montant HT" value={marche.montantHt ? formatCurrency(marche.montantHt) : '-'} isMoney />
+                <Field label="Montant TTC" value={marche.montantTtc ? formatCurrency(marche.montantTtc) : '-'} isMoney />
+                <Field label="Fournisseur" value={marche.fournisseurNom || '-'} />
+                <Field label="Delai execution" value={marche.delaiExecution ? `${marche.delaiExecution} jours` : '-'} />
                 {marche.conventionId && marche.conventionCode && (
                   <Field
                     label="Convention"
@@ -174,13 +178,6 @@ const MarcheDetailPageModern = () => {
                     onLinkClick={() => navigate(`/conventions/${marche.conventionId}`)}
                   />
                 )}
-              </FieldGroup>
-
-              <FieldGroup title="Finances">
-                <Field label="Montant HT" value={marche.montantHt ? formatCurrency(marche.montantHt) : '-'} isMoney />
-                <Field label="Montant TTC" value={marche.montantTtc ? formatCurrency(marche.montantTtc) : '-'} isMoney />
-                <Field label="Fournisseur" value={marche.fournisseurNom || '-'} />
-                <Field label="Delai execution" value={marche.delaiExecution ? `${marche.delaiExecution} jours` : '-'} />
               </FieldGroup>
             </Box>
 

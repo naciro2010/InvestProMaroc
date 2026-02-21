@@ -53,6 +53,7 @@ export interface ConventionWizardFormData {
 
   // Step 2: Budget
   budgetGlobal: number
+  tauxTvaLignes: number
   lignesBudget: BudgetLigne[]
 
   // Commission (integrated in Budget step)

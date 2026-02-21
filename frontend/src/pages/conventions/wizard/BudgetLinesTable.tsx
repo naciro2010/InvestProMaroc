@@ -121,12 +121,9 @@ const BudgetLinesTable = ({
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <DecimalInput
-                      size="small"
-                      value={editingLigne.tauxTVA}
-                      onChange={(v) => setEditingLigne((p) => ({ ...p, tauxTVA: v, montantTTC: p.montantHT * (1 + v / 100) }))}
-                      decimalPlaces={2} min={0} max={100} sx={{ minWidth: 70 }}
-                    />
+                    <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                      {editingLigne.tauxTVA}%
+                    </Typography>
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary }}>

@@ -79,6 +79,7 @@ class ConventionService(
             budget = convention.budget
             baseCalcul = convention.baseCalcul
             tauxTva = convention.tauxTva
+            tauxTvaLignes = convention.tauxTvaLignes
             dateDebut = convention.dateDebut
             dateFin = convention.dateFin
             description = convention.description
@@ -297,6 +298,7 @@ class ConventionService(
             "budget" to existing.budget.toString(),
             "baseCalcul" to (existing.baseCalcul ?: ""),
             "tauxTva" to existing.tauxTva.toString(),
+            "tauxTvaLignes" to existing.tauxTvaLignes.toString(),
             "dateDebut" to existing.dateDebut.toString(),
             "dateFin" to (existing.dateFin?.toString() ?: ""),
             "description" to (existing.description ?: ""),
@@ -313,6 +315,7 @@ class ConventionService(
             budget = convention.budget
             baseCalcul = convention.baseCalcul
             tauxTva = convention.tauxTva
+            tauxTvaLignes = convention.tauxTvaLignes
             dateDebut = convention.dateDebut
             dateFin = convention.dateFin
             description = convention.description
@@ -331,6 +334,7 @@ class ConventionService(
             "budget" to updated.budget.toString(),
             "baseCalcul" to (updated.baseCalcul ?: ""),
             "tauxTva" to updated.tauxTva.toString(),
+            "tauxTvaLignes" to updated.tauxTvaLignes.toString(),
             "dateDebut" to updated.dateDebut.toString(),
             "dateFin" to (updated.dateFin?.toString() ?: ""),
             "description" to (updated.description ?: ""),
@@ -394,7 +398,7 @@ class ConventionService(
     private fun determinerTypeModification(champsModifies: List<String>): String {
         return when {
             champsModifies.contains("statut") -> "STATUS_CHANGE"
-            champsModifies.any { champ: String -> champ in listOf("tauxCommission", "baseCalcul", "tauxTva") } -> "FINANCIAL_PARAMS_CHANGE"
+            champsModifies.any { champ: String -> champ in listOf("tauxCommission", "baseCalcul", "tauxTva", "tauxTvaLignes") } -> "FINANCIAL_PARAMS_CHANGE"
             champsModifies.any { champ: String -> champ in listOf("dateDebut", "dateFin") } -> "DATES_CHANGE"
             champsModifies.contains("budget") -> "BUDGET_CHANGE"
             else -> "UPDATE"

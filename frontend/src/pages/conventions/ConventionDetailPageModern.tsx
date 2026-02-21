@@ -38,7 +38,7 @@ interface Convention {
   id: number; code: string; numero: string; libelle: string; objet: string
   typeConvention: 'CADRE' | 'SPECIFIQUE'; statut: string
   tauxCommission: number; baseCalcul: string; budget: number
-  dateSignature: string; dateDebut: string; dateFin?: string; tauxTva: number
+  dateSignature: string; dateDebut: string; dateFin?: string; tauxTva: number; tauxTvaLignes: number
   parentConventionId?: number | null; parentConventionNumero?: string | null
   heriteParametres?: boolean
 }

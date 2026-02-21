@@ -44,6 +44,7 @@ interface ConventionApiResponse {
   tauxCommission: number
   baseCalcul: string
   tauxTva: number
+  tauxTvaLignes: number
   dateConvention: string
   dateDebut: string
   dateFin: string
@@ -112,6 +113,7 @@ const ConventionEditPageComplete = () => {
         tauxCommission: data.tauxCommission || 0,
         baseCalcul: data.baseCalcul || 'DECAISSEMENTS_TTC',
         tauxTva: data.tauxTva || 20,
+        tauxTvaLignes: data.tauxTvaLignes || 20,
         dateConvention: toIsoDate(data.dateConvention),
         dateDebut,
         dateFin,
@@ -154,6 +156,7 @@ const ConventionEditPageComplete = () => {
         tauxCommission: formData.tauxCommission,
         baseCalcul: formData.baseCalcul,
         tauxTva: formData.tauxTva,
+        tauxTvaLignes: formData.tauxTvaLignes,
         dateConvention: formData.dateConvention,
         dateDebut: formData.dateDebut,
         dateFin: formData.dateFin || undefined,

@@ -492,6 +492,7 @@ class ConventionController(
                 budget = request.budget
                 baseCalcul = request.baseCalcul ?: "DECAISSEMENTS_TTC"
                 tauxTva = request.tauxTva
+                tauxTvaLignes = request.tauxTvaLignes ?: tauxTvaLignes
                 dateDebut = request.dateDebut
                 dateFin = request.dateFin
                 description = request.description

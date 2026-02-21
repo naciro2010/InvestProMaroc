@@ -128,6 +128,7 @@ export interface CreateConventionDTO extends Record<string, unknown> {
   budget?: number
   baseCalcul?: string | null
   tauxTva?: number | null
+  tauxTvaLignes?: number | null
   typeConvention?: string
   heriteParametres?: boolean
   surchargeTauxCommission?: number | null
@@ -159,6 +160,7 @@ export interface ConventionFinancesDTO {
   budget: number
   baseCalcul: string
   tauxTva: number
+  tauxTvaLignes: number
   montantCommissionEstime: number | null
 }
 
@@ -195,6 +197,7 @@ export interface UpdateConventionWithHistoryRequest extends Record<string, unkno
   budget: number
   baseCalcul: string | null
   tauxTva: number
+  tauxTvaLignes: number
   dateDebut: string
   dateFin: string | null
   description: string | null

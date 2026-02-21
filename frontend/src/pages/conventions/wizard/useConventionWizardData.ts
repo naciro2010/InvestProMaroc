@@ -34,6 +34,7 @@ interface ConventionApiData {
   tauxCommission: number
   baseCalcul: string
   tauxTva: number
+  tauxTvaLignes?: number
   dateConvention: string
   dateDebut: string
   dateFin: string | null
@@ -132,7 +133,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
         dateFin,
         dureeMois,
         budgetGlobal: convention.budget || convention.budgetTotal || 0,
-        tauxTvaLignes: convention.tauxTva || 20,
+        tauxTvaLignes: convention.tauxTvaLignes ?? convention.tauxTva ?? 20,
         lignesBudget: [],
         commissionMode: 'GLOBAL',
         tauxCommission: convention.tauxCommission || 2.5,
@@ -188,6 +189,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
         budget: data.budgetGlobal,
         baseCalcul: data.baseCalcul,
         tauxTva: data.tauxTva,
+        tauxTvaLignes: data.tauxTvaLignes,
         dateDebut: data.dateDebut,
         dateFin: data.dateFin || undefined,
         description: undefined,
@@ -213,6 +215,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
         budget: data.budgetGlobal,
         baseCalcul: data.baseCalcul,
         tauxTva: data.tauxTva,
+        tauxTvaLignes: data.tauxTvaLignes,
         dateDebut: data.dateDebut,
         dateFin: data.dateFin || undefined,
         description: undefined,

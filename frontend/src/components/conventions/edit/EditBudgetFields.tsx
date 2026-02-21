@@ -67,6 +67,30 @@ const EditBudgetFields = ({
             />
           }
         />
+        <Field
+          label="Taux TVA Lignes (%)"
+          value={`${watchValues.tauxTvaLignes}%`}
+          isEditing={isEditing}
+          editContent={
+            <Controller
+              name="tauxTvaLignes"
+              control={control}
+              render={({ field }) => (
+                <DecimalInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  fullWidth
+                  size="small"
+                  decimalPlaces={2}
+                  min={0}
+                  max={100}
+                  error={!!errors.tauxTvaLignes}
+                  helperText={errors.tauxTvaLignes?.message || 'Applique a toutes les lignes'}
+                />
+              )}
+            />
+          }
+        />
       </FieldGroup>
 
       <FieldGroup title="Configuration Commission" columns={2}>

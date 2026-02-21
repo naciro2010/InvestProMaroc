@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS conventions (
     herite_parametres BOOLEAN DEFAULT FALSE NOT NULL,
     surcharge_taux_commission DECIMAL(5,2),
     surcharge_base_calcul VARCHAR(50),
+    taux_tva_lignes DECIMAL(5,2) DEFAULT 20.00 NOT NULL,
     objet_rich JSONB,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

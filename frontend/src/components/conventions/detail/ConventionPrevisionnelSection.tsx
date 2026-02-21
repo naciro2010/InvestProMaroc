@@ -19,6 +19,7 @@ interface ConventionData {
   tauxCommission: number
   baseCalcul: string
   tauxTva: number
+  tauxTvaLignes: number
   dateSignature: string
   dateDebut: string
   dateFin?: string
@@ -105,7 +106,8 @@ const ConventionPrevisionnelSection = ({
           <Field label="Budget" value={formatCurrency(convention.budget)} isMoney />
           <Field label="Commission" value={`${convention.tauxCommission}%`} />
           <Field label="Base" value={convention.baseCalcul === 'DECAISSEMENTS_HT' ? 'HT' : 'TTC'} />
-          <Field label="TVA" value={`${convention.tauxTva}%`} />
+          <Field label="TVA Commission" value={`${convention.tauxTva}%`} />
+          <Field label="TVA Lignes" value={`${convention.tauxTvaLignes ?? 20}%`} />
           <Field label="Signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
           <Field label="Debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
           <Field label="Fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />

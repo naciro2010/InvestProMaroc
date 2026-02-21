@@ -43,6 +43,7 @@ class ConventionMapper(
             budget = entity.budget,
             baseCalcul = entity.baseCalcul,
             tauxTva = entity.tauxTva,
+            tauxTvaLignes = entity.tauxTvaLignes,
 
             dateDebut = entity.dateDebut,
             dateFin = entity.dateFin,

@@ -68,6 +68,11 @@ class Convention(
     @field:DecimalMin("0.00")
     var tauxTva: BigDecimal = BigDecimal("20.00"),
 
+    @Column(name = "taux_tva_lignes", nullable = false, precision = 5, scale = 2)
+    @field:DecimalMin("0.00")
+    @field:DecimalMax("100.00")
+    var tauxTvaLignes: BigDecimal = BigDecimal("20.00"),
+
     // Dates
     @Column(name = "date_debut", nullable = false)
     @field:NotNull

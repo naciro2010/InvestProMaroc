@@ -38,7 +38,7 @@ interface Convention {
   id: number; code: string; numero: string; libelle: string; objet: string
   typeConvention: 'CADRE' | 'SPECIFIQUE'; statut: string
   tauxCommission: number; baseCalcul: string; budget: number
-  dateSignature: string; dateDebut: string; dateFin?: string; tauxTva: number
+  dateSignature: string; dateDebut: string; dateFin?: string; tauxTva: number; tauxTvaLignes: number
   parentConventionId?: number | null; parentConventionNumero?: string | null
   heriteParametres?: boolean
 }
@@ -92,7 +92,7 @@ const ConventionDetailPageModern = () => {
       setLoading(true)
       const res = await conventionsAPI.getById(cid)
       setConvention(res.data.data || res.data)
-      Promise.all([loadAvenants(cid), loadSousConventions(cid), loadProjets(cid), loadMarches(cid), loadVersements(cid)])
+      await Promise.all([loadAvenants(cid), loadSousConventions(cid), loadProjets(cid), loadMarches(cid), loadVersements(cid)])
     } catch { setError('Erreur lors du chargement de la convention') }
     finally { setLoading(false) }
   }

@@ -9,6 +9,7 @@ import ma.investpro.service.CategorieDepenseService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -62,7 +63,7 @@ class CategorieDepenseController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun create(@RequestBody dto: CreateCategorieDepenseDTO): ResponseEntity<ApiResponse<CategorieDepenseDTO>> {
+    fun create(@Valid @RequestBody dto: CreateCategorieDepenseDTO): ResponseEntity<ApiResponse<CategorieDepenseDTO>> {
         val created = service.create(dto)
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success(created, "Type de dépense créé avec succès"))
@@ -72,7 +73,7 @@ class CategorieDepenseController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun update(
         @PathVariable id: Long,
-        @RequestBody dto: UpdateCategorieDepenseDTO
+        @Valid @RequestBody dto: UpdateCategorieDepenseDTO
     ): ResponseEntity<ApiResponse<CategorieDepenseDTO>> {
         val updated = service.update(id, dto)
         return if (updated != null) {

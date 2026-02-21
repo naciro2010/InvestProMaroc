@@ -7,6 +7,7 @@ import ma.investpro.service.MaitreOeuvreService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -133,7 +134,7 @@ class MaitreOeuvreController(
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun create(@RequestBody request: MaitreOeuvreRequest): ResponseEntity<ApiResponse<MaitreOeuvreResponse>> {
+    fun create(@Valid @RequestBody request: MaitreOeuvreRequest): ResponseEntity<ApiResponse<MaitreOeuvreResponse>> {
         return try {
             val data = service.create(request)
             ResponseEntity.status(HttpStatus.CREATED).body(
@@ -169,7 +170,7 @@ class MaitreOeuvreController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun update(
         @PathVariable id: Long,
-        @RequestBody request: MaitreOeuvreRequest
+        @Valid @RequestBody request: MaitreOeuvreRequest
     ): ResponseEntity<ApiResponse<MaitreOeuvreResponse>> {
         return try {
             val data = service.update(id, request)

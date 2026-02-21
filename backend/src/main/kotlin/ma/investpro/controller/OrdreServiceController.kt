@@ -12,6 +12,7 @@ import ma.investpro.service.OrdreServiceService
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 private val logger = KotlinLogging.logger {}
@@ -66,7 +67,7 @@ class OrdreServiceController(
     @WriteAccess
     fun createOrdreService(
         @PathVariable marcheId: Long,
-        @RequestBody request: CreateOrdreServiceRequest
+        @Valid @RequestBody request: CreateOrdreServiceRequest
     ): ResponseEntity<ApiResponse<OrdreServiceDTO>> {
         logger.info { "POST /api/marches/$marcheId/ordres-service - type: ${request.typeOrdre}" }
         return try {
@@ -95,7 +96,7 @@ class OrdreServiceController(
     fun updateOrdreService(
         @PathVariable marcheId: Long,
         @PathVariable id: Long,
-        @RequestBody request: CreateOrdreServiceRequest
+        @Valid @RequestBody request: CreateOrdreServiceRequest
     ): ResponseEntity<ApiResponse<OrdreServiceDTO>> {
         logger.info { "PUT /api/marches/$marcheId/ordres-service/$id" }
         return try {

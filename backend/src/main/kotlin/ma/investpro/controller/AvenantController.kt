@@ -7,6 +7,7 @@ import ma.investpro.service.AvenantService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -46,7 +47,7 @@ class AvenantController(
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun create(@RequestBody avenant: Avenant): ResponseEntity<Avenant> {
+    fun create(@Valid @RequestBody avenant: Avenant): ResponseEntity<Avenant> {
         return try {
             val created = avenantService.create(avenant)
             ResponseEntity.status(HttpStatus.CREATED).body(created)
@@ -59,7 +60,7 @@ class AvenantController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun update(
         @PathVariable id: Long,
-        @RequestBody avenant: Avenant
+        @Valid @RequestBody avenant: Avenant
     ): ResponseEntity<Avenant> {
         return try {
             val updated = avenantService.update(id, avenant)
@@ -97,7 +98,7 @@ class AvenantController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun valider(
         @PathVariable id: Long,
-        @RequestBody request: Map<String, Long>
+        @Valid @RequestBody request: Map<String, Long>
     ): ResponseEntity<Avenant> {
         return try {
             val valideParId = request["valideParId"]
@@ -114,7 +115,7 @@ class AvenantController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun rejeter(
         @PathVariable id: Long,
-        @RequestBody request: Map<String, String>
+        @Valid @RequestBody request: Map<String, String>
     ): ResponseEntity<Avenant> {
         return try {
             val motif = request["motif"] ?: "Aucun motif fourni"
@@ -129,7 +130,7 @@ class AvenantController(
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     fun annuler(
         @PathVariable id: Long,
-        @RequestBody request: Map<String, String>
+        @Valid @RequestBody request: Map<String, String>
     ): ResponseEntity<Avenant> {
         return try {
             val motif = request["motif"] ?: "Aucun motif fourni"

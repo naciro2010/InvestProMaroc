@@ -19,5 +19,6 @@ data class ConventionFinancesDTO(
     val budget: BigDecimal,
     val baseCalcul: String,
     val tauxTva: BigDecimal,
+    val tauxTvaLignes: BigDecimal,
     val montantCommissionEstime: BigDecimal? = null // Calculated field
 )

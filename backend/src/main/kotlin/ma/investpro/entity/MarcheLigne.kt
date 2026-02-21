@@ -87,7 +87,7 @@ class MarcheLigne(
      * Calcule le montant TVA
      */
     fun calculerMontantTVA() {
-        montantTVA = montantHT * tauxTVA.divide(BigDecimal(100))
+        montantTVA = montantHT.multiply(tauxTVA).divide(BigDecimal(100), 2, java.math.RoundingMode.HALF_UP)
     }
 
     /**

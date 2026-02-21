@@ -69,7 +69,7 @@ class MarcheService(
 
         // Calculer les montants si necessaire
         if (marche.montantTva == BigDecimal.ZERO && marche.montantHt > BigDecimal.ZERO) {
-            marche.montantTva = marche.montantHt.multiply(marche.tauxTva).divide(BigDecimal(100))
+            marche.montantTva = marche.montantHt.multiply(marche.tauxTva).divide(BigDecimal(100), 2, java.math.RoundingMode.HALF_UP)
             marche.montantTtc = marche.montantHt.add(marche.montantTva)
             logger.debug { "Auto-calculated TVA: ${marche.montantTva}, TTC: ${marche.montantTtc}" }
         }

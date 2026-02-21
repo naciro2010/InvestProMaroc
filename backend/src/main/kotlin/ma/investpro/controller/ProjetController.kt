@@ -12,6 +12,7 @@ import ma.investpro.security.annotations.AdminOnly
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 
@@ -119,7 +120,7 @@ class ProjetController(
 
     @PostMapping
     @WriteAccess
-    fun create(@RequestBody projet: Projet): ResponseEntity<ProjetDTO> {
+    fun create(@Valid @RequestBody projet: Projet): ResponseEntity<ProjetDTO> {
         return try {
             val created = projetService.create(projet)
             val dto = projetMapper.toDTO(created)
@@ -133,7 +134,7 @@ class ProjetController(
     @WriteAccess
     fun update(
         @PathVariable id: Long,
-        @RequestBody projet: Projet
+        @Valid @RequestBody projet: Projet
     ): ResponseEntity<ProjetDTO> {
         return try {
             val updated = projetService.update(id, projet)

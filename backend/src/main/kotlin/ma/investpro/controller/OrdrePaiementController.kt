@@ -8,6 +8,7 @@ import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 private val logger = KotlinLogging.logger {}
@@ -60,7 +61,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun createOrdrePaiement(@RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<ApiResponse<OrdrePaiement>> {
+    fun createOrdrePaiement(@Valid @RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "POST /api/ordres-paiement - Creation OP ${ordrePaiement.numeroOP}" }
         return try {
             val createdOrdrePaiement = ordrePaiementService.create(ordrePaiement)
@@ -88,7 +89,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    fun updateOrdrePaiement(@PathVariable id: Long, @RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<ApiResponse<OrdrePaiement>> {
+    fun updateOrdrePaiement(@PathVariable id: Long, @Valid @RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "PUT /api/ordres-paiement/$id" }
         return try {
             val updatedOrdrePaiement = ordrePaiementService.update(id, ordrePaiement)
@@ -144,7 +145,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
 
     @PostMapping("/{id}/valider")
     @PreAuthorize("hasRole('ADMIN')")
-    fun validerOrdrePaiement(@PathVariable id: Long, @RequestBody body: Map<String, Long>): ResponseEntity<ApiResponse<OrdrePaiement>> {
+    fun validerOrdrePaiement(@PathVariable id: Long, @Valid @RequestBody body: Map<String, Long>): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "POST /api/ordres-paiement/$id/valider" }
         return try {
             val valideParId = body["valideParId"] ?: throw IllegalArgumentException("valideParId requis")

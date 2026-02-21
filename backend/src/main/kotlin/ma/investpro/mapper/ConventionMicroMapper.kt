@@ -63,6 +63,7 @@ class ConventionMicroMapper(
             budget = convention.budget,
             baseCalcul = convention.baseCalcul,
             tauxTva = convention.tauxTva,
+            tauxTvaLignes = convention.tauxTvaLignes,
             montantCommissionEstime = montantCommissionEstime
         )
     }

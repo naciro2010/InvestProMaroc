@@ -19,6 +19,7 @@ data class ConventionDTO(
     val budget: BigDecimal,
     val baseCalcul: String,
     val tauxTva: BigDecimal,
+    val tauxTvaLignes: BigDecimal,
     val dateDebut: LocalDate,
     val dateFin: LocalDate?,
     val description: String?,
@@ -236,6 +237,10 @@ data class UpdateConventionWithHistoryRequest(
     @field:DecimalMin(value = "0.00", message = "Le taux TVA doit être positif")
     @field:DecimalMax(value = "20.00", message = "Le taux TVA ne peut dépasser 20%")
     val tauxTva: BigDecimal,
+
+    @field:DecimalMin(value = "0.00", message = "Le taux TVA lignes doit être positif")
+    @field:DecimalMax(value = "100.00", message = "Le taux TVA lignes ne peut dépasser 100%")
+    val tauxTvaLignes: BigDecimal? = null,
 
     @field:NotNull
     val dateDebut: LocalDate,

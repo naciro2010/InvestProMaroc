@@ -11,6 +11,7 @@ export interface ConventionEditFormData {
   tauxCommission: number
   baseCalcul: string
   tauxTva: number
+  tauxTvaLignes: number
   dateConvention: string
   dateDebut: string
   dateFin: string
@@ -65,6 +66,10 @@ export const conventionEditSchema = z.object({
   tauxTva: z
     .number()
     .min(0, 'Le taux TVA doit etre positif')
+    .max(100, 'Maximum 100%'),
+  tauxTvaLignes: z
+    .number()
+    .min(0, 'Le taux TVA lignes doit etre positif')
     .max(100, 'Maximum 100%'),
   dateConvention: z.string().min(1, 'La date de signature est requise'),
   dateDebut: z.string().min(1, 'La date de debut est requise'),

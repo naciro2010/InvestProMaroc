@@ -103,7 +103,6 @@ export const WIZARD_STEPS = [
   'Informations',
   'Budget & Commission',
   'Partenaires',
-  'Subventions',
   'Récapitulatif',
 ]
 

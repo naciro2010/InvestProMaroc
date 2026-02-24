@@ -167,26 +167,7 @@ const WizardStepRecapitulatif = ({
         </Paper>
       )}
 
-      {/* Section 4: Subventions */}
-      {formData.subventions.length > 0 && (
-        <Paper sx={{ p: 3, bgcolor: '#f0fdf4' }}>
-          <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>
-            Subventions
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-            <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Nombre</Typography>
-              <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>{formData.subventions.length}</Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Total subventions</Typography>
-              <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>{formatCurrency(totals.totalSubventions)}</Typography>
-            </Box>
-          </Box>
-        </Paper>
-      )}
-
-      {/* Section 5: Dates */}
+      {/* Section 4: Dates */}
       <Paper sx={{ p: 3 }}>
         <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>
           Période

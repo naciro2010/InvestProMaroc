@@ -17,7 +17,7 @@ import {
   FormHelperText,
 } from '@mui/material'
 import { Save, Cancel } from '@mui/icons-material'
-import { versementsPrevisionnelsAPI, partenairesAPI } from '@/lib/api'
+import { versementsPrevisionnelsAPI, conventionsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import DecimalInput from '@/components/ui/DecimalInput'
 
@@ -77,8 +77,21 @@ const VersementFormDialog = ({
   const loadPartenaires = async () => {
     try {
       setLoadingPartenaires(true)
-      const res = await partenairesAPI.getAllActive()
-      setPartenaires(res.data.data || res.data || [])
+      const res = await conventionsAPI.getPartenaires(conventionId)
+      const conventionPartenaires = res.data.data || res.data || []
+      // Map convention partenaires to the Partenaire interface used by the dropdown
+      const mapped: Partenaire[] = (conventionPartenaires as Array<{
+        partenaireId: number
+        partenaireCode: string
+        partenaireNom: string
+        partenaireSigle: string | null
+      }>).map((cp) => ({
+        id: cp.partenaireId,
+        code: cp.partenaireCode,
+        raisonSociale: cp.partenaireNom,
+        sigle: cp.partenaireSigle || undefined,
+      }))
+      setPartenaires(mapped)
     } catch (err) {
       console.error('Error loading partenaires:', err)
     } finally {

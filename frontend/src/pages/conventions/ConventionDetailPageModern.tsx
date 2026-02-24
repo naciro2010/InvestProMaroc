@@ -30,6 +30,7 @@ import {
 } from '../../components/conventions/detail'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
+import VersementFormDialog from '../../components/conventions/VersementFormDialog'
 import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
 import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
 import SousConventionFormSimple from './SousConventionFormSimple'
@@ -89,6 +90,8 @@ const ConventionDetailPageModern = () => {
   const [linkProjetDialogOpen, setLinkProjetDialogOpen] = useState(false)
   const [linkMarcheDialogOpen, setLinkMarcheDialogOpen] = useState(false)
   const [partenairesRefreshKey, setPartenairesRefreshKey] = useState(0)
+  const [versementDialogOpen, setVersementDialogOpen] = useState(false)
+  const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
   const [sousConventionDialogOpen, setSousConventionDialogOpen] = useState(false)
   const [editingSousConvention, setEditingSousConvention] = useState<SousConvention | null>(null)
   const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | null; id: number | null }>({ open: false, type: null, id: null })
@@ -296,6 +299,13 @@ const ConventionDetailPageModern = () => {
                 })
                 setAddPartenaireDialogOpen(true)
               }}
+              onAddVersement={() => { setEditingVersement(null); setVersementDialogOpen(true) }}
+              onEditVersement={(v) => { setEditingVersement(v); setVersementDialogOpen(true) }}
+              onDeleteVersement={async (vid) => {
+                if (!window.confirm('Supprimer ce versement previsionnel ?')) return
+                try { await versementsPrevisionnelsAPI.delete(vid); showSuccess('Versement supprime'); loadVersements(convention.id) }
+                catch { showError('Erreur lors de la suppression') }
+              }}
               onRefresh={() => loadConvention(convention.id)}
             />
 
@@ -321,7 +331,8 @@ const ConventionDetailPageModern = () => {
       {/* Dialogs */}
       {convention && (
         <>
-          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget} onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }} onSuccess={() => { setPartenairesRefreshKey((k: number) => k + 1); setEditPartenaireData(null) }} editData={editPartenaireData} />
+          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget} onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }} onSuccess={() => { setPartenairesRefreshKey((k: number) => k + 1); setEditPartenaireData(null); loadVersements(convention.id) }} editData={editPartenaireData} />
+          <VersementFormDialog open={versementDialogOpen} conventionId={convention.id} onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }} onSuccess={() => loadVersements(convention.id)} editingVersement={editingVersement} />
           <LinkProjetDialog open={linkProjetDialogOpen} conventionId={convention.id} onClose={() => setLinkProjetDialogOpen(false)} onSuccess={() => loadProjets(convention.id)} />
           <LinkMarcheDialog open={linkMarcheDialogOpen} conventionId={convention.id} onClose={() => setLinkMarcheDialogOpen(false)} onSuccess={() => loadMarches(convention.id)} />
           <SousConventionFormSimple open={sousConventionDialogOpen} onClose={() => { setSousConventionDialogOpen(false); setEditingSousConvention(null) }} onSuccess={() => { loadSousConventions(convention.id); setSousConventionDialogOpen(false); setEditingSousConvention(null) }} parentConvention={{ id: convention.id, numero: convention.numero, libelle: convention.libelle, tauxCommission: convention.tauxCommission, baseCalcul: convention.baseCalcul, tauxTva: convention.tauxTva, budget: convention.budget }} editingSousConvention={editingSousConvention} />

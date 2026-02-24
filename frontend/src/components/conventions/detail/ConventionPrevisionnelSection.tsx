@@ -1,8 +1,9 @@
 import React from 'react'
 import { Box } from '@mui/material'
-import { Assignment, CalendarMonth, Handshake, PieChart, CardGiftcard } from '@mui/icons-material'
+import { Assignment, CalendarMonth, Handshake, PieChart, CardGiftcard, AccountBalance } from '@mui/icons-material'
 import { FieldGroup, Field, StatusBadge, ResizableSection } from '@/components/core'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
+import ConventionVersementsCard from './ConventionVersementsCard'
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
 import { colors } from '@/lib/designSystem'
@@ -55,6 +56,9 @@ interface ConventionPrevisionnelSectionProps {
   versements: VersementPrevisionnel[]
   onAddPartenaire: () => void
   onEditPartenaire: (p: PartenaireCallbackData) => void
+  onAddVersement: () => void
+  onEditVersement: (v: VersementPrevisionnel) => void
+  onDeleteVersement: (id: number) => void
   onRefresh: () => void
 }
 
@@ -71,6 +75,9 @@ const ConventionPrevisionnelSection = ({
   versements,
   onAddPartenaire,
   onEditPartenaire,
+  onAddVersement,
+  onEditVersement,
+  onDeleteVersement,
   onRefresh,
 }: ConventionPrevisionnelSectionProps) => {
   return (
@@ -115,6 +122,20 @@ const ConventionPrevisionnelSection = ({
           versements={versements}
           onAddClick={onAddPartenaire}
           onEditClick={onEditPartenaire}
+        />
+      </ResizableSection>
+
+      {/* Versements previsionnels */}
+      <ResizableSection
+        title="Versements previsionnels"
+        storageKey="conv-prev-versements"
+        icon={<AccountBalance sx={{ color: colors.warning[500], fontSize: 16 }} />}
+      >
+        <ConventionVersementsCard
+          versements={versements}
+          onAdd={onAddVersement}
+          onEdit={onEditVersement}
+          onDelete={onDeleteVersement}
         />
       </ResizableSection>
 

@@ -58,6 +58,15 @@ const STATUS_STEPS: StatusStep[] = [
   { value: 'ACHEVE', label: 'Acheve' },
 ]
 
+/** Normalize backend status aliases to the canonical values used in STATUS_STEPS */
+const normalizeStatut = (statut: string): string => {
+  const aliases: Record<string, string> = {
+    VALIDE: 'VALIDEE',
+    EN_COURS: 'EN_EXECUTION',
+  }
+  return aliases[statut] || statut
+}
+
 const ConventionDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -91,7 +100,8 @@ const ConventionDetailPageModern = () => {
     try {
       setLoading(true)
       const res = await conventionsAPI.getById(cid)
-      setConvention(res.data.data || res.data)
+      const raw = res.data.data || res.data
+      setConvention({ ...raw, statut: normalizeStatut(raw.statut) })
       await Promise.all([loadAvenants(cid), loadSousConventions(cid), loadProjets(cid), loadMarches(cid), loadVersements(cid)])
     } catch { setError('Erreur lors du chargement de la convention') }
     finally { setLoading(false) }
@@ -157,6 +167,25 @@ const ConventionDetailPageModern = () => {
 
   const canEdit = convention.statut === 'BROUILLON'
 
+  // Build effective steps: insert REJETE/ANNULE into the pipeline when active
+  const effectiveSteps: StatusStep[] = (() => {
+    const statut = convention.statut
+    if (statut === 'REJETE') {
+      return [
+        { value: 'BROUILLON', label: 'Brouillon' },
+        { value: 'SOUMIS', label: 'Soumis' },
+        { value: 'REJETE', label: 'Rejete', variant: 'danger' as const },
+      ]
+    }
+    if (statut === 'ANNULE') {
+      return [
+        ...STATUS_STEPS.slice(0, 4),
+        { value: 'ANNULE', label: 'Annule', variant: 'danger' as const },
+      ]
+    }
+    return STATUS_STEPS
+  })()
+
   const breadcrumbs = [
     { label: 'Conventions', path: '/conventions' },
     ...(convention.parentConventionId && convention.parentConventionNumero
@@ -217,7 +246,7 @@ const ConventionDetailPageModern = () => {
           <FormView
             isEditing={false}
             onToggleEdit={canEdit ? () => navigate(`/conventions/${id}/edit`) : undefined}
-            statusSteps={STATUS_STEPS}
+            statusSteps={effectiveSteps}
             currentStatus={convention.statut}
           >
             {/* Title */}

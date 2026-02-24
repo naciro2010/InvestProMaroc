@@ -27,6 +27,8 @@ interface FormViewProps {
 interface StatusStep {
   value: string
   label: string
+  /** Use 'danger' for rejected/cancelled states */
+  variant?: 'danger'
 }
 
 /**
@@ -52,7 +54,9 @@ const FormView = ({
     const currentIdx = statusSteps?.findIndex(s => s.value === currentStatus) ?? -1
     const stepIdx = statusSteps?.findIndex(s => s.value === step.value) ?? -1
 
-    if (stepIdx === currentIdx) return styles.statusPipelineStepActive
+    if (stepIdx === currentIdx) {
+      return step.variant === 'danger' ? styles.statusPipelineStepDanger : styles.statusPipelineStepActive
+    }
     if (stepIdx < currentIdx) return styles.statusPipelineStepDone
     return styles.statusPipelineStep
   }

@@ -22,6 +22,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 import {
   formatCurrency,
   type ConventionWizardFormData,
@@ -45,7 +46,6 @@ const WizardStepPartenaires = ({
     designation: '',
     budget: 0,
     pourcentage: 0,
-    ci: 0,
   })
 
   const budgetGlobal = formData.budgetGlobal
@@ -66,7 +66,7 @@ const WizardStepPartenaires = ({
         ...prev,
         partenaires: [...prev.partenaires, newPartenaire],
       }))
-      setNewPartenaire({ designation: '', budget: 0, pourcentage: 0, ci: 0 })
+      setNewPartenaire({ designation: '', budget: 0, pourcentage: 0 })
     }
   }
 
@@ -84,10 +84,10 @@ const WizardStepPartenaires = ({
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
       <Box>
-        <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
           Allocation aux partenaires
         </Typography>
-        <Divider sx={{ mb: 3 }} />
+        <Divider />
       </Box>
 
       <Alert severity="info">
@@ -96,15 +96,15 @@ const WizardStepPartenaires = ({
       </Alert>
 
       {/* Add partenaire form */}
-      <Card sx={{ p: 2 }}>
-        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+      <Card sx={{ ...componentStyles.card, p: 2 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, mb: 2, color: colors.textPrimary }}>
           Ajouter un partenaire
         </Typography>
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr 1fr auto' },
-            gap: 1,
+            gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr auto' },
+            gap: 1.5,
             alignItems: 'flex-end',
           }}
         >
@@ -131,29 +131,19 @@ const WizardStepPartenaires = ({
             min={0}
             max={100}
           />
-          <DecimalInput
-            size="small"
-            label="CI (%)"
-            value={newPartenaire.ci}
-            onChange={(value) =>
-              setNewPartenaire({ ...newPartenaire, ci: value })
-            }
-            decimalPlaces={2}
-            min={0}
-          />
           <Button
             variant="contained"
             size="small"
             startIcon={<AddIcon />}
             onClick={handleAddPartenaire}
             disabled={!newPartenaire.designation || newPartenaire.budget <= 0}
-            sx={{ height: 40 }}
+            sx={{ ...componentStyles.buttonPrimary, height: 40 }}
           >
             Ajouter
           </Button>
         </Box>
         {newPartenaire.budget > 0 && (
-          <Typography variant="caption" color={reliquatAvecNouveau >= 0 ? 'text.secondary' : 'error'} sx={{ mt: 1, display: 'block' }}>
+          <Typography variant="caption" sx={{ mt: 1, display: 'block', color: reliquatAvecNouveau >= 0 ? colors.textSecondary : colors.danger[600] }}>
             Reliquat après ajout : {formatCurrency(reliquatAvecNouveau)}
           </Typography>
         )}
@@ -161,34 +151,24 @@ const WizardStepPartenaires = ({
 
       {/* Partenaires table */}
       {formData.partenaires.length > 0 && (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={componentStyles.table.container}>
           <Table size="small">
-            <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Partenaire</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>
-                  Budget
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>
-                  %
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>
-                  CI (%)
-                </TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600 }}>
-                  Actions
-                </TableCell>
+            <TableHead>
+              <TableRow sx={componentStyles.table.header}>
+                <TableCell sx={componentStyles.table.headerCell}>Partenaire</TableCell>
+                <TableCell align="right" sx={componentStyles.table.headerCell}>Budget</TableCell>
+                <TableCell align="right" sx={componentStyles.table.headerCell}>%</TableCell>
+                <TableCell align="center" sx={{ ...componentStyles.table.headerCell, width: 80 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {formData.partenaires.map((p, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{p.designation}</TableCell>
-                  <TableCell align="right">{formatCurrency(p.budget)}</TableCell>
-                  <TableCell align="right">{p.pourcentage.toFixed(2)}%</TableCell>
-                  <TableCell align="right">{p.ci}%</TableCell>
-                  <TableCell align="center">
-                    <IconButton size="small" color="error" onClick={() => handleDeletePartenaire(idx)}>
+                <TableRow key={idx} sx={componentStyles.table.row}>
+                  <TableCell sx={componentStyles.table.cell}>{p.designation}</TableCell>
+                  <TableCell align="right" sx={componentStyles.table.cell}>{formatCurrency(p.budget)}</TableCell>
+                  <TableCell align="right" sx={componentStyles.table.cell}>{p.pourcentage.toFixed(2)}%</TableCell>
+                  <TableCell align="center" sx={componentStyles.table.cell}>
+                    <IconButton size="small" onClick={() => handleDeletePartenaire(idx)} sx={{ color: colors.danger[500] }}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
@@ -200,38 +180,38 @@ const WizardStepPartenaires = ({
       )}
 
       {/* Summary */}
-      <Card sx={{ p: 2, bgcolor: '#f0f9ff' }}>
+      <Card sx={{ ...componentStyles.card, p: 2, bgcolor: colors.primary[25] }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
               Budget global
             </Typography>
-            <Typography variant="h6">{formatCurrency(budgetGlobal)}</Typography>
+            <Typography variant="h6" sx={{ color: colors.textPrimary }}>{formatCurrency(budgetGlobal)}</Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
               Total alloué
             </Typography>
-            <Typography variant="h6" color="primary">
+            <Typography variant="h6" sx={{ color: colors.primary[700] }}>
               {formatCurrency(totals.totalPartenaires)}
             </Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
               Reliquat
             </Typography>
             <Typography
               variant="h6"
-              color={reliquat >= 0 ? 'success.main' : 'error.main'}
+              sx={{ color: reliquat >= 0 ? colors.success[600] : colors.danger[600] }}
             >
               {formatCurrency(reliquat)}
             </Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
               Allocation
             </Typography>
-            <Typography variant="h6">{allocationPct.toFixed(1)}%</Typography>
+            <Typography variant="h6" sx={{ color: colors.textPrimary }}>{allocationPct.toFixed(1)}%</Typography>
           </Box>
         </Box>
         {budgetGlobal > 0 && (

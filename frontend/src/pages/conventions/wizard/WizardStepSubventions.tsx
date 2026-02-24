@@ -21,6 +21,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 import {
   formatCurrency,
   type ConventionWizardFormData,
@@ -72,26 +73,26 @@ const WizardStepSubventions = ({
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
       <Box>
-        <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-          💸 Subventions
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
+          Subventions
         </Typography>
-        <Divider sx={{ mb: 3 }} />
+        <Divider />
       </Box>
 
       <Alert severity="info">
-        💡 Enregistrer les subventions obtenues ou prévues pour cette convention.
+        Enregistrer les subventions obtenues ou prévues pour cette convention.
       </Alert>
 
       {/* Add subvention form */}
-      <Card sx={{ p: 2 }}>
-        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+      <Card sx={{ ...componentStyles.card, p: 2 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, mb: 2, color: colors.textPrimary }}>
           Ajouter une subvention
         </Typography>
         <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr 1fr auto' },
-            gap: 1,
+            gap: 1.5,
             alignItems: 'flex-end',
           }}
         >
@@ -142,7 +143,7 @@ const WizardStepSubventions = ({
             size="small"
             startIcon={<AddIcon />}
             onClick={handleAddSubvention}
-            sx={{ height: 40 }}
+            sx={{ ...componentStyles.buttonPrimary, height: 40 }}
           >
             Ajouter
           </Button>
@@ -151,36 +152,28 @@ const WizardStepSubventions = ({
 
       {/* Subventions table */}
       {formData.subventions.length > 0 && (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={componentStyles.table.container}>
           <Table size="small">
-            <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Organisme</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>
-                  Montant
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>
-                  %
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>
-                  Date obtention
-                </TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600 }}>
-                  Actions
-                </TableCell>
+            <TableHead>
+              <TableRow sx={componentStyles.table.header}>
+                <TableCell sx={componentStyles.table.headerCell}>Organisme</TableCell>
+                <TableCell align="right" sx={componentStyles.table.headerCell}>Montant</TableCell>
+                <TableCell align="right" sx={componentStyles.table.headerCell}>%</TableCell>
+                <TableCell align="right" sx={componentStyles.table.headerCell}>Date obtention</TableCell>
+                <TableCell align="center" sx={{ ...componentStyles.table.headerCell, width: 80 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {formData.subventions.map((s, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{s.organisme}</TableCell>
-                  <TableCell align="right">{formatCurrency(s.montant)}</TableCell>
-                  <TableCell align="right">{s.pourcentage.toFixed(2)}%</TableCell>
-                  <TableCell align="right">
+                <TableRow key={idx} sx={componentStyles.table.row}>
+                  <TableCell sx={componentStyles.table.cell}>{s.organisme}</TableCell>
+                  <TableCell align="right" sx={componentStyles.table.cell}>{formatCurrency(s.montant)}</TableCell>
+                  <TableCell align="right" sx={componentStyles.table.cell}>{s.pourcentage.toFixed(2)}%</TableCell>
+                  <TableCell align="right" sx={componentStyles.table.cell}>
                     {new Date(s.dateObtention).toLocaleDateString('fr-FR')}
                   </TableCell>
-                  <TableCell align="center">
-                    <IconButton size="small" color="error" onClick={() => handleDeleteSubvention(idx)}>
+                  <TableCell align="center" sx={componentStyles.table.cell}>
+                    <IconButton size="small" onClick={() => handleDeleteSubvention(idx)} sx={{ color: colors.danger[500] }}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
@@ -193,19 +186,19 @@ const WizardStepSubventions = ({
 
       {/* Summary */}
       {formData.subventions.length > 0 && (
-        <Card sx={{ p: 2, bgcolor: '#f0fdf4' }}>
+        <Card sx={{ ...componentStyles.card, p: 2, bgcolor: colors.success[25] }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
                 Nombre de subventions
               </Typography>
-              <Typography variant="h6">{formData.subventions.length}</Typography>
+              <Typography variant="h6" sx={{ color: colors.textPrimary }}>{formData.subventions.length}</Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
                 Total subventions
               </Typography>
-              <Typography variant="h6" color="success.main">
+              <Typography variant="h6" sx={{ color: colors.success[600] }}>
                 {formatCurrency(totals.totalSubventions)}
               </Typography>
             </Box>

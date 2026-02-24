@@ -296,7 +296,6 @@ const WizardStepRecapitulatif = ({
                   <TableCell sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Partenaire</TableCell>
                   <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Budget</TableCell>
                   <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>%</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>CI (%)</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -305,7 +304,6 @@ const WizardStepRecapitulatif = ({
                     <TableCell sx={{ fontSize: typography.sizes.sm }}>{p.designation}</TableCell>
                     <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{formatCurrency(p.budget)}</TableCell>
                     <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{p.pourcentage.toFixed(2)}%</TableCell>
-                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{p.ci}%</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

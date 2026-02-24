@@ -9,6 +9,7 @@ import {
 import DecimalInput from '@/components/ui/DecimalInput'
 import RichTextEditor from '@/components/common/RichTextEditor'
 import { getPlainTextLength, stripHtml } from '@/utils/textUtils'
+import { colors, typography } from '@/lib/designSystem'
 import type { ConventionSettings } from '@/lib/settings/conventionSettings'
 import type {
   ConventionWizardFormData,
@@ -39,10 +40,10 @@ const WizardStepInformations = ({
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
       <Box>
-        <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
-          📋 Informations générales
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
+          Informations générales
         </Typography>
-        <Divider sx={{ mb: 3 }} />
+        <Divider />
       </Box>
 
       {/* Code, Numéro, Type */}
@@ -92,13 +93,13 @@ const WizardStepInformations = ({
       {/* Info alert */}
       <Alert severity="info">
         {formData.type === 'CADRE'
-          ? '📌 Convention CADRE - Permet de créer des sous-conventions après validation.'
-          : '📋 Convention NON_CADRE - Convention simple et directe.'}
+          ? 'Convention CADRE - Permet de créer des sous-conventions après validation.'
+          : 'Convention NON_CADRE - Convention simple et directe.'}
       </Alert>
 
       {/* Libellé */}
       <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
           Libellé de la convention *
         </Typography>
         <RichTextEditor
@@ -114,14 +115,14 @@ const WizardStepInformations = ({
           placeholder="Libellé de la convention..."
           minHeight={120}
         />
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+        <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: colors.textSecondary }}>
           {getPlainTextLength(formData.libelleRich)} / 200 caractères
         </Typography>
       </Box>
 
       {/* Objet (Rich Text) */}
       <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
           Objet de la convention *
         </Typography>
         <RichTextEditor
@@ -140,8 +141,8 @@ const WizardStepInformations = ({
 
       {/* Dates */}
       <Box sx={{ mt: 3 }}>
-        <Typography variant="subtitle2" gutterBottom fontWeight={600}>
-          📅 Dates
+        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+          Dates
         </Typography>
         <Box
           sx={{

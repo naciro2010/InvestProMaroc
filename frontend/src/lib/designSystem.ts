@@ -1427,6 +1427,24 @@ export const componentStyles = {
         borderRight: 'none',
       },
     },
+    /** Danger variant for rejected/cancelled statuses */
+    statusPipelineStepDanger: {
+      px: 1.5,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.semibold,
+      color: colors.danger[700],
+      bgcolor: colors.danger[100],
+      borderRight: `1px solid ${colors.danger[200]}`,
+      cursor: 'default',
+      '&:first-of-type': {
+        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
+      },
+      '&:last-of-type': {
+        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
+        borderRight: 'none',
+      },
+    },
     /** Sheet (main content area of form) */
     sheet: {
       p: { xs: 2, sm: 3 },

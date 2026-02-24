@@ -332,42 +332,7 @@ const WizardStepRecapitulatif = ({
         </Paper>
       )}
 
-      {/* Section 5: Subventions */}
-      {formData.subventions.length > 0 && (
-        <Paper sx={{ ...componentStyles.card, p: 3 }}>
-          <SectionTitle>Subventions ({formData.subventions.length})</SectionTitle>
-          <TableContainer sx={{ border: `1px solid ${colors.border}`, borderRadius: 1, mb: 2 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ bgcolor: colors.neutral[50] }}>
-                  <TableCell sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Organisme</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Montant</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>%</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Date obtention</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {formData.subventions.map((s, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell sx={{ fontSize: typography.sizes.sm }}>{s.organisme}</TableCell>
-                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{formatCurrency(s.montant)}</TableCell>
-                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{s.pourcentage.toFixed(2)}%</TableCell>
-                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{formatDate(s.dateObtention)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <Box>
-              <FieldLabel>Total subventions</FieldLabel>
-              <FieldValue color={colors.success[600]}>{formatCurrency(totals.totalSubventions)}</FieldValue>
-            </Box>
-          </Box>
-        </Paper>
-      )}
-
-      {/* Section 6: Pièces jointes */}
+      {/* Section 5: Pièces jointes */}
       <Paper sx={{ ...componentStyles.card, p: 3 }}>
         <SectionTitle>Pièces jointes</SectionTitle>
         <FileUploadZone

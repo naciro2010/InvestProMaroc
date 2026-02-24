@@ -1,8 +1,6 @@
 // Original components (monolithic data loading)
-export { default as ConventionInfoCard } from './ConventionInfoCard'
 export { default as ConventionSousConventionsCard } from './ConventionSousConventionsCard'
 export { default as ConventionAvenantsTab } from './ConventionAvenantsTab'
-export { default as ConventionHistoryCard } from './ConventionHistoryCard'
 
 // Lazy-loading micro-components (micro-services pattern)
 export { default as ConventionInfoCardLazy } from './ConventionInfoCardLazy'
@@ -22,6 +20,9 @@ export { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedT
 // Parent convention banner (sous-convention detail)
 export { default as ParentConventionBanner } from './ParentConventionBanner'
 
-// Main sections: Previsionnel & Realisation
+// Financial summary table (top-level overview)
+export { default as ConventionSummaryTable } from './ConventionSummaryTable'
+
+// Main sections
 export { default as ConventionPrevisionnelSection } from './ConventionPrevisionnelSection'
 export { default as ConventionRealisationSection } from './ConventionRealisationSection'

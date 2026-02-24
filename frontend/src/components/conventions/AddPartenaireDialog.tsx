@@ -19,7 +19,7 @@ import {
   LinearProgress,
   Divider,
 } from '@mui/material';
-import { conventionsAPI, partenairesAPI } from '@/lib/api';
+import { conventionsAPI, partenairesAPI, versementsPrevisionnelsAPI } from '@/lib/api';
 import { colors, typography, borders } from '@/lib/designSystem';
 import DecimalInput from '@/components/ui/DecimalInput';
 
@@ -199,6 +199,22 @@ export default function AddPartenaireDialog({
           partenaireId: formData.partenaireId,
           ...payload,
         });
+
+        // Create versement previsionnel if fields are filled
+        const versementMontant = parseFloat(formData.versementMontant);
+        if (formData.versementDate && !isNaN(versementMontant) && versementMontant > 0) {
+          try {
+            await versementsPrevisionnelsAPI.create(conventionId, {
+              partenaireId: formData.partenaireId,
+              dateVersement: formData.versementDate,
+              montant: versementMontant,
+              montantPrevu: versementMontant,
+              volet: formData.versementVolet || null,
+            });
+          } catch (versErr) {
+            console.error('Error creating versement previsionnel:', versErr);
+          }
+        }
       }
 
       onSuccess();

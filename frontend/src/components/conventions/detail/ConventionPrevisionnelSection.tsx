@@ -1,13 +1,12 @@
 import React from 'react'
-import { Box, Typography } from '@mui/material'
-import { Assignment, AccountBalance, Receipt, Handshake, PieChart, CardGiftcard } from '@mui/icons-material'
+import { Box } from '@mui/material'
+import { Assignment, CalendarMonth, Handshake, PieChart, CardGiftcard, AccountBalance } from '@mui/icons-material'
 import { FieldGroup, Field, StatusBadge, ResizableSection } from '@/components/core'
-import ConventionBudgetExecutionCard from './ConventionBudgetExecutionCard'
-import ConventionBudgetDetailCard from './ConventionBudgetDetailCard'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
+import ConventionVersementsCard from './ConventionVersementsCard'
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
-import { colors, typography } from '@/lib/designSystem'
+import { colors } from '@/lib/designSystem'
 
 interface ConventionData {
   id: number
@@ -57,21 +56,18 @@ interface ConventionPrevisionnelSectionProps {
   versements: VersementPrevisionnel[]
   onAddPartenaire: () => void
   onEditPartenaire: (p: PartenaireCallbackData) => void
+  onAddVersement: () => void
+  onEditVersement: (v: VersementPrevisionnel) => void
+  onDeleteVersement: (id: number) => void
   onRefresh: () => void
 }
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
 const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
 
 /**
- * SECTION: Previsionnel
- * All planned/budgeted data: info, finances, dates, budget synthesis,
- * partenaires (with versements prev. column), imputations, subventions.
- *
- * Each sub-section is wrapped in a ResizableSection for collapsible
- * and resizable layout control.
+ * Convention info + planning details.
+ * Financial data (budget, commission, TVA) is handled by SummaryTable above.
+ * This section shows: identification, dates, partenaires, imputations, subventions.
  */
 const ConventionPrevisionnelSection = ({
   convention,
@@ -79,67 +75,38 @@ const ConventionPrevisionnelSection = ({
   versements,
   onAddPartenaire,
   onEditPartenaire,
+  onAddVersement,
+  onEditVersement,
+  onDeleteVersement,
   onRefresh,
 }: ConventionPrevisionnelSectionProps) => {
   return (
     <Box>
-      {/* Section Header */}
-      <SectionHeader
-        icon={<Assignment sx={{ color: colors.primary[600], fontSize: 20 }} />}
-        title="Previsionnel"
-        subtitle="Budget, parametres financiers et planification"
-        color={colors.primary[50]}
-        borderColor={colors.primary[200]}
-      />
-
-      {/* Info Fields - single flat block, 4 columns */}
+      {/* Identification */}
       <ResizableSection
-        title="Informations generales"
+        title="Identification"
         storageKey="conv-prev-info"
         icon={<Assignment sx={{ color: colors.primary[500], fontSize: 16 }} />}
       >
-        <FieldGroup title="Convention" columns={4} collapsible storageKey="conv-info-all">
+        <FieldGroup columns={4} collapsible storageKey="conv-info-ident">
           <Field label="Code" value={convention.code} />
           <Field label="Numero" value={convention.numero} />
           <Field label="Type" value={<StatusBadge status={convention.typeConvention} />} />
           <Field label="Statut" value={<StatusBadge status={convention.statut} />} />
-          <Field label="Budget" value={formatCurrency(convention.budget)} isMoney />
-          <Field label="Commission" value={`${convention.tauxCommission}%`} />
-          <Field label="Base" value={convention.baseCalcul === 'DECAISSEMENTS_HT' ? 'HT' : 'TTC'} />
-          <Field label="TVA Commission" value={`${convention.tauxTva}%`} />
-          <Field label="TVA Lignes" value={`${convention.tauxTvaLignes ?? 20}%`} />
-          <Field label="Signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
-          <Field label="Debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
-          <Field label="Fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
         </FieldGroup>
       </ResizableSection>
 
-      {/* Financial Synthesis */}
+      {/* Dates */}
       <ResizableSection
-        title="Synthese budgetaire"
-        storageKey="conv-prev-budget-exec"
-        icon={<AccountBalance sx={{ color: colors.success[500], fontSize: 16 }} />}
-        key={`budget-${partenairesRefreshKey}`}
+        title="Echeancier"
+        storageKey="conv-prev-dates"
+        icon={<CalendarMonth sx={{ color: colors.info[500], fontSize: 16 }} />}
       >
-        <ConventionBudgetExecutionCard
-          conventionId={convention.id}
-          conventionBudget={convention.budget}
-          tauxCommission={convention.tauxCommission}
-          tauxTva={convention.tauxTva}
-          baseCalcul={convention.baseCalcul}
-        />
-      </ResizableSection>
-
-      {/* Budget Detail: per-marche tracking */}
-      <ResizableSection
-        title="Detail budgetaire par marche"
-        storageKey="conv-prev-budget-detail"
-        icon={<Receipt sx={{ color: colors.info[500], fontSize: 16 }} />}
-      >
-        <ConventionBudgetDetailCard
-          conventionId={convention.id}
-          conventionBudget={convention.budget}
-        />
+        <FieldGroup columns={3} collapsible storageKey="conv-info-dates">
+          <Field label="Date signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
+          <Field label="Date debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
+          <Field label="Date fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
+        </FieldGroup>
       </ResizableSection>
 
       {/* Partenaires */}
@@ -158,9 +125,23 @@ const ConventionPrevisionnelSection = ({
         />
       </ResizableSection>
 
+      {/* Versements previsionnels */}
+      <ResizableSection
+        title="Versements previsionnels"
+        storageKey="conv-prev-versements"
+        icon={<AccountBalance sx={{ color: colors.warning[500], fontSize: 16 }} />}
+      >
+        <ConventionVersementsCard
+          versements={versements}
+          onAdd={onAddVersement}
+          onEdit={onEditVersement}
+          onDelete={onDeleteVersement}
+        />
+      </ResizableSection>
+
       {/* Imputations previsionnelles */}
       <ResizableSection
-        title="Imputations"
+        title="Imputations previsionnelles"
         storageKey="conv-prev-imputations"
         icon={<PieChart sx={{ color: colors.warning[500], fontSize: 16 }} />}
       >
@@ -178,40 +159,5 @@ const ConventionPrevisionnelSection = ({
     </Box>
   )
 }
-
-/** Compact section header with icon, title and accent bar */
-const SectionHeader = ({ icon, title, subtitle, color, borderColor }: {
-  icon: React.ReactNode
-  title: string
-  subtitle: string
-  color: string
-  borderColor: string
-}) => (
-  <Box sx={{
-    display: 'flex', alignItems: 'center', gap: 1.5,
-    mb: 2.5, mt: 0.5, pb: 1.5,
-    borderBottom: `2px solid ${borderColor}`,
-  }}>
-    <Box sx={{
-      width: 36, height: 36, borderRadius: '8px', bgcolor: color,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      {icon}
-    </Box>
-    <Box>
-      <Typography sx={{
-        fontWeight: typography.weights.bold,
-        fontSize: typography.sizes.md,
-        color: colors.textPrimary,
-        lineHeight: 1.2,
-      }}>
-        {title}
-      </Typography>
-      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-        {subtitle}
-      </Typography>
-    </Box>
-  </Box>
-)
 
 export default ConventionPrevisionnelSection

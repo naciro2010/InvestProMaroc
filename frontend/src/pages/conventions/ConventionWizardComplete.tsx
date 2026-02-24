@@ -11,7 +11,6 @@ import {
   WizardStepInformations,
   WizardStepBudget,
   WizardStepPartenaires,
-  WizardStepSubventions,
   WizardStepRecapitulatif,
 } from './wizard'
 
@@ -69,8 +68,6 @@ const ConventionWizardComplete = () => {
         return true
       case 3:
         return true
-      case 4:
-        return true
       default:
         return false
     }
@@ -108,14 +105,6 @@ const ConventionWizardComplete = () => {
           />
         )
       case 3:
-        return (
-          <WizardStepSubventions
-            formData={formData}
-            setFormData={setFormData}
-            totals={totals}
-          />
-        )
-      case 4:
         return (
           <WizardStepRecapitulatif
             formData={formData}

@@ -49,16 +49,17 @@ const FormView = ({
 }: FormViewProps) => {
   const styles = componentStyles.formView
 
-  const getStepStyle = (step: StatusStep) => {
-    if (!currentStatus) return styles.statusPipelineStep
+  const getStepInfo = (step: StatusStep): { style: Record<string, unknown>; state: 'done' | 'active' | 'future' | 'danger' } => {
+    if (!currentStatus) return { style: styles.statusPipelineStep, state: 'future' }
     const currentIdx = statusSteps?.findIndex(s => s.value === currentStatus) ?? -1
     const stepIdx = statusSteps?.findIndex(s => s.value === step.value) ?? -1
 
     if (stepIdx === currentIdx) {
-      return step.variant === 'danger' ? styles.statusPipelineStepDanger : styles.statusPipelineStepActive
+      if (step.variant === 'danger') return { style: styles.statusPipelineStepDanger, state: 'danger' }
+      return { style: styles.statusPipelineStepActive, state: 'active' }
     }
-    if (stepIdx < currentIdx) return styles.statusPipelineStepDone
-    return styles.statusPipelineStep
+    if (stepIdx < currentIdx) return { style: styles.statusPipelineStepDone, state: 'done' }
+    return { style: styles.statusPipelineStep, state: 'future' }
   }
 
   return (
@@ -103,11 +104,15 @@ const FormView = ({
 
           {statusSteps && (
             <Box sx={styles.statusPipeline}>
-              {statusSteps.map((step) => (
-                <Box key={step.value} sx={getStepStyle(step)}>
-                  {step.label}
-                </Box>
-              ))}
+              {statusSteps.map((step) => {
+                const { style, state } = getStepInfo(step)
+                return (
+                  <Box key={step.value} sx={{ ...style, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {state === 'done' && <Check size={12} />}
+                    {step.label}
+                  </Box>
+                )
+              })}
             </Box>
           )}
         </Box>

@@ -1,12 +1,11 @@
-import React from 'react'
-import { Box } from '@mui/material'
-import { Assignment, CalendarMonth, Handshake, PieChart, CardGiftcard, AccountBalance } from '@mui/icons-material'
+import { Box, Button } from '@mui/material'
+import { Assignment, CalendarMonth, Handshake, PieChart, CardGiftcard, AccountBalance, Add } from '@mui/icons-material'
 import { FieldGroup, Field, StatusBadge, ResizableSection } from '@/components/core'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
 import ConventionVersementsCard from './ConventionVersementsCard'
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
-import { colors } from '@/lib/designSystem'
+import { colors, typography } from '@/lib/designSystem'
 
 interface ConventionData {
   id: number
@@ -64,10 +63,23 @@ interface ConventionPrevisionnelSectionProps {
 
 const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
 
+const addBtnSx = {
+  textTransform: 'none' as const,
+  fontSize: typography.sizes.xs,
+  color: colors.primary[600],
+  borderColor: colors.primary[200],
+  py: 0.25,
+  px: 1,
+  minHeight: 0,
+  '&:hover': { borderColor: colors.primary[400], bgcolor: colors.primary[25] },
+}
+
 /**
  * Convention info + planning details.
- * Financial data (budget, commission, TVA) is handled by SummaryTable above.
- * This section shows: identification, dates, partenaires, imputations, subventions.
+ * Financial data (budget, commission, TVA) is in SummaryTable above.
+ * This section: identification, dates, partenaires, versements, imputations, subventions.
+ * 
+ * Each sub-section uses ResizableSection with actions slot for Add buttons.
  */
 const ConventionPrevisionnelSection = ({
   convention,
@@ -109,11 +121,17 @@ const ConventionPrevisionnelSection = ({
         </FieldGroup>
       </ResizableSection>
 
-      {/* Partenaires */}
+      {/* Partenaires - Add button in ResizableSection actions slot */}
       <ResizableSection
         title="Partenaires"
         storageKey="conv-prev-partenaires"
         icon={<Handshake sx={{ color: colors.purple[500], fontSize: 16 }} />}
+        actions={
+          <Button variant="outlined" size="small" startIcon={<Add />} onClick={onAddPartenaire} sx={addBtnSx}>
+            Ajouter
+          </Button>
+        }
+        noPadding
       >
         <ConventionPartenairesCard
           key={partenairesRefreshKey}
@@ -130,6 +148,12 @@ const ConventionPrevisionnelSection = ({
         title="Versements previsionnels"
         storageKey="conv-prev-versements"
         icon={<AccountBalance sx={{ color: colors.warning[500], fontSize: 16 }} />}
+        actions={
+          <Button variant="outlined" size="small" startIcon={<Add />} onClick={onAddVersement} sx={addBtnSx}>
+            Ajouter
+          </Button>
+        }
+        noPadding
       >
         <ConventionVersementsCard
           versements={versements}
@@ -144,6 +168,7 @@ const ConventionPrevisionnelSection = ({
         title="Imputations previsionnelles"
         storageKey="conv-prev-imputations"
         icon={<PieChart sx={{ color: colors.warning[500], fontSize: 16 }} />}
+        noPadding
       >
         <ConventionImputationsCard conventionId={convention.id} onRefresh={onRefresh} />
       </ResizableSection>
@@ -153,6 +178,7 @@ const ConventionPrevisionnelSection = ({
         title="Subventions"
         storageKey="conv-prev-subventions"
         icon={<CardGiftcard sx={{ color: colors.success[500], fontSize: 16 }} />}
+        noPadding
       >
         <ConventionSubventionsCard conventionId={convention.id} />
       </ResizableSection>

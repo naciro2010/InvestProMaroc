@@ -1,7 +1,20 @@
-import { Box, Container, Paper, Typography, Chip, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip } from '@mui/material'
-import { History, Visibility } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
-import RichTextDisplay from '../../ui/RichTextDisplay'
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
+  Chip,
+} from '@mui/material'
+import { Visibility, History } from '@mui/icons-material'
+import StatusBadge from '@/components/core/StatusBadge'
+import { colors, typography } from '@/lib/designSystem'
 
 interface Convention {
   id: number
@@ -27,88 +40,97 @@ interface ConventionAvenantsTabProps {
   getStatusColor: (statut: string) => 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
 }
 
-const ConventionAvenantsTab = ({ convention, avenants, formatCurrency, formatDate, getStatusColor }: ConventionAvenantsTabProps) => {
+/**
+ * ConventionAvenantsTab - Avenants list using design system tokens.
+ * Odoo-inspired: clean table with StatusBadge, consistent typography.
+ */
+const ConventionAvenantsTab = ({ convention, avenants, formatCurrency, formatDate }: ConventionAvenantsTabProps) => {
   const navigate = useNavigate()
 
+  if (avenants.length === 0) {
+    return (
+      <Box sx={{ py: 5, textAlign: 'center' }}>
+        <History sx={{ fontSize: 40, color: colors.neutral[300], mb: 1.5 }} />
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 0.5 }}>
+          Aucun avenant pour cette convention
+        </Typography>
+        <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+          Les modifications futures seront enregistrees comme avenants
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ mb: 3 }}>
-        <Alert severity="info" icon={<History />}>
-          <Typography variant="body2" fontWeight={600}>
-            Convention initiale : {convention.numero}
-          </Typography>
-          <Typography variant="caption">
-            Signée le {formatDate(convention.dateSignature)} • Montant : {formatCurrency(convention.budget)}
-          </Typography>
-        </Alert>
+    <Box sx={{ px: { xs: 1, md: 2 } }}>
+      {/* Convention reference */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, px: 1 }}>
+        <History sx={{ fontSize: 16, color: colors.info[500] }} />
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+          Convention initiale : <strong>{convention.numero}</strong> - Signee le {formatDate(convention.dateSignature)} - {formatCurrency(convention.budget)}
+        </Typography>
       </Box>
 
-      {avenants.length > 0 ? (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell width="100px">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="A" size="small" color="warning" />
-                    Numéro
-                  </Box>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ bgcolor: colors.neutral[50] }}>
+              <TableCell sx={thStyle}>Numero</TableCell>
+              <TableCell sx={thStyle}>Objet</TableCell>
+              <TableCell sx={thStyle}>Type</TableCell>
+              <TableCell sx={thStyle}>Date</TableCell>
+              <TableCell sx={thStyle}>Statut</TableCell>
+              <TableCell align="center" sx={{ ...thStyle, width: 70 }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {avenants.map((avenant, index) => (
+              <TableRow key={avenant.id} sx={{ '&:hover': { bgcolor: colors.neutral[25] }, cursor: 'pointer' }}
+                onClick={() => navigate(`/conventions/${convention.id}/avenants/${avenant.id}`)}>
+                <TableCell>
+                  <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm, color: colors.primary[600] }}>
+                    {avenant.numeroAvenant}
+                  </Typography>
+                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Avenant #{index + 1}</Typography>
                 </TableCell>
-                <TableCell>Objet</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Statut</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell>
+                  <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {avenant.objet}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip label={avenant.type} size="small" variant="outlined"
+                    sx={{ fontSize: typography.sizes.xs, height: 22, borderColor: colors.neutral[300] }} />
+                </TableCell>
+                <TableCell>
+                  <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary }}>{formatDate(avenant.dateAvenant)}</Typography>
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={avenant.statut} size="small" />
+                </TableCell>
+                <TableCell align="center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                  <Tooltip title="Voir les details">
+                    <IconButton size="small" onClick={() => navigate(`/conventions/${convention.id}/avenants/${avenant.id}`)}
+                      sx={{ color: colors.primary[600] }}>
+                      <Visibility sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {avenants.map((avenant, index) => (
-                <TableRow key={avenant.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {avenant.numeroAvenant}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Avenant #{index + 1}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <RichTextDisplay html={avenant.objet || ''} collapseLength={100} allowExpand />
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={avenant.type} size="small" variant="outlined" />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{formatDate(avenant.dateAvenant)}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={avenant.statut} size="small" color={getStatusColor(avenant.statut)} />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Voir les détails">
-                      <IconButton size="small" onClick={() => navigate(`/conventions/${convention.id}/avenants/${avenant.id}`)}>
-                        <Visibility fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <History sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="body1" color="text.secondary" gutterBottom>
-            Aucun avenant pour cette convention
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Les modifications futures de la convention seront enregistrées comme avenants
-          </Typography>
-        </Paper>
-      )}
-    </Container>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   )
+}
+
+const thStyle = {
+  fontWeight: typography.weights.semibold,
+  fontSize: typography.sizes.xs,
+  color: colors.textSecondary,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.04em',
 }
 
 export default ConventionAvenantsTab

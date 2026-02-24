@@ -14,13 +14,9 @@ import { Plus, Pencil } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
-import {
-  ConfirmDialog,
-  ControlPanel,
-  FormView,
-} from '../../components/core'
+import { ControlPanel, FormView } from '../../components/core'
 import type { StatusStep } from '../../components/core'
-import { api, conventionsAPI, avenantConventionsAPI, versementsPrevisionnelsAPI, projetConventionsAPI } from '../../lib/api'
+import { conventionsAPI, versementsPrevisionnelsAPI } from '../../lib/api'
 import {
   ConventionWorkflowActions,
   ConventionPrevisionnelSection,
@@ -31,9 +27,6 @@ import {
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import VersementFormDialog from '../../components/conventions/VersementFormDialog'
-import LinkProjetDialog from '../../components/conventions/LinkProjetDialog'
-import LinkMarcheDialog from '../../components/conventions/LinkMarcheDialog'
-import SousConventionFormSimple from './SousConventionFormSimple'
 
 interface Convention {
   id: number; code: string; numero: string; libelle: string; objet: string
@@ -44,12 +37,7 @@ interface Convention {
   heriteParametres?: boolean
 }
 
-interface SousConvention { id: number; code: string; numero: string; libelle: string; statut: string; budget: number; dateDebut: string }
-interface Avenant { id: number; numeroAvenant: string; dateAvenant: string; statut: string; objet: string; type: string }
-interface Projet { id: number; code: string; designation: string; budgetTotal: number; statut: string }
-interface Marche { id: number; numeroMarche: string; objet: string; montantTtc: number; statut: string; fournisseurNom?: string }
 interface VersementPrevisionnel { id: number; partenaireId?: number; partenaireNom?: string; partenaireSigle?: string; volet?: string; dateVersement: string; montant: number; montantPrevu?: number; remarques?: string }
-interface ProjetConventionAssociation { projetId: number; projetCode: string; projetNom: string; projetBudgetTotal: number; projetStatut: string }
 
 const STATUS_STEPS: StatusStep[] = [
   { value: 'BROUILLON', label: 'Brouillon' },
@@ -61,10 +49,7 @@ const STATUS_STEPS: StatusStep[] = [
 
 /** Normalize backend status aliases to the canonical values used in STATUS_STEPS */
 const normalizeStatut = (statut: string): string => {
-  const aliases: Record<string, string> = {
-    VALIDE: 'VALIDEE',
-    EN_COURS: 'EN_EXECUTION',
-  }
+  const aliases: Record<string, string> = { VALIDE: 'VALIDEE', EN_COURS: 'EN_EXECUTION' }
   return aliases[statut] || statut
 }
 
@@ -74,29 +59,19 @@ const ConventionDetailPageModern = () => {
   const { user, isAdmin, isManager } = useAuth()
   const { showSuccess, showError } = useToast()
 
-  // Data state
+  // Convention + versements (shared between PrevisionnelSection sub-components)
   const [loading, setLoading] = useState(true)
   const [convention, setConvention] = useState<Convention | null>(null)
-  const [avenants, setAvenants] = useState<Avenant[]>([])
-  const [sousConventions, setSousConventions] = useState<SousConvention[]>([])
-  const [projets, setProjets] = useState<Projet[]>([])
-  const [marches, setMarches] = useState<Marche[]>([])
   const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  // Dialog state
+  // Partenaire & Versement dialog state
   const [addPartenaireDialogOpen, setAddPartenaireDialogOpen] = useState(false)
   const [editPartenaireData, setEditPartenaireData] = useState<{ id: number; partenaireId: number; partenaireNom: string; budgetAlloue: number; pourcentage: number; estMaitreOeuvre: boolean; estMaitreOeuvreDelegue: boolean; remarques?: string } | null>(null)
-  const [linkProjetDialogOpen, setLinkProjetDialogOpen] = useState(false)
-  const [linkMarcheDialogOpen, setLinkMarcheDialogOpen] = useState(false)
   const [partenairesRefreshKey, setPartenairesRefreshKey] = useState(0)
   const [versementDialogOpen, setVersementDialogOpen] = useState(false)
   const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
-  const [sousConventionDialogOpen, setSousConventionDialogOpen] = useState(false)
-  const [editingSousConvention, setEditingSousConvention] = useState<SousConvention | null>(null)
-  const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | null; id: number | null }>({ open: false, type: null, id: null })
 
-  // Data loading
   useEffect(() => { if (id) loadConvention(parseInt(id)) }, [id])
 
   const loadConvention = async (cid: number) => {
@@ -105,41 +80,14 @@ const ConventionDetailPageModern = () => {
       const res = await conventionsAPI.getById(cid)
       const raw = res.data.data || res.data
       setConvention({ ...raw, statut: normalizeStatut(raw.statut) })
-      await Promise.all([loadAvenants(cid), loadSousConventions(cid), loadProjets(cid), loadMarches(cid), loadVersements(cid)])
+      loadVersements(cid)
     } catch { setError('Erreur lors du chargement de la convention') }
     finally { setLoading(false) }
   }
 
-  const loadAvenants = async (cid: number) => { try { const r = await avenantConventionsAPI.getByConvention(cid); setAvenants(r.data.data || r.data || []) } catch { setAvenants([]) } }
-  const loadSousConventions = async (cid: number) => { try { const r = await conventionsAPI.getSousConventions(cid); setSousConventions(r.data.data || []) } catch { /* ignored */ } }
-  const loadProjets = async (cid: number) => {
-    try {
-      const r = await projetConventionsAPI.getByConvention(cid)
-      const associations: ProjetConventionAssociation[] = r.data.data || r.data || []
-      setProjets(associations.map((a: ProjetConventionAssociation) => ({ id: a.projetId, code: a.projetCode, designation: a.projetNom, budgetTotal: a.projetBudgetTotal, statut: a.projetStatut })))
-    } catch { setProjets([]) }
-  }
-  const loadMarches = async (cid: number) => { try { const r = await api.get(`/marches/convention/${cid}`); setMarches(r.data.data || r.data || []) } catch { setMarches([]) } }
-  const loadVersements = async (cid: number) => { try { const r = await versementsPrevisionnelsAPI.getByConvention(cid); setVersements(r.data.data || r.data || []) } catch { setVersements([]) } }
-
-  // Confirm actions
-  const handleConfirmAction = async () => {
-    if (!convention || !confirmState.id || !confirmState.type) return
-    try {
-      switch (confirmState.type) {
-        case 'unlinkProjet': await conventionsAPI.unlinkProjet(confirmState.id, convention.id); showSuccess('Projet delie'); loadProjets(convention.id); break
-        case 'unlinkMarche': await conventionsAPI.unlinkMarche(convention.id, confirmState.id); showSuccess('Marche delie'); loadMarches(convention.id); break
-      }
-    } catch { showError('Erreur lors de l\'operation') }
-    finally { setConfirmState({ open: false, type: null, id: null }) }
-  }
-
-  const getConfirmDialogProps = () => {
-    switch (confirmState.type) {
-      case 'unlinkProjet': return { title: 'Delier le projet', message: 'Voulez-vous delier ce projet ?', variant: 'warning' as const, confirmLabel: 'Delier' }
-      case 'unlinkMarche': return { title: 'Delier le marche', message: 'Voulez-vous delier ce marche ?', variant: 'warning' as const, confirmLabel: 'Delier' }
-      default: return { title: '', message: '', variant: 'info' as const, confirmLabel: 'Confirmer' }
-    }
+  const loadVersements = async (cid: number) => {
+    try { const r = await versementsPrevisionnelsAPI.getByConvention(cid); setVersements(r.data.data || r.data || []) }
+    catch { setVersements([]) }
   }
 
   useEffect(() => { if (error) { const t = setTimeout(() => setError(null), 5000); return () => clearTimeout(t) } }, [error])
@@ -172,20 +120,13 @@ const ConventionDetailPageModern = () => {
 
   // Build effective steps: insert REJETE/ANNULE into the pipeline when active
   const effectiveSteps: StatusStep[] = (() => {
-    const statut = convention.statut
-    if (statut === 'REJETE') {
-      return [
-        { value: 'BROUILLON', label: 'Brouillon' },
-        { value: 'SOUMIS', label: 'Soumis' },
-        { value: 'REJETE', label: 'Rejete', variant: 'danger' as const },
-      ]
-    }
-    if (statut === 'ANNULE') {
-      return [
-        ...STATUS_STEPS.slice(0, 4),
-        { value: 'ANNULE', label: 'Annule', variant: 'danger' as const },
-      ]
-    }
+    if (convention.statut === 'REJETE') return [
+      { value: 'BROUILLON', label: 'Brouillon' }, { value: 'SOUMIS', label: 'Soumis' },
+      { value: 'REJETE', label: 'Rejete', variant: 'danger' as const },
+    ]
+    if (convention.statut === 'ANNULE') return [
+      ...STATUS_STEPS.slice(0, 4), { value: 'ANNULE', label: 'Annule', variant: 'danger' as const },
+    ]
     return STATUS_STEPS
   })()
 
@@ -218,12 +159,6 @@ const ConventionDetailPageModern = () => {
                   <Plus size={14} style={{ marginRight: 4 }} /> Avenant
                 </Button>
               </Tooltip>
-              {convention.typeConvention === 'CADRE' && (
-                <Button variant="outlined" size="small" onClick={() => { setEditingSousConvention(null); setSousConventionDialogOpen(true) }}
-                  sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}>
-                  <Plus size={14} style={{ marginRight: 4 }} /> Sous-conv.
-                </Button>
-              )}
               <Tooltip title={!canEdit ? 'Statut BROUILLON requis' : 'Modifier'}>
                 <span>
                   <Button variant="outlined" size="small" disabled={!canEdit} onClick={() => navigate(`/conventions/${id}/edit`)}
@@ -273,7 +208,7 @@ const ConventionDetailPageModern = () => {
               </Box>
             )}
 
-            {/* ===== FINANCIAL SUMMARY TABLE ===== */}
+            {/* Financial Summary */}
             <Box sx={{ mb: 3 }}>
               <ConventionSummaryTable
                 conventionId={convention.id}
@@ -284,7 +219,7 @@ const ConventionDetailPageModern = () => {
               />
             </Box>
 
-            {/* ===== CONVENTION INFO & PLANNING ===== */}
+            {/* Convention Info & Planning (partenaires, versements, imputations, subventions) */}
             <ConventionPrevisionnelSection
               convention={convention}
               partenairesRefreshKey={partenairesRefreshKey}
@@ -309,42 +244,19 @@ const ConventionDetailPageModern = () => {
               onRefresh={() => loadConvention(convention.id)}
             />
 
-            {/* ===== PROJECTS, MARCHES & AVENANTS ===== */}
-            <ConventionRealisationSection
-              convention={convention}
-              projets={projets}
-              marches={marches}
-              sousConventions={sousConventions}
-              avenants={avenants}
-              onLinkProjet={() => setLinkProjetDialogOpen(true)}
-              onUnlinkProjet={(pid) => setConfirmState({ open: true, type: 'unlinkProjet', id: pid })}
-              onLinkMarche={() => setLinkMarcheDialogOpen(true)}
-              onUnlinkMarche={(mid) => setConfirmState({ open: true, type: 'unlinkMarche', id: mid })}
-              onAddSousConvention={() => { setEditingSousConvention(null); setSousConventionDialogOpen(true) }}
-              onEditSousConvention={(sc) => { setEditingSousConvention(sc); setSousConventionDialogOpen(true) }}
-              onNavigateToConvention={(cid) => navigate(`/conventions/${cid}`)}
-            />
+            {/* Projects, Marches, Sous-conventions, Avenants (self-contained) */}
+            <ConventionRealisationSection convention={convention} />
           </FormView>
         </Container>
       </Box>
 
-      {/* Dialogs */}
+      {/* Partenaire & Versement Dialogs */}
       {convention && (
         <>
           <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget} onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }} onSuccess={() => { setPartenairesRefreshKey((k: number) => k + 1); setEditPartenaireData(null); loadVersements(convention.id) }} editData={editPartenaireData} />
           <VersementFormDialog open={versementDialogOpen} conventionId={convention.id} onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }} onSuccess={() => loadVersements(convention.id)} editingVersement={editingVersement} />
-          <LinkProjetDialog open={linkProjetDialogOpen} conventionId={convention.id} onClose={() => setLinkProjetDialogOpen(false)} onSuccess={() => loadProjets(convention.id)} />
-          <LinkMarcheDialog open={linkMarcheDialogOpen} conventionId={convention.id} onClose={() => setLinkMarcheDialogOpen(false)} onSuccess={() => loadMarches(convention.id)} />
-          <SousConventionFormSimple open={sousConventionDialogOpen} onClose={() => { setSousConventionDialogOpen(false); setEditingSousConvention(null) }} onSuccess={() => { loadSousConventions(convention.id); setSousConventionDialogOpen(false); setEditingSousConvention(null) }} parentConvention={{ id: convention.id, numero: convention.numero, libelle: convention.libelle, tauxCommission: convention.tauxCommission, baseCalcul: convention.baseCalcul, tauxTva: convention.tauxTva, budget: convention.budget }} editingSousConvention={editingSousConvention} />
         </>
       )}
-
-      <ConfirmDialog
-        open={confirmState.open}
-        {...getConfirmDialogProps()}
-        onConfirm={handleConfirmAction}
-        onCancel={() => setConfirmState({ open: false, type: null, id: null })}
-      />
     </AppLayout>
   )
 }

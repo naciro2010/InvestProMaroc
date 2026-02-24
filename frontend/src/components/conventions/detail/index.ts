@@ -26,3 +26,6 @@ export { default as ConventionSummaryTable } from './ConventionSummaryTable'
 // Main sections
 export { default as ConventionPrevisionnelSection } from './ConventionPrevisionnelSection'
 export { default as ConventionRealisationSection } from './ConventionRealisationSection'
+
+// Form dialogs
+export { default as ImputationFormDialog } from './ImputationFormDialog'

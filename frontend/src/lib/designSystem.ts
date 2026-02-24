@@ -1376,15 +1376,17 @@ export const componentStyles = {
       maxWidth: '100%',
       '&::-webkit-scrollbar': { display: 'none' },
     },
+    /** Future/inactive step - very muted */
     statusPipelineStep: {
       px: 1.5,
       py: 0.5,
       fontSize: typography.sizes.sm,
-      fontWeight: typography.weights.medium,
-      color: colors.textSecondary,
-      bgcolor: colors.neutral[100],
-      borderRight: `1px solid ${colors.border}`,
+      fontWeight: typography.weights.normal,
+      color: colors.neutral[400],
+      bgcolor: colors.neutral[50],
+      borderRight: `1px solid ${colors.neutral[200]}`,
       cursor: 'default',
+      whiteSpace: 'nowrap' as const,
       '&:first-of-type': {
         borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
       },
@@ -1393,15 +1395,17 @@ export const componentStyles = {
         borderRight: 'none',
       },
     },
+    /** Active/current step - Odoo-style filled primary */
     statusPipelineStepActive: {
       px: 1.5,
       py: 0.5,
       fontSize: typography.sizes.sm,
-      fontWeight: typography.weights.semibold,
-      color: colors.primary[700],
-      bgcolor: colors.primary[100],
-      borderRight: `1px solid ${colors.primary[200]}`,
+      fontWeight: typography.weights.bold,
+      color: '#fff',
+      bgcolor: colors.primary[600],
+      borderRight: `1px solid ${colors.primary[700]}`,
       cursor: 'default',
+      whiteSpace: 'nowrap' as const,
       '&:first-of-type': {
         borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
       },
@@ -1410,6 +1414,7 @@ export const componentStyles = {
         borderRight: 'none',
       },
     },
+    /** Done/completed step - green with checkmark space */
     statusPipelineStepDone: {
       px: 1.5,
       py: 0.5,
@@ -1419,6 +1424,7 @@ export const componentStyles = {
       bgcolor: colors.success[50],
       borderRight: `1px solid ${colors.success[100]}`,
       cursor: 'default',
+      whiteSpace: 'nowrap' as const,
       '&:first-of-type': {
         borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
       },
@@ -1432,11 +1438,12 @@ export const componentStyles = {
       px: 1.5,
       py: 0.5,
       fontSize: typography.sizes.sm,
-      fontWeight: typography.weights.semibold,
-      color: colors.danger[700],
-      bgcolor: colors.danger[100],
-      borderRight: `1px solid ${colors.danger[200]}`,
+      fontWeight: typography.weights.bold,
+      color: '#fff',
+      bgcolor: colors.danger[600],
+      borderRight: `1px solid ${colors.danger[700]}`,
       cursor: 'default',
+      whiteSpace: 'nowrap' as const,
       '&:first-of-type': {
         borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
       },

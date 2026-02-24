@@ -1,10 +1,10 @@
 import React, { useRef } from 'react'
 import { Box, Typography, Button } from '@mui/material'
-import { TrendingUp, Assessment, ListAlt } from '@mui/icons-material'
+import { TrendingUp, ListAlt } from '@mui/icons-material'
 import { StatusBadge, InlineTable, Notebook, ResizableSection } from '@/components/core'
-import ConventionStatsCard from './ConventionStatsCard'
 import ConventionAvenantsTab from './ConventionAvenantsTab'
 import { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedTab'
+import { DetailSectionHeader } from './ConventionPrevisionnelSection'
 import { colors, typography } from '@/lib/designSystem'
 
 interface ConventionBase {
@@ -83,10 +83,8 @@ const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'se
 
 /**
  * SECTION: Realisation
- * Execution data: stats/KPIs, projects, marches, sous-conventions, avenants.
- *
- * Each sub-section is wrapped in a ResizableSection for collapsible
- * and resizable layout control.
+ * Execution data: projects, marches, sous-conventions, avenants.
+ * Stats/KPIs are now in the ConventionSummaryTable at the top of the page.
  */
 const ConventionRealisationSection = ({
   convention,
@@ -107,27 +105,13 @@ const ConventionRealisationSection = ({
   return (
     <Box>
       {/* Section Header */}
-      <SectionHeader
+      <DetailSectionHeader
         icon={<TrendingUp sx={{ color: colors.success[600], fontSize: 20 }} />}
         title="Realisation"
-        subtitle="Execution, projets lies et suivi d'avancement"
+        subtitle="Projets lies, marches, sous-conventions et avenants"
         color={colors.success[50]}
         borderColor={colors.success[200]}
       />
-
-      {/* Stats Card */}
-      <ResizableSection
-        title="Indicateurs cles"
-        storageKey="conv-real-stats"
-        icon={<Assessment sx={{ color: colors.info[500], fontSize: 16 }} />}
-      >
-        <ConventionStatsCard
-          conventionId={convention.id}
-          onStatClick={() => {
-            setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
-          }}
-        />
-      </ResizableSection>
 
       {/* Notebook with tabs */}
       <ResizableSection
@@ -179,7 +163,7 @@ const ConventionRealisationSection = ({
                         <StatusBadge key="stat" status={sc.statut} size="small" />,
                         <Typography key="bud" sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(sc.budget)}</Typography>,
                         sc.statut === 'BROUILLON' ? (
-                          <Button key="act" size="small" onClick={(e) => { e.stopPropagation(); onEditSousConvention(sc) }}
+                          <Button key="act" size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEditSousConvention(sc) }}
                             sx={{ textTransform: 'none', fontSize: typography.sizes.xs, color: colors.primary[600], minWidth: 0 }}>
                             Modifier
                           </Button>
@@ -213,40 +197,5 @@ const ConventionRealisationSection = ({
     </Box>
   )
 }
-
-/** Compact section header with icon, title and accent bar */
-const SectionHeader = ({ icon, title, subtitle, color, borderColor }: {
-  icon: React.ReactNode
-  title: string
-  subtitle: string
-  color: string
-  borderColor: string
-}) => (
-  <Box sx={{
-    display: 'flex', alignItems: 'center', gap: 1.5,
-    mb: 2.5, mt: 0.5, pb: 1.5,
-    borderBottom: `2px solid ${borderColor}`,
-  }}>
-    <Box sx={{
-      width: 36, height: 36, borderRadius: '8px', bgcolor: color,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}>
-      {icon}
-    </Box>
-    <Box>
-      <Typography sx={{
-        fontWeight: typography.weights.bold,
-        fontSize: typography.sizes.md,
-        color: colors.textPrimary,
-        lineHeight: 1.2,
-      }}>
-        {title}
-      </Typography>
-      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-        {subtitle}
-      </Typography>
-    </Box>
-  </Box>
-)
 
 export default ConventionRealisationSection

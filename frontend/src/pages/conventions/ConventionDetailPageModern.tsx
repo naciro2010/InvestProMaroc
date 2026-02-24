@@ -27,6 +27,7 @@ import {
   ConventionPrevisionnelSection,
   ConventionRealisationSection,
   ParentConventionBanner,
+  ConventionSummaryTable,
 } from '../../components/conventions/detail'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
@@ -240,6 +241,17 @@ const ConventionDetailPageModern = () => {
                 />
               </Box>
             )}
+
+            {/* ===== FINANCIAL SUMMARY TABLE ===== */}
+            <Box sx={{ mb: 3 }}>
+              <ConventionSummaryTable
+                conventionId={convention.id}
+                conventionBudget={convention.budget}
+                tauxCommission={convention.tauxCommission}
+                tauxTva={convention.tauxTva}
+                baseCalcul={convention.baseCalcul}
+              />
+            </Box>
 
             {/* ===== SECTION 1: PREVISIONNEL ===== */}
             <ConventionPrevisionnelSection

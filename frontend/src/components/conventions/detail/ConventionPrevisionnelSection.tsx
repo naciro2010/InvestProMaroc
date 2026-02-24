@@ -1,9 +1,7 @@
 import React from 'react'
 import { Box, Typography } from '@mui/material'
-import { Assignment, AccountBalance, Receipt, Handshake, PieChart, CardGiftcard } from '@mui/icons-material'
+import { Assignment, Handshake, PieChart, CardGiftcard } from '@mui/icons-material'
 import { FieldGroup, Field, StatusBadge, ResizableSection } from '@/components/core'
-import ConventionBudgetExecutionCard from './ConventionBudgetExecutionCard'
-import ConventionBudgetDetailCard from './ConventionBudgetDetailCard'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
@@ -67,11 +65,8 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
 
 /**
  * SECTION: Previsionnel
- * All planned/budgeted data: info, finances, dates, budget synthesis,
- * partenaires (with versements prev. column), imputations, subventions.
- *
- * Each sub-section is wrapped in a ResizableSection for collapsible
- * and resizable layout control.
+ * Convention info, partenaires, imputations, subventions.
+ * Financial summary (budget/engagement) is now in ConventionSummaryTable above.
  */
 const ConventionPrevisionnelSection = ({
   convention,
@@ -84,15 +79,15 @@ const ConventionPrevisionnelSection = ({
   return (
     <Box>
       {/* Section Header */}
-      <SectionHeader
+      <DetailSectionHeader
         icon={<Assignment sx={{ color: colors.primary[600], fontSize: 20 }} />}
         title="Previsionnel"
-        subtitle="Budget, parametres financiers et planification"
+        subtitle="Informations, partenaires et planification"
         color={colors.primary[50]}
         borderColor={colors.primary[200]}
       />
 
-      {/* Info Fields - single flat block, 4 columns */}
+      {/* Info Fields */}
       <ResizableSection
         title="Informations generales"
         storageKey="conv-prev-info"
@@ -112,34 +107,6 @@ const ConventionPrevisionnelSection = ({
           <Field label="Debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
           <Field label="Fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
         </FieldGroup>
-      </ResizableSection>
-
-      {/* Financial Synthesis */}
-      <ResizableSection
-        title="Synthese budgetaire"
-        storageKey="conv-prev-budget-exec"
-        icon={<AccountBalance sx={{ color: colors.success[500], fontSize: 16 }} />}
-        key={`budget-${partenairesRefreshKey}`}
-      >
-        <ConventionBudgetExecutionCard
-          conventionId={convention.id}
-          conventionBudget={convention.budget}
-          tauxCommission={convention.tauxCommission}
-          tauxTva={convention.tauxTva}
-          baseCalcul={convention.baseCalcul}
-        />
-      </ResizableSection>
-
-      {/* Budget Detail: per-marche tracking */}
-      <ResizableSection
-        title="Detail budgetaire par marche"
-        storageKey="conv-prev-budget-detail"
-        icon={<Receipt sx={{ color: colors.info[500], fontSize: 16 }} />}
-      >
-        <ConventionBudgetDetailCard
-          conventionId={convention.id}
-          conventionBudget={convention.budget}
-        />
       </ResizableSection>
 
       {/* Partenaires */}
@@ -180,7 +147,7 @@ const ConventionPrevisionnelSection = ({
 }
 
 /** Compact section header with icon, title and accent bar */
-const SectionHeader = ({ icon, title, subtitle, color, borderColor }: {
+export const DetailSectionHeader = ({ icon, title, subtitle, color, borderColor }: {
   icon: React.ReactNode
   title: string
   subtitle: string

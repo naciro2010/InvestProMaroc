@@ -22,6 +22,12 @@ export { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedT
 // Parent convention banner (sous-convention detail)
 export { default as ParentConventionBanner } from './ParentConventionBanner'
 
+// Financial summary table (v3 - top-level overview)
+export { default as ConventionSummaryTable } from './ConventionSummaryTable'
+
 // Main sections: Previsionnel & Realisation
 export { default as ConventionPrevisionnelSection } from './ConventionPrevisionnelSection'
 export { default as ConventionRealisationSection } from './ConventionRealisationSection'
+
+// Shared section header
+export { DetailSectionHeader } from './ConventionPrevisionnelSection'

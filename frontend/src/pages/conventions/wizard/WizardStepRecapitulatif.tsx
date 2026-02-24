@@ -37,7 +37,7 @@ const computeLineCommission = (
   return (assiette * ligne.tauxCommissionLigne) / 100
 }
 
-const SectionTitle = ({ children }: { children: string }) => (
+const SectionTitle = ({ children }: { children: ReactNode }) => (
   <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.bold, color: colors.primary[700], mb: 1.5 }}>
     {children}
   </Typography>

@@ -1,10 +1,11 @@
 import { Box, Button } from '@mui/material'
-import { Assignment, CalendarMonth, Handshake, PieChart, CardGiftcard, AccountBalance, Add } from '@mui/icons-material'
+import { Assignment, CalendarMonth, Handshake, PieChart, CardGiftcard, AccountBalance, ReceiptLong, Add } from '@mui/icons-material'
 import { FieldGroup, Field, StatusBadge, ResizableSection } from '@/components/core'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
 import ConventionVersementsCard from './ConventionVersementsCard'
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
+import ConventionBudgetLignesCard from './ConventionBudgetLignesCard'
 import { colors, typography } from '@/lib/designSystem'
 
 interface ConventionData {
@@ -119,6 +120,16 @@ const ConventionPrevisionnelSection = ({
           <Field label="Date debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
           <Field label="Date fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
         </FieldGroup>
+      </ResizableSection>
+
+      {/* Repartition par categories de depenses */}
+      <ResizableSection
+        title="Repartition par Categories de Depenses"
+        storageKey="conv-prev-budget-lignes"
+        icon={<ReceiptLong sx={{ color: colors.success[500], fontSize: 16 }} />}
+        noPadding
+      >
+        <ConventionBudgetLignesCard conventionId={convention.id} />
       </ResizableSection>
 
       {/* Partenaires - Add button in ResizableSection actions slot */}

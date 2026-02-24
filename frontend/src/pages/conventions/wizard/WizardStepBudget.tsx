@@ -57,42 +57,35 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
       .finally(() => setLoadingCategories(false))
   }, [])
 
-  // Propagate global tauxCommission to all existing lines
-  useEffect(() => {
-    if (formData.commissionMode === 'GLOBAL' && hasLines) {
-      setFormData((prev: ConventionWizardFormData) => ({
-        ...prev,
-        lignesBudget: prev.lignesBudget.map((l: BudgetLigne) => ({
-          ...l,
-          tauxCommissionLigne: prev.tauxCommission,
-        })),
-      }))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.tauxCommission])
-
-  // Propagate global tauxTvaLignes to ALL existing lines + new line form
-  useEffect(() => {
-    const tva = formData.tauxTvaLignes
-    // Update new line form
+  // Handler: propagate TVA change to ALL existing lines + new line form (no stale closures)
+  const handleTvaLignesChange = (value: number) => {
+    setFormData((prev: ConventionWizardFormData) => ({
+      ...prev,
+      tauxTvaLignes: value,
+      lignesBudget: prev.lignesBudget.map((l: BudgetLigne) => ({
+        ...l,
+        tauxTVA: value,
+        montantTTC: l.montantHT * (1 + value / 100),
+      })),
+    }))
     setNewLigne((prev) => ({
       ...prev,
-      tauxTVA: tva,
-      montantTTC: prev.montantHT * (1 + tva / 100),
+      tauxTVA: value,
+      montantTTC: prev.montantHT * (1 + value / 100),
     }))
-    // Update all existing lines
-    if (hasLines) {
-      setFormData((prev: ConventionWizardFormData) => ({
-        ...prev,
-        lignesBudget: prev.lignesBudget.map((l: BudgetLigne) => ({
-          ...l,
-          tauxTVA: tva,
-          montantTTC: l.montantHT * (1 + tva / 100),
-        })),
-      }))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.tauxTvaLignes])
+  }
+
+  // Handler: propagate global tauxCommission to all lines (GLOBAL mode only)
+  const handleTauxCommissionChange = (value: number) => {
+    setFormData((prev: ConventionWizardFormData) => ({
+      ...prev,
+      tauxCommission: value,
+      lignesBudget: prev.commissionMode === 'GLOBAL'
+        ? prev.lignesBudget.map((l: BudgetLigne) => ({ ...l, tauxCommissionLigne: value }))
+        : prev.lignesBudget,
+    }))
+    setNewLigne((prev) => ({ ...prev, tauxCommissionLigne: value }))
+  }
 
   const usedCategoryIds = formData.lignesBudget
     .map((l: BudgetLigne) => l.categorieDepenseId)
@@ -161,12 +154,12 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
             fullWidth
             label="Taux TVA lignes (%)"
             value={formData.tauxTvaLignes}
-            onChange={(value) => setFormData((prev: ConventionWizardFormData) => ({ ...prev, tauxTvaLignes: value }))}
+            onChange={handleTvaLignesChange}
             decimalPlaces={2}
             min={0}
             max={100}
             size="small"
-            helperText="Applique a toutes les lignes"
+            helperText="Appliqué automatiquement à toutes les lignes"
           />
         </Box>
       </Card>
@@ -208,7 +201,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
               fullWidth
               label="Taux de commission (%)"
               value={formData.tauxCommission}
-              onChange={(value) => setFormData((prev: ConventionWizardFormData) => ({ ...prev, tauxCommission: value }))}
+              onChange={handleTauxCommissionChange}
               decimalPlaces={2} min={0} max={100} size="small"
               sx={{ minWidth: 80 }}
             />
@@ -349,7 +342,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
           Resume Budget & Commission
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(5, 1fr)' }, gap: 2 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
           <Box>
             <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>Budget Global</Typography>
             <Typography variant="h6" sx={{ color: colors.primary[700], mt: 0.5 }}>{formatCurrency(formData.budgetGlobal)}</Typography>
@@ -357,7 +350,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
           <Box>
             <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>Mode Commission</Typography>
             <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold, mt: 0.5 }}>
-              {isParCategorie ? 'Par categorie' : 'Taux global'}
+              {isParCategorie ? 'Par catégorie' : 'Taux global'} — Base : {formData.baseCalcul === 'DECAISSEMENTS_HT' ? 'Décaissements HT' : 'Décaissements TTC'}
             </Typography>
           </Box>
           <Box>
@@ -367,6 +360,13 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
             <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold, mt: 0.5 }}>
               {isParCategorie ? 'Variable' : `${formData.tauxCommission}%`}
             </Typography>
+          </Box>
+        </Box>
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+          <Box>
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>TVA Lignes</Typography>
+            <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold, mt: 0.5 }}>{formData.tauxTvaLignes}%</Typography>
           </Box>
           <Box>
             <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>Commission HT</Typography>

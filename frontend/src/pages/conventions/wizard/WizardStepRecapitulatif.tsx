@@ -1,21 +1,74 @@
+import type { ReactNode } from 'react'
 import {
   Box,
   Typography,
   Paper,
   Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
 } from '@mui/material'
 import FileUploadZone from '@/components/common/FileUploadZone'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 import {
   formatCurrency,
   type ConventionWizardFormData,
   type SetFormDataFunction,
   type WizardTotals,
+  type BudgetLigne,
 } from './types'
 
 interface WizardStepRecapitulatifProps {
   formData: ConventionWizardFormData
   setFormData: SetFormDataFunction
   totals: WizardTotals
+}
+
+const computeLineCommission = (
+  ligne: BudgetLigne,
+  baseCalcul: 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT'
+): number => {
+  const base = baseCalcul === 'DECAISSEMENTS_HT' ? ligne.montantHT : ligne.montantTTC
+  const assiette = ligne.plafond > 0 ? Math.min(base, ligne.plafond) : base
+  return (assiette * ligne.tauxCommissionLigne) / 100
+}
+
+const SectionTitle = ({ children }: { children: ReactNode }) => (
+  <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.bold, color: colors.primary[700], mb: 1.5 }}>
+    {children}
+  </Typography>
+)
+
+const FieldLabel = ({ children }: { children: ReactNode }) => (
+  <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
+    {children}
+  </Typography>
+)
+
+const FieldValue = ({ children, color }: { children: React.ReactNode; color?: string }) => (
+  <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold, mt: 0.5, color }}>
+    {children}
+  </Typography>
+)
+
+const formatDate = (dateStr: string): string => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+const typeLabels: Record<string, string> = {
+  CADRE: 'Convention Cadre',
+  NON_CADRE: 'Convention Non-Cadre',
+  SPECIFIQUE: 'Convention Spécifique',
+  AVENANT: 'Avenant',
 }
 
 const WizardStepRecapitulatif = ({
@@ -28,183 +81,295 @@ const WizardStepRecapitulatif = ({
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
       <Box>
-        <Typography variant="h6" gutterBottom fontWeight={600} color="primary">
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: typography.weights.bold, color: colors.primary[700] }}>
           Récapitulatif complet
         </Typography>
-        <Divider sx={{ mb: 3 }} />
+        <Divider />
       </Box>
 
       {/* Section 1: Identité */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>
-          Identité de la convention
-        </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-            gap: 2,
-          }}
-        >
+      <Paper sx={{ ...componentStyles.card, p: 3 }}>
+        <SectionTitle>Identité de la convention</SectionTitle>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2, mb: 2 }}>
           <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Code</Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>{formData.code}</Typography>
+            <FieldLabel>Code</FieldLabel>
+            <FieldValue color={colors.primary[700]}>{formData.code}</FieldValue>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Numéro</Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>{formData.numeroConvention || '-'}</Typography>
+            <FieldLabel>Numéro</FieldLabel>
+            <FieldValue>{formData.numeroConvention || '-'}</FieldValue>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Type</Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-              {formData.type === 'CADRE' ? 'CADRE' : 'NON_CADRE'}
-            </Typography>
+            <FieldLabel>Type</FieldLabel>
+            <Chip
+              label={typeLabels[formData.type] || formData.type}
+              size="small"
+              color={formData.type === 'CADRE' ? 'primary' : 'info'}
+              variant="outlined"
+              sx={{ mt: 0.5 }}
+            />
+          </Box>
+        </Box>
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ mb: 2 }}>
+          <FieldLabel>Libellé</FieldLabel>
+          <Typography variant="body2" sx={{ mt: 0.5, fontWeight: typography.weights.medium }}>
+            {formData.libelle || '-'}
+          </Typography>
+        </Box>
+        <Box>
+          <FieldLabel>Objet</FieldLabel>
+          {formData.objetRich ? (
+            <Box
+              dangerouslySetInnerHTML={{ __html: formData.objetRich }}
+              sx={{
+                mt: 0.5,
+                fontSize: typography.sizes.sm,
+                color: colors.textPrimary,
+                '& p': { m: 0, mb: 0.5 },
+                '& ul, & ol': { pl: 2, m: 0 },
+              }}
+            />
+          ) : (
+            <Typography variant="body2" sx={{ mt: 0.5 }}>-</Typography>
+          )}
+        </Box>
+      </Paper>
+
+      {/* Section 2: Dates */}
+      <Paper sx={{ ...componentStyles.card, p: 3 }}>
+        <SectionTitle>Période et dates</SectionTitle>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+          <Box>
+            <FieldLabel>Date de signature</FieldLabel>
+            <FieldValue>{formatDate(formData.dateSignature)}</FieldValue>
+          </Box>
+          <Box>
+            <FieldLabel>Date de début</FieldLabel>
+            <FieldValue>{formatDate(formData.dateDebut)}</FieldValue>
+          </Box>
+          <Box>
+            <FieldLabel>Date de fin</FieldLabel>
+            <FieldValue>{formData.dateFin ? formatDate(formData.dateFin) : '-'}</FieldValue>
+          </Box>
+          <Box>
+            <FieldLabel>Durée</FieldLabel>
+            <FieldValue>{formData.dureeMois} mois</FieldValue>
           </Box>
         </Box>
       </Paper>
 
-      {/* Section 2: Budget & Commission */}
-      <Paper sx={{ p: 3, bgcolor: '#f0f9ff' }}>
-        <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>
-          Budget & Commission
-        </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(5, 1fr)' },
-            gap: 2,
-          }}
-        >
+      {/* Section 3: Budget & Commission */}
+      <Paper sx={{ ...componentStyles.card, p: 3, border: `2px solid ${colors.primary[200]}` }}>
+        <SectionTitle>Budget & Commission</SectionTitle>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2, mb: 2 }}>
           <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Budget Global</Typography>
-            <Typography variant="h6" color="primary" sx={{ mt: 0.5 }}>{formatCurrency(formData.budgetGlobal)}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Mode Commission</Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-              {isParCategorie ? 'Par catégorie' : 'Taux global'}
+            <FieldLabel>Budget Global</FieldLabel>
+            <Typography variant="h6" sx={{ color: colors.primary[700], mt: 0.5 }}>
+              {formatCurrency(formData.budgetGlobal)}
             </Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-              {isParCategorie ? 'Taux' : 'Taux Commission'}
-            </Typography>
-            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-              {isParCategorie ? 'Variable par ligne' : `${formData.tauxCommission}% (${formData.baseCalcul})`}
+            <FieldLabel>Mode Commission</FieldLabel>
+            <FieldValue>{isParCategorie ? 'Par catégorie (avec plafond)' : 'Taux global'}</FieldValue>
+          </Box>
+          <Box>
+            <FieldLabel>{isParCategorie ? 'Taux' : 'Taux Commission'}</FieldLabel>
+            <FieldValue>{isParCategorie ? 'Variable par ligne' : `${formData.tauxCommission}%`}</FieldValue>
+          </Box>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 2 }}>
+          <Box>
+            <FieldLabel>Base de calcul</FieldLabel>
+            <FieldValue>
+              {formData.baseCalcul === 'DECAISSEMENTS_HT' ? 'Décaissements HT' : 'Décaissements TTC'}
+            </FieldValue>
+          </Box>
+          <Box>
+            <FieldLabel>TVA Lignes</FieldLabel>
+            <FieldValue>{formData.tauxTvaLignes}%</FieldValue>
+          </Box>
+          <Box>
+            <FieldLabel>Commission HT</FieldLabel>
+            <Typography variant="h6" sx={{ color: colors.info[600], mt: 0.5 }}>
+              {formatCurrency(totals.commissionHT)}
             </Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>Commission HT</Typography>
-            <Typography variant="h6" color="info.main" sx={{ mt: 0.5 }}>{formatCurrency(totals.commissionHT)}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-              Commission TTC ({formData.tauxTva}% TVA)
+            <FieldLabel>Commission TTC ({formData.tauxTva}% TVA)</FieldLabel>
+            <Typography variant="h6" sx={{ color: colors.success[600], mt: 0.5 }}>
+              {formatCurrency(totals.commissionTTC)}
             </Typography>
-            <Typography variant="h6" color="success.main" sx={{ mt: 0.5 }}>{formatCurrency(totals.commissionTTC)}</Typography>
           </Box>
         </Box>
 
+        {/* Budget lines detail table */}
         {formData.lignesBudget.length > 0 && (
           <>
             <Divider sx={{ my: 2 }} />
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>Lignes de budget</Typography>
-                <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                  {formData.lignesBudget.length} ligne(s) - Total: {formatCurrency(totals.totalLignesTTC)}
-                </Typography>
-              </Box>
-              {totals.differenceGlobalVsLignes !== 0 && (
-                <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                    Différence Budget vs Lignes
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    color={totals.differenceGlobalVsLignes >= 0 ? 'success.main' : 'error.main'}
-                    sx={{ mt: 0.5 }}
-                  >
-                    {formatCurrency(totals.differenceGlobalVsLignes)}
-                  </Typography>
-                </Box>
-              )}
+            <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold, mb: 1 }}>
+              Lignes de budget ({formData.lignesBudget.length})
+            </Typography>
+            <TableContainer sx={{ border: `1px solid ${colors.border}`, borderRadius: 1 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: colors.neutral[50] }}>
+                    <TableCell sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Catégorie</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Montant HT</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>TVA</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Montant TTC</TableCell>
+                    {isParCategorie && (
+                      <>
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Plafond</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Taux</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Commission</TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {formData.lignesBudget.map((ligne, idx) => (
+                    <TableRow key={idx} sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                      <TableCell sx={{ fontSize: typography.sizes.sm }}>{ligne.designation}</TableCell>
+                      <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{formatCurrency(ligne.montantHT)}</TableCell>
+                      <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{ligne.tauxTVA}%</TableCell>
+                      <TableCell align="right" sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold }}>
+                        {formatCurrency(ligne.montantTTC)}
+                      </TableCell>
+                      {isParCategorie && (
+                        <>
+                          <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>
+                            {ligne.plafond > 0 ? formatCurrency(ligne.plafond) : 'Illimité'}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{ligne.tauxCommissionLigne}%</TableCell>
+                          <TableCell align="right" sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.success[600] }}>
+                            {formatCurrency(computeLineCommission(ligne, formData.baseCalcul))}
+                          </TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  ))}
+                  {/* Total row */}
+                  <TableRow sx={{ bgcolor: colors.primary[25] }}>
+                    <TableCell sx={{ fontWeight: typography.weights.bold }}>TOTAL</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: typography.weights.bold }}>{formatCurrency(totals.totalLignesHT)}</TableCell>
+                    <TableCell />
+                    <TableCell align="right" sx={{ fontWeight: typography.weights.bold }}>{formatCurrency(totals.totalLignesTTC)}</TableCell>
+                    {isParCategorie && (
+                      <>
+                        <TableCell />
+                        <TableCell />
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.bold, color: colors.success[700] }}>
+                          {formatCurrency(totals.commissionHT)}
+                        </TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {/* Difference alert */}
+            <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FieldLabel>Écart Budget Global vs Lignes :</FieldLabel>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: typography.weights.bold,
+                  color: totals.differenceGlobalVsLignes >= 0 ? colors.success[600] : colors.danger[600],
+                }}
+              >
+                {formatCurrency(totals.differenceGlobalVsLignes)}
+              </Typography>
             </Box>
           </>
         )}
       </Paper>
 
-      {/* Section 3: Partenaires */}
+      {/* Section 4: Partenaires */}
       {formData.partenaires.length > 0 && (
-        <Paper sx={{ p: 3, bgcolor: '#eff6ff' }}>
-          <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>
-            Partenaires
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
+        <Paper sx={{ ...componentStyles.card, p: 3 }}>
+          <SectionTitle>Partenaires ({formData.partenaires.length})</SectionTitle>
+          <TableContainer sx={{ border: `1px solid ${colors.border}`, borderRadius: 1, mb: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ bgcolor: colors.neutral[50] }}>
+                  <TableCell sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Partenaire</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Budget</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>%</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {formData.partenaires.map((p, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell sx={{ fontSize: typography.sizes.sm }}>{p.designation}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{formatCurrency(p.budget)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{p.pourcentage.toFixed(2)}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
             <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Nombre</Typography>
-              <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>{formData.partenaires.length}</Typography>
+              <FieldLabel>Total alloué</FieldLabel>
+              <FieldValue color={colors.primary[700]}>{formatCurrency(totals.totalPartenaires)}</FieldValue>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Total alloué</Typography>
-              <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                {formatCurrency(totals.totalPartenaires)}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Reliquat</Typography>
-              <Typography
-                variant="body2"
-                fontWeight={600}
-                color={formData.budgetGlobal - totals.totalPartenaires >= 0 ? 'success.main' : 'error.main'}
-                sx={{ mt: 0.5 }}
-              >
+              <FieldLabel>Reliquat</FieldLabel>
+              <FieldValue color={formData.budgetGlobal - totals.totalPartenaires >= 0 ? colors.success[600] : colors.danger[600]}>
                 {formatCurrency(formData.budgetGlobal - totals.totalPartenaires)}
-              </Typography>
+              </FieldValue>
+            </Box>
+            <Box>
+              <FieldLabel>Allocation</FieldLabel>
+              <FieldValue>
+                {formData.budgetGlobal > 0
+                  ? `${((totals.totalPartenaires / formData.budgetGlobal) * 100).toFixed(1)}%`
+                  : '0%'}
+              </FieldValue>
             </Box>
           </Box>
         </Paper>
       )}
 
-      {/* Section 4: Subventions */}
+      {/* Section 5: Subventions */}
       {formData.subventions.length > 0 && (
-        <Paper sx={{ p: 3, bgcolor: '#f0fdf4' }}>
-          <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>
-            Subventions
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+        <Paper sx={{ ...componentStyles.card, p: 3 }}>
+          <SectionTitle>Subventions ({formData.subventions.length})</SectionTitle>
+          <TableContainer sx={{ border: `1px solid ${colors.border}`, borderRadius: 1, mb: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ bgcolor: colors.neutral[50] }}>
+                  <TableCell sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Organisme</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Montant</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>%</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.xs }}>Date obtention</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {formData.subventions.map((s, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell sx={{ fontSize: typography.sizes.sm }}>{s.organisme}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{formatCurrency(s.montant)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{s.pourcentage.toFixed(2)}%</TableCell>
+                    <TableCell align="right" sx={{ fontSize: typography.sizes.sm }}>{formatDate(s.dateObtention)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Nombre</Typography>
-              <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>{formData.subventions.length}</Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Total subventions</Typography>
-              <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>{formatCurrency(totals.totalSubventions)}</Typography>
+              <FieldLabel>Total subventions</FieldLabel>
+              <FieldValue color={colors.success[600]}>{formatCurrency(totals.totalSubventions)}</FieldValue>
             </Box>
           </Box>
         </Paper>
       )}
 
-      {/* Section 5: Dates */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="subtitle2" fontWeight={600} color="primary" sx={{ mb: 2 }}>
-          Période
-        </Typography>
-        <Typography variant="body2">
-          Du {new Date(formData.dateDebut).toLocaleDateString('fr-FR')}
-          {formData.dateFin && ` au ${new Date(formData.dateFin).toLocaleDateString('fr-FR')}`}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Durée : {formData.dureeMois} mois
-        </Typography>
-      </Paper>
-
-      {/* File upload */}
-      <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2 }}>
-        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
-          Pièces jointes
-        </Typography>
+      {/* Section 6: Pièces jointes */}
+      <Paper sx={{ ...componentStyles.card, p: 3 }}>
+        <SectionTitle>Pièces jointes</SectionTitle>
         <FileUploadZone
           files={formData.files}
           onFilesChange={(files) => setFormData((prev) => ({ ...prev, files }))}

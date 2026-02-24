@@ -31,6 +31,8 @@ interface WizardViewProps {
   cancelLabel?: string
   /** Extra actions displayed after the Next/Submit button */
   extraActions?: ReactNode
+  /** Optional persistent summary bar rendered between step indicator and content */
+  summaryBar?: ReactNode
   children: ReactNode
 }
 
@@ -68,6 +70,7 @@ const WizardView = ({
   nextLabel = 'Suivant',
   cancelLabel = 'Annuler',
   extraActions,
+  summaryBar,
   children,
 }: WizardViewProps) => {
   const styles = componentStyles.wizardView
@@ -136,6 +139,9 @@ const WizardView = ({
           </Box>
         ))}
       </Box>
+
+      {/* Optional summary bar */}
+      {summaryBar}
 
       {/* Content sheet */}
       <Box sx={styles.sheet}>

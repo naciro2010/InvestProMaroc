@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Alert, Box, CircularProgress, Typography } from '@mui/material'
+import { Alert, Box, Chip, CircularProgress, Typography } from '@mui/material'
 import AppLayout from '../../components/layout/AppLayout'
 import { WizardView } from '@/components/core'
 import { getPlainTextLength } from '../../utils/textUtils'
+import { colors, typography } from '@/lib/designSystem'
 import {
   WIZARD_STEPS,
+  formatCurrency,
   useConventionWizardData,
   WizardStepInformations,
   WizardStepBudget,
@@ -126,6 +128,38 @@ const ConventionWizardComplete = () => {
     }
   }
 
+  // Build summary chips for the persistent info bar
+  const summaryChips: Array<{ label: string; color: 'primary' | 'info' | 'success' | 'default' | 'warning' }> = []
+  if (formData.code) summaryChips.push({ label: formData.code, color: 'primary' })
+  if (formData.type) summaryChips.push({ label: formData.type, color: 'info' })
+  if (formData.budgetGlobal > 0) summaryChips.push({ label: `Budget: ${formatCurrency(formData.budgetGlobal)}`, color: 'default' })
+  if (totals.commissionTTC > 0) summaryChips.push({ label: `Commission: ${formatCurrency(totals.commissionTTC)}`, color: 'success' })
+  if (formData.lignesBudget.length > 0) summaryChips.push({ label: `${formData.lignesBudget.length} ligne(s)`, color: 'default' })
+  if (formData.partenaires.length > 0) summaryChips.push({ label: `${formData.partenaires.length} partenaire(s)`, color: 'default' })
+  if (formData.subventions.length > 0) summaryChips.push({ label: `${formData.subventions.length} subvention(s)`, color: 'default' })
+
+  const wizardSummaryBar = summaryChips.length > 0 ? (
+    <Box sx={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 1,
+      py: 1.5,
+      px: 2.5,
+      bgcolor: colors.neutral[50],
+      borderBottom: `1px solid ${colors.border}`,
+      borderRadius: 1,
+      mb: 1,
+    }}>
+      <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold, mr: 0.5 }}>
+        Résumé :
+      </Typography>
+      {summaryChips.map((chip, idx) => (
+        <Chip key={idx} label={chip.label} size="small" color={chip.color} variant="outlined" />
+      ))}
+    </Box>
+  ) : null
+
   if (isLoadingConvention) {
     return (
       <AppLayout>
@@ -153,6 +187,7 @@ const ConventionWizardComplete = () => {
         isNextDisabled={!isStepValid()}
         isSubmitting={isSubmitting}
         submitLabel={isEditing ? 'Modifier la convention' : 'Créer la convention'}
+        summaryBar={wizardSummaryBar}
       >
         {renderStepContent(activeStep)}
 

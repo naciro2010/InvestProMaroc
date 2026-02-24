@@ -8,7 +8,6 @@ import {
   Alert,
   Skeleton,
   Tooltip,
-  Divider,
 } from '@mui/material'
 import { Lock } from '@mui/icons-material'
 import { Plus, Pencil } from 'lucide-react'
@@ -253,7 +252,7 @@ const ConventionDetailPageModern = () => {
               />
             </Box>
 
-            {/* ===== SECTION 1: PREVISIONNEL ===== */}
+            {/* ===== CONVENTION INFO & PLANNING ===== */}
             <ConventionPrevisionnelSection
               convention={convention}
               partenairesRefreshKey={partenairesRefreshKey}
@@ -271,10 +270,7 @@ const ConventionDetailPageModern = () => {
               onRefresh={() => loadConvention(convention.id)}
             />
 
-            {/* Section Divider */}
-            <Divider sx={{ my: 3, borderColor: colors.border }} />
-
-            {/* ===== SECTION 2: REALISATION ===== */}
+            {/* ===== PROJECTS, MARCHES & AVENANTS ===== */}
             <ConventionRealisationSection
               convention={convention}
               projets={projets}

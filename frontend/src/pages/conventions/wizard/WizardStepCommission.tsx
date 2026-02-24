@@ -90,7 +90,7 @@ const WizardStepCommission = ({
       </Card>
 
       {/* Preview calcul */}
-      <Card sx={{ p: 3, bgcolor: '#f0fdf4', border: '2px solid #22c55e' }}>
+      <Card sx={{ p: 3, bgcolor: 'success.50', border: '2px solid', borderColor: 'success.main' }}>
         <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
           📊 Aperçu du calcul de commission
         </Typography>

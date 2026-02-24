@@ -26,7 +26,6 @@ export interface Partenaire {
   designation: string
   budget: number
   pourcentage: number
-  ci: number
 }
 
 export interface Subvention {

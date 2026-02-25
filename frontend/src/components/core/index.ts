@@ -62,3 +62,7 @@ export type { WizardStep } from './WizardView'
 
 // Resizable Section (collapsible + resizable panels for detail pages)
 export { default as ResizableSection } from './ResizableSection'
+
+// API-backed Autocomplete (search + duplicate prevention + inline quick-create)
+export { default as ApiAutocomplete } from './ApiAutocomplete'
+export type { AutocompleteOption, QuickCreateConfig, QuickCreateField } from './ApiAutocomplete'

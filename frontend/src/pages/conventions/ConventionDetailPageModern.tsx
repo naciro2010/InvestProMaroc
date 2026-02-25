@@ -34,7 +34,7 @@ interface Convention {
   tauxCommission: number; baseCalcul: string; budget: number
   dateSignature: string; dateDebut: string; dateFin?: string; tauxTva: number; tauxTvaLignes: number
   parentConventionId?: number | null; parentConventionNumero?: string | null
-  heriteParametres?: boolean
+  heriteParametres?: boolean; commissionMode?: string
 }
 
 interface VersementPrevisionnel { id: number; partenaireId?: number; partenaireNom?: string; partenaireSigle?: string; volet?: string; dateVersement: string; montant: number; montantPrevu?: number; remarques?: string }
@@ -187,7 +187,7 @@ const ConventionDetailPageModern = () => {
             statusSteps={effectiveSteps}
             currentStatus={convention.statut}
           >
-            {/* Title */}
+            {/* Title + Objet */}
             <Typography sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.25 }}>
               {convention.libelle || convention.code}
             </Typography>
@@ -208,7 +208,7 @@ const ConventionDetailPageModern = () => {
               </Box>
             )}
 
-            {/* Financial Summary */}
+            {/* 1. Financial Summary (highest priority - Odoo-style KPI cards) */}
             <Box sx={{ mb: 3 }}>
               <ConventionSummaryTable
                 conventionId={convention.id}
@@ -216,10 +216,11 @@ const ConventionDetailPageModern = () => {
                 tauxCommission={convention.tauxCommission}
                 tauxTva={convention.tauxTva}
                 baseCalcul={convention.baseCalcul}
+                commissionMode={convention.commissionMode}
               />
             </Box>
 
-            {/* Convention Info & Planning (partenaires, versements, imputations, subventions) */}
+            {/* 2. Convention Info & Planning (partenaires, versements, imputations, budget lines, subventions) */}
             <ConventionPrevisionnelSection
               convention={convention}
               partenairesRefreshKey={partenairesRefreshKey}
@@ -244,7 +245,7 @@ const ConventionDetailPageModern = () => {
               onRefresh={() => loadConvention(convention.id)}
             />
 
-            {/* Projects, Marches, Sous-conventions, Avenants (self-contained) */}
+            {/* 3. Projects, Marches, Sous-conventions, Avenants (self-contained) */}
             <ConventionRealisationSection convention={convention} />
           </FormView>
         </Container>

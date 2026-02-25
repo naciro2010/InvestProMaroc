@@ -24,7 +24,6 @@ import {
   Divider,
 } from '@mui/material'
 import {
-  Add,
   MoreVert,
   CheckCircle,
   Cancel,
@@ -37,7 +36,7 @@ import {
   FolderOpen,
   Description,
 } from '@mui/icons-material'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw, Upload } from 'lucide-react'
 import { conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -51,6 +50,7 @@ import {
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import RichTextDisplay from '../../components/ui/RichTextDisplay'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '../../lib/exportUtils'
+import ImportConventionsDialog from '../../components/conventions/ImportConventionsDialog'
 
 // Types
 type StatutConvention = 'BROUILLON' | 'SOUMIS' | 'VALIDE'
@@ -98,6 +98,7 @@ const ConventionsTableModern = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [motifRejet, setMotifRejet] = useState('')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
 
   // Fetch data
   useEffect(() => {
@@ -307,6 +308,15 @@ const ConventionsTableModern = () => {
               >
                 Nouveau
               </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Upload size={16} />}
+                onClick={() => setImportDialogOpen(true)}
+                sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.75 }}
+              >
+                Importer
+              </Button>
               <ExportButton onClick={handleExport} />
               <IconButton size="small" onClick={fetchConventions} sx={{ color: colors.textSecondary }}>
                 <RefreshCw size={16} />
@@ -505,6 +515,13 @@ const ConventionsTableModern = () => {
         confirmLabel="Supprimer"
         onConfirm={confirmDelete}
         onCancel={() => setDeleteConfirmOpen(false)}
+      />
+
+      <ImportConventionsDialog
+        open={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onSuccess={fetchConventions}
+        existingCodes={conventions.map(c => c.code)}
       />
     </AppLayout>
   )

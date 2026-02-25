@@ -23,6 +23,7 @@ export interface BudgetLigne {
 
 export interface Partenaire {
   id?: string
+  partenaireId?: number
   designation: string
   budget: number
   pourcentage: number

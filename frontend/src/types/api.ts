@@ -220,6 +220,8 @@ export interface ConventionBudgetLigneDTO {
   designation: string | null
   montant: number
   pourcentage: number
+  tauxCommission?: number
+  plafond?: number
   remarques: string | null
   actif: boolean
   createdAt: string | null

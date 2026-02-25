@@ -45,6 +45,7 @@ interface PartenaireCallbackData {
   partenaireSigle: string | null
   budgetAlloue: number
   pourcentage: number
+  commissionIntervention: number | null
   estMaitreOeuvre: boolean
   estMaitreOeuvreDelegue: boolean
   remarques: string | null
@@ -78,9 +79,14 @@ const addBtnSx = {
 /**
  * Convention info + planning details.
  * Financial data (budget, commission, TVA) is in SummaryTable above.
- * This section: identification, dates, partenaires, versements, imputations, subventions.
- * 
- * Each sub-section uses ResizableSection with actions slot for Add buttons.
+ *
+ * REORGANIZED by priority (Odoo-style):
+ * 1. Budget lines (categories de depenses) - core financial breakdown
+ * 2. Partenaires - who's involved
+ * 3. Identification & Dates - administrative info
+ * 4. Versements previsionnels - payment schedule
+ * 5. Imputations previsionnelles - accounting
+ * 6. Subventions - grants
  */
 const ConventionPrevisionnelSection = ({
   convention,
@@ -95,34 +101,7 @@ const ConventionPrevisionnelSection = ({
 }: ConventionPrevisionnelSectionProps) => {
   return (
     <Box>
-      {/* Identification */}
-      <ResizableSection
-        title="Identification"
-        storageKey="conv-prev-info"
-        icon={<Assignment sx={{ color: colors.primary[500], fontSize: 16 }} />}
-      >
-        <FieldGroup columns={4} collapsible storageKey="conv-info-ident">
-          <Field label="Code" value={convention.code} />
-          <Field label="Numero" value={convention.numero} />
-          <Field label="Type" value={<StatusBadge status={convention.typeConvention} />} />
-          <Field label="Statut" value={<StatusBadge status={convention.statut} />} />
-        </FieldGroup>
-      </ResizableSection>
-
-      {/* Dates */}
-      <ResizableSection
-        title="Echeancier"
-        storageKey="conv-prev-dates"
-        icon={<CalendarMonth sx={{ color: colors.info[500], fontSize: 16 }} />}
-      >
-        <FieldGroup columns={3} collapsible storageKey="conv-info-dates">
-          <Field label="Date signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
-          <Field label="Date debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
-          <Field label="Date fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
-        </FieldGroup>
-      </ResizableSection>
-
-      {/* Repartition par categories de depenses */}
+      {/* 1. Repartition par categories de depenses (highest priority) */}
       <ResizableSection
         title="Repartition par Categories de Depenses"
         storageKey="conv-prev-budget-lignes"
@@ -132,7 +111,7 @@ const ConventionPrevisionnelSection = ({
         <ConventionBudgetLignesCard conventionId={convention.id} />
       </ResizableSection>
 
-      {/* Partenaires - Add button in ResizableSection actions slot */}
+      {/* 2. Partenaires */}
       <ResizableSection
         title="Partenaires"
         storageKey="conv-prev-partenaires"
@@ -154,7 +133,28 @@ const ConventionPrevisionnelSection = ({
         />
       </ResizableSection>
 
-      {/* Versements previsionnels */}
+      {/* 3. Identification & Dates (compact) */}
+      <ResizableSection
+        title="Identification & Echeancier"
+        storageKey="conv-prev-info"
+        icon={<Assignment sx={{ color: colors.primary[500], fontSize: 16 }} />}
+      >
+        <FieldGroup columns={4} collapsible storageKey="conv-info-ident">
+          <Field label="Code" value={convention.code} />
+          <Field label="Numero" value={convention.numero} />
+          <Field label="Type" value={<StatusBadge status={convention.typeConvention} />} />
+          <Field label="Statut" value={<StatusBadge status={convention.statut} />} />
+        </FieldGroup>
+        <Box sx={{ mt: 1 }}>
+          <FieldGroup columns={3} collapsible storageKey="conv-info-dates">
+            <Field label="Date signature" value={convention.dateSignature ? formatDate(convention.dateSignature) : '-'} />
+            <Field label="Date debut" value={convention.dateDebut ? formatDate(convention.dateDebut) : '-'} />
+            <Field label="Date fin" value={convention.dateFin ? formatDate(convention.dateFin) : '-'} />
+          </FieldGroup>
+        </Box>
+      </ResizableSection>
+
+      {/* 4. Versements previsionnels */}
       <ResizableSection
         title="Versements previsionnels"
         storageKey="conv-prev-versements"
@@ -174,7 +174,7 @@ const ConventionPrevisionnelSection = ({
         />
       </ResizableSection>
 
-      {/* Imputations previsionnelles */}
+      {/* 5. Imputations previsionnelles */}
       <ResizableSection
         title="Imputations previsionnelles"
         storageKey="conv-prev-imputations"
@@ -184,7 +184,7 @@ const ConventionPrevisionnelSection = ({
         <ConventionImputationsCard conventionId={convention.id} onRefresh={onRefresh} />
       </ResizableSection>
 
-      {/* Subventions */}
+      {/* 6. Subventions */}
       <ResizableSection
         title="Subventions"
         storageKey="conv-prev-subventions"

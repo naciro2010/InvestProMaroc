@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Paper,
@@ -11,9 +11,12 @@ import {
   TableRow,
   LinearProgress,
   Skeleton,
+  Tooltip,
 } from '@mui/material'
-import { marchesAPI } from '@/lib/api'
+import { TrendingUp, AccountBalance, Receipt, Payments } from '@mui/icons-material'
+import { marchesAPI, conventionsAPI } from '@/lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
+import type { ConventionBudgetLigneDTO, ApiResponse } from '@/types/api'
 
 interface MarcheData {
   id: number
@@ -48,6 +51,7 @@ interface ConventionSummaryTableProps {
   tauxCommission: number
   tauxTva: number
   baseCalcul: string
+  commissionMode?: string
 }
 
 const formatCurrency = (amount: number): string =>
@@ -63,6 +67,9 @@ const formatPct = (val: number): string => `${val.toFixed(1)}%`
  * ConventionSummaryTable: Financial summary at the top of the detail page.
  * Shows Budget / Engagement / Reste a engager / Depenses / Reste a payer
  * per marche + totals + commission line.
+ *
+ * FIXED: Commission calculation now handles PAR_CATEGORIE mode correctly
+ * by summing individual budget line commissions with plafond logic.
  */
 const ConventionSummaryTable = ({
   conventionId,
@@ -70,16 +77,26 @@ const ConventionSummaryTable = ({
   tauxCommission,
   tauxTva,
   baseCalcul,
+  commissionMode,
 }: ConventionSummaryTableProps) => {
   const [lines, setLines] = useState<SummaryLine[]>([])
   const [loading, setLoading] = useState(true)
+  const [budgetLignes, setBudgetLignes] = useState<ConventionBudgetLigneDTO[]>([])
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
 
-      const marchesRes = await marchesAPI.getByConvention(conventionId)
+      // Load marches and budget lines in parallel
+      const [marchesRes, budgetLignesRes] = await Promise.all([
+        marchesAPI.getByConvention(conventionId),
+        conventionsAPI.getBudgetLignes(conventionId).catch(() => ({ data: { data: [] } })),
+      ])
+
       const marches: MarcheData[] = marchesRes.data.data || marchesRes.data || []
+      const lignes: ConventionBudgetLigneDTO[] =
+        (budgetLignesRes.data as ApiResponse<ConventionBudgetLigneDTO[]>).data ?? []
+      setBudgetLignes(lignes)
 
       const situationPromises = marches.map(async (m) => {
         try {
@@ -130,7 +147,21 @@ const ConventionSummaryTable = ({
   const tauxEngagement = conventionBudget > 0 ? (totalEngage / conventionBudget) * 100 : 0
   const tauxDecaissement = totalEngage > 0 ? (totalDepenses / totalEngage) * 100 : 0
 
-  const commissionHT = (conventionBudget * tauxCommission) / 100
+  // FIX: Commission calculation - handle PAR_CATEGORIE mode correctly
+  let commissionHT: number
+  if (commissionMode === 'PAR_CATEGORIE' && budgetLignes.length > 0) {
+    // Per-category: sum of individual line commissions with plafond logic
+    commissionHT = budgetLignes.reduce((sum: number, ligne: ConventionBudgetLigneDTO) => {
+      const base = ligne.montant || 0
+      const taux = ligne.tauxCommission ?? tauxCommission
+      const plafond = ligne.plafond ?? 0
+      const assiette = plafond > 0 ? Math.min(base, plafond) : base
+      return sum + (assiette * taux) / 100
+    }, 0)
+  } else {
+    // Global mode: commission based on budgetGlobal
+    commissionHT = (conventionBudget * tauxCommission) / 100
+  }
   const commissionTTC = commissionHT * (1 + tauxTva / 100)
   const baseLabel = baseCalcul === 'DECAISSEMENTS_HT' ? 'HT' : 'TTC'
 
@@ -149,32 +180,44 @@ const ConventionSummaryTable = ({
 
   return (
     <Paper sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
-      {/* Header with KPIs */}
+      {/* KPI Cards Row */}
       <Box sx={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        px: 2.5, py: 1.5, borderBottom: `1px solid ${colors.border}`, bgcolor: colors.neutral[25],
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+        gap: 0,
+        borderBottom: `1px solid ${colors.border}`,
       }}>
-        <Typography sx={{
-          fontWeight: typography.weights.bold,
-          color: colors.textPrimary,
-          fontSize: typography.sizes.sm,
-        }}>
-          Synthese financiere
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2.5, alignItems: 'center' }}>
-          <KpiTag label="Commission" value={`${tauxCommission}% ${baseLabel}`} />
-          <KpiTag label="TVA" value={`${tauxTva}%`} />
-          <KpiTag
-            label="Engagement"
-            value={formatPct(tauxEngagement)}
-            color={tauxEngagement > 100 ? colors.danger[600] : colors.primary[600]}
-          />
-          <KpiTag
-            label="Decaissement"
-            value={formatPct(tauxDecaissement)}
-            color={colors.success[600]}
-          />
-        </Box>
+        <KpiCard
+          icon={<AccountBalance sx={{ fontSize: 18, color: colors.primary[500] }} />}
+          label="Budget"
+          value={formatCurrency(conventionBudget)}
+          color={colors.primary[700]}
+        />
+        <KpiCard
+          icon={<TrendingUp sx={{ fontSize: 18, color: tauxEngagement > 100 ? colors.danger[500] : colors.info[500] }} />}
+          label="Engagement"
+          value={formatCurrency(totalEngage)}
+          subtitle={formatPct(tauxEngagement)}
+          color={tauxEngagement > 100 ? colors.danger[700] : colors.info[700]}
+          progress={Math.min(tauxEngagement, 100)}
+          progressColor={tauxEngagement > 100 ? colors.danger[500] : colors.primary[500]}
+        />
+        <KpiCard
+          icon={<Receipt sx={{ fontSize: 18, color: colors.success[500] }} />}
+          label="Depenses"
+          value={formatCurrency(totalDepenses)}
+          subtitle={formatPct(tauxDecaissement)}
+          color={colors.success[700]}
+          progress={Math.min(tauxDecaissement, 100)}
+          progressColor={colors.success[500]}
+        />
+        <KpiCard
+          icon={<Payments sx={{ fontSize: 18, color: colors.warning[500] }} />}
+          label="Commission"
+          value={formatCurrency(commissionTTC)}
+          subtitle={`${tauxCommission}% ${baseLabel} + TVA ${tauxTva}%`}
+          color={colors.warning[700]}
+        />
       </Box>
 
       {/* Progress bars */}
@@ -304,17 +347,59 @@ const ConventionSummaryTable = ({
   )
 }
 
-/** Compact KPI tag in the header */
-const KpiTag = ({ label, value, color }: { label: string; value: string; color?: string }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-    <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>{label}:</Typography>
-    <Typography sx={{
-      fontSize: typography.sizes.xs,
-      fontWeight: typography.weights.bold,
-      color: color || colors.textPrimary,
-    }}>
-      {value}
-    </Typography>
+/** Compact KPI card for the header row */
+const KpiCard = ({
+  icon, label, value, subtitle, color, progress, progressColor,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+  subtitle?: string
+  color: string
+  progress?: number
+  progressColor?: string
+}) => (
+  <Box sx={{
+    px: 2, py: 1.5,
+    borderRight: `1px solid ${colors.border}`,
+    '&:last-child': { borderRight: 'none' },
+  }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+      {icon}
+      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: typography.weights.semibold }}>
+        {label}
+      </Typography>
+    </Box>
+    <Tooltip title={value} placement="bottom">
+      <Typography sx={{
+        fontSize: typography.sizes.lg,
+        fontWeight: typography.weights.bold,
+        color,
+        fontVariantNumeric: 'tabular-nums',
+        lineHeight: 1.2,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
+        {value}
+      </Typography>
+    </Tooltip>
+    {subtitle && (
+      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, mt: 0.25 }}>
+        {subtitle}
+      </Typography>
+    )}
+    {progress !== undefined && progressColor && (
+      <LinearProgress
+        variant="determinate"
+        value={progress}
+        sx={{
+          mt: 0.5, height: 3, borderRadius: 2,
+          bgcolor: colors.neutral[100],
+          '& .MuiLinearProgress-bar': { borderRadius: 2, bgcolor: progressColor },
+        }}
+      />
+    )}
   </Box>
 )
 

@@ -107,6 +107,21 @@ export interface Convention {
   sousConventions?: Convention[]
 }
 
+export interface CreateConventionBudgetLigneDTO {
+  categorieDepenseId: number
+  designation?: string
+  montant: number
+}
+
+export interface CreateConventionPartenaireDTO {
+  partenaireId: number
+  budgetAlloue: number
+  pourcentage: number
+  estMaitreOeuvre?: boolean
+  estMaitreOeuvreDelegue?: boolean
+  remarques?: string
+}
+
 export interface CreateConventionDTO extends Record<string, unknown> {
   code: string
   designation?: string
@@ -133,6 +148,9 @@ export interface CreateConventionDTO extends Record<string, unknown> {
   heriteParametres?: boolean
   surchargeTauxCommission?: number | null
   surchargeBaseCalcul?: string | null
+  // Related data
+  lignesBudget?: CreateConventionBudgetLigneDTO[]
+  partenaires?: CreateConventionPartenaireDTO[]
 }
 
 export interface UpdateConventionDTO extends Partial<CreateConventionDTO> {

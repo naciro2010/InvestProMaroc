@@ -187,6 +187,81 @@ data class UpdateConventionBudgetLigneRequest(
     val remarques: String? = null
 )
 
+// Convention Creation Request DTO
+
+data class CreateConventionRequest(
+    @field:NotBlank(message = "Le code est obligatoire")
+    val code: String,
+
+    @field:NotBlank(message = "Le numéro est obligatoire")
+    val numero: String,
+
+    @field:NotNull(message = "La date de convention est obligatoire")
+    val dateConvention: LocalDate,
+
+    @field:NotBlank(message = "Le type de convention est obligatoire")
+    val typeConvention: String,
+
+    @field:NotBlank(message = "Le libellé est obligatoire")
+    val libelle: String,
+
+    val objet: String? = null,
+
+    @field:NotNull(message = "Le taux de commission est obligatoire")
+    @field:DecimalMin(value = "0.00", message = "Le taux de commission doit être >= 0")
+    @field:DecimalMax(value = "100.00", message = "Le taux de commission doit être <= 100")
+    val tauxCommission: BigDecimal,
+
+    @field:NotNull(message = "Le budget est obligatoire")
+    @field:DecimalMin(value = "0.00", message = "Le budget doit être >= 0")
+    val budget: BigDecimal,
+
+    val baseCalcul: String = "DECAISSEMENTS_TTC",
+
+    @field:DecimalMin(value = "0.00", message = "Le taux TVA doit être >= 0")
+    val tauxTva: BigDecimal = BigDecimal("20.00"),
+
+    @field:DecimalMin(value = "0.00", message = "Le taux TVA lignes doit être >= 0")
+    @field:DecimalMax(value = "100.00", message = "Le taux TVA lignes doit être <= 100")
+    val tauxTvaLignes: BigDecimal = BigDecimal("20.00"),
+
+    @field:NotNull(message = "La date de début est obligatoire")
+    val dateDebut: LocalDate,
+
+    val dateFin: LocalDate? = null,
+
+    val description: String? = null,
+
+    // Sous-convention specific fields
+    val heriteParametres: Boolean = false,
+    val surchargeTauxCommission: BigDecimal? = null,
+    val surchargeBaseCalcul: String? = null,
+
+    // Related data: Budget lines
+    val lignesBudget: List<CreateConventionBudgetLigneRequest>? = null,
+
+    // Related data: Partenaires
+    val partenaires: List<CreateConventionPartenaireRequest>? = null
+)
+
+data class CreateConventionPartenaireRequest(
+    @field:NotNull(message = "L'ID du partenaire est obligatoire")
+    val partenaireId: Long,
+
+    @field:NotNull(message = "Le budget alloué est obligatoire")
+    @field:DecimalMin("0.00", message = "Le budget doit être positif")
+    val budgetAlloue: BigDecimal,
+
+    @field:NotNull(message = "Le pourcentage est obligatoire")
+    @field:DecimalMin("0.00", message = "Le pourcentage doit être >= 0")
+    @field:DecimalMax("100.00", message = "Le pourcentage doit être <= 100")
+    val pourcentage: BigDecimal,
+
+    val estMaitreOeuvre: Boolean = false,
+    val estMaitreOeuvreDelegue: Boolean = false,
+    val remarques: String? = null
+)
+
 // Convention Modification DTOs
 
 data class ConventionModificationDTO(

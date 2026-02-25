@@ -12,6 +12,8 @@ import ma.investpro.mapper.ConventionMapper
 import ma.investpro.mapper.ConventionModificationMapper
 import ma.investpro.mapper.ConventionMicroMapper
 import ma.investpro.service.ConventionService
+import ma.investpro.service.ConventionBudgetLigneService
+import ma.investpro.service.ConventionPartenaireService
 import ma.investpro.service.MarcheService
 import ma.investpro.repository.ImputationPrevisionnelleRepository
 import ma.investpro.repository.VersementPrevisionnelRepository
@@ -40,6 +42,8 @@ import jakarta.validation.Valid
 @RequestMapping("/api/conventions")
 class ConventionController(
     private val conventionService: ConventionService,
+    private val conventionBudgetLigneService: ConventionBudgetLigneService,
+    private val conventionPartenaireService: ConventionPartenaireService,
     private val conventionMapper: ConventionMapper,
     private val conventionModificationMapper: ConventionModificationMapper,
     private val conventionMicroMapper: ConventionMicroMapper,
@@ -116,18 +120,66 @@ class ConventionController(
 
     @PostMapping
     @WriteAccess
-    fun create(@Valid @RequestBody convention: Convention): ResponseEntity<ConventionDTO> {
+    fun create(@Valid @RequestBody request: CreateConventionRequest): ResponseEntity<ApiResponse<ConventionDTO>> {
         return try {
+            // Mapper le DTO vers l'entité Convention
+            val convention = Convention(
+                code = request.code,
+                numero = request.numero,
+                dateConvention = request.dateConvention,
+                typeConvention = TypeConvention.valueOf(request.typeConvention),
+                libelle = request.libelle,
+                objet = request.objet,
+                tauxCommission = request.tauxCommission,
+                budget = request.budget,
+                baseCalcul = request.baseCalcul,
+                tauxTva = request.tauxTva,
+                tauxTvaLignes = request.tauxTvaLignes,
+                dateDebut = request.dateDebut,
+                dateFin = request.dateFin,
+                description = request.description
+            )
+
             // Capturer l'utilisateur créateur depuis le contexte de sécurité
             val authentication = SecurityContextHolder.getContext().authentication
             val user = authentication.principal as? User
             convention.createdById = user?.id
 
             val created = conventionService.create(convention)
-            val dto = conventionMapper.toDTO(created)
-            ResponseEntity.status(HttpStatus.CREATED).body(dto)
+
+            // Sauvegarder les lignes de budget si présentes
+            request.lignesBudget?.forEach { ligneRequest ->
+                conventionBudgetLigneService.addBudgetLigne(
+                    conventionId = created.id!!,
+                    categorieDepenseId = ligneRequest.categorieDepenseId,
+                    montant = ligneRequest.montant,
+                    designation = ligneRequest.designation,
+                    remarques = null
+                )
+            }
+
+            // Sauvegarder les partenaires si présents
+            request.partenaires?.forEach { partenaireRequest ->
+                conventionPartenaireService.addPartenaireToConvention(
+                    conventionId = created.id!!,
+                    partenaireId = partenaireRequest.partenaireId,
+                    budgetAlloue = partenaireRequest.budgetAlloue,
+                    pourcentage = partenaireRequest.pourcentage,
+                    estMaitreOeuvre = partenaireRequest.estMaitreOeuvre,
+                    estMaitreOeuvreDelegue = partenaireRequest.estMaitreOeuvreDelegue,
+                    remarques = partenaireRequest.remarques
+                )
+            }
+
+            // Recharger la convention avec toutes les relations
+            val reloaded = conventionService.findById(created.id!!) ?: created
+            val dto = conventionMapper.toDTO(reloaded)
+            ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto, "Convention créée avec succès"))
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
+            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur de validation"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la création: ${e.message}"))
         }
     }
 
@@ -135,14 +187,33 @@ class ConventionController(
     @WriteAccess
     fun update(
         @PathVariable id: Long,
-        @Valid @RequestBody convention: Convention
-    ): ResponseEntity<ConventionDTO> {
+        @Valid @RequestBody request: CreateConventionRequest
+    ): ResponseEntity<ApiResponse<ConventionDTO>> {
         return try {
+            val convention = Convention(
+                code = request.code,
+                numero = request.numero,
+                dateConvention = request.dateConvention,
+                typeConvention = TypeConvention.valueOf(request.typeConvention),
+                libelle = request.libelle,
+                objet = request.objet,
+                tauxCommission = request.tauxCommission,
+                budget = request.budget,
+                baseCalcul = request.baseCalcul,
+                tauxTva = request.tauxTva,
+                tauxTvaLignes = request.tauxTvaLignes,
+                dateDebut = request.dateDebut,
+                dateFin = request.dateFin,
+                description = request.description
+            )
             val updated = conventionService.update(id, convention)
             val dto = conventionMapper.toDTO(updated)
-            ResponseEntity.ok(dto)
+            ResponseEntity.ok(ApiResponse.success(dto, "Convention mise à jour avec succès"))
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
+            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur de validation"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la mise à jour: ${e.message}"))
         }
     }
 
@@ -291,14 +362,33 @@ class ConventionController(
     @WriteAccess
     fun creerSousConvention(
         @PathVariable parentId: Long,
-        @Valid @RequestBody sousConvention: Convention
-    ): ResponseEntity<ConventionDTO> {
+        @Valid @RequestBody request: CreateConventionRequest
+    ): ResponseEntity<ApiResponse<ConventionDTO>> {
         return try {
+            val sousConvention = Convention(
+                code = request.code,
+                numero = request.numero,
+                dateConvention = request.dateConvention,
+                typeConvention = TypeConvention.valueOf(request.typeConvention),
+                libelle = request.libelle,
+                objet = request.objet,
+                tauxCommission = request.tauxCommission,
+                budget = request.budget,
+                baseCalcul = request.baseCalcul,
+                tauxTva = request.tauxTva,
+                tauxTvaLignes = request.tauxTvaLignes,
+                dateDebut = request.dateDebut,
+                dateFin = request.dateFin,
+                description = request.description,
+                heriteParametres = request.heriteParametres,
+                surchargeTauxCommission = request.surchargeTauxCommission,
+                surchargeBaseCalcul = request.surchargeBaseCalcul
+            )
             val created = conventionService.creerSousConvention(parentId, sousConvention)
             val dto = conventionMapper.toDTO(created)
-            ResponseEntity.status(HttpStatus.CREATED).body(dto)
+            ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto, "Sous-convention créée avec succès"))
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
+            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur de validation"))
         }
     }
 

@@ -175,26 +175,50 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
     loadNextCode()
   }, [formData.code, isEditing])
 
+  // Build payload with all related data
+  const buildPayload = (data: ConventionWizardFormData) => {
+    // Map budget lines to backend format
+    const lignesBudget = data.lignesBudget
+      .filter((ligne) => ligne.categorieDepenseId && ligne.montantHT > 0)
+      .map((ligne) => ({
+        categorieDepenseId: ligne.categorieDepenseId!,
+        designation: ligne.designation,
+        montant: ligne.montantHT,
+      }))
+
+    // Map partenaires to backend format
+    const partenaires = data.partenaires
+      .filter((p) => p.partenaireId && p.budget > 0)
+      .map((p) => ({
+        partenaireId: p.partenaireId!,
+        budgetAlloue: p.budget,
+        pourcentage: p.pourcentage,
+      }))
+
+    return {
+      code: data.code,
+      numero: data.numeroConvention,
+      dateConvention: data.dateSignature,
+      typeConvention: data.type,
+      libelle: data.libelle,
+      objet: data.objetRich || data.objet,
+      tauxCommission: data.tauxCommission,
+      budget: data.budgetGlobal,
+      baseCalcul: data.baseCalcul,
+      tauxTva: data.tauxTva,
+      tauxTvaLignes: data.tauxTvaLignes,
+      dateDebut: data.dateDebut,
+      dateFin: data.dateFin || undefined,
+      description: undefined,
+      lignesBudget: lignesBudget.length > 0 ? lignesBudget : undefined,
+      partenaires: partenaires.length > 0 ? partenaires : undefined,
+    }
+  }
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: ConventionWizardFormData) => {
-      const payload = {
-        code: data.code,
-        numero: data.numeroConvention,
-        dateConvention: data.dateSignature,
-        typeConvention: data.type,
-        libelle: data.libelle,
-        objet: data.objetRich || data.objet,
-        tauxCommission: data.tauxCommission,
-        budget: data.budgetGlobal,
-        baseCalcul: data.baseCalcul,
-        tauxTva: data.tauxTva,
-        tauxTvaLignes: data.tauxTvaLignes,
-        dateDebut: data.dateDebut,
-        dateFin: data.dateFin || undefined,
-        description: undefined,
-      }
-      return await conventionsAPI.create(payload)
+      return await conventionsAPI.create(buildPayload(data))
     },
     onSuccess: () => {
       navigate('/conventions')
@@ -204,23 +228,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async (data: ConventionWizardFormData) => {
-      const payload = {
-        code: data.code,
-        numero: data.numeroConvention,
-        dateConvention: data.dateSignature,
-        typeConvention: data.type,
-        libelle: data.libelle,
-        objet: data.objetRich || data.objet,
-        tauxCommission: data.tauxCommission,
-        budget: data.budgetGlobal,
-        baseCalcul: data.baseCalcul,
-        tauxTva: data.tauxTva,
-        tauxTvaLignes: data.tauxTvaLignes,
-        dateDebut: data.dateDebut,
-        dateFin: data.dateFin || undefined,
-        description: undefined,
-      }
-      return await conventionsAPI.update(parseInt(id!), payload)
+      return await conventionsAPI.update(parseInt(id!), buildPayload(data))
     },
     onSuccess: () => {
       navigate(`/conventions/${id}`)

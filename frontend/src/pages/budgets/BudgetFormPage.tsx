@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Typography,
 } from '@mui/material'
+import { Handshake as ConventionIcon } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import {
   StickyActionBar,
@@ -16,6 +17,8 @@ import {
   FormGroup,
   FormField,
   ControlPanel,
+  ApiAutocomplete,
+  type AutocompleteOption,
 } from '@/components/core'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import DecimalInput from '@/components/ui/DecimalInput'
@@ -164,22 +167,23 @@ export default function BudgetFormPage() {
                   />
                 </FormField>
                 <FormField>
-                  <TextField
+                  <ApiAutocomplete
                     label="Convention"
+                    placeholder="Rechercher une convention..."
                     required
-                    fullWidth
-                    size="small"
-                    select
-                    value={formData.conventionId || ''}
-                    onChange={(e) => handleChange('conventionId', e.target.value ? parseInt(e.target.value) : undefined)}
-                  >
-                    <MenuItem value="">-- Selectionner une convention --</MenuItem>
-                    {conventions.map((conv) => (
-                      <MenuItem key={conv.id} value={conv.id}>
-                        {conv.code} - {conv.objet}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                    value={
+                      conventions
+                        .map((c): AutocompleteOption => ({ id: c.id!, label: c.objet || c.code, secondaryLabel: c.code }))
+                        .find((o) => o.id === formData.conventionId) ?? null
+                    }
+                    onChange={(opt) => handleChange('conventionId', opt?.id ?? undefined)}
+                    options={conventions.map((c): AutocompleteOption => ({
+                      id: c.id!,
+                      label: c.objet || c.code,
+                      secondaryLabel: c.code,
+                    }))}
+                    optionIcon={<ConventionIcon sx={{ fontSize: 16, color: colors.neutral[400] }} />}
+                  />
                 </FormField>
               </FormGroup>
               <FormGroup columns={2}>

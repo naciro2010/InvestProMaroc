@@ -7,16 +7,14 @@ import {
   Button,
   Typography,
   IconButton,
-  Autocomplete,
   CircularProgress,
   Alert,
 } from '@mui/material'
-import { Add, Delete, PersonAdd } from '@mui/icons-material'
+import { Add, Delete, Handshake as ConventionIcon, Business as FournisseurIcon } from '@mui/icons-material'
 import AppLayout from '@/components/layout/AppLayout'
-import { StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField, ControlPanel } from '@/components/core'
+import { StickyActionBar, FormLayout, FormPageSection, FormGroup, FormField, ControlPanel, ApiAutocomplete, type AutocompleteOption, type QuickCreateConfig } from '@/components/core'
 import LocationPicker from '@/components/ui/LocationPicker'
 import DecimalInput from '@/components/ui/DecimalInput'
-import FournisseurDialog from '@/components/marches/FournisseurDialog'
 import { fournisseursAPI, conventionsAPI, dimensionsAPI } from '@/lib/api'
 import { colors, typography, componentStyles, borders, spacing } from '@/lib/designSystem'
 import RichTextEditor from '@/components/common/RichTextEditor'
@@ -26,13 +24,13 @@ interface Dimension extends DimensionAnalytique {
   valeurs: { code: string; libelle: string }[]
 }
 
-interface ConventionOption {
+interface ConventionOptionData {
   id: number
   code: string
   libelle: string
 }
 
-interface FournisseurOption {
+interface FournisseurOptionData {
   id: number
   code: string
   raisonSociale: string
@@ -49,12 +47,9 @@ export default function MarcheFormPage() {
   const [error, setError] = useState('')
 
   // Reference data
-  const [conventions, setConventions] = useState<ConventionOption[]>([])
-  const [fournisseurs, setFournisseurs] = useState<FournisseurOption[]>([])
+  const [conventions, setConventions] = useState<ConventionOptionData[]>([])
+  const [fournisseurs, setFournisseurs] = useState<FournisseurOptionData[]>([])
   const [dimensions, setDimensions] = useState<Dimension[]>([])
-
-  // Fournisseur dialog
-  const [fournisseurDialogOpen, setFournisseurDialogOpen] = useState(false)
 
   // Form state
   const [numeroMarche, setNumeroMarche] = useState('')
@@ -105,7 +100,7 @@ export default function MarcheFormPage() {
       setConventions(Array.isArray(convData) ? convData : [])
 
       const fournData = fournRes.data.data || fournRes.data || []
-      setFournisseurs(Array.isArray(fournData) ? fournData.map((f: FournisseurOption) => ({
+      setFournisseurs(Array.isArray(fournData) ? fournData.map((f: FournisseurOptionData) => ({
         id: f.id,
         code: f.code,
         raisonSociale: f.raisonSociale,
@@ -268,7 +263,47 @@ export default function MarcheFormPage() {
     }).format(amount)
   }
 
-  const selectedFournisseur = fournisseurs.find(f => f.id === fournisseurId) || null
+  // Map reference data to AutocompleteOption
+  const conventionOptions: AutocompleteOption[] = conventions.map((c) => ({
+    id: c.id,
+    label: c.libelle || c.code,
+    secondaryLabel: c.code,
+  }))
+  const fournisseurOptions: AutocompleteOption[] = fournisseurs.map((f) => ({
+    id: f.id,
+    label: f.raisonSociale,
+    secondaryLabel: f.ice ? `ICE: ${f.ice}` : f.code,
+  }))
+  const selectedConventionOption = conventionOptions.find((o) => o.id === conventionId) ?? null
+  const selectedFournisseurOption = fournisseurOptions.find((o) => o.id === fournisseurId) ?? null
+
+  const fournisseurQuickCreate: QuickCreateConfig<AutocompleteOption> = {
+    dialogTitle: 'Nouveau fournisseur',
+    icon: <FournisseurIcon sx={{ color: colors.primary[600] }} />,
+    fields: [
+      { name: 'code', label: 'Code', required: true, placeholder: 'FOURN-001', autoFocus: true },
+      { name: 'raisonSociale', label: 'Raison sociale', required: true },
+      { name: 'ice', label: 'ICE (15 chiffres)', placeholder: '000000000000000' },
+    ],
+    infoMessage: 'Le fournisseur sera cree et immediatement selectionne. Vous pourrez completer ses informations depuis la gestion des fournisseurs.',
+    onCreate: async (vals) => {
+      const res = await fournisseursAPI.create({
+        code: vals.code,
+        raisonSociale: vals.raisonSociale,
+        ice: vals.ice || undefined,
+      })
+      const created = res.data.data || res.data
+      const newF: FournisseurOptionData = {
+        id: created.id,
+        code: created.code,
+        raisonSociale: created.raisonSociale,
+        ice: created.ice || null,
+      }
+      setFournisseurs((prev) => [...prev, newF])
+      setFournisseurId(newF.id)
+      return { id: newF.id, label: newF.raisonSociale, secondaryLabel: newF.ice ? `ICE: ${newF.ice}` : newF.code }
+    },
+  }
 
   if (loading && isEdit) {
     return (
@@ -346,83 +381,26 @@ export default function MarcheFormPage() {
 
             <FormGroup columns={3}>
               <FormField>
-                <TextField
+                <ApiAutocomplete
                   label="Convention"
-                  select
-                  value={conventionId || ''}
-                  onChange={(e) => setConventionId(e.target.value ? Number(e.target.value) : null)}
-                  fullWidth
-                  size="small"
-                  sx={componentStyles.inputField}
-                >
-                  <MenuItem value="">
-                    <Typography sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>
-                      -- Aucune --
-                    </Typography>
-                  </MenuItem>
-                  {conventions.map(c => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.code} - {c.libelle}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  placeholder="Rechercher une convention..."
+                  value={selectedConventionOption}
+                  onChange={(opt) => setConventionId(opt?.id ?? null)}
+                  options={conventionOptions}
+                  optionIcon={<ConventionIcon sx={{ fontSize: 16, color: colors.neutral[400] }} />}
+                />
               </FormField>
               <FormField>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                  <Autocomplete
-                    options={fournisseurs}
-                    value={selectedFournisseur}
-                    onChange={(_, newValue) => setFournisseurId(newValue?.id || null)}
-                    getOptionLabel={(option) =>
-                      `${option.raisonSociale}${option.ice ? ` (ICE: ${option.ice})` : ''}`
-                    }
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Fournisseur"
-                        required
-                        size="small"
-                        sx={componentStyles.inputField}
-                      />
-                    )}
-                    renderOption={(props, option) => (
-                      <Box component="li" {...props} key={option.id}>
-                        <Box>
-                          <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>
-                            {option.raisonSociale}
-                          </Typography>
-                          {option.ice && (
-                            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-                              ICE: {option.ice}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    )}
-                    noOptionsText="Aucun fournisseur trouvé"
-                    sx={{ flex: 1 }}
-                  />
-                  <IconButton
-                    onClick={() => setFournisseurDialogOpen(true)}
-                    size="small"
-                    title="Créer un nouveau fournisseur"
-                    sx={{
-                      mt: 0.5,
-                      bgcolor: colors.primary[50],
-                      color: colors.primary[600],
-                      border: `1px solid ${colors.primary[200]}`,
-                      borderRadius: borders.radius.base,
-                      width: 38,
-                      height: 38,
-                      '&:hover': {
-                        bgcolor: colors.primary[100],
-                      },
-                    }}
-                  >
-                    <PersonAdd sx={{ fontSize: 18 }} />
-                  </IconButton>
-                </Box>
+                <ApiAutocomplete
+                  label="Fournisseur"
+                  placeholder="Rechercher un fournisseur..."
+                  value={selectedFournisseurOption}
+                  onChange={(opt) => setFournisseurId(opt?.id ?? null)}
+                  options={fournisseurOptions}
+                  required
+                  optionIcon={<FournisseurIcon sx={{ fontSize: 16, color: colors.neutral[400] }} />}
+                  quickCreate={fournisseurQuickCreate}
+                />
               </FormField>
               <FormField>
                 <TextField
@@ -821,15 +799,6 @@ export default function MarcheFormPage() {
         </FormLayout>
       </form>
 
-      {/* Fournisseur Creation Dialog */}
-      <FournisseurDialog
-        open={fournisseurDialogOpen}
-        onClose={() => setFournisseurDialogOpen(false)}
-        onSuccess={(newFournisseur) => {
-          setFournisseurs(prev => [...prev, newFournisseur])
-          setFournisseurId(newFournisseur.id)
-        }}
-      />
     </AppLayout>
   )
 }

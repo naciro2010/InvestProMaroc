@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -8,40 +8,43 @@ import {
   TextField,
   Grid,
   Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
-import { Add } from '@mui/icons-material';
-import DecimalInput from '@/components/ui/DecimalInput';
+} from '@mui/material'
+import { Add, Business } from '@mui/icons-material'
+import DecimalInput from '@/components/ui/DecimalInput'
+import { ApiAutocomplete, type AutocompleteOption } from '@/components/core'
+import { colors, typography } from '@/lib/designSystem'
 
 interface VersementPrevisionnelForm {
-  volet?: string;
-  dateVersement: string;
-  montantPrevu?: number;
-  montant: number;
-  partenaireId?: number;
-  modId?: number;
-  remarques?: string;
+  volet?: string
+  dateVersement: string
+  montantPrevu?: number
+  montant: number
+  partenaireId?: number
+  modId?: number
+  remarques?: string
 }
 
 interface Partenaire {
-  id: number;
-  nom: string;
-  estMaitreOeuvreDelegue?: boolean;
+  id: number
+  nom: string
+  estMaitreOeuvreDelegue?: boolean
 }
 
 interface AddVersementDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onAdd: (versement: VersementPrevisionnelForm) => Promise<void>;
-  partenaires: Partenaire[];
+  open: boolean
+  onClose: () => void
+  onAdd: (versement: VersementPrevisionnelForm) => Promise<void>
+  partenaires: Partenaire[]
+}
+
+/** Map a Partenaire to the generic AutocompleteOption shape. */
+function toOption(p: Partenaire): AutocompleteOption {
+  return { id: p.id, label: p.nom }
 }
 
 const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementDialogProps) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<VersementPrevisionnelForm>({
     volet: '',
     dateVersement: new Date().toISOString().split('T')[0],
@@ -50,25 +53,29 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
     partenaireId: undefined,
     modId: undefined,
     remarques: '',
-  });
+  })
 
-  const mods = partenaires.filter(p => p.estMaitreOeuvreDelegue);
+  const allOptions = partenaires.map(toOption)
+  const modOptions = partenaires.filter((p) => p.estMaitreOeuvreDelegue).map(toOption)
+
+  const selectedPartenaire = allOptions.find((o) => o.id === formData.partenaireId) ?? null
+  const selectedMod = modOptions.find((o) => o.id === formData.modId) ?? null
 
   const handleChange = (field: keyof VersementPrevisionnelForm, value: string | number | undefined) => {
-    setFormData({ ...formData, [field]: value });
-  };
+    setFormData({ ...formData, [field]: value })
+  }
 
   const handleSubmit = async () => {
     if (!formData.dateVersement || formData.montant <= 0) {
-      setError('Veuillez remplir tous les champs requis');
-      return;
+      setError('Veuillez remplir tous les champs requis')
+      return
     }
 
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     try {
-      await onAdd(formData);
+      await onAdd(formData)
       setFormData({
         volet: '',
         dateVersement: new Date().toISOString().split('T')[0],
@@ -77,26 +84,33 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
         partenaireId: undefined,
         modId: undefined,
         remarques: '',
-      });
-      onClose();
+      })
+      onClose()
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(axiosErr.response?.data?.message || 'Erreur lors de l\'ajout');
+      const axiosErr = err as { response?: { data?: { message?: string } } }
+      setError(axiosErr.response?.data?.message || "Erreur lors de l'ajout")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Ajouter un Versement Prévisionnel</DialogTitle>
+      <DialogTitle sx={{ fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold }}>
+        Ajouter un Versement Previsionnel
+      </DialogTitle>
       <DialogContent>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-        <Grid container spacing={2}>
+        <Grid container spacing={2} sx={{ mt: 0.5 }}>
           <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
+              size="small"
               label="Volet / Composante"
               value={formData.volet}
               onChange={(e) => handleChange('volet', e.target.value)}
@@ -107,6 +121,7 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
             <TextField
               fullWidth
               required
+              size="small"
               type="date"
               label="Date de Versement"
               value={formData.dateVersement}
@@ -137,47 +152,36 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
               helperText="Montant effectivement verse ou a verser"
             />
           </Grid>
+
+          {/* Partenaire - API-backed Autocomplete */}
           <Grid size={{ xs: 12 }}>
-            <FormControl fullWidth>
-              <InputLabel>Partenaire Bénéficiaire</InputLabel>
-              <Select
-                value={formData.partenaireId || ''}
-                label="Partenaire Bénéficiaire"
-                onChange={(e) => handleChange('partenaireId', e.target.value ? Number(e.target.value) : undefined)}
-              >
-                <MenuItem value="">
-                  <em>-- Sélectionner --</em>
-                </MenuItem>
-                {partenaires.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {p.nom}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <ApiAutocomplete
+              label="Partenaire Beneficiaire"
+              placeholder="Rechercher un partenaire..."
+              value={selectedPartenaire}
+              onChange={(opt) => handleChange('partenaireId', opt?.id ?? undefined)}
+              options={allOptions}
+              optionIcon={<Business sx={{ fontSize: 16, color: colors.neutral[400] }} />}
+            />
           </Grid>
+
+          {/* MOD Responsable - filtered Autocomplete */}
           <Grid size={{ xs: 12 }}>
-            <FormControl fullWidth>
-              <InputLabel>MOD Responsable</InputLabel>
-              <Select
-                value={formData.modId || ''}
-                label="MOD Responsable"
-                onChange={(e) => handleChange('modId', e.target.value ? Number(e.target.value) : undefined)}
-              >
-                <MenuItem value="">
-                  <em>-- Aucun --</em>
-                </MenuItem>
-                {mods.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {p.nom}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <ApiAutocomplete
+              label="MOD Responsable"
+              placeholder="Rechercher un MOD..."
+              value={selectedMod}
+              onChange={(opt) => handleChange('modId', opt?.id ?? undefined)}
+              options={modOptions}
+              optionIcon={<Business sx={{ fontSize: 16, color: colors.neutral[400] }} />}
+              noOptionsText="Aucun Maitre d'oeuvre delegue disponible"
+            />
           </Grid>
+
           <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
+              size="small"
               multiline
               rows={3}
               label="Remarques"
@@ -187,8 +191,8 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} disabled={loading} size="small">
           Annuler
         </Button>
         <Button
@@ -196,13 +200,14 @@ const AddVersementDialog = ({ open, onClose, onAdd, partenaires }: AddVersementD
           variant="contained"
           startIcon={<Add />}
           disabled={loading}
-          sx={{ bgcolor: '#1e40af', '&:hover': { bgcolor: '#1e3a8a' } }}
+          size="small"
+          sx={{ bgcolor: colors.primary[600], '&:hover': { bgcolor: colors.primary[700] } }}
         >
           {loading ? 'Ajout...' : 'Ajouter'}
         </Button>
       </DialogActions>
     </Dialog>
-  );
-};
+  )
+}
 
-export default AddVersementDialog;
+export default AddVersementDialog

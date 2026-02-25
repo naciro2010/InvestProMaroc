@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import {
   Box, Typography, Chip, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, IconButton, Paper, Tooltip,
+  TableHead, TableRow, IconButton, Paper, Tooltip, Autocomplete, TextField,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
@@ -75,12 +75,27 @@ const BudgetLinesTable = ({
     if (e.key === 'Escape') cancelEditing()
   }
 
+  // Build available categories for editing: current line's category + unused categories
+  const getEditableCategories = (currentLigne: BudgetLigne): CategorieDepenseListDTO[] => {
+    const usedIds = lignes
+      .filter((l) => l !== currentLigne)
+      .map((l) => l.categorieDepenseId)
+      .filter((id): id is number => id !== undefined)
+    return categories.filter((c) => !usedIds.includes(c.id))
+  }
+
   return (
-    <TableContainer component={Paper} sx={{ ...componentStyles.table.container, mb: 2 }}>
+    <TableContainer component={Paper} sx={{
+      ...componentStyles.table.container,
+      mb: 2,
+      borderRadius: '0 0 8px 8px',
+      borderTop: 'none',
+      mt: '-1px',
+    }}>
       <Table size="small">
         <TableHead>
           <TableRow sx={componentStyles.table.header}>
-            <TableCell sx={componentStyles.table.headerCell}>Categorie</TableCell>
+            <TableCell sx={{ ...componentStyles.table.headerCell, minWidth: 200 }}>Categorie</TableCell>
             <TableCell align="right" sx={componentStyles.table.headerCell}>Montant HT</TableCell>
             <TableCell align="right" sx={componentStyles.table.headerCell}>TVA (%)</TableCell>
             <TableCell align="right" sx={componentStyles.table.headerCell}>Montant TTC</TableCell>
@@ -101,6 +116,8 @@ const BudgetLinesTable = ({
 
             if (isEditing) {
               const editTTC = editingLigne.montantHT * (1 + editingLigne.tauxTVA / 100)
+              const editableCats = getEditableCategories(lignes[idx])
+              const editCat = categories.find((c) => c.id === editingLigne.categorieDepenseId) ?? null
               return (
                 <TableRow
                   key={idx}
@@ -108,9 +125,25 @@ const BudgetLinesTable = ({
                   onKeyDown={handleEditKeyDown}
                 >
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: typography.weights.medium, color: colors.textPrimary }}>
-                      {cat ? `${cat.code} - ${cat.libelle}` : editingLigne.designation}
-                    </Typography>
+                    <Autocomplete
+                      size="small"
+                      options={editableCats}
+                      value={editCat}
+                      getOptionLabel={(opt) => `${opt.code} - ${opt.libelle}`}
+                      isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                      onChange={(_e, val) => {
+                        setEditingLigne((p) => ({
+                          ...p,
+                          categorieDepenseId: val?.id,
+                          designation: val ? val.libelle : p.designation,
+                        }))
+                      }}
+                      renderInput={(params) => (
+                        <TextField {...params} placeholder="Categorie..." size="small" />
+                      )}
+                      sx={{ minWidth: 180 }}
+                      disableClearable={false}
+                    />
                   </TableCell>
                   <TableCell align="right">
                     <DecimalInput

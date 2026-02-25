@@ -3,11 +3,15 @@ import {
   Box, Typography, TextField, Card, Chip, Divider, Alert,
   Button, Autocomplete, CircularProgress,
   MenuItem, ToggleButtonGroup, ToggleButton,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  createFilterOptions,
+  type FilterOptionsState,
 } from '@mui/material'
 import {
   Add as AddIcon,
   Lock as LockIcon,
   Info as InfoIcon,
+  Category as CategoryIcon,
 } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { categoriesDepensesAPI } from '@/lib/api'
@@ -22,6 +26,13 @@ import {
   type BudgetLigne,
 } from './types'
 import BudgetLinesTable from './BudgetLinesTable'
+
+interface CategorieOption extends CategorieDepenseListDTO {
+  inputValue?: string
+  isNew?: boolean
+}
+
+const filterCategories = createFilterOptions<CategorieOption>()
 
 interface WizardStepBudgetProps {
   formData: ConventionWizardFormData
@@ -42,9 +53,16 @@ const emptyLigne = (tauxCommission: number, tauxTVA: number): BudgetLigne => ({
 const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: WizardStepBudgetProps) => {
   const [categories, setCategories] = useState<CategorieDepenseListDTO[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
-  const [selectedCategorie, setSelectedCategorie] = useState<CategorieDepenseListDTO | null>(null)
+  const [selectedCategorie, setSelectedCategorie] = useState<CategorieOption | null>(null)
   const [newLigne, setNewLigne] = useState<BudgetLigne>(emptyLigne(formData.tauxCommission, formData.tauxTvaLignes))
   const categoryRef = useRef<HTMLInputElement>(null)
+
+  // Quick-create category dialog state
+  const [createCatDialogOpen, setCreateCatDialogOpen] = useState(false)
+  const [newCatLibelle, setNewCatLibelle] = useState('')
+  const [newCatCode, setNewCatCode] = useState('')
+  const [newCatGroupe, setNewCatGroupe] = useState('')
+  const [creatingCategory, setCreatingCategory] = useState(false)
 
   const isParCategorie = formData.commissionMode === 'PAR_CATEGORIE'
   const hasLines = formData.lignesBudget.length > 0
@@ -94,6 +112,37 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
   const availableCategories = categories.filter(
     (cat: CategorieDepenseListDTO) => !usedCategoryIds.includes(cat.id)
   )
+
+  // Quick-create a new category (Odoo-style CAYT)
+  const handleCreateCategorie = async () => {
+    if (!newCatLibelle) return
+    setCreatingCategory(true)
+    try {
+      const res = await categoriesDepensesAPI.create({
+        libelle: newCatLibelle,
+        code: newCatCode || `CAT-${Date.now().toString(36).toUpperCase()}`,
+        categorie: newCatGroupe || undefined,
+        actif: true,
+      })
+      const created = (res.data as { data?: CategorieDepenseListDTO }).data ?? (res.data as CategorieDepenseListDTO)
+      setCategories((prev) => [...prev, created])
+      const newOption: CategorieOption = { ...created }
+      setSelectedCategorie(newOption)
+      setNewLigne((prev) => ({
+        ...prev,
+        categorieDepenseId: created.id,
+        designation: created.libelle,
+      }))
+      setCreateCatDialogOpen(false)
+      setNewCatLibelle('')
+      setNewCatCode('')
+      setNewCatGroupe('')
+    } catch {
+      // silently handle - user can try again
+    } finally {
+      setCreatingCategory(false)
+    }
+  }
 
   const handleAddLigne = () => {
     if (!newLigne.designation || newLigne.montantHT <= 0) return
@@ -237,29 +286,89 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
         </Box>
 
         {/* Add line form: 2-line Odoo-style layout */}
-        <Card sx={{ ...componentStyles.card, p: 2, mb: 2 }}>
-          {/* Line 1: Category (full width) */}
-          <Autocomplete
+        <Card sx={{ ...componentStyles.card, p: 2, mb: 2, borderRadius: '8px 8px 0 0' }}>
+          {/* Line 1: Category with CAYT (full width) */}
+          <Autocomplete<CategorieOption, false, false, true>
             size="small"
-            options={availableCategories}
+            options={availableCategories as CategorieOption[]}
             loading={loadingCategories}
             value={selectedCategorie}
-            getOptionLabel={(option) => `${option.code} - ${option.libelle}`}
-            groupBy={(option) => option.categorie ?? 'Autre'}
+            getOptionLabel={(option: string | CategorieOption) => {
+              if (typeof option === 'string') return option
+              if (option.inputValue) return option.inputValue
+              return `${option.code} - ${option.libelle}`
+            }}
+            groupBy={(option) => option.isNew ? '' : (option.categorie ?? 'Autre')}
             isOptionEqualToValue={(option, value) => option.id === value.id}
-            onChange={(_event, value) => {
-              setSelectedCategorie(value)
-              setNewLigne((prev) => ({
-                ...prev,
-                categorieDepenseId: value?.id,
-                designation: value ? value.libelle : '',
-              }))
+            filterOptions={(options: CategorieOption[], params: FilterOptionsState<CategorieOption>) => {
+              const filtered = filterCategories(options, params)
+              const { inputValue } = params
+              const isExisting = options.some(
+                (opt) => opt.libelle.toLowerCase() === inputValue.toLowerCase()
+              )
+              if (inputValue !== '' && !isExisting) {
+                filtered.push({
+                  id: -1,
+                  code: '',
+                  libelle: `Creer "${inputValue}"`,
+                  inputValue,
+                  isNew: true,
+                })
+              }
+              return filtered
+            }}
+            onChange={(_event: React.SyntheticEvent, newValue: string | CategorieOption | null) => {
+              if (typeof newValue === 'string') {
+                setNewCatLibelle(newValue)
+                setCreateCatDialogOpen(true)
+              } else if (newValue && newValue.isNew) {
+                setNewCatLibelle(newValue.inputValue || '')
+                setCreateCatDialogOpen(true)
+              } else {
+                setSelectedCategorie(newValue)
+                setNewLigne((prev) => ({
+                  ...prev,
+                  categorieDepenseId: newValue?.id,
+                  designation: newValue ? newValue.libelle : '',
+                }))
+              }
+            }}
+            renderOption={(props: React.HTMLAttributes<HTMLLIElement>, option: CategorieOption) => {
+              if (option.isNew) {
+                return (
+                  <li {...props} key="create-new-cat">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: colors.primary[600] }}>
+                      <AddIcon sx={{ fontSize: 18 }} />
+                      <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>
+                        {option.libelle}
+                      </Typography>
+                    </Box>
+                  </li>
+                )
+              }
+              return (
+                <li {...props} key={option.id}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CategoryIcon sx={{ fontSize: 16, color: colors.neutral[400] }} />
+                    <Box>
+                      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>
+                        {option.code} - {option.libelle}
+                      </Typography>
+                      {option.categorie && (
+                        <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                          {option.categorie}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </li>
+              )
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Categorie de depense"
-                placeholder="Selectionner une categorie..."
+                placeholder="Rechercher ou creer une categorie..."
                 inputRef={categoryRef}
                 InputProps={{
                   ...params.InputProps,
@@ -272,8 +381,17 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
                 }}
               />
             )}
-            noOptionsText="Aucune categorie disponible"
+            noOptionsText={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: colors.textSecondary }}>
+                <AddIcon sx={{ fontSize: 16 }} />
+                Tapez un nom pour creer une nouvelle categorie
+              </Box>
+            }
             loadingText="Chargement..."
+            freeSolo
+            selectOnFocus
+            clearOnBlur
+            handleHomeEndKeys
             sx={{ mb: 2 }}
           />
 
@@ -288,10 +406,10 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
             alignItems: 'flex-start',
           }}>
             <DecimalInput size="small" label="Montant HT" value={newLigne.montantHT}
-              onChange={(v) => setNewLigne({ ...newLigne, montantHT: v, montantTTC: v * (1 + formData.tauxTvaLignes / 100) })}
+              onChange={(v) => setNewLigne((prev) => ({ ...prev, montantHT: v, montantTTC: v * (1 + prev.tauxTVA / 100) }))}
               decimalPlaces={2} min={0} sx={{ minWidth: 140 }}
             />
-            <DecimalInput size="small" label={`Montant TTC (TVA ${formData.tauxTvaLignes}%)`} value={newLigne.montantTTC}
+            <DecimalInput size="small" label={`Montant TTC (TVA ${formData.tauxTvaLignes}%)`} value={newLigne.montantHT * (1 + formData.tauxTvaLignes / 100)}
               onChange={() => {}} decimalPlaces={2} min={0}
               InputProps={{ readOnly: true }} sx={{ minWidth: 140, bgcolor: colors.neutral[50] }}
             />
@@ -335,6 +453,67 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
           />
         )}
       </Box>
+
+      {/* Quick-create category dialog (Odoo-style CAYT) */}
+      <Dialog open={createCatDialogOpen} onClose={() => setCreateCatDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CategoryIcon sx={{ color: colors.primary[600] }} />
+            Creer une nouvelle categorie de depense
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Libelle *"
+              value={newCatLibelle}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCatLibelle(e.target.value)}
+              autoFocus
+              placeholder="Nom de la categorie"
+            />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Code"
+                value={newCatCode}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCatCode(e.target.value)}
+                placeholder="Ex: CAT-001"
+                helperText="Auto-genere si vide"
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Groupe/Famille"
+                value={newCatGroupe}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewCatGroupe(e.target.value)}
+                placeholder="Ex: Travaux"
+                helperText="Optionnel"
+              />
+            </Box>
+            <Alert severity="info" sx={{ fontSize: typography.sizes.xs }}>
+              La categorie sera creee et immediatement disponible pour selection. Vous pourrez completer ses informations plus tard depuis le parametrage.
+            </Alert>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCreateCatDialogOpen(false)} size="small" disabled={creatingCategory}>
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCreateCategorie}
+            disabled={!newCatLibelle || creatingCategory}
+            startIcon={creatingCategory ? <CircularProgress size={14} /> : <AddIcon />}
+            sx={componentStyles.buttonPrimary}
+          >
+            {creatingCategory ? 'Creation...' : 'Creer et selectionner'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Summary Card */}
       <Card sx={{ ...componentStyles.card, p: 3, border: `2px solid ${colors.primary[200]}` }}>

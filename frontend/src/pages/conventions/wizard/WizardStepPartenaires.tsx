@@ -4,6 +4,7 @@ import {
   Typography,
   TextField,
   Card,
+  Chip,
   Divider,
   Alert,
   Button,
@@ -22,17 +23,20 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip,
   createFilterOptions,
+  type AutocompleteRenderInputParams,
+  type FilterOptionsState,
 } from '@mui/material'
-import type { AutocompleteRenderInputParams, FilterOptionsState } from '@mui/material'
 import {
   Delete as DeleteIcon,
   Add as AddIcon,
-  Edit as EditIcon,
   Check as CheckIcon,
   Close as CloseIcon,
+  Edit as EditIcon,
   PersonAdd as PersonAddIcon,
   Business as BusinessIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { partenairesAPI } from '@/lib/api'
@@ -154,11 +158,19 @@ const WizardStepPartenaires = ({
     if (editingIndex === index) setEditingIndex(null)
   }
 
+  // Edit partner state
+  const [editPartenaire, setEditPartenaire] = useState<PartenaireOption | null>(null)
+  const [editDesignation, setEditDesignation] = useState('')
+
   const startEdit = (index: number) => {
     const p = formData.partenaires[index]
     setEditingIndex(index)
     setEditBudget(p.budget)
     setEditPourcentage(p.pourcentage)
+    setEditDesignation(p.designation)
+    // Find the existing partenaire option for the edit autocomplete
+    const found = existingPartenaires.find((ep) => ep.id === p.partenaireId) ?? null
+    setEditPartenaire(found)
   }
 
   const saveEdit = () => {
@@ -166,7 +178,17 @@ const WizardStepPartenaires = ({
     setFormData((prev: ConventionWizardFormData) => ({
       ...prev,
       partenaires: prev.partenaires.map((p: Partenaire, i: number) =>
-        i === editingIndex ? { ...p, budget: editBudget, pourcentage: editPourcentage } : p
+        i === editingIndex ? {
+          ...p,
+          partenaireId: editPartenaire?.id ?? p.partenaireId,
+          designation: editPartenaire
+            ? (editPartenaire.sigle
+              ? `${editPartenaire.sigle} - ${editPartenaire.raisonSociale}`
+              : editPartenaire.raisonSociale)
+            : editDesignation,
+          budget: editBudget,
+          pourcentage: editPourcentage,
+        } : p
       ),
     }))
     setEditingIndex(null)
@@ -180,6 +202,25 @@ const WizardStepPartenaires = ({
   const handleEditPourcentageChange = (value: number) => {
     setEditPourcentage(value)
     setEditBudget((value / 100) * budgetGlobal)
+  }
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTableRowElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      setTimeout(saveEdit, 0)
+    }
+    if (e.key === 'Escape') setEditingIndex(null)
+  }
+
+  // Available partenaires for editing: current partenaire + unused ones
+  const getEditablePartenaires = (currentPartenaireId?: number): PartenaireOption[] => {
+    const otherUsedIds = formData.partenaires
+      .filter((_: Partenaire, i: number) => i !== editingIndex)
+      .map((p: Partenaire) => p.partenaireId)
+      .filter((id): id is number => id !== undefined)
+    return existingPartenaires.filter(
+      (p: PartenaireOption) => !otherUsedIds.includes(p.id ?? -1) || p.id === currentPartenaireId
+    )
   }
 
   // Quick-create a new partenaire
@@ -224,6 +265,65 @@ const WizardStepPartenaires = ({
         </Typography>
         <Divider />
       </Box>
+
+      {/* Summary reminder of previous steps */}
+      <Card sx={{
+        ...componentStyles.card,
+        p: 2,
+        bgcolor: colors.neutral[25],
+        border: `1px solid ${colors.border}`,
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+          <InfoIcon sx={{ fontSize: 18, color: colors.info[500] }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary, fontSize: typography.sizes.sm }}>
+            Rappel des informations precedentes
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 1.5 }}>
+          <Box>
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold, display: 'block' }}>
+              Convention
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>
+              {formData.code || '-'}
+            </Typography>
+            <Chip
+              label={formData.type}
+              size="small"
+              color="primary"
+              variant="outlined"
+              sx={{ mt: 0.5, height: 20, fontSize: '0.65rem' }}
+            />
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold, display: 'block' }}>
+              Budget Global
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: typography.weights.bold, color: colors.primary[700], fontSize: typography.sizes.sm }}>
+              {formatCurrency(formData.budgetGlobal)}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold, display: 'block' }}>
+              Commission
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>
+              {formData.commissionMode === 'PAR_CATEGORIE' ? 'Par categorie' : `${formData.tauxCommission}% global`}
+            </Typography>
+            <Typography variant="caption" sx={{ color: colors.success[600] }}>
+              TTC: {formatCurrency(totals.commissionTTC)}
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold, display: 'block' }}>
+              Lignes budget
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>
+              {formData.lignesBudget.length} ligne(s) — {formatCurrency(totals.totalLignesTTC)} TTC
+            </Typography>
+          </Box>
+        </Box>
+      </Card>
 
       {/* Budget overview bar */}
       <Card sx={{ ...componentStyles.card, p: 2, bgcolor: colors.primary[25], border: `1px solid ${colors.primary[100]}` }}>
@@ -419,12 +519,41 @@ const WizardStepPartenaires = ({
                   : 0
 
                 if (isEditing) {
+                  const editablePartenaires = getEditablePartenaires(p.partenaireId)
                   return (
-                    <TableRow key={idx} sx={{ bgcolor: colors.warning[25], '&:hover': { bgcolor: colors.warning[25] } }}>
+                    <TableRow
+                      key={idx}
+                      sx={{ bgcolor: colors.warning[25], '&:hover': { bgcolor: colors.warning[25] } }}
+                      onKeyDown={handleEditKeyDown}
+                    >
                       <TableCell sx={componentStyles.table.cell}>
-                        <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>
-                          {p.designation}
-                        </Typography>
+                        <Autocomplete<PartenaireOption, false, false, true>
+                          size="small"
+                          options={editablePartenaires}
+                          value={editPartenaire}
+                          getOptionLabel={(option: string | PartenaireOption) => {
+                            if (typeof option === 'string') return option
+                            return option.sigle
+                              ? `${option.code} - ${option.sigle} (${option.raisonSociale})`
+                              : `${option.code} - ${option.raisonSociale}`
+                          }}
+                          isOptionEqualToValue={(option, value) => option.id === value.id}
+                          onChange={(_e, val) => {
+                            if (val && typeof val !== 'string') {
+                              setEditPartenaire(val)
+                              setEditDesignation(
+                                val.sigle
+                                  ? `${val.sigle} - ${val.raisonSociale}`
+                                  : val.raisonSociale
+                              )
+                            }
+                          }}
+                          renderInput={(params) => (
+                            <TextField {...params} placeholder="Partenaire..." size="small" />
+                          )}
+                          freeSolo
+                          sx={{ minWidth: 200 }}
+                        />
                       </TableCell>
                       <TableCell align="right">
                         <DecimalInput
@@ -450,12 +579,16 @@ const WizardStepPartenaires = ({
                       <TableCell />
                       <TableCell align="center">
                         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                          <IconButton size="small" onClick={saveEdit} sx={{ color: colors.success[600] }}>
-                            <CheckIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => setEditingIndex(null)} sx={{ color: colors.danger[500] }}>
-                            <CloseIcon fontSize="small" />
-                          </IconButton>
+                          <Tooltip title="Enregistrer (Entree)">
+                            <IconButton size="small" onClick={saveEdit} sx={{ color: colors.success[600] }}>
+                              <CheckIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Annuler (Echap)">
+                            <IconButton size="small" onClick={() => setEditingIndex(null)} sx={{ color: colors.danger[500] }}>
+                              <CloseIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -463,7 +596,15 @@ const WizardStepPartenaires = ({
                 }
 
                 return (
-                  <TableRow key={idx} sx={componentStyles.table.row}>
+                  <TableRow
+                    key={idx}
+                    sx={{
+                      ...componentStyles.table.row,
+                      cursor: 'pointer',
+                      '&:hover .edit-hint': { opacity: 1 },
+                    }}
+                    onClick={() => startEdit(idx)}
+                  >
                     <TableCell sx={componentStyles.table.cell}>
                       <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>
                         {p.designation}
@@ -497,10 +638,14 @@ const WizardStepPartenaires = ({
                     </TableCell>
                     <TableCell align="center" sx={componentStyles.table.cell}>
                       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                        <IconButton size="small" onClick={() => startEdit(idx)}>
-                          <EditIcon sx={{ fontSize: 16, color: colors.primary[400] }} />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => handleDeletePartenaire(idx)} sx={{ color: colors.danger[500] }}>
+                        <Tooltip title="Modifier">
+                          <EditIcon className="edit-hint" sx={{ fontSize: 16, color: colors.primary[400], opacity: 0, transition: 'opacity 0.2s' }} />
+                        </Tooltip>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => { e.stopPropagation(); handleDeletePartenaire(idx) }}
+                          sx={{ color: colors.danger[500] }}
+                        >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Box>

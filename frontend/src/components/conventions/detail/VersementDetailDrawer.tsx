@@ -4,18 +4,7 @@ import {
 } from '@mui/material'
 import { Close, CalendarMonth, TrendingUp, ArrowForward, AccountBalance } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
-
-interface VersementPrevisionnel {
-  id: number
-  partenaireId?: number
-  partenaireNom?: string
-  partenaireSigle?: string
-  volet?: string
-  dateVersement: string
-  montant: number
-  montantPrevu?: number
-  remarques?: string
-}
+import type { VersementPrevisionnel } from './types'
 
 interface VersementDetailDrawerProps {
   open: boolean

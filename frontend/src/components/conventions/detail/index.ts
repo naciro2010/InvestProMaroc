@@ -36,3 +36,10 @@ export { default as ConventionRealisationSection } from './ConventionRealisation
 
 // Form dialogs
 export { default as ImputationFormDialog } from './ImputationFormDialog'
+
+// Shared types & styles
+export { thStyle } from './types'
+export type {
+  SituationPaiement, MarcheData, VersementPrevisionnel, VersementPartenaireRef,
+  ImputationPrevisionnelle, Subvention, SousConvention, Avenant, Projet, Marche,
+} from './types'

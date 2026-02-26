@@ -4,19 +4,7 @@ import {
 } from '@mui/material'
 import { Close, AccountBalance, CalendarMonth, ArrowForward, CurrencyExchange } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
-
-interface Subvention {
-  id: number
-  conventionId: number
-  organismeBailleur: string
-  typeSubvention?: string
-  montantTotal: number
-  devise: string
-  tauxChange?: number
-  dateDebutValidite?: string
-  dateFinValidite?: string
-  conditions?: string
-}
+import type { Subvention } from './types'
 
 interface SubventionDetailDrawerProps {
   open: boolean

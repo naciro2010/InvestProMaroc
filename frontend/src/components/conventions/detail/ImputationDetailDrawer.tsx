@@ -4,17 +4,7 @@ import {
 } from '@mui/material'
 import { Close, Schedule, CalendarMonth, ArrowForward, TrendingUp } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
-
-interface ImputationPrevisionnelle {
-  id: number
-  conventionId: number
-  volet?: string
-  dateDemarrage: string
-  delaiMois: number
-  dateFinPrevue?: string
-  montantPrevu?: number
-  remarques?: string
-}
+import type { ImputationPrevisionnelle } from './types'
 
 interface ImputationDetailDrawerProps {
   open: boolean

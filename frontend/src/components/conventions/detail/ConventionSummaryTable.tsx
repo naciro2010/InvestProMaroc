@@ -18,23 +18,7 @@ import { marchesAPI, conventionsAPI } from '@/lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import MarcheDetailDrawer from './MarcheDetailDrawer'
 import type { ConventionBudgetLigneDTO, ApiResponse } from '@/types/api'
-
-interface MarcheData {
-  id: number
-  numeroMarche: string
-  objet: string
-  montantTtc: number
-  statut: string
-  fournisseurNom?: string
-}
-
-interface SituationPaiement {
-  totalDecomptes: number
-  totalNetAPayer: number
-  totalMontantPaye: number
-  resteAPayer: number
-  tauxPaiement: number
-}
+import type { MarcheData, SituationPaiement } from './types'
 
 interface SummaryLine {
   label: string

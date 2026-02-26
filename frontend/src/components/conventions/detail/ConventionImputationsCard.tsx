@@ -19,17 +19,8 @@ import { conventionsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import ImputationFormDialog from './ImputationFormDialog'
 import ImputationDetailDrawer from './ImputationDetailDrawer'
-
-interface ImputationPrevisionnelle {
-  id: number
-  conventionId: number
-  volet?: string
-  dateDemarrage: string
-  delaiMois: number
-  dateFinPrevue?: string
-  montantPrevu?: number
-  remarques?: string
-}
+import { thStyle } from './types'
+import type { ImputationPrevisionnelle } from './types'
 
 interface ConventionImputationsCardProps {
   conventionId: number
@@ -226,14 +217,6 @@ const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit
       />
     </Box>
   )
-}
-
-const thStyle = {
-  fontWeight: typography.weights.semibold,
-  fontSize: typography.sizes.xs,
-  color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
 }
 
 export default ConventionImputationsCard

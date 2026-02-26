@@ -7,6 +7,7 @@ import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
 import ConventionBudgetLignesCard from './ConventionBudgetLignesCard'
 import { colors, typography } from '@/lib/designSystem'
+import type { VersementPrevisionnel } from './types'
 
 interface ConventionData {
   id: number
@@ -23,18 +24,6 @@ interface ConventionData {
   dateDebut: string
   dateFin?: string
   parentConventionId?: number | null
-}
-
-interface VersementPrevisionnel {
-  id: number
-  partenaireId?: number
-  partenaireNom?: string
-  partenaireSigle?: string
-  volet?: string
-  dateVersement: string
-  montant: number
-  montantPrevu?: number
-  remarques?: string
 }
 
 interface PartenaireCallbackData {

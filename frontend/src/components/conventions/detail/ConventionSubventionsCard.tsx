@@ -19,19 +19,8 @@ import { subventionsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import SubventionFormDialog from '../SubventionFormDialog'
 import SubventionDetailDrawer from './SubventionDetailDrawer'
-
-interface Subvention {
-  id: number
-  conventionId: number
-  organismeBailleur: string
-  typeSubvention?: string
-  montantTotal: number
-  devise: string
-  tauxChange?: number
-  dateDebutValidite?: string
-  dateFinValidite?: string
-  conditions?: string
-}
+import { thStyle } from './types'
+import type { Subvention } from './types'
 
 interface ConventionSubventionsCardProps {
   conventionId: number
@@ -235,14 +224,6 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
       />
     </Box>
   )
-}
-
-const thStyle = {
-  fontWeight: typography.weights.semibold,
-  fontSize: typography.sizes.xs,
-  color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
 }
 
 export default ConventionSubventionsCard

@@ -17,6 +17,8 @@ import { Edit, Delete, ArrowUpward, ChevronRight, AddCircleOutline } from '@mui/
 import { conventionsAPI } from '@/lib/api'
 import { colors, borders, typography } from '@/lib/designSystem'
 import PartenaireDetailDrawer from './PartenaireDetailDrawer'
+import { thStyle } from './types'
+import type { VersementPartenaireRef } from './types'
 
 interface ConventionPartenaireData {
   id: number
@@ -32,19 +34,12 @@ interface ConventionPartenaireData {
   remarques: string | null
 }
 
-interface VersementPrevisionnel {
-  id: number
-  partenaireId?: number
-  montant: number
-  montantPrevu?: number
-}
-
 interface ConventionPartenairesCardProps {
   conventionId: number
   conventionBudget?: number
   canEdit?: boolean
   parentConventionId?: number
-  versements?: VersementPrevisionnel[]
+  versements?: VersementPartenaireRef[]
   onAddClick: () => void
   onEditClick?: (partenaire: ConventionPartenaireData) => void
 }
@@ -317,14 +312,6 @@ const ConventionPartenairesCard = ({
       />
     </Box>
   )
-}
-
-const thStyle = {
-  fontWeight: typography.weights.semibold,
-  fontSize: typography.sizes.xs,
-  color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
 }
 
 export default ConventionPartenairesCard

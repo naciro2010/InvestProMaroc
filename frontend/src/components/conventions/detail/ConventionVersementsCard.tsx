@@ -14,18 +14,8 @@ import {
 import { Edit, Delete, AccountBalance, ChevronRight, AddCircleOutline } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
 import VersementDetailDrawer from './VersementDetailDrawer'
-
-interface VersementPrevisionnel {
-  id: number
-  partenaireId?: number
-  partenaireNom?: string
-  partenaireSigle?: string
-  volet?: string
-  dateVersement: string
-  montant: number
-  montantPrevu?: number
-  remarques?: string
-}
+import { thStyle } from './types'
+import type { VersementPrevisionnel } from './types'
 
 interface ConventionVersementsCardProps {
   versements: VersementPrevisionnel[]
@@ -216,14 +206,6 @@ const ConventionVersementsCard = ({
     />
   </>
   )
-}
-
-const thStyle = {
-  fontWeight: typography.weights.semibold,
-  fontSize: typography.sizes.xs,
-  color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
 }
 
 export default ConventionVersementsCard

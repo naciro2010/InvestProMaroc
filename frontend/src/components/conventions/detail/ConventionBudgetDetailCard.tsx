@@ -17,23 +17,7 @@ import {
 import { WarningAmber, CheckCircle, ErrorOutline, AccountBalance } from '@mui/icons-material'
 import { conventionsAPI, marchesAPI } from '@/lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
-
-interface MarcheData {
-  id: number
-  numeroMarche: string
-  objet: string
-  montantTtc: number
-  statut: string
-  fournisseurNom?: string
-}
-
-interface SituationPaiement {
-  totalDecomptes: number
-  totalNetAPayer: number
-  totalMontantPaye: number
-  resteAPayer: number
-  tauxPaiement: number
-}
+import type { MarcheData, SituationPaiement } from './types'
 
 interface BudgetLine {
   label: string

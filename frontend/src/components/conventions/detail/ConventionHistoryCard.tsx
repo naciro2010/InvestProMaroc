@@ -64,9 +64,8 @@ export default function ConventionHistoryCard({
         setLoading(true);
         const response = await conventionsAPI.getHistorique(conventionId);
         setModifications(response.data.data || []);
-      } catch (err) {
+      } catch {
         setError('Erreur lors du chargement de l\'historique');
-        console.error(err);
       } finally {
         setLoading(false);
       }

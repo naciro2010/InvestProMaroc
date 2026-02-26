@@ -11,14 +11,7 @@ import {
 import { marchesAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import StatusBadge from '@/components/core/StatusBadge'
-
-interface SituationPaiement {
-  totalDecomptes: number
-  totalNetAPayer: number
-  totalMontantPaye: number
-  resteAPayer: number
-  tauxPaiement: number
-}
+import type { SituationPaiement } from './types'
 
 interface DecompteSimple {
   id: number

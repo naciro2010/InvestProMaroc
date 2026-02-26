@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -14,10 +14,11 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'
-import { Delete, TrendingUp, Schedule } from '@mui/icons-material'
+import { Delete, TrendingUp, Schedule, ChevronRight } from '@mui/icons-material'
 import { conventionsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import ImputationFormDialog from './ImputationFormDialog'
+import ImputationDetailDrawer from './ImputationDetailDrawer'
 
 interface ImputationPrevisionnelle {
   id: number
@@ -32,6 +33,7 @@ interface ImputationPrevisionnelle {
 
 interface ConventionImputationsCardProps {
   conventionId: number
+  conventionBudget?: number
   onRefresh?: () => void
 }
 
@@ -50,11 +52,12 @@ const formatCurrency = (amount: number) =>
  * ConventionImputationsCard - Pure content for ResizableSection.
  * No Paper wrapper or redundant header. Dialog extracted to ImputationFormDialog.
  */
-const ConventionImputationsCard = ({ conventionId, onRefresh }: ConventionImputationsCardProps) => {
+const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, onRefresh }: ConventionImputationsCardProps) => {
   const [imputations, setImputations] = useState<ImputationPrevisionnelle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedImputation, setSelectedImputation] = useState<ImputationPrevisionnelle | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -110,11 +113,16 @@ const ConventionImputationsCard = ({ conventionId, onRefresh }: ConventionImputa
               <TableCell align="right" sx={thStyle}>Montant prevu</TableCell>
               <TableCell sx={thStyle}>Remarques</TableCell>
               <TableCell align="center" sx={{ ...thStyle, width: 60 }}>Actions</TableCell>
+              <TableCell sx={{ ...thStyle, width: 32 }} />
             </TableRow>
           </TableHead>
           <TableBody>
             {imputations.map(imp => (
-              <TableRow key={imp.id} sx={{ '&:hover': { bgcolor: colors.neutral[25] } }}>
+              <Tooltip key={imp.id} title="Cliquer pour voir le detail" placement="left" arrow enterDelay={600}>
+              <TableRow
+                onClick={() => setSelectedImputation(imp)}
+                sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, bgcolor: selectedImputation?.id === imp.id ? colors.primary[25] : 'transparent' }}
+              >
                 <TableCell>
                   {imp.volet ? (
                     <Chip label={imp.volet} size="small"
@@ -149,12 +157,16 @@ const ConventionImputationsCard = ({ conventionId, onRefresh }: ConventionImputa
                 </TableCell>
                 <TableCell align="center">
                   <Tooltip title="Supprimer">
-                    <IconButton size="small" onClick={() => handleDelete(imp.id)} sx={{ color: colors.danger[500] }}>
+                    <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(imp.id) }} sx={{ color: colors.danger[500] }}>
                       <Delete sx={{ fontSize: 15 }} />
                     </IconButton>
                   </Tooltip>
                 </TableCell>
+                <TableCell sx={{ px: 0.5 }}>
+                  <ChevronRight sx={{ fontSize: 16, color: colors.neutral[400] }} />
+                </TableCell>
               </TableRow>
+              </Tooltip>
             ))}
           </TableBody>
         </Table>
@@ -164,6 +176,15 @@ const ConventionImputationsCard = ({ conventionId, onRefresh }: ConventionImputa
         open={dialogOpen} conventionId={conventionId}
         onClose={() => setDialogOpen(false)}
         onSuccess={(newImp) => { setImputations(prev => [...prev, newImp]); setDialogOpen(false); onRefresh?.() }}
+      />
+
+      {/* Detail Drawer */}
+      <ImputationDetailDrawer
+        open={selectedImputation !== null}
+        onClose={() => setSelectedImputation(null)}
+        imputation={selectedImputation}
+        allImputations={imputations}
+        conventionBudget={conventionBudget}
       />
     </Box>
   )

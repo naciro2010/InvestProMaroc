@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -13,9 +13,10 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material'
-import { Edit, Delete, ArrowUpward } from '@mui/icons-material'
+import { Edit, Delete, ArrowUpward, ChevronRight } from '@mui/icons-material'
 import { conventionsAPI } from '@/lib/api'
 import { colors, borders, typography } from '@/lib/designSystem'
+import PartenaireDetailDrawer from './PartenaireDetailDrawer'
 
 interface ConventionPartenaireData {
   id: number
@@ -40,6 +41,7 @@ interface VersementPrevisionnel {
 
 interface ConventionPartenairesCardProps {
   conventionId: number
+  conventionBudget?: number
   parentConventionId?: number
   versements?: VersementPrevisionnel[]
   onAddClick: () => void
@@ -60,6 +62,7 @@ const formatCurrencyFull = (amount: number): string =>
  */
 const ConventionPartenairesCard = ({
   conventionId,
+  conventionBudget = 0,
   parentConventionId,
   versements = [],
   onAddClick,
@@ -69,6 +72,7 @@ const ConventionPartenairesCard = ({
   const [parentPartenaires, setParentPartenaires] = useState<ConventionPartenaireData[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingParent, setLoadingParent] = useState(false)
+  const [selectedPartenaire, setSelectedPartenaire] = useState<ConventionPartenaireData | null>(null)
 
   const isSousConvention = !!parentConventionId
 
@@ -184,7 +188,11 @@ const ConventionPartenairesCard = ({
               const isFromParent = parentPartenaireIds.has(p.partenaireId)
               const versTotal = versementsByPartenaire.get(p.partenaireId) || 0
               return (
-                <TableRow key={p.id} sx={{ '&:hover': { bgcolor: colors.neutral[25] } }}>
+                <Tooltip key={p.id} title="Cliquer pour voir le detail" placement="left" arrow enterDelay={600}>
+                <TableRow
+                  onClick={() => setSelectedPartenaire(p)}
+                  sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, bgcolor: selectedPartenaire?.id === p.id ? colors.primary[25] : 'transparent' }}
+                >
                   <TableCell>
                     <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm, color: colors.textPrimary }}>
                       {p.partenaireSigle || p.partenaireCode}
@@ -229,19 +237,20 @@ const ConventionPartenairesCard = ({
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.25 }}>
                       {onEditClick && (
                         <Tooltip title="Modifier">
-                          <IconButton size="small" onClick={() => onEditClick(p)}>
+                          <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEditClick(p) }}>
                             <Edit sx={{ fontSize: 15, color: colors.neutral[500] }} />
                           </IconButton>
                         </Tooltip>
                       )}
                       <Tooltip title="Supprimer">
-                        <IconButton size="small" onClick={() => handleDelete(p.id)}>
+                        <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(p.id) }}>
                           <Delete sx={{ fontSize: 15, color: colors.danger[500] }} />
                         </IconButton>
                       </Tooltip>
                     </Box>
                   </TableCell>
                 </TableRow>
+                </Tooltip>
               )
             })}
             {/* Total */}
@@ -259,6 +268,22 @@ const ConventionPartenairesCard = ({
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Detail Drawer */}
+      <PartenaireDetailDrawer
+        open={selectedPartenaire !== null}
+        onClose={() => setSelectedPartenaire(null)}
+        partenaire={selectedPartenaire}
+        conventionId={conventionId}
+        conventionBudget={conventionBudget}
+        versements={versements.map(v => ({
+          id: v.id,
+          partenaireId: v.partenaireId,
+          dateVersement: '',
+          montant: v.montant,
+          montantPrevu: v.montantPrevu,
+        }))}
+      />
     </Box>
   )
 }

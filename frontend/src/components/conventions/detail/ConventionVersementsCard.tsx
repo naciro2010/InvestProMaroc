@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -10,8 +11,9 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material'
-import { Edit, Delete, AccountBalance } from '@mui/icons-material'
+import { Edit, Delete, AccountBalance, ChevronRight } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
+import VersementDetailDrawer from './VersementDetailDrawer'
 
 interface VersementPrevisionnel {
   id: number
@@ -27,6 +29,7 @@ interface VersementPrevisionnel {
 
 interface ConventionVersementsCardProps {
   versements: VersementPrevisionnel[]
+  conventionBudget?: number
   onAdd: () => void
   onEdit: (versement: VersementPrevisionnel) => void
   onDelete: (versementId: number) => void
@@ -44,10 +47,12 @@ const formatDate = (date: string) =>
  */
 const ConventionVersementsCard = ({
   versements,
+  conventionBudget = 0,
   onAdd,
   onEdit,
   onDelete,
 }: ConventionVersementsCardProps) => {
+  const [selectedVersement, setSelectedVersement] = useState<VersementPrevisionnel | null>(null)
   const totalVersements = versements.reduce((sum, v) => sum + v.montant, 0)
   const totalPrevu = versements.reduce((sum, v) => sum + (v.montantPrevu || 0), 0)
 
@@ -63,6 +68,7 @@ const ConventionVersementsCard = ({
   }
 
   return (
+  <>
     <TableContainer>
       <Table size="small">
         <TableHead>
@@ -74,11 +80,16 @@ const ConventionVersementsCard = ({
             <TableCell align="right" sx={thStyle}>Montant reel</TableCell>
             <TableCell align="right" sx={thStyle}>Ecart</TableCell>
             <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>
+            <TableCell sx={{ ...thStyle, width: 32 }} />
           </TableRow>
         </TableHead>
         <TableBody>
           {versements.map(v => (
-            <TableRow key={v.id} sx={{ '&:hover': { bgcolor: colors.neutral[25] } }}>
+            <Tooltip key={v.id} title="Cliquer pour voir le detail" placement="left" arrow enterDelay={600}>
+            <TableRow
+              onClick={() => setSelectedVersement(v)}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, bgcolor: selectedVersement?.id === v.id ? colors.primary[25] : 'transparent' }}
+            >
               <TableCell>
                 <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm, color: colors.textPrimary }}>
                   {v.partenaireSigle || v.partenaireNom || '-'}
@@ -119,18 +130,22 @@ const ConventionVersementsCard = ({
               <TableCell align="center">
                 <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
                   <Tooltip title="Modifier">
-                    <IconButton size="small" onClick={() => onEdit(v)} sx={{ color: colors.primary[600] }}>
+                    <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(v) }} sx={{ color: colors.primary[600] }}>
                       <Edit sx={{ fontSize: 15 }} />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Supprimer">
-                    <IconButton size="small" onClick={() => onDelete(v.id)} sx={{ color: colors.danger[500] }}>
+                    <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onDelete(v.id) }} sx={{ color: colors.danger[500] }}>
                       <Delete sx={{ fontSize: 15 }} />
                     </IconButton>
                   </Tooltip>
                 </Box>
               </TableCell>
+              <TableCell sx={{ px: 0.5 }}>
+                <ChevronRight sx={{ fontSize: 16, color: colors.neutral[400] }} />
+              </TableCell>
             </TableRow>
+            </Tooltip>
           ))}
           {/* Total */}
           <TableRow sx={{ bgcolor: colors.neutral[50], '& td': { borderBottom: 0 } }}>
@@ -152,11 +167,21 @@ const ConventionVersementsCard = ({
                 </Typography>
               )}
             </TableCell>
-            <TableCell />
+            <TableCell colSpan={2} />
           </TableRow>
         </TableBody>
       </Table>
     </TableContainer>
+
+    {/* Detail Drawer */}
+    <VersementDetailDrawer
+      open={selectedVersement !== null}
+      onClose={() => setSelectedVersement(null)}
+      versement={selectedVersement}
+      allVersements={versements}
+      conventionBudget={conventionBudget}
+    />
+  </>
   )
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -14,10 +14,11 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'
-import { Edit, Delete, AccountBalance } from '@mui/icons-material'
+import { Edit, Delete, AccountBalance, ChevronRight } from '@mui/icons-material'
 import { subventionsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import SubventionFormDialog from '../SubventionFormDialog'
+import SubventionDetailDrawer from './SubventionDetailDrawer'
 
 interface Subvention {
   id: number
@@ -34,6 +35,7 @@ interface Subvention {
 
 interface ConventionSubventionsCardProps {
   conventionId: number
+  conventionBudget?: number
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -50,12 +52,13 @@ const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('
  * ConventionSubventionsCard - Pure content for ResizableSection.
  * No Paper wrapper or redundant header.
  */
-const ConventionSubventionsCard = ({ conventionId }: ConventionSubventionsCardProps) => {
+const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0 }: ConventionSubventionsCardProps) => {
   const [subventions, setSubventions] = useState<Subvention[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingSubvention, setEditingSubvention] = useState<Subvention | null>(null)
+  const [selectedSubvention, setSelectedSubvention] = useState<Subvention | null>(null)
 
   const loadSubventions = async () => {
     try {
@@ -102,11 +105,16 @@ const ConventionSubventionsCard = ({ conventionId }: ConventionSubventionsCardPr
               <TableCell align="right" sx={thStyle}>Montant</TableCell>
               <TableCell sx={thStyle}>Validite</TableCell>
               <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>
+              <TableCell sx={{ ...thStyle, width: 32 }} />
             </TableRow>
           </TableHead>
           <TableBody>
             {subventions.map(s => (
-              <TableRow key={s.id} sx={{ '&:hover': { bgcolor: colors.neutral[25] } }}>
+              <Tooltip key={s.id} title="Cliquer pour voir le detail" placement="left" arrow enterDelay={600}>
+              <TableRow
+                onClick={() => setSelectedSubvention(s)}
+                sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, bgcolor: selectedSubvention?.id === s.id ? colors.primary[25] : 'transparent' }}
+              >
                 <TableCell>
                   <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>{s.organismeBailleur}</Typography>
                   {s.conditions && (
@@ -140,29 +148,42 @@ const ConventionSubventionsCard = ({ conventionId }: ConventionSubventionsCardPr
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
                     <Tooltip title="Modifier">
-                      <IconButton size="small" onClick={() => { setEditingSubvention(s); setDialogOpen(true) }} sx={{ color: colors.primary[600] }}>
+                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingSubvention(s); setDialogOpen(true) }} sx={{ color: colors.primary[600] }}>
                         <Edit sx={{ fontSize: 15 }} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Supprimer">
-                      <IconButton size="small" onClick={() => handleDelete(s.id)} sx={{ color: colors.danger[500] }}>
+                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(s.id) }} sx={{ color: colors.danger[500] }}>
                         <Delete sx={{ fontSize: 15 }} />
                       </IconButton>
                     </Tooltip>
                   </Box>
                 </TableCell>
+                <TableCell sx={{ px: 0.5 }}>
+                  <ChevronRight sx={{ fontSize: 16, color: colors.neutral[400] }} />
+                </TableCell>
               </TableRow>
+              </Tooltip>
             ))}
             <TableRow sx={{ bgcolor: colors.neutral[50], '& td': { borderBottom: 0 } }}>
               <TableCell colSpan={2} sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>Total</TableCell>
               <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.success[700] }}>
                 {formatCurrency(totalMAD, 'MAD')}
               </TableCell>
-              <TableCell colSpan={2} />
+              <TableCell colSpan={3} />
             </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Detail Drawer */}
+      <SubventionDetailDrawer
+        open={selectedSubvention !== null}
+        onClose={() => setSelectedSubvention(null)}
+        subvention={selectedSubvention}
+        allSubventions={subventions}
+        conventionBudget={conventionBudget}
+      />
 
       <SubventionFormDialog
         open={dialogOpen} conventionId={conventionId}

@@ -13,9 +13,10 @@ import {
   Skeleton,
   Tooltip,
 } from '@mui/material'
-import { TrendingUp, AccountBalance, Receipt, Payments } from '@mui/icons-material'
+import { TrendingUp, AccountBalance, Receipt, Payments, ChevronRight } from '@mui/icons-material'
 import { marchesAPI, conventionsAPI } from '@/lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
+import MarcheDetailDrawer from './MarcheDetailDrawer'
 import type { ConventionBudgetLigneDTO, ApiResponse } from '@/types/api'
 
 interface MarcheData {
@@ -82,6 +83,7 @@ const ConventionSummaryTable = ({
   const [lines, setLines] = useState<SummaryLine[]>([])
   const [loading, setLoading] = useState(true)
   const [budgetLignes, setBudgetLignes] = useState<ConventionBudgetLigneDTO[]>([])
+  const [selectedLine, setSelectedLine] = useState<SummaryLine | null>(null)
 
   const loadData = useCallback(async () => {
     try {
@@ -255,6 +257,7 @@ const ConventionSummaryTable = ({
               <TableCell align="right" sx={thStyle}>Reste a engager</TableCell>
               <TableCell align="right" sx={thStyle}>Depenses realisees</TableCell>
               <TableCell align="right" sx={thStyle}>Reste a payer</TableCell>
+              <TableCell sx={{ ...thStyle, width: 32 }} />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -268,28 +271,36 @@ const ConventionSummaryTable = ({
               </TableRow>
             )}
             {lines.map((line: SummaryLine, idx: number) => (
-              <TableRow key={idx} sx={{ '&:hover': { bgcolor: colors.neutral[25] } }}>
-                <TableCell sx={{ ...tdStyle, maxWidth: 220 }}>
-                  <Typography sx={{
-                    fontSize: typography.sizes.xs,
-                    fontWeight: typography.weights.medium,
-                    color: colors.textPrimary,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {line.label}
-                  </Typography>
-                </TableCell>
-                <CurrencyCell value={line.budget} />
-                <CurrencyCell value={line.engage} color={colors.primary[700]} />
-                <CurrencyCell value={line.resteAEngager} />
-                <CurrencyCell value={line.depenses} color={colors.success[700]} />
-                <CurrencyCell
-                  value={line.resteAPayer}
-                  color={line.resteAPayer > 0 ? colors.warning[700] : colors.success[700]}
-                />
-              </TableRow>
+              <Tooltip key={idx} title="Cliquer pour voir le detail" placement="left" arrow enterDelay={600}>
+                <TableRow
+                  onClick={() => line.marcheId ? setSelectedLine(line) : undefined}
+                  sx={{ cursor: line.marcheId ? 'pointer' : 'default', '&:hover': { bgcolor: colors.primary[25] }, bgcolor: selectedLine?.marcheId === line.marcheId ? colors.primary[25] : 'transparent' }}
+                >
+                  <TableCell sx={{ ...tdStyle, maxWidth: 220 }}>
+                    <Typography sx={{
+                      fontSize: typography.sizes.xs,
+                      fontWeight: typography.weights.medium,
+                      color: colors.primary[700],
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {line.label}
+                    </Typography>
+                  </TableCell>
+                  <CurrencyCell value={line.budget} />
+                  <CurrencyCell value={line.engage} color={colors.primary[700]} />
+                  <CurrencyCell value={line.resteAEngager} />
+                  <CurrencyCell value={line.depenses} color={colors.success[700]} />
+                  <CurrencyCell
+                    value={line.resteAPayer}
+                    color={line.resteAPayer > 0 ? colors.warning[700] : colors.success[700]}
+                  />
+                  <TableCell sx={{ ...tdStyle, px: 0.5 }}>
+                    {line.marcheId && <ChevronRight sx={{ fontSize: 16, color: colors.neutral[400] }} />}
+                  </TableCell>
+                </TableRow>
+              </Tooltip>
             ))}
 
             {/* Commission row */}
@@ -307,7 +318,7 @@ const ConventionSummaryTable = ({
                   TTC: {formatCurrency(commissionTTC)}
                 </Typography>
               </TableCell>
-              <TableCell colSpan={3} sx={tdStyle} />
+              <TableCell colSpan={4} sx={tdStyle} />
             </TableRow>
 
             {/* Total Row */}
@@ -343,6 +354,17 @@ const ConventionSummaryTable = ({
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Marche Detail Drawer */}
+      <MarcheDetailDrawer
+        open={selectedLine !== null}
+        onClose={() => setSelectedLine(null)}
+        marcheId={selectedLine?.marcheId ?? null}
+        marcheLabel={selectedLine?.label ?? ''}
+        marcheEngagement={selectedLine?.engage ?? 0}
+        marcheDepenses={selectedLine?.depenses ?? 0}
+        marcheResteAPayer={selectedLine?.resteAPayer ?? 0}
+      />
     </Paper>
   )
 }

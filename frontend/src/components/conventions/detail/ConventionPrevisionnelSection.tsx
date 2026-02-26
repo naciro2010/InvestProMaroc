@@ -134,6 +134,7 @@ const ConventionPrevisionnelSection = ({
         <ConventionPartenairesCard
           key={partenairesRefreshKey}
           conventionId={convention.id}
+          conventionBudget={convention.budget}
           parentConventionId={convention.parentConventionId ?? undefined}
           versements={versements}
           onAddClick={onAddPartenaire}
@@ -176,6 +177,7 @@ const ConventionPrevisionnelSection = ({
       >
         <ConventionVersementsCard
           versements={versements}
+          conventionBudget={convention.budget}
           onAdd={onAddVersement}
           onEdit={onEditVersement}
           onDelete={onDeleteVersement}
@@ -189,7 +191,7 @@ const ConventionPrevisionnelSection = ({
         icon={<PieChart sx={{ color: colors.warning[500], fontSize: 16 }} />}
         noPadding
       >
-        <ConventionImputationsCard conventionId={convention.id} onRefresh={onRefresh} />
+        <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} onRefresh={onRefresh} />
       </ResizableSection>
 
       {/* 6. Subventions */}
@@ -199,7 +201,7 @@ const ConventionPrevisionnelSection = ({
         icon={<CardGiftcard sx={{ color: colors.success[500], fontSize: 16 }} />}
         noPadding
       >
-        <ConventionSubventionsCard conventionId={convention.id} />
+        <ConventionSubventionsCard conventionId={convention.id} conventionBudget={convention.budget} />
       </ResizableSection>
     </Box>
   )

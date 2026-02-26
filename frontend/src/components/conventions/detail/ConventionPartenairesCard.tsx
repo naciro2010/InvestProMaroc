@@ -13,7 +13,7 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material'
-import { Edit, Delete, ArrowUpward, ChevronRight } from '@mui/icons-material'
+import { Edit, Delete, ArrowUpward, ChevronRight, AddCircleOutline } from '@mui/icons-material'
 import { conventionsAPI } from '@/lib/api'
 import { colors, borders, typography } from '@/lib/designSystem'
 import PartenaireDetailDrawer from './PartenaireDetailDrawer'
@@ -42,6 +42,7 @@ interface VersementPrevisionnel {
 interface ConventionPartenairesCardProps {
   conventionId: number
   conventionBudget?: number
+  canEdit?: boolean
   parentConventionId?: number
   versements?: VersementPrevisionnel[]
   onAddClick: () => void
@@ -63,6 +64,7 @@ const formatCurrencyFull = (amount: number): string =>
 const ConventionPartenairesCard = ({
   conventionId,
   conventionBudget = 0,
+  canEdit = false,
   parentConventionId,
   versements = [],
   onAddClick,
@@ -134,9 +136,20 @@ const ConventionPartenairesCard = ({
   if (partenaires.length === 0) {
     return (
       <Box sx={{ py: 3, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: canEdit ? 1.5 : 0 }}>
           {isSousConvention ? 'Aucun partenaire propre a cette sous-convention' : 'Aucun partenaire defini'}
         </Typography>
+        {canEdit && (
+          <Box
+            onClick={onAddClick}
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, cursor: 'pointer', py: 0.75, px: 2, borderRadius: 1, '&:hover': { bgcolor: colors.primary[25] } }}
+          >
+            <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+              Ajouter un partenaire
+            </Typography>
+          </Box>
+        )}
       </Box>
     )
   }
@@ -180,7 +193,7 @@ const ConventionPartenairesCard = ({
               <TableCell align="right" sx={thStyle}>Vers. prev.</TableCell>
               <TableCell sx={thStyle}>Role</TableCell>
               {isSousConvention && <TableCell sx={thStyle}>Source</TableCell>}
-              <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>
+              {canEdit && <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -233,28 +246,30 @@ const ConventionPartenairesCard = ({
                       )}
                     </TableCell>
                   )}
-                  <TableCell align="center">
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.25 }}>
-                      {onEditClick && (
-                        <Tooltip title="Modifier">
-                          <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEditClick(p) }}>
-                            <Edit sx={{ fontSize: 15, color: colors.neutral[500] }} />
+                  {canEdit && (
+                    <TableCell align="center">
+                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.25 }}>
+                        {onEditClick && (
+                          <Tooltip title="Modifier">
+                            <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEditClick(p) }}>
+                              <Edit sx={{ fontSize: 15, color: colors.neutral[500] }} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <Tooltip title="Supprimer">
+                          <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(p.id) }}>
+                            <Delete sx={{ fontSize: 15, color: colors.danger[500] }} />
                           </IconButton>
                         </Tooltip>
-                      )}
-                      <Tooltip title="Supprimer">
-                        <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(p.id) }}>
-                          <Delete sx={{ fontSize: 15, color: colors.danger[500] }} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
+                      </Box>
+                    </TableCell>
+                  )}
                 </TableRow>
                 </Tooltip>
               )
             })}
             {/* Total */}
-            <TableRow sx={{ bgcolor: colors.neutral[50], '& td': { borderBottom: 0 } }}>
+            <TableRow sx={{ bgcolor: colors.neutral[50] }}>
               <TableCell sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>Total</TableCell>
               <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.primary[700] }}>
                 {formatCurrency(totalBudget)}
@@ -263,8 +278,24 @@ const ConventionPartenairesCard = ({
               <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.warning[700] }}>
                 {totalVersements > 0 ? formatCurrencyFull(totalVersements) : '-'}
               </TableCell>
-              <TableCell colSpan={isSousConvention ? 3 : 2} />
+              <TableCell colSpan={isSousConvention ? (canEdit ? 3 : 2) : (canEdit ? 2 : 1)} />
             </TableRow>
+            {/* Odoo-style add line */}
+            {canEdit && (
+              <TableRow
+                onClick={onAddClick}
+                sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, '& td': { borderBottom: 0 } }}
+              >
+                <TableCell colSpan={isSousConvention ? (canEdit ? 8 : 7) : (canEdit ? 7 : 6)}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                    <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+                    <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+                      Ajouter un partenaire
+                    </Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

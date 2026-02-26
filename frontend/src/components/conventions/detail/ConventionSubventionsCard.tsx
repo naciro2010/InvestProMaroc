@@ -14,7 +14,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'
-import { Edit, Delete, AccountBalance, ChevronRight } from '@mui/icons-material'
+import { Edit, Delete, AccountBalance, ChevronRight, AddCircleOutline } from '@mui/icons-material'
 import { subventionsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import SubventionFormDialog from '../SubventionFormDialog'
@@ -36,6 +36,7 @@ interface Subvention {
 interface ConventionSubventionsCardProps {
   conventionId: number
   conventionBudget?: number
+  canEdit?: boolean
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -52,7 +53,7 @@ const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('
  * ConventionSubventionsCard - Pure content for ResizableSection.
  * No Paper wrapper or redundant header.
  */
-const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0 }: ConventionSubventionsCardProps) => {
+const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit = false }: ConventionSubventionsCardProps) => {
   const [subventions, setSubventions] = useState<Subvention[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -89,10 +90,32 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0 }: Conve
     return (
       <Box sx={{ py: 3, textAlign: 'center' }}>
         <AccountBalance sx={{ fontSize: 36, color: colors.neutral[300], mb: 1 }} />
-        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>Aucune subvention enregistree</Typography>
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: canEdit ? 1.5 : 0 }}>
+          Aucune subvention enregistree
+        </Typography>
+        {canEdit && (
+          <Box
+            onClick={() => { setEditingSubvention(null); setDialogOpen(true) }}
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, cursor: 'pointer', py: 0.75, px: 2, borderRadius: 1, '&:hover': { bgcolor: colors.primary[25] } }}
+          >
+            <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+              Ajouter une subvention
+            </Typography>
+          </Box>
+        )}
+
+        <SubventionFormDialog
+          open={dialogOpen} conventionId={conventionId}
+          onClose={() => { setDialogOpen(false); setEditingSubvention(null) }}
+          onSuccess={() => { loadSubventions(); setDialogOpen(false); setEditingSubvention(null) }}
+          editingSubvention={editingSubvention}
+        />
       </Box>
     )
   }
+
+  const totalColSpan = canEdit ? 7 : 6
 
   return (
     <Box>
@@ -104,7 +127,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0 }: Conve
               <TableCell sx={thStyle}>Type</TableCell>
               <TableCell align="right" sx={thStyle}>Montant</TableCell>
               <TableCell sx={thStyle}>Validite</TableCell>
-              <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>
+              {canEdit && <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>}
               <TableCell sx={{ ...thStyle, width: 32 }} />
             </TableRow>
           </TableHead>
@@ -145,33 +168,52 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0 }: Conve
                       ? `${formatDate(s.dateDebutValidite)} - ${formatDate(s.dateFinValidite)}` : '-'}
                   </Typography>
                 </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
-                    <Tooltip title="Modifier">
-                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingSubvention(s); setDialogOpen(true) }} sx={{ color: colors.primary[600] }}>
-                        <Edit sx={{ fontSize: 15 }} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Supprimer">
-                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(s.id) }} sx={{ color: colors.danger[500] }}>
-                        <Delete sx={{ fontSize: 15 }} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
+                {canEdit && (
+                  <TableCell align="center">
+                    <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
+                      <Tooltip title="Modifier">
+                        <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingSubvention(s); setDialogOpen(true) }} sx={{ color: colors.primary[600] }}>
+                          <Edit sx={{ fontSize: 15 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(s.id) }} sx={{ color: colors.danger[500] }}>
+                          <Delete sx={{ fontSize: 15 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                )}
                 <TableCell sx={{ px: 0.5 }}>
                   <ChevronRight sx={{ fontSize: 16, color: colors.neutral[400] }} />
                 </TableCell>
               </TableRow>
               </Tooltip>
             ))}
-            <TableRow sx={{ bgcolor: colors.neutral[50], '& td': { borderBottom: 0 } }}>
+            {/* Total */}
+            <TableRow sx={{ bgcolor: colors.neutral[50] }}>
               <TableCell colSpan={2} sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>Total</TableCell>
               <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.success[700] }}>
                 {formatCurrency(totalMAD, 'MAD')}
               </TableCell>
-              <TableCell colSpan={3} />
+              <TableCell colSpan={canEdit ? 3 : 2} />
             </TableRow>
+            {/* Odoo-style add line */}
+            {canEdit && (
+              <TableRow
+                onClick={() => { setEditingSubvention(null); setDialogOpen(true) }}
+                sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, '& td': { borderBottom: 0 } }}
+              >
+                <TableCell colSpan={totalColSpan}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                    <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+                    <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+                      Ajouter une subvention
+                    </Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

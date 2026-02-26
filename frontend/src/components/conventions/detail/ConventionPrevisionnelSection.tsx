@@ -53,6 +53,7 @@ interface PartenaireCallbackData {
 
 interface ConventionPrevisionnelSectionProps {
   convention: ConventionData
+  canEdit: boolean
   partenairesRefreshKey: number
   versements: VersementPrevisionnel[]
   onAddPartenaire: () => void
@@ -90,6 +91,7 @@ const addBtnSx = {
  */
 const ConventionPrevisionnelSection = ({
   convention,
+  canEdit,
   partenairesRefreshKey,
   versements,
   onAddPartenaire,
@@ -124,17 +126,18 @@ const ConventionPrevisionnelSection = ({
         title="Partenaires"
         storageKey="conv-prev-partenaires"
         icon={<Handshake sx={{ color: colors.purple[500], fontSize: 16 }} />}
-        actions={
+        actions={canEdit ? (
           <Button variant="outlined" size="small" startIcon={<Add />} onClick={onAddPartenaire} sx={addBtnSx}>
             Ajouter
           </Button>
-        }
+        ) : undefined}
         noPadding
       >
         <ConventionPartenairesCard
           key={partenairesRefreshKey}
           conventionId={convention.id}
           conventionBudget={convention.budget}
+          canEdit={canEdit}
           parentConventionId={convention.parentConventionId ?? undefined}
           versements={versements}
           onAddClick={onAddPartenaire}
@@ -168,16 +171,17 @@ const ConventionPrevisionnelSection = ({
         title="Versements previsionnels"
         storageKey="conv-prev-versements"
         icon={<AccountBalance sx={{ color: colors.warning[500], fontSize: 16 }} />}
-        actions={
+        actions={canEdit ? (
           <Button variant="outlined" size="small" startIcon={<Add />} onClick={onAddVersement} sx={addBtnSx}>
             Ajouter
           </Button>
-        }
+        ) : undefined}
         noPadding
       >
         <ConventionVersementsCard
           versements={versements}
           conventionBudget={convention.budget}
+          canEdit={canEdit}
           onAdd={onAddVersement}
           onEdit={onEditVersement}
           onDelete={onDeleteVersement}
@@ -191,7 +195,7 @@ const ConventionPrevisionnelSection = ({
         icon={<PieChart sx={{ color: colors.warning[500], fontSize: 16 }} />}
         noPadding
       >
-        <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} onRefresh={onRefresh} />
+        <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} onRefresh={onRefresh} />
       </ResizableSection>
 
       {/* 6. Subventions */}
@@ -201,7 +205,7 @@ const ConventionPrevisionnelSection = ({
         icon={<CardGiftcard sx={{ color: colors.success[500], fontSize: 16 }} />}
         noPadding
       >
-        <ConventionSubventionsCard conventionId={convention.id} conventionBudget={convention.budget} />
+        <ConventionSubventionsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} />
       </ResizableSection>
     </Box>
   )

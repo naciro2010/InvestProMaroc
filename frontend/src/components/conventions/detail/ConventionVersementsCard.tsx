@@ -11,7 +11,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material'
-import { Edit, Delete, AccountBalance, ChevronRight } from '@mui/icons-material'
+import { Edit, Delete, AccountBalance, ChevronRight, AddCircleOutline } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
 import VersementDetailDrawer from './VersementDetailDrawer'
 
@@ -30,6 +30,7 @@ interface VersementPrevisionnel {
 interface ConventionVersementsCardProps {
   versements: VersementPrevisionnel[]
   conventionBudget?: number
+  canEdit?: boolean
   onAdd: () => void
   onEdit: (versement: VersementPrevisionnel) => void
   onDelete: (versementId: number) => void
@@ -48,6 +49,7 @@ const formatDate = (date: string) =>
 const ConventionVersementsCard = ({
   versements,
   conventionBudget = 0,
+  canEdit = false,
   onAdd,
   onEdit,
   onDelete,
@@ -60,12 +62,25 @@ const ConventionVersementsCard = ({
     return (
       <Box sx={{ py: 4, textAlign: 'center' }}>
         <AccountBalance sx={{ fontSize: 36, color: colors.neutral[300], mb: 1 }} />
-        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: canEdit ? 1.5 : 0 }}>
           Aucun versement previsionnel
         </Typography>
+        {canEdit && (
+          <Box
+            onClick={onAdd}
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, cursor: 'pointer', py: 0.75, px: 2, borderRadius: 1, '&:hover': { bgcolor: colors.primary[25] } }}
+          >
+            <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+              Ajouter un versement
+            </Typography>
+          </Box>
+        )}
       </Box>
     )
   }
+
+  const totalColSpan = canEdit ? 9 : 8
 
   return (
   <>
@@ -79,7 +94,7 @@ const ConventionVersementsCard = ({
             <TableCell align="right" sx={thStyle}>Montant prevu</TableCell>
             <TableCell align="right" sx={thStyle}>Montant reel</TableCell>
             <TableCell align="right" sx={thStyle}>Ecart</TableCell>
-            <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>
+            {canEdit && <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>}
             <TableCell sx={{ ...thStyle, width: 32 }} />
           </TableRow>
         </TableHead>
@@ -127,20 +142,22 @@ const ConventionVersementsCard = ({
                   <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>-</Typography>
                 )}
               </TableCell>
-              <TableCell align="center">
-                <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
-                  <Tooltip title="Modifier">
-                    <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(v) }} sx={{ color: colors.primary[600] }}>
-                      <Edit sx={{ fontSize: 15 }} />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Supprimer">
-                    <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onDelete(v.id) }} sx={{ color: colors.danger[500] }}>
-                      <Delete sx={{ fontSize: 15 }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
+              {canEdit && (
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
+                    <Tooltip title="Modifier">
+                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(v) }} sx={{ color: colors.primary[600] }}>
+                        <Edit sx={{ fontSize: 15 }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Supprimer">
+                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onDelete(v.id) }} sx={{ color: colors.danger[500] }}>
+                        <Delete sx={{ fontSize: 15 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              )}
               <TableCell sx={{ px: 0.5 }}>
                 <ChevronRight sx={{ fontSize: 16, color: colors.neutral[400] }} />
               </TableCell>
@@ -148,7 +165,7 @@ const ConventionVersementsCard = ({
             </Tooltip>
           ))}
           {/* Total */}
-          <TableRow sx={{ bgcolor: colors.neutral[50], '& td': { borderBottom: 0 } }}>
+          <TableRow sx={{ bgcolor: colors.neutral[50] }}>
             <TableCell colSpan={3} sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>Total</TableCell>
             <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>
               {formatCurrency(totalPrevu)}
@@ -167,8 +184,24 @@ const ConventionVersementsCard = ({
                 </Typography>
               )}
             </TableCell>
-            <TableCell colSpan={2} />
+            <TableCell colSpan={canEdit ? 2 : 1} />
           </TableRow>
+          {/* Odoo-style add line */}
+          {canEdit && (
+            <TableRow
+              onClick={onAdd}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, '& td': { borderBottom: 0 } }}
+            >
+              <TableCell colSpan={totalColSpan}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                  <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+                  <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+                    Ajouter un versement
+                  </Typography>
+                </Box>
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </TableContainer>

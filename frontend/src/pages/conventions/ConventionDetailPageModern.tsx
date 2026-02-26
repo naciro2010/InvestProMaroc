@@ -223,6 +223,7 @@ const ConventionDetailPageModern = () => {
             {/* 2. Convention Info & Planning (partenaires, versements, imputations, budget lines, subventions) */}
             <ConventionPrevisionnelSection
               convention={convention}
+              canEdit={canEdit}
               partenairesRefreshKey={partenairesRefreshKey}
               versements={versements}
               onAddPartenaire={() => setAddPartenaireDialogOpen(true)}

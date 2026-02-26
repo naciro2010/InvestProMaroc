@@ -8,7 +8,6 @@ import {
   Divider,
   Alert,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -500,7 +499,8 @@ const WizardStepPartenaires = ({
 
       {/* Partenaires table with inline editing */}
       {formData.partenaires.length > 0 && (
-        <TableContainer component={Paper} sx={componentStyles.table.container}>
+        <Card sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
+        <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow sx={componentStyles.table.header}>
@@ -670,6 +670,7 @@ const WizardStepPartenaires = ({
             </TableBody>
           </Table>
         </TableContainer>
+        </Card>
       )}
 
       {/* Empty state */}
@@ -681,12 +682,12 @@ const WizardStepPartenaires = ({
 
       {/* Summary footer */}
       {formData.partenaires.length > 0 && (
-        <Box sx={{
+        <Card sx={{
+          ...componentStyles.card,
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' },
           gap: 2,
           p: 2,
-          borderRadius: 1,
           bgcolor: reliquat >= 0 ? colors.success[25] : colors.danger[25],
           border: `1px solid ${reliquat >= 0 ? colors.success[200] : colors.danger[200]}`,
         }}>
@@ -712,7 +713,7 @@ const WizardStepPartenaires = ({
             </Typography>
             <Typography variant="h6">{allocationPct.toFixed(1)}%</Typography>
           </Box>
-        </Box>
+        </Card>
       )}
 
       {reliquat < 0 && (

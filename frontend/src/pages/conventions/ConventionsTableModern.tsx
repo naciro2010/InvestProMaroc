@@ -11,6 +11,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material'
+import { Star as StarIcon } from '@mui/icons-material'
 import { Plus, RefreshCw, Upload, Layers, Columns3 } from 'lucide-react'
 import { conventionsAPI } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -66,6 +67,23 @@ const ConventionsTableModern = () => {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(25)
 
+  // Favorites (row-level, localStorage-backed)
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(() => {
+    try { const s = localStorage.getItem('convention-favorites'); return s ? new Set(JSON.parse(s) as number[]) : new Set() }
+    catch { return new Set() }
+  })
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+
+  const toggleFavorite = useCallback((id: number) => {
+    setFavoriteIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      localStorage.setItem('convention-favorites', JSON.stringify([...next]))
+      return next
+    })
+  }, [])
+
   // Dialogs & menus
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [selectedConvention, setSelectedConvention] = useState<Convention | null>(null)
@@ -101,6 +119,7 @@ const ConventionsTableModern = () => {
 
   const filteredData = useMemo(() => {
     return groupedData.filter(conv => {
+      if (showFavoritesOnly && !favoriteIds.has(conv.id)) return false
       if (searchQuery) {
         const q = searchQuery.toLowerCase()
         const mp = conv.code?.toLowerCase().includes(q) || conv.libelle?.toLowerCase().includes(q) || conv.numero?.toLowerCase().includes(q)
@@ -119,7 +138,7 @@ const ConventionsTableModern = () => {
       if (f.createdBy && conv.createdByNom !== f.createdBy) return false
       return true
     })
-  }, [groupedData, searchQuery, advancedFilters])
+  }, [groupedData, searchQuery, advancedFilters, showFavoritesOnly, favoriteIds])
 
   const stats = useMemo(() => ({
     total: filteredData.length,
@@ -219,6 +238,19 @@ const ConventionsTableModern = () => {
             sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5, px: 1.5, ...(groupBy && { borderColor: colors.info[300], bgcolor: colors.info[50], color: colors.info[700] }) }}>
             {groupBy ? `Grouper: ${GROUPBY_OPTIONS.find(o => o.value === groupBy)?.label}` : 'Grouper'}
           </Button>
+          <Button
+            variant={showFavoritesOnly ? 'contained' : 'outlined'}
+            size="small"
+            startIcon={<StarIcon sx={{ fontSize: 16 }} />}
+            onClick={() => { setShowFavoritesOnly(prev => !prev); setPage(0) }}
+            sx={{
+              ...(showFavoritesOnly ? componentStyles.buttonPrimary : componentStyles.buttonSecondary),
+              fontSize: typography.sizes.sm, py: 0.5, px: 1.5,
+              ...(showFavoritesOnly && { bgcolor: colors.warning[500], '&:hover': { bgcolor: colors.warning[600] } }),
+            }}
+          >
+            Favoris{favoriteIds.size > 0 ? ` (${favoriteIds.size})` : ''}
+          </Button>
           <SavedFiltersMenu currentFilters={advancedFilters} currentGroupBy={groupBy} onLoadFilter={handleLoadSavedFilter} />
           <IconButton size="small" onClick={(e) => setColumnsAnchor(e.currentTarget)} sx={{ color: colors.textSecondary, p: 0.75 }}><Columns3 size={16} /></IconButton>
           {!loading && (
@@ -229,7 +261,8 @@ const ConventionsTableModern = () => {
 
         <Box sx={{ p: { xs: 2, md: 3 } }}>
           <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
-            onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen} />
+            onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
+            favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
         </Box>
       </Box>
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import {
   Box, Typography, Chip, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, IconButton, Paper, Tooltip, Autocomplete, TextField,
+  TableHead, TableRow, IconButton, Tooltip, Autocomplete, TextField,
 } from '@mui/material'
 import {
   Delete as DeleteIcon,
@@ -85,13 +85,7 @@ const BudgetLinesTable = ({
   }
 
   return (
-    <TableContainer component={Paper} sx={{
-      ...componentStyles.table.container,
-      mb: 2,
-      borderRadius: '0 0 8px 8px',
-      borderTop: 'none',
-      mt: '-1px',
-    }}>
+    <TableContainer sx={{ borderTop: `1px solid ${colors.border}` }}>
       <Table size="small">
         <TableHead>
           <TableRow sx={componentStyles.table.header}>

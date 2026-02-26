@@ -12,6 +12,7 @@ export { default as ConventionImputationsCard } from './ConventionImputationsCar
 export { default as ConventionBudgetExecutionCard } from './ConventionBudgetExecutionCard'
 export { default as ConventionBudgetDetailCard } from './ConventionBudgetDetailCard'
 export { default as ConventionBudgetLignesCard } from './ConventionBudgetLignesCard'
+export { default as BudgetLigneDetailDrawer } from './BudgetLigneDetailDrawer'
 
 // Modular detail components (v2)
 export { default as ConventionWorkflowActions } from './ConventionWorkflowActions'

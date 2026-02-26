@@ -108,7 +108,15 @@ const ConventionPrevisionnelSection = ({
         icon={<ReceiptLong sx={{ color: colors.success[500], fontSize: 16 }} />}
         noPadding
       >
-        <ConventionBudgetLignesCard conventionId={convention.id} />
+        <ConventionBudgetLignesCard
+          conventionId={convention.id}
+          conventionFinancials={{
+            budget: convention.budget,
+            tauxCommission: convention.tauxCommission,
+            tauxTva: convention.tauxTva,
+            baseCalcul: convention.baseCalcul,
+          }}
+        />
       </ResizableSection>
 
       {/* 2. Partenaires */}

@@ -285,8 +285,9 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
           <Chip label={`${formData.lignesBudget.length} ligne(s)`} color="primary" size="small" variant="outlined" />
         </Box>
 
-        {/* Add line form: 2-line Odoo-style layout */}
-        <Card sx={{ ...componentStyles.card, p: 2, mb: 2, borderRadius: '8px 8px 0 0' }}>
+        {/* Add line form + table in unified Card */}
+        <Card sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
+        <Box sx={{ p: 2 }}>
           {/* Line 1: Category with CAYT (full width) */}
           <Autocomplete<CategorieOption, false, false, true>
             size="small"
@@ -438,20 +439,21 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
               Ajouter
             </Button>
           </Box>
-        </Card>
+        </Box>
 
-        {/* Lines table (extracted micro-component) */}
-        {hasLines && (
-          <BudgetLinesTable
-            lignes={formData.lignesBudget}
-            categories={categories}
-            isParCategorie={isParCategorie}
-            baseCalcul={formData.baseCalcul}
-            totals={totals}
-            onUpdateLigne={handleUpdateLigne}
-            onDeleteLigne={handleDeleteLigne}
-          />
-        )}
+          {/* Lines table (extracted micro-component) */}
+          {hasLines && (
+            <BudgetLinesTable
+              lignes={formData.lignesBudget}
+              categories={categories}
+              isParCategorie={isParCategorie}
+              baseCalcul={formData.baseCalcul}
+              totals={totals}
+              onUpdateLigne={handleUpdateLigne}
+              onDeleteLigne={handleDeleteLigne}
+            />
+          )}
+        </Card>
       </Box>
 
       {/* Quick-create category dialog (Odoo-style CAYT) */}

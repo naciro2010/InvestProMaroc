@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -13,9 +13,12 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material'
-import { Edit, Delete, ArrowUpward } from '@mui/icons-material'
+import { Edit, Delete, ArrowUpward, ChevronRight, AddCircleOutline } from '@mui/icons-material'
 import { conventionsAPI } from '@/lib/api'
 import { colors, borders, typography } from '@/lib/designSystem'
+import PartenaireDetailDrawer from './PartenaireDetailDrawer'
+import { thStyle } from './types'
+import type { VersementPartenaireRef } from './types'
 
 interface ConventionPartenaireData {
   id: number
@@ -31,17 +34,12 @@ interface ConventionPartenaireData {
   remarques: string | null
 }
 
-interface VersementPrevisionnel {
-  id: number
-  partenaireId?: number
-  montant: number
-  montantPrevu?: number
-}
-
 interface ConventionPartenairesCardProps {
   conventionId: number
+  conventionBudget?: number
+  canEdit?: boolean
   parentConventionId?: number
-  versements?: VersementPrevisionnel[]
+  versements?: VersementPartenaireRef[]
   onAddClick: () => void
   onEditClick?: (partenaire: ConventionPartenaireData) => void
 }
@@ -60,6 +58,8 @@ const formatCurrencyFull = (amount: number): string =>
  */
 const ConventionPartenairesCard = ({
   conventionId,
+  conventionBudget = 0,
+  canEdit = false,
   parentConventionId,
   versements = [],
   onAddClick,
@@ -69,6 +69,7 @@ const ConventionPartenairesCard = ({
   const [parentPartenaires, setParentPartenaires] = useState<ConventionPartenaireData[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingParent, setLoadingParent] = useState(false)
+  const [selectedPartenaire, setSelectedPartenaire] = useState<ConventionPartenaireData | null>(null)
 
   const isSousConvention = !!parentConventionId
 
@@ -130,9 +131,20 @@ const ConventionPartenairesCard = ({
   if (partenaires.length === 0) {
     return (
       <Box sx={{ py: 3, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: canEdit ? 1.5 : 0 }}>
           {isSousConvention ? 'Aucun partenaire propre a cette sous-convention' : 'Aucun partenaire defini'}
         </Typography>
+        {canEdit && (
+          <Box
+            onClick={onAddClick}
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, cursor: 'pointer', py: 0.75, px: 2, borderRadius: 1, '&:hover': { bgcolor: colors.primary[25] } }}
+          >
+            <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+              Ajouter un partenaire
+            </Typography>
+          </Box>
+        )}
       </Box>
     )
   }
@@ -176,7 +188,7 @@ const ConventionPartenairesCard = ({
               <TableCell align="right" sx={thStyle}>Vers. prev.</TableCell>
               <TableCell sx={thStyle}>Role</TableCell>
               {isSousConvention && <TableCell sx={thStyle}>Source</TableCell>}
-              <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>
+              {canEdit && <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -184,7 +196,11 @@ const ConventionPartenairesCard = ({
               const isFromParent = parentPartenaireIds.has(p.partenaireId)
               const versTotal = versementsByPartenaire.get(p.partenaireId) || 0
               return (
-                <TableRow key={p.id} sx={{ '&:hover': { bgcolor: colors.neutral[25] } }}>
+                <Tooltip key={p.id} title="Cliquer pour voir le detail" placement="left" arrow enterDelay={600}>
+                <TableRow
+                  onClick={() => setSelectedPartenaire(p)}
+                  sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, bgcolor: selectedPartenaire?.id === p.id ? colors.primary[25] : 'transparent' }}
+                >
                   <TableCell>
                     <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm, color: colors.textPrimary }}>
                       {p.partenaireSigle || p.partenaireCode}
@@ -225,27 +241,30 @@ const ConventionPartenairesCard = ({
                       )}
                     </TableCell>
                   )}
-                  <TableCell align="center">
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.25 }}>
-                      {onEditClick && (
-                        <Tooltip title="Modifier">
-                          <IconButton size="small" onClick={() => onEditClick(p)}>
-                            <Edit sx={{ fontSize: 15, color: colors.neutral[500] }} />
+                  {canEdit && (
+                    <TableCell align="center">
+                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.25 }}>
+                        {onEditClick && (
+                          <Tooltip title="Modifier">
+                            <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEditClick(p) }}>
+                              <Edit sx={{ fontSize: 15, color: colors.neutral[500] }} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <Tooltip title="Supprimer">
+                          <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(p.id) }}>
+                            <Delete sx={{ fontSize: 15, color: colors.danger[500] }} />
                           </IconButton>
                         </Tooltip>
-                      )}
-                      <Tooltip title="Supprimer">
-                        <IconButton size="small" onClick={() => handleDelete(p.id)}>
-                          <Delete sx={{ fontSize: 15, color: colors.danger[500] }} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
+                      </Box>
+                    </TableCell>
+                  )}
                 </TableRow>
+                </Tooltip>
               )
             })}
             {/* Total */}
-            <TableRow sx={{ bgcolor: colors.neutral[50], '& td': { borderBottom: 0 } }}>
+            <TableRow sx={{ bgcolor: colors.neutral[50] }}>
               <TableCell sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>Total</TableCell>
               <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.primary[700] }}>
                 {formatCurrency(totalBudget)}
@@ -254,21 +273,45 @@ const ConventionPartenairesCard = ({
               <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.warning[700] }}>
                 {totalVersements > 0 ? formatCurrencyFull(totalVersements) : '-'}
               </TableCell>
-              <TableCell colSpan={isSousConvention ? 3 : 2} />
+              <TableCell colSpan={isSousConvention ? (canEdit ? 3 : 2) : (canEdit ? 2 : 1)} />
             </TableRow>
+            {/* Odoo-style add line */}
+            {canEdit && (
+              <TableRow
+                onClick={onAddClick}
+                sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, '& td': { borderBottom: 0 } }}
+              >
+                <TableCell colSpan={isSousConvention ? (canEdit ? 8 : 7) : (canEdit ? 7 : 6)}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                    <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+                    <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+                      Ajouter un partenaire
+                    </Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Detail Drawer */}
+      <PartenaireDetailDrawer
+        open={selectedPartenaire !== null}
+        onClose={() => setSelectedPartenaire(null)}
+        partenaire={selectedPartenaire}
+        conventionId={conventionId}
+        conventionBudget={conventionBudget}
+        versements={versements.map(v => ({
+          id: v.id,
+          partenaireId: v.partenaireId,
+          dateVersement: '',
+          montant: v.montant,
+          montantPrevu: v.montantPrevu,
+        }))}
+      />
     </Box>
   )
-}
-
-const thStyle = {
-  fontWeight: typography.weights.semibold,
-  fontSize: typography.sizes.xs,
-  color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
 }
 
 export default ConventionPartenairesCard

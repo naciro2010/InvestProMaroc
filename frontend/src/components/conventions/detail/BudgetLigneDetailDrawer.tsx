@@ -24,28 +24,12 @@ import { marchesAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import StatusBadge from '@/components/core/StatusBadge'
 import type { ConventionBudgetLigneDTO } from '@/types/api'
+import type { MarcheData, SituationPaiement } from './types'
 
 // ---------- Types ----------
 
-interface MarcheResume {
-  id: number
-  numeroMarche: string
-  objet: string
-  montantTtc: number
-  statut: string
-  fournisseurNom?: string
-}
-
-interface SituationPaiement {
-  totalDecomptes: number
-  totalNetAPayer: number
-  totalMontantPaye: number
-  resteAPayer: number
-  tauxPaiement: number
-}
-
 interface MarcheWithSituation {
-  marche: MarcheResume
+  marche: MarcheData
   situation: SituationPaiement | null
 }
 
@@ -92,7 +76,7 @@ const BudgetLigneDetailDrawer = ({
     setLoading(true)
     try {
       const res = await marchesAPI.getByConvention(conventionId)
-      const marches: MarcheResume[] = res.data.data || res.data || []
+      const marches: MarcheData[] = res.data.data || res.data || []
 
       const withSituations = await Promise.all(
         marches.map(async (m) => {
@@ -343,7 +327,7 @@ const FormulaStep = ({ step, title, formula, result, hint, isLast }: {
 )
 
 const MarcheCard = ({ marche, situation, onClick }: {
-  marche: MarcheResume; situation: SituationPaiement | null; onClick: () => void
+  marche: MarcheData; situation: SituationPaiement | null; onClick: () => void
 }) => {
   const pct = situation?.tauxPaiement || 0
   return (

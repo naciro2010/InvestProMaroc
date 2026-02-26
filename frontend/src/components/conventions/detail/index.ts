@@ -13,6 +13,11 @@ export { default as ConventionBudgetExecutionCard } from './ConventionBudgetExec
 export { default as ConventionBudgetDetailCard } from './ConventionBudgetDetailCard'
 export { default as ConventionBudgetLignesCard } from './ConventionBudgetLignesCard'
 export { default as BudgetLigneDetailDrawer } from './BudgetLigneDetailDrawer'
+export { default as MarcheDetailDrawer } from './MarcheDetailDrawer'
+export { default as PartenaireDetailDrawer } from './PartenaireDetailDrawer'
+export { default as VersementDetailDrawer } from './VersementDetailDrawer'
+export { default as ImputationDetailDrawer } from './ImputationDetailDrawer'
+export { default as SubventionDetailDrawer } from './SubventionDetailDrawer'
 
 // Modular detail components (v2)
 export { default as ConventionWorkflowActions } from './ConventionWorkflowActions'
@@ -31,3 +36,10 @@ export { default as ConventionRealisationSection } from './ConventionRealisation
 
 // Form dialogs
 export { default as ImputationFormDialog } from './ImputationFormDialog'
+
+// Shared types & styles
+export { thStyle } from './types'
+export type {
+  SituationPaiement, MarcheData, VersementPrevisionnel, VersementPartenaireRef,
+  ImputationPrevisionnelle, Subvention, SousConvention, Avenant, Projet, Marche,
+} from './types'

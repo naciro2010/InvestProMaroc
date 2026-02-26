@@ -11,16 +11,13 @@ import SousConventionFormSimple from '@/pages/conventions/SousConventionFormSimp
 import { api, conventionsAPI, avenantConventionsAPI, projetConventionsAPI } from '@/lib/api'
 import { useToast } from '@/contexts/ToastContext'
 import { colors, typography } from '@/lib/designSystem'
+import type { SousConvention, Avenant, Projet, Marche } from './types'
 
 interface ConventionBase {
   id: number; numero: string; libelle: string; dateSignature: string; budget: number
   typeConvention: 'CADRE' | 'SPECIFIQUE'; tauxCommission: number; baseCalcul: string; tauxTva: number
 }
 
-interface SousConvention { id: number; code: string; numero: string; libelle: string; statut: string; budget: number; dateDebut: string }
-interface Avenant { id: number; numeroAvenant: string; dateAvenant: string; statut: string; objet: string; type: string }
-interface Projet { id: number; code: string; designation: string; budgetTotal: number; statut: string }
-interface Marche { id: number; numeroMarche: string; objet: string; montantTtc: number; statut: string; fournisseurNom?: string }
 interface ProjetAssociation { projetId: number; projetCode: string; projetNom: string; projetBudgetTotal: number; projetStatut: string }
 
 interface ConventionRealisationSectionProps {

@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -10,23 +11,16 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material'
-import { Edit, Delete, AccountBalance } from '@mui/icons-material'
+import { Edit, Delete, AccountBalance, ChevronRight, AddCircleOutline } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
-
-interface VersementPrevisionnel {
-  id: number
-  partenaireId?: number
-  partenaireNom?: string
-  partenaireSigle?: string
-  volet?: string
-  dateVersement: string
-  montant: number
-  montantPrevu?: number
-  remarques?: string
-}
+import VersementDetailDrawer from './VersementDetailDrawer'
+import { thStyle } from './types'
+import type { VersementPrevisionnel } from './types'
 
 interface ConventionVersementsCardProps {
   versements: VersementPrevisionnel[]
+  conventionBudget?: number
+  canEdit?: boolean
   onAdd: () => void
   onEdit: (versement: VersementPrevisionnel) => void
   onDelete: (versementId: number) => void
@@ -44,10 +38,13 @@ const formatDate = (date: string) =>
  */
 const ConventionVersementsCard = ({
   versements,
+  conventionBudget = 0,
+  canEdit = false,
   onAdd,
   onEdit,
   onDelete,
 }: ConventionVersementsCardProps) => {
+  const [selectedVersement, setSelectedVersement] = useState<VersementPrevisionnel | null>(null)
   const totalVersements = versements.reduce((sum, v) => sum + v.montant, 0)
   const totalPrevu = versements.reduce((sum, v) => sum + (v.montantPrevu || 0), 0)
 
@@ -55,14 +52,28 @@ const ConventionVersementsCard = ({
     return (
       <Box sx={{ py: 4, textAlign: 'center' }}>
         <AccountBalance sx={{ fontSize: 36, color: colors.neutral[300], mb: 1 }} />
-        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: canEdit ? 1.5 : 0 }}>
           Aucun versement previsionnel
         </Typography>
+        {canEdit && (
+          <Box
+            onClick={onAdd}
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, cursor: 'pointer', py: 0.75, px: 2, borderRadius: 1, '&:hover': { bgcolor: colors.primary[25] } }}
+          >
+            <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+              Ajouter un versement
+            </Typography>
+          </Box>
+        )}
       </Box>
     )
   }
 
+  const totalColSpan = canEdit ? 9 : 8
+
   return (
+  <>
     <TableContainer>
       <Table size="small">
         <TableHead>
@@ -73,12 +84,17 @@ const ConventionVersementsCard = ({
             <TableCell align="right" sx={thStyle}>Montant prevu</TableCell>
             <TableCell align="right" sx={thStyle}>Montant reel</TableCell>
             <TableCell align="right" sx={thStyle}>Ecart</TableCell>
-            <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>
+            {canEdit && <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>}
+            <TableCell sx={{ ...thStyle, width: 32 }} />
           </TableRow>
         </TableHead>
         <TableBody>
           {versements.map(v => (
-            <TableRow key={v.id} sx={{ '&:hover': { bgcolor: colors.neutral[25] } }}>
+            <Tooltip key={v.id} title="Cliquer pour voir le detail" placement="left" arrow enterDelay={600}>
+            <TableRow
+              onClick={() => setSelectedVersement(v)}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, bgcolor: selectedVersement?.id === v.id ? colors.primary[25] : 'transparent' }}
+            >
               <TableCell>
                 <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm, color: colors.textPrimary }}>
                   {v.partenaireSigle || v.partenaireNom || '-'}
@@ -116,24 +132,30 @@ const ConventionVersementsCard = ({
                   <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>-</Typography>
                 )}
               </TableCell>
-              <TableCell align="center">
-                <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
-                  <Tooltip title="Modifier">
-                    <IconButton size="small" onClick={() => onEdit(v)} sx={{ color: colors.primary[600] }}>
-                      <Edit sx={{ fontSize: 15 }} />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Supprimer">
-                    <IconButton size="small" onClick={() => onDelete(v.id)} sx={{ color: colors.danger[500] }}>
-                      <Delete sx={{ fontSize: 15 }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
+              {canEdit && (
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
+                    <Tooltip title="Modifier">
+                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(v) }} sx={{ color: colors.primary[600] }}>
+                        <Edit sx={{ fontSize: 15 }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Supprimer">
+                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onDelete(v.id) }} sx={{ color: colors.danger[500] }}>
+                        <Delete sx={{ fontSize: 15 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              )}
+              <TableCell sx={{ px: 0.5 }}>
+                <ChevronRight sx={{ fontSize: 16, color: colors.neutral[400] }} />
               </TableCell>
             </TableRow>
+            </Tooltip>
           ))}
           {/* Total */}
-          <TableRow sx={{ bgcolor: colors.neutral[50], '& td': { borderBottom: 0 } }}>
+          <TableRow sx={{ bgcolor: colors.neutral[50] }}>
             <TableCell colSpan={3} sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>Total</TableCell>
             <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>
               {formatCurrency(totalPrevu)}
@@ -152,20 +174,38 @@ const ConventionVersementsCard = ({
                 </Typography>
               )}
             </TableCell>
-            <TableCell />
+            <TableCell colSpan={canEdit ? 2 : 1} />
           </TableRow>
+          {/* Odoo-style add line */}
+          {canEdit && (
+            <TableRow
+              onClick={onAdd}
+              sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, '& td': { borderBottom: 0 } }}
+            >
+              <TableCell colSpan={totalColSpan}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                  <AddCircleOutline sx={{ fontSize: 16, color: colors.primary[500] }} />
+                  <Typography sx={{ fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+                    Ajouter un versement
+                  </Typography>
+                </Box>
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </TableContainer>
-  )
-}
 
-const thStyle = {
-  fontWeight: typography.weights.semibold,
-  fontSize: typography.sizes.xs,
-  color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
+    {/* Detail Drawer */}
+    <VersementDetailDrawer
+      open={selectedVersement !== null}
+      onClose={() => setSelectedVersement(null)}
+      versement={selectedVersement}
+      allVersements={versements}
+      conventionBudget={conventionBudget}
+    />
+  </>
+  )
 }
 
 export default ConventionVersementsCard

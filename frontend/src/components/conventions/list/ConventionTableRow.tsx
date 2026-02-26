@@ -16,6 +16,8 @@ import {
   KeyboardArrowRight,
   FolderOpen,
   Description,
+  Star,
+  StarBorder,
 } from '@mui/icons-material'
 import { StatusBadge } from '@/components/core'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
@@ -44,6 +46,8 @@ interface ConventionTableRowProps {
   onRowClick: (id: number) => void
   onMenuOpen: (e: React.MouseEvent<HTMLElement>, conv: Convention) => void
   columns: ColumnConfig[]
+  isFavorite?: boolean
+  onToggleFavorite?: (id: number) => void
   selectable: boolean
   selected: boolean
   onSelect: (id: number) => void
@@ -54,7 +58,8 @@ const listStyles = componentStyles.listView
 // ==================== COMPONENT ====================
 
 const ConventionTableRow = ({
-  conv, expanded, onToggle, onRowClick, onMenuOpen, columns, selectable, selected, onSelect,
+  conv, expanded, onToggle, onRowClick, onMenuOpen, columns,
+  isFavorite = false, onToggleFavorite, selectable, selected, onSelect,
 }: ConventionTableRowProps) => {
   const hasSous = conv.sousConventions && conv.sousConventions.length > 0
   const isVisible = (key: string) => columns.find(c => c.key === key)?.visible !== false
@@ -79,6 +84,18 @@ const ConventionTableRow = ({
               onChange={() => onSelect(conv.id)}
               sx={{ p: 0.5 }}
             />
+          </TableCell>
+        )}
+
+        {onToggleFavorite && (
+          <TableCell sx={{ width: 36, px: 0.5 }}>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); onToggleFavorite(conv.id) }}
+              sx={{ p: 0.25, color: isFavorite ? colors.warning[500] : colors.neutral[300], '&:hover': { color: colors.warning[500] } }}
+            >
+              {isFavorite ? <Star sx={{ fontSize: 18 }} /> : <StarBorder sx={{ fontSize: 18 }} />}
+            </IconButton>
           </TableCell>
         )}
 
@@ -169,6 +186,7 @@ const ConventionTableRow = ({
                       sx={{ ...listStyles.dataRow, bgcolor: colors.neutral[25], '&:hover': { bgcolor: colors.primary[25] } }}
                     >
                       {selectable && <TableCell padding="checkbox" sx={{ width: 42 }} />}
+                      {onToggleFavorite && <TableCell sx={{ width: 36, px: 0.5 }} />}
                       <TableCell sx={{ width: 40 }} />
                       <TableCell sx={{ pl: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

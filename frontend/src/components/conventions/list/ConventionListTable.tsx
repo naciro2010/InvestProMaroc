@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Box,
   Table,
@@ -12,7 +12,7 @@ import {
   Chip,
 } from '@mui/material'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Description } from '@mui/icons-material'
+import { Description, ArrowDropUp, ArrowDropDown } from '@mui/icons-material'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import ConventionTableRow from './ConventionTableRow'
 
@@ -45,6 +45,8 @@ export interface ColumnConfig {
   visible: boolean
 }
 
+type SortDirection = 'asc' | 'desc'
+
 interface GroupData {
   key: string
   label: string
@@ -64,6 +66,8 @@ interface ConventionListTableProps {
   onRowsPerPageChange: (rpp: number) => void
   onRowClick: (id: number) => void
   onMenuOpen: (e: React.MouseEvent<HTMLElement>, conv: Convention) => void
+  favoriteIds?: Set<number>
+  onToggleFavorite?: (id: number) => void
   selectable?: boolean
   selectedIds?: Set<number>
   onSelectionChange?: (ids: Set<number>) => void
@@ -75,6 +79,22 @@ const formatCurrency = (amount: number): string => {
   if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`
   if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`
   return amount.toLocaleString('fr-FR')
+}
+
+const sortConventions = (items: ConventionWithChildren[], col: string, dir: SortDirection): ConventionWithChildren[] => {
+  return [...items].sort((a, b) => {
+    let cmp = 0
+    switch (col) {
+      case 'code': cmp = (a.code || '').localeCompare(b.code || ''); break
+      case 'type': cmp = (a.type || '').localeCompare(b.type || ''); break
+      case 'statut': cmp = (a.statut || '').localeCompare(b.statut || ''); break
+      case 'budget': cmp = a.budget - b.budget; break
+      case 'commission': cmp = a.tauxCommission - b.tauxCommission; break
+      case 'dateDebut': cmp = (a.dateDebut || '').localeCompare(b.dateDebut || ''); break
+      case 'createdBy': cmp = (a.createdByNom || '').localeCompare(b.createdByNom || ''); break
+    }
+    return dir === 'asc' ? cmp : -cmp
+  })
 }
 
 const groupConventions = (data: ConventionWithChildren[], groupBy: string): GroupData[] => {
@@ -94,12 +114,13 @@ const groupConventions = (data: ConventionWithChildren[], groupBy: string): Grou
     groups.get(key)!.push(conv)
   })
   return Array.from(groups.entries()).map(([key, convs]) => ({
-    key,
-    label: key,
-    conventions: convs,
-    totalBudget: convs.reduce((s, c) => s + c.budget, 0),
-    count: convs.length,
+    key, label: key, conventions: convs,
+    totalBudget: convs.reduce((s, c) => s + c.budget, 0), count: convs.length,
   }))
+}
+
+const COLUMN_ALIGN: Record<string, 'left' | 'right' | 'center'> = {
+  budget: 'right', commission: 'center',
 }
 
 const listStyles = componentStyles.listView
@@ -109,10 +130,13 @@ const listStyles = componentStyles.listView
 const ConventionListTable = ({
   data, loading, groupBy, columns, page, rowsPerPage,
   onPageChange, onRowsPerPageChange, onRowClick, onMenuOpen,
+  favoriteIds, onToggleFavorite,
   selectable = false, selectedIds = new Set(), onSelectionChange,
 }: ConventionListTableProps) => {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [sortCol, setSortCol] = useState('dateDebut')
+  const [sortDir, setSortDir] = useState<SortDirection>('desc')
 
   const toggleRow = (id: number) => {
     setExpandedRows(prev => {
@@ -136,14 +160,26 @@ const ConventionListTable = ({
     else n.add(id)
     onSelectionChange?.(n)
   }
+  const handleSort = (col: string) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+  }
 
-  const groups = groupConventions(data, groupBy)
+  const sortedData = useMemo(() => sortConventions(data, sortCol, sortDir), [data, sortCol, sortDir])
+  const groups = groupConventions(sortedData, groupBy)
   const paginatedGroups = groupBy
     ? groups
     : groups.map(g => ({ ...g, conventions: g.conventions.slice(page * rowsPerPage, (page + 1) * rowsPerPage) }))
 
   const visibleColumns = columns.filter(c => c.visible)
-  const totalColSpan = 3 + visibleColumns.length + (selectable ? 1 : 0)
+  const hasFavorites = Boolean(onToggleFavorite)
+  const totalColSpan = 3 + visibleColumns.length + (selectable ? 1 : 0) + (hasFavorites ? 1 : 0)
+
+  const SortIcon = ({ col }: { col: string }) => {
+    if (sortCol !== col) return null
+    return sortDir === 'asc' ? <ArrowDropUp sx={{ fontSize: 18, ml: -0.5 }} /> : <ArrowDropDown sx={{ fontSize: 18, ml: -0.5 }} />
+  }
+  const headerSx = { cursor: 'pointer', userSelect: 'none' as const, '&:hover': { bgcolor: colors.neutral[50] } }
 
   return (
     <Box sx={listStyles.container}>
@@ -152,11 +188,14 @@ const ConventionListTable = ({
           <TableHead>
             <TableRow sx={listStyles.headerRow}>
               {selectable && <TableCell padding="checkbox" sx={{ width: 42 }} />}
+              {hasFavorites && <TableCell sx={{ width: 36, px: 0.5 }} />}
               <TableCell sx={{ width: 40, pl: 1 }} />
-              <TableCell>Convention</TableCell>
+              <TableCell onClick={() => handleSort('code')} sx={headerSx}>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>Convention<SortIcon col="code" /></Box>
+              </TableCell>
               {visibleColumns.map(col => (
-                <TableCell key={col.key} align={col.key === 'budget' ? 'right' : col.key === 'commission' ? 'center' : 'left'}>
-                  {col.label}
+                <TableCell key={col.key} align={COLUMN_ALIGN[col.key] || 'left'} onClick={() => handleSort(col.key)} sx={headerSx}>
+                  <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>{col.label}<SortIcon col={col.key} /></Box>
                 </TableCell>
               ))}
               <TableCell align="center" sx={{ width: 50 }} />
@@ -195,6 +234,8 @@ const ConventionListTable = ({
                   onRowClick={onRowClick}
                   onMenuOpen={onMenuOpen}
                   columns={columns}
+                  favoriteIds={favoriteIds}
+                  onToggleFavorite={onToggleFavorite}
                   selectable={selectable}
                   selectedIds={selectedIds}
                   onSelect={handleSelect}
@@ -234,6 +275,8 @@ interface GroupSectionProps {
   onRowClick: (id: number) => void
   onMenuOpen: (e: React.MouseEvent<HTMLElement>, conv: Convention) => void
   columns: ColumnConfig[]
+  favoriteIds?: Set<number>
+  onToggleFavorite?: (id: number) => void
   selectable: boolean
   selectedIds: Set<number>
   onSelect: (id: number) => void
@@ -242,7 +285,8 @@ interface GroupSectionProps {
 
 const GroupSection = ({
   group, showHeader, collapsed, onToggleSection, expandedRows,
-  onToggleRow, onRowClick, onMenuOpen, columns, selectable, selectedIds, onSelect, totalColSpan,
+  onToggleRow, onRowClick, onMenuOpen, columns, favoriteIds, onToggleFavorite,
+  selectable, selectedIds, onSelect, totalColSpan,
 }: GroupSectionProps) => (
   <>
     {showHeader && (
@@ -270,6 +314,8 @@ const GroupSection = ({
         onRowClick={onRowClick}
         onMenuOpen={onMenuOpen}
         columns={columns}
+        isFavorite={favoriteIds?.has(conv.id) ?? false}
+        onToggleFavorite={onToggleFavorite}
         selectable={selectable}
         selected={selectedIds.has(conv.id)}
         onSelect={onSelect}

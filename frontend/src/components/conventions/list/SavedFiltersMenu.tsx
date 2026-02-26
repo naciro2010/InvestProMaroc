@@ -101,7 +101,7 @@ const SavedFiltersMenu = ({
 
   return (
     <>
-      {/* Favorites button */}
+      {/* Saved filters button */}
       <Button
         variant="outlined"
         size="small"
@@ -114,7 +114,7 @@ const SavedFiltersMenu = ({
           px: 1.5,
         }}
       >
-        Favoris
+        Vues
         {savedFilters.length > 0 && (
           <Box
             component="span"

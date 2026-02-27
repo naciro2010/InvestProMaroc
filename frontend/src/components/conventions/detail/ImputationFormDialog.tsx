@@ -9,11 +9,14 @@ import {
   Alert,
   Box,
   CircularProgress,
+  Typography,
+  Divider,
 } from '@mui/material'
 import { Save, Cancel } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { conventionsAPI } from '@/lib/api'
-import { colors, typography } from '@/lib/designSystem'
+import { colors, typography, borders } from '@/lib/designSystem'
+import ExpenseCategoryRepartition, { type CategoryAllocation } from '@/components/conventions/ExpenseCategoryRepartition'
 import type { ImputationPrevisionnelle } from './types'
 
 interface ImputationFormDialogProps {
@@ -37,6 +40,14 @@ const calculateEndDate = (startDate: string, delaiMois: number): string => {
   return date.toLocaleDateString('fr-FR')
 }
 
+const sectionTitleSx = {
+  fontSize: typography.sizes.xs,
+  fontWeight: typography.weights.semibold,
+  color: colors.textSecondary,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.04em',
+}
+
 const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: ImputationFormDialogProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,9 +58,10 @@ const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: Imputa
     montantPrevu: '',
     remarques: '',
   })
+  const [categoryAllocations, setCategoryAllocations] = useState<CategoryAllocation[]>([])
 
   const handleChange = (field: keyof ImputationFormData, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev: ImputationFormData) => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async () => {
@@ -71,6 +83,7 @@ const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: Imputa
       onSuccess(newImputation)
       // Reset form
       setFormData({ volet: '', dateDemarrage: new Date().toISOString().split('T')[0], delaiMois: 12, montantPrevu: '', remarques: '' })
+      setCategoryAllocations([])
     } catch {
       setError("Erreur lors de l'ajout de l'imputation")
     } finally {
@@ -78,8 +91,15 @@ const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: Imputa
     }
   }
 
+  const handleClose = () => {
+    setCategoryAllocations([])
+    onClose()
+  }
+
+  const montantPrevu = parseFloat(formData.montantPrevu) || 0
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ color: colors.primary[700], fontWeight: typography.weights.semibold }}>
         Ajouter une imputation previsionnelle
       </DialogTitle>
@@ -95,15 +115,31 @@ const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: Imputa
           <DecimalInput label="Delai (mois)" value={formData.delaiMois}
             onChange={(value) => handleChange('delaiMois', value)} decimalPlaces={0} min={1} required size="small"
             helperText={formData.dateDemarrage && formData.delaiMois > 0 ? `Date fin prevue: ${calculateEndDate(formData.dateDemarrage, formData.delaiMois)}` : ''} />
-          <DecimalInput label="Montant prevu (MAD)" value={parseFloat(formData.montantPrevu) || 0}
+          <DecimalInput label="Montant prevu (MAD)" value={montantPrevu}
             onChange={(value) => handleChange('montantPrevu', value.toString())} decimalPlaces={2} min={0} size="small" />
+
+          <Divider sx={{ borderColor: colors.borderSubtle }} />
+
+          {/* Repartition par categories de depenses */}
+          <Typography sx={sectionTitleSx}>Repartition par categories de depenses</Typography>
+          <Box sx={{ border: `1px solid ${colors.border}`, borderRadius: borders.radius.md, overflow: 'hidden' }}>
+            <ExpenseCategoryRepartition
+              conventionId={conventionId}
+              allocations={categoryAllocations}
+              onChange={setCategoryAllocations}
+              totalBudget={montantPrevu}
+            />
+          </Box>
+
+          <Divider sx={{ borderColor: colors.borderSubtle }} />
+
           <TextField label="Remarques" multiline rows={2} value={formData.remarques}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('remarques', e.target.value)}
             placeholder="Notes et observations..." size="small" />
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} disabled={loading} startIcon={<Cancel />}>Annuler</Button>
+        <Button onClick={handleClose} disabled={loading} startIcon={<Cancel />}>Annuler</Button>
         <Button variant="contained" onClick={handleSubmit} disabled={loading}
           startIcon={loading ? <CircularProgress size={16} /> : <Save />}>
           Enregistrer

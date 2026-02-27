@@ -25,6 +25,7 @@ import {
 import { conventionsAPI, partenairesAPI, versementsPrevisionnelsAPI } from '@/lib/api'
 import { colors, typography, borders } from '@/lib/designSystem'
 import DecimalInput from '@/components/ui/DecimalInput'
+import ExpenseCategoryRepartition, { type CategoryAllocation } from './ExpenseCategoryRepartition'
 
 interface PartenaireSimple {
   id: number
@@ -128,6 +129,7 @@ export default function AddPartenaireDialog({
   }
 
   const [formData, setFormData] = useState<FormData>(defaultFormData)
+  const [categoryAllocations, setCategoryAllocations] = useState<CategoryAllocation[]>([])
 
   useEffect(() => {
     if (open && editData) {
@@ -251,6 +253,7 @@ export default function AddPartenaireDialog({
     setSelectedPartenaire(null)
     setValidationErrors({})
     setError('')
+    setCategoryAllocations([])
     syncSourceRef.current = 'none'
     onClose()
   }
@@ -588,6 +591,19 @@ export default function AddPartenaireDialog({
                     />
                   }
                   label={<Typography sx={{ fontSize: typography.sizes.sm }}>Maitre d'oeuvre delegue (MOD)</Typography>}
+                />
+              </Box>
+
+              <Divider sx={{ borderColor: colors.borderSubtle }} />
+
+              {/* Section: Repartition par categories de depenses */}
+              <Typography sx={sectionTitleSx}>Repartition par categories de depenses</Typography>
+              <Box sx={{ border: `1px solid ${colors.border}`, borderRadius: borders.radius.md, overflow: 'hidden' }}>
+                <ExpenseCategoryRepartition
+                  conventionId={conventionId}
+                  allocations={categoryAllocations}
+                  onChange={setCategoryAllocations}
+                  totalBudget={budgetNum}
                 />
               </Box>
 

@@ -9,13 +9,14 @@ import {
   Skeleton,
   Tooltip,
 } from '@mui/material'
-import { Lock } from '@mui/icons-material'
+import { Lock, CalendarMonth } from '@mui/icons-material'
 import { Plus, Pencil } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
-import { ControlPanel, FormView } from '../../components/core'
+import { ControlPanel, FormView, StatusBadge } from '../../components/core'
 import type { StatusStep } from '../../components/core'
+import RichTextDisplay from '../../components/ui/RichTextDisplay'
 import { conventionsAPI, versementsPrevisionnelsAPI } from '../../lib/api'
 import {
   ConventionWorkflowActions,
@@ -187,15 +188,55 @@ const ConventionDetailPageModern = () => {
             statusSteps={effectiveSteps}
             currentStatus={convention.statut}
           >
-            {/* Title + Objet */}
-            <Typography sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.25 }}>
-              {convention.libelle || convention.code}
-            </Typography>
-            {convention.objet && (
-              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, mb: 2, lineHeight: 1.4 }}>
-                {convention.objet}
-              </Typography>
-            )}
+            {/* Title + Metadata Header */}
+            <Box sx={{ mb: 2 }}>
+              {/* Title - use RichTextDisplay for rich text content */}
+              <Box sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
+                <RichTextDisplay html={convention.libelle || convention.code} variant="compact" allowExpand={false} />
+              </Box>
+
+              {/* Objet / Description */}
+              {convention.objet && (
+                <Box sx={{ mb: 1.5 }}>
+                  <RichTextDisplay html={convention.objet} variant="compact" collapseLength={200} />
+                </Box>
+              )}
+
+              {/* Compact metadata: code, numero, type, dates */}
+              <Box sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 1.5,
+                py: 1,
+                borderTop: `1px solid ${colors.borderSubtle}`,
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Code:</Typography>
+                  <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.code}</Typography>
+                </Box>
+                <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>N°:</Typography>
+                  <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.numero}</Typography>
+                </Box>
+                <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                <StatusBadge status={convention.typeConvention} size="small" />
+                {convention.dateSignature && (
+                  <>
+                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <CalendarMonth sx={{ fontSize: 13, color: colors.textSecondary }} />
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                        {new Date(convention.dateSignature).toLocaleDateString('fr-FR')}
+                        {convention.dateDebut && ` — ${new Date(convention.dateDebut).toLocaleDateString('fr-FR')}`}
+                        {convention.dateFin && ` → ${new Date(convention.dateFin).toLocaleDateString('fr-FR')}`}
+                      </Typography>
+                    </Box>
+                  </>
+                )}
+              </Box>
+            </Box>
 
             {/* Parent Convention Banner */}
             {convention.parentConventionId && convention.parentConventionNumero && (

@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Alert, Skeleton, Typography, Button, Container } from '@mui/material'
-import { Pencil, Lock } from 'lucide-react'
-import AppLayout from '../../components/layout/AppLayout'
-import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge } from '../../components/core'
-import type { StatusStep } from '../../components/core'
-import { marchesAPI } from '../../lib/api'
-import { colors, typography, componentStyles } from '../../lib/designSystem'
+import { Pencil, Lock, ArrowLeft } from 'lucide-react'
+import AppLayout from '@/components/layout/AppLayout'
+import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge, type StatusStep } from '@/components/core'
+import { marchesAPI } from '@/lib/api'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 import MarcheStatsCard from './components/MarcheStatsCard'
 import MarcheConventionCard from './components/MarcheConventionCard'
 import MarcheInfoCard from './components/MarcheInfoCard'
@@ -52,13 +51,10 @@ const MarcheDetailPageModern = () => {
 
   const marcheId = id ? parseInt(id) : 0
 
-  useEffect(() => {
-    if (marcheId) loadMarche(marcheId)
-  }, [marcheId])
-
-  const loadMarche = async (mid: number) => {
+  const loadMarche = useCallback(async (mid: number) => {
     try {
       setLoading(true)
+      setError(null)
       const res = await marchesAPI.getById(mid)
       const data = res.data?.data || res.data
       setMarche(data)
@@ -67,7 +63,11 @@ const MarcheDetailPageModern = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (marcheId) loadMarche(marcheId)
+  }, [marcheId, loadMarche])
 
   if (!id) {
     return (
@@ -102,39 +102,51 @@ const MarcheDetailPageModern = () => {
     return (
       <AppLayout>
         <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Alert severity="error">{error || 'Marche non trouve'}</Alert>
+          <Alert severity="error" sx={{ mb: 2 }}>{error || 'Marche non trouve'}</Alert>
+          <Button onClick={() => navigate('/marches')} sx={componentStyles.buttonSecondary}>
+            Retour aux marches
+          </Button>
         </Container>
       </AppLayout>
     )
   }
 
-  const canEdit = marche.statut === 'BROUILLON'
-
-  const breadcrumbs = [
-    { label: 'Marches', path: '/marches' },
-    { label: marche.numeroMarche || `#${marche.id}` },
-  ]
+  const canEdit = marche.statut === 'BROUILLON' || marche.statut === 'EN_COURS'
 
   return (
     <AppLayout>
       <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-        {/* Control Panel - breadcrumbs + actions */}
+        {/* ControlPanel - breadcrumbs + actions */}
         <ControlPanel
-          breadcrumbs={breadcrumbs}
+          breadcrumbs={[
+            { label: 'Marches', path: '/marches' },
+            { label: marche.numeroMarche || `#${marche.id}` },
+          ]}
           actions={
-            <Button
-              variant="outlined"
-              size="small"
-              disabled={!canEdit}
-              onClick={() => navigate(`/marches/${id}/modifier`)}
-              sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}
-            >
-              {canEdit
-                ? <Pencil size={14} style={{ marginRight: 4 }} />
-                : <Lock size={14} style={{ marginRight: 4 }} />
-              }
-              Modifier
-            </Button>
+            <>
+              <StatusBadge status={marche.statut} size="small" />
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={!canEdit}
+                onClick={() => navigate(`/marches/${id}/modifier`)}
+                sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}
+              >
+                {canEdit
+                  ? <Pencil size={14} style={{ marginRight: 4 }} />
+                  : <Lock size={14} style={{ marginRight: 4 }} />
+                }
+                Modifier
+              </Button>
+              <Button
+                size="small"
+                startIcon={<ArrowLeft size={14} />}
+                onClick={() => navigate('/marches')}
+                sx={{ ...componentStyles.buttonGhost, textTransform: 'none', fontSize: typography.sizes.sm }}
+              >
+                Liste
+              </Button>
+            </>
           }
           hideBottomRow
         />
@@ -181,10 +193,10 @@ const MarcheDetailPageModern = () => {
               </FieldGroup>
             </Box>
 
-            {/* Stats Card */}
+            {/* Stats Card - micro-component with independent data loading */}
             <MarcheStatsCard marcheId={marcheId} />
 
-            {/* Notebook tabs */}
+            {/* Notebook tabs - each tab loads data independently */}
             <Box sx={{ mt: 3 }}>
               <Notebook
                 tabs={[

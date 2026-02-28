@@ -1,6 +1,6 @@
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, Tooltip } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Briefcase, GitBranch, History, Users } from 'lucide-react'
+import { FileText, Briefcase, GitBranch, History, Users, Banknote } from 'lucide-react'
 import { colors, typography, borders, transitions } from '@/lib/designSystem'
 
 interface ConventionSmartButtonsProps {
@@ -11,112 +11,134 @@ interface ConventionSmartButtonsProps {
   nombreSousConventions: number
   nombreAvenants: number
   nombrePartenaires: number
+  montantTotalMarches?: number
+  montantTotalProjets?: number
+  commissionTTC?: number
+  tauxRealisation?: number
 }
 
-interface SmartButtonConfig {
-  key: string
-  icon: React.ReactNode
-  value: string
-  rawValue: number
-  label: string
-  color: string
-  mutedColor: string
-  onClick: () => void
-  visible: boolean
-}
-
-const formatCount = (n: number): string => {
+const fmtShort = (n: number): string => {
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}G`
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`
   return n.toString()
 }
+const fmtMAD = (n: number): string => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(n)
 
 interface SmartButtonProps {
-  icon: React.ReactNode; value: string; label: string
-  color: string; mutedColor: string; isZero: boolean; onClick: () => void
+  icon: React.ReactNode; value: string; label: string; subtitle?: string
+  hint?: string; color: string; mutedColor: string; isZero: boolean; onClick: () => void
 }
 
-const SmartButton = ({ icon, value, label, color, mutedColor, isZero, onClick }: SmartButtonProps) => {
+const SmartButton = ({ icon, value, label, subtitle, hint, color, mutedColor, isZero, onClick }: SmartButtonProps) => {
   const activeColor = isZero ? mutedColor : color
   return (
-    <Box
-      onClick={onClick}
-      sx={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        px: 2, py: 1.5, minWidth: 90, flex: '1 1 0', cursor: 'pointer',
-        borderRadius: borders.radius.md,
-        border: `1px solid ${isZero ? colors.neutral[200] : `${color}25`}`,
-        backgroundColor: isZero ? colors.neutral[25] : `${color}06`,
-        transition: `all ${transitions.normal}`, opacity: isZero ? 0.7 : 1,
-        '&:hover': { backgroundColor: isZero ? colors.neutral[50] : `${color}12`, borderColor: isZero ? colors.neutral[300] : `${color}40` },
-      }}
-    >
-      <Box sx={{ color: activeColor, mb: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isZero ? 0.5 : 0.7 }}>
-        {icon}
+    <Tooltip title={hint || label} placement="top" arrow enterDelay={400}>
+      <Box
+        onClick={onClick}
+        sx={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          px: 2, py: 1.25, minWidth: 95, flex: '1 1 0', cursor: 'pointer',
+          borderRadius: borders.radius.md,
+          border: `1px solid ${isZero ? colors.neutral[200] : `${color}25`}`,
+          backgroundColor: isZero ? colors.neutral[25] : `${color}06`,
+          transition: `all ${transitions.normal}`, opacity: isZero ? 0.7 : 1,
+          '&:hover': { backgroundColor: isZero ? colors.neutral[50] : `${color}12`, borderColor: isZero ? colors.neutral[300] : `${color}40`, transform: 'translateY(-1px)' },
+        }}
+      >
+        <Box sx={{ color: activeColor, mb: 0.25, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isZero ? 0.5 : 0.7 }}>
+          {icon}
+        </Box>
+        <Typography sx={{ fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: activeColor, lineHeight: 1.2 }}>
+          {value}
+        </Typography>
+        <Typography sx={{
+          fontSize: typography.sizes['2xs'], fontWeight: typography.weights.medium,
+          color: isZero ? colors.textDisabled : colors.textSecondary,
+          lineHeight: 1.1, mt: 0.15, textAlign: 'center', whiteSpace: 'nowrap',
+        }}>
+          {label}
+        </Typography>
+        {subtitle && (
+          <Typography sx={{
+            fontSize: '9px', fontWeight: typography.weights.semibold,
+            color: activeColor, lineHeight: 1.1, mt: 0.15, textAlign: 'center',
+            whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
+          }}>
+            {subtitle}
+          </Typography>
+        )}
       </Box>
-      <Typography sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: activeColor, lineHeight: typography.lineHeights.tight }}>
-        {value}
-      </Typography>
-      <Typography sx={{
-        fontSize: typography.sizes['2xs'], fontWeight: typography.weights.medium,
-        color: isZero ? colors.textDisabled : colors.textSecondary,
-        lineHeight: typography.lineHeights.tight, mt: 0.25, textAlign: 'center',
-        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%',
-      }}>
-        {label}
-      </Typography>
-    </Box>
+    </Tooltip>
   )
 }
 
 /**
- * SmartButtons: compact entity counts (Odoo-style).
- * Financial metrics (commission, montant, realisation) removed — now in FinancialFlowCard.
+ * SmartButtons: Odoo-style buttons showing entity counts + financial amounts.
+ * Click navigates to filtered views.
  */
 const ConventionSmartButtons = ({
   conventionId, typeConvention, nombreMarches, nombreProjets,
   nombreSousConventions, nombreAvenants, nombrePartenaires,
+  montantTotalMarches, montantTotalProjets, commissionTTC, tauxRealisation,
 }: ConventionSmartButtonsProps) => {
   const navigate = useNavigate()
-  const iconSize = 18
+  const iconSize = 17
 
-  const buttons: SmartButtonConfig[] = [
+  const buttons = [
     {
       key: 'marches', icon: <FileText size={iconSize} />,
-      value: formatCount(nombreMarches), rawValue: nombreMarches, label: 'Marches',
-      color: colors.primary[600], mutedColor: colors.neutral[400],
+      value: String(nombreMarches), label: 'Marches',
+      subtitle: montantTotalMarches && montantTotalMarches > 0 ? fmtShort(montantTotalMarches) + ' MAD' : undefined,
+      hint: montantTotalMarches ? `${nombreMarches} marche(s) - Engagement total: ${fmtMAD(montantTotalMarches)}` : `${nombreMarches} marche(s)`,
+      rawValue: nombreMarches, color: colors.primary[600], mutedColor: colors.neutral[400],
       onClick: () => navigate(`/marches?conventionId=${conventionId}`), visible: true,
     },
     {
       key: 'projets', icon: <Briefcase size={iconSize} />,
-      value: formatCount(nombreProjets), rawValue: nombreProjets, label: 'Projets',
-      color: colors.purple[600], mutedColor: colors.neutral[400],
+      value: String(nombreProjets), label: 'Projets',
+      subtitle: montantTotalProjets && montantTotalProjets > 0 ? fmtShort(montantTotalProjets) + ' MAD' : undefined,
+      hint: montantTotalProjets ? `${nombreProjets} projet(s) - Budget total: ${fmtMAD(montantTotalProjets)}` : `${nombreProjets} projet(s)`,
+      rawValue: nombreProjets, color: colors.purple[600], mutedColor: colors.neutral[400],
       onClick: () => navigate(`/projets?conventionId=${conventionId}`), visible: true,
     },
     {
+      key: 'commission', icon: <Banknote size={iconSize} />,
+      value: commissionTTC && commissionTTC > 0 ? fmtShort(commissionTTC) : '0',
+      label: 'Commission',
+      subtitle: tauxRealisation !== undefined && tauxRealisation > 0 ? `${tauxRealisation.toFixed(0)}% realise` : undefined,
+      hint: commissionTTC ? `Commission TTC: ${fmtMAD(commissionTTC)}${tauxRealisation ? ` - Taux de realisation: ${tauxRealisation.toFixed(1)}%` : ''}` : 'Commission non calculee',
+      rawValue: commissionTTC || 0, color: colors.warning[600], mutedColor: colors.neutral[400],
+      onClick: () => {}, visible: true,
+    },
+    {
       key: 'sousConventions', icon: <GitBranch size={iconSize} />,
-      value: formatCount(nombreSousConventions), rawValue: nombreSousConventions, label: 'S-Conv.',
-      color: colors.info[600], mutedColor: colors.neutral[400],
+      value: String(nombreSousConventions), label: 'S-Conv.',
+      subtitle: undefined, hint: `${nombreSousConventions} sous-convention(s)`,
+      rawValue: nombreSousConventions, color: colors.info[600], mutedColor: colors.neutral[400],
       onClick: () => navigate(`/conventions?parentId=${conventionId}`), visible: typeConvention === 'CADRE',
     },
     {
       key: 'avenants', icon: <History size={iconSize} />,
-      value: formatCount(nombreAvenants), rawValue: nombreAvenants, label: 'Avenants',
-      color: colors.warning[600], mutedColor: colors.neutral[400],
+      value: String(nombreAvenants), label: 'Avenants',
+      subtitle: undefined, hint: `${nombreAvenants} avenant(s)`,
+      rawValue: nombreAvenants, color: colors.danger[500], mutedColor: colors.neutral[400],
       onClick: () => navigate(`/conventions/${conventionId}?tab=avenants`), visible: true,
     },
     {
       key: 'partenaires', icon: <Users size={iconSize} />,
-      value: formatCount(nombrePartenaires), rawValue: nombrePartenaires, label: 'Partenaires',
-      color: colors.success[600], mutedColor: colors.neutral[400],
+      value: String(nombrePartenaires), label: 'Partenaires',
+      subtitle: undefined, hint: `${nombrePartenaires} partenaire(s)`,
+      rawValue: nombrePartenaires, color: colors.success[600], mutedColor: colors.neutral[400],
       onClick: () => navigate(`/conventions/${conventionId}?tab=partenaires`), visible: true,
     },
   ]
 
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, py: 1 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, py: 0.5 }}>
       {buttons.filter(b => b.visible).map(b => (
         <SmartButton key={b.key} icon={b.icon} value={b.value} label={b.label}
+          subtitle={b.subtitle} hint={b.hint}
           color={b.color} mutedColor={b.mutedColor} isZero={b.rawValue === 0} onClick={b.onClick} />
       ))}
     </Box>

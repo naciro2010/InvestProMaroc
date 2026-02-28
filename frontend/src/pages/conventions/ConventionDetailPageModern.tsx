@@ -17,6 +17,7 @@ import {
 } from '../../components/conventions/detail'
 import ConventionSmartButtons from '../../components/conventions/detail/ConventionSmartButtons'
 import ConventionFinancialFlowCard from '../../components/conventions/detail/ConventionFinancialFlowCard'
+import ConventionKeyInfoCard from '../../components/conventions/detail/ConventionKeyInfoCard'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import VersementFormDialog from '../../components/conventions/VersementFormDialog'
@@ -241,9 +242,18 @@ const ConventionDetailPageModern = () => {
                   nombreSousConventions={enrichedData.nombreSousConventions}
                   nombreAvenants={enrichedData.nombreAvenants}
                   nombrePartenaires={enrichedData.nombrePartenaires}
+                  montantTotalMarches={enrichedData.montantTotalMarches}
+                  montantTotalProjets={enrichedData.montantTotalProjets}
+                  commissionTTC={enrichedData.commissionTTC}
+                  tauxRealisation={enrichedData.tauxRealisation}
                 />
               </Box>
             )}
+
+            {/* Convention Parameters, Dates & Audit Trail */}
+            <Box sx={{ mb: 2 }}>
+              <ConventionKeyInfoCard convention={convention} enrichedData={enrichedData} />
+            </Box>
 
             {/* PRIMARY: Financial Flow (Ressources IN / Emplois OUT / Solde) */}
             <Box sx={{ mb: 3 }}>
@@ -253,6 +263,8 @@ const ConventionDetailPageModern = () => {
                 tauxCommission={convention.tauxCommission}
                 tauxTva={convention.tauxTva}
                 commissionTTC={enrichedData?.commissionTTC}
+                commissionMode={convention.commissionMode}
+                baseCalcul={convention.baseCalcul}
                 canEdit={canEdit}
                 refreshKey={financialRefreshKey}
                 onAddPartenaire={() => setAddPartenaireDialogOpen(true)}

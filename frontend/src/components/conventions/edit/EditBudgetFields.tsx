@@ -11,6 +11,8 @@ interface EditBudgetFieldsProps {
   isEditing: boolean
   watchValues: ConventionEditFormData
   setValue: (name: keyof ConventionEditFormData, value: number | string) => void
+  parentConventionCode?: string | null
+  heriteParametres?: boolean
 }
 
 const BASE_CALCUL_OPTIONS = [
@@ -27,14 +29,20 @@ const EditBudgetFields = ({
   isEditing,
   watchValues,
   setValue,
+  parentConventionCode,
+  heriteParametres,
 }: EditBudgetFieldsProps) => {
   const baseCalculLabel =
     BASE_CALCUL_OPTIONS.find((o) => o.value === watchValues.baseCalcul)?.label ||
     watchValues.baseCalcul
 
-  // Commission estimates
   const commissionHT = (watchValues.budget * watchValues.tauxCommission) / 100
   const commissionTTC = commissionHT * (1 + watchValues.tauxTva / 100)
+
+  // Build provenance for inherited fields
+  const inheritedProvenance = heriteParametres && parentConventionCode
+    ? { source: parentConventionCode, isInherited: true }
+    : undefined
 
   return (
     <>
@@ -45,6 +53,7 @@ const EditBudgetFields = ({
           isMoney
           required
           isEditing={isEditing}
+          help="Budget total de la convention en MAD. Sert de base au calcul de la commission si le mode est global."
           editContent={
             <Controller
               name="budget"
@@ -71,6 +80,7 @@ const EditBudgetFields = ({
           label="Taux TVA Lignes (%)"
           value={`${watchValues.tauxTvaLignes}%`}
           isEditing={isEditing}
+          help="Taux de TVA applique automatiquement a toutes les lignes de budget de la convention."
           editContent={
             <Controller
               name="tauxTvaLignes"
@@ -99,6 +109,8 @@ const EditBudgetFields = ({
           value={`${watchValues.tauxCommission}%`}
           required
           isEditing={isEditing}
+          help="Pourcentage applique sur la base de calcul pour determiner le montant de la commission. Ex: 2.5% du montant des decaissements."
+          provenance={inheritedProvenance}
           editContent={
             <Controller
               name="tauxCommission"
@@ -124,6 +136,8 @@ const EditBudgetFields = ({
           value={baseCalculLabel}
           required
           isEditing={isEditing}
+          help="Determine sur quoi le taux de commission est applique. DECAISSEMENTS_TTC: sur les montants TTC. DECAISSEMENTS_HT: hors taxes."
+          provenance={inheritedProvenance}
           editContent={
             <Controller
               name="baseCalcul"
@@ -151,6 +165,8 @@ const EditBudgetFields = ({
           label="Taux TVA Commission (%)"
           value={`${watchValues.tauxTva}%`}
           isEditing={isEditing}
+          help="Taux de TVA applique sur la commission elle-meme (pas sur les lignes budgetaires). Generalement 20% au Maroc."
+          provenance={inheritedProvenance}
           editContent={
             <Controller
               name="tauxTva"
@@ -176,8 +192,7 @@ const EditBudgetFields = ({
       {/* Commission Summary Card */}
       <Box
         sx={{
-          mt: 2,
-          p: 2,
+          mt: 2, p: 2,
           bgcolor: colors.primary[25],
           border: `1px solid ${colors.primary[100]}`,
           borderRadius: '6px',

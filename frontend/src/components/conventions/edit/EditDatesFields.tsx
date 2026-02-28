@@ -25,7 +25,6 @@ const EditDatesFields = ({
   autoDateFin,
   onAutoDateFinChange,
 }: EditDatesFieldsProps) => {
-  // Auto-calculate dateFin when dureeMois or dateDebut change
   useEffect(() => {
     if (!isEditing || !autoDateFin || !watchValues.dateDebut) return
     const computed = formatDateInput(addMonths(new Date(watchValues.dateDebut), watchValues.dureeMois || 0))
@@ -34,7 +33,6 @@ const EditDatesFields = ({
     }
   }, [isEditing, autoDateFin, watchValues.dateDebut, watchValues.dureeMois, watchValues.dateFin, setValue])
 
-  // Recalculate dureeMois when dateFin is manually changed
   useEffect(() => {
     if (!isEditing || autoDateFin || !watchValues.dateDebut || !watchValues.dateFin) return
     const months = calculateDurationMonths(new Date(watchValues.dateDebut), new Date(watchValues.dateFin))
@@ -60,35 +58,13 @@ const EditDatesFields = ({
   )
 
   return (
-    <FieldGroup title="Dates & Duree" columns={2}>
-      <Field
-        label="Date de Signature"
-        value={formatDateFR(watchValues.dateConvention)}
-        required
-        isEditing={isEditing}
-        editContent={
-          <Controller
-            name="dateConvention"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                type="date"
-                size="small"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.dateConvention}
-                helperText={errors.dateConvention?.message}
-              />
-            )}
-          />
-        }
-      />
+    <FieldGroup title="Planification" columns={2}>
       <Field
         label="Date de Debut"
         value={formatDateFR(watchValues.dateDebut)}
         required
         isEditing={isEditing}
+        help="Date effective de demarrage de la convention. A partir de cette date, les engagements financiers sont pris en compte."
         editContent={
           <Controller
             name="dateDebut"
@@ -108,35 +84,10 @@ const EditDatesFields = ({
         }
       />
       <Field
-        label="Date de Fin"
-        value={formatDateFR(watchValues.dateFin)}
-        isEditing={isEditing}
-        editContent={
-          <Controller
-            name="dateFin"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                type="date"
-                size="small"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.dateFin}
-                helperText={
-                  (errors.dateFin?.message as string) ||
-                  (autoDateFin ? 'Calculee automatiquement depuis la duree' : '')
-                }
-                onChange={handleDateFinChange(field.onChange)}
-              />
-            )}
-          />
-        }
-      />
-      <Field
         label="Duree (mois)"
         value={`${watchValues.dureeMois} mois`}
         isEditing={isEditing}
+        help="Duree prevue de la convention en mois. Modifiez la duree pour recalculer automatiquement la date de fin."
         editContent={
           <Controller
             name="dureeMois"
@@ -156,6 +107,33 @@ const EditDatesFields = ({
                     ? 'La date de fin est calculee automatiquement.'
                     : 'Modifiez la duree pour recalculer la date de fin.')
                 }
+              />
+            )}
+          />
+        }
+      />
+      <Field
+        label="Date de Fin"
+        value={formatDateFR(watchValues.dateFin)}
+        isEditing={isEditing}
+        help="Date prevue de fin de la convention. Peut etre calculee automatiquement depuis la duree ou saisie manuellement."
+        editContent={
+          <Controller
+            name="dateFin"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                type="date"
+                size="small"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!errors.dateFin}
+                helperText={
+                  (errors.dateFin?.message as string) ||
+                  (autoDateFin ? 'Calculee automatiquement depuis la duree' : '')
+                }
+                onChange={handleDateFinChange(field.onChange)}
               />
             )}
           />

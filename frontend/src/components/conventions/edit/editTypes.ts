@@ -26,9 +26,15 @@ export interface ConventionMetadata {
   createdBy: string
   dateSoumission: string | null
   dateValidation: string | null
+  valideParNom: string | null
+  motifRejet: string | null
   parentConventionCode: string | null
+  heriteParametres: boolean
   isLocked: boolean
+  motifVerrouillage: string | null
   sousConventionsCount: number
+  nombreProjets: number
+  nombreMarches: number
 }
 
 export const conventionEditSchema = z.object({
@@ -99,7 +105,19 @@ export const formatDateFR = (dateStr: string | null | undefined): string => {
 export const CONVENTION_STATUS_STEPS = [
   { value: 'BROUILLON', label: 'Brouillon' },
   { value: 'SOUMIS', label: 'Soumis' },
+  { value: 'REJETE', label: 'Rejete', variant: 'danger' as const },
   { value: 'VALIDEE', label: 'Validee' },
+  { value: 'VALIDE', label: 'Validee' },
   { value: 'EN_EXECUTION', label: 'En execution' },
+  { value: 'EN_COURS', label: 'En execution' },
   { value: 'ACHEVE', label: 'Acheve' },
 ]
+
+/** Normalize backend status to display status (handles VALIDE/VALIDEE, EN_COURS/EN_EXECUTION) */
+export const normalizeStatut = (statut: string): string => {
+  const aliases: Record<string, string> = {
+    VALIDE: 'VALIDEE',
+    EN_COURS: 'EN_EXECUTION',
+  }
+  return aliases[statut] || statut
+}

@@ -66,3 +66,12 @@ export { default as ResizableSection } from './ResizableSection'
 // API-backed Autocomplete (search + duplicate prevention + inline quick-create)
 export { default as ApiAutocomplete } from './ApiAutocomplete'
 export type { AutocompleteOption, QuickCreateConfig, QuickCreateField } from './ApiAutocomplete'
+
+// Command Palette (Ctrl+K global search)
+export { default as CommandPalette } from './CommandPalette'
+
+// Keyboard Shortcuts Help (Ctrl+/ modal)
+export { default as KeyboardShortcutsHelp } from './KeyboardShortcutsHelp'
+
+// Notification Center (bell icon dropdown)
+export { default as NotificationCenter } from './NotificationCenter'

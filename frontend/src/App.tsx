@@ -6,6 +6,9 @@ import { ToastProvider } from './contexts/ToastContext'
 import { ThemeContextProvider } from './contexts/ThemeContext'
 import { LayoutContextProvider } from './contexts/LayoutContext'
 import { CircularProgress, Box } from '@mui/material'
+import CommandPalette from './components/core/CommandPalette'
+import KeyboardShortcutsHelp from './components/core/KeyboardShortcutsHelp'
+import { useGoShortcuts } from './hooks/useGoShortcuts'
 
 // Eager load - Critical path pages
 import LandingPage from './pages/LandingPage'
@@ -117,6 +120,17 @@ const queryClient = new QueryClient({
   },
 })
 
+// Global features that require Router context (hooks need to be inside Router)
+const GlobalFeatures = () => {
+  useGoShortcuts()
+  return (
+    <>
+      <CommandPalette />
+      <KeyboardShortcutsHelp />
+    </>
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -125,6 +139,7 @@ function App() {
           <LayoutContextProvider>
             <AuthProvider>
               <ToastProvider>
+                <GlobalFeatures />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     {/* Public Routes */}

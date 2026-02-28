@@ -15,7 +15,7 @@ import javax.sql.DataSource
 
 /**
  * Clean integration test with real PostgreSQL + Flyway migrations
- * Tests the 3-file migration strategy (V1: DROP, V2: CREATE, V3: SEED)
+ * Tests the migration strategy (V1: DROP, V2: CREATE, V3: SEED, V4: COLLAB)
  *
  * No Spring Boot context - just pure Flyway + PostgreSQL + JdbcTemplate
  *
@@ -79,11 +79,11 @@ class FlywayMigrationIntegrationTest {
         val info = flyway.info()
         val appliedMigrations = info.applied()
 
-        // All 3 migrations should be applied
+        // All versioned migrations should be applied
         appliedMigrations shouldNotBe null
         val versionedMigrations = appliedMigrations.filter { it.version != null }
 
-        versionedMigrations.size shouldBe 3
+        versionedMigrations.size shouldBe 4
 
         // Verify each migration
         versionedMigrations[0].version.version shouldBe "1"
@@ -94,6 +94,9 @@ class FlywayMigrationIntegrationTest {
 
         versionedMigrations[2].version.version shouldBe "3"
         versionedMigrations[2].description shouldBe "seed data"
+
+        versionedMigrations[3].version.version shouldBe "4"
+        versionedMigrations[3].description shouldBe "notifications and team messages"
     }
 
     @Test
@@ -365,7 +368,8 @@ class FlywayMigrationIntegrationTest {
             "avenants",
             "pieces_jointes", "maitres_oeuvre", "categories_depenses",
             "convention_modifications",
-            "convention_configurations", "convention_type_configurations"
+            "convention_configurations", "convention_type_configurations",
+            "notifications", "team_messages"
         )
 
         // Verify all expected tables exist

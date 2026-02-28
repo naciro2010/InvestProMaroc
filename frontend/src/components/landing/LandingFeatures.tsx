@@ -38,17 +38,36 @@ interface UseCase {
   examples: string[]
 }
 
+interface Capability {
+  title: string
+  detail: string
+}
+
 interface LandingFeaturesProps {
   features: Feature[]
   workflow: WorkflowItem[]
   useCases: UseCase[]
+  capabilities: Capability[]
 }
 
-const LandingFeatures = ({ features, workflow, useCases }: LandingFeaturesProps) => {
+const LandingFeatures = ({ features, workflow, useCases, capabilities }: LandingFeaturesProps) => {
   return (
     <>
+      <section className="py-14 bg-white border-y border-slate-200">
+        <Container maxWidth="lg">
+          <div className="grid md:grid-cols-3 gap-4">
+            {capabilities.map((item, index) => (
+              <div key={index} className="rounded-xl border border-blue-100 bg-blue-50/70 p-5">
+                <h4 className="text-slate-900 font-semibold mb-2">{item.title}</h4>
+                <p className="text-sm text-slate-600">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gray-50">
+      <section id="features" className="py-20 bg-gradient-to-b from-white to-blue-50">
         <Container maxWidth="lg">
           <motion.div
             initial="hidden"
@@ -57,11 +76,11 @@ const LandingFeatures = ({ features, workflow, useCases }: LandingFeaturesProps)
             variants={fadeIn}
             className="text-center mb-16"
           >
-            <h3 className="text-4xl font-bold text-gray-900 mb-4">
+            <h3 className="text-4xl font-bold text-slate-900 mb-4">
               Tout dans une seule plateforme
             </h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              De la convention au paiement, g{"\u00e9"}rez l'int{"\u00e9"}gralit{"\u00e9"} du processus avec des outils puissants et intuitifs
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              De la convention CADRE/SPECIFIQUE jusqu’au paiement, suivez chaque étape avec statut, historique, validations et contrôles budgétaires en temps réel
             </p>
           </motion.div>
 
@@ -76,20 +95,20 @@ const LandingFeatures = ({ features, workflow, useCases }: LandingFeaturesProps)
               <motion.div
                 key={index}
                 variants={fadeIn}
-                className="bg-white rounded-lg border border-gray-200 p-8"
+                className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm"
               >
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex-shrink-0">
-                    <div className="w-16 h-16 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                    <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 border border-blue-200">
                       {feature.icon}
                     </div>
                   </div>
                   <div className="flex-grow">
-                    <h4 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h4>
-                    <p className="text-gray-600 mb-4 leading-relaxed">{feature.description}</p>
+                    <h4 className="text-2xl font-bold text-slate-900 mb-3">{feature.title}</h4>
+                    <p className="text-slate-600 mb-4 leading-relaxed">{feature.description}</p>
                     <ul className="grid md:grid-cols-2 gap-3">
                       {feature.benefits.map((benefit, i) => (
-                        <li key={i} className="flex items-start space-x-2 text-sm text-gray-700">
+                        <li key={i} className="flex items-start space-x-2 text-sm text-slate-700">
                           <FaCheckCircle className="text-green-600 mt-0.5 flex-shrink-0" />
                           <span>{benefit}</span>
                         </li>
@@ -113,10 +132,10 @@ const LandingFeatures = ({ features, workflow, useCases }: LandingFeaturesProps)
             variants={fadeIn}
             className="text-center mb-16"
           >
-            <h3 className="text-4xl font-bold text-gray-900 mb-4">
+            <h3 className="text-4xl font-bold text-slate-900 mb-4">
               {"Workflow complet de A \u00e0 Z"}
             </h3>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-slate-600">
               Un processus fluide de la planification au paiement
             </p>
           </motion.div>
@@ -134,10 +153,10 @@ const LandingFeatures = ({ features, workflow, useCases }: LandingFeaturesProps)
                   {item.step}
                 </div>
                 <div className="text-2xl text-blue-600 mb-2">{item.icon}</div>
-                <h4 className="font-semibold text-gray-900 mb-1">{item.title}</h4>
-                <p className="text-sm text-gray-600">{item.desc}</p>
+                <h4 className="font-semibold text-slate-900 mb-1">{item.title}</h4>
+                <p className="text-sm text-slate-600">{item.desc}</p>
                 {index < workflow.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-1/2 w-full h-0.5 bg-gray-200"></div>
+                  <div className="hidden md:block absolute top-8 left-1/2 w-full h-0.5 bg-slate-200"></div>
                 )}
               </motion.div>
             ))}
@@ -146,7 +165,7 @@ const LandingFeatures = ({ features, workflow, useCases }: LandingFeaturesProps)
       </section>
 
       {/* Use Cases Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-slate-50">
         <Container maxWidth="lg">
           <motion.div
             initial="hidden"
@@ -155,10 +174,10 @@ const LandingFeatures = ({ features, workflow, useCases }: LandingFeaturesProps)
             variants={fadeIn}
             className="text-center mb-16"
           >
-            <h3 className="text-4xl font-bold text-gray-900 mb-4">
+            <h3 className="text-4xl font-bold text-slate-900 mb-4">
               Pour tous les acteurs publics
             </h3>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-slate-600">
               {"Adapt\u00e9 aux besoins de chaque type d\u2019organisation"}
             </p>
           </motion.div>
@@ -174,14 +193,14 @@ const LandingFeatures = ({ features, workflow, useCases }: LandingFeaturesProps)
               <motion.div
                 key={index}
                 variants={fadeIn}
-                className="bg-white rounded-lg border border-gray-200 p-8"
+                className="bg-white rounded-2xl border border-slate-200 p-8"
               >
                 <div className="text-4xl text-blue-600 mb-4">{useCase.icon}</div>
-                <h4 className="text-xl font-bold text-gray-900 mb-2">{useCase.sector}</h4>
-                <p className="text-gray-600 mb-4">{useCase.description}</p>
+                <h4 className="text-xl font-bold text-slate-900 mb-2">{useCase.sector}</h4>
+                <p className="text-slate-600 mb-4">{useCase.description}</p>
                 <div className="space-y-2">
                   {useCase.examples.map((example, i) => (
-                    <div key={i} className="flex items-center space-x-2 text-sm text-gray-700">
+                    <div key={i} className="flex items-center space-x-2 text-sm text-slate-700">
                       <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
                       <span>{example}</span>
                     </div>

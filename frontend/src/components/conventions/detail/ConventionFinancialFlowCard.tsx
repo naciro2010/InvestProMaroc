@@ -12,7 +12,7 @@ import LinkMarcheDialog from '../LinkMarcheDialog'
 import MarcheDetailDrawer from './MarcheDetailDrawer'
 import PartenaireDetailDrawer from './PartenaireDetailDrawer'
 import SubventionDetailDrawer from './SubventionDetailDrawer'
-import BudgetLigneDetailDrawer from './BudgetLigneDetailDrawer'
+import ConventionBudgetLignesInline from './ConventionBudgetLignesInline'
 import type { Subvention, MarcheData, SituationPaiement, VersementPrevisionnel } from './types'
 import type { ConventionBudgetLigneDTO, ApiResponse } from '@/types/api'
 
@@ -68,7 +68,6 @@ const ConventionFinancialFlowCard = ({
   const [selPartenaire, setSelPartenaire] = useState<PartenaireData | null>(null)
   const [selMarcheId, setSelMarcheId] = useState<number | null>(null)
   const [selSubvention, setSelSubvention] = useState<Subvention | null>(null)
-  const [selBudgetLigne, setSelBudgetLigne] = useState<ConventionBudgetLigneDTO | null>(null)
 
   const loadData = useCallback(async () => {
     try {
@@ -138,52 +137,18 @@ const ConventionFinancialFlowCard = ({
   return (
     <Paper sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
 
-      {/* ═══ SECTION 1: RÉPARTITION BUDGÉTAIRE PAR CATÉGORIE ═══ */}
-      {budgetLignes.length > 0 && (
-        <Box>
-          <SectionHdr icon={<PieChart size={16} color={colors.primary[600]} />} label="Repartition budgetaire par categorie" total={fmt(totalBudgetLignes)} color={colors.primary[800]} bg={colors.primary[25]} />
-          <TableContainer><Table size="small">
-            <TableHead><TableRow sx={{ bgcolor: colors.neutral[50] }}>
-              <TableCell sx={th}>Categorie</TableCell>
-              <TableCell sx={th}>Designation</TableCell>
-              <TableCell align="right" sx={th}>Budget</TableCell>
-              <TableCell align="right" sx={{ ...th, width: 55 }}>Part</TableCell>
-              <TableCell sx={{ ...th, width: 100 }}>Repartition</TableCell>
-              <TableCell sx={{ ...th, width: 24 }} />
-            </TableRow></TableHead>
-            <TableBody>
-              {budgetLignes.map(l => {
-                const barW = totalBudgetLignes > 0 ? (l.montant / totalBudgetLignes) * 100 : 0
-                return (
-                  <Tooltip key={l.id} title="Cliquer pour voir le detail du calcul de commission" placement="left" arrow enterDelay={500}>
-                    <TableRow onClick={() => setSelBudgetLigne(l)} sx={clickRow}>
-                      <TableCell sx={td}><Chip label={l.categorieDepenseCode} size="small" variant="outlined" sx={{ color: colors.primary[600], borderColor: colors.primary[200], fontSize: '10px', height: 20 }} /></TableCell>
-                      <TableCell sx={td}><Typography sx={{ fontSize: typography.sizes.sm }}>{l.designation || l.categorieDepenseLibelle}</Typography></TableCell>
-                      <TableCell align="right" sx={td}><Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, ...tnum }}>{fmt(l.montant)}</Typography></TableCell>
-                      <TableCell align="right" sx={td}><Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, ...tnum }}>{pct(l.pourcentage)}</Typography></TableCell>
-                      <TableCell sx={td}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <LinearProgress variant="determinate" value={barW} sx={{ flex: 1, height: 5, borderRadius: 3, bgcolor: colors.neutral[100], '& .MuiLinearProgress-bar': { borderRadius: 3, bgcolor: colors.primary[400] } }} />
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={{ ...td, px: 0.5 }}><ChevronRight sx={{ fontSize: 16, color: colors.neutral[400] }} /></TableCell>
-                    </TableRow>
-                  </Tooltip>
-                )
-              })}
-              <TableRow sx={{ bgcolor: colors.primary[25] }}>
-                <TableCell colSpan={2} sx={{ ...td, fontWeight: typography.weights.bold, color: colors.primary[700] }}>Total ({budgetLignes.length} categorie{budgetLignes.length > 1 ? 's' : ''})</TableCell>
-                <TableCell align="right" sx={{ ...td, fontWeight: typography.weights.bold, ...tnum }}>{fmt(totalBudgetLignes)}</TableCell>
-                <TableCell align="right" sx={{ ...td, fontWeight: typography.weights.bold }}>100%</TableCell>
-                <TableCell colSpan={2} sx={td} />
-              </TableRow>
-            </TableBody>
-          </Table></TableContainer>
-        </Box>
-      )}
+      {/* ═══ SECTION 1: RÉPARTITION BUDGÉTAIRE PAR CATÉGORIE (Inline Edit) ═══ */}
+      <Box>
+        <SectionHdr icon={<PieChart size={16} color={colors.primary[600]} />} label="Repartition budgetaire par categorie" total={fmt(totalBudgetLignes)} color={colors.primary[800]} bg={colors.primary[25]} />
+        <ConventionBudgetLignesInline
+          conventionId={conventionId}
+          canEdit={canEdit}
+          onDataChanged={() => { loadData(); onRefresh?.() }}
+        />
+      </Box>
 
       {/* ═══ SECTION 2: RESSOURCES (Entrées) ═══ */}
-      <Box sx={{ borderLeft: `4px solid ${colors.success[500]}`, borderTop: budgetLignes.length > 0 ? `1px solid ${colors.border}` : 'none' }}>
+      <Box sx={{ borderLeft: `4px solid ${colors.success[500]}`, borderTop: `1px solid ${colors.border}` }}>
         <SectionHdr icon={<ArrowDownward sx={{ fontSize: 16, color: colors.success[600] }} />} label="Ressources (Entrees)" total={fmt(totalPrevuIn)} color={colors.success[800]} bg={colors.success[25]} />
         <TableContainer><Table size="small">
           <TableHead><TableRow sx={{ bgcolor: colors.neutral[50] }}>
@@ -378,10 +343,6 @@ const ConventionFinancialFlowCard = ({
         marcheDepenses={selMarche?.depense ?? 0} marcheResteAPayer={selMarche?.reste ?? 0} />
       <SubventionDetailDrawer open={selSubvention !== null} onClose={() => setSelSubvention(null)}
         subvention={selSubvention} allSubventions={subventions} conventionBudget={conventionBudget} />
-      <BudgetLigneDetailDrawer open={selBudgetLigne !== null} onClose={() => setSelBudgetLigne(null)}
-        ligne={selBudgetLigne} conventionId={conventionId}
-        conventionFinancials={{ budget: conventionBudget, tauxCommission, tauxTva, baseCalcul: baseCalcul || 'MONTANT_TTC', commissionMode }}
-        totalBudgetLignes={budgetLignes.length} />
     </Paper>
   )
 }

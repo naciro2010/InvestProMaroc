@@ -6,13 +6,14 @@ import { getEnabledConventionTypes } from '@/lib/settings/conventionSettings'
 import { useConventionConfiguration } from '@/hooks/useConventionConfiguration'
 import { FieldGroup, Field } from '@/components/core'
 import { colors, typography } from '@/lib/designSystem'
-import type { ConventionEditFormData } from './editTypes'
+import { formatDateFR, type ConventionEditFormData } from './editTypes'
 
 interface EditGeneralFieldsProps {
   control: Control<ConventionEditFormData>
   errors: FieldErrors<ConventionEditFormData>
   isEditing: boolean
   watchValues: ConventionEditFormData
+  parentConventionCode?: string | null
 }
 
 const EditGeneralFields = ({
@@ -20,6 +21,7 @@ const EditGeneralFields = ({
   errors,
   isEditing,
   watchValues,
+  parentConventionCode,
 }: EditGeneralFieldsProps) => {
   const { configuration: settings } = useConventionConfiguration()
   const typeOptions = getEnabledConventionTypes(settings)
@@ -32,12 +34,13 @@ const EditGeneralFields = ({
 
   return (
     <>
-      <FieldGroup title="Informations Generales" columns={2}>
+      <FieldGroup title="Identification" columns={2}>
         <Field
           label="Code"
           value={watchValues.code}
           required
           isEditing={isEditing}
+          help="Code interne unique de la convention. Genere automatiquement, modifiable avant soumission."
           editContent={
             <Controller
               name="code"
@@ -57,9 +60,10 @@ const EditGeneralFields = ({
           }
         />
         <Field
-          label="Numero"
+          label="Numero officiel"
           value={watchValues.numero || '-'}
           isEditing={isEditing}
+          help="Numero officiel du document (ex: CONV-2026-001). Doit etre unique dans le systeme."
           editContent={
             <Controller
               name="numero"
@@ -82,6 +86,8 @@ const EditGeneralFields = ({
           value={typeLabel}
           required
           isEditing={isEditing}
+          help="CADRE: convention mere pouvant avoir des sous-conventions. NON_CADRE: convention autonome. SPECIFIQUE: sous-convention rattachee a un CADRE."
+          provenance={parentConventionCode ? { source: parentConventionCode, isInherited: false } : undefined}
           editContent={
             <Controller
               name="typeConvention"
@@ -105,6 +111,30 @@ const EditGeneralFields = ({
             />
           }
         />
+        <Field
+          label="Date de signature"
+          value={formatDateFR(watchValues.dateConvention)}
+          required
+          isEditing={isEditing}
+          help="Date de signature officielle de la convention. Determine le point de depart administratif."
+          editContent={
+            <Controller
+              name="dateConvention"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  type="date"
+                  size="small"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  error={!!errors.dateConvention}
+                  helperText={errors.dateConvention?.message}
+                />
+              )}
+            />
+          }
+        />
       </FieldGroup>
 
       <FieldGroup title="Description" columns={1}>
@@ -113,6 +143,7 @@ const EditGeneralFields = ({
           required
           fullWidth
           isEditing={isEditing}
+          help="Titre court de la convention (max 200 caracteres). Affiche dans les listes et les references."
           value={
             watchValues.libelle ? (
               <Box
@@ -152,6 +183,7 @@ const EditGeneralFields = ({
           required
           fullWidth
           isEditing={isEditing}
+          help="Description detaillee de l'objet de la convention. Inclut le perimetre, les objectifs et le cadre juridique."
           value={
             watchValues.objet ? (
               <Box

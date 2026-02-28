@@ -13,6 +13,7 @@ import { Eye, ArrowLeft } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { conventionsAPI } from '@/lib/api'
 import { useToast } from '@/contexts/ToastContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { ControlPanel, FormView, Notebook, StatusBadge } from '@/components/core'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { calculateDurationMonths } from '@/utils/dateUtils'
@@ -21,9 +22,12 @@ import EditBudgetFields from '@/components/conventions/edit/EditBudgetFields'
 import EditBudgetLinesSection from '@/components/conventions/edit/EditBudgetLinesSection'
 import EditDatesFields from '@/components/conventions/edit/EditDatesFields'
 import EditInfoPanel from '@/components/conventions/edit/EditInfoPanel'
+import ConventionChatter from '@/components/conventions/edit/ConventionChatter'
+import ConventionWorkflowActions from '@/components/conventions/detail/ConventionWorkflowActions'
 import {
   conventionEditSchema,
   CONVENTION_STATUS_STEPS,
+  normalizeStatut,
   type ConventionEditFormData,
   type ConventionMetadata,
 } from '@/components/conventions/edit/editTypes'
@@ -54,10 +58,15 @@ interface ConventionApiResponse {
   createdBy: string
   dateSoumission: string | null
   dateValidation: string | null
+  valideParNom: string | null
+  motifRejet: string | null
   isLocked: boolean
   motifVerrouillage: string | null
+  heriteParametres: boolean
   parentConvention: { code: string } | null
   sousConventions: unknown[] | null
+  nombreProjets?: number
+  nombreMarches?: number
 }
 
 const toIsoDate = (val: string | Date | null | undefined): string => {
@@ -69,6 +78,7 @@ const ConventionEditPageComplete = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const { user, isAdmin, isManager } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -120,17 +130,37 @@ const ConventionEditPageComplete = () => {
         dureeMois,
       })
 
+      // Fetch stats for related entity counts
+      let nombreProjets = data.nombreProjets || 0
+      let nombreMarches = data.nombreMarches || 0
+      try {
+        const statsRes = await conventionsAPI.getStats(conventionId)
+        const stats = statsRes.data?.data
+        if (stats) {
+          nombreProjets = stats.nombreProjets || 0
+          nombreMarches = stats.nombreMarches || 0
+        }
+      } catch {
+        // Stats are non-critical
+      }
+
       setMetadata({
         id: data.id,
-        statut: data.statut,
+        statut: normalizeStatut(data.statut),
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
         createdBy: data.createdBy || '',
         dateSoumission: data.dateSoumission,
         dateValidation: data.dateValidation,
+        valideParNom: data.valideParNom || null,
+        motifRejet: data.motifRejet || null,
         parentConventionCode: data.parentConvention?.code || null,
+        heriteParametres: data.heriteParametres || false,
         isLocked: data.isLocked || false,
+        motifVerrouillage: data.motifVerrouillage || null,
         sousConventionsCount: data.sousConventions?.length || 0,
+        nombreProjets,
+        nombreMarches,
       })
     } catch {
       setError('Convention introuvable ou erreur de chargement.')
@@ -142,6 +172,11 @@ const ConventionEditPageComplete = () => {
   useEffect(() => {
     if (id) loadConvention(parseInt(id))
   }, [id, loadConvention])
+
+  // BUG-002 fix: Only allow editing BROUILLON or REJETE conventions
+  const canEdit = metadata && (
+    metadata.statut === 'BROUILLON' || metadata.statut === 'REJETE'
+  ) && !metadata.isLocked
 
   const handleSave = async (formData: ConventionEditFormData) => {
     try {
@@ -164,7 +199,6 @@ const ConventionEditPageComplete = () => {
       await conventionsAPI.update(parseInt(id!), payload)
       showToast('Convention mise a jour avec succes', 'success')
       setIsEditing(false)
-      // Reload to get fresh data including updated metadata
       await loadConvention(parseInt(id!))
     } catch {
       showToast('Erreur lors de la mise a jour', 'error')
@@ -179,7 +213,22 @@ const ConventionEditPageComplete = () => {
   }
 
   const handleToggleEdit = () => {
+    if (!canEdit) {
+      showToast('Seules les conventions en brouillon peuvent etre modifiees', 'warning')
+      return
+    }
     setIsEditing(true)
+  }
+
+  // Workflow action handlers
+  const handleWorkflowSuccess = (message: string) => {
+    showToast(message, 'success')
+  }
+  const handleWorkflowError = (message: string) => {
+    showToast(message, 'error')
+  }
+  const handleWorkflowReload = () => {
+    if (id) loadConvention(parseInt(id))
   }
 
   if (loading) {
@@ -253,13 +302,65 @@ const ConventionEditPageComplete = () => {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <FormView
               isEditing={isEditing}
-              onToggleEdit={handleToggleEdit}
+              onToggleEdit={canEdit ? handleToggleEdit : undefined}
               onSave={handleSubmit(handleSave)}
               onCancel={handleCancel}
               isSaving={saving}
               statusSteps={CONVENTION_STATUS_STEPS}
               currentStatus={metadata.statut}
+              statusBarActions={
+                !isEditing ? (
+                  <ConventionWorkflowActions
+                    conventionId={metadata.id}
+                    statut={metadata.statut}
+                    userId={user?.id}
+                    isAdmin={isAdmin}
+                    isManager={isManager}
+                    onSuccess={handleWorkflowSuccess}
+                    onError={handleWorkflowError}
+                    onReload={handleWorkflowReload}
+                  />
+                ) : undefined
+              }
             >
+              {/* Non-editable status banner for locked/non-brouillon conventions */}
+              {!canEdit && !isEditing && (
+                <Alert
+                  severity="info"
+                  sx={{
+                    mb: 2,
+                    bgcolor: colors.info[50],
+                    border: `1px solid ${colors.info[200]}`,
+                    '& .MuiAlert-icon': { color: colors.info[600] },
+                  }}
+                >
+                  {metadata.isLocked
+                    ? `Convention verrouillee : ${metadata.motifVerrouillage || 'Modification non autorisee'}`
+                    : `Convention en statut "${metadata.statut}" - la modification n'est possible qu'en statut Brouillon ou Rejete.`
+                  }
+                </Alert>
+              )}
+
+              {/* Rejection motif banner */}
+              {metadata.statut === 'REJETE' && metadata.motifRejet && (
+                <Alert
+                  severity="warning"
+                  sx={{
+                    mb: 2,
+                    bgcolor: colors.danger[25],
+                    border: `1px solid ${colors.danger[200]}`,
+                    '& .MuiAlert-icon': { color: colors.danger[600] },
+                  }}
+                >
+                  <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.sm, color: colors.danger[700], mb: 0.5 }}>
+                    Convention rejetee
+                  </Typography>
+                  <Typography sx={{ fontSize: typography.sizes.sm, color: colors.danger[600] }}>
+                    Motif : &ldquo;{metadata.motifRejet}&rdquo;
+                  </Typography>
+                </Alert>
+              )}
+
               {/* Validation errors summary */}
               {isEditing && Object.keys(errors).length > 0 && (
                 <Alert severity="error" sx={{ mb: 2 }}>
@@ -267,12 +368,13 @@ const ConventionEditPageComplete = () => {
                 </Alert>
               )}
 
-              {/* General info + description with RichText */}
+              {/* General info (now includes dateConvention) */}
               <EditGeneralFields
                 control={control}
                 errors={errors}
                 isEditing={isEditing}
                 watchValues={watchValues as ConventionEditFormData}
+                parentConventionCode={metadata.parentConventionCode}
               />
 
               {/* Tabbed sections */}
@@ -288,6 +390,8 @@ const ConventionEditPageComplete = () => {
                           isEditing={isEditing}
                           watchValues={watchValues as ConventionEditFormData}
                           setValue={setValue}
+                          parentConventionCode={metadata.parentConventionCode}
+                          heriteParametres={metadata.heriteParametres}
                         />
                         <EditBudgetLinesSection
                           conventionId={parseInt(id)}
@@ -297,7 +401,7 @@ const ConventionEditPageComplete = () => {
                     ),
                   },
                   {
-                    label: 'Dates & Duree',
+                    label: 'Planification',
                     content: (
                       <EditDatesFields
                         control={control}
@@ -346,6 +450,20 @@ const ConventionEditPageComplete = () => {
                 </Alert>
               )}
             </FormView>
+
+            {/* Chatter / Activity log - Odoo style */}
+            <Box sx={{ mt: 3 }}>
+              <ConventionChatter
+                conventionId={parseInt(id)}
+                statut={metadata.statut}
+                createdBy={metadata.createdBy}
+                createdAt={metadata.createdAt}
+                dateSoumission={metadata.dateSoumission}
+                dateValidation={metadata.dateValidation}
+                valideParNom={metadata.valideParNom}
+                motifRejet={metadata.motifRejet}
+              />
+            </Box>
           </Box>
 
           {/* Info sidebar */}

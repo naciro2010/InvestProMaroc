@@ -46,6 +46,9 @@ export { default as ConventionCalculationBreakdown } from './ConventionCalculati
 // Traceability / audit card (Odoo-style)
 export { default as ConventionTraceabilityCard } from './ConventionTraceabilityCard'
 
+// Key info card (convention parameters + dates + audit trail)
+export { default as ConventionKeyInfoCard } from './ConventionKeyInfoCard'
+
 // Form dialogs
 export { default as ImputationFormDialog } from './ImputationFormDialog'
 

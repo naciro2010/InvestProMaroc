@@ -1,4 +1,5 @@
-import { Paper, Stack, Typography, LinearProgress } from '@mui/material'
+import { Box, Typography, LinearProgress } from '@mui/material'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 
 interface ProjetProgressBarProps {
   pourcentageAvancement: number
@@ -6,17 +7,31 @@ interface ProjetProgressBarProps {
 
 const ProjetProgressBar = ({ pourcentageAvancement }: ProjetProgressBarProps) => {
   return (
-    <Paper sx={{ p: 3, mb: 3 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" fontWeight={600}>
+    <Box sx={{ ...componentStyles.card, p: 2.5, mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+        <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
           Progression Globale
         </Typography>
-        <Typography variant="h6" color="primary.main" fontWeight={600}>
-          {pourcentageAvancement.toFixed(2)}%
+        <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.primary[600] }}>
+          {pourcentageAvancement.toFixed(1)}%
         </Typography>
-      </Stack>
-      <LinearProgress variant="determinate" value={pourcentageAvancement} sx={{ height: 10, borderRadius: 5 }} />
-    </Paper>
+      </Box>
+      <LinearProgress
+        variant="determinate"
+        value={pourcentageAvancement}
+        sx={{
+          height: 8,
+          borderRadius: 4,
+          bgcolor: colors.neutral[100],
+          '& .MuiLinearProgress-bar': {
+            borderRadius: 4,
+            bgcolor: pourcentageAvancement >= 80 ? colors.success[400]
+              : pourcentageAvancement >= 40 ? colors.primary[400]
+              : colors.warning[400],
+          },
+        }}
+      />
+    </Box>
   )
 }
 

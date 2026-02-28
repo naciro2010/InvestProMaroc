@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
-import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  Divider,
-  Skeleton,
-} from '@mui/material'
-import { projetsAPI } from '../../../lib/projetsAPI'
+import { Box, Typography, Skeleton } from '@mui/material'
+import { projetsAPI } from '@/lib/projetsAPI'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
+import { FieldGroup, Field } from '@/components/core'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { Projet, formatDate } from './projetDetailTypes'
 
 interface ProjetInfoCardProps {
@@ -37,117 +32,93 @@ const ProjetInfoCard = ({ projetId }: ProjetInfoCardProps) => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl">
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-          <Skeleton variant="rectangular" height={200} />
-          <Skeleton variant="rectangular" height={200} />
-        </Box>
-      </Container>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: '8px' }} />
+        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: '8px' }} />
+      </Box>
     )
   }
 
   if (!projet) return null
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-        {/* Informations Principales */}
-        <Paper sx={{ p: 3, bgcolor: '#f9fafb' }}>
-          <Typography variant="h6" fontWeight={600} gutterBottom>
-            Informations Principales
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Box sx={{ display: 'grid', gap: 2 }}>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Code Projet</Typography>
-              <Typography variant="body1" fontWeight={500}>{projet.code}</Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Nom</Typography>
-              <Typography variant="body1" fontWeight={500}>{projet.nom}</Typography>
-            </Box>
-            {projet.description && (
-              <Box>
-                <Typography variant="caption" color="text.secondary">Description</Typography>
-                <RichTextDisplay html={projet.description} variant="block" />
-              </Box>
-            )}
-            {projet.responsableNom && (
-              <Box>
-                <Typography variant="caption" color="text.secondary">Responsable</Typography>
-                <Typography variant="body1">{projet.responsableNom}</Typography>
-              </Box>
-            )}
-          </Box>
-        </Paper>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* Informations Principales */}
+      <FieldGroup title="Informations Principales" columns={2}>
+        <Field label="Code Projet" value={projet.code} />
+        <Field label="Nom" value={projet.nom} />
+        {projet.responsableNom && (
+          <Field label="Responsable" value={projet.responsableNom} />
+        )}
+        {projet.localisation && (
+          <Field label="Localisation" value={projet.localisation} />
+        )}
+      </FieldGroup>
 
-        {/* Dates */}
-        <Paper sx={{ p: 3, bgcolor: '#f9fafb' }}>
-          <Typography variant="h6" fontWeight={600} gutterBottom>
-            Dates
+      {/* Description */}
+      {projet.description && (
+        <Box>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Description
           </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Box sx={{ display: 'grid', gap: 2 }}>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Date de Creation</Typography>
-              <Typography variant="body1">{formatDate(projet.dateCreation)}</Typography>
-            </Box>
-            {projet.dateDebut && (
-              <Box>
-                <Typography variant="caption" color="text.secondary">Date de Debut Prevue</Typography>
-                <Typography variant="body1">{formatDate(projet.dateDebut)}</Typography>
-              </Box>
-            )}
-            {projet.dateFin && (
-              <Box>
-                <Typography variant="caption" color="text.secondary">Date de Fin Prevue</Typography>
-                <Typography variant="body1">{formatDate(projet.dateFin)}</Typography>
-              </Box>
-            )}
-            {projet.dateDebutReel && (
-              <Box>
-                <Typography variant="caption" color="text.secondary">Date de Debut Reelle</Typography>
-                <Typography variant="body1">{formatDate(projet.dateDebutReel)}</Typography>
-              </Box>
-            )}
-            {projet.dateFinReelle && (
-              <Box>
-                <Typography variant="caption" color="text.secondary">Date de Fin Reelle</Typography>
-                <Typography variant="body1">{formatDate(projet.dateFinReelle)}</Typography>
-              </Box>
-            )}
-          </Box>
-        </Paper>
+          <RichTextDisplay html={projet.description} variant="block" />
+        </Box>
+      )}
 
-        {/* Observations */}
-        {(projet.motifSuspension || projet.motifAnnulation || projet.observations) && (
-          <Paper sx={{ p: 3, bgcolor: '#fff3cd', gridColumn: { xs: '1', md: 'span 2' } }}>
-            <Typography variant="h6" fontWeight={600} gutterBottom>
-              Observations
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
+      {/* Dates */}
+      <FieldGroup title="Dates" columns={2}>
+        <Field label="Date de Creation" value={projet.dateCreation ? formatDate(projet.dateCreation) : '-'} />
+        {projet.dateDebut && (
+          <Field label="Date de Debut Prevue" value={formatDate(projet.dateDebut)} />
+        )}
+        {projet.dateFin && (
+          <Field label="Date de Fin Prevue" value={formatDate(projet.dateFin)} />
+        )}
+        {projet.dateDebutReel && (
+          <Field label="Date de Debut Reelle" value={formatDate(projet.dateDebutReel)} />
+        )}
+        {projet.dateFinReelle && (
+          <Field label="Date de Fin Reelle" value={formatDate(projet.dateFinReelle)} />
+        )}
+        {projet.dureeMois && (
+          <Field label="Duree" value={`${projet.dureeMois} mois`} />
+        )}
+      </FieldGroup>
+
+      {/* Observations */}
+      {(projet.motifSuspension || projet.motifAnnulation || projet.observations) && (
+        <Box sx={{
+          ...componentStyles.card,
+          p: 2.5,
+          bgcolor: colors.warning[25],
+          borderColor: colors.warning[200],
+        }}>
+          <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary, mb: 1.5 }}>
+            Observations
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {projet.motifSuspension && (
-              <Box mb={2}>
-                <Typography variant="caption" color="text.secondary">Motif de Suspension</Typography>
-                <Typography variant="body1">{projet.motifSuspension}</Typography>
+              <Box>
+                <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Motif de Suspension</Typography>
+                <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary }}>{projet.motifSuspension}</Typography>
               </Box>
             )}
             {projet.motifAnnulation && (
-              <Box mb={2}>
-                <Typography variant="caption" color="text.secondary">Motif d'Annulation</Typography>
-                <Typography variant="body1">{projet.motifAnnulation}</Typography>
+              <Box>
+                <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Motif d'Annulation</Typography>
+                <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary }}>{projet.motifAnnulation}</Typography>
               </Box>
             )}
             {projet.observations && (
               <Box>
-                <Typography variant="caption" color="text.secondary">Observations</Typography>
-                <Typography variant="body1">{projet.observations}</Typography>
+                <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Observations</Typography>
+                <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary }}>{projet.observations}</Typography>
               </Box>
             )}
-          </Paper>
-        )}
-      </Box>
-    </Container>
+          </Box>
+        </Box>
+      )}
+    </Box>
   )
 }
 

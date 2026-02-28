@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Container,
-  Chip,
   Table,
   TableBody,
   TableCell,
@@ -16,8 +14,10 @@ import {
 } from '@mui/material'
 import { Visibility } from '@mui/icons-material'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
-import { conventionsAPI, projetConventionsAPI } from '../../../lib/api'
-import { projetsAPI } from '../../../lib/projetsAPI'
+import { StatusBadge } from '@/components/core'
+import { conventionsAPI, projetConventionsAPI } from '@/lib/api'
+import { projetsAPI } from '@/lib/projetsAPI'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { Convention, ProjetConventionAssociation, Projet, formatCurrency, formatDate } from './projetDetailTypes'
 
 interface ProjetConventionsTabProps {
@@ -36,17 +36,13 @@ const ProjetConventionsTab = ({ projetId }: ProjetConventionsTabProps) => {
         const allConventions: Convention[] = []
         const seenIds = new Set<number>()
 
-        // 1. Load direct FK conventionId from the projet
         let directConventionId: number | undefined
         try {
           const projetRes = await projetsAPI.getById(projetId)
           const projetData = projetRes.data as Projet
           directConventionId = projetData.conventionId
-        } catch {
-          // Projet load failed, continue
-        }
+        } catch { /* continue */ }
 
-        // 2. Load conventions from junction table (many-to-many)
         try {
           const junctionRes = await projetConventionsAPI.getByProjet(projetId)
           const associations: ProjetConventionAssociation[] = junctionRes.data.data || junctionRes.data || []
@@ -64,27 +60,19 @@ const ProjetConventionsTab = ({ projetId }: ProjetConventionsTabProps) => {
               })
             }
           })
-        } catch {
-          // Junction table query failed, continue with direct FK
-        }
+        } catch { /* continue */ }
 
-        // 3. Also load direct FK convention if not already in the list
         if (directConventionId && !seenIds.has(directConventionId)) {
           try {
             const convResponse = await conventionsAPI.getById(directConventionId)
             const convData = convResponse.data?.data || convResponse.data
-            if (convData) {
-              allConventions.push(convData as Convention)
-            }
-          } catch {
-            // Direct convention load failed, ignore
-          }
+            if (convData) allConventions.push(convData as Convention)
+          } catch { /* ignore */ }
         }
 
         setConventions(allConventions)
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Erreur chargement conventions'
-        console.error(message)
+        console.error(err instanceof Error ? err.message : 'Erreur chargement conventions')
       } finally {
         setLoading(false)
       }
@@ -93,60 +81,58 @@ const ProjetConventionsTab = ({ projetId }: ProjetConventionsTabProps) => {
   }, [projetId])
 
   if (loading) {
+    return <Skeleton variant="rectangular" height={200} sx={{ borderRadius: '8px' }} />
+  }
+
+  if (conventions.length === 0) {
     return (
-      <Container maxWidth="xl">
-        <Skeleton variant="rectangular" height={200} />
-      </Container>
+      <Box sx={{ py: 4, textAlign: 'center' }}>
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+          Aucune convention liee a ce projet
+        </Typography>
+      </Box>
     )
   }
 
   return (
-    <Container maxWidth="xl">
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Code</TableCell>
-              <TableCell>Numero</TableCell>
-              <TableCell>Libelle</TableCell>
-              <TableCell>Statut</TableCell>
-              <TableCell align="right">Budget</TableCell>
-              <TableCell>Date Debut</TableCell>
-              <TableCell>Date Fin</TableCell>
-              <TableCell align="center">Actions</TableCell>
+    <TableContainer sx={componentStyles.table.container}>
+      <Table>
+        <TableHead>
+          <TableRow sx={componentStyles.table.header}>
+            <TableCell sx={componentStyles.table.headerCell}>Code</TableCell>
+            <TableCell sx={componentStyles.table.headerCell}>Numero</TableCell>
+            <TableCell sx={componentStyles.table.headerCell}>Libelle</TableCell>
+            <TableCell sx={componentStyles.table.headerCell}>Statut</TableCell>
+            <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Budget</TableCell>
+            <TableCell sx={componentStyles.table.headerCell}>Date Debut</TableCell>
+            <TableCell sx={componentStyles.table.headerCell}>Date Fin</TableCell>
+            <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'center' }}>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {conventions.map((conv) => (
+            <TableRow key={conv.id} sx={componentStyles.table.row}>
+              <TableCell sx={componentStyles.table.cell}>{conv.code}</TableCell>
+              <TableCell sx={componentStyles.table.cell}>{conv.numero}</TableCell>
+              <TableCell sx={{ ...componentStyles.table.cell, fontWeight: typography.weights.medium }}>
+                <RichTextDisplay html={conv.libelle} variant="inline" />
+              </TableCell>
+              <TableCell sx={componentStyles.table.cell}>
+                <StatusBadge status={conv.statut} size="small" />
+              </TableCell>
+              <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>{formatCurrency(conv.budget)}</TableCell>
+              <TableCell sx={componentStyles.table.cell}>{conv.dateDebut ? formatDate(conv.dateDebut) : '-'}</TableCell>
+              <TableCell sx={componentStyles.table.cell}>{conv.dateFin ? formatDate(conv.dateFin) : '-'}</TableCell>
+              <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'center' }}>
+                <IconButton size="small" onClick={() => navigate(`/conventions/${conv.id}`)} sx={{ color: colors.primary[600] }}>
+                  <Visibility fontSize="small" />
+                </IconButton>
+              </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {conventions.map((conv) => (
-              <TableRow key={conv.id} hover>
-                <TableCell>{conv.code}</TableCell>
-                <TableCell>{conv.numero}</TableCell>
-                <TableCell sx={{ fontWeight: 500 }}><RichTextDisplay html={conv.libelle} variant="inline" /></TableCell>
-                <TableCell>
-                  <Chip label={conv.statut} size="small" color="info" />
-                </TableCell>
-                <TableCell align="right">{formatCurrency(conv.budget)}</TableCell>
-                <TableCell>{formatDate(conv.dateDebut)}</TableCell>
-                <TableCell>{conv.dateFin ? formatDate(conv.dateFin) : '-'}</TableCell>
-                <TableCell align="center">
-                  <IconButton size="small" onClick={() => navigate(`/conventions/${conv.id}`)}>
-                    <Visibility fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {conventions.length === 0 && (
-        <Box sx={{ py: 4, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            Aucune convention liee a ce projet
-          </Typography>
-        </Box>
-      )}
-    </Container>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }
 

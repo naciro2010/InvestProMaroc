@@ -1,5 +1,6 @@
-import { Container, Paper, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { colors, typography, componentStyles, chartColors } from '@/lib/designSystem'
 
 interface ChartData {
   mois: string
@@ -13,24 +14,22 @@ interface ProjetChartTabProps {
 
 const ProjetChartTab = ({ chartData }: ProjetChartTabProps) => {
   return (
-    <Container maxWidth="xl">
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          Courbe de Progression
-        </Typography>
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="mois" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="avancement" stroke="#2196f3" strokeWidth={2} name="Avancement réel" />
-            <Line type="monotone" dataKey="planifie" stroke="#ff9800" strokeWidth={2} strokeDasharray="5 5" name="Planifié" />
-          </LineChart>
-        </ResponsiveContainer>
-      </Paper>
-    </Container>
+    <Box sx={{ ...componentStyles.card, p: 2.5 }}>
+      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary, mb: 2 }}>
+        Courbe de Progression
+      </Typography>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" stroke={colors.neutral[200]} />
+          <XAxis dataKey="mois" tick={{ fontSize: 12, fill: colors.textSecondary }} />
+          <YAxis tick={{ fontSize: 12, fill: colors.textSecondary }} />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="avancement" stroke={chartColors.primary} strokeWidth={2} name="Avancement reel" />
+          <Line type="monotone" dataKey="planifie" stroke={chartColors.warning} strokeWidth={2} strokeDasharray="5 5" name="Planifie" />
+        </LineChart>
+      </ResponsiveContainer>
+    </Box>
   )
 }
 

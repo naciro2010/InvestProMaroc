@@ -34,6 +34,9 @@ export { default as ConventionSummaryTable } from './ConventionSummaryTable'
 export { default as ConventionPrevisionnelSection } from './ConventionPrevisionnelSection'
 export { default as ConventionRealisationSection } from './ConventionRealisationSection'
 
+// Financial flow card (unified IN/OUT view)
+export { default as ConventionFinancialFlowCard } from './ConventionFinancialFlowCard'
+
 // Smart buttons bar (Odoo-style)
 export { default as ConventionSmartButtons } from './ConventionSmartButtons'
 

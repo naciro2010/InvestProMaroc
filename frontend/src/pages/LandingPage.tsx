@@ -36,6 +36,11 @@ interface WorkflowItem {
   icon: ReactNode
 }
 
+interface Capability {
+  title: string
+  detail: string
+}
+
 interface UseCase {
   icon: ReactNode
   sector: string
@@ -43,9 +48,8 @@ interface UseCase {
   examples: string[]
 }
 
-interface PricingPlan {
+interface DeploymentPlan {
   name: string
-  price: string
   description: string
   features: string[]
   cta: string
@@ -131,6 +135,21 @@ const LandingPage = () => {
     { step: '5', title: 'Paiement', desc: "R\u00e8glement fournisseur", icon: <FaMoneyCheckAlt /> },
   ]
 
+  const capabilities: Capability[] = [
+    {
+      title: 'Vue unifi\u00e9e des op\u00e9rations',
+      detail: 'Un seul espace pour les directions financi\u00e8res, techniques et de contr\u00f4le.',
+    },
+    {
+      title: 'Automatisation du circuit administratif',
+      detail: 'Validation, notifications, journaux d\'audit et relances intelligentes.',
+    },
+    {
+      title: 'Pilotage orient\u00e9 performance',
+      detail: 'KPI instantan\u00e9s, consolidation multi-projets et tableaux ex\u00e9cutifs.',
+    },
+  ]
+
   // Use cases
   const useCases: UseCase[] = [
     {
@@ -159,53 +178,42 @@ const LandingPage = () => {
     },
   ]
 
-  // Pricing
-  const pricingPlans: PricingPlan[] = [
+  // Deployment options (sans prix)
+  const deploymentPlans: DeploymentPlan[] = [
     {
-      name: 'Starter',
-      price: 'Gratuit',
-      description: "Id\u00e9al pour d\u00e9couvrir la plateforme",
+      name: 'D\u00e9couverte guid\u00e9e',
+      description: "Id\u00e9al pour valider rapidement l'ad\u00e9quation avec vos processus internes",
       features: [
-        '10 conventions maximum',
-        '5 utilisateurs',
-        'Support email',
-        "Donn\u00e9es de d\u00e9mo",
-        'Exports Excel basiques',
+        'Environnement de d\u00e9monstration pr\u00eat \u00e0 l\'emploi',
+        'Parcours m\u00e9tier comment\u00e9 (convention \u2192 paiement)',
+        'Accompagnement initial des \u00e9quipes m\u00e9tier',
+        'Jeu de donn\u00e9es public pr\u00e9charg\u00e9',
       ],
-      cta: 'Essayer gratuitement',
+      cta: 'Planifier une d\u00e9mo',
       highlighted: false,
     },
     {
-      name: 'Professional',
-      price: '15,000 MAD/mois',
-      description: 'Pour les organisations moyennes',
+      name: 'D\u00e9ploiement op\u00e9rationnel',
+      description: 'Con\u00e7u pour les organisations qui souhaitent industrialiser leur pilotage',
       features: [
-        "Conventions illimit\u00e9es",
-        '25 utilisateurs',
-        'Support prioritaire',
-        'Formation incluse',
-        "Exports avanc\u00e9s",
-        "API REST compl\u00e8te",
-        "H\u00e9bergement s\u00e9curis\u00e9",
+        'Workflow complet conventions, march\u00e9s, d\u00e9comptes et paiements',
+        'Portail r\u00f4les & permissions align\u00e9 aux structures publiques',
+        'Tableaux de bord analytiques et exports avanc\u00e9s',
+        'Formation fonctionnelle et support de d\u00e9marrage',
       ],
-      cta: "Demander une d\u00e9mo",
+      cta: "D\u00e9marrer le cadrage",
       highlighted: true,
     },
     {
-      name: 'Enterprise',
-      price: 'Sur devis',
-      description: 'Solution sur-mesure pour grandes organisations',
+      name: 'Transformation \u00e0 grande \u00e9chelle',
+      description: 'Pour les minist\u00e8res, grandes agences et programmes multi-entit\u00e9s',
       features: [
-        'Tout Professional +',
-        "Utilisateurs illimit\u00e9s",
-        "Support d\u00e9di\u00e9 24/7",
-        'Personnalisation UI',
-        "Int\u00e9grations ERP",
-        'SLA 99.9%',
-        'Formation sur site',
-        "H\u00e9bergement d\u00e9di\u00e9",
+        'Interfa\u00e7age SI existant (ERP, tr\u00e9sorerie, GED, SSO)',
+        'Gouvernance multi-instances et reporting consolid\u00e9',
+        'Runbook de conduite du changement et transfert de comp\u00e9tences',
+        'Accompagnement continu des \u00e9quipes projet',
       ],
-      cta: 'Nous contacter',
+      cta: 'Construire la feuille de route',
       highlighted: false,
     },
   ]
@@ -264,10 +272,10 @@ const LandingPage = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-950">
       <LandingHero stats={stats} />
-      <LandingFeatures features={features} workflow={workflow} useCases={useCases} />
-      <LandingStats pricingPlans={pricingPlans} testimonials={testimonials} faqs={faqs} />
+      <LandingFeatures features={features} workflow={workflow} useCases={useCases} capabilities={capabilities} />
+      <LandingStats deploymentPlans={deploymentPlans} testimonials={testimonials} faqs={faqs} />
       <LandingCTA />
     </div>
   )

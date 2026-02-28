@@ -1,12 +1,5 @@
 import { useState, useEffect } from 'react'
-import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  Stack,
-  Skeleton,
-} from '@mui/material'
+import { Box, Typography, Skeleton } from '@mui/material'
 import {
   Edit,
   PlayArrow,
@@ -15,67 +8,61 @@ import {
   Cancel,
   Timeline,
 } from '@mui/icons-material'
-import { projetsAPI } from '../../../lib/projetsAPI'
+import { projetsAPI } from '@/lib/projetsAPI'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { Projet, formatDate } from './projetDetailTypes'
 
 interface ProjetHistoriqueTabProps {
   projetId: number
 }
 
-interface HistoryIconBoxProps {
-  bgColor: string
-  textColor: string
-  children: React.ReactNode
-}
-
-const HistoryIconBox = ({ bgColor, textColor, children }: HistoryIconBoxProps) => (
-  <Box sx={{
-    p: 1,
-    borderRadius: '50%',
-    bgcolor: bgColor,
-    color: textColor,
-    height: 40,
-    width: 40,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }}>
-    {children}
-  </Box>
-)
-
 interface HistoryEntryProps {
   icon: React.ReactNode
   bgColor: string
-  textColor: string
+  iconColor: string
   title: string
   date?: string
   description?: string
 }
 
-const HistoryEntry = ({ icon, bgColor, textColor, title, date, description }: HistoryEntryProps) => (
-  <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
-    <Stack direction="row" spacing={2}>
-      <HistoryIconBox bgColor={bgColor} textColor={textColor}>
-        {icon}
-      </HistoryIconBox>
-      <Box flex={1}>
-        <Typography variant="body1" fontWeight={600}>
-          {title}
+const HistoryEntry = ({ icon, bgColor, iconColor, title, date, description }: HistoryEntryProps) => (
+  <Box sx={{
+    ...componentStyles.card,
+    p: 2,
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 2,
+  }}>
+    <Box sx={{
+      p: 1,
+      borderRadius: '50%',
+      bgcolor: bgColor,
+      color: iconColor,
+      height: 40,
+      width: 40,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}>
+      {icon}
+    </Box>
+    <Box sx={{ flex: 1 }}>
+      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+        {title}
+      </Typography>
+      {date && (
+        <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+          {date}
         </Typography>
-        {date && (
-          <Typography variant="caption" color="text.secondary">
-            {date}
-          </Typography>
-        )}
-        {description && (
-          <Typography variant="body2" color="text.secondary" mt={1}>
-            {description}
-          </Typography>
-        )}
-      </Box>
-    </Stack>
-  </Paper>
+      )}
+      {description && (
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mt: 0.5 }}>
+          {description}
+        </Typography>
+      )}
+    </Box>
+  </Box>
 )
 
 const ProjetHistoriqueTab = ({ projetId }: ProjetHistoriqueTabProps) => {
@@ -99,25 +86,21 @@ const ProjetHistoriqueTab = ({ projetId }: ProjetHistoriqueTabProps) => {
   }, [projetId])
 
   if (loading) {
-    return (
-      <Container maxWidth="xl">
-        <Skeleton variant="rectangular" height={300} />
-      </Container>
-    )
+    return <Skeleton variant="rectangular" height={300} sx={{ borderRadius: '8px' }} />
   }
 
   if (!projet) return null
 
   return (
-    <Container maxWidth="xl">
-      <Typography variant="h6" fontWeight={600} gutterBottom mb={3}>
+    <Box>
+      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary, mb: 2 }}>
         Historique des Modifications
       </Typography>
-      <Stack spacing={2}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         <HistoryEntry
-          icon={<Timeline />}
-          bgColor="primary.light"
-          textColor="primary.dark"
+          icon={<Timeline fontSize="small" />}
+          bgColor={colors.primary[50]}
+          iconColor={colors.primary[600]}
           title="Projet cree"
           date={projet.dateCreation ? formatDate(projet.dateCreation) : 'N/A'}
           description="Statut initial: EN_PREPARATION"
@@ -125,9 +108,9 @@ const ProjetHistoriqueTab = ({ projetId }: ProjetHistoriqueTabProps) => {
 
         {projet.dateDebutReel && (
           <HistoryEntry
-            icon={<PlayArrow />}
-            bgColor="success.light"
-            textColor="success.dark"
+            icon={<PlayArrow fontSize="small" />}
+            bgColor={colors.success[50]}
+            iconColor={colors.success[600]}
             title="Projet demarre"
             date={formatDate(projet.dateDebutReel)}
             description="Passage au statut: EN_COURS"
@@ -136,9 +119,9 @@ const ProjetHistoriqueTab = ({ projetId }: ProjetHistoriqueTabProps) => {
 
         {projet.motifSuspension && (
           <HistoryEntry
-            icon={<Pause />}
-            bgColor="warning.light"
-            textColor="warning.dark"
+            icon={<Pause fontSize="small" />}
+            bgColor={colors.warning[50]}
+            iconColor={colors.warning[600]}
             title="Projet suspendu"
             description={`Motif: ${projet.motifSuspension}`}
           />
@@ -146,9 +129,9 @@ const ProjetHistoriqueTab = ({ projetId }: ProjetHistoriqueTabProps) => {
 
         {projet.dateFinReelle && (
           <HistoryEntry
-            icon={<Done />}
-            bgColor="success.light"
-            textColor="success.dark"
+            icon={<Done fontSize="small" />}
+            bgColor={colors.success[50]}
+            iconColor={colors.success[600]}
             title="Projet termine"
             date={formatDate(projet.dateFinReelle)}
             description="Passage au statut: TERMINE"
@@ -157,9 +140,9 @@ const ProjetHistoriqueTab = ({ projetId }: ProjetHistoriqueTabProps) => {
 
         {projet.motifAnnulation && (
           <HistoryEntry
-            icon={<Cancel />}
-            bgColor="error.light"
-            textColor="error.dark"
+            icon={<Cancel fontSize="small" />}
+            bgColor={colors.danger[50]}
+            iconColor={colors.danger[600]}
             title="Projet annule"
             description={`Motif: ${projet.motifAnnulation}`}
           />
@@ -167,15 +150,15 @@ const ProjetHistoriqueTab = ({ projetId }: ProjetHistoriqueTabProps) => {
 
         {projet.dateModification && (
           <HistoryEntry
-            icon={<Edit />}
-            bgColor="info.light"
-            textColor="info.dark"
+            icon={<Edit fontSize="small" />}
+            bgColor={colors.info[50]}
+            iconColor={colors.info[600]}
             title="Derniere modification"
             date={formatDate(projet.dateModification)}
           />
         )}
-      </Stack>
-    </Container>
+      </Box>
+    </Box>
   )
 }
 

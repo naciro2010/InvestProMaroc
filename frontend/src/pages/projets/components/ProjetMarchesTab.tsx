@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Container,
-  Chip,
   Table,
   TableBody,
   TableCell,
@@ -16,8 +14,10 @@ import {
 } from '@mui/material'
 import { Visibility } from '@mui/icons-material'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
-import { api } from '../../../lib/api'
-import { Marche, formatCurrency, getStatusColor } from './projetDetailTypes'
+import { StatusBadge } from '@/components/core'
+import { api } from '@/lib/api'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { Marche, formatCurrency } from './projetDetailTypes'
 
 interface ProjetMarchesTabProps {
   projetId: number
@@ -35,8 +35,7 @@ const ProjetMarchesTab = ({ projetId }: ProjetMarchesTabProps) => {
         const res = await api.get(`/marches/projet/${projetId}`)
         setMarches(res.data.data || res.data || [])
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Erreur chargement marches'
-        console.error(message)
+        console.error(err instanceof Error ? err.message : 'Erreur chargement marches')
         setMarches([])
       } finally {
         setLoading(false)
@@ -46,56 +45,54 @@ const ProjetMarchesTab = ({ projetId }: ProjetMarchesTabProps) => {
   }, [projetId])
 
   if (loading) {
+    return <Skeleton variant="rectangular" height={200} sx={{ borderRadius: '8px' }} />
+  }
+
+  if (marches.length === 0) {
     return (
-      <Container maxWidth="xl">
-        <Skeleton variant="rectangular" height={200} />
-      </Container>
+      <Box sx={{ py: 4, textAlign: 'center' }}>
+        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+          Aucun marche lie a ce projet
+        </Typography>
+      </Box>
     )
   }
 
   return (
-    <Container maxWidth="xl">
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Code</TableCell>
-              <TableCell>Objet</TableCell>
-              <TableCell>Fournisseur</TableCell>
-              <TableCell align="right">Montant TTC</TableCell>
-              <TableCell>Statut</TableCell>
-              <TableCell align="center">Actions</TableCell>
+    <TableContainer sx={componentStyles.table.container}>
+      <Table>
+        <TableHead>
+          <TableRow sx={componentStyles.table.header}>
+            <TableCell sx={componentStyles.table.headerCell}>Code</TableCell>
+            <TableCell sx={componentStyles.table.headerCell}>Objet</TableCell>
+            <TableCell sx={componentStyles.table.headerCell}>Fournisseur</TableCell>
+            <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Montant TTC</TableCell>
+            <TableCell sx={componentStyles.table.headerCell}>Statut</TableCell>
+            <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'center' }}>Actions</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {marches.map((marche) => (
+            <TableRow key={marche.id} sx={componentStyles.table.row}>
+              <TableCell sx={componentStyles.table.cell}>{marche.code}</TableCell>
+              <TableCell sx={componentStyles.table.cell}>
+                <RichTextDisplay html={marche.objet} variant="inline" />
+              </TableCell>
+              <TableCell sx={componentStyles.table.cell}>{marche.fournisseurNom || '-'}</TableCell>
+              <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>{formatCurrency(marche.montantTTC)}</TableCell>
+              <TableCell sx={componentStyles.table.cell}>
+                <StatusBadge status={marche.statut} size="small" />
+              </TableCell>
+              <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'center' }}>
+                <IconButton size="small" onClick={() => navigate(`/marches/${marche.id}`)} sx={{ color: colors.primary[600] }}>
+                  <Visibility fontSize="small" />
+                </IconButton>
+              </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {marches.map((marche) => (
-              <TableRow key={marche.id} hover>
-                <TableCell>{marche.code}</TableCell>
-                <TableCell><RichTextDisplay html={marche.objet} variant="inline" /></TableCell>
-                <TableCell>{marche.fournisseurNom || '-'}</TableCell>
-                <TableCell align="right">{formatCurrency(marche.montantTTC)}</TableCell>
-                <TableCell>
-                  <Chip label={marche.statut} size="small" color={getStatusColor(marche.statut)} />
-                </TableCell>
-                <TableCell align="center">
-                  <IconButton size="small" onClick={() => navigate(`/marches/${marche.id}`)}>
-                    <Visibility fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {marches.length === 0 && (
-        <Box sx={{ py: 4, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            Aucun marche lie a ce projet
-          </Typography>
-        </Box>
-      )}
-    </Container>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }
 

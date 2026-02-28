@@ -12,6 +12,7 @@ export { default as ConventionImputationsCard } from './ConventionImputationsCar
 export { default as ConventionBudgetExecutionCard } from './ConventionBudgetExecutionCard'
 export { default as ConventionBudgetDetailCard } from './ConventionBudgetDetailCard'
 export { default as ConventionBudgetLignesCard } from './ConventionBudgetLignesCard'
+export { default as ConventionBudgetLignesInline } from './ConventionBudgetLignesInline'
 export { default as BudgetLigneDetailDrawer } from './BudgetLigneDetailDrawer'
 export { default as MarcheDetailDrawer } from './MarcheDetailDrawer'
 export { default as PartenaireDetailDrawer } from './PartenaireDetailDrawer'

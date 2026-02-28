@@ -5,6 +5,7 @@ import {
   Receipt, DollarSign, LogOut, User, Settings, Briefcase, ChevronDown,
   ShoppingCart, UserCog, Wallet, Tags, Handshake, BarChart3, Search, X,
   Command,
+  MessageSquare,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { colors, typography, borders, transitions, shadows } from '@/lib/designSystem'
@@ -258,6 +259,7 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
         {/* Top-level items */}
         <SidebarLink path="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" isActive={isActive} onNavigate={handleMobileNavigate} />
         <SidebarLink path="/reporting" icon={<BarChart3 className="w-4 h-4" />} label="Reporting" isActive={isActive} onNavigate={handleMobileNavigate} />
+        <SidebarLink path="/messagerie" icon={<MessageSquare className="w-4 h-4" />} label="Messagerie" isActive={isActive} onNavigate={handleMobileNavigate} />
 
         <div style={{ height: '1px', backgroundColor: colors.divider, margin: '6px 16px' }} />
 

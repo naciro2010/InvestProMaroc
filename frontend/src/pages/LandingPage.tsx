@@ -83,7 +83,7 @@ const LandingPage = () => {
     {
       icon: <FaFileContract className="text-3xl" />,
       title: 'Conventions & Avenants',
-      description: "G\u00e9rez vos conventions CADRE et SPECIFIQUES avec workflow complet (BROUILLON \u2192 SOUMIS \u2192 VALIDEE \u2192 EN_EXECUTION \u2192 ACHEVE). Sous-conventions hi\u00e9rarchiques avec h\u00e9ritage de param\u00e8tres.",
+      description: "Structurez vos conventions CADRE et SPECIFIQUES avec workflow complet (BROUILLON \u2192 SOUMIS \u2192 VALIDEE \u2192 EN_EXECUTION \u2192 ACHEVE), pièces jointes, versioning des avenants et héritage des paramètres métiers.",
       benefits: [
         "Workflow avec validation multi-niveaux",
         "Historique complet des avenants (JSONB)",
@@ -94,7 +94,7 @@ const LandingPage = () => {
     {
       icon: <FaMapMarkerAlt className="text-3xl" />,
       title: "March\u00e9s G\u00e9olocalis\u00e9s",
-      description: "Suivi d\u00e9taill\u00e9 ligne par ligne avec g\u00e9olocalisation OpenStreetMap. Avenants avec impact montants et d\u00e9lais. Alertes automatiques sur seuils.",
+      description: "Pilotez chaque marché ligne par ligne avec géolocalisation OpenStreetMap, suivi des délais, indicateurs d\'avancement et gestion des avenants avec impact automatique sur montants et calendrier.",
       benefits: [
         'Carte interactive avec Leaflet',
         'Suivi ligne par ligne avec imputations',
@@ -105,7 +105,7 @@ const LandingPage = () => {
     {
       icon: <FaFileInvoiceDollar className="text-3xl" />,
       title: "D\u00e9comptes & Paiements",
-      description: "De la situation de travaux au paiement fournisseur. Calcul automatique des retenues (garantie, RAS, p\u00e9nalit\u00e9s). Contr\u00f4le budg\u00e9taire en temps r\u00e9el.",
+      description: "Du constat d\'avancement à l\'ordre de paiement, sécurisez chaque étape: calcul des retenues (garantie, RAS, pénalités), contrôle des montants engagés et conformité avant règlement fournisseur.",
       benefits: [
         "Workflow D\u00e9compte \u2192 OP \u2192 Paiement",
         'Calcul automatique des retenues',
@@ -116,7 +116,7 @@ const LandingPage = () => {
     {
       icon: <FaChartPie className="text-3xl" />,
       title: 'Analyse Multidimensionnelle',
-      description: "Plan analytique dynamique avec dimensions illimit\u00e9es (Budget, Projet, Secteur, D\u00e9partement, Phase...). Graphiques interactifs. Exports Excel instantan\u00e9s.",
+      description: "Analysez vos données avec un plan analytique dynamique (Budget, Projet, Secteur, Département, Phase…), filtres multicritères, graphiques interactifs et exports prêts pour les instances de pilotage.",
       benefits: [
         'Dimensions configurables (JSONB)',
         'Graphiques Recharts interactifs',
@@ -138,15 +138,15 @@ const LandingPage = () => {
   const capabilities: Capability[] = [
     {
       title: 'Vue unifi\u00e9e des op\u00e9rations',
-      detail: 'Un seul espace pour les directions financi\u00e8res, techniques et de contr\u00f4le.',
+      detail: 'Un écran unique pour suivre conventions, engagements, réalisations, pièces justificatives et validations inter-services.',
     },
     {
       title: 'Automatisation du circuit administratif',
-      detail: 'Validation, notifications, journaux d\'audit et relances intelligentes.',
+      detail: 'Circuits de validation configurables, notifications automatiques, journal d’audit complet et relances selon les échéances.',
     },
     {
       title: 'Pilotage orient\u00e9 performance',
-      detail: 'KPI instantan\u00e9s, consolidation multi-projets et tableaux ex\u00e9cutifs.',
+      detail: 'Indicateurs instantanés, vues consolidées multi-projets et synthèses décisionnelles pour la direction.',
     },
   ]
 
@@ -267,12 +267,12 @@ const LandingPage = () => {
     },
     {
       question: 'Proposez-vous une formation ?',
-      answer: "Oui, formation initiale incluse dans les plans Professional et Enterprise. Documentation compl\u00e8te et vid\u00e9os tutoriels disponibles.",
+      answer: "Oui. Nous proposons un accompagnement au démarrage, un transfert de compétences, une documentation complète et des supports pédagogiques pour les équipes métier et SI.",
     },
   ]
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-white">
       <LandingHero stats={stats} />
       <LandingFeatures features={features} workflow={workflow} useCases={useCases} capabilities={capabilities} />
       <LandingStats deploymentPlans={deploymentPlans} testimonials={testimonials} faqs={faqs} />

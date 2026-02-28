@@ -12,7 +12,7 @@ const LandingCTA = () => {
   return (
     <>
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-700 to-indigo-700 text-white border-y border-blue-400/30">
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-y border-blue-200">
         <Container maxWidth="lg">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -21,10 +21,10 @@ const LandingCTA = () => {
             className="text-center max-w-3xl mx-auto"
           >
             <h3 className="text-4xl font-bold mb-4">
-              {"Pr\u00eat \u00e0 industrialiser votre pilotage public ?"}
+              {"Pr\u00eat \u00e0 moderniser votre gestion des conventions et investissements ?"}
             </h3>
             <p className="text-xl mb-8 text-blue-100">
-              {"Passez d\u2019un suivi fragment\u00e9 \u00e0 une plateforme unifi\u00e9e, claire et orient\u00e9e r\u00e9sultats."}
+              {"Offrez \u00e0 vos \u00e9quipes une exp\u00e9rience claire, structur\u00e9e et orient\u00e9e ex\u00e9cution, avec un suivi complet de chaque dossier."}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button

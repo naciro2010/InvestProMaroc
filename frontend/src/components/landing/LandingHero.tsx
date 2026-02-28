@@ -41,7 +41,7 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
       <motion.nav
         initial={{ y: -50 }}
         animate={{ y: 0 }}
-        className="bg-slate-950 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-sm bg-opacity-95"
+        className="bg-white border-b border-slate-200 sticky top-0 z-50 backdrop-blur-sm bg-opacity-95"
       >
         <Container maxWidth="lg">
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
@@ -50,15 +50,15 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
                 <FaChartLine className="text-white text-xl" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-white">InvestPro Maroc</h1>
-                <p className="text-xs text-slate-400">Gestion Investissements Publics</p>
+                <h1 className="text-lg font-semibold text-slate-900">InvestPro Maroc</h1>
+                <p className="text-xs text-slate-500">Gestion Investissements Publics</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
               <Button
                 variant="text"
                 onClick={() => navigate('/login')}
-                sx={{ textTransform: 'none', color: '#cbd5e1' }}
+                sx={{ textTransform: 'none', color: '#334155' }}
               >
                 Connexion
               </Button>
@@ -75,8 +75,8 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
       </motion.nav>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.24),transparent_45%)]" />
+      <section className="py-20 bg-gradient-to-b from-blue-50 via-white to-slate-50 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.18),transparent_45%)]" />
         <Container maxWidth="lg">
           <motion.div
             initial="hidden"
@@ -90,11 +90,11 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
               size="small"
               sx={{ mb: 3, fontWeight: 500 }}
             />
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              {"Un cockpit moderne pour piloter vos investissements publics"}
+            <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+              {"La plateforme claire et structurée pour piloter vos conventions publiques"}
             </h2>
-            <p className="text-xl text-slate-300 mb-8 leading-relaxed">
-              {"Inspir\u00e9 des standards Odoo: une exp\u00e9rience claire, modulaire et productive pour g\u00e9rer conventions, march\u00e9s, d\u00e9comptes, paiements et analyse de performance dans un seul environnement."}
+            <p className="text-xl text-slate-600 mb-8 leading-relaxed">
+              {"Inspirée des meilleures pratiques ERP, InvestPro centralise le cycle complet: convention cadre/spécifique, marchés, suivi de réalisation, décomptes, ordres de paiement et tableaux de bord analytiques pour un pilotage précis et collaboratif."}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
               <Button
@@ -115,7 +115,7 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
                 En savoir plus
               </Button>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-300">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-600">
               <div className="flex items-center space-x-2">
                 <FaCheckCircle className="text-green-600" />
                 <span>Architecture web sans installation</span>
@@ -134,7 +134,7 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-slate-900 border-y border-slate-800">
+      <section className="py-16 bg-white border-y border-slate-200">
         <Container maxWidth="lg">
           <motion.div
             initial="hidden"
@@ -144,12 +144,12 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
             className="grid grid-cols-2 md:grid-cols-4 gap-8"
           >
             {stats.map((stat, index) => (
-              <motion.div key={index} variants={fadeIn} className="text-center rounded-2xl border border-slate-700 p-5 bg-slate-950/60">
-                <div className="text-blue-400 text-3xl mb-2 flex justify-center">
+              <motion.div key={index} variants={fadeIn} className="text-center rounded-2xl border border-slate-200 p-5 bg-slate-50">
+                <div className="text-blue-600 text-3xl mb-2 flex justify-center">
                   {stat.icon}
                 </div>
-                <div className="text-4xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-sm text-slate-300">{stat.label}</div>
+                <div className="text-4xl font-bold text-slate-900 mb-1">{stat.value}</div>
+                <div className="text-sm text-slate-600">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>

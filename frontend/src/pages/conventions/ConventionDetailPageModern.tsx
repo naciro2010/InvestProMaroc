@@ -1,14 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Alert,
-  Skeleton,
-  Tooltip,
-} from '@mui/material'
+import { Box, Container, Typography, Button, Alert, Skeleton, Tooltip } from '@mui/material'
 import { Lock, CalendarMonth } from '@mui/icons-material'
 import { Plus, Pencil } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
@@ -17,17 +9,18 @@ import AppLayout from '../../components/layout/AppLayout'
 import { ControlPanel, FormView, StatusBadge } from '../../components/core'
 import type { StatusStep } from '../../components/core'
 import RichTextDisplay from '../../components/ui/RichTextDisplay'
-import { conventionsAPI, versementsPrevisionnelsAPI } from '../../lib/api'
+import { conventionsAPI } from '../../lib/api'
 import {
   ConventionWorkflowActions,
-  ConventionPrevisionnelSection,
   ConventionRealisationSection,
   ParentConventionBanner,
-  ConventionSummaryTable,
 } from '../../components/conventions/detail'
+import ConventionSmartButtons from '../../components/conventions/detail/ConventionSmartButtons'
+import ConventionFinancialFlowCard from '../../components/conventions/detail/ConventionFinancialFlowCard'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import VersementFormDialog from '../../components/conventions/VersementFormDialog'
+import type { ConventionDetailEnrichedDTO } from '../../types/api'
 
 interface Convention {
   id: number; code: string; numero: string; libelle: string; objet: string
@@ -60,35 +53,34 @@ const ConventionDetailPageModern = () => {
   const { user, isAdmin, isManager } = useAuth()
   const { showSuccess, showError } = useToast()
 
-  // Convention + versements (shared between PrevisionnelSection sub-components)
   const [loading, setLoading] = useState(true)
   const [convention, setConvention] = useState<Convention | null>(null)
-  const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
+  const [enrichedData, setEnrichedData] = useState<ConventionDetailEnrichedDTO | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Partenaire & Versement dialog state
+  // CRUD dialog state
   const [addPartenaireDialogOpen, setAddPartenaireDialogOpen] = useState(false)
   const [editPartenaireData, setEditPartenaireData] = useState<{ id: number; partenaireId: number; partenaireNom: string; budgetAlloue: number; pourcentage: number; estMaitreOeuvre: boolean; estMaitreOeuvreDelegue: boolean; remarques?: string } | null>(null)
-  const [partenairesRefreshKey, setPartenairesRefreshKey] = useState(0)
   const [versementDialogOpen, setVersementDialogOpen] = useState(false)
   const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
+  const [financialRefreshKey, setFinancialRefreshKey] = useState(0)
+
+  const refreshFinancialData = useCallback(() => setFinancialRefreshKey(k => k + 1), [])
 
   useEffect(() => { if (id) loadConvention(parseInt(id)) }, [id])
 
   const loadConvention = async (cid: number) => {
     try {
       setLoading(true)
-      const res = await conventionsAPI.getById(cid)
+      const [res, enrichedRes] = await Promise.all([
+        conventionsAPI.getById(cid),
+        conventionsAPI.getDetailEnriched(cid).catch(() => null),
+      ])
       const raw = res.data.data || res.data
       setConvention({ ...raw, statut: normalizeStatut(raw.statut) })
-      loadVersements(cid)
+      if (enrichedRes) setEnrichedData(enrichedRes.data.data || enrichedRes.data || null)
     } catch { setError('Erreur lors du chargement de la convention') }
     finally { setLoading(false) }
-  }
-
-  const loadVersements = async (cid: number) => {
-    try { const r = await versementsPrevisionnelsAPI.getByConvention(cid); setVersements(r.data.data || r.data || []) }
-    catch { setVersements([]) }
   }
 
   useEffect(() => { if (error) { const t = setTimeout(() => setError(null), 5000); return () => clearTimeout(t) } }, [error])
@@ -102,6 +94,7 @@ const ConventionDetailPageModern = () => {
         </Box>
         <Container maxWidth="xl" sx={{ py: 3 }}>
           <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
+          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mb: 2 }} />
           <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
           <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
         </Container>
@@ -188,36 +181,24 @@ const ConventionDetailPageModern = () => {
             statusSteps={effectiveSteps}
             currentStatus={convention.statut}
           >
-            {/* Title + Metadata Header */}
-            <Box sx={{ mb: 2 }}>
-              {/* Title - use RichTextDisplay for rich text content */}
+            {/* Title + Description + Metadata */}
+            <Box sx={{ mb: 1.5 }}>
               <Box sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
                 <RichTextDisplay html={convention.libelle || convention.code} variant="compact" allowExpand={false} />
               </Box>
-
-              {/* Objet / Description */}
               {convention.objet && (
-                <Box sx={{ mb: 1.5 }}>
+                <Box sx={{ mb: 1 }}>
                   <RichTextDisplay html={convention.objet} variant="compact" collapseLength={200} />
                 </Box>
               )}
-
-              {/* Compact metadata: code, numero, type, dates */}
-              <Box sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: 1.5,
-                py: 1,
-                borderTop: `1px solid ${colors.borderSubtle}`,
-              }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, py: 0.75, borderTop: `1px solid ${colors.borderSubtle}` }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Code:</Typography>
                   <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.code}</Typography>
                 </Box>
                 <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>N°:</Typography>
+                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>N:</Typography>
                   <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.numero}</Typography>
                 </Box>
                 <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
@@ -240,7 +221,7 @@ const ConventionDetailPageModern = () => {
 
             {/* Parent Convention Banner */}
             {convention.parentConventionId && convention.parentConventionNumero && (
-              <Box sx={{ mb: 2 }}>
+              <Box sx={{ mb: 1.5 }}>
                 <ParentConventionBanner
                   parentConventionId={convention.parentConventionId}
                   parentConventionNumero={convention.parentConventionNumero}
@@ -249,46 +230,53 @@ const ConventionDetailPageModern = () => {
               </Box>
             )}
 
-            {/* 1. Financial Summary (highest priority - Odoo-style KPI cards) */}
+            {/* Smart Buttons (entity counts) */}
+            {enrichedData && (
+              <Box sx={{ mb: 2 }}>
+                <ConventionSmartButtons
+                  conventionId={convention.id}
+                  typeConvention={convention.typeConvention}
+                  nombreMarches={enrichedData.nombreMarches}
+                  nombreProjets={enrichedData.nombreProjets}
+                  nombreSousConventions={enrichedData.nombreSousConventions}
+                  nombreAvenants={enrichedData.nombreAvenants}
+                  nombrePartenaires={enrichedData.nombrePartenaires}
+                />
+              </Box>
+            )}
+
+            {/* PRIMARY: Financial Flow (Ressources IN / Emplois OUT / Solde) */}
             <Box sx={{ mb: 3 }}>
-              <ConventionSummaryTable
+              <ConventionFinancialFlowCard
                 conventionId={convention.id}
                 conventionBudget={convention.budget}
                 tauxCommission={convention.tauxCommission}
                 tauxTva={convention.tauxTva}
-                baseCalcul={convention.baseCalcul}
-                commissionMode={convention.commissionMode}
+                commissionTTC={enrichedData?.commissionTTC}
+                canEdit={canEdit}
+                refreshKey={financialRefreshKey}
+                onAddPartenaire={() => setAddPartenaireDialogOpen(true)}
+                onEditPartenaire={(p) => {
+                  setEditPartenaireData({
+                    id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
+                    budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
+                    estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
+                    remarques: p.remarques || undefined,
+                  })
+                  setAddPartenaireDialogOpen(true)
+                }}
+                onAddVersement={() => { setEditingVersement(null); setVersementDialogOpen(true) }}
+                onRefresh={refreshFinancialData}
               />
             </Box>
 
-            {/* 2. Convention Info & Planning (partenaires, versements, imputations, budget lines, subventions) */}
-            <ConventionPrevisionnelSection
+            {/* SECONDARY: Projects, Marches, Budget lignes, Imputations, Avenants */}
+            <ConventionRealisationSection
               convention={convention}
               canEdit={canEdit}
-              partenairesRefreshKey={partenairesRefreshKey}
-              versements={versements}
-              onAddPartenaire={() => setAddPartenaireDialogOpen(true)}
-              onEditPartenaire={(p) => {
-                setEditPartenaireData({
-                  id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
-                  budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
-                  estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
-                  remarques: p.remarques || undefined,
-                })
-                setAddPartenaireDialogOpen(true)
-              }}
-              onAddVersement={() => { setEditingVersement(null); setVersementDialogOpen(true) }}
-              onEditVersement={(v) => { setEditingVersement(v); setVersementDialogOpen(true) }}
-              onDeleteVersement={async (vid) => {
-                if (!window.confirm('Supprimer ce versement previsionnel ?')) return
-                try { await versementsPrevisionnelsAPI.delete(vid); showSuccess('Versement supprime'); loadVersements(convention.id) }
-                catch { showError('Erreur lors de la suppression') }
-              }}
-              onRefresh={() => loadConvention(convention.id)}
+              onRefresh={refreshFinancialData}
+              refreshKey={financialRefreshKey}
             />
-
-            {/* 3. Projects, Marches, Sous-conventions, Avenants (self-contained) */}
-            <ConventionRealisationSection convention={convention} />
           </FormView>
         </Container>
       </Box>
@@ -296,8 +284,14 @@ const ConventionDetailPageModern = () => {
       {/* Partenaire & Versement Dialogs */}
       {convention && (
         <>
-          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget} onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }} onSuccess={() => { setPartenairesRefreshKey((k: number) => k + 1); setEditPartenaireData(null); loadVersements(convention.id) }} editData={editPartenaireData} />
-          <VersementFormDialog open={versementDialogOpen} conventionId={convention.id} onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }} onSuccess={() => loadVersements(convention.id)} editingVersement={editingVersement} />
+          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget}
+            onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
+            onSuccess={() => { refreshFinancialData(); setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
+            editData={editPartenaireData} />
+          <VersementFormDialog open={versementDialogOpen} conventionId={convention.id}
+            onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }}
+            onSuccess={() => { refreshFinancialData(); setVersementDialogOpen(false); setEditingVersement(null) }}
+            editingVersement={editingVersement} />
         </>
       )}
     </AppLayout>

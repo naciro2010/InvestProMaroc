@@ -338,6 +338,7 @@ export const conventionsAPI = {
   getFinances: (id: number) => api.get(`/conventions/${id}/finances`),
   getDates: (id: number) => api.get(`/conventions/${id}/dates`),
   getStats: (id: number) => api.get(`/conventions/${id}/stats`),
+  getDetailEnriched: (id: number) => api.get(`/conventions/${id}/detail-enriched`),
 }
 
 // Projets API

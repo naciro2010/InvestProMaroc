@@ -5,6 +5,8 @@ import { ListAlt } from '@mui/icons-material'
 import { StatusBadge, InlineTable, Notebook, ResizableSection, ConfirmDialog } from '@/components/core'
 import ConventionAvenantsTab from './ConventionAvenantsTab'
 import { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedTab'
+import ConventionBudgetLignesCard from './ConventionBudgetLignesCard'
+import ConventionImputationsCard from './ConventionImputationsCard'
 import LinkProjetDialog from '../LinkProjetDialog'
 import LinkMarcheDialog from '../LinkMarcheDialog'
 import SousConventionFormSimple from '@/pages/conventions/SousConventionFormSimple'
@@ -22,6 +24,9 @@ interface ProjetAssociation { projetId: number; projetCode: string; projetNom: s
 
 interface ConventionRealisationSectionProps {
   convention: ConventionBase
+  canEdit?: boolean
+  onRefresh?: () => void
+  refreshKey?: number
 }
 
 const formatCurrency = (amount: number) =>
@@ -43,7 +48,7 @@ const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'se
  * Self-contained micro-component: loads projets, marches, sous-conventions, avenants.
  * Manages its own dialogs for linking/unlinking and sous-convention CRUD.
  */
-const ConventionRealisationSection = ({ convention }: ConventionRealisationSectionProps) => {
+const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, refreshKey }: ConventionRealisationSectionProps) => {
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
 
@@ -58,7 +63,7 @@ const ConventionRealisationSection = ({ convention }: ConventionRealisationSecti
   const [editingSc, setEditingSc] = useState<SousConvention | null>(null)
   const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | null; id: number | null }>({ open: false, type: null, id: null })
 
-  useEffect(() => { loadAvenants(); loadSousConventions(); loadProjets(); loadMarches() }, [convention.id])
+  useEffect(() => { loadAvenants(); loadSousConventions(); loadProjets(); loadMarches() }, [convention.id, refreshKey])
 
   const loadAvenants = async () => { try { const r = await avenantConventionsAPI.getByConvention(convention.id); setAvenants(r.data.data || r.data || []) } catch { setAvenants([]) } }
   const loadSousConventions = async () => { try { const r = await conventionsAPI.getSousConventions(convention.id); setSousConventions(r.data.data || []) } catch { /* ignored */ } }
@@ -89,7 +94,7 @@ const ConventionRealisationSection = ({ convention }: ConventionRealisationSecti
   return (
     <>
       <ResizableSection
-        title="Projets, marches et avenants"
+        title="Projets, marches, budget et details"
         storageKey="conv-real-notebook"
         icon={<ListAlt sx={{ color: colors.success[500], fontSize: 16 }} />}
         noPadding
@@ -104,15 +109,15 @@ const ConventionRealisationSection = ({ convention }: ConventionRealisationSecti
               label: 'Marches', count: marches.length,
               content: <ConventionMarchesTab marches={marches} onLinkMarche={() => setLinkMarcheOpen(true)} onUnlinkMarche={(mid) => setConfirmState({ open: true, type: 'unlinkMarche', id: mid })} />,
             },
-            {
+            ...(convention.typeConvention === 'CADRE' ? [{
               label: 'Sous-conventions', count: sousConventions.length,
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
                   <InlineTable
                     headers={[
                       { label: 'Code', width: '20%' }, { label: 'Libelle' },
-                      { label: 'Statut', width: 120 }, { label: 'Budget', width: 150, align: 'right' },
-                      { label: 'Actions', width: 100, align: 'center' },
+                      { label: 'Statut', width: 120 }, { label: 'Budget', width: 150, align: 'right' as const },
+                      { label: 'Actions', width: 100, align: 'center' as const },
                     ]}
                     rows={sousConventions.map(sc => [
                       <Typography key="code" sx={{ color: colors.primary[600], fontWeight: typography.weights.medium, fontSize: typography.sizes.sm }}>{sc.code}</Typography>,
@@ -126,22 +131,33 @@ const ConventionRealisationSection = ({ convention }: ConventionRealisationSecti
                     ])}
                     onRowClick={(idx) => navigate(`/conventions/${sousConventions[idx].id}`)}
                     emptyMessage="Aucune sous-convention"
-                    showAddLine={convention.typeConvention === 'CADRE'}
+                    showAddLine
                     onAddLine={() => { setEditingSc(null); setScDialogOpen(true) }}
                   />
                 </Box>
               ),
-            },
+            }] : []),
             {
               label: 'Avenants', count: avenants.length,
               content: <ConventionAvenantsTab convention={convention} avenants={avenants} formatCurrency={formatCurrency} formatDate={formatDate} getStatusColor={getStatusColor} />,
+            },
+            {
+              label: 'Budget lignes',
+              content: <ConventionBudgetLignesCard conventionId={convention.id} conventionFinancials={{
+                budget: convention.budget, tauxCommission: convention.tauxCommission,
+                tauxTva: convention.tauxTva, baseCalcul: convention.baseCalcul,
+              }} />,
+            },
+            {
+              label: 'Imputations',
+              content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} onRefresh={onRefresh} />,
             },
           ]}
         />
       </ResizableSection>
 
-      <LinkProjetDialog open={linkProjetOpen} conventionId={convention.id} onClose={() => setLinkProjetOpen(false)} onSuccess={loadProjets} />
-      <LinkMarcheDialog open={linkMarcheOpen} conventionId={convention.id} onClose={() => setLinkMarcheOpen(false)} onSuccess={loadMarches} />
+      <LinkProjetDialog open={linkProjetOpen} conventionId={convention.id} onClose={() => setLinkProjetOpen(false)} onSuccess={() => { loadProjets(); onRefresh?.() }} />
+      <LinkMarcheDialog open={linkMarcheOpen} conventionId={convention.id} onClose={() => setLinkMarcheOpen(false)} onSuccess={() => { loadMarches(); onRefresh?.() }} />
       <SousConventionFormSimple
         open={scDialogOpen}
         onClose={() => { setScDialogOpen(false); setEditingSc(null) }}

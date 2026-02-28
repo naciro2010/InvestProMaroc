@@ -28,6 +28,24 @@ class UserController(
     private val passwordEncoder: PasswordEncoder
 ) {
 
+
+
+    @GetMapping
+    @ReadAccess
+    fun getUsers(): ResponseEntity<ApiResponse<List<Map<String, Any?>>>> {
+        val users = userRepository.findAll().map { user ->
+            mapOf(
+                "id" to user.id,
+                "username" to user.getUsername(),
+                "email" to user.email,
+                "fullName" to user.fullName,
+                "roles" to user.roles,
+                "actif" to user.actif,
+                "createdAt" to user.createdAt
+            )
+        }
+        return ResponseEntity.ok(ApiResponse.success(users, "Utilisateurs récupérés"))
+    }
     /**
      * Changer le mot de passe de l'utilisateur authentifié.
      *

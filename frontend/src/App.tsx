@@ -63,6 +63,7 @@ const SelectWithQuickCreateDemo = lazy(() => import('./pages/examples/SelectWith
 const ReportingPage = lazy(() => import('./pages/reporting/ReportingPage'))
 const UsersPage = lazy(() => import('./pages/users/UsersPage'))
 const UnderConstruction = lazy(() => import('./pages/UnderConstruction'))
+const TeamMessagingPage = lazy(() => import('./pages/TeamMessagingPage'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -399,6 +400,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <ReportingPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/messagerie"
+                      element={
+                        <ProtectedRoute>
+                          <TeamMessagingPage />
                         </ProtectedRoute>
                       }
                     />

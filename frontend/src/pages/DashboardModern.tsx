@@ -16,6 +16,7 @@ import {
   DashboardBudgetOverview,
   DashboardMarcheChart,
   DashboardRecentActivity,
+  DashboardQuickActions,
 } from '../components/dashboard'
 import { getGreeting } from '../components/dashboard/types'
 
@@ -68,9 +69,19 @@ const DashboardModern = () => {
           }}>
             Vue d'ensemble de vos investissements et operations
           </Typography>
+          <Typography sx={{
+            fontSize: typography.sizes.sm,
+            color: colors.neutral[400],
+            mt: 0.25,
+          }}>
+            {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}
+          </Typography>
         </Box>
 
         <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
+          {/* Quick Actions */}
+          <DashboardQuickActions />
+
           {/* KPI Cards */}
           <DashboardKPICards refreshKey={refreshKey} />
 

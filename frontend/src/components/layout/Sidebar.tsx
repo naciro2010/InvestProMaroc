@@ -4,9 +4,11 @@ import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, LogOut, User, Settings, Briefcase, ChevronDown,
   ShoppingCart, UserCog, Wallet, Tags, Handshake, BarChart3, Search, X,
+  Command,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { colors, typography, borders, transitions, shadows } from '@/lib/designSystem'
+import NotificationCenter from '@/components/core/NotificationCenter'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
   useSensor, useSensors, DragEndEvent,
@@ -182,45 +184,74 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
             InvestPro
           </span>
         </Link>
-        {isMobile && (
-          <button onClick={onClose} style={{
-            padding: '4px', backgroundColor: 'transparent', border: 'none',
-            cursor: 'pointer', borderRadius: borders.radius.sm, display: 'flex',
-          }}>
-            <X className="w-5 h-5" style={{ color: colors.textSecondary }} />
-          </button>
-        )}
-      </div>
-
-      {/* Search box */}
-      <div style={{ padding: '8px 12px' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          padding: '6px 10px', backgroundColor: colors.neutral[50],
-          borderRadius: borders.radius.base, border: `1px solid ${colors.border}`,
-        }}>
-          <Search className="w-3.5 h-3.5" style={{ color: colors.neutral[400], flexShrink: 0 }} />
-          <input
-            type="text"
-            placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              border: 'none', outline: 'none', backgroundColor: 'transparent',
-              fontSize: typography.sizes.sm, color: colors.textPrimary,
-              width: '100%', padding: 0,
-            }}
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} style={{
-              padding: '2px', backgroundColor: 'transparent', border: 'none',
-              cursor: 'pointer', display: 'flex',
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <NotificationCenter />
+          {isMobile && (
+            <button onClick={onClose} style={{
+              padding: '4px', backgroundColor: 'transparent', border: 'none',
+              cursor: 'pointer', borderRadius: borders.radius.sm, display: 'flex',
             }}>
-              <X className="w-3 h-3" style={{ color: colors.neutral[400] }} />
+              <X className="w-5 h-5" style={{ color: colors.textSecondary }} />
             </button>
           )}
         </div>
       </div>
+
+      {/* Search box - opens Command Palette on click */}
+      <div style={{ padding: '8px 12px' }}>
+        <button
+          onClick={() => {
+            // Dispatch Ctrl+K to open Command Palette
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
+          }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
+            padding: '6px 10px', backgroundColor: colors.neutral[50],
+            borderRadius: borders.radius.base, border: `1px solid ${colors.border}`,
+            cursor: 'pointer', textAlign: 'left',
+            transition: `all ${transitions.fast}`,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = colors.neutral[300]; e.currentTarget.style.backgroundColor = colors.surface }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.backgroundColor = colors.neutral[50] }}
+        >
+          <Search className="w-3.5 h-3.5" style={{ color: colors.neutral[400], flexShrink: 0 }} />
+          <span style={{
+            fontSize: typography.sizes.sm, color: colors.neutral[400],
+            flex: 1,
+          }}>
+            Rechercher...
+          </span>
+          <kbd style={{
+            padding: '1px 5px', backgroundColor: colors.neutral[100],
+            border: `1px solid ${colors.neutral[200]}`, borderRadius: borders.radius.sm,
+            fontSize: typography.sizes['2xs'], fontFamily: typography.fontFamilyMono,
+            color: colors.neutral[500], display: 'flex', alignItems: 'center', gap: '2px',
+          }}>
+            <Command className="w-2.5 h-2.5" />K
+          </kbd>
+        </button>
+      </div>
+
+      {/* Local menu filter */}
+      {searchQuery && (
+        <div style={{ padding: '0 12px 4px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '4px 10px', backgroundColor: colors.primary[25],
+            borderRadius: borders.radius.base, border: `1px solid ${colors.primary[200]}`,
+          }}>
+            <span style={{ fontSize: typography.sizes.xs, color: colors.primary[600], flex: 1 }}>
+              Filtre: {searchQuery}
+            </span>
+            <button onClick={() => setSearchQuery('')} style={{
+              padding: '2px', backgroundColor: 'transparent', border: 'none',
+              cursor: 'pointer', display: 'flex',
+            }}>
+              <X className="w-3 h-3" style={{ color: colors.primary[400] }} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>

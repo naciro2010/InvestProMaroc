@@ -204,6 +204,39 @@ export interface ConventionStatsDTO {
   commissionTotale: number
 }
 
+export interface ConventionDetailEnrichedDTO {
+  id: number
+  // Audit info
+  createdByNom: string | null
+  createdAt: string | null
+  updatedAt: string | null
+  valideParNom: string | null
+  dateValidation: string | null
+  dateSoumission: string | null
+  // Related entity counts
+  nombreMarches: number
+  nombreProjets: number
+  nombreSousConventions: number
+  nombreAvenants: number
+  nombrePartenaires: number
+  // Financial summaries
+  montantTotalMarches: number
+  montantTotalProjets: number
+  tauxRealisation: number
+  commissionEstimee: number
+  commissionTTC: number
+  // Effective rates (after inheritance)
+  tauxCommissionEffectif: number
+  baseCalculEffective: string
+  // Duration
+  dureeJours: number
+  estActive: boolean
+  // Workflow
+  motifRejet: string | null
+  isLocked: boolean
+  version: string | null
+}
+
 export interface UpdateConventionWithHistoryRequest extends Record<string, unknown> {
   motifModification: string
   modifieParId: number

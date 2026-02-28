@@ -769,4 +769,27 @@ class ConventionController(
                 .body(ApiResponse.error("Erreur lors de la récupération des statistiques"))
         }
     }
+
+    /**
+     * Enriched detail data for the Odoo-inspired convention detail page.
+     *
+     * Returns audit info, related entity counts, financial summaries,
+     * effective rates (after inheritance), duration, and workflow state
+     * in a single response (~10-15 KB).
+     */
+    @GetMapping("/{id}/detail-enriched")
+    @ReadAccess
+    fun getDetailEnriched(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDetailEnrichedDTO>> {
+        return try {
+            val convention = conventionService.findById(id)
+                ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Convention non trouvée"))
+
+            val dto = conventionMicroMapper.toDetailEnrichedDTO(convention)
+            ResponseEntity.ok(ApiResponse.success(dto))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la récupération des données enrichies"))
+        }
+    }
 }

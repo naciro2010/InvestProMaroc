@@ -5,6 +5,8 @@ import ma.investpro.entity.Convention
 import ma.investpro.repository.ProjetRepository
 import ma.investpro.repository.MarcheRepository
 import ma.investpro.repository.ConventionRepository
+import ma.investpro.repository.AvenantConventionRepository
+import ma.investpro.repository.UserRepository
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -24,7 +26,9 @@ import java.time.temporal.ChronoUnit
 class ConventionMicroMapper(
     private val projetRepository: ProjetRepository,
     private val marcheRepository: MarcheRepository,
-    private val conventionRepository: ConventionRepository
+    private val conventionRepository: ConventionRepository,
+    private val avenantConventionRepository: AvenantConventionRepository,
+    private val userRepository: UserRepository
 ) {
 
     /**
@@ -141,6 +145,109 @@ class ConventionMicroMapper(
             montantTotalMarches = montantTotalMarches,
             tauxRealisation = tauxRealisation,
             commissionTotale = commissionTotale
+        )
+    }
+
+    /**
+     * Convert to Detail Enriched DTO (aggregated data for Odoo-style detail page)
+     * Payload: ~10-15 KB
+     *
+     * Combines audit info, entity counts, financial summaries,
+     * effective rates, duration, and workflow info in a single response.
+     */
+    fun toDetailEnrichedDTO(convention: Convention): ConventionDetailEnrichedDTO {
+        val conventionId = convention.id ?: 0L
+
+        // --- Audit info: resolve user names ---
+        val createdByNom: String? = convention.createdById?.let { userId ->
+            userRepository.findById(userId).orElse(null)?.fullName
+        }
+        val valideParNom: String? = convention.valideParId?.let { userId ->
+            userRepository.findById(userId).orElse(null)?.fullName
+        }
+
+        // --- Counts of related entities ---
+        val nombreMarches: Long = if (conventionId > 0) marcheRepository.countByConventionId(conventionId) else 0
+        val nombreProjets: Long = if (conventionId > 0) projetRepository.countByConventionId(conventionId) else 0
+        val nombreSousConventions: Long = if (conventionId > 0) conventionRepository.countByParentConventionId(conventionId) else 0
+        val nombreAvenants: Long = if (conventionId > 0) avenantConventionRepository.countByConventionId(conventionId) else 0
+        val nombrePartenaires: Long = convention.partenaires.size.toLong()
+
+        // --- Financial summaries ---
+        val marches = if (conventionId > 0) marcheRepository.findByConventionId(conventionId) else emptyList()
+        val montantTotalMarches: BigDecimal = marches.fold(BigDecimal.ZERO) { acc, marche ->
+            acc.add(marche.montantTtc)
+        }
+
+        val projets = if (conventionId > 0) projetRepository.findByConventionId(conventionId) else emptyList()
+        val montantTotalProjets: BigDecimal = projets.fold(BigDecimal.ZERO) { acc, projet ->
+            acc.add(projet.budgetTotal)
+        }
+
+        val tauxRealisation: BigDecimal = if (convention.budget > BigDecimal.ZERO) {
+            montantTotalMarches
+                .multiply(BigDecimal(100))
+                .divide(convention.budget, 2, RoundingMode.HALF_UP)
+        } else BigDecimal.ZERO
+
+        val tauxCommissionEffectif: BigDecimal = convention.getTauxCommissionEffectif()
+        val commissionEstimee: BigDecimal = montantTotalMarches
+            .multiply(tauxCommissionEffectif)
+            .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+
+        val commissionTTC: BigDecimal = commissionEstimee
+            .multiply(BigDecimal.ONE.add(convention.tauxTva.divide(BigDecimal(100), 4, RoundingMode.HALF_UP)))
+            .setScale(2, RoundingMode.HALF_UP)
+
+        val baseCalculEffective: String = convention.getBaseCalculEffective()
+
+        // --- Duration info ---
+        val dateFin = convention.dateFin
+        val dureeJours: Long? = if (dateFin != null) {
+            ChronoUnit.DAYS.between(convention.dateDebut, dateFin)
+        } else null
+
+        val now = LocalDate.now()
+        val estActive: Boolean = now.isAfter(convention.dateDebut.minusDays(1)) &&
+                (dateFin == null || now.isBefore(dateFin.plusDays(1)))
+
+        return ConventionDetailEnrichedDTO(
+            id = conventionId,
+
+            // Audit
+            createdByNom = createdByNom,
+            createdAt = convention.createdAt,
+            updatedAt = convention.updatedAt,
+            valideParNom = valideParNom,
+            dateValidation = convention.dateValidation,
+            dateSoumission = convention.dateSoumission,
+
+            // Counts
+            nombreMarches = nombreMarches,
+            nombreProjets = nombreProjets,
+            nombreSousConventions = nombreSousConventions,
+            nombreAvenants = nombreAvenants,
+            nombrePartenaires = nombrePartenaires,
+
+            // Financial summaries
+            montantTotalMarches = montantTotalMarches,
+            montantTotalProjets = montantTotalProjets,
+            tauxRealisation = tauxRealisation,
+            commissionEstimee = commissionEstimee,
+            commissionTTC = commissionTTC,
+
+            // Effective rates
+            tauxCommissionEffectif = tauxCommissionEffectif,
+            baseCalculEffective = baseCalculEffective,
+
+            // Duration
+            dureeJours = dureeJours,
+            estActive = estActive,
+
+            // Workflow
+            motifRejet = convention.motifRejet,
+            isLocked = convention.isLocked,
+            version = convention.version
         )
     }
 }

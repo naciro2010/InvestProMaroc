@@ -25,9 +25,13 @@ import {
   ParentConventionBanner,
   ConventionSummaryTable,
 } from '../../components/conventions/detail'
+import ConventionSmartButtons from '../../components/conventions/detail/ConventionSmartButtons'
+import ConventionTraceabilityCard from '../../components/conventions/detail/ConventionTraceabilityCard'
+import ConventionCalculationBreakdown from '../../components/conventions/detail/ConventionCalculationBreakdown'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import VersementFormDialog from '../../components/conventions/VersementFormDialog'
+import type { ConventionDetailEnrichedDTO } from '../../types/api'
 
 interface Convention {
   id: number; code: string; numero: string; libelle: string; objet: string
@@ -64,6 +68,7 @@ const ConventionDetailPageModern = () => {
   const [loading, setLoading] = useState(true)
   const [convention, setConvention] = useState<Convention | null>(null)
   const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
+  const [enrichedData, setEnrichedData] = useState<ConventionDetailEnrichedDTO | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Partenaire & Versement dialog state
@@ -78,9 +83,15 @@ const ConventionDetailPageModern = () => {
   const loadConvention = async (cid: number) => {
     try {
       setLoading(true)
-      const res = await conventionsAPI.getById(cid)
+      const [res, enrichedRes] = await Promise.all([
+        conventionsAPI.getById(cid),
+        conventionsAPI.getDetailEnriched(cid).catch(() => null),
+      ])
       const raw = res.data.data || res.data
       setConvention({ ...raw, statut: normalizeStatut(raw.statut) })
+      if (enrichedRes) {
+        setEnrichedData(enrichedRes.data.data || enrichedRes.data || null)
+      }
       loadVersements(cid)
     } catch { setError('Erreur lors du chargement de la convention') }
     finally { setLoading(false) }
@@ -102,6 +113,7 @@ const ConventionDetailPageModern = () => {
         </Box>
         <Container maxWidth="xl" sx={{ py: 3 }}>
           <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
+          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mb: 2 }} />
           <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
           <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
         </Container>
@@ -188,53 +200,78 @@ const ConventionDetailPageModern = () => {
             statusSteps={effectiveSteps}
             currentStatus={convention.statut}
           >
-            {/* Title + Metadata Header */}
-            <Box sx={{ mb: 2 }}>
-              {/* Title - use RichTextDisplay for rich text content */}
-              <Box sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
-                <RichTextDisplay html={convention.libelle || convention.code} variant="compact" allowExpand={false} />
+            {/* Title + Metadata Header + Traceability (2-column layout) */}
+            <Box sx={{ display: 'flex', gap: 3, mb: 2, flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+              {/* Left: Title + Description + Metadata */}
+              <Box sx={{ flex: '1 1 60%', minWidth: 0 }}>
+                <Box sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
+                  <RichTextDisplay html={convention.libelle || convention.code} variant="compact" allowExpand={false} />
+                </Box>
+
+                {convention.objet && (
+                  <Box sx={{ mb: 1.5 }}>
+                    <RichTextDisplay html={convention.objet} variant="compact" collapseLength={200} />
+                  </Box>
+                )}
+
+                {/* Compact metadata: code, numero, type, dates */}
+                <Box sx={{
+                  display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5,
+                  py: 1, borderTop: `1px solid ${colors.borderSubtle}`,
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Code:</Typography>
+                    <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.code}</Typography>
+                  </Box>
+                  <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>N°:</Typography>
+                    <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.numero}</Typography>
+                  </Box>
+                  <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                  <StatusBadge status={convention.typeConvention} size="small" />
+                  {convention.dateSignature && (
+                    <>
+                      <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <CalendarMonth sx={{ fontSize: 13, color: colors.textSecondary }} />
+                        <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                          {new Date(convention.dateSignature).toLocaleDateString('fr-FR')}
+                          {convention.dateDebut && ` — ${new Date(convention.dateDebut).toLocaleDateString('fr-FR')}`}
+                          {convention.dateFin && ` → ${new Date(convention.dateFin).toLocaleDateString('fr-FR')}`}
+                        </Typography>
+                      </Box>
+                    </>
+                  )}
+                </Box>
               </Box>
 
-              {/* Objet / Description */}
-              {convention.objet && (
-                <Box sx={{ mb: 1.5 }}>
-                  <RichTextDisplay html={convention.objet} variant="compact" collapseLength={200} />
-                </Box>
-              )}
-
-              {/* Compact metadata: code, numero, type, dates */}
-              <Box sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: 1.5,
-                py: 1,
-                borderTop: `1px solid ${colors.borderSubtle}`,
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Code:</Typography>
-                  <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.code}</Typography>
-                </Box>
-                <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>N°:</Typography>
-                  <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.numero}</Typography>
-                </Box>
-                <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                <StatusBadge status={convention.typeConvention} size="small" />
-                {convention.dateSignature && (
-                  <>
-                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CalendarMonth sx={{ fontSize: 13, color: colors.textSecondary }} />
-                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-                        {new Date(convention.dateSignature).toLocaleDateString('fr-FR')}
-                        {convention.dateDebut && ` — ${new Date(convention.dateDebut).toLocaleDateString('fr-FR')}`}
-                        {convention.dateFin && ` → ${new Date(convention.dateFin).toLocaleDateString('fr-FR')}`}
-                      </Typography>
-                    </Box>
-                  </>
-                )}
+              {/* Right: Traceability Card (audit, parameters, source) */}
+              <Box sx={{ flex: '0 0 auto', width: { xs: '100%', md: 400 } }}>
+                <ConventionTraceabilityCard
+                  createdByNom={enrichedData?.createdByNom ?? undefined}
+                  createdAt={enrichedData?.createdAt ?? undefined}
+                  valideParNom={enrichedData?.valideParNom ?? undefined}
+                  dateValidation={enrichedData?.dateValidation ?? undefined}
+                  dateSoumission={enrichedData?.dateSoumission ?? undefined}
+                  updatedAt={enrichedData?.updatedAt ?? undefined}
+                  version={enrichedData?.version ?? undefined}
+                  isLocked={enrichedData?.isLocked}
+                  motifRejet={enrichedData?.motifRejet ?? undefined}
+                  tauxCommission={convention.tauxCommission}
+                  tauxCommissionEffectif={enrichedData?.tauxCommissionEffectif}
+                  baseCalcul={convention.baseCalcul}
+                  baseCalculEffective={enrichedData?.baseCalculEffective}
+                  tauxTva={convention.tauxTva}
+                  tauxTvaLignes={convention.tauxTvaLignes}
+                  heriteParametres={convention.heriteParametres}
+                  parentConventionNumero={convention.parentConventionNumero ?? undefined}
+                  parentConventionId={convention.parentConventionId ?? undefined}
+                  dureeJours={enrichedData?.dureeJours ?? undefined}
+                  estActive={enrichedData?.estActive}
+                  dateDebut={convention.dateDebut}
+                  dateFin={convention.dateFin}
+                />
               </Box>
             </Box>
 
@@ -249,7 +286,40 @@ const ConventionDetailPageModern = () => {
               </Box>
             )}
 
-            {/* 1. Financial Summary (highest priority - Odoo-style KPI cards) */}
+            {/* Smart Buttons (Odoo-style related entity counts) */}
+            {enrichedData && (
+              <Box sx={{ mb: 2 }}>
+                <ConventionSmartButtons
+                  conventionId={convention.id}
+                  typeConvention={convention.typeConvention}
+                  nombreMarches={enrichedData.nombreMarches}
+                  nombreProjets={enrichedData.nombreProjets}
+                  nombreSousConventions={enrichedData.nombreSousConventions}
+                  nombreAvenants={enrichedData.nombreAvenants}
+                  nombrePartenaires={enrichedData.nombrePartenaires}
+                  commissionEstimee={enrichedData.commissionEstimee}
+                  montantTotalMarches={enrichedData.montantTotalMarches}
+                  tauxRealisation={enrichedData.tauxRealisation}
+                />
+              </Box>
+            )}
+
+            {/* Calculation Breakdown (collapsible, shows commission formula step-by-step) */}
+            <Box sx={{ mb: 2 }}>
+              <ConventionCalculationBreakdown
+                budget={convention.budget}
+                tauxCommission={convention.tauxCommission}
+                tauxCommissionEffectif={enrichedData?.tauxCommissionEffectif}
+                tauxTva={convention.tauxTva}
+                baseCalcul={convention.baseCalcul}
+                montantTotalMarches={enrichedData?.montantTotalMarches ?? 0}
+                tauxRealisation={enrichedData?.tauxRealisation ?? 0}
+                heriteParametres={convention.heriteParametres}
+                parentConventionNumero={convention.parentConventionNumero ?? undefined}
+              />
+            </Box>
+
+            {/* 1. Financial Summary (highest priority - Odoo-style KPI table) */}
             <Box sx={{ mb: 3 }}>
               <ConventionSummaryTable
                 conventionId={convention.id}

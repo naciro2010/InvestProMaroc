@@ -1,10 +1,14 @@
-import { useState, useEffect, useCallback, ReactNode } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Box, Alert, Skeleton, Typography, Button, Container, Tooltip, TextField, MenuItem } from '@mui/material'
-import { Lock, CalendarMonth } from '@mui/icons-material'
-import { Pencil, ArrowLeft } from 'lucide-react'
+import { Box, Alert, Skeleton, Typography, Button, Container } from '@mui/material'
+import { CalendarMonth } from '@mui/icons-material'
+import { ArrowLeft } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
-import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge, type StatusStep } from '@/components/core'
+import {
+  ControlPanel, FormView, FieldGroup, Notebook, StatusBadge,
+  InlineEditField, EditFieldDialog,
+  type StatusStep, type InlineEditFieldConfig,
+} from '@/components/core'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { marchesAPI, conventionsAPI, fournisseursAPI } from '@/lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
@@ -33,16 +37,12 @@ interface MarcheData {
   nbLignes?: number; nbDecomptes?: number; nbPaiements?: number; nbAvenants?: number; montantPaye?: number
 }
 
-interface MarcheEditData {
-  objet: string; statut: string; typeMarche: string; natureMarche: string
-  montantHt: number; tauxTva: number; montantTtc: number
-  conventionId: number | null; fournisseurId: number | null
-  dateMarche: string; dateDebut: string; dateFinPrevue: string
-  delaiExecution: number | null; retenueGarantie: number; remarques: string
-}
-
 interface ConventionRef { id: number; code: string; objet: string }
 interface FournisseurRef { id: number; code: string; raisonSociale: string }
+
+interface DialogFieldState {
+  key: string; label: string; value: string; mode: 'richtext' | 'textarea'
+}
 
 const STATUS_STEPS: StatusStep[] = [
   { value: 'BROUILLON', label: 'Brouillon' }, { value: 'EN_COURS', label: 'En cours' },
@@ -53,15 +53,6 @@ const STATUT_OPTIONS = STATUS_STEPS.map(s => ({ value: s.value, label: s.label }
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
-const buildEditData = (m: MarcheData): MarcheEditData => ({
-  objet: m.objet || '', statut: m.statut || 'BROUILLON',
-  typeMarche: m.typeMarche || '', natureMarche: m.natureMarche || '',
-  montantHt: m.montantHt || 0, tauxTva: m.tauxTva || 20, montantTtc: m.montantTtc || 0,
-  conventionId: m.conventionId, fournisseurId: m.fournisseurId,
-  dateMarche: m.dateMarche || '', dateDebut: m.dateDebut || '', dateFinPrevue: m.dateFinPrevue || '',
-  delaiExecution: m.delaiExecution, retenueGarantie: m.retenueGarantie || 0, remarques: m.remarques || '',
-})
-
 // ==================== COMPONENT ====================
 
 const MarcheDetailPageModern = () => {
@@ -71,11 +62,9 @@ const MarcheDetailPageModern = () => {
   const [marche, setMarche] = useState<MarcheData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [editData, setEditData] = useState<MarcheEditData | null>(null)
   const [conventions, setConventions] = useState<ConventionRef[]>([])
   const [fournisseurs, setFournisseurs] = useState<FournisseurRef[]>([])
+  const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
   const marcheId = id ? parseInt(id) : 0
 
   const loadMarche = useCallback(async (mid: number) => {
@@ -108,7 +97,7 @@ const MarcheDetailPageModern = () => {
 
   useEffect(() => { if (marcheId) loadMarche(marcheId) }, [marcheId, loadMarche])
 
-  const loadReferenceData = async () => {
+  const loadReferenceData = useCallback(async () => {
     try {
       const [convRes, fournRes] = await Promise.all([conventionsAPI.getAll(), fournisseursAPI.getAll()])
       const convArr = convRes.data?.data || convRes.data || []
@@ -116,73 +105,42 @@ const MarcheDetailPageModern = () => {
       const fournArr = fournRes.data?.data || fournRes.data || []
       setFournisseurs(Array.isArray(fournArr) ? fournArr.map((f: FournisseurRef) => ({ id: f.id, code: f.code, raisonSociale: f.raisonSociale })) : [])
     } catch { showToast('Erreur chargement des donnees de reference', 'error') }
-  }
+  }, [showToast])
 
-  const handleToggleEdit = async () => {
+  const canEdit = marche ? marche.statut === 'BROUILLON' || marche.statut === 'EN_COURS' : false
+
+  useEffect(() => { if (canEdit) loadReferenceData() }, [canEdit, loadReferenceData])
+
+  const handleFieldSave = async (fieldKey: string, value: string | number | null) => {
     if (!marche) return
-    setEditData(buildEditData(marche))
-    await loadReferenceData()
-    setIsEditing(true)
-  }
-  const handleCancel = () => { setIsEditing(false); setEditData(null) }
-
-  const handleSave = async () => {
-    if (!editData || !marche) return
-    try {
-      setIsSaving(true)
-      await marchesAPI.update(marche.id, {
-        numeroMarche: marche.numeroMarche, objet: editData.objet, statut: editData.statut,
-        typeMarche: editData.typeMarche || null, natureMarche: editData.natureMarche || null,
-        montantHt: editData.montantHt, tauxTva: editData.tauxTva, montantTtc: editData.montantTtc,
-        conventionId: editData.conventionId, fournisseurId: editData.fournisseurId,
-        dateMarche: editData.dateMarche || null, dateDebut: editData.dateDebut || null,
-        dateFinPrevue: editData.dateFinPrevue || null, delaiExecutionMois: editData.delaiExecution,
-        retenueGarantie: editData.retenueGarantie, remarques: editData.remarques || null,
-      })
-      showToast('Marche mis a jour avec succes', 'success')
-      setIsEditing(false); setEditData(null)
-      await loadMarche(marche.id)
-    } catch { showToast('Erreur lors de la sauvegarde', 'error') }
-    finally { setIsSaving(false) }
+    const payload: Record<string, unknown> = {
+      numeroMarche: marche.numeroMarche, objet: marche.objet, statut: marche.statut,
+      typeMarche: marche.typeMarche, natureMarche: marche.natureMarche,
+      naturePrestation: marche.naturePrestation, numAo: marche.numAo,
+      montantHt: marche.montantHt, tauxTva: marche.tauxTva, montantTtc: marche.montantTtc,
+      conventionId: marche.conventionId, fournisseurId: marche.fournisseurId,
+      dateMarche: marche.dateMarche, dateSignature: marche.dateSignature,
+      dateDebut: marche.dateDebut, dateFinPrevue: marche.dateFinPrevue,
+      delaiExecutionMois: marche.delaiExecution, retenueGarantie: marche.retenueGarantie,
+      remarques: marche.remarques,
+      [fieldKey]: value,
+    }
+    await marchesAPI.update(marche.id, payload)
+    await loadMarche(marche.id)
+    showToast('Marche mis a jour', 'success')
   }
 
-  const updateField = <K extends keyof MarcheEditData>(field: K, value: MarcheEditData[K]) => {
-    setEditData(prev => prev ? { ...prev, [field]: value } : prev)
+  const openFieldDialog = (fieldKey: string, value: string) => {
+    setDialogField({ key: fieldKey, label: 'Remarques', value, mode: 'textarea' })
   }
 
-  const textInput = (field: keyof MarcheEditData, type = 'text', opts?: { multiline?: boolean; disabled?: boolean }): ReactNode => {
-    if (!editData) return null
-    return (
-      <TextField size="small" fullWidth type={type} disabled={opts?.disabled}
-        multiline={opts?.multiline} rows={opts?.multiline ? 3 : undefined}
-        value={editData[field] ?? ''} onChange={e => {
-          const v = e.target.value
-          if (type === 'number') updateField(field, (v === '' ? 0 : Number(v)) as MarcheEditData[typeof field])
-          else updateField(field, v as MarcheEditData[typeof field])
-        }} />
-    )
+  const handleDialogSave = async (fieldKey: string, value: string) => {
+    await handleFieldSave(fieldKey, value)
   }
 
-  const selectInput = (field: keyof MarcheEditData, options: { value: string; label: string }[]): ReactNode => {
-    if (!editData) return null
-    return (
-      <TextField select size="small" fullWidth value={editData[field] ?? ''}
-        onChange={e => updateField(field, e.target.value as MarcheEditData[typeof field])}>
-        {options.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-      </TextField>
-    )
-  }
-
-  const refSelect = (field: 'conventionId' | 'fournisseurId', items: { id: number; label: string }[], empty: string): ReactNode => {
-    if (!editData) return null
-    return (
-      <TextField select size="small" fullWidth value={editData[field] ?? ''}
-        onChange={e => updateField(field, e.target.value ? Number(e.target.value) : null)}>
-        <MenuItem value="">{empty}</MenuItem>
-        {items.map(i => <MenuItem key={i.id} value={i.id}>{i.label}</MenuItem>)}
-      </TextField>
-    )
-  }
+  const field = (config: InlineEditFieldConfig) => (
+    <InlineEditField config={config} onSave={handleFieldSave} onOpenDialog={openFieldDialog} />
+  )
 
   // --- Render guards ---
   if (!id) return <AppLayout><Box sx={{ p: 4 }}><Alert severity="error">ID du marche manquant</Alert></Box></AppLayout>
@@ -210,10 +168,8 @@ const MarcheDetailPageModern = () => {
     </Container></AppLayout>
   )
 
-  const canEdit = marche.statut === 'BROUILLON' || marche.statut === 'EN_COURS'
-  const ed = isEditing && editData !== null
-  const convItems = conventions.map(c => ({ id: c.id, label: `${c.code} - ${c.objet}` }))
-  const fournItems = fournisseurs.map(f => ({ id: f.id, label: `${f.code} - ${f.raisonSociale}` }))
+  const convOptions = conventions.map(c => ({ value: c.id, label: `${c.code} - ${c.objet}` }))
+  const fournOptions = fournisseurs.map(f => ({ value: f.id, label: `${f.code} - ${f.raisonSociale}` }))
 
   // Build effective steps: insert SUSPENDU/ANNULE into the pipeline when active
   const effectiveSteps: StatusStep[] = (() => {
@@ -237,35 +193,16 @@ const MarcheDetailPageModern = () => {
             { label: marche.numeroMarche || `#${marche.id}` },
           ]}
           actions={
-            <>
-              <Tooltip title={!canEdit ? 'Statut ne permet pas la modification' : 'Modifier'}>
-                <span>
-                  <Button
-                    variant="outlined" size="small" disabled={!canEdit}
-                    onClick={() => navigate(`/marches/${id}/modifier`)}
-                    sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}
-                  >
-                    {canEdit
-                      ? <Pencil size={14} style={{ marginRight: 4 }} />
-                      : <Lock sx={{ fontSize: 14, mr: 0.5 }} />
-                    }
-                    Modifier
-                  </Button>
-                </span>
-              </Tooltip>
-              <Button size="small" startIcon={<ArrowLeft size={14} />} onClick={() => navigate('/marches')}
-                sx={{ ...componentStyles.buttonGhost, textTransform: 'none', fontSize: typography.sizes.sm }}>
-                Liste
-              </Button>
-            </>
+            <Button size="small" startIcon={<ArrowLeft size={14} />} onClick={() => navigate('/marches')}
+              sx={{ ...componentStyles.buttonGhost, textTransform: 'none', fontSize: typography.sizes.sm }}>
+              Liste
+            </Button>
           }
           hideBottomRow
         />
 
         <Container maxWidth="xl" sx={{ py: 2 }}>
-          <FormView isEditing={ed} onToggleEdit={canEdit ? handleToggleEdit : undefined}
-            onSave={handleSave} onCancel={handleCancel} isSaving={isSaving}
-            statusSteps={effectiveSteps} currentStatus={marche.statut}>
+          <FormView isEditing={false} statusSteps={effectiveSteps} currentStatus={marche.statut}>
 
             {/* Title + Description + Metadata (Odoo-style) */}
             <Box sx={{ mb: 1.5 }}>
@@ -338,39 +275,31 @@ const MarcheDetailPageModern = () => {
             {/* Inline-editable fields */}
             <Box sx={{ mb: 3 }}>
               <FieldGroup title="Informations generales" columns={3}>
-                <Field label="Numero" value={marche.numeroMarche} isEditing={ed}
-                  editContent={<TextField size="small" fullWidth value={marche.numeroMarche} disabled />} />
-                <Field label="Objet" value={marche.objet || '-'} isEditing={ed} editContent={textInput('objet')} fullWidth required />
-                <Field label="Statut" value={<StatusBadge status={marche.statut} />} isEditing={ed}
-                  editContent={selectInput('statut', STATUT_OPTIONS)} />
-                <Field label="Type" value={marche.typeMarche || '-'} isEditing={ed} editContent={textInput('typeMarche')} />
-                <Field label="Nature" value={marche.natureMarche || '-'} isEditing={ed} editContent={textInput('natureMarche')} />
-                <Field label="Convention" value={marche.conventionCode || '-'}
-                  isLink={!!marche.conventionId} onLinkClick={() => marche.conventionId && navigate(`/conventions/${marche.conventionId}`)}
-                  isEditing={ed} editContent={refSelect('conventionId', convItems, '-- Aucune --')} />
-                <Field label="Fournisseur" value={marche.fournisseurNom || '-'} isEditing={ed}
-                  editContent={refSelect('fournisseurId', fournItems, '-- Aucun --')} />
+                {field({ fieldKey: 'numeroMarche', label: 'Numero', type: 'text', value: marche.numeroMarche, editable: false })}
+                {field({ fieldKey: 'objet', label: 'Objet', type: 'text', value: marche.objet || '', editable: canEdit, fullWidth: true })}
+                {field({ fieldKey: 'statut', label: 'Statut', type: 'select', value: marche.statut, options: STATUT_OPTIONS, displayValue: <StatusBadge status={marche.statut} />, editable: canEdit })}
+                {field({ fieldKey: 'typeMarche', label: 'Type', type: 'text', value: marche.typeMarche || '', editable: canEdit })}
+                {field({ fieldKey: 'natureMarche', label: 'Nature', type: 'text', value: marche.natureMarche || '', editable: canEdit })}
+                {field({ fieldKey: 'naturePrestation', label: 'Nature prestation', type: 'text', value: marche.naturePrestation || '', editable: canEdit })}
+                {field({ fieldKey: 'numAo', label: 'N° AO', type: 'text', value: marche.numAo || '', editable: canEdit })}
+                {field({ fieldKey: 'conventionId', label: 'Convention', type: 'select', value: marche.conventionId, options: convOptions, emptyLabel: '-- Aucune --', displayValue: marche.conventionCode || '-', isLink: !!marche.conventionId && !canEdit, onLinkClick: () => marche.conventionId && navigate(`/conventions/${marche.conventionId}`), editable: canEdit })}
+                {field({ fieldKey: 'fournisseurId', label: 'Fournisseur', type: 'select', value: marche.fournisseurId, options: fournOptions, emptyLabel: '-- Aucun --', displayValue: marche.fournisseurNom || '-', editable: canEdit })}
               </FieldGroup>
               <FieldGroup title="Montants" columns={3}>
-                <Field label="Montant HT" value={marche.montantHt ? formatCurrency(marche.montantHt) : '-'} isMoney
-                  isEditing={ed} editContent={textInput('montantHt', 'number')} />
-                <Field label="Taux TVA (%)" value={marche.tauxTva != null ? `${marche.tauxTva}%` : '-'}
-                  isEditing={ed} editContent={textInput('tauxTva', 'number')} />
-                <Field label="Montant TTC" value={marche.montantTtc ? formatCurrency(marche.montantTtc) : '-'} isMoney
-                  isEditing={ed} editContent={textInput('montantTtc', 'number')} />
+                {field({ fieldKey: 'montantHt', label: 'Montant HT', type: 'number', value: marche.montantHt ?? 0, isMoney: true, displayValue: marche.montantHt ? formatCurrency(marche.montantHt) : '-', editable: canEdit })}
+                {field({ fieldKey: 'tauxTva', label: 'Taux TVA (%)', type: 'number', value: marche.tauxTva ?? 0, displayValue: marche.tauxTva != null ? `${marche.tauxTva}%` : '-', editable: canEdit })}
+                {field({ fieldKey: 'montantTtc', label: 'Montant TTC', type: 'number', value: marche.montantTtc ?? 0, isMoney: true, displayValue: marche.montantTtc ? formatCurrency(marche.montantTtc) : '-', editable: canEdit })}
               </FieldGroup>
               <FieldGroup title="Dates et delais" columns={3}>
-                <Field label="Date marche" value={marche.dateMarche || '-'} isEditing={ed} editContent={textInput('dateMarche', 'date')} />
-                <Field label="Date debut" value={marche.dateDebut || '-'} isEditing={ed} editContent={textInput('dateDebut', 'date')} />
-                <Field label="Date fin prevue" value={marche.dateFinPrevue || '-'} isEditing={ed} editContent={textInput('dateFinPrevue', 'date')} />
-                <Field label="Delai execution (mois)" value={marche.delaiExecution != null ? `${marche.delaiExecution} mois` : '-'}
-                  isEditing={ed} editContent={textInput('delaiExecution', 'number')} />
-                <Field label="Retenue garantie (%)" value={marche.retenueGarantie != null ? `${marche.retenueGarantie}%` : '-'}
-                  isEditing={ed} editContent={textInput('retenueGarantie', 'number')} />
+                {field({ fieldKey: 'dateSignature', label: 'Date signature', type: 'date', value: marche.dateSignature || '', editable: canEdit })}
+                {field({ fieldKey: 'dateMarche', label: 'Date marche', type: 'date', value: marche.dateMarche || '', editable: canEdit })}
+                {field({ fieldKey: 'dateDebut', label: 'Date debut', type: 'date', value: marche.dateDebut || '', editable: canEdit })}
+                {field({ fieldKey: 'dateFinPrevue', label: 'Date fin prevue', type: 'date', value: marche.dateFinPrevue || '', editable: canEdit })}
+                {field({ fieldKey: 'delaiExecution', label: 'Delai execution (mois)', type: 'number', value: marche.delaiExecution ?? 0, displayValue: marche.delaiExecution != null ? `${marche.delaiExecution} mois` : '-', editable: canEdit })}
+                {field({ fieldKey: 'retenueGarantie', label: 'Retenue garantie (%)', type: 'number', value: marche.retenueGarantie ?? 0, displayValue: marche.retenueGarantie != null ? `${marche.retenueGarantie}%` : '-', editable: canEdit })}
               </FieldGroup>
               <FieldGroup title="Notes">
-                <Field label="Remarques" value={marche.remarques || '-'} fullWidth isEditing={ed}
-                  editContent={textInput('remarques', 'text', { multiline: true })} />
+                {field({ fieldKey: 'remarques', label: 'Remarques', type: 'richtext', value: marche.remarques || '', displayValue: marche.remarques || '-', editable: canEdit, fullWidth: true })}
               </FieldGroup>
             </Box>
 
@@ -386,6 +315,17 @@ const MarcheDetailPageModern = () => {
           </FormView>
         </Container>
       </Box>
+      {dialogField && (
+        <EditFieldDialog
+          open
+          onClose={() => setDialogField(null)}
+          onSave={handleDialogSave}
+          fieldKey={dialogField.key}
+          fieldLabel={dialogField.label}
+          currentValue={dialogField.value}
+          mode={dialogField.mode}
+        />
+      )}
     </AppLayout>
   )
 }

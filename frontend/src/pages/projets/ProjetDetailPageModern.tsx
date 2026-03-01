@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
-import { Box, Container, Skeleton, Alert, TextField, MenuItem } from '@mui/material'
+import { Box, Container, Skeleton, Alert } from '@mui/material'
 import AppLayout from '@/components/layout/AppLayout'
-import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge, type StatusStep } from '@/components/core'
+import {
+  ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge,
+  InlineEditField, EditFieldDialog,
+  type StatusStep,
+} from '@/components/core'
 import { useToast } from '@/contexts/ToastContext'
 import { projetsAPI } from '@/lib/projetsAPI'
 import { ProjetStatsCards, ProjetProgressBar, ProjetChartTab, ProjetWorkflowActions } from '@/components/projets/detail'
@@ -16,20 +20,6 @@ import {
   formatCurrency,
 } from './components'
 import { colors, typography } from '@/lib/designSystem'
-
-/** Form data shape for inline editing */
-interface ProjetEditForm {
-  nom: string
-  description: string
-  statut: string
-  budgetTotal: number
-  dureeMois: number
-  dateDebut: string
-  localisation: string
-  pourcentageAvancement: number
-  objectifs: string
-  remarques: string
-}
 
 const STATUT_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'EN_PREPARATION', label: 'En preparation' },
@@ -46,20 +36,18 @@ const STATUS_STEPS: StatusStep[] = [
   { value: 'TERMINE', label: 'Termine' },
 ]
 
-const buildFormFromProjet = (p: Projet): ProjetEditForm => ({
-  nom: p.nom || '',
-  description: p.description || '',
-  statut: p.statut || 'EN_PREPARATION',
-  budgetTotal: p.budgetTotal ?? 0,
-  dureeMois: p.dureeMois ?? 12,
-  dateDebut: p.dateDebut || '',
-  localisation: p.localisation || '',
-  pourcentageAvancement: p.pourcentageAvancement ?? 0,
-  objectifs: p.objectifs || '',
-  remarques: p.remarques || '',
-})
+const DIALOG_LABELS: Record<string, string> = {
+  description: 'Description',
+  objectifs: 'Objectifs',
+  remarques: 'Remarques',
+}
 
-const inputSx = { '& .MuiInputBase-root': { fontSize: typography.sizes.sm } }
+interface DialogFieldState {
+  key: string
+  label: string
+  value: string
+  mode: 'richtext' | 'textarea'
+}
 
 const ProjetDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
@@ -67,9 +55,7 @@ const ProjetDetailPageModern = () => {
   const [loading, setLoading] = useState(true)
   const [projet, setProjet] = useState<Projet | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [form, setForm] = useState<ProjetEditForm>(buildFormFromProjet({} as Projet))
+  const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
 
   const projetId = id ? parseInt(id) : 0
 
@@ -77,9 +63,7 @@ const ProjetDetailPageModern = () => {
     try {
       setLoading(true)
       const response = await projetsAPI.getById(pid)
-      const data = response.data as Projet
-      setProjet(data)
-      setForm(buildFormFromProjet(data))
+      setProjet(response.data as Projet)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement du projet')
     } finally {
@@ -91,45 +75,28 @@ const ProjetDetailPageModern = () => {
     if (projetId) loadProjet(projetId)
   }, [projetId, loadProjet])
 
-  const handleFieldChange = (field: keyof ProjetEditForm, value: string | number) => {
-    setForm(prev => ({ ...prev, [field]: value }))
-  }
-
-  const handleSave = async () => {
-    if (!projet?.id) return
-    try {
-      setIsSaving(true)
-      await projetsAPI.update(projet.id, {
-        nom: form.nom,
-        description: form.description,
-        statut: form.statut,
-        budgetTotal: form.budgetTotal,
-        dureeMois: form.dureeMois,
-        dateDebut: form.dateDebut,
-        localisation: form.localisation,
-        pourcentageAvancement: form.pourcentageAvancement,
-        objectifs: form.objectifs,
-        remarques: form.remarques,
-      })
-      showToast('Projet mis a jour avec succes', 'success')
-      setIsEditing(false)
-      await loadProjet(projet.id)
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } }
-      showToast(axiosErr.response?.data?.message || 'Erreur lors de la sauvegarde', 'error')
-    } finally {
-      setIsSaving(false)
+  const handleFieldSave = async (fieldKey: string, value: string | number | null) => {
+    if (!projet || !projet.id) return
+    const payload = {
+      nom: projet.nom,
+      description: projet.description || '',
+      statut: projet.statut,
+      budgetTotal: projet.budgetTotal,
+      dureeMois: projet.dureeMois ?? 12,
+      dateDebut: projet.dateDebut || '',
+      localisation: projet.localisation || '',
+      pourcentageAvancement: projet.pourcentageAvancement,
+      objectifs: projet.objectifs || '',
+      remarques: projet.remarques || '',
+      [fieldKey]: value,
     }
+    await projetsAPI.update(projet.id, payload)
+    await loadProjet(projet.id)
+    showToast('Projet mis a jour', 'success')
   }
 
-  const handleCancel = () => {
-    if (projet) setForm(buildFormFromProjet(projet))
-    setIsEditing(false)
-  }
-
-  const handleToggleEdit = () => {
-    if (projet) setForm(buildFormFromProjet(projet))
-    setIsEditing(true)
+  const openFieldDialog = (fieldKey: string, value: string) => {
+    setDialogField({ key: fieldKey, label: DIALOG_LABELS[fieldKey] || fieldKey, value, mode: 'textarea' })
   }
 
   const generateProgressData = () => {
@@ -203,17 +170,13 @@ const ProjetDetailPageModern = () => {
 
         <Container maxWidth="xl" sx={{ py: 3 }}>
           <FormView
-            isEditing={isEditing}
-            onToggleEdit={canEdit ? handleToggleEdit : undefined}
-            onSave={handleSave}
-            onCancel={handleCancel}
-            isSaving={isSaving}
+            isEditing={false}
             statusSteps={effectiveSteps}
             currentStatus={projet.statut}
           >
             {/* Title */}
             <Box sx={{ fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
-              {isEditing ? form.nom : projet.nom}
+              {projet.nom}
             </Box>
             <Box sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 3 }}>
               Code: {projet.code}{projet.conventionNumero ? ` · Convention: ${projet.conventionNumero}` : ''}
@@ -222,109 +185,86 @@ const ProjetDetailPageModern = () => {
             {/* Informations */}
             <Box sx={{ mb: 3 }}>
               <FieldGroup title="Informations" columns={3}>
-                <Field label="Code" value={projet.code} />
-                <Field label="Nom" value={projet.nom} isEditing={isEditing} required
-                  editContent={<TextField fullWidth size="small" value={form.nom} sx={inputSx}
-                    onChange={(e) => handleFieldChange('nom', e.target.value)} />} />
-                <Field label="Statut" value={<StatusBadge status={projet.statut} />} isEditing={isEditing}
-                  editContent={
-                    <TextField fullWidth size="small" select value={form.statut} sx={inputSx}
-                      onChange={(e) => handleFieldChange('statut', e.target.value)}>
-                      {STATUT_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-                    </TextField>
-                  } />
-                <Field label="Avancement" value={`${projet.pourcentageAvancement}%`} isEditing={isEditing}
-                  editContent={<TextField fullWidth size="small" type="number" value={form.pourcentageAvancement} sx={inputSx}
-                    inputProps={{ min: 0, max: 100, step: 0.1 }}
-                    onChange={(e) => handleFieldChange('pourcentageAvancement', parseFloat(e.target.value) || 0)} />} />
-                <Field label="Budget total" value={formatCurrency(projet.budgetTotal)} isMoney isEditing={isEditing}
-                  editContent={<TextField fullWidth size="small" type="number" value={form.budgetTotal} sx={inputSx}
-                    inputProps={{ min: 0, step: 0.01 }}
-                    onChange={(e) => handleFieldChange('budgetTotal', parseFloat(e.target.value) || 0)} />} />
+                <InlineEditField config={{ fieldKey: 'code', label: 'Code', type: 'text', value: projet.code || '', editable: false }} onSave={handleFieldSave} />
+                <InlineEditField config={{ fieldKey: 'nom', label: 'Nom', type: 'text', value: projet.nom || '', editable: canEdit }} onSave={handleFieldSave} />
+                <InlineEditField config={{ fieldKey: 'statut', label: 'Statut', type: 'select', value: projet.statut, options: STATUT_OPTIONS, editable: canEdit, displayValue: <StatusBadge status={projet.statut} /> }} onSave={handleFieldSave} />
+                <InlineEditField config={{ fieldKey: 'pourcentageAvancement', label: 'Avancement', type: 'number', value: projet.pourcentageAvancement, editable: canEdit, displayValue: `${projet.pourcentageAvancement}%`, inputProps: { min: 0, max: 100, step: 0.1 } }} onSave={handleFieldSave} />
+                <InlineEditField config={{ fieldKey: 'budgetTotal', label: 'Budget total', type: 'number', value: projet.budgetTotal, editable: canEdit, isMoney: true, inputProps: { min: 0, step: 0.01 } }} onSave={handleFieldSave} />
                 <Field label="Budget consomme" value={formatCurrency(projet.budgetConsomme)} isMoney />
-                {(projet.estEnRetard || isEditing) && !isEditing && (
+                {projet.estEnRetard && (
                   <Field label="Retard" value={<StatusBadge status="REJETE" />} />
                 )}
               </FieldGroup>
             </Box>
 
-            {/* Budget & Planning (visible in edit mode) */}
-            {isEditing && (
-              <Box sx={{ mb: 3 }}>
-                <FieldGroup title="Budget & Planning" columns={3}>
-                  <Field label="Duree (mois)" value={projet.dureeMois ? `${projet.dureeMois} mois` : '-'} isEditing
-                    editContent={<TextField fullWidth size="small" type="number" value={form.dureeMois} sx={inputSx}
-                      inputProps={{ min: 1 }}
-                      onChange={(e) => handleFieldChange('dureeMois', parseInt(e.target.value) || 1)} />} />
-                  <Field label="Date debut" value={projet.dateDebut || '-'} isEditing
-                    editContent={<TextField fullWidth size="small" type="date" value={form.dateDebut} sx={inputSx}
-                      InputLabelProps={{ shrink: true }}
-                      onChange={(e) => handleFieldChange('dateDebut', e.target.value)} />} />
-                  <Field label="Localisation" value={projet.localisation || '-'} isEditing
-                    editContent={<TextField fullWidth size="small" value={form.localisation} sx={inputSx}
-                      onChange={(e) => handleFieldChange('localisation', e.target.value)} />} />
-                </FieldGroup>
-              </Box>
-            )}
+            {/* Budget & Planning */}
+            <Box sx={{ mb: 3 }}>
+              <FieldGroup title="Budget & Planning" columns={3}>
+                <InlineEditField config={{ fieldKey: 'dureeMois', label: 'Duree (mois)', type: 'number', value: projet.dureeMois ?? 0, editable: canEdit, displayValue: projet.dureeMois ? `${projet.dureeMois} mois` : '-', inputProps: { min: 1 } }} onSave={handleFieldSave} />
+                <InlineEditField config={{ fieldKey: 'dateDebut', label: 'Date debut', type: 'date', value: projet.dateDebut || '', editable: canEdit }} onSave={handleFieldSave} />
+                <InlineEditField config={{ fieldKey: 'localisation', label: 'Localisation', type: 'text', value: projet.localisation || '', editable: canEdit }} onSave={handleFieldSave} />
+              </FieldGroup>
+            </Box>
 
-            {/* Details (visible in edit mode) */}
-            {isEditing && (
-              <Box sx={{ mb: 3 }}>
-                <FieldGroup title="Details" columns={1}>
-                  <Field label="Description" value={projet.description || '-'} isEditing fullWidth
-                    editContent={<TextField fullWidth size="small" multiline minRows={3} value={form.description} sx={inputSx}
-                      onChange={(e) => handleFieldChange('description', e.target.value)} />} />
-                  <Field label="Objectifs" value={projet.objectifs || '-'} isEditing fullWidth
-                    editContent={<TextField fullWidth size="small" multiline minRows={2} value={form.objectifs} sx={inputSx}
-                      onChange={(e) => handleFieldChange('objectifs', e.target.value)} />} />
-                  <Field label="Remarques" value={projet.remarques || '-'} isEditing fullWidth
-                    editContent={<TextField fullWidth size="small" multiline minRows={2} value={form.remarques} sx={inputSx}
-                      onChange={(e) => handleFieldChange('remarques', e.target.value)} />} />
-                </FieldGroup>
-              </Box>
-            )}
+            {/* Details */}
+            <Box sx={{ mb: 3 }}>
+              <FieldGroup title="Details" columns={1}>
+                <InlineEditField config={{ fieldKey: 'description', label: 'Description', type: 'richtext', value: projet.description || '', editable: canEdit, fullWidth: true }} onSave={handleFieldSave} onOpenDialog={openFieldDialog} />
+                <InlineEditField config={{ fieldKey: 'objectifs', label: 'Objectifs', type: 'richtext', value: projet.objectifs || '', editable: canEdit, fullWidth: true }} onSave={handleFieldSave} onOpenDialog={openFieldDialog} />
+                <InlineEditField config={{ fieldKey: 'remarques', label: 'Remarques', type: 'richtext', value: projet.remarques || '', editable: canEdit, fullWidth: true }} onSave={handleFieldSave} onOpenDialog={openFieldDialog} />
+              </FieldGroup>
+            </Box>
 
-            {/* Stats and Progress (hidden during edit) */}
-            {!isEditing && (
-              <>
-                <ProjetStatsCards
-                  budgetTotal={projet.budgetTotal}
-                  pourcentageAvancement={projet.pourcentageAvancement}
-                  budgetConsomme={projet.budgetConsomme}
-                  estEnRetard={projet.estEnRetard}
-                  formatCurrency={formatCurrency}
-                />
-                <ProjetProgressBar pourcentageAvancement={projet.pourcentageAvancement} />
-              </>
-            )}
+            {/* Stats Cards */}
+            <ProjetStatsCards
+              budgetTotal={projet.budgetTotal}
+              pourcentageAvancement={projet.pourcentageAvancement}
+              budgetConsomme={projet.budgetConsomme}
+              estEnRetard={projet.estEnRetard}
+              formatCurrency={formatCurrency}
+            />
 
-            {/* Notebook tabs (hidden during edit) */}
-            {!isEditing && (
-              <Box sx={{ mt: 3 }}>
-                <Notebook
-                  tabs={[
-                    {
-                      label: 'Informations',
-                      content: (
-                        <Box>
-                          <ProjetInfoCard projetId={projetId} />
-                          <Box sx={{ mt: 3 }}>
-                            <ProjetBudgetSection projetId={projetId} />
-                          </Box>
+            {/* Progress Bar */}
+            <ProjetProgressBar pourcentageAvancement={projet.pourcentageAvancement} />
+
+            {/* Notebook Tabs */}
+            <Box sx={{ mt: 3 }}>
+              <Notebook
+                tabs={[
+                  {
+                    label: 'Informations',
+                    content: (
+                      <Box>
+                        <ProjetInfoCard projetId={projetId} />
+                        <Box sx={{ mt: 3 }}>
+                          <ProjetBudgetSection projetId={projetId} />
                         </Box>
-                      ),
-                    },
-                    { label: 'Conventions', content: <ProjetConventionsTab projetId={projetId} /> },
-                    { label: 'Marches lies', content: <ProjetMarchesTab projetId={projetId} /> },
-                    { label: 'Avancement', content: <ProjetChartTab chartData={generateProgressData()} /> },
-                    { label: 'Historique', content: <ProjetHistoriqueTab projetId={projetId} /> },
-                  ]}
-                />
-              </Box>
-            )}
+                      </Box>
+                    ),
+                  },
+                  { label: 'Conventions', content: <ProjetConventionsTab projetId={projetId} /> },
+                  { label: 'Marches lies', content: <ProjetMarchesTab projetId={projetId} /> },
+                  { label: 'Avancement', content: <ProjetChartTab chartData={generateProgressData()} /> },
+                  { label: 'Historique', content: <ProjetHistoriqueTab projetId={projetId} /> },
+                ]}
+              />
+            </Box>
           </FormView>
         </Container>
       </Box>
+
+      {/* Edit Field Dialog for rich text / textarea fields */}
+      {dialogField && (
+        <EditFieldDialog
+          open
+          onClose={() => setDialogField(null)}
+          onSave={handleFieldSave}
+          fieldKey={dialogField.key}
+          fieldLabel={dialogField.label}
+          currentValue={dialogField.value}
+          mode={dialogField.mode}
+        />
+      )}
     </AppLayout>
   )
 }

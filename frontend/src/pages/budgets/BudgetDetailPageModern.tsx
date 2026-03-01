@@ -2,26 +2,24 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Box, Container, Typography, Skeleton, Alert, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, TextField, MenuItem, Button,
+  TableCell, TableContainer, TableHead, TableRow, Button,
 } from '@mui/material'
 import { Trash2 } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge, type StatusStep } from '@/components/core'
+import {
+  ControlPanel, FormView, FieldGroup, Notebook, StatusBadge,
+  InlineEditField, EditFieldDialog,
+  type StatusStep, type InlineEditFieldConfig,
+} from '@/components/core'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { useToast } from '@/contexts/ToastContext'
-import type { Budget, StatutBudget } from '../../types/entities'
+import type { Budget } from '../../types/entities'
 
 interface ConventionOption { id: number; code: string; objet: string }
 
-interface BudgetFormData {
-  version: string
-  conventionId: number | undefined
-  dateBudget: string
-  statut: StatutBudget
-  plafondConvention: number
-  totalBudget: number
-  observations: string
+interface DialogFieldState {
+  key: string; label: string; value: string; mode: 'richtext' | 'textarea'
 }
 
 const STATUS_STEPS: StatusStep[] = [
@@ -31,6 +29,8 @@ const STATUS_STEPS: StatusStep[] = [
   { value: 'REJETE', label: 'Rejete', variant: 'danger' },
   { value: 'ARCHIVE', label: 'Archive' },
 ]
+
+const STATUT_OPTIONS = STATUS_STEPS.map(s => ({ value: s.value, label: s.label }))
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
@@ -47,11 +47,6 @@ const extractList = <T,>(responseData: unknown): T[] => {
   return []
 }
 
-const INITIAL_FORM: BudgetFormData = {
-  version: '', conventionId: undefined, dateBudget: '',
-  statut: 'BROUILLON', plafondConvention: 0, totalBudget: 0, observations: '',
-}
-
 const BudgetDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -60,10 +55,8 @@ const BudgetDetailPageModern = () => {
   const [loading, setLoading] = useState(true)
   const [budget, setBudget] = useState<Budget | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [formData, setFormData] = useState<BudgetFormData>(INITIAL_FORM)
   const [conventions, setConventions] = useState<ConventionOption[]>([])
+  const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
 
   const loadBudget = useCallback(async (budgetId: number) => {
     try {
@@ -81,37 +74,42 @@ const BudgetDetailPageModern = () => {
     if (id) loadBudget(parseInt(id))
   }, [id, loadBudget])
 
-  const handleToggleEdit = async () => {
-    if (!budget) return
-    setFormData({
-      version: budget.version, conventionId: budget.convention?.id,
-      dateBudget: budget.dateBudget, statut: budget.statut,
-      plafondConvention: budget.plafondConvention, totalBudget: budget.totalBudget,
+  const canEdit = budget?.statut === 'BROUILLON'
+
+  // Load conventions when canEdit
+  const loadConventions = useCallback(async () => {
+    try {
+      const res = await conventionsAPI.getAll()
+      const list = extractList<ConventionOption>(res.data)
+      setConventions(list.map(c => ({ id: c.id, code: c.code, objet: c.objet })))
+    } catch { /* ignore */ }
+  }, [])
+
+  useEffect(() => { if (canEdit) loadConventions() }, [canEdit, loadConventions])
+
+  const handleFieldSave = async (fieldKey: string, value: string | number | null) => {
+    if (!budget || !id) return
+    const payload: Record<string, unknown> = {
+      version: budget.version,
+      conventionId: budget.convention?.id,
+      dateBudget: budget.dateBudget,
+      statut: budget.statut,
+      plafondConvention: budget.plafondConvention,
+      totalBudget: budget.totalBudget,
       observations: budget.observations || '',
-    })
-    if (conventions.length === 0) {
-      try {
-        const res = await conventionsAPI.getAll()
-        const list = extractList<ConventionOption>(res.data)
-        setConventions(list.map(c => ({ id: c.id, code: c.code, objet: c.objet })))
-      } catch { /* conventions stay empty */ }
+      [fieldKey]: value,
     }
-    setIsEditing(true)
+    await budgetsAPI.update(parseInt(id), payload)
+    await loadBudget(parseInt(id))
+    showSuccess('Budget mis a jour')
   }
 
-  const handleSave = async () => {
-    if (!id) return
-    setIsSaving(true)
-    try {
-      await budgetsAPI.update(parseInt(id), { ...formData })
-      showSuccess('Budget mis a jour avec succes')
-      setIsEditing(false)
-      await loadBudget(parseInt(id))
-    } catch (err: unknown) {
-      showError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
-    } finally {
-      setIsSaving(false)
-    }
+  const openFieldDialog = (fieldKey: string, value: string) => {
+    setDialogField({ key: fieldKey, label: 'Observations', value, mode: 'textarea' })
+  }
+
+  const handleDialogSave = async (fieldKey: string, value: string) => {
+    await handleFieldSave(fieldKey, value)
   }
 
   const handleDelete = async () => {
@@ -125,9 +123,9 @@ const BudgetDetailPageModern = () => {
     }
   }
 
-  const updateField = (field: keyof BudgetFormData, value: string | number | undefined) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  const field = (config: InlineEditFieldConfig) => (
+    <InlineEditField config={config} onSave={handleFieldSave} onOpenDialog={openFieldDialog} />
+  )
 
   if (!id) return <AppLayout><Box sx={{ p: 4 }}><Alert severity="error">ID du budget manquant</Alert></Box></AppLayout>
 
@@ -149,9 +147,9 @@ const BudgetDetailPageModern = () => {
     </Container></AppLayout>
   )
 
-  const canEdit = budget.statut === 'BROUILLON'
   const deltaMontant = budget.deltaMontant ?? (budget.totalBudget - budget.plafondConvention)
   const conventionLabel = budget.convention ? `${budget.convention.code} - ${budget.convention.objet}` : '-'
+  const convOptions = conventions.map(c => ({ value: c.id, label: `${c.code} - ${c.objet}` }))
 
   return (
     <AppLayout>
@@ -168,10 +166,7 @@ const BudgetDetailPageModern = () => {
         />
 
         <Container maxWidth="xl" sx={{ py: 3 }}>
-          <FormView isEditing={isEditing} onToggleEdit={canEdit ? handleToggleEdit : undefined}
-            onSave={handleSave} onCancel={() => setIsEditing(false)} isSaving={isSaving}
-            statusSteps={STATUS_STEPS} currentStatus={budget.statut}>
-
+          <FormView isEditing={false} statusSteps={STATUS_STEPS} currentStatus={budget.statut}>
             <Typography sx={{ fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
               Budget {budget.version}
             </Typography>
@@ -181,46 +176,20 @@ const BudgetDetailPageModern = () => {
 
             <Box sx={{ mb: 3 }}>
               <FieldGroup title="Informations" columns={3}>
-                <Field label="Version" value={budget.version} isEditing={isEditing} editContent={
-                  <TextField size="small" fullWidth value={formData.version}
-                    onChange={e => updateField('version', e.target.value)} placeholder="V0, V1..." />
-                } />
-                <Field label="Statut" value={<StatusBadge status={budget.statut} />} isEditing={isEditing} editContent={
-                  <TextField size="small" fullWidth select value={formData.statut}
-                    onChange={e => updateField('statut', e.target.value)}>
-                    {STATUS_STEPS.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
-                  </TextField>
-                } />
-                <Field label="Date du budget" value={formatDate(budget.dateBudget)} isEditing={isEditing} editContent={
-                  <TextField size="small" fullWidth type="date" value={formData.dateBudget}
-                    onChange={e => updateField('dateBudget', e.target.value)} InputLabelProps={{ shrink: true }} />
-                } />
-                <Field label="Plafond Convention" value={formatCurrency(budget.plafondConvention)} isMoney isEditing={isEditing} editContent={
-                  <TextField size="small" fullWidth type="number" value={formData.plafondConvention}
-                    onChange={e => updateField('plafondConvention', parseFloat(e.target.value) || 0)}
-                    inputProps={{ min: 0, step: '0.01' }} />
-                } />
-                <Field label="Total Budget" value={formatCurrency(budget.totalBudget)} isMoney isEditing={isEditing} editContent={
-                  <TextField size="small" fullWidth type="number" value={formData.totalBudget}
-                    onChange={e => updateField('totalBudget', parseFloat(e.target.value) || 0)}
-                    inputProps={{ min: 0, step: '0.01' }} />
-                } />
-                <Field label="Delta" isMoney
-                  value={`${deltaMontant > 0 ? '+' : ''}${formatCurrency(deltaMontant)}`} />
-                <Field label="Convention" value={conventionLabel}
-                  isLink={!isEditing && !!budget.convention}
-                  onLinkClick={budget.convention ? () => navigate(`/conventions/${budget.convention!.id}`) : undefined}
-                  isEditing={isEditing} editContent={
-                    <TextField size="small" fullWidth select value={formData.conventionId ?? ''}
-                      onChange={e => updateField('conventionId', e.target.value ? Number(e.target.value) : undefined)}>
-                      <MenuItem value="">-- Aucune --</MenuItem>
-                      {conventions.map(c => <MenuItem key={c.id} value={c.id}>{c.code} - {c.objet}</MenuItem>)}
-                    </TextField>
-                  } />
-                <Field label="Observations" value={budget.observations || '-'} fullWidth isEditing={isEditing} editContent={
-                  <TextField size="small" fullWidth multiline minRows={2} value={formData.observations}
-                    onChange={e => updateField('observations', e.target.value)} />
-                } />
+                {field({ fieldKey: 'version', label: 'Version', type: 'text', value: budget.version, editable: canEdit, placeholder: 'V0, V1...' })}
+                {field({ fieldKey: 'statut', label: 'Statut', type: 'select', value: budget.statut, options: STATUT_OPTIONS, displayValue: <StatusBadge status={budget.statut} />, editable: canEdit })}
+                {field({ fieldKey: 'dateBudget', label: 'Date du budget', type: 'date', value: budget.dateBudget || '', editable: canEdit })}
+                {field({ fieldKey: 'plafondConvention', label: 'Plafond Convention', type: 'number', value: budget.plafondConvention, isMoney: true, displayValue: formatCurrency(budget.plafondConvention), editable: canEdit, inputProps: { min: 0, step: '0.01' } })}
+                {field({ fieldKey: 'totalBudget', label: 'Total Budget', type: 'number', value: budget.totalBudget, isMoney: true, displayValue: formatCurrency(budget.totalBudget), editable: canEdit, inputProps: { min: 0, step: '0.01' } })}
+                {field({ fieldKey: 'deltaMontant', label: 'Delta', type: 'number', value: deltaMontant, isMoney: true, displayValue: `${deltaMontant > 0 ? '+' : ''}${formatCurrency(deltaMontant)}`, editable: false })}
+                {field({
+                  fieldKey: 'conventionId', label: 'Convention', type: 'select',
+                  value: budget.convention?.id ?? null, options: convOptions, emptyLabel: '-- Aucune --',
+                  displayValue: conventionLabel,
+                  isLink: !!budget.convention, onLinkClick: budget.convention ? () => navigate(`/conventions/${budget.convention!.id}`) : undefined,
+                  editable: canEdit,
+                })}
+                {field({ fieldKey: 'observations', label: 'Observations', type: 'richtext', value: budget.observations || '', displayValue: budget.observations || '-', editable: canEdit, fullWidth: true })}
               </FieldGroup>
             </Box>
 
@@ -284,6 +253,13 @@ const BudgetDetailPageModern = () => {
           </FormView>
         </Container>
       </Box>
+      {dialogField && (
+        <EditFieldDialog
+          open onClose={() => setDialogField(null)} onSave={handleDialogSave}
+          fieldKey={dialogField.key} fieldLabel={dialogField.label}
+          currentValue={dialogField.value} mode={dialogField.mode}
+        />
+      )}
     </AppLayout>
   )
 }

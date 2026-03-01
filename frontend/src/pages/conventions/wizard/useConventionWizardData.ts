@@ -12,11 +12,44 @@ import {
   type ConventionTypeOptionDisplay,
   type HandleChangeFunction,
   type WizardTotals,
+  type BudgetLigne,
+  type Partenaire,
+  type Subvention,
 } from './types'
 
 interface ConventionListItem {
   id: number
   code: string
+}
+
+interface ConventionPartenaireApi {
+  id: number
+  partenaireId: number
+  partenaireNom: string
+  partenaireSigle: string | null
+  budgetAlloue: number
+  pourcentage: number
+  estMaitreOeuvre: boolean
+  estMaitreOeuvreDelegue: boolean
+  remarques: string | null
+}
+
+interface ConventionBudgetLigneApi {
+  id: number
+  categorieDepenseId: number
+  categorieDepenseCode: string
+  categorieDepenseLibelle: string
+  designation: string | null
+  montant: number
+  pourcentage: number
+  remarques: string | null
+}
+
+interface ConventionSubventionApi {
+  id: number
+  organismeBailleur: string
+  montantTotal: number
+  dateSignature: string | null
 }
 
 interface ConventionApiData {
@@ -39,6 +72,11 @@ interface ConventionApiData {
   dateDebut: string
   dateFin: string | null
   dureeMois?: number
+  description?: string
+  commissionMode?: string
+  // Related data returned by getById
+  partenaires?: ConventionPartenaireApi[]
+  subventions?: ConventionSubventionApi[]
 }
 
 interface UseConventionWizardDataResult {
@@ -93,60 +131,108 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
   const [formData, setFormData] = useState<ConventionWizardFormData>(defaultFormData)
 
   // Load existing convention when in edit mode
-  const { data: existingConvention, isLoading: isLoadingConvention } = useQuery({
+  const { data: existingConvention, isLoading: isLoadingConventionQuery } = useQuery({
     queryKey: ['convention', id],
     queryFn: () => (id ? conventionsAPI.getById(parseInt(id)) : null),
     enabled: isEditing,
   })
 
-  // Initialize form with loaded data
+  // Load budget lines separately (not included in getById response)
+  const { data: budgetLignesResponse, isLoading: isLoadingBudgetLignes } = useQuery({
+    queryKey: ['convention-budget-lignes', id],
+    queryFn: () => (id ? conventionsAPI.getBudgetLignes(parseInt(id)) : null),
+    enabled: isEditing,
+  })
+
+  const isLoadingConvention = isLoadingConventionQuery || isLoadingBudgetLignes
+
+  // Initialize form with loaded data (convention + partenaires + budget lines)
   useEffect(() => {
-    if (existingConvention?.data) {
-      // Handle ApiResponse wrapper: data may be at .data.data or .data
-      const responseData = existingConvention.data
-      const convention: ConventionApiData =
-        (responseData as { data?: ConventionApiData }).data ?? (responseData as ConventionApiData)
+    if (!existingConvention?.data) return
 
-      const formatDate = (dateStr: string | Date | null | undefined): string => {
-        if (!dateStr) return ''
-        return typeof dateStr === 'string'
-          ? dateStr.split('T')[0]
-          : new Date(dateStr).toISOString().split('T')[0]
-      }
+    // Handle ApiResponse wrapper: data may be at .data.data or .data
+    const responseData = existingConvention.data
+    const convention: ConventionApiData =
+      (responseData as { data?: ConventionApiData }).data ?? (responseData as ConventionApiData)
 
-      const dateDebut = formatDate(convention.dateDebut)
-      const dateFin = formatDate(convention.dateFin)
-      const dureeMois = dateDebut && dateFin
-        ? calculateDurationMonths(new Date(dateDebut), new Date(dateFin))
-        : (convention.dureeMois || 12)
-
-      setFormData({
-        code: convention.code || '',
-        numeroConvention: convention.numero || '',
-        libelle: convention.libelle || convention.designation || '',
-        libelleRich: convention.libelle || convention.designation || '',
-        objet: convention.objet || '',
-        objetRich: convention.objetRich || convention.objet || '',
-        type: (convention.typeConvention || convention.type || 'CADRE') as ConventionWizardFormData['type'],
-        dateSignature: formatDate(convention.dateConvention) || new Date().toISOString().split('T')[0],
-        dateDebut,
-        dateFin,
-        dureeMois,
-        budgetGlobal: convention.budget || convention.budgetTotal || 0,
-        tauxTvaLignes: convention.tauxTvaLignes ?? convention.tauxTva ?? 20,
-        lignesBudget: [],
-        commissionMode: 'GLOBAL',
-        tauxCommission: convention.tauxCommission || 2.5,
-        baseCalcul:
-          (convention.baseCalcul as 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT') ||
-          'DECAISSEMENTS_TTC',
-        tauxTva: convention.tauxTva || 20,
-        partenaires: [],
-        subventions: [],
-        files: [],
-      })
+    const formatDate = (dateStr: string | Date | null | undefined): string => {
+      if (!dateStr) return ''
+      return typeof dateStr === 'string'
+        ? dateStr.split('T')[0]
+        : new Date(dateStr).toISOString().split('T')[0]
     }
-  }, [existingConvention])
+
+    const dateDebut = formatDate(convention.dateDebut)
+    const dateFin = formatDate(convention.dateFin)
+    const dureeMois = dateDebut && dateFin
+      ? calculateDurationMonths(new Date(dateDebut), new Date(dateFin))
+      : (convention.dureeMois || 12)
+
+    // Map partenaires from API response to wizard format
+    const partenaires: Partenaire[] = (convention.partenaires ?? []).map((p) => ({
+      partenaireId: p.partenaireId,
+      designation: p.partenaireSigle
+        ? `${p.partenaireSigle} - ${p.partenaireNom}`
+        : p.partenaireNom,
+      budget: p.budgetAlloue,
+      pourcentage: p.pourcentage,
+    }))
+
+    // Map budget lines from separate API call to wizard format
+    let lignesBudget: BudgetLigne[] = []
+    if (budgetLignesResponse?.data) {
+      const budgetLignesData: ConventionBudgetLigneApi[] =
+        (budgetLignesResponse.data as { data?: ConventionBudgetLigneApi[] }).data ??
+        (budgetLignesResponse.data as ConventionBudgetLigneApi[])
+
+      if (Array.isArray(budgetLignesData)) {
+        const tauxTvaLignes = convention.tauxTvaLignes ?? convention.tauxTva ?? 20
+        lignesBudget = budgetLignesData.map((bl) => ({
+          categorieDepenseId: bl.categorieDepenseId,
+          designation: bl.designation || bl.categorieDepenseLibelle,
+          montantHT: bl.montant,
+          tauxTVA: tauxTvaLignes,
+          montantTTC: bl.montant * (1 + tauxTvaLignes / 100),
+          plafond: 0,
+          tauxCommissionLigne: convention.tauxCommission || 2.5,
+        }))
+      }
+    }
+
+    // Map subventions from API response
+    const subventions: Subvention[] = (convention.subventions ?? []).map((s) => ({
+      organisme: s.organismeBailleur,
+      montant: s.montantTotal,
+      pourcentage: convention.budget > 0 ? (s.montantTotal / convention.budget) * 100 : 0,
+      dateObtention: s.dateSignature || '',
+    }))
+
+    setFormData({
+      code: convention.code || '',
+      numeroConvention: convention.numero || '',
+      libelle: convention.libelle || convention.designation || '',
+      libelleRich: convention.libelle || convention.designation || '',
+      objet: convention.objet || '',
+      objetRich: convention.objetRich || convention.objet || '',
+      type: (convention.typeConvention || convention.type || 'CADRE') as ConventionWizardFormData['type'],
+      dateSignature: formatDate(convention.dateConvention) || new Date().toISOString().split('T')[0],
+      dateDebut,
+      dateFin,
+      dureeMois,
+      budgetGlobal: convention.budget || convention.budgetTotal || 0,
+      tauxTvaLignes: convention.tauxTvaLignes ?? convention.tauxTva ?? 20,
+      lignesBudget,
+      commissionMode: (convention.commissionMode as 'GLOBAL' | 'PAR_CATEGORIE') || 'GLOBAL',
+      tauxCommission: convention.tauxCommission || 2.5,
+      baseCalcul:
+        (convention.baseCalcul as 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT') ||
+        'DECAISSEMENTS_TTC',
+      tauxTva: convention.tauxTva || 20,
+      partenaires,
+      subventions,
+      files: [],
+    })
+  }, [existingConvention, budgetLignesResponse])
 
   // Load next convention code
   useEffect(() => {

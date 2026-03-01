@@ -194,6 +194,14 @@ function App() {
                       }
                     />
                     <Route
+                      path="/conventions/:id/edit"
+                      element={
+                        <ProtectedRoute>
+                          <ConventionWizardComplete />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="/conventions/:parentId/sous-conventions/nouvelle"
                       element={
                         <ProtectedRoute>

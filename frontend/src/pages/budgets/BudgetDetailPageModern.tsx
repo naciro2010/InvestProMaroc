@@ -103,7 +103,7 @@ const BudgetDetailPageModern = () => {
     if (!id) return
     setIsSaving(true)
     try {
-      await budgetsAPI.update(parseInt(id), formData)
+      await budgetsAPI.update(parseInt(id), { ...formData })
       showSuccess('Budget mis a jour avec succes')
       setIsEditing(false)
       await loadBudget(parseInt(id))

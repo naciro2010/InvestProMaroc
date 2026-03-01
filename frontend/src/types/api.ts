@@ -148,6 +148,8 @@ export interface CreateConventionDTO extends Record<string, unknown> {
   heriteParametres?: boolean
   surchargeTauxCommission?: number | null
   surchargeBaseCalcul?: string | null
+  commissionMode?: string | null
+  dateSignature?: string | null
   // Related data
   lignesBudget?: CreateConventionBudgetLigneDTO[]
   partenaires?: CreateConventionPartenaireDTO[]

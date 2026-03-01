@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Container, Typography, Button, Alert, Skeleton, Tooltip } from '@mui/material'
 import { CalendarMonth } from '@mui/icons-material'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
@@ -196,6 +196,14 @@ const ConventionDetailPageModern = () => {
                 onError={(msg: string) => showError(msg)}
                 onReload={() => loadConvention(convention.id)}
               />
+              {canEdit && (
+                <Tooltip title="Modifier la convention">
+                  <Button variant="contained" size="small" onClick={() => navigate(`/conventions/${id}/edit`)}
+                    sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.5 }}>
+                    <Pencil size={14} style={{ marginRight: 4 }} /> Modifier
+                  </Button>
+                </Tooltip>
+              )}
               <Tooltip title="Ajouter un avenant">
                 <Button variant="outlined" size="small" onClick={() => navigate(`/conventions/${id}/avenants/nouveau`)}
                   sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}>

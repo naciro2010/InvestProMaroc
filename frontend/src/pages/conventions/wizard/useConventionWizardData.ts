@@ -227,7 +227,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
       baseCalcul:
         (convention.baseCalcul as 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT') ||
         'DECAISSEMENTS_TTC',
-      tauxTva: convention.tauxTva || 20,
+      tauxTva: convention.tauxTvaLignes ?? convention.tauxTva ?? 20,
       partenaires,
       subventions,
       files: [],

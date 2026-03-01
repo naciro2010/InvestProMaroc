@@ -75,11 +75,12 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
       .finally(() => setLoadingCategories(false))
   }, [])
 
-  // Handler: propagate TVA change to ALL existing lines + new line form (no stale closures)
+  // Handler: propagate TVA change to ALL existing lines + new line form + commission (no stale closures)
   const handleTvaLignesChange = (value: number) => {
     setFormData((prev: ConventionWizardFormData) => ({
       ...prev,
       tauxTvaLignes: value,
+      tauxTva: value,
       lignesBudget: prev.lignesBudget.map((l: BudgetLigne) => ({
         ...l,
         tauxTVA: value,
@@ -201,14 +202,14 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
           />
           <DecimalInput
             fullWidth
-            label="Taux TVA lignes (%)"
+            label="Taux TVA (%)"
             value={formData.tauxTvaLignes}
             onChange={handleTvaLignesChange}
             decimalPlaces={2}
             min={0}
             max={100}
             size="small"
-            helperText="Appliqué automatiquement à toutes les lignes"
+            helperText="Appliqué aux lignes et à la commission"
           />
         </Box>
       </Card>
@@ -244,7 +245,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
           )}
         </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
           {!isParCategorie && (
             <DecimalInput
               fullWidth
@@ -259,14 +260,6 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
             <MenuItem value="DECAISSEMENTS_HT">Decaissements HT</MenuItem>
             <MenuItem value="DECAISSEMENTS_TTC">Decaissements TTC</MenuItem>
           </TextField>
-          <DecimalInput
-            fullWidth
-            label="Taux TVA commission (%)"
-            value={formData.tauxTva}
-            onChange={(value) => setFormData((prev: ConventionWizardFormData) => ({ ...prev, tauxTva: value }))}
-            decimalPlaces={2} min={0} max={100} size="small"
-            sx={{ minWidth: 80 }}
-          />
         </Box>
 
         {isParCategorie && !hasLines && (
@@ -546,7 +539,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
         <Divider sx={{ my: 2 }} />
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
           <Box>
-            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>TVA Lignes</Typography>
+            <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>Taux TVA</Typography>
             <Typography variant="body2" sx={{ fontWeight: typography.weights.semibold, mt: 0.5 }}>{formData.tauxTvaLignes}%</Typography>
           </Box>
           <Box>
@@ -555,7 +548,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
           </Box>
           <Box>
             <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
-              Commission TTC ({formData.tauxTva}% TVA)
+              Commission TTC ({formData.tauxTvaLignes}% TVA)
             </Typography>
             <Typography variant="h6" sx={{ color: colors.success[600], mt: 0.5 }}>{formatCurrency(totals.commissionTTC)}</Typography>
           </Box>

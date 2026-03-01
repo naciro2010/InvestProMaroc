@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, ReactNode } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Box, Alert, Skeleton, Typography, Button, Container, TextField, MenuItem } from '@mui/material'
-import { ArrowLeft } from 'lucide-react'
+import { Box, Alert, Skeleton, Typography, Button, Container, Tooltip, TextField, MenuItem } from '@mui/material'
+import { Lock, CalendarMonth } from '@mui/icons-material'
+import { Pencil, ArrowLeft } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge, type StatusStep } from '@/components/core'
+import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { marchesAPI, conventionsAPI, fournisseursAPI } from '@/lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { useToast } from '@/contexts/ToastContext'
-import MarcheStatsCard from './components/MarcheStatsCard'
+import MarcheSmartButtons from './components/MarcheSmartButtons'
 import MarcheConventionCard from './components/MarcheConventionCard'
 import MarcheInfoCard from './components/MarcheInfoCard'
 import MarcheOrdresServiceSection from './components/MarcheOrdresServiceSection'
@@ -24,9 +26,11 @@ interface MarcheData {
   conventionId: number | null; conventionCode: string | null
   fournisseurId: number | null; fournisseurNom: string | null
   montantHt: number | null; montantTtc: number | null; montantTva: number | null; tauxTva: number | null
-  typeMarche: string | null; natureMarche: string | null; delaiExecution: number | null
+  typeMarche: string | null; natureMarche: string | null; naturePrestation: string | null
+  delaiExecution: number | null; numAo: string | null; dateSignature: string | null
   dateDebut: string | null; dateFinPrevue: string | null
   retenueGarantie: number | null; remarques: string | null
+  nbLignes?: number; nbDecomptes?: number; nbPaiements?: number; nbAvenants?: number; montantPaye?: number
 }
 
 interface MarcheEditData {
@@ -89,9 +93,14 @@ const MarcheDetailPageModern = () => {
         montantHt: r.montantHT ?? r.montantHt ?? null, montantTtc: r.montantTTC ?? r.montantTtc ?? null,
         montantTva: r.montantTVA ?? r.montantTva ?? null, tauxTva: r.tauxTVA ?? r.tauxTva ?? null,
         typeMarche: r.typeMarche || null, natureMarche: r.natureMarche || null,
+        naturePrestation: r.naturePrestation || null, numAo: r.numAo || null,
+        dateSignature: r.dateSignature || null,
         delaiExecution: r.delaiExecutionMois ?? r.delaiExecution ?? null,
         dateDebut: r.dateDebut || null, dateFinPrevue: r.dateFinPrevue || null,
         retenueGarantie: r.retenueGarantie ?? null, remarques: r.remarques || null,
+        nbLignes: r.nbLignes ?? undefined, nbDecomptes: r.nbDecomptes ?? undefined,
+        nbPaiements: r.nbPaiements ?? undefined, nbAvenants: r.nbAvenants ?? undefined,
+        montantPaye: r.montantPaye ?? undefined,
       })
     } catch { setError('Erreur lors du chargement du marche') }
     finally { setLoading(false) }
@@ -177,19 +186,23 @@ const MarcheDetailPageModern = () => {
 
   // --- Render guards ---
   if (!id) return <AppLayout><Box sx={{ p: 4 }}><Alert severity="error">ID du marche manquant</Alert></Box></AppLayout>
+
   if (loading) return (
-    <AppLayout><Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-      <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
-        <Skeleton variant="text" width={300} height={32} /></Box>
-      <Container maxWidth="xl" sx={{ py: 3 }}>
-        <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-          <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
-          <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+    <AppLayout>
+      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+        <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
+          <Skeleton variant="text" width={300} height={32} />
         </Box>
-      </Container>
-    </Box></AppLayout>
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
+          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mb: 2 }} />
+          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
+          <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+        </Container>
+      </Box>
+    </AppLayout>
   )
+
   if (error || !marche) return (
     <AppLayout><Container maxWidth="xl" sx={{ py: 4 }}>
       <Alert severity="error" sx={{ mb: 2 }}>{error || 'Marche non trouve'}</Alert>
@@ -202,28 +215,127 @@ const MarcheDetailPageModern = () => {
   const convItems = conventions.map(c => ({ id: c.id, label: `${c.code} - ${c.objet}` }))
   const fournItems = fournisseurs.map(f => ({ id: f.id, label: `${f.code} - ${f.raisonSociale}` }))
 
+  // Build effective steps: insert SUSPENDU/ANNULE into the pipeline when active
+  const effectiveSteps: StatusStep[] = (() => {
+    if (marche.statut === 'SUSPENDU') return [
+      ...STATUS_STEPS.slice(0, 3),
+      { value: 'SUSPENDU', label: 'Suspendu', variant: 'danger' as const },
+    ]
+    if (marche.statut === 'ANNULE') return [
+      ...STATUS_STEPS.slice(0, 3),
+      { value: 'ANNULE', label: 'Annule', variant: 'danger' as const },
+    ]
+    return STATUS_STEPS
+  })()
+
   return (
     <AppLayout>
       <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
         <ControlPanel
-          breadcrumbs={[{ label: 'Marches', path: '/marches' }, { label: marche.numeroMarche || `#${marche.id}` }]}
-          actions={<>
-            <StatusBadge status={marche.statut} size="small" />
-            <Button size="small" startIcon={<ArrowLeft size={14} />} onClick={() => navigate('/marches')}
-              sx={{ ...componentStyles.buttonGhost, textTransform: 'none', fontSize: typography.sizes.sm }}>Liste</Button>
-          </>}
+          breadcrumbs={[
+            { label: 'Marches', path: '/marches' },
+            { label: marche.numeroMarche || `#${marche.id}` },
+          ]}
+          actions={
+            <>
+              <Tooltip title={!canEdit ? 'Statut ne permet pas la modification' : 'Modifier'}>
+                <span>
+                  <Button
+                    variant="outlined" size="small" disabled={!canEdit}
+                    onClick={() => navigate(`/marches/${id}/modifier`)}
+                    sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}
+                  >
+                    {canEdit
+                      ? <Pencil size={14} style={{ marginRight: 4 }} />
+                      : <Lock sx={{ fontSize: 14, mr: 0.5 }} />
+                    }
+                    Modifier
+                  </Button>
+                </span>
+              </Tooltip>
+              <Button size="small" startIcon={<ArrowLeft size={14} />} onClick={() => navigate('/marches')}
+                sx={{ ...componentStyles.buttonGhost, textTransform: 'none', fontSize: typography.sizes.sm }}>
+                Liste
+              </Button>
+            </>
+          }
           hideBottomRow
         />
-        <Container maxWidth="xl" sx={{ py: 3 }}>
+
+        <Container maxWidth="xl" sx={{ py: 2 }}>
           <FormView isEditing={ed} onToggleEdit={canEdit ? handleToggleEdit : undefined}
             onSave={handleSave} onCancel={handleCancel} isSaving={isSaving}
-            statusSteps={STATUS_STEPS} currentStatus={marche.statut}>
-            <Typography sx={{ fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
-              {marche.objet || marche.numeroMarche}
-            </Typography>
-            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, mb: 3 }}>
-              {marche.numeroMarche}
-            </Typography>
+            statusSteps={effectiveSteps} currentStatus={marche.statut}>
+
+            {/* Title + Description + Metadata (Odoo-style) */}
+            <Box sx={{ mb: 1.5 }}>
+              <Box sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
+                <RichTextDisplay html={marche.objet || marche.numeroMarche} variant="compact" allowExpand={false} />
+              </Box>
+
+              {/* Metadata bar with separators */}
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, py: 0.75, borderTop: `1px solid ${colors.borderSubtle}` }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>N:</Typography>
+                  <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{marche.numeroMarche}</Typography>
+                </Box>
+                {marche.numAo && (
+                  <>
+                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>AO:</Typography>
+                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{marche.numAo}</Typography>
+                    </Box>
+                  </>
+                )}
+                <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                {marche.typeMarche && <StatusBadge status={marche.typeMarche} size="small" />}
+                {(marche.naturePrestation || marche.natureMarche) && (
+                  <>
+                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                    <StatusBadge status={marche.naturePrestation || marche.natureMarche || ''} size="small" />
+                  </>
+                )}
+                {(marche.dateSignature || marche.dateMarche) && (
+                  <>
+                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <CalendarMonth sx={{ fontSize: 13, color: colors.textSecondary }} />
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                        {new Date(marche.dateSignature || marche.dateMarche).toLocaleDateString('fr-FR')}
+                        {marche.dateDebut && ` — ${new Date(marche.dateDebut).toLocaleDateString('fr-FR')}`}
+                        {marche.dateFinPrevue && ` → ${new Date(marche.dateFinPrevue).toLocaleDateString('fr-FR')}`}
+                      </Typography>
+                    </Box>
+                  </>
+                )}
+                {marche.fournisseurNom && (
+                  <>
+                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Fournisseur:</Typography>
+                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{marche.fournisseurNom}</Typography>
+                    </Box>
+                  </>
+                )}
+              </Box>
+            </Box>
+
+            {/* Smart Buttons - Odoo style (entity counts) */}
+            <Box sx={{ mb: 2 }}>
+              <MarcheSmartButtons
+                marcheId={marcheId}
+                nombreLignes={marche.nbLignes ?? 0}
+                nombreDecomptes={marche.nbDecomptes ?? 0}
+                nombrePaiements={marche.nbPaiements ?? 0}
+                nombreAvenants={marche.nbAvenants ?? 0}
+                montantTtc={marche.montantTtc ?? 0}
+                montantPaye={marche.montantPaye ?? 0}
+                fournisseurNom={marche.fournisseurNom ?? undefined}
+              />
+            </Box>
+
+            {/* Inline-editable fields */}
             <Box sx={{ mb: 3 }}>
               <FieldGroup title="Informations generales" columns={3}>
                 <Field label="Numero" value={marche.numeroMarche} isEditing={ed}
@@ -261,7 +373,8 @@ const MarcheDetailPageModern = () => {
                   editContent={textInput('remarques', 'text', { multiline: true })} />
               </FieldGroup>
             </Box>
-            <MarcheStatsCard marcheId={marcheId} />
+
+            {/* Notebook tabs - each tab loads data independently */}
             <Box sx={{ mt: 3 }}>
               <Notebook tabs={[
                 { label: 'Detail', content: (<Box><MarcheConventionCard marcheId={marcheId} /><Box sx={{ mt: 3 }}><MarcheInfoCard marcheId={marcheId} /></Box><Box sx={{ mt: 3 }}><MarcheOrdresServiceSection marcheId={marcheId} /></Box></Box>) },

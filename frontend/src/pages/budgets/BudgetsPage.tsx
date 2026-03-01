@@ -323,7 +323,7 @@ export default function BudgetsPage() {
                             </IconButton>
                             <IconButton
                               size="small"
-                              onClick={() => navigate(`/budgets/${budget.id}/modifier`)}
+                              onClick={() => navigate(`/budgets/${budget.id}`)}
                               sx={{ color: colors.neutral[500] }}
                             >
                               <Edit fontSize="small" />

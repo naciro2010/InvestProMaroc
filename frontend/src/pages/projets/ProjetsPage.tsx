@@ -235,7 +235,7 @@ const ProjetsPage = () => {
           selectedProjet={selectedProjet}
           onMenuClose={handleMenuClose}
           onNavigateDetail={() => { handleMenuClose(); navigate(`/projets/${selectedProjet?.id}`) }}
-          onNavigateEdit={() => { handleMenuClose(); navigate(`/projets/${selectedProjet?.id}/modifier`) }}
+          onNavigateEdit={() => { handleMenuClose(); navigate(`/projets/${selectedProjet?.id}`) }}
           onDemarrer={handleDemarrer}
           onSuspendre={handleSuspendre}
           onReprendre={handleReprendre}

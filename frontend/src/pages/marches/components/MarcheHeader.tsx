@@ -110,10 +110,10 @@ const MarcheHeader = ({ marcheId }: MarcheHeaderProps) => {
         <Button
           variant="contained"
           startIcon={<Edit />}
-          onClick={() => navigate(`/marches/${marcheId}/modifier`)}
+          onClick={() => navigate(`/marches/${marcheId}`)}
           sx={componentStyles.buttonPrimary}
         >
-          Modifier
+          Details
         </Button>
       </Box>
 

@@ -41,9 +41,6 @@ interface DialogFieldState {
   key: string; label: string; value: string; mode: 'richtext' | 'textarea'
 }
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(v)
-
 const STATUS_STEPS: StatusStep[] = [
   { value: 'BROUILLON', label: 'Brouillon' },
   { value: 'SOUMIS', label: 'Soumis' },
@@ -60,11 +57,6 @@ const normalizeStatut = (statut: string): string => {
 const TYPE_OPTIONS = [
   { value: 'CADRE', label: 'Cadre' },
   { value: 'SPECIFIQUE', label: 'Specifique' },
-]
-const BASE_OPTIONS = [
-  { value: 'MONTANT_TTC', label: 'Montant TTC' },
-  { value: 'MONTANT_HT', label: 'Montant HT' },
-  { value: 'MONTANT_NET', label: 'Montant Net' },
 ]
 
 const ConventionDetailPageModern = () => {
@@ -113,7 +105,8 @@ const ConventionDetailPageModern = () => {
       libelle: convention.libelle, numero: convention.numero, objet: convention.objet,
       typeConvention: convention.typeConvention, budget: convention.budget,
       tauxCommission: convention.tauxCommission, baseCalcul: convention.baseCalcul,
-      tauxTva: convention.tauxTva, commissionMode: convention.commissionMode || 'GLOBAL',
+      tauxTva: convention.tauxTva, tauxTvaLignes: convention.tauxTvaLignes,
+      commissionMode: convention.commissionMode || 'GLOBAL',
       dateSignature: convention.dateSignature || undefined,
       dateDebut: convention.dateDebut, dateFin: convention.dateFin || undefined,
       [fieldKey]: value === '' ? undefined : value,
@@ -312,22 +305,14 @@ const ConventionDetailPageModern = () => {
                 {field({ fieldKey: 'numero', label: 'Numero', type: 'text', value: convention.numero, editable: canEdit })}
                 {field({ fieldKey: 'typeConvention', label: 'Type', type: 'select', value: convention.typeConvention, options: TYPE_OPTIONS, displayValue: <StatusBadge status={convention.typeConvention} size="small" />, editable: canEdit })}
               </FieldGroup>
-              <FieldGroup title="Parametres financiers" columns={4}>
-                {field({ fieldKey: 'budget', label: 'Budget', type: 'number', value: convention.budget, isMoney: true, displayValue: formatCurrency(convention.budget), editable: canEdit })}
-                {field({ fieldKey: 'tauxCommission', label: 'Taux commission (%)', type: 'number', value: convention.tauxCommission, displayValue: `${convention.tauxCommission}%`, editable: canEdit, inputProps: { step: 0.01 } })}
-                {field({ fieldKey: 'baseCalcul', label: 'Base de calcul', type: 'select', value: convention.baseCalcul, options: BASE_OPTIONS, editable: canEdit })}
-                {field({ fieldKey: 'tauxTva', label: 'TVA (%)', type: 'number', value: convention.tauxTva, displayValue: `${convention.tauxTva}%`, editable: canEdit })}
-              </FieldGroup>
-              <FieldGroup title="Dates" columns={3}>
-                {field({ fieldKey: 'dateSignature', label: 'Date signature', type: 'date', value: convention.dateSignature || '', editable: canEdit })}
-                {field({ fieldKey: 'dateDebut', label: 'Date debut', type: 'date', value: convention.dateDebut || '', editable: canEdit })}
-                {field({ fieldKey: 'dateFin', label: 'Date fin', type: 'date', value: convention.dateFin || '', editable: canEdit })}
-              </FieldGroup>
             </Box>
 
-            {/* Convention Key Info Card (always visible) */}
+            {/* Convention Key Info Card (editable inline Odoo-style) */}
             <Box sx={{ mb: 2 }}>
-              <ConventionKeyInfoCard convention={convention} enrichedData={enrichedData} />
+              <ConventionKeyInfoCard
+                convention={convention} enrichedData={enrichedData}
+                canEdit={canEdit} onFieldSave={handleFieldSave}
+              />
             </Box>
 
             {/* Financial Flow */}

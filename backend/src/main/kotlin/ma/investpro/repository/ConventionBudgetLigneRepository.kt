@@ -30,4 +30,9 @@ interface ConventionBudgetLigneRepository : JpaRepository<ConventionBudgetLigne,
      * Trouve une ligne par convention et catégorie
      */
     fun findByConventionIdAndCategorieDepenseId(conventionId: Long, categorieDepenseId: Long): ConventionBudgetLigne?
+
+    /**
+     * Supprime toutes les lignes budget d'une convention
+     */
+    fun deleteByConventionId(conventionId: Long)
 }

@@ -44,4 +44,9 @@ interface ConventionPartenaireRepository : JpaRepository<ConventionPartenaire, L
      * Supprime un partenaire d'une convention
      */
     fun deleteByConventionIdAndPartenaireId(conventionId: Long, partenaireId: Long): Int
+
+    /**
+     * Supprime tous les partenaires d'une convention
+     */
+    fun deleteByConventionId(conventionId: Long)
 }

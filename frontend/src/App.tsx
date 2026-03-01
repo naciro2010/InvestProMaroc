@@ -25,24 +25,20 @@ const SousConventionWizard = lazy(() => import('./pages/conventions/SousConventi
 const AvenantForm = lazy(() => import('./pages/conventions/AvenantForm'))
 const AvenantDetailPage = lazy(() => import('./pages/conventions/AvenantDetailPage'))
 const ConventionDetailPageModern = lazy(() => import('./pages/conventions/ConventionDetailPageModern'))
-// ConventionEditPageComplete replaced by ConventionWizardComplete for unified edit experience
 const ParametrageConventionsPage = lazy(() => import('./pages/settings/ParametrageConventionsPage'))
 
 // Marchés
 const MarchesPage = lazy(() => import('./pages/marches/MarchesPage'))
 const MarcheDetailPageModern = lazy(() => import('./pages/marches/MarcheDetailPageModern'))
-const MarcheFormPage = lazy(() => import('./pages/marches/MarcheFormPage'))
 const MarcheWizard = lazy(() => import('./pages/marches/MarcheWizard'))
 
 // Projets
 const ProjetsPage = lazy(() => import('./pages/projets/ProjetsPage'))
-const ProjetFormPage = lazy(() => import('./pages/projets/ProjetFormPage'))
 const ProjetWizard = lazy(() => import('./pages/projets/ProjetWizard'))
 const ProjetDetailPageModern = lazy(() => import('./pages/projets/ProjetDetailPageModern'))
 
 // Budgets
 const BudgetsPage = lazy(() => import('./pages/budgets/BudgetsPage'))
-const BudgetFormPage = lazy(() => import('./pages/budgets/BudgetFormPage'))
 const BudgetWizard = lazy(() => import('./pages/budgets/BudgetWizard'))
 const BudgetDetailPageModern = lazy(() => import('./pages/budgets/BudgetDetailPageModern'))
 
@@ -190,14 +186,6 @@ function App() {
                       }
                     />
                     <Route
-                      path="/conventions/:id/edit"
-                      element={
-                        <ProtectedRoute>
-                          <ConventionWizardComplete />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
                       path="/conventions/:id"
                       element={
                         <ProtectedRoute>
@@ -248,14 +236,6 @@ function App() {
                       }
                     />
                     <Route
-                      path="/marches/:id/modifier"
-                      element={
-                        <ProtectedRoute>
-                          <MarcheFormPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
                       path="/marches/:id"
                       element={
                         <ProtectedRoute>
@@ -290,14 +270,6 @@ function App() {
                       }
                     />
                     <Route
-                      path="/projets/:id/modifier"
-                      element={
-                        <ProtectedRoute>
-                          <ProjetFormPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
                       path="/projets/:id"
                       element={
                         <ProtectedRoute>
@@ -320,14 +292,6 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <BudgetWizard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/budgets/:id/modifier"
-                      element={
-                        <ProtectedRoute>
-                          <BudgetFormPage />
                         </ProtectedRoute>
                       }
                     />

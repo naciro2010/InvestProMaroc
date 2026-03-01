@@ -206,7 +206,7 @@ export default function MarchesPage() {
               onPageChange={setPage}
               onRowsPerPageChange={(rpp) => { setRowsPerPage(rpp); setPage(0) }}
               onRowClick={(id) => navigate(`/marches/${id}`)}
-              onEdit={(id) => navigate(`/marches/${id}/modifier`)}
+              onEdit={(id) => navigate(`/marches/${id}`)}
               onDelete={handleDelete}
               onConventionClick={(id) => navigate(`/conventions/${id}`)}
             />

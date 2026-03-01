@@ -157,7 +157,7 @@ const ConventionsTableModern = () => {
     try {
       switch (action) {
         case 'view': navigate(`/conventions/${selectedConvention.id}`); break
-        case 'edit': navigate(`/conventions/${selectedConvention.id}/edit`); break
+        case 'edit': navigate(`/conventions/${selectedConvention.id}`); break
         case 'submit':
           await conventionsAPI.soumettre(selectedConvention.id)
           showToast('Convention soumise', 'success'); fetchConventions(); break

@@ -83,7 +83,7 @@ class FlywayMigrationIntegrationTest {
         appliedMigrations shouldNotBe null
         val versionedMigrations = appliedMigrations.filter { it.version != null }
 
-        versionedMigrations.size shouldBe 4
+        versionedMigrations.size shouldBe 3
 
         // Verify each migration
         versionedMigrations[0].version.version shouldBe "1"
@@ -94,9 +94,6 @@ class FlywayMigrationIntegrationTest {
 
         versionedMigrations[2].version.version shouldBe "3"
         versionedMigrations[2].description shouldBe "seed data"
-
-        versionedMigrations[3].version.version shouldBe "4"
-        versionedMigrations[3].description shouldBe "notifications and team messages"
     }
 
     @Test

@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS echeances_subvention CASCADE;
 DROP TABLE IF EXISTS subventions CASCADE;
 
 -- Budget
+DROP TABLE IF EXISTS budget_ligne_imputations CASCADE;
 DROP TABLE IF EXISTS convention_budget_lignes CASCADE;
 DROP TABLE IF EXISTS versements_previsionnels CASCADE;
 DROP TABLE IF EXISTS imputations_previsionnelles CASCADE;

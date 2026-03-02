@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.CreateConventionBudgetLigneRequest
 import ma.investpro.entity.ConventionBudgetLigne
 import ma.investpro.repository.CategorieDepenseRepository
 import ma.investpro.repository.ConventionBudgetLigneRepository
@@ -124,5 +125,28 @@ class ConventionBudgetLigneService(
 
         budgetLigne.actif = false
         conventionBudgetLigneRepository.save(budgetLigne)
+    }
+
+    /**
+     * Remplace toutes les lignes budget d'une convention.
+     * Supprime les anciennes et insère les nouvelles.
+     */
+    fun replaceAllForConvention(
+        conventionId: Long,
+        lignes: List<CreateConventionBudgetLigneRequest>
+    ) {
+        // Supprimer toutes les lignes existantes
+        conventionBudgetLigneRepository.deleteByConventionId(conventionId)
+
+        // Insérer les nouvelles lignes
+        lignes.forEach { ligneRequest ->
+            addBudgetLigne(
+                conventionId = conventionId,
+                categorieDepenseId = ligneRequest.categorieDepenseId,
+                montant = ligneRequest.montant,
+                designation = ligneRequest.designation,
+                remarques = ligneRequest.remarques
+            )
+        }
     }
 }

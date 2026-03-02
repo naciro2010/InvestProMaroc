@@ -1,5 +1,6 @@
 package ma.investpro.service
 
+import ma.investpro.dto.CreateConventionPartenaireRequest
 import ma.investpro.entity.Convention
 import ma.investpro.entity.ConventionPartenaire
 import ma.investpro.entity.Partenaire
@@ -156,6 +157,31 @@ class ConventionPartenaireService(
             throw IllegalArgumentException("ConventionPartenaire $id introuvable")
         }
         conventionPartenaireRepository.deleteById(id)
+    }
+
+    /**
+     * Remplace tous les partenaires d'une convention.
+     * Supprime les anciens et insère les nouveaux.
+     */
+    fun replaceAllForConvention(
+        conventionId: Long,
+        partenaires: List<CreateConventionPartenaireRequest>
+    ) {
+        // Supprimer tous les partenaires existants
+        conventionPartenaireRepository.deleteByConventionId(conventionId)
+
+        // Insérer les nouveaux partenaires
+        partenaires.forEach { partenaireRequest ->
+            addPartenaireToConvention(
+                conventionId = conventionId,
+                partenaireId = partenaireRequest.partenaireId,
+                budgetAlloue = partenaireRequest.budgetAlloue,
+                pourcentage = partenaireRequest.pourcentage,
+                estMaitreOeuvre = partenaireRequest.estMaitreOeuvre,
+                estMaitreOeuvreDelegue = partenaireRequest.estMaitreOeuvreDelegue,
+                remarques = partenaireRequest.remarques
+            )
+        }
     }
 
     /**

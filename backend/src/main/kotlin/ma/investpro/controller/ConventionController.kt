@@ -66,15 +66,12 @@ class ConventionController(
 
     @GetMapping("/{id}")
     @ReadAccess
-    fun getById(@PathVariable id: Long): ResponseEntity<Map<String, Any>> {
+    fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {
         val convention = conventionService.findById(id)
-            ?: return ResponseEntity.notFound().build()
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("Convention non trouvée"))
         val dto = conventionMapper.toDTO(convention)
-        return ResponseEntity.ok(mapOf(
-            "success" to true,
-            "message" to "Convention récupérée avec succès",
-            "data" to dto
-        ))
+        return ResponseEntity.ok(ApiResponse.success(dto, "Convention récupérée avec succès"))
     }
 
     @GetMapping("/code/{code}")
@@ -207,7 +204,20 @@ class ConventionController(
                 description = request.description
             )
             val updated = conventionService.update(id, convention)
-            val dto = conventionMapper.toDTO(updated)
+
+            // Remplacer les lignes de budget si présentes dans la requête
+            request.lignesBudget?.let { lignes ->
+                conventionBudgetLigneService.replaceAllForConvention(id, lignes)
+            }
+
+            // Remplacer les partenaires si présents dans la requête
+            request.partenaires?.let { partenaires ->
+                conventionPartenaireService.replaceAllForConvention(id, partenaires)
+            }
+
+            // Recharger la convention avec toutes les relations
+            val reloaded = conventionService.findById(id) ?: updated
+            val dto = conventionMapper.toDTO(reloaded)
             ResponseEntity.ok(ApiResponse.success(dto, "Convention mise à jour avec succès"))
         } catch (e: IllegalArgumentException) {
             ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur de validation"))

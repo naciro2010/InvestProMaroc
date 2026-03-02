@@ -343,3 +343,46 @@ INSERT INTO imputations_analytiques (id, type_imputation, reference_id, montant,
 (12, 'CONVENTION', 13, 3500000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R002"}');
 
 SELECT setval('imputations_analytiques_id_seq', 12, true);
+
+-- ============================================================================
+-- Lignes budget par catégorie de dépense (convention_budget_lignes)
+-- ============================================================================
+INSERT INTO convention_budget_lignes (id, convention_id, categorie_depense_id, designation, montant, pourcentage, actif) VALUES
+-- Convention 1 - Infrastructure (budget = 10 000 000)
+(1, 1, 1, 'Travaux routiers et génie civil', 5000000.00, 50.00, TRUE),
+(2, 1, 4, 'Études techniques et topographiques', 1500000.00, 15.00, TRUE),
+(3, 1, 6, 'Équipements de signalisation', 2000000.00, 20.00, TRUE),
+(4, 1, 3, 'Services de maîtrise d''œuvre', 1500000.00, 15.00, TRUE),
+-- Convention 2 - Équipement Public (budget = 5 000 000)
+(5, 2, 6, 'Équipements scolaires et médicaux', 2500000.00, 50.00, TRUE),
+(6, 2, 2, 'Fournitures de bureau et consommables', 1000000.00, 20.00, TRUE),
+(7, 2, 5, 'Formation du personnel', 750000.00, 15.00, TRUE),
+(8, 2, 7, 'Maintenance préventive', 750000.00, 15.00, TRUE),
+-- Convention 8 - Aménagement Territorial (budget = 15 000 000)
+(9, 8, 1, 'Travaux de viabilisation', 8000000.00, 53.33, TRUE),
+(10, 8, 4, 'Études d''impact et faisabilité', 2000000.00, 13.33, TRUE),
+(11, 8, 6, 'Équipements industriels', 3000000.00, 20.00, TRUE),
+(12, 8, 8, 'Conseil et assistance technique', 2000000.00, 13.33, TRUE);
+
+SELECT setval('convention_budget_lignes_id_seq', 12, true);
+
+-- ============================================================================
+-- Imputations par ligne budget (budget_ligne_imputations)
+-- ============================================================================
+INSERT INTO budget_ligne_imputations (id, budget_ligne_id, projet_id, projet_code, projet_libelle, pourcentage, montant, actif) VALUES
+-- Ligne 1: Travaux routiers (5M) → répartis entre PROJ-001 et PROJ-002
+(1, 1, 1, 'PROJ-001', 'Infrastructure Routière Casablanca', 60.00, 3000000.00, TRUE),
+(2, 1, 2, 'PROJ-002', 'Aménagement Boulevard Zerktouni', 40.00, 2000000.00, TRUE),
+-- Ligne 2: Études techniques (1.5M) → principalement PROJ-001
+(3, 2, 1, 'PROJ-001', 'Infrastructure Routière Casablanca', 70.00, 1050000.00, TRUE),
+(4, 2, 2, 'PROJ-002', 'Aménagement Boulevard Zerktouni', 30.00, 450000.00, TRUE),
+-- Ligne 3: Équipements signalisation (2M) → répartis
+(5, 3, 1, 'PROJ-001', 'Infrastructure Routière Casablanca', 50.00, 1000000.00, TRUE),
+(6, 3, 2, 'PROJ-002', 'Aménagement Boulevard Zerktouni', 50.00, 1000000.00, TRUE),
+-- Ligne 5: Équipements scolaires et médicaux (2.5M) → répartis entre PROJ-003 et PROJ-004
+(7, 5, 3, 'PROJ-003', 'Équipement Écoles Rabat', 60.00, 1500000.00, TRUE),
+(8, 5, 4, 'PROJ-004', 'Centres de Santé Régionaux', 40.00, 1000000.00, TRUE),
+-- Ligne 9: Travaux viabilisation (8M) → PROJ-005
+(9, 9, 5, 'PROJ-005', 'Zone Industrielle Kénitra', 100.00, 8000000.00, TRUE);
+
+SELECT setval('budget_ligne_imputations_id_seq', 9, true);

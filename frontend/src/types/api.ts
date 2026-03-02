@@ -312,6 +312,43 @@ export interface CreateCategorieDepenseDTO {
   ordreAffichage?: number
 }
 
+// ============================================================================
+// Budget Ligne Imputation Types (Distribution par projet)
+// ============================================================================
+
+export interface BudgetLigneImputationDTO {
+  id: number
+  budgetLigneId: number
+  projetId: number | null
+  projetCode: string
+  projetLibelle: string | null
+  pourcentage: number
+  montant: number
+  actif: boolean
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export interface CreateBudgetLigneImputationRequest {
+  projetId: number
+  projetCode: string
+  projetLibelle?: string
+  pourcentage: number
+}
+
+export interface UpdateBudgetLigneImputationRequest {
+  projetId?: number
+  projetCode?: string
+  projetLibelle?: string
+  pourcentage: number
+}
+
+export interface BudgetLigneWithImputationsDTO {
+  budgetLigne: ConventionBudgetLigneDTO
+  imputations: BudgetLigneImputationDTO[]
+  totalPourcentageImpute: number
+}
+
 export interface UpdateCategorieDepenseDTO {
   code?: string
   libelle?: string

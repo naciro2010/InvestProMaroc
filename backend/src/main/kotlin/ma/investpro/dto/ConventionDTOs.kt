@@ -187,6 +187,53 @@ data class UpdateConventionBudgetLigneRequest(
     val remarques: String? = null
 )
 
+// Budget Ligne Imputation DTOs
+
+data class BudgetLigneImputationDTO(
+    val id: Long,
+    val budgetLigneId: Long,
+    val projetId: Long?,
+    val projetCode: String,
+    val projetLibelle: String?,
+    val pourcentage: BigDecimal,
+    val montant: BigDecimal,
+    val actif: Boolean,
+    val createdAt: LocalDateTime?,
+    val updatedAt: LocalDateTime?
+)
+
+data class CreateBudgetLigneImputationRequest(
+    @field:NotNull(message = "Le projet est obligatoire")
+    val projetId: Long,
+
+    @field:NotBlank(message = "Le code projet est obligatoire")
+    val projetCode: String,
+
+    val projetLibelle: String? = null,
+
+    @field:NotNull(message = "Le pourcentage est obligatoire")
+    @field:DecimalMin(value = "0.01", message = "Le pourcentage doit être supérieur à 0")
+    @field:DecimalMax(value = "100.00", message = "Le pourcentage ne peut dépasser 100%")
+    val pourcentage: BigDecimal
+)
+
+data class UpdateBudgetLigneImputationRequest(
+    val projetId: Long? = null,
+    val projetCode: String? = null,
+    val projetLibelle: String? = null,
+
+    @field:NotNull(message = "Le pourcentage est obligatoire")
+    @field:DecimalMin(value = "0.01", message = "Le pourcentage doit être supérieur à 0")
+    @field:DecimalMax(value = "100.00", message = "Le pourcentage ne peut dépasser 100%")
+    val pourcentage: BigDecimal
+)
+
+data class BudgetLigneWithImputationsDTO(
+    val budgetLigne: ConventionBudgetLigneDTO,
+    val imputations: List<BudgetLigneImputationDTO>,
+    val totalPourcentageImpute: BigDecimal
+)
+
 // Convention Creation Request DTO
 
 data class CreateConventionRequest(

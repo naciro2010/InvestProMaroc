@@ -1036,6 +1036,32 @@ COMMENT ON COLUMN convention_budget_lignes.montant IS 'Montant alloué à cette 
 COMMENT ON COLUMN convention_budget_lignes.pourcentage IS 'Pourcentage du budget total (auto-calculé)';
 
 -- ============================================================================
+-- SECTION: BUDGET LIGNE IMPUTATIONS (Distribution par projet)
+-- ============================================================================
+
+-- Imputations par ligne de budget : répartition d'un montant sur des projets
+CREATE TABLE IF NOT EXISTS budget_ligne_imputations (
+    id BIGSERIAL PRIMARY KEY,
+    budget_ligne_id BIGINT NOT NULL REFERENCES convention_budget_lignes(id) ON DELETE CASCADE,
+    projet_id BIGINT REFERENCES projets(id) ON DELETE SET NULL,
+    projet_code VARCHAR(50) NOT NULL,
+    projet_libelle VARCHAR(200),
+    pourcentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    montant DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN NOT NULL DEFAULT TRUE,
+    UNIQUE(budget_ligne_id, projet_code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_budget_ligne_imp_ligne ON budget_ligne_imputations(budget_ligne_id);
+CREATE INDEX IF NOT EXISTS idx_budget_ligne_imp_projet ON budget_ligne_imputations(projet_id);
+
+COMMENT ON TABLE budget_ligne_imputations IS 'Répartition du montant d''une ligne budget par projet (imputation analytique)';
+COMMENT ON COLUMN budget_ligne_imputations.pourcentage IS 'Pourcentage du montant de la ligne budget alloué à ce projet';
+COMMENT ON COLUMN budget_ligne_imputations.montant IS 'Montant calculé (pourcentage × montant ligne budget)';
+
+-- ============================================================================
 -- END OF SCHEMA DEFINITION
 -- ============================================================================
 -- Total Tables: 42+

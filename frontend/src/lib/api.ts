@@ -333,6 +333,28 @@ export const conventionsAPI = {
   deleteBudgetLigne: (conventionId: number, id: number) =>
     api.delete(`/conventions/${conventionId}/budget-lignes/${id}`),
 
+  // Budget distribution (lignes + imputations groupées)
+  getBudgetDistribution: (conventionId: number) =>
+    api.get(`/conventions/${conventionId}/budget-distribution`),
+
+  // Budget ligne imputations (répartition par projet)
+  getBudgetLigneImputations: (conventionId: number, ligneId: number) =>
+    api.get(`/conventions/${conventionId}/budget-lignes/${ligneId}/imputations`),
+  addBudgetLigneImputation: (conventionId: number, ligneId: number, data: {
+    projetId: number;
+    projetCode: string;
+    projetLibelle?: string;
+    pourcentage: number;
+  }) => api.post(`/conventions/${conventionId}/budget-lignes/${ligneId}/imputations`, data),
+  updateBudgetLigneImputation: (conventionId: number, ligneId: number, id: number, data: {
+    projetId?: number;
+    projetCode?: string;
+    projetLibelle?: string;
+    pourcentage: number;
+  }) => api.put(`/conventions/${conventionId}/budget-lignes/${ligneId}/imputations/${id}`, data),
+  deleteBudgetLigneImputation: (conventionId: number, ligneId: number, id: number) =>
+    api.delete(`/conventions/${conventionId}/budget-lignes/${ligneId}/imputations/${id}`),
+
   // Micro-endpoints (progressive lazy loading)
   getBasic: (id: number) => api.get(`/conventions/${id}/basic`),
   getFinances: (id: number) => api.get(`/conventions/${id}/finances`),

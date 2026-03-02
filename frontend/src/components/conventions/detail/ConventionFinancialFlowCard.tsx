@@ -12,7 +12,7 @@ import LinkMarcheDialog from '../LinkMarcheDialog'
 import MarcheDetailDrawer from './MarcheDetailDrawer'
 import PartenaireDetailDrawer from './PartenaireDetailDrawer'
 import SubventionDetailDrawer from './SubventionDetailDrawer'
-import ConventionBudgetLignesInline from './ConventionBudgetLignesInline'
+import ConventionBudgetDistributionCard from './ConventionBudgetDistributionCard'
 import type { Subvention, MarcheData, SituationPaiement, VersementPrevisionnel } from './types'
 import type { ConventionBudgetLigneDTO, ApiResponse } from '@/types/api'
 
@@ -137,10 +137,10 @@ const ConventionFinancialFlowCard = ({
   return (
     <Paper sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
 
-      {/* ═══ SECTION 1: RÉPARTITION BUDGÉTAIRE PAR CATÉGORIE (Inline Edit) ═══ */}
+      {/* ═══ SECTION 1: DISTRIBUTION BUDGÉTAIRE PAR CATÉGORIE + IMPUTATIONS ═══ */}
       <Box>
-        <SectionHdr icon={<PieChart size={16} color={colors.primary[600]} />} label="Repartition budgetaire par categorie" total={fmt(totalBudgetLignes)} color={colors.primary[800]} bg={colors.primary[25]} />
-        <ConventionBudgetLignesInline
+        <SectionHdr icon={<PieChart size={16} color={colors.primary[600]} />} label="Distribution du budget par categorie" total={fmt(totalBudgetLignes)} color={colors.primary[800]} bg={colors.primary[25]} />
+        <ConventionBudgetDistributionCard
           conventionId={conventionId}
           canEdit={canEdit}
           onDataChanged={() => { loadData(); onRefresh?.() }}

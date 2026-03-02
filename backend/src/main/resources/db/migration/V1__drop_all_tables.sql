@@ -63,5 +63,9 @@ DROP TABLE IF EXISTS projets CASCADE;
 DROP TABLE IF EXISTS user_roles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
+-- Notifications & Messaging
+DROP TABLE IF EXISTS team_messages CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+
 -- Legacy/stale tables from previous migrations
 DROP TABLE IF EXISTS ordres_service CASCADE;

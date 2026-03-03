@@ -56,6 +56,8 @@ class ConventionBudgetLigneController(
             conventionId = conventionId,
             categorieDepenseId = request.categorieDepenseId,
             montant = request.montant,
+            engagementMontant = request.engagementMontant,
+            depensesMontant = request.depensesMontant,
             designation = request.designation,
             remarques = request.remarques
         )
@@ -78,6 +80,8 @@ class ConventionBudgetLigneController(
             id = id,
             categorieDepenseId = request.categorieDepenseId,
             montant = request.montant,
+            engagementMontant = request.engagementMontant,
+            depensesMontant = request.depensesMontant,
             designation = request.designation,
             remarques = request.remarques
         )

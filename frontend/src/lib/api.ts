@@ -321,12 +321,16 @@ export const conventionsAPI = {
   addBudgetLigne: (conventionId: number, data: {
     categorieDepenseId: number;
     montant: number;
+    engagementMontant?: number;
+    depensesMontant?: number;
     designation?: string;
     remarques?: string;
   }) => api.post(`/conventions/${conventionId}/budget-lignes`, data),
   updateBudgetLigne: (conventionId: number, id: number, data: {
     categorieDepenseId?: number;
     montant: number;
+    engagementMontant?: number;
+    depensesMontant?: number;
     designation?: string;
     remarques?: string;
   }) => api.put(`/conventions/${conventionId}/budget-lignes/${id}`, data),
@@ -345,6 +349,7 @@ export const conventionsAPI = {
     projetCode: string;
     projetLibelle?: string;
     pourcentage: number;
+    typeImputation?: string;
   }) => api.post(`/conventions/${conventionId}/budget-lignes/${ligneId}/imputations`, data),
   updateBudgetLigneImputation: (conventionId: number, ligneId: number, id: number, data: {
     projetId?: number;

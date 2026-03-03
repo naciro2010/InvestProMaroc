@@ -273,6 +273,10 @@ export interface ConventionBudgetLigneDTO {
   designation: string | null
   montant: number
   pourcentage: number
+  engagementMontant: number
+  depensesMontant: number
+  resteAEngager: number
+  resteAPayer: number
   tauxCommission?: number
   plafond?: number
   remarques: string | null
@@ -324,6 +328,7 @@ export interface BudgetLigneImputationDTO {
   projetLibelle: string | null
   pourcentage: number
   montant: number
+  typeImputation: string
   actif: boolean
   createdAt: string | null
   updatedAt: string | null
@@ -334,6 +339,7 @@ export interface CreateBudgetLigneImputationRequest {
   projetCode: string
   projetLibelle?: string
   pourcentage: number
+  typeImputation?: string
 }
 
 export interface UpdateBudgetLigneImputationRequest {
@@ -345,8 +351,12 @@ export interface UpdateBudgetLigneImputationRequest {
 
 export interface BudgetLigneWithImputationsDTO {
   budgetLigne: ConventionBudgetLigneDTO
-  imputations: BudgetLigneImputationDTO[]
-  totalPourcentageImpute: number
+  imputationsBudget: BudgetLigneImputationDTO[]
+  imputationsEngagement: BudgetLigneImputationDTO[]
+  imputationsDepense: BudgetLigneImputationDTO[]
+  totalPourcentageBudget: number
+  totalPourcentageEngagement: number
+  totalPourcentageDepense: number
 }
 
 export interface UpdateCategorieDepenseDTO {

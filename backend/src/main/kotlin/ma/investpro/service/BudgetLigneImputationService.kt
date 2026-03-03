@@ -11,7 +11,8 @@ import java.math.RoundingMode
 
 /**
  * Service pour la gestion des imputations par projet sur les lignes de budget.
- * Permet de répartir le montant d'une ligne budget entre plusieurs projets.
+ * Permet de répartir le montant d'une ligne budget entre plusieurs projets,
+ * avec distinction par type: BUDGET, ENGAGEMENT, DEPENSE.
  */
 @Service
 @Transactional
@@ -21,30 +22,22 @@ class BudgetLigneImputationService(
     private val projetRepository: ProjetRepository
 ) {
 
-    /**
-     * Récupère les imputations actives d'une ligne budget
-     */
     fun findByBudgetLigneId(budgetLigneId: Long): List<BudgetLigneImputation> {
         return budgetLigneImputationRepository.findByBudgetLigneIdAndActifTrue(budgetLigneId)
     }
 
-    /**
-     * Récupère les imputations pour plusieurs lignes budget (batch)
-     */
     fun findByBudgetLigneIds(budgetLigneIds: List<Long>): List<BudgetLigneImputation> {
         if (budgetLigneIds.isEmpty()) return emptyList()
         return budgetLigneImputationRepository.findByBudgetLigneIdInAndActifTrue(budgetLigneIds)
     }
 
-    /**
-     * Ajoute une imputation à une ligne budget
-     */
     fun addImputation(
         budgetLigneId: Long,
         projetId: Long,
         projetCode: String,
         projetLibelle: String?,
-        pourcentage: BigDecimal
+        pourcentage: BigDecimal,
+        typeImputation: String = "BUDGET"
     ): BudgetLigneImputation {
         val budgetLigne = conventionBudgetLigneRepository.findById(budgetLigneId)
             .orElseThrow { IllegalArgumentException("Ligne de budget $budgetLigneId introuvable") }
@@ -52,22 +45,32 @@ class BudgetLigneImputationService(
         val projet = projetRepository.findById(projetId)
             .orElseThrow { IllegalArgumentException("Projet $projetId introuvable") }
 
-        // Vérifier l'unicité budget_ligne + projet_code
-        if (budgetLigneImputationRepository.existsByBudgetLigneIdAndProjetCode(budgetLigneId, projetCode)) {
-            throw IllegalStateException("Ce projet est déjà imputé sur cette ligne de budget")
+        // Vérifier l'unicité budget_ligne + projet_code + type
+        if (budgetLigneImputationRepository.existsByBudgetLigneIdAndProjetCodeAndTypeImputation(
+                budgetLigneId, projetCode, typeImputation
+            )
+        ) {
+            throw IllegalStateException("Ce projet est déjà imputé (type $typeImputation) sur cette ligne de budget")
         }
 
-        // Vérifier que le total des pourcentages ne dépasse pas 100%
-        val existingImputations = budgetLigneImputationRepository.findByBudgetLigneIdAndActifTrue(budgetLigneId)
+        // Vérifier que le total des pourcentages ne dépasse pas 100% (par type)
+        val existingImputations = budgetLigneImputationRepository
+            .findByBudgetLigneIdAndTypeImputationAndActifTrue(budgetLigneId, typeImputation)
         val totalExisting = existingImputations.sumOf { it.pourcentage }
         if (totalExisting + pourcentage > BigDecimal("100.00")) {
             throw IllegalStateException(
-                "Le total des pourcentages (${totalExisting + pourcentage}%) dépasse 100%"
+                "Le total des pourcentages $typeImputation (${totalExisting + pourcentage}%) dépasse 100%"
             )
         }
 
-        // Calculer le montant: pourcentage × montant ligne budget
-        val montant = budgetLigne.montant
+        // Le montant de base dépend du type d'imputation
+        val baseMontant = when (typeImputation) {
+            "ENGAGEMENT" -> budgetLigne.engagementMontant
+            "DEPENSE" -> budgetLigne.depensesMontant
+            else -> budgetLigne.montant
+        }
+
+        val montant = baseMontant
             .multiply(pourcentage)
             .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
@@ -77,15 +80,13 @@ class BudgetLigneImputationService(
             projetCode = projetCode,
             projetLibelle = projetLibelle ?: projet.nom,
             pourcentage = pourcentage,
-            montant = montant
+            montant = montant,
+            typeImputation = typeImputation
         )
 
         return budgetLigneImputationRepository.save(imputation)
     }
 
-    /**
-     * Met à jour le pourcentage d'une imputation
-     */
     fun updateImputation(
         id: Long,
         projetId: Long?,
@@ -99,12 +100,15 @@ class BudgetLigneImputationService(
         val budgetLigne = imputation.budgetLigne
             ?: throw IllegalStateException("Ligne de budget null pour l'imputation $id")
 
-        // Si changement de projet, vérifier l'unicité
-        if (projetCode != null && projetCode != imputation.projetCode) {
-            val budgetLigneId = budgetLigne.id
-                ?: throw IllegalStateException("ID ligne de budget null")
+        val budgetLigneId = budgetLigne.id
+            ?: throw IllegalStateException("ID ligne de budget null")
 
-            if (budgetLigneImputationRepository.existsByBudgetLigneIdAndProjetCode(budgetLigneId, projetCode)) {
+        // Si changement de projet, vérifier l'unicité (avec type)
+        if (projetCode != null && projetCode != imputation.projetCode) {
+            if (budgetLigneImputationRepository.existsByBudgetLigneIdAndProjetCodeAndTypeImputation(
+                    budgetLigneId, projetCode, imputation.typeImputation
+                )
+            ) {
                 throw IllegalStateException("Ce projet est déjà imputé sur cette ligne de budget")
             }
             imputation.projetCode = projetCode
@@ -120,10 +124,9 @@ class BudgetLigneImputationService(
             imputation.projetLibelle = projetLibelle
         }
 
-        // Vérifier que le total ne dépasse pas 100%
-        val budgetLigneId = budgetLigne.id
-            ?: throw IllegalStateException("ID ligne de budget null")
-        val existingImputations = budgetLigneImputationRepository.findByBudgetLigneIdAndActifTrue(budgetLigneId)
+        // Vérifier que le total ne dépasse pas 100% (par type)
+        val existingImputations = budgetLigneImputationRepository
+            .findByBudgetLigneIdAndTypeImputationAndActifTrue(budgetLigneId, imputation.typeImputation)
         val totalOthers = existingImputations
             .filter { it.id != id }
             .sumOf { it.pourcentage }
@@ -133,8 +136,14 @@ class BudgetLigneImputationService(
             )
         }
 
-        // Recalculer le montant
-        val montant = budgetLigne.montant
+        // Le montant de base dépend du type d'imputation
+        val baseMontant = when (imputation.typeImputation) {
+            "ENGAGEMENT" -> budgetLigne.engagementMontant
+            "DEPENSE" -> budgetLigne.depensesMontant
+            else -> budgetLigne.montant
+        }
+
+        val montant = baseMontant
             .multiply(pourcentage)
             .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
@@ -144,9 +153,6 @@ class BudgetLigneImputationService(
         return budgetLigneImputationRepository.save(imputation)
     }
 
-    /**
-     * Supprime une imputation (soft delete)
-     */
     fun deleteImputation(id: Long) {
         val imputation = budgetLigneImputationRepository.findById(id)
             .orElseThrow { IllegalArgumentException("Imputation $id introuvable") }

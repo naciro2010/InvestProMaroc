@@ -1021,6 +1021,8 @@ CREATE TABLE IF NOT EXISTS convention_budget_lignes (
     designation VARCHAR(300),
     montant DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     pourcentage DECIMAL(5,2) DEFAULT 0.00,
+    engagement_montant DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    depenses_montant DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     remarques TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1032,8 +1034,10 @@ CREATE INDEX IF NOT EXISTS idx_conv_budget_lignes_conv ON convention_budget_lign
 CREATE INDEX IF NOT EXISTS idx_conv_budget_lignes_cat ON convention_budget_lignes(categorie_depense_id);
 
 COMMENT ON TABLE convention_budget_lignes IS 'Répartition du budget d''une convention par catégorie de dépense';
-COMMENT ON COLUMN convention_budget_lignes.montant IS 'Montant alloué à cette catégorie de dépense';
+COMMENT ON COLUMN convention_budget_lignes.montant IS 'Montant alloué à cette catégorie de dépense (budget convention)';
 COMMENT ON COLUMN convention_budget_lignes.pourcentage IS 'Pourcentage du budget total (auto-calculé)';
+COMMENT ON COLUMN convention_budget_lignes.engagement_montant IS 'Montant engagé (marchés, BC, etc.)';
+COMMENT ON COLUMN convention_budget_lignes.depenses_montant IS 'Montant des dépenses réalisées (décomptes, factures, etc.)';
 
 -- ============================================================================
 -- SECTION: BUDGET LIGNE IMPUTATIONS (Distribution par projet)
@@ -1048,18 +1052,21 @@ CREATE TABLE IF NOT EXISTS budget_ligne_imputations (
     projet_libelle VARCHAR(200),
     pourcentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     montant DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    type_imputation VARCHAR(20) NOT NULL DEFAULT 'BUDGET',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actif BOOLEAN NOT NULL DEFAULT TRUE,
-    UNIQUE(budget_ligne_id, projet_code)
+    UNIQUE(budget_ligne_id, projet_code, type_imputation)
 );
 
 CREATE INDEX IF NOT EXISTS idx_budget_ligne_imp_ligne ON budget_ligne_imputations(budget_ligne_id);
 CREATE INDEX IF NOT EXISTS idx_budget_ligne_imp_projet ON budget_ligne_imputations(projet_id);
+CREATE INDEX IF NOT EXISTS idx_budget_ligne_imp_type ON budget_ligne_imputations(type_imputation);
 
 COMMENT ON TABLE budget_ligne_imputations IS 'Répartition du montant d''une ligne budget par projet (imputation analytique)';
 COMMENT ON COLUMN budget_ligne_imputations.pourcentage IS 'Pourcentage du montant de la ligne budget alloué à ce projet';
 COMMENT ON COLUMN budget_ligne_imputations.montant IS 'Montant calculé (pourcentage × montant ligne budget)';
+COMMENT ON COLUMN budget_ligne_imputations.type_imputation IS 'Type d''imputation: BUDGET, ENGAGEMENT, DEPENSE';
 
 -- ============================================================================
 -- SECTION 14: NOTIFICATIONS & TEAM MESSAGING

@@ -35,6 +35,8 @@ class ConventionBudgetLigneService(
         conventionId: Long,
         categorieDepenseId: Long,
         montant: BigDecimal,
+        engagementMontant: BigDecimal = BigDecimal.ZERO,
+        depensesMontant: BigDecimal = BigDecimal.ZERO,
         designation: String?,
         remarques: String?
     ): ConventionBudgetLigne {
@@ -62,6 +64,8 @@ class ConventionBudgetLigneService(
             designation = designation ?: categorieDepense.libelle,
             montant = montant,
             pourcentage = pourcentage,
+            engagementMontant = engagementMontant,
+            depensesMontant = depensesMontant,
             remarques = remarques
         )
 
@@ -75,6 +79,8 @@ class ConventionBudgetLigneService(
         id: Long,
         categorieDepenseId: Long?,
         montant: BigDecimal,
+        engagementMontant: BigDecimal?,
+        depensesMontant: BigDecimal?,
         designation: String?,
         remarques: String?
     ): ConventionBudgetLigne {
@@ -109,6 +115,8 @@ class ConventionBudgetLigneService(
         budgetLigne.apply {
             this.montant = montant
             this.pourcentage = pourcentage
+            if (engagementMontant != null) this.engagementMontant = engagementMontant
+            if (depensesMontant != null) this.depensesMontant = depensesMontant
             this.designation = designation ?: this.designation
             this.remarques = remarques
         }
@@ -144,6 +152,8 @@ class ConventionBudgetLigneService(
                 conventionId = conventionId,
                 categorieDepenseId = ligneRequest.categorieDepenseId,
                 montant = ligneRequest.montant,
+                engagementMontant = ligneRequest.engagementMontant,
+                depensesMontant = ligneRequest.depensesMontant,
                 designation = ligneRequest.designation,
                 remarques = ligneRequest.remarques
             )

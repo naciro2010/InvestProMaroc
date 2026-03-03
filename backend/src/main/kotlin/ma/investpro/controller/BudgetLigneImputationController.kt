@@ -14,19 +14,7 @@ import ma.investpro.service.BudgetLigneImputationService
 import ma.investpro.service.ConventionBudgetLigneService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.math.BigDecimal
 
-/**
- * Contrôleur REST pour la gestion des imputations par projet
- * sur les lignes de budget d'une convention.
- *
- * Endpoints:
- * - GET    /api/conventions/{conventionId}/budget-lignes/{ligneId}/imputations
- * - GET    /api/conventions/{conventionId}/budget-distribution
- * - POST   /api/conventions/{conventionId}/budget-lignes/{ligneId}/imputations
- * - PUT    /api/conventions/{conventionId}/budget-lignes/{ligneId}/imputations/{id}
- * - DELETE /api/conventions/{conventionId}/budget-lignes/{ligneId}/imputations/{id}
- */
 @RestController
 @RequestMapping("/api/conventions/{conventionId}")
 class BudgetLigneImputationController(
@@ -36,9 +24,6 @@ class BudgetLigneImputationController(
     private val conventionBudgetLigneMapper: ConventionBudgetLigneMapper
 ) {
 
-    /**
-     * Récupère toutes les imputations d'une ligne budget
-     */
     @GetMapping("/budget-lignes/{ligneId}/imputations")
     @ReadAccess
     fun getImputations(
@@ -50,10 +35,6 @@ class BudgetLigneImputationController(
         return ResponseEntity.ok(ApiResponse.success(dtos, "Imputations récupérées avec succès"))
     }
 
-    /**
-     * Récupère la distribution budgétaire complète d'une convention
-     * (toutes les lignes budget + leurs imputations)
-     */
     @GetMapping("/budget-distribution")
     @ReadAccess
     fun getBudgetDistribution(
@@ -63,17 +44,23 @@ class BudgetLigneImputationController(
         val ligneIds = lignes.mapNotNull { it.id }
         val allImputations = budgetLigneImputationService.findByBudgetLigneIds(ligneIds)
 
-        // Group imputations by budget ligne id
         val imputationsByLigne = allImputations.groupBy { it.budgetLigne?.id }
 
         val result: List<BudgetLigneWithImputationsDTO> = lignes.map { ligne ->
             val ligneImputations = imputationsByLigne[ligne.id] ?: emptyList()
-            val totalPourcentage = ligneImputations.sumOf { it.pourcentage }
+
+            val budgetImps = ligneImputations.filter { it.typeImputation == "BUDGET" }
+            val engagementImps = ligneImputations.filter { it.typeImputation == "ENGAGEMENT" }
+            val depenseImps = ligneImputations.filter { it.typeImputation == "DEPENSE" }
 
             BudgetLigneWithImputationsDTO(
                 budgetLigne = conventionBudgetLigneMapper.toDTO(ligne),
-                imputations = budgetLigneImputationMapper.toDTOList(ligneImputations),
-                totalPourcentageImpute = totalPourcentage
+                imputationsBudget = budgetLigneImputationMapper.toDTOList(budgetImps),
+                imputationsEngagement = budgetLigneImputationMapper.toDTOList(engagementImps),
+                imputationsDepense = budgetLigneImputationMapper.toDTOList(depenseImps),
+                totalPourcentageBudget = budgetImps.sumOf { it.pourcentage },
+                totalPourcentageEngagement = engagementImps.sumOf { it.pourcentage },
+                totalPourcentageDepense = depenseImps.sumOf { it.pourcentage }
             )
         }
 
@@ -82,9 +69,6 @@ class BudgetLigneImputationController(
         )
     }
 
-    /**
-     * Ajoute une imputation à une ligne budget
-     */
     @PostMapping("/budget-lignes/{ligneId}/imputations")
     @WriteAccess
     fun addImputation(
@@ -97,16 +81,14 @@ class BudgetLigneImputationController(
             projetId = request.projetId,
             projetCode = request.projetCode,
             projetLibelle = request.projetLibelle,
-            pourcentage = request.pourcentage
+            pourcentage = request.pourcentage,
+            typeImputation = request.typeImputation
         )
 
         val dto = budgetLigneImputationMapper.toDTO(imputation)
         return ResponseEntity.ok(ApiResponse.success(dto, "Imputation ajoutée avec succès"))
     }
 
-    /**
-     * Met à jour une imputation
-     */
     @PutMapping("/budget-lignes/{ligneId}/imputations/{id}")
     @WriteAccess
     fun updateImputation(
@@ -127,9 +109,6 @@ class BudgetLigneImputationController(
         return ResponseEntity.ok(ApiResponse.success(dto, "Imputation mise à jour avec succès"))
     }
 
-    /**
-     * Supprime une imputation (soft delete)
-     */
     @DeleteMapping("/budget-lignes/{ligneId}/imputations/{id}")
     @WriteAccess
     fun deleteImputation(

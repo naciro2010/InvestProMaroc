@@ -22,8 +22,8 @@ import java.math.BigDecimal
     ],
     uniqueConstraints = [
         UniqueConstraint(
-            name = "uk_budget_ligne_imp_projet",
-            columnNames = ["budget_ligne_id", "projet_code"]
+            name = "uk_budget_ligne_imp_projet_type",
+            columnNames = ["budget_ligne_id", "projet_code", "type_imputation"]
         )
     ]
 )
@@ -51,6 +51,9 @@ class BudgetLigneImputation(
 
     @Column(nullable = false, precision = 15, scale = 2)
     @field:DecimalMin("0.00")
-    var montant: BigDecimal = BigDecimal.ZERO
+    var montant: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "type_imputation", nullable = false, length = 20)
+    var typeImputation: String = "BUDGET"
 
 ) : BaseEntity()

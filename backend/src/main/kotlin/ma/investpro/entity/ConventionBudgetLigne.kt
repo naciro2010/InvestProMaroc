@@ -49,6 +49,14 @@ class ConventionBudgetLigne(
     @field:DecimalMax("100.00")
     var pourcentage: BigDecimal = BigDecimal.ZERO,
 
+    @Column(name = "engagement_montant", nullable = false, precision = 15, scale = 2)
+    @field:DecimalMin("0.00")
+    var engagementMontant: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "depenses_montant", nullable = false, precision = 15, scale = 2)
+    @field:DecimalMin("0.00")
+    var depensesMontant: BigDecimal = BigDecimal.ZERO,
+
     @Column(columnDefinition = "TEXT")
     var remarques: String? = null
 

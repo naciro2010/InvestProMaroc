@@ -18,6 +18,9 @@ class ConventionBudgetLigneMapper {
         val convention = entity.convention
         val categorie = entity.categorieDepense
 
+        val resteAEngager = entity.montant.subtract(entity.engagementMontant)
+        val resteAPayer = entity.engagementMontant.subtract(entity.depensesMontant)
+
         return ConventionBudgetLigneDTO(
             id = entity.id,
             conventionId = convention?.id ?: 0L,
@@ -27,6 +30,10 @@ class ConventionBudgetLigneMapper {
             designation = entity.designation,
             montant = entity.montant,
             pourcentage = entity.pourcentage,
+            engagementMontant = entity.engagementMontant,
+            depensesMontant = entity.depensesMontant,
+            resteAEngager = resteAEngager,
+            resteAPayer = resteAPayer,
             remarques = entity.remarques,
             actif = entity.actif,
             createdAt = entity.createdAt,

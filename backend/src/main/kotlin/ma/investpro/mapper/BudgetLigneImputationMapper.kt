@@ -16,6 +16,7 @@ class BudgetLigneImputationMapper {
             projetLibelle = entity.projetLibelle,
             pourcentage = entity.pourcentage,
             montant = entity.montant,
+            typeImputation = entity.typeImputation,
             actif = entity.actif,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt

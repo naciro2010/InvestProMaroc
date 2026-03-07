@@ -10,3 +10,6 @@ export { default as ConventionListTable } from './ConventionListTable'
 export type { Convention, ConventionWithChildren, ColumnConfig } from './ConventionListTable'
 
 export { default as ConventionActionDialogs } from './ConventionActionDialogs'
+
+export { default as ConventionKanbanView } from './ConventionKanbanView'
+export type { KanbanConvention } from './ConventionKanbanView'

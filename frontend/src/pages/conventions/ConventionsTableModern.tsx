@@ -26,6 +26,7 @@ import {
   SavedFiltersMenu,
   ConventionListTable,
   ConventionActionDialogs,
+  ConventionKanbanView,
   EMPTY_FILTERS,
   type ConventionFilterState,
   type Convention,
@@ -53,6 +54,8 @@ const GROUPBY_OPTIONS = [
 
 // ==================== MAIN PAGE ====================
 
+type ViewMode = 'list' | 'kanban'
+
 const ConventionsTableModern = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -66,6 +69,7 @@ const ConventionsTableModern = () => {
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(25)
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
   // Favorites (row-level, localStorage-backed)
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(() => {
@@ -229,7 +233,10 @@ const ConventionsTableModern = () => {
           searchValue={searchQuery}
           onSearchChange={(v) => { setSearchQuery(v); setPage(0) }}
           searchPlaceholder="Rechercher par code, libelle, numero..."
-          paginationInfo={filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => setViewMode(mode as ViewMode)}
+          availableViews={['list', 'kanban']}
+          paginationInfo={viewMode === 'list' && filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
           onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
           onNextPage={() => setPage(p => p + 1)}
         >
@@ -260,9 +267,16 @@ const ConventionsTableModern = () => {
         </ControlPanel>
 
         <Box sx={{ p: { xs: 2, md: 3 } }}>
-          <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
-            onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
-            favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
+          {viewMode === 'kanban' ? (
+            <ConventionKanbanView
+              data={filteredData.flatMap(c => [c, ...(c.sousConventions || [])])}
+              onCardClick={(id) => navigate(`/conventions/${id}`)}
+            />
+          ) : (
+            <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
+              onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
+              favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
+          )}
         </Box>
       </Box>
 

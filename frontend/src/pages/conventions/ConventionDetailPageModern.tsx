@@ -8,8 +8,8 @@ import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
 import {
   ControlPanel, FormView, FieldGroup, StatusBadge,
-  InlineEditField, EditFieldDialog,
-  type StatusStep, type InlineEditFieldConfig,
+  InlineEditField, EditFieldDialog, Chatter,
+  type StatusStep, type InlineEditFieldConfig, type ChatterActivity,
 } from '../../components/core'
 import RichTextDisplay from '../../components/ui/RichTextDisplay'
 import { conventionsAPI } from '../../lib/api'
@@ -77,10 +77,43 @@ const ConventionDetailPageModern = () => {
   const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
   const [financialRefreshKey, setFinancialRefreshKey] = useState(0)
   const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
+  const [chatterActivities, setChatterActivities] = useState<ChatterActivity[]>([])
+  const [chatterLoading, setChatterLoading] = useState(false)
 
   const refreshFinancialData = useCallback(() => setFinancialRefreshKey(k => k + 1), [])
 
-  useEffect(() => { if (id) loadConvention(parseInt(id)) }, [id])
+  const loadChatterActivities = useCallback(async (cid: number) => {
+    setChatterLoading(true)
+    try {
+      const res = await conventionsAPI.getHistorique(cid)
+      const modifications = res.data?.data || res.data || []
+      const activities: ChatterActivity[] = Array.isArray(modifications)
+        ? modifications.map((mod: Record<string, unknown>, idx: number) => ({
+            id: (mod.id as number) || idx,
+            type: (mod.typeModification === 'STATUS' ? 'workflow' : 'modification') as ChatterActivity['type'],
+            date: (mod.dateModification as string) || (mod.createdAt as string) || new Date().toISOString(),
+            user: (mod.modifieParNom as string) || 'Systeme',
+            userInitials: ((mod.modifieParNom as string) || 'S').substring(0, 2).toUpperCase(),
+            title: (mod.typeModification as string) || 'Modification',
+            details: (mod.motif as string) || undefined,
+            fieldsChanged: Array.isArray(mod.champsModifies) ? (mod.champsModifies as string[]) : undefined,
+          }))
+        : []
+      setChatterActivities(activities)
+    } catch {
+      setChatterActivities([])
+    } finally {
+      setChatterLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (id) {
+      const cid = parseInt(id)
+      loadConvention(cid)
+      loadChatterActivities(cid)
+    }
+  }, [id, loadChatterActivities])
 
   const loadConvention = async (cid: number) => {
     try {
@@ -341,6 +374,15 @@ const ConventionDetailPageModern = () => {
             <ConventionRealisationSection
               convention={convention} canEdit={canEdit}
               onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
+            />
+
+            {/* Chatter - Activity Log (Odoo-style) */}
+            <Chatter
+              entityType="convention"
+              entityId={convention.id}
+              activities={chatterActivities}
+              loading={chatterLoading}
+              onRefresh={() => loadChatterActivities(convention.id)}
             />
           </FormView>
         </Container>

@@ -13,3 +13,8 @@ export { default as ConventionActionDialogs } from './ConventionActionDialogs'
 
 export { default as ConventionKanbanView } from './ConventionKanbanView'
 export type { KanbanConvention } from './ConventionKanbanView'
+
+export { default as GroupByPopover } from './GroupByPopover'
+export type { GroupByOption } from './GroupByPopover'
+
+export { default as ColumnVisibilityPopover } from './ColumnVisibilityPopover'

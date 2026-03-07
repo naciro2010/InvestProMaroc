@@ -84,5 +84,5 @@ export type { InlineEditFieldConfig } from './InlineEditField'
 export { default as EditFieldDialog } from './EditFieldDialog'
 
 // Chatter (Odoo-style activity log / history timeline)
-export { default as Chatter } from './Chatter'
-export type { ChatterActivity } from './Chatter'
+export { default as Chatter } from './chatter'
+export type { ChatterActivity, ChatterProps } from './chatter'

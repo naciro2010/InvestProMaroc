@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Box, Container, Typography, Button, Alert, Skeleton, Tooltip } from '@mui/material'
-import { CalendarMonth } from '@mui/icons-material'
+import { Box, Container, Button, Alert, Tooltip } from '@mui/material'
 import { Plus, Pencil } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -11,7 +10,6 @@ import {
   InlineEditField, EditFieldDialog, Chatter,
   type StatusStep, type InlineEditFieldConfig, type ChatterActivity,
 } from '../../components/core'
-import RichTextDisplay from '../../components/ui/RichTextDisplay'
 import { conventionsAPI } from '../../lib/api'
 import {
   ConventionWorkflowActions,
@@ -24,7 +22,10 @@ import ConventionKeyInfoCard from '../../components/conventions/detail/Conventio
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import VersementFormDialog from '../../components/conventions/VersementFormDialog'
+import { ConventionDetailSkeleton, ConventionHeaderMetadata } from './detail'
 import type { ConventionDetailEnrichedDTO, UpdateConventionDTO } from '../../types/api'
+
+// ==================== TYPES ====================
 
 interface Convention {
   id: number; code: string; numero: string; libelle: string; objet: string
@@ -37,9 +38,11 @@ interface Convention {
 
 interface VersementPrevisionnel { id: number; partenaireId?: number; partenaireNom?: string; partenaireSigle?: string; volet?: string; dateVersement: string; montant: number; montantPrevu?: number; remarques?: string }
 
-interface DialogFieldState {
-  key: string; label: string; value: string; mode: 'richtext' | 'textarea'
-}
+interface DialogFieldState { key: string; label: string; value: string; mode: 'richtext' | 'textarea' }
+
+interface PartenaireEditData { id: number; partenaireId: number; partenaireNom: string; budgetAlloue: number; pourcentage: number; estMaitreOeuvre: boolean; estMaitreOeuvreDelegue: boolean; remarques?: string }
+
+// ==================== CONSTANTS ====================
 
 const STATUS_STEPS: StatusStep[] = [
   { value: 'BROUILLON', label: 'Brouillon' },
@@ -59,6 +62,8 @@ const TYPE_OPTIONS = [
   { value: 'SPECIFIQUE', label: 'Specifique' },
 ]
 
+// ==================== MAIN COMPONENT ====================
+
 const ConventionDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -70,9 +75,8 @@ const ConventionDetailPageModern = () => {
   const [enrichedData, setEnrichedData] = useState<ConventionDetailEnrichedDTO | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // CRUD dialog state
   const [addPartenaireDialogOpen, setAddPartenaireDialogOpen] = useState(false)
-  const [editPartenaireData, setEditPartenaireData] = useState<{ id: number; partenaireId: number; partenaireNom: string; budgetAlloue: number; pourcentage: number; estMaitreOeuvre: boolean; estMaitreOeuvreDelegue: boolean; remarques?: string } | null>(null)
+  const [editPartenaireData, setEditPartenaireData] = useState<PartenaireEditData | null>(null)
   const [versementDialogOpen, setVersementDialogOpen] = useState(false)
   const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
   const [financialRefreshKey, setFinancialRefreshKey] = useState(0)
@@ -100,19 +104,12 @@ const ConventionDetailPageModern = () => {
           }))
         : []
       setChatterActivities(activities)
-    } catch {
-      setChatterActivities([])
-    } finally {
-      setChatterLoading(false)
-    }
+    } catch { setChatterActivities([]) }
+    finally { setChatterLoading(false) }
   }, [])
 
   useEffect(() => {
-    if (id) {
-      const cid = parseInt(id)
-      loadConvention(cid)
-      loadChatterActivities(cid)
-    }
+    if (id) { const cid = parseInt(id); loadConvention(cid); loadChatterActivities(cid) }
   }, [id, loadChatterActivities])
 
   const loadConvention = async (cid: number) => {
@@ -131,7 +128,6 @@ const ConventionDetailPageModern = () => {
 
   useEffect(() => { if (error) { const t = setTimeout(() => setError(null), 5000); return () => clearTimeout(t) } }, [error])
 
-  // Per-field save
   const handleFieldSave = async (fieldKey: string, value: string | number | null) => {
     if (!convention || !id) return
     const payload = {
@@ -154,30 +150,11 @@ const ConventionDetailPageModern = () => {
     setDialogField({ key: fieldKey, label: labels[fieldKey] || fieldKey, value, mode: 'richtext' })
   }
 
-  const handleDialogSave = async (fieldKey: string, value: string) => {
-    await handleFieldSave(fieldKey, value)
-  }
-
   const field = (config: InlineEditFieldConfig) => (
     <InlineEditField config={config} onSave={handleFieldSave} onOpenDialog={openFieldDialog} />
   )
 
-  // Loading state
-  if (loading) return (
-    <AppLayout>
-      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-        <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
-          <Skeleton variant="text" width={300} height={32} />
-        </Box>
-        <Container maxWidth="xl" sx={{ py: 3 }}>
-          <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
-          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mb: 2 }} />
-          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
-          <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
-        </Container>
-      </Box>
-    </AppLayout>
-  )
+  if (loading) return <ConventionDetailSkeleton />
 
   if (!convention) return (
     <AppLayout>
@@ -248,65 +225,15 @@ const ConventionDetailPageModern = () => {
         )}
 
         <Container maxWidth="xl" sx={{ py: 2 }}>
-          <FormView
-            isEditing={false}
-            statusSteps={effectiveSteps}
-            currentStatus={convention.statut}
-          >
-            {/* Title + Description + Metadata */}
-            <Box sx={{ mb: 1.5 }}>
-              <Box
-                sx={{
-                  fontSize: typography.sizes.xl, fontWeight: typography.weights.bold,
-                  color: colors.textPrimary, mb: 0.5, cursor: canEdit ? 'pointer' : 'default',
-                  borderRadius: '4px', px: 0.5, mx: -0.5,
-                  '&:hover': canEdit ? { bgcolor: colors.primary[25] } : {},
-                }}
-                onClick={canEdit ? () => openFieldDialog('libelle', convention.libelle || '') : undefined}
-              >
-                <RichTextDisplay html={convention.libelle || convention.code} variant="compact" allowExpand={false} />
-              </Box>
-              {convention.objet && (
-                <Box
-                  sx={{
-                    mb: 1, cursor: canEdit ? 'pointer' : 'default',
-                    borderRadius: '4px', px: 0.5, mx: -0.5,
-                    '&:hover': canEdit ? { bgcolor: colors.primary[25] } : {},
-                  }}
-                  onClick={canEdit ? () => openFieldDialog('objet', convention.objet || '') : undefined}
-                >
-                  <RichTextDisplay html={convention.objet} variant="compact" collapseLength={200} />
-                </Box>
-              )}
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, py: 0.75, borderTop: `1px solid ${colors.borderSubtle}` }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Code:</Typography>
-                  <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.code}</Typography>
-                </Box>
-                <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>N:</Typography>
-                  <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{convention.numero}</Typography>
-                </Box>
-                <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                <StatusBadge status={convention.typeConvention} size="small" />
-                {convention.dateSignature && (
-                  <>
-                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CalendarMonth sx={{ fontSize: 13, color: colors.textSecondary }} />
-                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-                        {new Date(convention.dateSignature).toLocaleDateString('fr-FR')}
-                        {convention.dateDebut && ` — ${new Date(convention.dateDebut).toLocaleDateString('fr-FR')}`}
-                        {convention.dateFin && ` → ${new Date(convention.dateFin).toLocaleDateString('fr-FR')}`}
-                      </Typography>
-                    </Box>
-                  </>
-                )}
-              </Box>
-            </Box>
+          <FormView isEditing={false} statusSteps={effectiveSteps} currentStatus={convention.statut}>
+            <ConventionHeaderMetadata
+              code={convention.code} numero={convention.numero}
+              libelle={convention.libelle} objet={convention.objet}
+              typeConvention={convention.typeConvention}
+              dateSignature={convention.dateSignature} dateDebut={convention.dateDebut} dateFin={convention.dateFin}
+              canEdit={canEdit} onEditField={openFieldDialog}
+            />
 
-            {/* Parent Convention Banner */}
             {convention.parentConventionId && convention.parentConventionNumero && (
               <Box sx={{ mb: 1.5 }}>
                 <ParentConventionBanner
@@ -317,7 +244,6 @@ const ConventionDetailPageModern = () => {
               </Box>
             )}
 
-            {/* Smart Buttons */}
             {enrichedData && (
               <Box sx={{ mb: 2 }}>
                 <ConventionSmartButtons
@@ -331,7 +257,6 @@ const ConventionDetailPageModern = () => {
               </Box>
             )}
 
-            {/* Inline-editable fields */}
             <Box sx={{ mb: 2 }}>
               <FieldGroup title="Informations generales" columns={3}>
                 {field({ fieldKey: 'code', label: 'Code', type: 'text', value: convention.code, editable: false })}
@@ -340,7 +265,6 @@ const ConventionDetailPageModern = () => {
               </FieldGroup>
             </Box>
 
-            {/* Convention Key Info Card (editable inline Odoo-style) */}
             <Box sx={{ mb: 2 }}>
               <ConventionKeyInfoCard
                 convention={convention} enrichedData={enrichedData}
@@ -348,7 +272,6 @@ const ConventionDetailPageModern = () => {
               />
             </Box>
 
-            {/* Financial Flow */}
             <Box sx={{ mb: 3 }}>
               <ConventionFinancialFlowCard
                 conventionId={convention.id} conventionBudget={convention.budget}
@@ -370,25 +293,20 @@ const ConventionDetailPageModern = () => {
               />
             </Box>
 
-            {/* Realisation Section */}
             <ConventionRealisationSection
               convention={convention} canEdit={canEdit}
               onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
             />
 
-            {/* Chatter - Activity Log (Odoo-style) */}
             <Chatter
-              entityType="convention"
-              entityId={convention.id}
-              activities={chatterActivities}
-              loading={chatterLoading}
+              entityType="convention" entityId={convention.id}
+              activities={chatterActivities} loading={chatterLoading}
               onRefresh={() => loadChatterActivities(convention.id)}
             />
           </FormView>
         </Container>
       </Box>
 
-      {/* Dialogs */}
       {convention && (
         <>
           <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget}
@@ -403,7 +321,7 @@ const ConventionDetailPageModern = () => {
       )}
       {dialogField && (
         <EditFieldDialog
-          open onClose={() => setDialogField(null)} onSave={handleDialogSave}
+          open onClose={() => setDialogField(null)} onSave={handleFieldSave}
           fieldKey={dialogField.key} fieldLabel={dialogField.label}
           currentValue={dialogField.value} mode={dialogField.mode}
         />

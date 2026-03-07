@@ -106,7 +106,7 @@ class ConventionSubResourceController(
     @WriteAccess
     fun ajouterVersement(
         @PathVariable conventionId: Long,
-        @Valid @RequestBody request: Map<String, @JvmSuppressWildcards Any?>
+        @Valid @RequestBody request: CreateVersementPrevisionnelRequest
     ): ResponseEntity<VersementPrevisionnelDTO> {
         return try {
             val convention = conventionService.findById(conventionId)
@@ -114,16 +114,14 @@ class ConventionSubResourceController(
 
             val versement = VersementPrevisionnel().apply {
                 this.convention = convention
-                volet = request["volet"] as? String
-                dateVersement = java.time.LocalDate.parse(request["dateVersement"] as String)
-                montant = (request["montant"] as? Number)?.let { java.math.BigDecimal(it.toString()) } ?: java.math.BigDecimal.ZERO
-                montantPrevu = (request["montantPrevu"] as? Number)?.let { java.math.BigDecimal(it.toString()) }
-                remarques = request["remarques"] as? String
-                (request["partenaireId"] as? Number)?.toLong()?.let { pid ->
-                    partenaire = partenaireRepository.findById(pid).orElse(null)
-                }
-                (request["modId"] as? Number)?.toLong()?.let { modId ->
-                    maitreOeuvreDelegue = partenaireRepository.findById(modId).orElse(null)
+                volet = request.volet
+                dateVersement = request.dateVersement
+                montant = request.montant
+                montantPrevu = request.montantPrevu
+                remarques = request.remarques
+                partenaire = partenaireRepository.findById(request.partenaireId).orElse(null)
+                request.modId?.let { id ->
+                    maitreOeuvreDelegue = partenaireRepository.findById(id).orElse(null)
                 }
             }
 

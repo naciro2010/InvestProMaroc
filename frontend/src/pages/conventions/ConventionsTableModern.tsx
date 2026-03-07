@@ -4,12 +4,7 @@ import {
   Box,
   Button,
   IconButton,
-  MenuItem,
   Chip,
-  Popover,
-  Typography,
-  Checkbox,
-  FormControlLabel,
 } from '@mui/material'
 import { Star as StarIcon } from '@mui/icons-material'
 import { Plus, RefreshCw, Upload, Layers, Columns3 } from 'lucide-react'
@@ -27,6 +22,8 @@ import {
   ConventionListTable,
   ConventionActionDialogs,
   ConventionKanbanView,
+  GroupByPopover,
+  ColumnVisibilityPopover,
   EMPTY_FILTERS,
   type ConventionFilterState,
   type Convention,
@@ -280,26 +277,8 @@ const ConventionsTableModern = () => {
         </Box>
       </Box>
 
-      {/* Group By */}
-      <Popover open={Boolean(groupByAnchor)} anchorEl={groupByAnchor} onClose={() => setGroupByAnchor(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        PaperProps={{ sx: { borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mt: 0.5 } }}>
-        {GROUPBY_OPTIONS.map((opt) => (
-          <MenuItem key={opt.value} selected={groupBy === opt.value} onClick={() => { setGroupBy(opt.value); setGroupByAnchor(null) }} sx={{ fontSize: typography.sizes.sm, minWidth: 160 }}>{opt.label}</MenuItem>
-        ))}
-      </Popover>
-
-      {/* Column Visibility */}
-      <Popover open={Boolean(columnsAnchor)} anchorEl={columnsAnchor} onClose={() => setColumnsAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{ sx: { borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mt: 0.5, p: 1, minWidth: 180 } }}>
-        <Typography sx={{ px: 1, py: 0.5, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          Colonnes visibles
-        </Typography>
-        {columns.map((col) => (
-          <FormControlLabel key={col.key} control={<Checkbox size="small" checked={col.visible} onChange={() => toggleColumn(col.key)} sx={{ p: 0.5, ml: 0.5 }} />}
-            label={col.label} sx={{ display: 'flex', mx: 0, '& .MuiFormControlLabel-label': { fontSize: typography.sizes.sm } }} />
-        ))}
-      </Popover>
+      <GroupByPopover anchorEl={groupByAnchor} onClose={() => setGroupByAnchor(null)} options={GROUPBY_OPTIONS} currentValue={groupBy} onChange={setGroupBy} />
+      <ColumnVisibilityPopover anchorEl={columnsAnchor} onClose={() => setColumnsAnchor(null)} columns={columns} onToggle={toggleColumn} />
 
       {/* Action dialogs */}
       <ConventionActionDialogs

@@ -10,11 +10,11 @@ interface KanbanConvention {
   code: string
   libelle: string
   numero: string
-  type: string
+  type?: string
   statut: string
   budget: number
   tauxCommission: number
-  dateDebut: string
+  dateDebut?: string
   dateFin?: string
   createdByNom?: string
   sousConventionsCount?: number
@@ -80,7 +80,7 @@ const KanbanCard = ({ convention, onClick }: KanbanCardProps) => (
       }}>
         {convention.code}
       </Typography>
-      <StatusBadge status={convention.type} size="small" />
+      <StatusBadge status={convention.type || 'CADRE'} size="small" />
     </Box>
 
     {/* Title */}

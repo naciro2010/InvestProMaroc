@@ -41,6 +41,11 @@ interface ConventionPartenaireRepository : JpaRepository<ConventionPartenaire, L
     fun findMaitreOeuvreDelegueByConventionId(@Param("conventionId") conventionId: Long): ConventionPartenaire?
 
     /**
+     * Compte les partenaires d'une convention
+     */
+    fun countByConventionId(conventionId: Long): Long
+
+    /**
      * Supprime un partenaire d'une convention
      */
     fun deleteByConventionIdAndPartenaireId(conventionId: Long, partenaireId: Long): Int

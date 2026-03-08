@@ -7,6 +7,7 @@ import {
   MenuItem,
   Alert,
   Divider,
+  LinearProgress,
 } from '@mui/material'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
@@ -14,7 +15,14 @@ import { WizardView } from '@/components/core'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import DecimalInput from '@/components/ui/DecimalInput'
-import { marchesAPI, conventionsAPI, fournisseursAPI } from '../../lib/api'
+import {
+  marchesAPI,
+  conventionsAPI,
+  fournisseursAPI,
+  cascadeAPI,
+  ConventionSummaryDTO,
+  FournisseurSummaryDTO,
+} from '../../lib/api'
 import { colors } from '@/lib/designSystem'
 
 const steps = ['Informations générales', 'Montants & Dates', 'Localisation & Confirmation']
@@ -72,11 +80,18 @@ interface ApiErrorResponse {
   }
 }
 
+const formatMAD = (value: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(value)
+
+const formatPct = (value: number) => `${value.toFixed(1)}%`
+
 const MarcheWizard = () => {
   const navigate = useNavigate()
   const [activeStep, setActiveStep] = useState(0)
   const [conventions, setConventions] = useState<Convention[]>([])
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
+  const [conventionSummary, setConventionSummary] = useState<ConventionSummaryDTO | null>(null)
+  const [fournisseurSummary, setFournisseurSummary] = useState<FournisseurSummaryDTO | null>(null)
 
   const [formData, setFormData] = useState<MarcheFormData>({
     code: '',
@@ -119,6 +134,28 @@ const MarcheWizard = () => {
     }
     loadData()
   }, [])
+
+  // Cascade: load convention summary when convention changes
+  useEffect(() => {
+    if (formData.conventionId) {
+      cascadeAPI.getConventionSummary(formData.conventionId)
+        .then(res => setConventionSummary(res.data.data ?? null))
+        .catch(() => setConventionSummary(null))
+    } else {
+      setConventionSummary(null)
+    }
+  }, [formData.conventionId])
+
+  // Cascade: load fournisseur summary when fournisseur changes
+  useEffect(() => {
+    if (formData.fournisseurId) {
+      cascadeAPI.getFournisseurSummary(formData.fournisseurId)
+        .then(res => setFournisseurSummary(res.data.data ?? null))
+        .catch(() => setFournisseurSummary(null))
+    } else {
+      setFournisseurSummary(null)
+    }
+  }, [formData.fournisseurId])
 
   // React Query mutation pour la création
   const createMutation = useMutation({
@@ -325,6 +362,112 @@ const MarcheWizard = () => {
                 ))}
               </TextField>
             </Box>
+
+            {/* Odoo-style: Convention summary info card */}
+            {conventionSummary && (
+              <Box sx={{
+                p: 2.5,
+                bgcolor: colors.primary[50],
+                border: `1px solid ${colors.primary[200]}`,
+                borderRadius: 2,
+                mt: 1,
+              }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ color: colors.primary[700], mb: 1.5 }}>
+                  Convention: {conventionSummary.numero} — {conventionSummary.libelle}
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Budget</Typography>
+                    <Typography variant="body2" fontWeight={600}>{formatMAD(conventionSummary.budget)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Engagé HT</Typography>
+                    <Typography variant="body2" fontWeight={600}>{formatMAD(conventionSummary.montantEngageHT)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Budget restant</Typography>
+                    <Typography variant="body2" fontWeight={600} sx={{
+                      color: conventionSummary.budgetRestant > 0 ? colors.success[600] : colors.danger[600],
+                    }}>
+                      {formatMAD(conventionSummary.budgetRestant)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Taux engagement</Typography>
+                    <Typography variant="body2" fontWeight={600}>{formatPct(conventionSummary.tauxEngagement)}</Typography>
+                  </Box>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(conventionSummary.tauxEngagement, 100)}
+                  sx={{
+                    mt: 1.5,
+                    height: 6,
+                    borderRadius: 3,
+                    bgcolor: colors.primary[100],
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: conventionSummary.tauxEngagement > 90 ? colors.danger[500] : colors.primary[500],
+                      borderRadius: 3,
+                    },
+                  }}
+                />
+                <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Taux commission: {formatPct(conventionSummary.tauxCommission)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    TVA: {formatPct(conventionSummary.tauxTva)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {conventionSummary.nombreMarches} marché(s) · {conventionSummary.nombreProjets} projet(s)
+                  </Typography>
+                </Box>
+                {conventionSummary.budgetRestant <= 0 && (
+                  <Alert severity="warning" sx={{ mt: 1.5 }}>
+                    Le budget de cette convention est entièrement engagé.
+                  </Alert>
+                )}
+              </Box>
+            )}
+
+            {/* Odoo-style: Fournisseur summary info card */}
+            {fournisseurSummary && (
+              <Box sx={{
+                p: 2.5,
+                bgcolor: colors.neutral[50],
+                border: `1px solid ${colors.neutral[200]}`,
+                borderRadius: 2,
+                mt: 1,
+              }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ color: colors.neutral[700], mb: 1 }}>
+                  Fournisseur: {fournisseurSummary.raisonSociale}
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">ICE</Typography>
+                    <Typography variant="body2" fontWeight={600}>{fournisseurSummary.ice || '—'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">IF</Typography>
+                    <Typography variant="body2" fontWeight={600}>{fournisseurSummary.identifiantFiscal || '—'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Marchés</Typography>
+                    <Typography variant="body2" fontWeight={600}>{fournisseurSummary.nombreMarches}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Total marchés</Typography>
+                    <Typography variant="body2" fontWeight={600}>{formatMAD(fournisseurSummary.montantTotalMarches)}</Typography>
+                  </Box>
+                </Box>
+                {fournisseurSummary.ville && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    {fournisseurSummary.adresse ? `${fournisseurSummary.adresse}, ` : ''}{fournisseurSummary.ville}
+                    {fournisseurSummary.telephone ? ` · Tél: ${fournisseurSummary.telephone}` : ''}
+                  </Typography>
+                )}
+              </Box>
+            )}
           </Box>
         )
 

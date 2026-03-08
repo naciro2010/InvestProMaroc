@@ -2,15 +2,17 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Typography,
+  Chip,
   IconButton,
+  CircularProgress,
   TextField,
   InputAdornment,
   Stack,
@@ -19,18 +21,16 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material'
-import {
-  Visibility,
-  Edit,
-  Delete,
-  AttachMoney,
-} from '@mui/icons-material'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw, Eye, Edit2, Trash2 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel, StatusBadge, ExportButton } from '@/components/core'
+import ConfirmDialog from '@/components/core/ConfirmDialog'
 import { ordresPaiementAPI } from '@/lib/api'
 import FileUpload from '@/components/ui/FileUpload'
 import DecimalInput from '@/components/ui/DecimalInput'
+import { useToast } from '@/contexts/ToastContext'
+import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
+import { AttachMoney } from '@mui/icons-material'
 
 interface OrdrePaiementItem {
   id: number
@@ -46,12 +46,22 @@ interface OrdrePaiementItem {
   statut?: string
 }
 
+const styles = componentStyles.listPage
+const listStyles = componentStyles.listView
+
 const OrdresPaiementPage = () => {
+  const { showToast } = useToast()
   const [ordres, setOrdres] = useState<OrdrePaiementItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [statutFilter, setStatutFilter] = useState<string>('ALL')
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(25)
+
+  // Dialog
   const [openDialog, setOpenDialog] = useState(false)
   const [selectedOrdre, setSelectedOrdre] = useState<OrdrePaiementItem | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null })
   const [formData, setFormData] = useState({
     numeroOrdre: '',
     dateEmission: new Date().toISOString().split('T')[0],
@@ -64,26 +74,45 @@ const OrdresPaiementPage = () => {
     decompteId: 0,
   })
 
-  // Pagination
-  const [page, setPage] = useState(0)
-  const rowsPerPage = 25
-
-  useEffect(() => {
-    loadOrdres()
-  }, [])
+  useEffect(() => { loadOrdres() }, [])
 
   const loadOrdres = async () => {
     setLoading(true)
     try {
       const { data } = await ordresPaiementAPI.getAll()
       setOrdres(data.data || [])
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur chargement ordres de paiement:', msg)
+    } catch {
+      showToast('Erreur lors du chargement', 'error')
     } finally {
       setLoading(false)
     }
   }
+
+  const stats = useMemo(() => ({
+    total: ordres.length,
+    EN_ATTENTE: ordres.filter(o => o.statut === 'EN_ATTENTE').length,
+    EXECUTE: ordres.filter(o => o.statut === 'EXECUTE').length,
+    ANNULE: ordres.filter(o => o.statut === 'ANNULE').length,
+  }), [ordres])
+
+  const filteredOrdres = useMemo(() => {
+    return ordres.filter(o => {
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase()
+        if (!(
+          o.numeroOrdre?.toLowerCase().includes(q) ||
+          o.beneficiaire?.toLowerCase().includes(q)
+        )) return false
+      }
+      if (statutFilter !== 'ALL' && o.statut !== statutFilter) return false
+      return true
+    })
+  }, [ordres, searchTerm, statutFilter])
+
+  const paginatedOrdres = useMemo(() => {
+    const start = page * rowsPerPage
+    return filteredOrdres.slice(start, start + rowsPerPage)
+  }, [filteredOrdres, page, rowsPerPage])
 
   const handleOpenDialog = (ordre: OrdrePaiementItem | null = null) => {
     if (ordre) {
@@ -116,306 +145,225 @@ const OrdresPaiementPage = () => {
     setOpenDialog(true)
   }
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
-    setSelectedOrdre(null)
-  }
+  const handleCloseDialog = () => { setOpenDialog(false); setSelectedOrdre(null) }
 
   const handleSubmit = async () => {
     try {
-      const payload = {
-        ...formData,
-        montant: formData.montant,
-        decompteId: formData.decompteId,
-      }
-
       if (selectedOrdre) {
-        await ordresPaiementAPI.update(selectedOrdre.id, payload)
+        await ordresPaiementAPI.update(selectedOrdre.id, formData)
+        showToast('Ordre modifie avec succes', 'success')
       } else {
-        await ordresPaiementAPI.create(payload)
+        await ordresPaiementAPI.create(formData)
+        showToast('Ordre cree avec succes', 'success')
       }
-
       handleCloseDialog()
       loadOrdres()
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur sauvegarde ordre de paiement:', msg)
+    } catch {
+      showToast('Erreur lors de la sauvegarde', 'error')
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Confirmer la suppression ?')) return
-
+  const confirmDelete = async () => {
+    if (!deleteConfirm.id) return
     try {
-      await ordresPaiementAPI.delete(id)
+      await ordresPaiementAPI.delete(deleteConfirm.id)
+      showToast('Ordre supprime', 'success')
       loadOrdres()
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur suppression:', msg)
+    } catch {
+      showToast('Erreur lors de la suppression', 'error')
+    } finally {
+      setDeleteConfirm({ open: false, id: null })
     }
-  }
-
-
-  const filteredOrdres = useMemo(() => {
-    return ordres.filter(o =>
-      o.numeroOrdre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.beneficiaire?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [ordres, searchTerm])
-
-  const paginatedOrdres = useMemo(() => {
-    const start = page * rowsPerPage
-    return filteredOrdres.slice(start, start + rowsPerPage)
-  }, [filteredOrdres, page, rowsPerPage])
-
-  const paginationInfo = useMemo(() => {
-    const total = filteredOrdres.length
-    if (total === 0) return undefined
-    const currentStart = page * rowsPerPage + 1
-    const currentEnd = Math.min((page + 1) * rowsPerPage, total)
-    return { currentStart, currentEnd, total }
-  }, [filteredOrdres.length, page, rowsPerPage])
-
-  const handleExport = () => {
-    // TODO: Implement export logic for ordres de paiement
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount) + ' MAD'
+    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' MAD'
   }
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress size={40} />
+        </Box>
+      </AppLayout>
+    )
+  }
+
+  const pStart = filteredOrdres.length > 0 ? page * rowsPerPage + 1 : 0
+  const pEnd = Math.min((page + 1) * rowsPerPage, filteredOrdres.length)
 
   return (
     <AppLayout>
-      <ControlPanel
-        breadcrumbs={[{ label: 'Ordres de paiement' }]}
-        actions={
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<RefreshCw size={16} />}
-              onClick={loadOrdres}
-              sx={{ textTransform: 'none' }}
-            >
-              Actualiser
-            </Button>
-            <ExportButton onClick={handleExport} />
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<Plus size={16} />}
-              onClick={() => handleOpenDialog()}
-              sx={{ textTransform: 'none' }}
-            >
-              Nouveau
-            </Button>
-          </Box>
-        }
-        searchValue={searchTerm}
-        onSearchChange={(value) => { setSearchTerm(value); setPage(0) }}
-        searchPlaceholder="Rechercher..."
-        paginationInfo={paginationInfo}
-        onPreviousPage={() => setPage((p) => Math.max(0, p - 1))}
-        onNextPage={() => setPage((p) => p + 1)}
-      />
+      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+        <ControlPanel
+          breadcrumbs={[{ label: 'Ordres de paiement' }]}
+          actions={
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<Plus size={16} />}
+                onClick={() => handleOpenDialog()}
+                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
+              >
+                Nouveau
+              </Button>
+              <ExportButton onClick={() => { /* TODO */ }} />
+              <IconButton size="small" onClick={loadOrdres} sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </>
+          }
+          searchValue={searchTerm}
+          onSearchChange={(v) => { setSearchTerm(v); setPage(0) }}
+          searchPlaceholder="Rechercher par numero, beneficiaire..."
+          paginationInfo={filteredOrdres.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredOrdres.length } : undefined}
+          onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
+          onNextPage={() => setPage(p => p + 1)}
+        >
+          {(['ALL', 'EN_ATTENTE', 'EXECUTE', 'ANNULE'] as const).map((statut) => {
+            const count = statut === 'ALL' ? ordres.length : (stats[statut as keyof typeof stats] || 0)
+            const isActive = statutFilter === statut
+            return (
+              <Chip
+                key={statut}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
+                    <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
+                  </Box>
+                }
+                onClick={() => { setStatutFilter(statut); setPage(0) }}
+                sx={isActive ? styles.filterPillActive : styles.filterPill}
+              />
+            )
+          })}
+        </ControlPanel>
 
-      <Box sx={{ p: 3 }}>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell><strong>Numéro OP</strong></TableCell>
-                <TableCell><strong>Date Émission</strong></TableCell>
-                <TableCell><strong>Date Exécution</strong></TableCell>
-                <TableCell><strong>Bénéficiaire</strong></TableCell>
-                <TableCell align="right"><strong>Montant</strong></TableCell>
-                <TableCell><strong>Statut</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">Chargement...</TableCell>
-                </TableRow>
-              ) : paginatedOrdres.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    Aucun ordre de paiement trouvé
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedOrdres.map((ordre) => (
-                  <TableRow key={ordre.id} hover>
-                    <TableCell>{ordre.numeroOrdre}</TableCell>
-                    <TableCell>
-                      {new Date(ordre.dateEmission).toLocaleDateString('fr-FR')}
-                    </TableCell>
-                    <TableCell>
-                      {ordre.dateExecution ? new Date(ordre.dateExecution).toLocaleDateString('fr-FR') : '-'}
-                    </TableCell>
-                    <TableCell>{ordre.beneficiaire || '-'}</TableCell>
-                    <TableCell align="right">
-                      <Typography variant="body2" fontWeight="bold" color="primary">
-                        {formatCurrency(ordre.montant)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        status={ordre.statut || 'EN_ATTENTE'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton size="small" color="primary" title="Voir">
-                        <Visibility />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="info"
-                        onClick={() => handleOpenDialog(ordre)}
-                        title="Modifier"
-                      >
-                        <Edit />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDelete(ordre.id)}
-                        title="Supprimer"
-                      >
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={listStyles.container}>
+            <TableContainer>
+              <Table size="small" sx={listStyles.table}>
+                <TableHead>
+                  <TableRow sx={listStyles.headerRow}>
+                    <TableCell>Numero OP</TableCell>
+                    <TableCell>Date Emission</TableCell>
+                    <TableCell>Date Execution</TableCell>
+                    <TableCell>Beneficiaire</TableCell>
+                    <TableCell align="right">Montant</TableCell>
+                    <TableCell align="center">Statut</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* Dialog Formulaire */}
-        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-          <DialogTitle>
-            {selectedOrdre ? 'Modifier l\'Ordre de Paiement' : 'Nouvel Ordre de Paiement'}
-          </DialogTitle>
-          <DialogContent>
-            <Stack spacing={3} sx={{ mt: 2 }}>
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Numéro OP"
-                  value={formData.numeroOrdre}
-                  onChange={(e) => setFormData({ ...formData, numeroOrdre: e.target.value })}
-                  placeholder="OP-001"
-                />
-                <TextField
-                  fullWidth
-                  required
-                  type="date"
-                  label="Date d'Émission"
-                  value={formData.dateEmission}
-                  onChange={(e) => setFormData({ ...formData, dateEmission: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Stack>
-
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Date d'Exécution Prévue"
-                  value={formData.dateExecution}
-                  onChange={(e) => setFormData({ ...formData, dateExecution: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <DecimalInput
-                  fullWidth
-                  required
-                  label="Montant"
-                  value={formData.montant}
-                  onChange={(value) => setFormData({ ...formData, montant: value })}
-                  decimalPlaces={2}
-                  min={0}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><AttachMoney /></InputAdornment>,
-                    endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                  }}
-                />
-              </Stack>
-
-              <TextField
-                fullWidth
-                required
-                label="Bénéficiaire"
-                value={formData.beneficiaire}
-                onChange={(e) => setFormData({ ...formData, beneficiaire: e.target.value })}
-                placeholder="Nom du bénéficiaire"
-              />
-
-              <TextField
-                fullWidth
-                label="Compte Bancaire"
-                value={formData.compteBancaire}
-                onChange={(e) => setFormData({ ...formData, compteBancaire: e.target.value })}
-                placeholder="RIB du bénéficiaire"
-              />
-
-              <TextField
-                fullWidth
-                label="Référence"
-                value={formData.reference}
-                onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                placeholder="Référence interne"
-              />
-
-              <DecimalInput
-                fullWidth
-                required
-                label="Décompte (ID)"
-                value={formData.decompteId}
-                onChange={(value) => setFormData({ ...formData, decompteId: value })}
-                decimalPlaces={0}
-                min={0}
-                helperText="ID du décompte associé"
-              />
-
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Observation"
-                value={formData.observation}
-                onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
-              />
-
-              {selectedOrdre && (
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Pièces jointes
-                  </Typography>
-                  <FileUpload
-                    typeEntite="ORDRE_PAIEMENT"
-                    entiteId={selectedOrdre.id}
-                    maxFiles={10}
-                    maxFileSize={10}
-                  />
-                </Box>
-              )}
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Annuler</Button>
-            <Button variant="contained" onClick={handleSubmit}>
-              {selectedOrdre ? 'Modifier' : 'Créer'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+                </TableHead>
+                <TableBody>
+                  {paginatedOrdres.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                        <Typography sx={{ color: colors.textSecondary }}>Aucun ordre de paiement trouve</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedOrdres.map((ordre) => (
+                      <TableRow key={ordre.id} sx={listStyles.dataRow} onClick={() => handleOpenDialog(ordre)}>
+                        <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
+                          {ordre.numeroOrdre}
+                        </TableCell>
+                        <TableCell sx={{ color: colors.textSecondary }}>
+                          {new Date(ordre.dateEmission).toLocaleDateString('fr-FR')}
+                        </TableCell>
+                        <TableCell sx={{ color: colors.textSecondary }}>
+                          {ordre.dateExecution ? new Date(ordre.dateExecution).toLocaleDateString('fr-FR') : '-'}
+                        </TableCell>
+                        <TableCell>{ordre.beneficiaire || '-'}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: typography.weights.bold, color: colors.primary[700] }}>
+                          {formatCurrency(ordre.montant)}
+                        </TableCell>
+                        <TableCell align="center">
+                          <StatusBadge status={ordre.statut || 'EN_ATTENTE'} size="small" />
+                        </TableCell>
+                        <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                            <IconButton size="small" onClick={() => handleOpenDialog(ordre)} sx={{ color: colors.neutral[500] }}>
+                              <Eye size={14} />
+                            </IconButton>
+                            <IconButton size="small" onClick={() => handleOpenDialog(ordre)} sx={{ color: colors.neutral[500] }}>
+                              <Edit2 size={14} />
+                            </IconButton>
+                            <IconButton size="small" onClick={() => setDeleteConfirm({ open: true, id: ordre.id })} sx={{ color: colors.danger[500] }}>
+                              <Trash2 size={14} />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              component="div"
+              count={filteredOrdres.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0) }}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              labelRowsPerPage="Lignes par page"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
+            />
+          </Box>
+        </Box>
       </Box>
+
+      {/* Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth PaperProps={{ sx: componentStyles.dialog.paper }}>
+        <DialogTitle sx={componentStyles.dialog.title}>
+          {selectedOrdre ? 'Modifier l\'Ordre de Paiement' : 'Nouvel Ordre de Paiement'}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <TextField fullWidth required label="Numero OP" value={formData.numeroOrdre} onChange={(e) => setFormData({ ...formData, numeroOrdre: e.target.value })} placeholder="OP-001" size="small" />
+              <TextField fullWidth required type="date" label="Date d'Emission" value={formData.dateEmission} onChange={(e) => setFormData({ ...formData, dateEmission: e.target.value })} InputLabelProps={{ shrink: true }} size="small" />
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <TextField fullWidth type="date" label="Date d'Execution Prevue" value={formData.dateExecution} onChange={(e) => setFormData({ ...formData, dateExecution: e.target.value })} InputLabelProps={{ shrink: true }} size="small" />
+              <DecimalInput fullWidth required label="Montant" value={formData.montant} onChange={(value) => setFormData({ ...formData, montant: value })} decimalPlaces={2} min={0}
+                InputProps={{ startAdornment: <InputAdornment position="start"><AttachMoney /></InputAdornment>, endAdornment: <InputAdornment position="end">MAD</InputAdornment> }} />
+            </Stack>
+            <TextField fullWidth required label="Beneficiaire" value={formData.beneficiaire} onChange={(e) => setFormData({ ...formData, beneficiaire: e.target.value })} size="small" />
+            <TextField fullWidth label="Compte Bancaire" value={formData.compteBancaire} onChange={(e) => setFormData({ ...formData, compteBancaire: e.target.value })} size="small" />
+            <TextField fullWidth label="Reference" value={formData.reference} onChange={(e) => setFormData({ ...formData, reference: e.target.value })} size="small" />
+            <DecimalInput fullWidth required label="Decompte (ID)" value={formData.decompteId} onChange={(value) => setFormData({ ...formData, decompteId: value })} decimalPlaces={0} min={0} helperText="ID du decompte associe" />
+            <TextField fullWidth multiline rows={3} label="Observation" value={formData.observation} onChange={(e) => setFormData({ ...formData, observation: e.target.value })} size="small" />
+            {selectedOrdre && (
+              <Box>
+                <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary, mb: 1 }}>
+                  Pieces jointes
+                </Typography>
+                <FileUpload typeEntite="ORDRE_PAIEMENT" entiteId={selectedOrdre.id} maxFiles={10} maxFileSize={10} />
+              </Box>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={handleCloseDialog} sx={componentStyles.buttonSecondary}>Annuler</Button>
+          <Button onClick={handleSubmit} sx={componentStyles.buttonPrimary}>
+            {selectedOrdre ? 'Modifier' : 'Creer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title="Supprimer l'ordre de paiement"
+        message="Cette action est irreversible. Voulez-vous continuer ?"
+        variant="danger"
+        confirmLabel="Supprimer"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false, id: null })}
+      />
     </AppLayout>
   )
 }

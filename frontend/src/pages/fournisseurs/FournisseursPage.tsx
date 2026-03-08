@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box, Typography, Button, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TablePagination, Chip, Skeleton,
+  TableHead, TableRow, TablePagination, Chip, Skeleton, IconButton,
   TableSortLabel,
 } from '@mui/material'
-import { Add, Refresh } from '@mui/icons-material'
+import { Plus, RefreshCw } from 'lucide-react'
 import { fournisseursAPI } from '@/lib/api'
 import { useToast } from '@/contexts/ToastContext'
 import AppLayout from '@/components/layout/AppLayout'
@@ -135,17 +135,21 @@ const FournisseursPage = () => {
           onSearchChange={setSearchQuery}
           searchPlaceholder="Rechercher par code, raison sociale, ville, ICE..."
           actions={
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<Plus size={16} />}
+                onClick={() => navigate('/fournisseurs/nouveau')}
+                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
+              >
+                Nouveau
+              </Button>
               <ExportButton onClick={handleExport} />
-              <Button variant="outlined" size="small" startIcon={<Refresh />}
-                onClick={fetchFournisseurs} sx={{ textTransform: 'none' }}>
-                Actualiser
-              </Button>
-              <Button variant="contained" size="small" startIcon={<Add />}
-                onClick={() => navigate('/fournisseurs/nouveau')} sx={{ textTransform: 'none' }}>
-                Nouveau Fournisseur
-              </Button>
-            </Box>
+              <IconButton size="small" onClick={fetchFournisseurs} sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </>
           }
         >
           {FILTER_OPTIONS.map(({ key, label }) => {

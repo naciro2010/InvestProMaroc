@@ -16,12 +16,7 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material'
-import {
-  Visibility,
-  Edit,
-  Delete,
-} from '@mui/icons-material'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw, Eye, Edit2, Trash2 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel, StatusBadge, ExportButton } from '@/components/core'
 import { budgetsAPI } from '@/lib/api'
@@ -174,21 +169,7 @@ export default function BudgetsPage() {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                     <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
-                    <Box component="span" sx={{
-                      bgcolor: isActive ? colors.primary[200] : colors.neutral[200],
-                      color: isActive ? colors.primary[800] : colors.neutral[600],
-                      fontSize: typography.sizes['2xs'],
-                      fontWeight: typography.weights.bold,
-                      borderRadius: '9999px',
-                      px: 0.75,
-                      minWidth: 18,
-                      height: 18,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                      {count}
-                    </Box>
+                    <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
                   </Box>
                 }
                 size="small"
@@ -314,26 +295,14 @@ export default function BudgetsPage() {
                         </TableCell>
                         <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => navigate(`/budgets/${budget.id}`)}
-                              sx={{ color: colors.neutral[500] }}
-                            >
-                              <Visibility fontSize="small" />
+                            <IconButton size="small" onClick={() => navigate(`/budgets/${budget.id}`)} sx={{ color: colors.neutral[500] }}>
+                              <Eye size={14} />
                             </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => navigate(`/budgets/${budget.id}`)}
-                              sx={{ color: colors.neutral[500] }}
-                            >
-                              <Edit fontSize="small" />
+                            <IconButton size="small" onClick={() => navigate(`/budgets/${budget.id}`)} sx={{ color: colors.neutral[500] }}>
+                              <Edit2 size={14} />
                             </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDelete(budget.id)}
-                              sx={{ color: colors.danger[500] }}
-                            >
-                              <Delete fontSize="small" />
+                            <IconButton size="small" onClick={() => handleDelete(budget.id)} sx={{ color: colors.danger[500] }}>
+                              <Trash2 size={14} />
                             </IconButton>
                           </Box>
                         </TableCell>

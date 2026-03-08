@@ -23,14 +23,8 @@ import {
   DialogActions,
   Stack,
 } from '@mui/material'
-import {
-  Add,
-  Visibility,
-  Edit,
-  Delete,
-  AttachMoney,
-  Refresh,
-} from '@mui/icons-material'
+import { AttachMoney } from '@mui/icons-material'
+import { Plus, RefreshCw, Eye, Edit2, Trash2 } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import api, { decomptesAPI } from '../../lib/api'
 import DecimalInput from '@/components/ui/DecimalInput'
@@ -54,6 +48,7 @@ interface Decompte {
 }
 
 // Styles from design system
+const styles = componentStyles.listPage
 const listViewStyles = componentStyles.listView
 
 const DecomptesPage = () => {
@@ -228,7 +223,7 @@ const DecomptesPage = () => {
   if (loading) {
     return (
       <AppLayout>
-        <Box sx={{ minHeight: '100vh', bgcolor: colors.neutral[50], display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <CircularProgress size={40} />
         </Box>
       </AppLayout>
@@ -237,25 +232,26 @@ const DecomptesPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.neutral[50] }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
         {/* Control Panel */}
         <ControlPanel
           breadcrumbs={[{ label: 'Decomptes' }]}
           actions={
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <>
               <Button
                 variant="contained"
-                startIcon={<Add />}
+                size="small"
+                startIcon={<Plus size={16} />}
                 onClick={() => handleOpenDialog()}
-                sx={{ textTransform: 'none', fontWeight: typography.weights.semibold }}
+                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
               >
-                Nouveau Decompte
+                Nouveau
               </Button>
               <ExportButton onClick={handleExport} />
-              <IconButton size="small" onClick={loadDecomptes} title="Rafraîchir">
-                <Refresh fontSize="small" />
+              <IconButton size="small" onClick={loadDecomptes} sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} />
               </IconButton>
-            </Box>
+            </>
           }
           searchValue={searchTerm}
           onSearchChange={(value: string) => { setSearchTerm(value); setPage(0); }}
@@ -351,26 +347,14 @@ const DecomptesPage = () => {
                         </TableCell>
                         <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleOpenDialog(decompte)}
-                              sx={{ color: colors.neutral[500] }}
-                            >
-                              <Visibility fontSize="small" />
+                            <IconButton size="small" onClick={() => handleOpenDialog(decompte)} sx={{ color: colors.neutral[500] }}>
+                              <Eye size={14} />
                             </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleOpenDialog(decompte)}
-                              sx={{ color: colors.neutral[500] }}
-                            >
-                              <Edit fontSize="small" />
+                            <IconButton size="small" onClick={() => handleOpenDialog(decompte)} sx={{ color: colors.neutral[500] }}>
+                              <Edit2 size={14} />
                             </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDelete(decompte.id)}
-                              sx={{ color: colors.danger[500] }}
-                            >
-                              <Delete fontSize="small" />
+                            <IconButton size="small" onClick={() => handleDelete(decompte.id)} sx={{ color: colors.danger[500] }}>
+                              <Trash2 size={14} />
                             </IconButton>
                           </Box>
                         </TableCell>

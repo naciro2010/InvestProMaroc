@@ -5,7 +5,23 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-// Convention DTOs
+// ==================== Request DTOs ====================
+
+data class CreateVersementPrevisionnelRequest(
+    val volet: String? = null,
+    @field:NotNull(message = "La date de versement est obligatoire")
+    val dateVersement: LocalDate,
+    @field:NotNull(message = "Le montant est obligatoire")
+    @field:DecimalMin(value = "0.0", message = "Le montant doit être positif")
+    val montant: BigDecimal,
+    val montantPrevu: BigDecimal? = null,
+    @field:NotNull(message = "Le partenaire est obligatoire")
+    val partenaireId: Long,
+    val modId: Long? = null,
+    val remarques: String? = null
+)
+
+// ==================== Convention DTOs ====================
 data class ConventionDTO(
     val id: Long?,
     val code: String,

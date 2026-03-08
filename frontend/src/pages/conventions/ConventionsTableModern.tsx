@@ -4,12 +4,7 @@ import {
   Box,
   Button,
   IconButton,
-  MenuItem,
   Chip,
-  Popover,
-  Typography,
-  Checkbox,
-  FormControlLabel,
 } from '@mui/material'
 import { Star as StarIcon } from '@mui/icons-material'
 import { Plus, RefreshCw, Upload, Layers, Columns3 } from 'lucide-react'
@@ -26,6 +21,9 @@ import {
   SavedFiltersMenu,
   ConventionListTable,
   ConventionActionDialogs,
+  ConventionKanbanView,
+  GroupByPopover,
+  ColumnVisibilityPopover,
   EMPTY_FILTERS,
   type ConventionFilterState,
   type Convention,
@@ -53,6 +51,8 @@ const GROUPBY_OPTIONS = [
 
 // ==================== MAIN PAGE ====================
 
+type ViewMode = 'list' | 'kanban'
+
 const ConventionsTableModern = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -66,6 +66,7 @@ const ConventionsTableModern = () => {
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(25)
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
   // Favorites (row-level, localStorage-backed)
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(() => {
@@ -229,7 +230,10 @@ const ConventionsTableModern = () => {
           searchValue={searchQuery}
           onSearchChange={(v) => { setSearchQuery(v); setPage(0) }}
           searchPlaceholder="Rechercher par code, libelle, numero..."
-          paginationInfo={filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => setViewMode(mode as ViewMode)}
+          availableViews={['list', 'kanban']}
+          paginationInfo={viewMode === 'list' && filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
           onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
           onNextPage={() => setPage(p => p + 1)}
         >
@@ -260,32 +264,21 @@ const ConventionsTableModern = () => {
         </ControlPanel>
 
         <Box sx={{ p: { xs: 2, md: 3 } }}>
-          <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
-            onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
-            favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
+          {viewMode === 'kanban' ? (
+            <ConventionKanbanView
+              data={filteredData.flatMap(c => [c, ...(c.sousConventions || [])])}
+              onCardClick={(id) => navigate(`/conventions/${id}`)}
+            />
+          ) : (
+            <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
+              onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
+              favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
+          )}
         </Box>
       </Box>
 
-      {/* Group By */}
-      <Popover open={Boolean(groupByAnchor)} anchorEl={groupByAnchor} onClose={() => setGroupByAnchor(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        PaperProps={{ sx: { borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mt: 0.5 } }}>
-        {GROUPBY_OPTIONS.map((opt) => (
-          <MenuItem key={opt.value} selected={groupBy === opt.value} onClick={() => { setGroupBy(opt.value); setGroupByAnchor(null) }} sx={{ fontSize: typography.sizes.sm, minWidth: 160 }}>{opt.label}</MenuItem>
-        ))}
-      </Popover>
-
-      {/* Column Visibility */}
-      <Popover open={Boolean(columnsAnchor)} anchorEl={columnsAnchor} onClose={() => setColumnsAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{ sx: { borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mt: 0.5, p: 1, minWidth: 180 } }}>
-        <Typography sx={{ px: 1, py: 0.5, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          Colonnes visibles
-        </Typography>
-        {columns.map((col) => (
-          <FormControlLabel key={col.key} control={<Checkbox size="small" checked={col.visible} onChange={() => toggleColumn(col.key)} sx={{ p: 0.5, ml: 0.5 }} />}
-            label={col.label} sx={{ display: 'flex', mx: 0, '& .MuiFormControlLabel-label': { fontSize: typography.sizes.sm } }} />
-        ))}
-      </Popover>
+      <GroupByPopover anchorEl={groupByAnchor} onClose={() => setGroupByAnchor(null)} options={GROUPBY_OPTIONS} currentValue={groupBy} onChange={setGroupBy} />
+      <ColumnVisibilityPopover anchorEl={columnsAnchor} onClose={() => setColumnsAnchor(null)} columns={columns} onToggle={toggleColumn} />
 
       {/* Action dialogs */}
       <ConventionActionDialogs

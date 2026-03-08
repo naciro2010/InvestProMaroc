@@ -22,7 +22,20 @@ import {
 } from '@/types/api'
 import authService from './authService'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const resolveApiUrl = () => {
+  const rawUrl = import.meta.env.VITE_API_URL?.trim()
+
+  if (!rawUrl) {
+    return 'http://localhost:8080/api'
+  }
+
+  const sanitized = rawUrl.replace(/\/+$/, '')
+
+  // Support both VITE_API_URL=http://host:port and VITE_API_URL=http://host:port/api
+  return sanitized.endsWith('/api') ? sanitized : `${sanitized}/api`
+}
+
+const API_URL = resolveApiUrl()
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -448,10 +461,10 @@ export const comptesBancairesAPI = {
 export const usersAPI = {
   getAll: () => api.get('/users'),
   getById: (id: number) => api.get(`/users/${id}`),
-  update: (id: number, data: Record<string, unknown>) => api.put(`/users/${id}`, data),
+  updateProfile: (data: { prenom: string; nom: string; email: string }) => api.put('/users/profile', data),
   delete: (id: number) => api.delete(`/users/${id}`),
-  changePassword: (id: number, oldPassword: string, newPassword: string) =>
-    api.post(`/users/${id}/change-password`, { oldPassword, newPassword }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.put('/users/change-password', { currentPassword, newPassword }),
 }
 
 // Budgets API
@@ -470,7 +483,7 @@ export const budgetsAPI = {
 export const decomptesAPI = {
   getAll: () => api.get('/decomptes'),
   getList: () => api.get('/decomptes/list'),
-  getByMarche: (marcheId: number) => api.get(`/decomptes?marcheId=${marcheId}`),
+  getByMarche: (marcheId: number) => api.get(`/decomptes/marche/${marcheId}`),
   getById: (id: number) => api.get(`/decomptes/${id}`),
   create: (data: CreateDecompteDTO) => api.post('/decomptes', data),
   update: (id: number, data: UpdateDecompteDTO) => api.put(`/decomptes/${id}`, data),

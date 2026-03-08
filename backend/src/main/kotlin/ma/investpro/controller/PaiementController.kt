@@ -20,9 +20,15 @@ class PaiementController(private val paiementService: PaiementService) {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getAllPaiements(): ResponseEntity<ApiResponse<List<Paiement>>> {
-        logger.info { "GET /api/paiements" }
-        val paiements = paiementService.findAll()
+    fun getAllPaiements(
+        @RequestParam(required = false) opId: Long?
+    ): ResponseEntity<ApiResponse<List<Paiement>>> {
+        logger.info { "GET /api/paiements?opId=$opId" }
+        val paiements = if (opId != null) {
+            paiementService.findByOrdrePaiement(opId)
+        } else {
+            paiementService.findAll()
+        }
         return ResponseEntity.ok(ApiResponse(
             success = true,
             data = paiements,

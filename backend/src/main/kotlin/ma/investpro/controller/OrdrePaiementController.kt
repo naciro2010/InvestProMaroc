@@ -20,9 +20,15 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-    fun getAllOrdresPaiement(): ResponseEntity<ApiResponse<List<OrdrePaiement>>> {
-        logger.info { "GET /api/ordres-paiement" }
-        val ordresPaiement = ordrePaiementService.findAll()
+    fun getAllOrdresPaiement(
+        @RequestParam(required = false) decompteId: Long?
+    ): ResponseEntity<ApiResponse<List<OrdrePaiement>>> {
+        logger.info { "GET /api/ordres-paiement?decompteId=$decompteId" }
+        val ordresPaiement = if (decompteId != null) {
+            ordrePaiementService.findByDecompte(decompteId)
+        } else {
+            ordrePaiementService.findAll()
+        }
         return ResponseEntity.ok(ApiResponse(
             success = true,
             data = ordresPaiement,

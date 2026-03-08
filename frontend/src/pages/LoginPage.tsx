@@ -37,13 +37,7 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center p-4">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 -left-10 w-72 h-72 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float" />
-        <div className="absolute bottom-20 -right-10 w-72 h-72 bg-accent-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-float" style={{ animationDelay: '2s' }} />
-      </div>
-
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -53,33 +47,33 @@ const LoginPage = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-800 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center">
               <Briefcase className="w-7 h-7 text-white" />
             </div>
-            <span className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+            <span className="text-3xl font-bold text-primary-700">
               InvestPro
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
             Bon retour !
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-500">
             Connectez-vous à votre compte
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3"
+              className="mb-6 p-4 bg-danger-50 border border-danger-200 rounded-lg flex items-start space-x-3"
             >
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-red-800">Erreur de connexion</p>
-                <p className="text-sm text-red-600">{error}</p>
+                <p className="text-sm font-medium text-danger-700">Erreur de connexion</p>
+                <p className="text-sm text-danger-600">{error}</p>
               </div>
             </motion.div>
           )}
@@ -125,7 +119,7 @@ const LoginPage = () => {
                   value={formData.password}
                   onChange={handleChange}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="••••••••"
+                  placeholder="--------"
                   autoComplete="current-password"
                 />
               </div>
@@ -154,7 +148,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -174,7 +168,7 @@ const LoginPage = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
@@ -197,7 +191,7 @@ const LoginPage = () => {
 
         {/* Back to home */}
         <div className="mt-6 text-center">
-          <Link to="/" className="text-sm text-gray-600 hover:text-gray-900">
+          <Link to="/" className="text-sm text-gray-500 hover:text-gray-800">
             ← Retour à l'accueil
           </Link>
         </div>

@@ -1,8 +1,28 @@
 import { useState, useEffect } from 'react'
-import { FaSearch, FaCalculator, FaFileInvoice } from 'react-icons/fa'
+import {
+  Box,
+  Typography,
+  TextField,
+  InputAdornment,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  CircularProgress,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  SelectChangeEvent,
+} from '@mui/material'
+import { Search, Calculator } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { Card, Button } from '../../components/ui'
+import { PageHeader } from '../../components/core'
 import api from '../../lib/api'
+import { colors, typography, componentStyles } from '../../lib/designSystem'
 
 interface Commission {
   id: number
@@ -34,7 +54,6 @@ export default function CommissionsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [yearFilter, setYearFilter] = useState<number>(new Date().getFullYear())
 
-  // Stats
   const [stats, setStats] = useState({
     total: 0,
     montantTotal: 0,
@@ -55,7 +74,6 @@ export default function CommissionsPage() {
       const data = response.data
       setCommissions(data)
 
-      // Calculate stats
       const montantTotal = data.reduce((sum: number, c: Commission) => sum + c.montantCommissionHt, 0)
       const montantTvaTotal = data.reduce((sum: number, c: Commission) => sum + c.montantTvaCommission, 0)
       const montantTtcTotal = data.reduce((sum: number, c: Commission) => sum + c.montantCommissionTtc, 0)
@@ -66,8 +84,9 @@ export default function CommissionsPage() {
         montantTvaTotal,
         montantTtcTotal,
       })
-    } catch (error) {
-      console.error('Erreur lors du chargement des commissions:', error)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
+      console.error('Erreur lors du chargement des commissions:', msg)
     } finally {
       setLoading(false)
     }
@@ -102,187 +121,173 @@ export default function CommissionsPage() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-info"></div>
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <CircularProgress />
+        </Box>
       </AppLayout>
     )
   }
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        {/* En-tête */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-rubik text-gray-800">Commissions d'Intervention</h1>
-            <p className="text-gray-600 mt-1">Calcul et suivi des commissions selon les conventions</p>
-          </div>
-          <Button
-            variant="success"
-            icon={<FaCalculator />}
-            onClick={() => alert('Calcul automatique des commissions (à implémenter)')}
-          >
-            Calculer Commissions
-          </Button>
-        </div>
-
-        {/* Stats rapides */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card title="Total Commissions">
-            <div className="text-3xl font-bold font-rubik text-gray-800">{stats.total}</div>
-          </Card>
-
-          <Card title="Montant HT">
-            <div className="text-2xl font-bold font-rubik text-success">
-              {formatCurrency(stats.montantTotal)}
-            </div>
-          </Card>
-
-          <Card title="TVA">
-            <div className="text-2xl font-bold font-rubik text-warning">
-              {formatCurrency(stats.montantTvaTotal)}
-            </div>
-          </Card>
-
-          <Card title="Montant TTC">
-            <div className="text-2xl font-bold font-rubik text-info">
-              {formatCurrency(stats.montantTtcTotal)}
-            </div>
-          </Card>
-        </div>
-
-        {/* Filtres et recherche */}
-        <Card title="Recherche et Filtres">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher par facture, fournisseur, ou convention..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-info"
-              />
-            </div>
-
-            <select
-              value={yearFilter}
-              onChange={(e) => setYearFilter(parseInt(e.target.value))}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-info"
+      <Box sx={componentStyles.pageBackground}>
+        <PageHeader
+          title="Commissions d'Intervention"
+          breadcrumbs={[
+            { label: 'Accueil', path: '/dashboard' },
+            { label: 'Commissions' },
+          ]}
+          actions={
+            <Button
+              variant="contained"
+              startIcon={<Calculator size={18} />}
+              sx={componentStyles.buttonPrimary}
+              onClick={() => alert('Calcul automatique des commissions (à implémenter)')}
             >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  Année {year}
-                </option>
-              ))}
-            </select>
-          </div>
-        </Card>
+              Calculer Commissions
+            </Button>
+          }
+        />
 
-        {/* Table des commissions */}
-        <Card title="Liste des Commissions">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Facture
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fournisseur
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Convention
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Base
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Taux (%)
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Montant HT
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    TVA
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Montant TTC
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCommissions.map((commission) => (
-                  <tr key={commission.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {formatDate(commission.dateCalcul)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <FaFileInvoice className="text-info mr-2" />
-                        <span className="text-sm font-medium text-gray-900">
-                          {commission.depense?.numeroFacture}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {commission.depense?.fournisseur?.raisonSociale || '-'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {commission.convention?.numero}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {commission.convention?.libelle}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm text-gray-900">
-                        {formatCurrency(commission.montantBase)}
-                      </div>
-                      <div className="text-xs text-gray-500">{commission.baseCalcul}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-semibold text-success">
-                        {commission.tauxCommission}%
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-bold text-gray-900">
-                        {formatCurrency(commission.montantCommissionHt)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm text-gray-900">
-                        {formatCurrency(commission.montantTvaCommission)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-bold text-info">
-                        {formatCurrency(commission.montantCommissionTtc)}
-                      </div>
-                    </td>
-                  </tr>
+        <Box sx={{ p: 3 }}>
+          {/* Stats */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+            {[
+              { label: 'Total Commissions', value: stats.total.toString(), color: colors.textPrimary },
+              { label: 'Montant HT', value: formatCurrency(stats.montantTotal), color: colors.success[600] },
+              { label: 'TVA', value: formatCurrency(stats.montantTvaTotal), color: colors.warning[600] },
+              { label: 'Montant TTC', value: formatCurrency(stats.montantTtcTotal), color: colors.info[600] },
+            ].map((stat) => (
+              <Box key={stat.label} sx={componentStyles.statCard}>
+                <Box sx={{ p: 2.5 }}>
+                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, mb: 0.5 }}>
+                    {stat.label}
+                  </Typography>
+                  <Typography sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: stat.color }}>
+                    {stat.value}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+
+          {/* Toolbar */}
+          <Box sx={{ ...componentStyles.card, p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+            <TextField
+              size="small"
+              placeholder="Rechercher par facture, fournisseur, ou convention..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ flexGrow: 1, minWidth: 280 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={18} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Année</InputLabel>
+              <Select
+                value={yearFilter.toString()}
+                label="Année"
+                onChange={(e: SelectChangeEvent) => setYearFilter(parseInt(e.target.value))}
+              >
+                {years.map((year) => (
+                  <MenuItem key={year} value={year.toString()}>
+                    {year}
+                  </MenuItem>
                 ))}
-              </tbody>
-            </table>
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Table */}
+          <TableContainer sx={componentStyles.table.container}>
+            <Table>
+              <TableHead>
+                <TableRow sx={componentStyles.table.header}>
+                  <TableCell sx={componentStyles.table.headerCell}>Date</TableCell>
+                  <TableCell sx={componentStyles.table.headerCell}>Facture</TableCell>
+                  <TableCell sx={componentStyles.table.headerCell}>Fournisseur</TableCell>
+                  <TableCell sx={componentStyles.table.headerCell}>Convention</TableCell>
+                  <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Base</TableCell>
+                  <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Taux (%)</TableCell>
+                  <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Montant HT</TableCell>
+                  <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>TVA</TableCell>
+                  <TableCell sx={{ ...componentStyles.table.headerCell, textAlign: 'right' }}>Montant TTC</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredCommissions.map((commission) => (
+                  <TableRow key={commission.id} sx={componentStyles.table.row}>
+                    <TableCell sx={componentStyles.table.cell}>
+                      <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+                        {formatDate(commission.dateCalcul)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={componentStyles.table.cell}>
+                      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>
+                        {commission.depense?.numeroFacture}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={componentStyles.table.cell}>
+                      <Typography sx={{ fontSize: typography.sizes.sm }}>
+                        {commission.depense?.fournisseur?.raisonSociale || '-'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={componentStyles.table.cell}>
+                      <Typography sx={{ fontSize: typography.sizes.sm }}>
+                        {commission.convention?.numero}
+                      </Typography>
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                        {commission.convention?.libelle}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
+                      <Typography sx={{ fontSize: typography.sizes.sm }}>
+                        {formatCurrency(commission.montantBase)}
+                      </Typography>
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                        {commission.baseCalcul}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
+                      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.success[600] }}>
+                        {commission.tauxCommission}%
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
+                      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold }}>
+                        {formatCurrency(commission.montantCommissionHt)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
+                      <Typography sx={{ fontSize: typography.sizes.sm }}>
+                        {formatCurrency(commission.montantTvaCommission)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
+                      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.info[600] }}>
+                        {formatCurrency(commission.montantCommissionTtc)}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
             {filteredCommissions.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Aucune commission trouvée</p>
-              </div>
+              <Box sx={componentStyles.emptyState}>
+                <Typography sx={{ color: colors.textSecondary }}>
+                  Aucune commission trouvée
+                </Typography>
+              </Box>
             )}
-          </div>
-        </Card>
-      </div>
+          </TableContainer>
+        </Box>
+      </Box>
     </AppLayout>
   )
 }

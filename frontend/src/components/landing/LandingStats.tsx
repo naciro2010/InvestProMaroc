@@ -62,10 +62,10 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
             variants={fadeIn}
             className="text-center mb-16"
           >
-            <h3 className="text-4xl font-bold text-slate-900 mb-4">
+            <h3 className="text-4xl font-bold text-gray-900 mb-4">
               {"Parcours de d\u00e9ploiement adapt\u00e9 \u00e0 votre organisation"}
             </h3>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-gray-600">
               {"Une approche progressive, orient\u00e9e usage et adoption m\u00e9tier"}
             </p>
           </motion.div>
@@ -83,8 +83,8 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
                 variants={fadeIn}
                 className={`rounded-lg border ${
                   plan.highlighted
-                    ? 'border-blue-300 shadow-md bg-blue-50'
-                    : 'border-slate-200 bg-white'
+                    ? 'border-primary-300 shadow-md bg-primary-50'
+                    : 'border-gray-200 bg-white'
                 } p-8 relative`}
               >
                 {plan.highlighted && (
@@ -92,12 +92,12 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
                     <Chip label="Populaire" color="primary" size="small" />
                   </div>
                 )}
-                <h4 className="text-2xl font-bold text-slate-900 mb-2">{plan.name}</h4>
-                <p className="text-sm text-slate-600 mb-6">{plan.description}</p>
+                <h4 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h4>
+                <p className="text-sm text-gray-600 mb-6">{plan.description}</p>
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start space-x-2 text-sm text-slate-700">
-                      <FaCheckCircle className="text-green-600 mt-0.5 flex-shrink-0" />
+                    <li key={i} className="flex items-start space-x-2 text-sm text-gray-700">
+                      <FaCheckCircle className="text-success-600 mt-0.5 flex-shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -117,7 +117,7 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-slate-50">
+      <section className="py-20 bg-gray-50">
         <Container maxWidth="lg">
           <motion.div
             initial="hidden"
@@ -126,10 +126,10 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
             variants={fadeIn}
             className="text-center mb-16"
           >
-            <h3 className="text-4xl font-bold text-slate-900 mb-4">
+            <h3 className="text-4xl font-bold text-gray-900 mb-4">
               Ce que disent nos utilisateurs
             </h3>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-gray-600">
               {"Retours d\u2019exp\u00e9rience de nos clients"}
             </p>
           </motion.div>
@@ -145,16 +145,16 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
               <motion.div
                 key={index}
                 variants={fadeIn}
-                className="bg-white rounded-lg border border-slate-200 p-8"
+                className="bg-white rounded-lg border border-gray-200 p-8"
               >
-                <FaQuoteLeft className="text-blue-600 text-2xl mb-4" />
-                <p className="text-slate-700 mb-6 leading-relaxed">{testimonial.quote}</p>
+                <FaQuoteLeft className="text-primary-600 text-2xl mb-4" />
+                <p className="text-gray-700 mb-6 leading-relaxed">{testimonial.quote}</p>
                 <div className="flex items-center space-x-3">
                   <div className="text-3xl">{testimonial.avatar}</div>
                   <div>
-                    <div className="font-semibold text-slate-900">{testimonial.author}</div>
-                    <div className="text-sm text-slate-600">{testimonial.role}</div>
-                    <div className="text-xs text-slate-500">{testimonial.organization}</div>
+                    <div className="font-semibold text-gray-900">{testimonial.author}</div>
+                    <div className="text-sm text-gray-600">{testimonial.role}</div>
+                    <div className="text-xs text-gray-500">{testimonial.organization}</div>
                   </div>
                 </div>
               </motion.div>
@@ -173,10 +173,10 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
             variants={fadeIn}
             className="text-center mb-16"
           >
-            <h3 className="text-4xl font-bold text-slate-900 mb-4">
+            <h3 className="text-4xl font-bold text-gray-900 mb-4">
               {"Questions fr\u00e9quentes"}
             </h3>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-gray-600">
               Tout ce que vous devez savoir
             </p>
           </motion.div>
@@ -192,10 +192,10 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
               <motion.div
                 key={index}
                 variants={fadeIn}
-                className="border border-slate-200 bg-white rounded-lg p-6"
+                className="border border-gray-200 bg-white rounded-lg p-6"
               >
-                <h4 className="text-lg font-semibold text-slate-900 mb-3">{faq.question}</h4>
-                <p className="text-slate-600 leading-relaxed">{faq.answer}</p>
+                <h4 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h4>
+                <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
               </motion.div>
             ))}
           </motion.div>

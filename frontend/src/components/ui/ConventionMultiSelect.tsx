@@ -10,6 +10,7 @@ import {
   Alert,
 } from '@mui/material'
 import { conventionsAPI } from '../../lib/api'
+import { colors, typography, borders } from '../../lib/designSystem'
 
 interface Convention {
   id: number
@@ -30,7 +31,7 @@ interface ConventionMultiSelectProps {
 const ConventionMultiSelect = ({
   selectedConventionIds,
   onSelectionChange,
-  label = '📋 Conventions Associées',
+  label = 'Conventions Associées',
   disabled = false,
 }: ConventionMultiSelectProps) => {
   const [conventions, setConventions] = useState<Convention[]>([])
@@ -43,7 +44,6 @@ const ConventionMultiSelect = ({
         setLoading(true)
         const response = await conventionsAPI.getAll()
         if (response.data && Array.isArray(response.data)) {
-          // Filter to only active conventions (BROUILLON, SOUMIS, VALIDEE)
           const activeConventions: Convention[] = response.data.filter(
             (c: Convention) =>
               c.statut === 'BROUILLON' || c.statut === 'SOUMIS' || c.statut === 'VALIDEE'
@@ -83,13 +83,21 @@ const ConventionMultiSelect = ({
   return (
     <Box
       sx={{
-        background: '#f0f9ff',
-        borderLeft: '4px solid #2563eb',
+        backgroundColor: colors.primary[25],
+        borderLeft: `4px solid ${colors.primary[600]}`,
         p: 3,
-        borderRadius: '8px',
+        borderRadius: borders.radius.lg,
       }}
     >
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2563eb' }}>
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: typography.weights.bold,
+          mb: 2,
+          color: colors.primary[700],
+          fontSize: typography.sizes.md,
+        }}
+      >
         {label}
       </Typography>
 
@@ -100,7 +108,7 @@ const ConventionMultiSelect = ({
       )}
 
       {conventions.length === 0 ? (
-        <Typography variant="body2" color="textSecondary">
+        <Typography variant="body2" sx={{ color: colors.textSecondary }}>
           Aucune convention disponible
         </Typography>
       ) : (
@@ -111,12 +119,13 @@ const ConventionMultiSelect = ({
               sx={{
                 p: 2,
                 mb: 1.5,
-                borderLeft: '3px solid #2563eb',
+                borderLeft: `3px solid ${colors.primary[600]}`,
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.6 : 1,
                 transition: 'all 0.2s ease',
+                boxShadow: 'none',
                 '&:hover': {
-                  backgroundColor: disabled ? 'inherit' : '#e0f2fe',
+                  backgroundColor: disabled ? 'inherit' : colors.primary[50],
                 },
               }}
             >
@@ -130,10 +139,13 @@ const ConventionMultiSelect = ({
                 }
                 label={
                   <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontWeight: typography.weights.semibold }}
+                    >
                       {convention.numero} - {convention.libelle}
                     </Typography>
-                    <Typography variant="caption" color="textSecondary">
+                    <Typography variant="caption" sx={{ color: colors.textSecondary }}>
                       Code: {convention.code} | Statut: {convention.statut}
                     </Typography>
                   </Box>
@@ -150,12 +162,12 @@ const ConventionMultiSelect = ({
           sx={{
             mt: 2,
             p: 1.5,
-            backgroundColor: '#dbeafe',
-            borderRadius: '6px',
-            borderLeft: '3px solid #2563eb',
+            backgroundColor: colors.primary[50],
+            borderRadius: borders.radius.md,
+            borderLeft: `3px solid ${colors.primary[600]}`,
           }}
         >
-          <Typography variant="caption" sx={{ color: '#1e40af' }}>
+          <Typography variant="caption" sx={{ color: colors.primary[800] }}>
             <strong>{selectedConventionIds.length}</strong> convention(s) sélectionnée(s)
           </Typography>
         </Box>

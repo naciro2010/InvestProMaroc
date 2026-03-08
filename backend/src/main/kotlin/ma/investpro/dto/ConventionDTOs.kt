@@ -257,6 +257,14 @@ data class BudgetLigneWithImputationsDTO(
     val totalPourcentageDepense: BigDecimal
 )
 
+data class BudgetDistributionResponse(
+    val lignes: List<BudgetLigneWithImputationsDTO>,
+    val totalEngagement: BigDecimal,
+    val totalDepenses: BigDecimal,
+    val totalResteAEngager: BigDecimal,
+    val totalResteAPayer: BigDecimal
+)
+
 // Convention Creation Request DTO
 
 data class CreateConventionRequest(

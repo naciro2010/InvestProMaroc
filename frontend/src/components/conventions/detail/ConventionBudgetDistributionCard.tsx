@@ -9,25 +9,13 @@ import { conventionsAPI, categoriesDepensesAPI, projetsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import BudgetImputationChips from './BudgetImputationChips'
 import type {
-  BudgetLigneWithImputationsDTO, CategorieDepenseListDTO, ApiResponse,
+  BudgetLigneWithImputationsDTO, BudgetDistributionResponse,
+  CategorieDepenseListDTO, ApiResponse,
 } from '@/types/api'
 
 /* ──── Types ──── */
 
 interface ProjetOption { id: number; code: string; nom: string }
-
-interface NewRowState {
-  catId: number | null
-  montant: string
-  engagement: string
-  depenses: string
-}
-
-interface EditFieldsState {
-  montant: string
-  engagement: string
-  depenses: string
-}
 
 interface Props {
   conventionId: number
@@ -66,8 +54,11 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [editFields, setEditFields] = useState<EditFieldsState>({ montant: '', engagement: '', depenses: '' })
-  const [newRow, setNewRow] = useState<NewRowState | null>(null)
+  const [editMontant, setEditMontant] = useState('')
+  const [newRow, setNewRow] = useState<{ catId: number | null; montant: string } | null>(null)
+
+  // Convention-level totals computed from marchés/décomptes
+  const [convTotals, setConvTotals] = useState({ engagement: 0, depenses: 0, resteAEngager: 0, resteAPayer: 0 })
 
   const loadData = useCallback(async () => {
     try {
@@ -75,11 +66,21 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
       const [distRes, catRes, projRes] = await Promise.all([
         conventionsAPI.getBudgetDistribution(conventionId),
         categoriesDepensesAPI.getList(),
-        projetsAPI.getAll(),
+        projetsAPI.getByConvention(conventionId),
       ])
-      setDistribution((distRes.data as ApiResponse<BudgetLigneWithImputationsDTO[]>).data ?? [])
+      const distData = (distRes.data as ApiResponse<BudgetDistributionResponse>).data
+      setDistribution(distData?.lignes ?? [])
+      setConvTotals({
+        engagement: distData?.totalEngagement ?? 0,
+        depenses: distData?.totalDepenses ?? 0,
+        resteAEngager: distData?.totalResteAEngager ?? 0,
+        resteAPayer: distData?.totalResteAPayer ?? 0,
+      })
       setCategories((catRes.data as ApiResponse<CategorieDepenseListDTO[]>).data ?? [])
-      setProjets(((projRes.data as ApiResponse<ProjetOption[]>).data ?? []).map((p: ProjetOption) => ({ id: p.id, code: p.code, nom: p.nom })))
+      const projList = (projRes.data as ProjetOption[] | undefined) ?? ((projRes.data as ApiResponse<ProjetOption[]>).data ?? [])
+      setProjets(
+        (Array.isArray(projList) ? projList : []).map((p: ProjetOption) => ({ id: p.id, code: p.code, nom: p.nom }))
+      )
     } catch { setDistribution([]) }
     finally { setLoading(false) }
   }, [conventionId])
@@ -96,21 +97,16 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
     try {
       await conventionsAPI.addBudgetLigne(conventionId, {
         categorieDepenseId: newRow.catId, montant: parseMontant(newRow.montant),
-        engagementMontant: parseMontant(newRow.engagement), depensesMontant: parseMontant(newRow.depenses),
       })
       setNewRow(null); await refresh()
     } catch { /* */ } finally { setSaving(false) }
   }
 
   const handleSaveEdit = async (id: number) => {
-    if (parseMontant(editFields.montant) <= 0) return
+    if (parseMontant(editMontant) <= 0) return
     setSaving(true)
     try {
-      await conventionsAPI.updateBudgetLigne(conventionId, id, {
-        montant: parseMontant(editFields.montant),
-        engagementMontant: parseMontant(editFields.engagement),
-        depensesMontant: parseMontant(editFields.depenses),
-      })
+      await conventionsAPI.updateBudgetLigne(conventionId, id, { montant: parseMontant(editMontant) })
       setEditingId(null); await refresh()
     } catch { /* */ } finally { setSaving(false) }
   }
@@ -147,14 +143,7 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
 
   const usedCatIds = new Set(distribution.map((d: BudgetLigneWithImputationsDTO) => d.budgetLigne.categorieDepenseId))
   const availableCats = categories.filter((c: CategorieDepenseListDTO) => !usedCatIds.has(c.id))
-  interface BudgetTotals { budget: number; engagement: number; resteEngager: number; depenses: number; restePayer: number }
-  const totals = distribution.reduce((acc: BudgetTotals, d: BudgetLigneWithImputationsDTO) => ({
-    budget: acc.budget + d.budgetLigne.montant,
-    engagement: acc.engagement + d.budgetLigne.engagementMontant,
-    resteEngager: acc.resteEngager + d.budgetLigne.resteAEngager,
-    depenses: acc.depenses + d.budgetLigne.depensesMontant,
-    restePayer: acc.restePayer + d.budgetLigne.resteAPayer,
-  }), { budget: 0, engagement: 0, resteEngager: 0, depenses: 0, restePayer: 0 })
+  const totalBudget = distribution.reduce((s: number, d: BudgetLigneWithImputationsDTO) => s + d.budgetLigne.montant, 0)
 
   const numInputSx = { width: 100, '& .MuiInputBase-input': { fontSize: '11px', py: 0.25, textAlign: 'right' } }
 
@@ -204,8 +193,8 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
                     </Box>
                   </TableCell>
                   <TableCell align="right" sx={td}>
-                    <TextField size="small" value={editFields.montant} autoFocus
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEditFields((prev: EditFieldsState) => ({ ...prev, montant: e.target.value }))}
+                    <TextField size="small" value={editMontant} autoFocus
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEditMontant(e.target.value)}
                       InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontSize: '9px' }}>MAD</Typography></InputAdornment> }}
                       sx={numInputSx} />
                   </TableCell>
@@ -215,11 +204,9 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
                       onAdd={data => handleAddImput(l.id!, data)} onUpdate={(iid, p) => handleUpdateImput(l.id!, iid, p)}
                       onDelete={iid => handleDeleteImput(l.id!, iid)} />
                   </TableCell>
-                  <TableCell align="right" sx={td}>
-                    <TextField size="small" value={editFields.engagement}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEditFields((prev: EditFieldsState) => ({ ...prev, engagement: e.target.value }))}
-                      InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontSize: '9px' }}>MAD</Typography></InputAdornment> }}
-                      sx={numInputSx} />
+                  {/* Engagement — computed, read-only even in edit mode */}
+                  <TableCell align="right" sx={montantCol}>
+                    <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>{fmt(l.engagementMontant)}</Typography>
                   </TableCell>
                   <TableCell sx={td}>
                     <BudgetImputationChips imputations={item.imputationsEngagement} canEdit={canEdit} saving={saving}
@@ -229,14 +216,12 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
                   </TableCell>
                   <TableCell align="right" sx={montantCol}>
                     <Typography sx={{ fontSize: typography.sizes.xs, color: colors.warning[600], ...tnum }}>
-                      {fmt(parseMontant(editFields.montant) - parseMontant(editFields.engagement))}
+                      {fmt(parseMontant(editMontant) - l.engagementMontant)}
                     </Typography>
                   </TableCell>
-                  <TableCell align="right" sx={td}>
-                    <TextField size="small" value={editFields.depenses}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEditFields((prev: EditFieldsState) => ({ ...prev, depenses: e.target.value }))}
-                      InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontSize: '9px' }}>MAD</Typography></InputAdornment> }}
-                      sx={numInputSx} />
+                  {/* Dépenses — computed, read-only */}
+                  <TableCell align="right" sx={montantCol}>
+                    <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>{fmt(l.depensesMontant)}</Typography>
                   </TableCell>
                   <TableCell sx={td}>
                     <BudgetImputationChips imputations={item.imputationsDepense} canEdit={canEdit} saving={saving}
@@ -246,11 +231,11 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
                   </TableCell>
                   <TableCell align="right" sx={montantCol}>
                     <Typography sx={{ fontSize: typography.sizes.xs, color: colors.danger[600], ...tnum }}>
-                      {fmt(parseMontant(editFields.engagement) - parseMontant(editFields.depenses))}
+                      {fmt(l.engagementMontant - l.depensesMontant)}
                     </Typography>
                   </TableCell>
                   <TableCell align="center" sx={td}>
-                    <IconButton size="small" onClick={() => handleSaveEdit(l.id!)} disabled={saving || parseMontant(editFields.montant) <= 0}>
+                    <IconButton size="small" onClick={() => handleSaveEdit(l.id!)} disabled={saving || parseMontant(editMontant) <= 0}>
                       <Check sx={{ fontSize: 14, color: colors.success[600] }} />
                     </IconButton>
                     <IconButton size="small" onClick={() => setEditingId(null)} disabled={saving}>
@@ -306,7 +291,7 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
                   <TableCell align="center" sx={td}>
                     <Tooltip title="Modifier">
                       <IconButton size="small" disabled={saving} onClick={() => {
-                        setEditingId(l.id); setEditFields({ montant: String(l.montant), engagement: String(l.engagementMontant), depenses: String(l.depensesMontant) })
+                        setEditingId(l.id); setEditMontant(String(l.montant))
                       }}><Edit sx={{ fontSize: 14, color: colors.neutral[500] }} /></IconButton>
                     </Tooltip>
                     <Tooltip title="Supprimer">
@@ -325,7 +310,7 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
             <TableRow sx={{ bgcolor: colors.success[25] }}>
               <TableCell sx={{ ...td, position: 'sticky', left: 0, bgcolor: colors.success[25], zIndex: 1 }}>
                 <Select size="small" value={newRow.catId ?? ''} displayEmpty
-                  onChange={(e: SelectChangeEvent<number | string>) => setNewRow((r: NewRowState | null) => r ? { ...r, catId: Number(e.target.value) } : r)}
+                  onChange={(e: SelectChangeEvent<number | string>) => setNewRow((r: { catId: number | null; montant: string } | null) => r ? { ...r, catId: Number(e.target.value) } : r)}
                   sx={{ minWidth: 130, fontSize: '11px' }}
                   renderValue={(val: number | string) => {
                     if (!val) return <Typography sx={{ fontSize: '11px', color: colors.textSecondary }}>Categorie...</Typography>
@@ -340,35 +325,18 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
               </TableCell>
               <TableCell align="right" sx={td}>
                 <TextField size="small" value={newRow.montant} autoFocus placeholder="Budget"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewRow((r: NewRowState | null) => r ? { ...r, montant: e.target.value } : r)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewRow((r: { catId: number | null; montant: string } | null) => r ? { ...r, montant: e.target.value } : r)}
                   InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontSize: '9px' }}>MAD</Typography></InputAdornment> }}
                   sx={numInputSx} />
               </TableCell>
               <TableCell sx={td} />
-              <TableCell align="right" sx={td}>
-                <TextField size="small" value={newRow.engagement} placeholder="Engagement"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewRow((r: NewRowState | null) => r ? { ...r, engagement: e.target.value } : r)}
-                  InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontSize: '9px' }}>MAD</Typography></InputAdornment> }}
-                  sx={numInputSx} />
-              </TableCell>
+              {/* Engagement, Imputation, Reste — empty for new row (will be computed from marchés) */}
+              <TableCell align="right" sx={montantCol}><Typography sx={{ fontSize: '10px', color: colors.textSecondary, fontStyle: 'italic' }}>—</Typography></TableCell>
               <TableCell sx={td} />
-              <TableCell align="right" sx={montantCol}>
-                <Typography sx={{ fontSize: typography.sizes.xs, color: colors.warning[600] }}>
-                  {fmt(parseMontant(newRow.montant) - parseMontant(newRow.engagement))}
-                </Typography>
-              </TableCell>
-              <TableCell align="right" sx={td}>
-                <TextField size="small" value={newRow.depenses} placeholder="Depenses"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewRow((r: NewRowState | null) => r ? { ...r, depenses: e.target.value } : r)}
-                  InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontSize: '9px' }}>MAD</Typography></InputAdornment> }}
-                  sx={numInputSx} />
-              </TableCell>
+              <TableCell align="right" sx={montantCol}><Typography sx={{ fontSize: '10px', color: colors.textSecondary, fontStyle: 'italic' }}>—</Typography></TableCell>
+              <TableCell align="right" sx={montantCol}><Typography sx={{ fontSize: '10px', color: colors.textSecondary, fontStyle: 'italic' }}>—</Typography></TableCell>
               <TableCell sx={td} />
-              <TableCell align="right" sx={montantCol}>
-                <Typography sx={{ fontSize: typography.sizes.xs, color: colors.danger[600] }}>
-                  {fmt(parseMontant(newRow.engagement) - parseMontant(newRow.depenses))}
-                </Typography>
-              </TableCell>
+              <TableCell align="right" sx={montantCol}><Typography sx={{ fontSize: '10px', color: colors.textSecondary, fontStyle: 'italic' }}>—</Typography></TableCell>
               <TableCell align="center" sx={td}>
                 <IconButton size="small" onClick={handleSaveNew} disabled={saving || !newRow.catId || parseMontant(newRow.montant) <= 0}>
                   <Check sx={{ fontSize: 14, color: colors.success[600] }} />
@@ -386,21 +354,21 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
               <TableCell sx={{ ...td, fontWeight: typography.weights.bold, color: colors.primary[700], position: 'sticky', left: 0, bgcolor: colors.primary[25], zIndex: 1 }}>
                 Total ({distribution.length} categorie{distribution.length > 1 ? 's' : ''})
               </TableCell>
-              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold }}>{fmt(totals.budget)}</TableCell>
+              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold }}>{fmt(totalBudget)}</TableCell>
               <TableCell sx={td} />
-              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold }}>{fmt(totals.engagement)}</TableCell>
+              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold }}>{fmt(convTotals.engagement)}</TableCell>
               <TableCell sx={td} />
-              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold, color: colors.warning[700] }}>{fmt(totals.resteEngager)}</TableCell>
-              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold }}>{fmt(totals.depenses)}</TableCell>
+              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold, color: colors.warning[700] }}>{fmt(convTotals.resteAEngager)}</TableCell>
+              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold }}>{fmt(convTotals.depenses)}</TableCell>
               <TableCell sx={td} />
-              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold, color: colors.danger[700] }}>{fmt(totals.restePayer)}</TableCell>
+              <TableCell align="right" sx={{ ...montantCol, fontWeight: typography.weights.bold, color: colors.danger[700] }}>{fmt(convTotals.resteAPayer)}</TableCell>
               {canEdit && <TableCell sx={td} />}
             </TableRow>
           )}
 
           {/* ── Add trigger ── */}
           {canEdit && !newRow && (
-            <TableRow onClick={() => { setEditingId(null); setNewRow({ catId: null, montant: '', engagement: '', depenses: '' }) }}
+            <TableRow onClick={() => { setEditingId(null); setNewRow({ catId: null, montant: '' }) }}
               sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, '& td': { borderBottom: 0 } }}>
               <TableCell colSpan={canEdit ? 10 : 9} sx={td}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

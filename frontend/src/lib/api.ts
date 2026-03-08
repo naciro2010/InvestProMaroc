@@ -373,6 +373,7 @@ export const projetsAPI = {
   getAll: () => api.get('/projets'),
   getActive: () => api.get('/projets/active'),
   getById: (id: number) => api.get(`/projets/${id}`),
+  getByConvention: (conventionId: number) => api.get(`/projets/convention/${conventionId}`),
   search: (q: string) => api.get(`/projets/search?q=${q}`),
   create: (data: CreateProjetDTO) => api.post('/projets', data),
   update: (id: number, data: UpdateProjetDTO) => api.put(`/projets/${id}`, data),

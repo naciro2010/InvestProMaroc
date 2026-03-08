@@ -359,6 +359,14 @@ export interface BudgetLigneWithImputationsDTO {
   totalPourcentageDepense: number
 }
 
+export interface BudgetDistributionResponse {
+  lignes: BudgetLigneWithImputationsDTO[]
+  totalEngagement: number
+  totalDepenses: number
+  totalResteAEngager: number
+  totalResteAPayer: number
+}
+
 export interface UpdateCategorieDepenseDTO {
   code?: string
   libelle?: string

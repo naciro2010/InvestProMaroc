@@ -2,18 +2,22 @@ package ma.investpro.controller
 
 import jakarta.validation.Valid
 import ma.investpro.dto.ApiResponse
+import ma.investpro.dto.BudgetDistributionResponse
 import ma.investpro.dto.BudgetLigneImputationDTO
 import ma.investpro.dto.BudgetLigneWithImputationsDTO
 import ma.investpro.dto.CreateBudgetLigneImputationRequest
 import ma.investpro.dto.UpdateBudgetLigneImputationRequest
 import ma.investpro.mapper.BudgetLigneImputationMapper
 import ma.investpro.mapper.ConventionBudgetLigneMapper
+import ma.investpro.repository.DecompteRepository
+import ma.investpro.repository.MarcheRepository
 import ma.investpro.security.annotations.ReadAccess
 import ma.investpro.security.annotations.WriteAccess
 import ma.investpro.service.BudgetLigneImputationService
 import ma.investpro.service.ConventionBudgetLigneService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
 
 @RestController
 @RequestMapping("/api/conventions/{conventionId}")
@@ -21,7 +25,9 @@ class BudgetLigneImputationController(
     private val budgetLigneImputationService: BudgetLigneImputationService,
     private val conventionBudgetLigneService: ConventionBudgetLigneService,
     private val budgetLigneImputationMapper: BudgetLigneImputationMapper,
-    private val conventionBudgetLigneMapper: ConventionBudgetLigneMapper
+    private val conventionBudgetLigneMapper: ConventionBudgetLigneMapper,
+    private val marcheRepository: MarcheRepository,
+    private val decompteRepository: DecompteRepository
 ) {
 
     @GetMapping("/budget-lignes/{ligneId}/imputations")
@@ -39,14 +45,14 @@ class BudgetLigneImputationController(
     @ReadAccess
     fun getBudgetDistribution(
         @PathVariable conventionId: Long
-    ): ResponseEntity<ApiResponse<List<BudgetLigneWithImputationsDTO>>> {
+    ): ResponseEntity<ApiResponse<BudgetDistributionResponse>> {
         val lignes = conventionBudgetLigneService.findByConventionId(conventionId)
         val ligneIds = lignes.mapNotNull { it.id }
         val allImputations = budgetLigneImputationService.findByBudgetLigneIds(ligneIds)
 
         val imputationsByLigne = allImputations.groupBy { it.budgetLigne?.id }
 
-        val result: List<BudgetLigneWithImputationsDTO> = lignes.map { ligne ->
+        val lignesDTO: List<BudgetLigneWithImputationsDTO> = lignes.map { ligne ->
             val ligneImputations = imputationsByLigne[ligne.id] ?: emptyList()
 
             val budgetImps = ligneImputations.filter { it.typeImputation == "BUDGET" }
@@ -64,8 +70,28 @@ class BudgetLigneImputationController(
             )
         }
 
+        // Compute engagement from marchés linked to this convention
+        val marches = marcheRepository.findByConventionId(conventionId)
+        val totalEngagement = marches.fold(BigDecimal.ZERO) { acc, m -> acc.add(m.montantTtc) }
+
+        // Compute dépenses from décomptes of those marchés
+        val totalDepenses = marches.fold(BigDecimal.ZERO) { acc, m ->
+            val decomptes = decompteRepository.findByMarcheId(m.id!!)
+            acc.add(decomptes.fold(BigDecimal.ZERO) { dAcc, d -> dAcc.add(d.netAPayer) })
+        }
+
+        val totalBudget = lignes.fold(BigDecimal.ZERO) { acc, l -> acc.add(l.montant) }
+
+        val response = BudgetDistributionResponse(
+            lignes = lignesDTO,
+            totalEngagement = totalEngagement,
+            totalDepenses = totalDepenses,
+            totalResteAEngager = totalBudget.subtract(totalEngagement),
+            totalResteAPayer = totalEngagement.subtract(totalDepenses)
+        )
+
         return ResponseEntity.ok(
-            ApiResponse.success(result, "Distribution budgétaire récupérée avec succès")
+            ApiResponse.success(response, "Distribution budgétaire récupérée avec succès")
         )
     }
 

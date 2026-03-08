@@ -7,7 +7,7 @@ import { colors, typography } from '@/lib/designSystem'
  * RichTextEditor Component
  *
  * Reusable rich text editor with formatting options.
- * Uses Odoo design system tokens for consistent styling.
+ * Uses design system tokens for consistent styling.
  */
 
 interface RichTextEditorProps {

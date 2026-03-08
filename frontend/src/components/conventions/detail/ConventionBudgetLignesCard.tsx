@@ -39,7 +39,7 @@ const formatMAD = (value: number): string =>
  * ConventionBudgetLignesCard - Display of budget lines by expense category.
  * Micro-component: self-loads data via GET /conventions/{id}/budget-lignes.
  *
- * Clickable rows open an Odoo-style detail drawer with calculation breakdown,
+ * Clickable rows open a detail drawer with calculation breakdown,
  * linked marches, and navigation links.
  */
 const ConventionBudgetLignesCard = ({ conventionId, conventionFinancials }: ConventionBudgetLignesCardProps) => {

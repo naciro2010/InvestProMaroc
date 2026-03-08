@@ -40,13 +40,13 @@ export { default as ConventionRealisationSection } from './ConventionRealisation
 // Financial flow card (unified IN/OUT view)
 export { default as ConventionFinancialFlowCard } from './ConventionFinancialFlowCard'
 
-// Smart buttons bar (Odoo-style)
+// Smart buttons bar
 export { default as ConventionSmartButtons } from './ConventionSmartButtons'
 
-// Calculation breakdown (Odoo-inspired)
+// Calculation breakdown
 export { default as ConventionCalculationBreakdown } from './ConventionCalculationBreakdown'
 
-// Traceability / audit card (Odoo-style)
+// Traceability / audit card
 export { default as ConventionTraceabilityCard } from './ConventionTraceabilityCard'
 
 // Key info card (convention parameters + dates + audit trail)

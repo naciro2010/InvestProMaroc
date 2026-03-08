@@ -63,7 +63,7 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
     }).format(amount)
   }
 
-  // Status colors aligned with designSystem.ts Odoo palette
+  // Status colors aligned with designSystem.ts palette
   const getStatusColor = (statut: string) => {
     switch (statut) {
       case 'VALIDE':

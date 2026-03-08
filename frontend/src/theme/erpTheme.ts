@@ -366,6 +366,6 @@ const themeOptions: ThemeOptions = {
 
 export const erpTheme = createTheme(themeOptions)
 /** @deprecated Use erpTheme instead */
-export const odooTheme = erpTheme
+export const investProTheme = erpTheme
 
 export { colors }

@@ -181,7 +181,7 @@ const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit
               </TableRow>
               </Tooltip>
             ))}
-            {/* Odoo-style add line */}
+            {/* Add line */}
             {canEdit && (
               <TableRow
                 onClick={() => setDialogOpen(true)}

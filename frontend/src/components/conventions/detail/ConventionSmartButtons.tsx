@@ -74,7 +74,7 @@ const SmartButton = ({ icon, value, label, subtitle, hint, color, mutedColor, is
 }
 
 /**
- * SmartButtons: Odoo-style buttons showing entity counts + financial amounts.
+ * SmartButtons: Buttons showing entity counts + financial amounts.
  * Click navigates to filtered views.
  */
 const ConventionSmartButtons = ({

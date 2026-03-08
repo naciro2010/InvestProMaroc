@@ -204,7 +204,7 @@ const MarcheDetailPageModern = () => {
         <Container maxWidth="xl" sx={{ py: 2 }}>
           <FormView isEditing={false} statusSteps={effectiveSteps} currentStatus={marche.statut}>
 
-            {/* Title + Description + Metadata (Odoo-style) */}
+            {/* Title + Description + Metadata */}
             <Box sx={{ mb: 1.5 }}>
               <Box sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
                 <RichTextDisplay html={marche.objet || marche.numeroMarche} variant="compact" allowExpand={false} />
@@ -258,7 +258,7 @@ const MarcheDetailPageModern = () => {
               </Box>
             </Box>
 
-            {/* Smart Buttons - Odoo style (entity counts) */}
+            {/* Smart Buttons (entity counts) */}
             <Box sx={{ mb: 2 }}>
               <MarcheSmartButtons
                 marcheId={marcheId}

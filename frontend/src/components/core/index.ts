@@ -76,13 +76,13 @@ export { default as KeyboardShortcutsHelp } from './KeyboardShortcutsHelp'
 // Notification Center (bell icon dropdown)
 export { default as NotificationCenter } from './NotificationCenter'
 
-// Inline Edit Field (Odoo-style click-to-edit)
+// Inline Edit Field (click-to-edit)
 export { default as InlineEditField } from './InlineEditField'
 export type { InlineEditFieldConfig } from './InlineEditField'
 
 // Edit Field Dialog (rich text / textarea editing modal)
 export { default as EditFieldDialog } from './EditFieldDialog'
 
-// Chatter (Odoo-style activity log / history timeline)
+// Chatter (activity log / history timeline)
 export { default as Chatter } from './chatter'
 export type { ChatterActivity, ChatterProps } from './chatter'

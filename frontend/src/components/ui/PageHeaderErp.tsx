@@ -2,7 +2,7 @@ import { ReactNode } from 'react'
 import { Box, Typography, Stack, Chip } from '@mui/material'
 import Breadcrumbs, { BreadcrumbItem } from './Breadcrumbs'
 
-interface PageHeaderOdooProps {
+interface PageHeaderErpProps {
   title: string
   subtitle?: string
   breadcrumbs?: BreadcrumbItem[]
@@ -25,13 +25,13 @@ interface PageHeaderOdooProps {
  * - White background with subtle bottom border
  * - Generous, consistent spacing (8px base)
  */
-const PageHeaderOdoo = ({
+const PageHeaderErp = ({
   title,
   subtitle,
   breadcrumbs,
   status,
   actions,
-}: PageHeaderOdooProps) => {
+}: PageHeaderErpProps) => {
   return (
     <Box
       sx={{
@@ -106,4 +106,4 @@ const PageHeaderOdoo = ({
   )
 }
 
-export default PageHeaderOdoo
+export default PageHeaderErp

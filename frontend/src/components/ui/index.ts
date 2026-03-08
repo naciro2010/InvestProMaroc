@@ -17,6 +17,6 @@ export { default as ConventionMultiSelect } from './ConventionMultiSelect'
 
 // ERP-style components (clean, professional, no flashy effects)
 export { default as Breadcrumbs } from './Breadcrumbs'
-export { default as PageHeaderOdoo } from './PageHeaderOdoo'
+export { default as PageHeaderErp } from './PageHeaderErp'
 export { default as FormSection } from './FormSection'
 export { default as DataCard, DataRow } from './DataCard'

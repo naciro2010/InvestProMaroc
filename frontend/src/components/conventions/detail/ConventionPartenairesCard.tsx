@@ -275,7 +275,7 @@ const ConventionPartenairesCard = ({
               </TableCell>
               <TableCell colSpan={isSousConvention ? (canEdit ? 3 : 2) : (canEdit ? 2 : 1)} />
             </TableRow>
-            {/* Odoo-style add line */}
+            {/* Add line */}
             {canEdit && (
               <TableRow
                 onClick={onAddClick}

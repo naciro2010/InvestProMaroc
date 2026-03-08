@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
-import { erpTheme } from '../theme/odooTheme'
+import { erpTheme } from '../theme/erpTheme'
 
 /**
  * Theme Mode Type

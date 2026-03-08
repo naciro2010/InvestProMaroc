@@ -68,7 +68,7 @@ const addBtnSx = {
  * Convention info + planning details.
  * Financial data (budget, commission, TVA) is in SummaryTable above.
  *
- * REORGANIZED by priority (Odoo-style):
+ * REORGANIZED by priority:
  * 1. Budget lines (categories de depenses) - core financial breakdown
  * 2. Partenaires - who's involved
  * 3. Versements previsionnels - payment schedule

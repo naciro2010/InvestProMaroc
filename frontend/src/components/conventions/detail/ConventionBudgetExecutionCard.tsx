@@ -52,7 +52,7 @@ const formatPct = (val: number): string => `${val.toFixed(1)}%`
 /**
  * MICRO-COMPONENT: ConventionBudgetExecutionCard
  * Shows full financial overview: budget, commission, partenaires allocation, execution tracking
- * Inspired by Odoo-style compact financial tables
+ * Compact financial tables with ERP-style layout
  */
 const ConventionBudgetExecutionCard = ({
   conventionId,
@@ -134,7 +134,7 @@ const ConventionBudgetExecutionCard = ({
         </Box>
       </Box>
 
-      {/* KPI Row - compact Odoo style */}
+      {/* KPI Row - compact layout */}
       <Box sx={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',

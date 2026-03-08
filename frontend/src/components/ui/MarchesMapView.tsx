@@ -63,20 +63,21 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
     }).format(amount)
   }
 
+  // Status colors aligned with designSystem.ts Odoo palette
   const getStatusColor = (statut: string) => {
     switch (statut) {
       case 'VALIDE':
-        return 'bg-green-100 text-green-800'
+        return 'bg-success-50 text-success-700'
       case 'EN_COURS':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-info-50 text-info-700'
       case 'TERMINE':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-700'
       case 'SUSPENDU':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-warning-50 text-warning-700'
       case 'ANNULE':
-        return 'bg-red-100 text-red-800'
+        return 'bg-danger-50 text-danger-700'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-700'
     }
   }
 
@@ -103,8 +104,8 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
     return (
       <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
         <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucun marché géolocalisé</h3>
-        <p className="text-gray-600 max-w-md mx-auto">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">Aucun marché géolocalisé</h3>
+        <p className="text-gray-500 max-w-md mx-auto">
           Aucun marché n'a de coordonnées géographiques. Ajoutez des localisations aux marchés pour
           les voir apparaître sur la carte.
         </p>
@@ -114,20 +115,20 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-        <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+      <div className="bg-primary-25 border border-primary-200 rounded-lg p-4 flex items-start gap-3">
+        <MapPin className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
         <div>
-          <h4 className="font-semibold text-blue-900 mb-1">
+          <h4 className="font-semibold text-primary-800 mb-1">
             {geolocatedMarches.length} marché{geolocatedMarches.length > 1 ? 's' : ''}{' '}
             géolocalisé{geolocatedMarches.length > 1 ? 's' : ''}
           </h4>
-          <p className="text-sm text-blue-700">
+          <p className="text-sm text-primary-700">
             Cliquez sur les marqueurs pour voir les détails des marchés.
           </p>
         </div>
       </div>
 
-      <div className="border border-gray-300 rounded-lg overflow-hidden shadow-md">
+      <div className="border border-gray-300 rounded-lg overflow-hidden shadow-sm">
         <MapContainer
           center={getMapCenter()}
           zoom={geolocatedMarches.length === 1 ? 13 : 7}
@@ -147,7 +148,7 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
               <Popup maxWidth={300}>
                 <div className="p-2">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-bold text-gray-900 text-sm">
+                    <h3 className="font-bold text-gray-800 text-sm">
                       {marche.numeroMarche}
                     </h3>
                     <span
@@ -160,12 +161,12 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
                   </div>
 
                   {marche.objet && (
-                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">
                       {stripHtml(marche.objet)}
                     </p>
                   )}
 
-                  <div className="space-y-1 text-xs text-gray-700 mb-3">
+                  <div className="space-y-1 text-xs text-gray-600 mb-3">
                     {marche.fournisseurNom && (
                       <p>
                         <span className="font-medium">Fournisseur:</span>{' '}
@@ -180,7 +181,7 @@ const MarchesMapView = ({ marches }: MarchesMapViewProps) => {
                     </p>
                     {marche.adresse && (
                       <p>
-                        <span className="font-medium">📍</span> {marche.adresse}
+                        <span className="font-medium">Adresse:</span> {marche.adresse}
                       </p>
                     )}
                     {marche.zoneGeographique && (

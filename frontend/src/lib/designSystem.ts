@@ -326,10 +326,10 @@ export const shadows = {
   lg: '0 8px 16px -4px rgba(9, 30, 66, 0.12), 0 0 1px rgba(9, 30, 66, 0.12)',
   /** Très élevée - modals */
   xl: '0 16px 32px -8px rgba(9, 30, 66, 0.16), 0 0 1px rgba(9, 30, 66, 0.12)',
-  /** Focus ring */
-  focus: '0 0 0 2px #ffffff, 0 0 0 4px #388bff',
+  /** Focus ring - utilise primary Odoo */
+  focus: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.primary[400]}`,
   /** Focus ring danger */
-  focusDanger: '0 0 0 2px #ffffff, 0 0 0 4px #f15b50',
+  focusDanger: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.danger[400]}`,
 } as const
 
 // ==================== BORDURES ====================
@@ -1401,7 +1401,7 @@ export const componentStyles = {
       py: 0.5,
       fontSize: typography.sizes.sm,
       fontWeight: typography.weights.bold,
-      color: '#fff',
+      color: colors.textOnColor,
       bgcolor: colors.primary[600],
       borderRight: `1px solid ${colors.primary[700]}`,
       cursor: 'default',
@@ -1439,7 +1439,7 @@ export const componentStyles = {
       py: 0.5,
       fontSize: typography.sizes.sm,
       fontWeight: typography.weights.bold,
-      color: '#fff',
+      color: colors.textOnColor,
       bgcolor: colors.danger[600],
       borderRight: `1px solid ${colors.danger[700]}`,
       cursor: 'default',

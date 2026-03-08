@@ -12,7 +12,7 @@ const LandingCTA = () => {
   return (
     <>
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-y border-blue-200">
+      <section className="py-20 bg-primary-700 text-white border-y border-primary-200">
         <Container maxWidth="lg">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -23,7 +23,7 @@ const LandingCTA = () => {
             <h3 className="text-4xl font-bold mb-4">
               {"Pr\u00eat \u00e0 moderniser votre gestion des conventions et investissements ?"}
             </h3>
-            <p className="text-xl mb-8 text-blue-100">
+            <p className="text-xl mb-8 text-primary-100">
               {"Offrez \u00e0 vos \u00e9quipes une exp\u00e9rience claire, structur\u00e9e et orient\u00e9e ex\u00e9cution, avec un suivi complet de chaque dossier."}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -56,7 +56,7 @@ const LandingCTA = () => {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary-600 rounded flex items-center justify-center">
                   <FaChartLine className="text-white" />
                 </div>
                 <span className="font-bold text-white">InvestPro Maroc</span>
@@ -93,7 +93,7 @@ const LandingCTA = () => {
                 href="https://github.com/naciro2010/InvestProMaroc"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 transition-colors text-sm inline-flex items-center space-x-1"
+                className="text-primary-300 hover:text-primary-200 transition-colors text-sm inline-flex items-center space-x-1"
               >
                 <span>github.com/naciro2010/InvestProMaroc</span>
                 <FaArrowRight className="text-xs" />

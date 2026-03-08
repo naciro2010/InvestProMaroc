@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Box, Button, Typography } from '@mui/material'
 import { ExpandMore, ExpandLess } from '@mui/icons-material'
 import { stripHtml } from '@/utils/textUtils'
-import { componentStyles } from '@/lib/designSystem'
+import { componentStyles, colors } from '@/lib/designSystem'
 
 type RichTextVariant = 'block' | 'inline' | 'compact'
 
@@ -86,7 +86,7 @@ const RichTextDisplay = ({
                 left: 0,
                 right: 0,
                 height: '40px',
-                background: 'linear-gradient(transparent, white)',
+                background: `linear-gradient(transparent, ${colors.surface})`,
                 pointerEvents: 'none',
               }
             : {},

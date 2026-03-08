@@ -18,6 +18,7 @@ import {
   InsertDriveFile,
   Download,
 } from '@mui/icons-material'
+import { colors, borders, transitions } from '@/lib/designSystem'
 
 interface Document {
   id?: number
@@ -56,13 +57,11 @@ const DocumentUploader = ({
   }
 
   const validateFile = (file: File): string | null => {
-    // Vérifier la taille
     const maxSizeBytes = maxSize * 1024 * 1024
     if (file.size > maxSizeBytes) {
       return `Le fichier "${file.name}" dépasse la taille maximale de ${maxSize}MB`
     }
 
-    // Vérifier le type
     const fileExt = `.${file.name.split('.').pop()?.toLowerCase()}`
     if (acceptedTypes.length > 0 && !acceptedTypes.includes(fileExt)) {
       return `Le type de fichier "${fileExt}" n'est pas accepté`
@@ -142,14 +141,21 @@ const DocumentUploader = ({
         sx={{
           p: 3,
           textAlign: 'center',
-          border: dragActive ? '2px dashed #3cb0e5' : '2px dashed #ddd',
-          backgroundColor: dragActive ? '#f0f8ff' : disabled ? '#f5f5f5' : '#fafafa',
+          border: dragActive
+            ? `2px dashed ${colors.primary[400]}`
+            : `2px dashed ${colors.neutral[300]}`,
+          backgroundColor: dragActive
+            ? colors.primary[25]
+            : disabled
+              ? colors.neutral[50]
+              : colors.neutral[25],
           cursor: disabled ? 'not-allowed' : 'pointer',
-          transition: 'all 0.3s ease',
+          transition: `all ${transitions.normal}`,
+          boxShadow: 'none',
           '&:hover': !disabled
             ? {
-                borderColor: '#3cb0e5',
-                backgroundColor: '#f0f8ff',
+                borderColor: colors.primary[400],
+                backgroundColor: colors.primary[25],
               }
             : {},
         }}
@@ -168,11 +174,17 @@ const DocumentUploader = ({
           style={{ display: 'none' }}
         />
         <label htmlFor="file-upload" style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}>
-          <CloudUpload sx={{ fontSize: 48, color: disabled ? '#ccc' : '#3cb0e5', mb: 2 }} />
+          <CloudUpload
+            sx={{
+              fontSize: 48,
+              color: disabled ? colors.textDisabled : colors.primary[500],
+              mb: 2,
+            }}
+          />
           <Typography variant="h6" gutterBottom>
             Glissez-déposez vos fichiers ici
           </Typography>
-          <Typography variant="body2" color="textSecondary" gutterBottom>
+          <Typography variant="body2" sx={{ color: colors.textSecondary }} gutterBottom>
             ou
           </Typography>
           <Button
@@ -183,7 +195,11 @@ const DocumentUploader = ({
           >
             Parcourir les fichiers
           </Button>
-          <Typography variant="caption" display="block" sx={{ mt: 2 }} color="textSecondary">
+          <Typography
+            variant="caption"
+            display="block"
+            sx={{ mt: 2, color: colors.textSecondary }}
+          >
             Types acceptés: {acceptedTypes.join(', ')} | Taille max: {maxSize}MB
           </Typography>
         </label>
@@ -207,13 +223,13 @@ const DocumentUploader = ({
               <ListItem
                 key={index}
                 sx={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 1,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: borders.radius.md,
                   mb: 1,
-                  backgroundColor: '#fff',
+                  backgroundColor: colors.surface,
                 }}
               >
-                <InsertDriveFile sx={{ mr: 2, color: '#3cb0e5' }} />
+                <InsertDriveFile sx={{ mr: 2, color: colors.primary[500] }} />
                 <ListItemText
                   primary={doc.nomOriginal}
                   secondary={

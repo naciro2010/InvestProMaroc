@@ -7,80 +7,113 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Palette Moderne - Bleu Professionnel
-        modern: {
-          blue: '#3b82f6',          // Bleu principal moderne
-          'blue-dark': '#1e3a8a',   // Bleu foncé profond
-          'blue-light': '#60a5fa',  // Bleu clair
+        // Palette Odoo - Violet professionnel (alignée avec designSystem.ts)
+        primary: {
+          25: '#f8f6f9',
+          50: '#f2edf3',
+          100: '#e4d8e7',
+          200: '#cab3d0',
+          300: '#af8db8',
+          400: '#946aa0',
+          500: '#7f5189',
+          600: '#714B67',  // Main - Odoo inspired purple
+          700: '#5f4058',
+          800: '#473043',
+          900: '#332431',
         },
-        // Gris GitLab (très important pour le look épuré)
+        // Gris neutres chauds (alignés designSystem.ts)
         gray: {
-          50: '#FAFAFA',
-          100: '#F5F5F5',
-          200: '#EEEEEE',
-          300: '#DBDBDB',
-          400: '#BFBFBF',
-          500: '#999999',
-          600: '#666666',
-          700: '#525252',
-          800: '#303030',
-          900: '#2E2E2E',
-          950: '#1F1F1F',
+          50: '#f5f5f6',
+          100: '#eeeff0',
+          200: '#dddee0',
+          300: '#b8babe',
+          400: '#8e9196',
+          500: '#6b6f75',
+          600: '#4f5359',
+          700: '#383c42',
+          800: '#24272d',
+          900: '#16181c',
         },
-        // Couleurs sémantiques GitLab (douces)
+        // Couleurs sémantiques (alignées designSystem.ts)
         success: {
-          50: '#F0FDF4',
-          100: '#DCFCE7',
-          500: '#108548',   // Vert GitLab
-          600: '#0D6B3D',
+          25: '#f6f9f7',
+          50: '#edf5ef',
+          100: '#d4e8d9',
+          200: '#a8d4b2',
+          500: '#4a9660',
+          600: '#3d7f52',
+          700: '#336a45',
         },
         danger: {
-          50: '#FEF2F2',
-          100: '#FEE2E2',
-          500: '#DD2B0E',   // Rouge GitLab
-          600: '#C91C00',
+          25: '#fdf7f7',
+          50: '#faeeed',
+          100: '#f2d5d2',
+          200: '#e0a8a3',
+          500: '#a84d45',
+          600: '#93403a',
+          700: '#7b3531',
         },
         info: {
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          500: '#1F75CB',   // Bleu GitLab
-          600: '#1068BF',
+          25: '#f6f9fa',
+          50: '#eaf1f4',
+          100: '#cedfea',
+          200: '#a3c5d6',
+          500: '#42809d',
+          600: '#366b84',
+          700: '#2d596e',
         },
         warning: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          500: '#AB6100',   // Jaune/Orange GitLab
-          600: '#9E5A00',
+          25: '#fdfaf5',
+          50: '#faf3e3',
+          100: '#f0e0b8',
+          200: '#e2c880',
+          500: '#ad8a20',
+          600: '#8f7218',
+          700: '#755e15',
         },
-        // Alias pour compatibilité
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+        purple: {
+          50: '#f0eef6',
+          100: '#ddd8ec',
+          200: '#b9b0d4',
+          500: '#6d6199',
+          600: '#5b5187',
+          700: '#4c4372',
+        },
+        // Alias sémantiques
+        accent: {
+          50: '#f0eef6',
+          100: '#ddd8ec',
+          200: '#b9b0d4',
+          600: '#5b5187',
         },
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Noto Sans', 'Ubuntu', 'Cantarell', 'Helvetica Neue', 'sans-serif'],
-        mono: ['Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Noto Sans', 'Ubuntu', 'Helvetica Neue', 'sans-serif'],
+        mono: ["'JetBrains Mono'", 'SF Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       boxShadow: {
-        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'DEFAULT': '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
-        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
-        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.08)',
-        'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.08)',
+        'xs': '0 1px 2px 0 rgba(9, 30, 66, 0.04)',
+        'sm': '0 1px 3px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.08)',
+        'DEFAULT': '0 4px 8px -2px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.08)',
+        'md': '0 4px 8px -2px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.08)',
+        'lg': '0 8px 16px -4px rgba(9, 30, 66, 0.12), 0 0 1px rgba(9, 30, 66, 0.12)',
+        'xl': '0 16px 32px -8px rgba(9, 30, 66, 0.16), 0 0 1px rgba(9, 30, 66, 0.12)',
       },
       borderRadius: {
-        'DEFAULT': '0.25rem',
-        'md': '0.375rem',
-        'lg': '0.5rem',
+        'DEFAULT': '4px',
+        'sm': '3px',
+        'md': '6px',
+        'lg': '8px',
+        'xl': '12px',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+      },
+      animation: {
+        float: 'float 6s ease-in-out infinite',
       },
     },
   },

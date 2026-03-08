@@ -1,8 +1,8 @@
 /**
  * Design System v3.0 - InvestPro Maroc
  *
- * STYLE: Epure, sobre, professionnel
- * Professional design system: functional density + clean whitespace + subtle accents
+ * STYLE: Odoo-inspired, sobre et professionnel
+ * Professional design system: ergonomic density + clean whitespace + enterprise accents
  *
  * PRINCIPES:
  * - Couleurs desaturees et douces (pas de couleurs "flashy")
@@ -16,20 +16,20 @@
 
 export const colors = {
   /**
-   * Primaire - Bleu-gris professionnel (desature)
+   * Primaire - Violet Odoo (adapté ERP)
    */
   primary: {
-    25: '#f8f9fb',
-    50: '#eef2f6',
-    100: '#d8e0ea',
-    200: '#adbdd3',
-    300: '#8199b5',
-    400: '#5f7d9e',
-    500: '#486a8e',
-    600: '#3b5998', // Main - bleu sobre
-    700: '#334d80',
-    800: '#263a5e',
-    900: '#1c2d49',
+    25: '#f8f6f9',
+    50: '#f2edf3',
+    100: '#e4d8e7',
+    200: '#cab3d0',
+    300: '#af8db8',
+    400: '#946aa0',
+    500: '#7f5189',
+    600: '#714B67', // Main - Odoo inspired purple
+    700: '#5f4058',
+    800: '#473043',
+    900: '#332431',
   },
 
   /**
@@ -156,7 +156,7 @@ export const colors = {
   surface: '#ffffff',
 
   /** Sidebar */
-  sidebarBg: '#fafafa',
+  sidebarBg: '#f6f4f7',
 
   /** Bordure standard - tres douce */
   border: '#e2e3e5',
@@ -179,9 +179,9 @@ export const colors = {
   /** Texte sur fond colore */
   textOnColor: '#ffffff',
 
-  /** Lien - bleu calme */
-  link: '#3b5998',
-  linkHover: '#334d80',
+  /** Lien - violet Odoo */
+  link: '#714B67',
+  linkHover: '#5f4058',
 } as const
 
 // ==================== TYPOGRAPHIE ====================

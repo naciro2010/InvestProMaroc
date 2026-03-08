@@ -1,6 +1,9 @@
 package ma.investpro.controller
 
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 import ma.investpro.dto.ApiResponse
 import ma.investpro.dto.ChangePasswordRequest
 import ma.investpro.entity.User
@@ -28,6 +31,20 @@ class UserController(
     private val passwordEncoder: PasswordEncoder
 ) {
 
+    data class UpdateProfileRequest(
+        @field:NotBlank(message = "Le prénom est obligatoire")
+        @field:Size(max = 50, message = "Le prénom ne peut pas dépasser 50 caractères")
+        val prenom: String,
+
+        @field:NotBlank(message = "Le nom est obligatoire")
+        @field:Size(max = 50, message = "Le nom ne peut pas dépasser 50 caractères")
+        val nom: String,
+
+        @field:NotBlank(message = "L'email est obligatoire")
+        @field:Email(message = "L'email doit être valide")
+        val email: String
+    )
+
 
 
     @GetMapping
@@ -46,6 +63,34 @@ class UserController(
         }
         return ResponseEntity.ok(ApiResponse.success(users, "Utilisateurs récupérés"))
     }
+
+    @PutMapping("/profile")
+    @ReadAccess
+    fun updateCurrentUserProfile(
+        @Valid @RequestBody request: UpdateProfileRequest,
+        @AuthenticationPrincipal userDetails: UserDetails
+    ): ResponseEntity<ApiResponse<Map<String, Any?>>> {
+        logger.info { "Mise à jour du profil pour l'utilisateur: ${userDetails.username}" }
+
+        val user = userRepository.findByUsername(userDetails.username)
+            .orElseThrow { IllegalArgumentException("Utilisateur non trouvé: ${userDetails.username}") }
+
+        user.fullName = "${request.prenom.trim()} ${request.nom.trim()}".trim()
+        user.email = request.email.trim()
+
+        val updatedUser = userRepository.save(user)
+
+        val payload = mapOf(
+            "id" to updatedUser.id,
+            "username" to updatedUser.getUsername(),
+            "email" to updatedUser.email,
+            "fullName" to updatedUser.fullName,
+            "roles" to updatedUser.roles
+        )
+
+        return ResponseEntity.ok(ApiResponse.success(payload, "Profil mis à jour avec succès"))
+    }
+
     /**
      * Changer le mot de passe de l'utilisateur authentifié.
      *

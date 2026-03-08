@@ -3,7 +3,7 @@ import { FaUser, FaEnvelope, FaLock, FaUserShield, FaEdit, FaSave } from 'react-
 import AppLayout from '../components/layout/AppLayout'
 import { Card, Button } from '../components/ui'
 import { useAuth } from '../contexts/AuthContext'
-import api from '../lib/api'
+import { usersAPI } from '../lib/api'
 
 interface UserProfile {
   id: number
@@ -60,14 +60,8 @@ export default function ProfilePage() {
     e.preventDefault()
     try {
       setLoading(true)
-      // Try to update if endpoint exists, otherwise just show message
-      try {
-        await api.put(`/api/users/${profile?.id}`, formData)
-        alert('Profil mis à jour avec succès')
-      } catch (apiError) {
-        console.log('Update endpoint not available, changes will be saved on next login')
-        alert('Profil mis à jour (changes seront synchronisés)')
-      }
+      await usersAPI.updateProfile(formData)
+      alert('Profil mis à jour avec succès')
       setEditMode(false)
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error)
@@ -87,10 +81,7 @@ export default function ProfilePage() {
 
     try {
       setLoading(true)
-      await api.put('/users/change-password', {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      })
+      await usersAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
       setPasswordMode(false)
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
       alert('Mot de passe changé avec succès')

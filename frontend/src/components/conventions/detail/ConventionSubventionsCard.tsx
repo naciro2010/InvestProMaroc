@@ -187,7 +187,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
               </TableCell>
               <TableCell colSpan={canEdit ? 3 : 2} />
             </TableRow>
-            {/* Odoo-style add line */}
+            {/* Add line */}
             {canEdit && (
               <TableRow
                 onClick={() => { setEditingSubvention(null); setDialogOpen(true) }}

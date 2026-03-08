@@ -114,7 +114,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
     (cat: CategorieDepenseListDTO) => !usedCategoryIds.includes(cat.id)
   )
 
-  // Quick-create a new category (Odoo-style CAYT)
+  // Quick-create a new category (CAYT)
   const handleCreateCategorie = async () => {
     if (!newCatLibelle) return
     setCreatingCategory(true)
@@ -449,7 +449,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
         </Card>
       </Box>
 
-      {/* Quick-create category dialog (Odoo-style CAYT) */}
+      {/* Quick-create category dialog (CAYT) */}
       <Dialog open={createCatDialogOpen} onClose={() => setCreateCatDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

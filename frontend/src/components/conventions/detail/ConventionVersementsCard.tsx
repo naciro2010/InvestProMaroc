@@ -176,7 +176,7 @@ const ConventionVersementsCard = ({
             </TableCell>
             <TableCell colSpan={canEdit ? 2 : 1} />
           </TableRow>
-          {/* Odoo-style add line */}
+          {/* Add line */}
           {canEdit && (
             <TableRow
               onClick={onAdd}

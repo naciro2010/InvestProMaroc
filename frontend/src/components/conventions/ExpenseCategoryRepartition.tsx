@@ -368,7 +368,7 @@ const ExpenseCategoryRepartition = ({
               </TableRow>
             )}
 
-            {/* Odoo-style add lines */}
+            {/* Add lines */}
             {!readOnly && (
               <TableRow sx={{ '& td': { borderBottom: 0 } }}>
                 <TableCell colSpan={3}>

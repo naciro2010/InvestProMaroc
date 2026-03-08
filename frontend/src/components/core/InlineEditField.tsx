@@ -62,7 +62,7 @@ interface InlineEditFieldProps {
 // ==================== COMPONENT ====================
 
 /**
- * InlineEditField - Odoo-style click-to-edit field.
+ * InlineEditField - Click-to-edit field.
  *
  * In view mode, displays the value. When clicked, switches to an inline
  * input. Saves on Enter/blur, cancels on Escape.

@@ -136,7 +136,7 @@ const BudgetLigneDetailDrawer = ({
       </Box>
 
       <Box sx={{ overflow: 'auto', flex: 1 }}>
-        {/* Odoo-style Smart Stat Buttons */}
+        {/* Smart Stat Buttons */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}` }}>
           <StatButton icon={<AccountBalance sx={{ fontSize: 16 }} />} label="Budget" value={fmtMAD(ligne.montant)} color={colors.primary[600]} borderRight />
           <StatButton icon={<TrendingUp sx={{ fontSize: 16 }} />} label="Engage" value={fmtMAD(totalEngage)} subtitle={fmtPct(tauxExecution)} color={tauxExecution > 100 ? colors.danger[600] : colors.info[600]} />

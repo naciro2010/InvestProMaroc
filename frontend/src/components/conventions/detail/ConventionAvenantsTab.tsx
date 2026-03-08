@@ -42,7 +42,7 @@ interface ConventionAvenantsTabProps {
 
 /**
  * ConventionAvenantsTab - Avenants list using design system tokens.
- * Odoo-inspired: clean table with StatusBadge, consistent typography.
+ * Clean table with StatusBadge, consistent typography.
  */
 const ConventionAvenantsTab = ({ convention, avenants, formatCurrency, formatDate }: ConventionAvenantsTabProps) => {
   const navigate = useNavigate()

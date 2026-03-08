@@ -1,7 +1,7 @@
 /**
  * Design System v3.0 - InvestPro Maroc
  *
- * STYLE: Odoo-inspired, sobre et professionnel
+ * STYLE: Sobre et professionnel, adapte ERP
  * Professional design system: ergonomic density + clean whitespace + enterprise accents
  *
  * PRINCIPES:
@@ -16,7 +16,7 @@
 
 export const colors = {
   /**
-   * Primaire - Violet Odoo (adapté ERP)
+   * Primaire - Violet InvestPro (accent ERP)
    */
   primary: {
     25: '#f8f6f9',
@@ -26,7 +26,7 @@ export const colors = {
     300: '#af8db8',
     400: '#946aa0',
     500: '#7f5189',
-    600: '#714B67', // Main - Odoo inspired purple
+    600: '#714B67', // Main - InvestPro purple
     700: '#5f4058',
     800: '#473043',
     900: '#332431',
@@ -179,7 +179,7 @@ export const colors = {
   /** Texte sur fond colore */
   textOnColor: '#ffffff',
 
-  /** Lien - violet Odoo */
+  /** Lien - violet primaire */
   link: '#714B67',
   linkHover: '#5f4058',
 } as const
@@ -326,7 +326,7 @@ export const shadows = {
   lg: '0 8px 16px -4px rgba(9, 30, 66, 0.12), 0 0 1px rgba(9, 30, 66, 0.12)',
   /** Très élevée - modals */
   xl: '0 16px 32px -8px rgba(9, 30, 66, 0.16), 0 0 1px rgba(9, 30, 66, 0.12)',
-  /** Focus ring - utilise primary Odoo */
+  /** Focus ring - utilise primary */
   focus: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.primary[400]}`,
   /** Focus ring danger */
   focusDanger: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.danger[400]}`,
@@ -1395,7 +1395,7 @@ export const componentStyles = {
         borderRight: 'none',
       },
     },
-    /** Active/current step - Odoo-style filled primary */
+    /** Active/current step - filled primary */
     statusPipelineStepActive: {
       px: 1.5,
       py: 0.5,

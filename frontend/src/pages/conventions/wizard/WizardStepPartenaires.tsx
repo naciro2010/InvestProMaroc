@@ -351,7 +351,7 @@ const WizardStepPartenaires = ({
         </Typography>
       </Card>
 
-      {/* Odoo-style add partenaire form */}
+      {/* Add partenaire form */}
       <Card sx={{ ...componentStyles.card, p: 2 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, mb: 2, color: colors.textPrimary }}>
           Ajouter un partenaire
@@ -722,7 +722,7 @@ const WizardStepPartenaires = ({
         </Alert>
       )}
 
-      {/* Quick-create partenaire dialog (Odoo-style) */}
+      {/* Quick-create partenaire dialog */}
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

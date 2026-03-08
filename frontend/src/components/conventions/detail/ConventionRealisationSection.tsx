@@ -17,7 +17,7 @@ import type { SousConvention, Avenant, Projet, Marche } from './types'
 import type { ConventionBudgetLigneDTO } from '@/types/api'
 
 interface ConventionBase {
-  id: number; numero: string; libelle: string; dateSignature: string; budget: number
+  id: number; numero: string; libelle: string; dateSignature: string; dateDebut: string; dateFin?: string; budget: number
   typeConvention: 'CADRE' | 'SPECIFIQUE'; tauxCommission: number; baseCalcul: string; tauxTva: number
 }
 
@@ -81,7 +81,7 @@ const statusChip = (isOk: boolean, message: string) => (
 
 /**
  * Self-contained micro-component: loads projets, marches, sous-conventions, avenants.
- * Adds an Odoo-like coherence strip to keep budget/prevision/realisation crystal clear.
+ * Includes a coherence strip to keep budget/prevision/realisation crystal clear.
  */
 const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, refreshKey }: ConventionRealisationSectionProps) => {
   const navigate = useNavigate()
@@ -211,40 +211,94 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
         noPadding
       >
         <Box sx={{ px: { xs: 1, md: 2 }, pt: 1.5, pb: 1 }}>
+          {/* Dates clés de la convention */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 1.5, flexWrap: 'wrap' }}>
+            {[
+              { label: 'Date signature', value: convention.dateSignature, color: colors.primary[600] },
+              { label: 'Date debut', value: convention.dateDebut, color: colors.info[600] },
+              { label: 'Date fin prevue', value: convention.dateFin, color: convention.dateFin && new Date(convention.dateFin) < new Date() ? colors.danger[600] : colors.success[600] },
+            ].map((d, i) => (
+              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, px: 1.5, py: 0.75, bgcolor: colors.neutral[50], borderRadius: '6px', border: `1px solid ${colors.borderSubtle}` }}>
+                <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: typography.weights.semibold }}>{d.label}</Typography>
+                <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: d.color, fontVariantNumeric: 'tabular-nums' }}>
+                  {d.value ? formatDate(d.value) : '—'}
+                </Typography>
+              </Box>
+            ))}
+            {convention.dateDebut && convention.dateFin && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, px: 1.5, py: 0.75, bgcolor: colors.purple[25], borderRadius: '6px', border: `1px solid ${colors.purple[100]}` }}>
+                <Typography sx={{ fontSize: '10px', color: colors.purple[600], textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: typography.weights.semibold }}>Duree</Typography>
+                <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.purple[700] }}>
+                  {Math.ceil((new Date(convention.dateFin).getTime() - new Date(convention.dateDebut).getTime()) / (1000 * 60 * 60 * 24))} jours
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
+          {/* Vue de coherence */}
           <Box sx={{ border: `1px solid ${colors.border}`, borderRadius: '8px', bgcolor: colors.surface, overflow: 'hidden' }}>
-            <Box sx={{ px: 1.5, py: 1, borderBottom: `1px solid ${colors.borderSubtle}`, bgcolor: colors.primary[25], display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.primary[700] }}>
-                Vue de coherence (style Odoo ERP)
+            <Box sx={{ px: 2, py: 1.25, borderBottom: `1px solid ${colors.borderSubtle}`, bgcolor: colors.info[25], display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.info[700] }}>
+                Tableau de coherence budgetaire
               </Typography>
               {loadingMetrics && <CircularProgress size={14} />}
             </Box>
             {!metrics ? (
-              <Typography sx={{ px: 1.5, py: 1.25, fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+              <Typography sx={{ px: 2, py: 2, fontSize: typography.sizes.xs, color: colors.textSecondary }}>
                 Donnees de coherence indisponibles pour le moment.
               </Typography>
             ) : (
-              <InlineTable
-                headers={[
-                  { label: 'Indicateur' },
-                  { label: 'Montant', align: 'right' as const, width: 170 },
-                  { label: 'Lecture metier', width: 280 },
-                ]}
-                rows={[
-                  [<Typography key="b1" sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold }}>Budget convention</Typography>, <Typography key="b2" sx={{ fontSize: typography.sizes.xs }}>{formatCurrency(convention.budget)}</Typography>, <Typography key="b3" sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Montant de reference</Typography>],
-                  [<Typography key="l1" sx={{ fontSize: typography.sizes.xs }}>Lignes budget (prevision detaillee)</Typography>, <Typography key="l2" sx={{ fontSize: typography.sizes.xs }}>{formatCurrency(metrics.totalBudgetLignes)}</Typography>, statusChip(Math.abs(budgetEcart) < 1, Math.abs(budgetEcart) < 1 ? 'OK: aligne au budget' : `Ecart: ${formatCurrency(budgetEcart)}`)],
-                  [<Typography key="p1" sx={{ fontSize: typography.sizes.xs }}>Partenaires alloues</Typography>, <Typography key="p2" sx={{ fontSize: typography.sizes.xs }}>{formatCurrency(metrics.totalPartenaires)}</Typography>, statusChip(Math.abs(partenairesEcart) < 1, Math.abs(partenairesEcart) < 1 ? 'OK: allocation complete' : `Reste a allouer: ${formatCurrency(partenairesEcart)}`)],
-                  [<Typography key="s1" sx={{ fontSize: typography.sizes.xs }}>Subventions (ressources externes)</Typography>, <Typography key="s2" sx={{ fontSize: typography.sizes.xs }}>{formatCurrency(metrics.totalSubventions)}</Typography>, <Typography key="s3" sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>A comparer au besoin de financement</Typography>],
-                  [<Typography key="pr1" sx={{ fontSize: typography.sizes.xs }}>Projets rattaches</Typography>, <Typography key="pr2" sx={{ fontSize: typography.sizes.xs }}>{formatCurrency(metrics.totalProjets)}</Typography>, <Typography key="pr3" sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Vision programme (hors engagement comptable)</Typography>],
-                  [<Typography key="m1" sx={{ fontSize: typography.sizes.xs }}>Marches engages</Typography>, <Typography key="m2" sx={{ fontSize: typography.sizes.xs }}>{formatCurrency(metrics.totalMarches)}</Typography>, <Typography key="m3" sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Valeur contractuelle engagee</Typography>],
-                  [<Typography key="d1" sx={{ fontSize: typography.sizes.xs }}>Decomptes constates</Typography>, <Typography key="d2" sx={{ fontSize: typography.sizes.xs }}>{formatCurrency(metrics.totalDecomptes)}</Typography>, statusChip(true, `A engager en plus: ${formatCurrency(executionEcart)}`)],
-                  [<Typography key="pa1" sx={{ fontSize: typography.sizes.xs }}>Paiements realises</Typography>, <Typography key="pa2" sx={{ fontSize: typography.sizes.xs }}>{formatCurrency(metrics.totalPaiements)}</Typography>, statusChip(true, `Reste a payer: ${formatCurrency(paiementEcart)}`)],
-                ]}
-                emptyMessage="Aucune donnee"
-              />
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
+                {[
+                  { label: 'Budget convention', amount: convention.budget, hint: 'Montant de reference', icon: '📋', bg: colors.primary[25], labelWeight: typography.weights.bold },
+                  { label: 'Lignes budget (prevision detaillee)', amount: metrics.totalBudgetLignes, chip: { ok: Math.abs(budgetEcart) < 1, msg: Math.abs(budgetEcart) < 1 ? 'OK: aligne au budget' : `Ecart: ${formatCurrency(budgetEcart)}` } },
+                  { label: 'Partenaires alloues', amount: metrics.totalPartenaires, chip: { ok: Math.abs(partenairesEcart) < 1, msg: Math.abs(partenairesEcart) < 1 ? 'OK: allocation complete' : `Reste a allouer: ${formatCurrency(partenairesEcart)}` } },
+                  { label: 'Subventions (ressources externes)', amount: metrics.totalSubventions, hint: 'A comparer au besoin de financement' },
+                  { label: 'Projets rattaches', amount: metrics.totalProjets, hint: 'Vision programme (hors engagement comptable)' },
+                  { label: 'Marches engages', amount: metrics.totalMarches, hint: 'Valeur contractuelle engagee', bg: colors.neutral[25] },
+                  { label: 'Decomptes constates', amount: metrics.totalDecomptes, chip: { ok: true, msg: `A engager en plus: ${formatCurrency(executionEcart)}` } },
+                  { label: 'Paiements realises', amount: metrics.totalPaiements, chip: { ok: true, msg: `Reste a payer: ${formatCurrency(paiementEcart)}` } },
+                ].map((row, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      px: 2, py: 1.25, gap: 2,
+                      borderBottom: idx < 7 ? `1px solid ${colors.borderSubtle}` : 'none',
+                      bgcolor: row.bg || 'transparent',
+                      '&:hover': { bgcolor: colors.neutral[50] },
+                      transition: 'background-color 0.15s',
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{
+                        fontSize: typography.sizes.sm,
+                        fontWeight: row.labelWeight || typography.weights.medium,
+                        color: colors.textPrimary,
+                      }}>
+                        {row.label}
+                      </Typography>
+                    </Box>
+                    <Typography sx={{
+                      fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold,
+                      color: colors.textPrimary, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', minWidth: 150, textAlign: 'right',
+                    }}>
+                      {formatCurrency(row.amount)}
+                    </Typography>
+                    <Box sx={{ minWidth: 220, textAlign: 'right' }}>
+                      {row.chip ? statusChip(row.chip.ok, row.chip.msg) : (
+                        <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>{row.hint}</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
             )}
-            <Typography sx={{ px: 1.5, py: 0.9, fontSize: '10px', color: colors.textSecondary, borderTop: `1px dashed ${colors.borderSubtle}` }}>
-              Logique de lecture: Budget → Lignes budget/Partenaires (prevision) → Marches (engagement) → Decomptes (realise technique) → Paiements (realise financier).
-            </Typography>
+            <Box sx={{ px: 2, py: 1, borderTop: `1px dashed ${colors.borderSubtle}`, bgcolor: colors.neutral[25] }}>
+              <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>
+                Budget → Lignes budget / Partenaires (prevision) → Marches (engagement) → Decomptes (realise technique) → Paiements (realise financier)
+              </Typography>
+            </Box>
           </Box>
         </Box>
 

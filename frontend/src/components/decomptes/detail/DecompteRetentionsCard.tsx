@@ -1,5 +1,6 @@
 import { Paper, Typography, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Stack, Box } from '@mui/material'
 import { Security, AccountBalance, Warning, TrendingDown } from '@mui/icons-material'
+import { colors } from '@/lib/designSystem'
 
 interface Retenue {
   id: number
@@ -118,7 +119,7 @@ const DecompteRetentionsCard = ({ retenues, totalRetenues, formatCurrency }: Dec
           </TableContainer>
 
           {/* Total */}
-          <Box sx={{ mt: 2, p: 2, bgcolor: '#fef2f2', borderRadius: 1, border: '1px solid', borderColor: 'error.light' }}>
+          <Box sx={{ mt: 2, p: 2, bgcolor: colors.danger[50], borderRadius: 1, border: '1px solid', borderColor: 'error.light' }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography variant="body1" fontWeight={600}>
                 Total Retenues

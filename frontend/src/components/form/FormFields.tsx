@@ -20,6 +20,7 @@ import {
   Checkbox,
 } from '@mui/material'
 import DecimalInput from '@/components/ui/DecimalInput'
+import { colors } from '@/lib/designSystem'
 
 /**
  * Reusable form components integrated with react-hook-form
@@ -388,8 +389,8 @@ export function FormErrors({ errors, className }: FormErrorsProps): React.ReactE
       sx={{
         p: 2,
         mb: 2,
-        bgcolor: '#ffebee',
-        border: '1px solid #ef5350',
+        bgcolor: colors.danger[50],
+        border: `1px solid ${colors.danger[400]}`,
         borderRadius: 1,
         display: 'flex',
         flexDirection: 'column',
@@ -398,7 +399,7 @@ export function FormErrors({ errors, className }: FormErrorsProps): React.ReactE
       className={className}
     >
       {errorList.map(([field, error]) => (
-        <div key={field} style={{ color: '#c62828', fontSize: '0.875rem' }}>
+        <div key={field} style={{ color: colors.danger[800], fontSize: '0.875rem' }}>
           <strong>{field}:</strong> {String((error as { message?: string })?.message || error)}
         </div>
       ))}
@@ -430,17 +431,17 @@ export function FormSection({
       sx={{
         mb: 3,
         p: 3,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: colors.neutral[50],
         borderRadius: 2,
-        border: '1px solid #e0e0e0',
+        border: `1px solid ${colors.neutral[200]}`,
       }}
     >
       {title && (
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
           {icon && <Box sx={{ fontSize: '1.5rem' }}>{icon}</Box>}
           <div>
-            <Box sx={{ fontSize: '1.1rem', fontWeight: 600, color: '#1976d2' }}>{title}</Box>
-            {subtitle && <Box sx={{ fontSize: '0.875rem', color: '#666' }}>{subtitle}</Box>}
+            <Box sx={{ fontSize: '1.1rem', fontWeight: 600, color: colors.primary[600] }}>{title}</Box>
+            {subtitle && <Box sx={{ fontSize: '0.875rem', color: colors.textSecondary }}>{subtitle}</Box>}
           </div>
         </Box>
       )}

@@ -7,9 +7,11 @@ import ma.investpro.service.PaiementService
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 private val logger = KotlinLogging.logger {}
 
@@ -19,7 +21,7 @@ private val logger = KotlinLogging.logger {}
 class PaiementController(private val paiementService: PaiementService) {
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllPaiements(
         @RequestParam(required = false) opId: Long?
     ): ResponseEntity<ApiResponse<List<Paiement>>> {
@@ -37,7 +39,7 @@ class PaiementController(private val paiementService: PaiementService) {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getPaiementById(@PathVariable id: Long): ResponseEntity<ApiResponse<Paiement>> {
         logger.info { "GET /api/paiements/$id" }
         return try {
@@ -66,7 +68,7 @@ class PaiementController(private val paiementService: PaiementService) {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun createPaiement(@Valid @RequestBody paiement: Paiement): ResponseEntity<ApiResponse<Paiement>> {
         logger.info { "POST /api/paiements - Creation paiement ${paiement.referencePaiement}" }
         return try {
@@ -94,7 +96,7 @@ class PaiementController(private val paiementService: PaiementService) {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun updatePaiement(@PathVariable id: Long, @Valid @RequestBody paiement: Paiement): ResponseEntity<ApiResponse<Paiement>> {
         logger.info { "PUT /api/paiements/$id" }
         return try {
@@ -122,7 +124,7 @@ class PaiementController(private val paiementService: PaiementService) {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun deletePaiement(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         logger.info { "DELETE /api/paiements/$id" }
         return try {
@@ -150,7 +152,7 @@ class PaiementController(private val paiementService: PaiementService) {
     }
 
     @GetMapping("/statistiques")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getStatistiques(): ResponseEntity<ApiResponse<PaiementStatistiques>> {
         logger.info { "GET /api/paiements/statistiques" }
         return try {

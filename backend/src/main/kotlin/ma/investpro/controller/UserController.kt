@@ -9,6 +9,7 @@ import ma.investpro.dto.ChangePasswordRequest
 import ma.investpro.entity.User
 import ma.investpro.repository.UserRepository
 import ma.investpro.security.annotations.ReadAccess
+import java.time.LocalDateTime
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -45,20 +46,36 @@ class UserController(
         val email: String
     )
 
+    data class UserListDTO(
+        val id: Long?,
+        val username: String,
+        val email: String?,
+        val fullName: String?,
+        val roles: Set<String>,
+        val actif: Boolean,
+        val createdAt: LocalDateTime?
+    )
 
+    data class UserProfileDTO(
+        val id: Long?,
+        val username: String,
+        val email: String?,
+        val fullName: String?,
+        val roles: Set<String>
+    )
 
     @GetMapping
     @ReadAccess
-    fun getUsers(): ResponseEntity<ApiResponse<List<Map<String, Any?>>>> {
+    fun getUsers(): ResponseEntity<ApiResponse<List<UserListDTO>>> {
         val users = userRepository.findAll().map { user ->
-            mapOf(
-                "id" to user.id,
-                "username" to user.getUsername(),
-                "email" to user.email,
-                "fullName" to user.fullName,
-                "roles" to user.roles,
-                "actif" to user.actif,
-                "createdAt" to user.createdAt
+            UserListDTO(
+                id = user.id,
+                username = user.getUsername(),
+                email = user.email,
+                fullName = user.fullName,
+                roles = user.roles,
+                actif = user.actif,
+                createdAt = user.createdAt
             )
         }
         return ResponseEntity.ok(ApiResponse.success(users, "Utilisateurs récupérés"))
@@ -69,7 +86,7 @@ class UserController(
     fun updateCurrentUserProfile(
         @Valid @RequestBody request: UpdateProfileRequest,
         @AuthenticationPrincipal userDetails: UserDetails
-    ): ResponseEntity<ApiResponse<Map<String, Any?>>> {
+    ): ResponseEntity<ApiResponse<UserProfileDTO>> {
         logger.info { "Mise à jour du profil pour l'utilisateur: ${userDetails.username}" }
 
         val user = userRepository.findByUsername(userDetails.username)
@@ -80,12 +97,12 @@ class UserController(
 
         val updatedUser = userRepository.save(user)
 
-        val payload = mapOf(
-            "id" to updatedUser.id,
-            "username" to updatedUser.getUsername(),
-            "email" to updatedUser.email,
-            "fullName" to updatedUser.fullName,
-            "roles" to updatedUser.roles
+        val payload = UserProfileDTO(
+            id = updatedUser.id,
+            username = updatedUser.getUsername(),
+            email = updatedUser.email,
+            fullName = updatedUser.fullName,
+            roles = updatedUser.roles
         )
 
         return ResponseEntity.ok(ApiResponse.success(payload, "Profil mis à jour avec succès"))

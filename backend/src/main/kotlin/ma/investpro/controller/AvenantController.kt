@@ -6,9 +6,11 @@ import ma.investpro.entity.Avenant
 import ma.investpro.service.AvenantService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 @RestController
 @RequestMapping("/api/avenants")
@@ -20,13 +22,13 @@ class AvenantController(
     // ========== CRUD Endpoints ==========
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAll(): ResponseEntity<List<Avenant>> {
         return ResponseEntity.ok(avenantService.findAll())
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getById(@PathVariable id: Long): ResponseEntity<Avenant> {
         val avenant = avenantService.findById(id)
             ?: return ResponseEntity.notFound().build()
@@ -34,19 +36,19 @@ class AvenantController(
     }
 
     @GetMapping("/convention/{conventionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByConvention(@PathVariable conventionId: Long): ResponseEntity<List<Avenant>> {
         return ResponseEntity.ok(avenantService.findByConvention(conventionId))
     }
 
     @GetMapping("/convention/{conventionId}/valides")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAvenantsValidesOrdonnes(@PathVariable conventionId: Long): ResponseEntity<List<Avenant>> {
         return ResponseEntity.ok(avenantService.findAvenantsValidesOrdonnes(conventionId))
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun create(@Valid @RequestBody avenant: Avenant): ResponseEntity<Avenant> {
         return try {
             val created = avenantService.create(avenant)
@@ -57,7 +59,7 @@ class AvenantController(
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody avenant: Avenant
@@ -71,7 +73,7 @@ class AvenantController(
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun delete(@PathVariable id: Long): ResponseEntity<Void> {
         return try {
             avenantService.delete(id)
@@ -84,7 +86,7 @@ class AvenantController(
     // ========== Workflow Endpoints ==========
 
     @PostMapping("/{id}/soumettre")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun soumettre(@PathVariable id: Long): ResponseEntity<Avenant> {
         return try {
             val avenant = avenantService.soumettre(id)
@@ -95,7 +97,7 @@ class AvenantController(
     }
 
     @PostMapping("/{id}/valider")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun valider(
         @PathVariable id: Long,
         @Valid @RequestBody request: Map<String, Long>
@@ -112,7 +114,7 @@ class AvenantController(
     }
 
     @PostMapping("/{id}/rejeter")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun rejeter(
         @PathVariable id: Long,
         @Valid @RequestBody request: Map<String, String>
@@ -127,7 +129,7 @@ class AvenantController(
     }
 
     @PostMapping("/{id}/annuler")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun annuler(
         @PathVariable id: Long,
         @Valid @RequestBody request: Map<String, String>
@@ -144,13 +146,13 @@ class AvenantController(
     // ========== Version & Historique ==========
 
     @GetMapping("/convention/{conventionId}/version-consolidee")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getVersionConsolidee(@PathVariable conventionId: Long): ResponseEntity<ConsolidatedVersionResponse> {
         return ResponseEntity.ok(avenantService.getVersionConsolidee(conventionId))
     }
 
     @GetMapping("/convention/{conventionId}/historique")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getHistoriqueVersions(@PathVariable conventionId: Long): ResponseEntity<List<VersionHistoryEntry>> {
         return ResponseEntity.ok(avenantService.getHistoriqueVersions(conventionId))
     }

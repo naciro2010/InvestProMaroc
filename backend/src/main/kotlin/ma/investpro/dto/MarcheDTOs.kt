@@ -148,3 +148,10 @@ data class MarcheSituationPaiementDTO(
     val decomptesPayesTotalement: Int,
     val nombrePaiements: Int
 )
+
+data class MarcheGlobalStatsDTO(
+    val total: Int,
+    val byStatus: Map<String, Int>,
+    val totalAmount: BigDecimal,
+    val avgAmount: BigDecimal
+)

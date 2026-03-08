@@ -4,14 +4,16 @@ import ma.investpro.dto.*
 import ma.investpro.service.ReportingService
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 private val logger = KotlinLogging.logger {}
 
 @RestController
 @RequestMapping("/api/reporting")
-@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+@ReadAccess
 class ReportingController(private val reportingService: ReportingService) {
 
     // ==================== RECHERCHE AVANCÉE ====================

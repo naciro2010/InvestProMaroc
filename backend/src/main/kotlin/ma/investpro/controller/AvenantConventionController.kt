@@ -6,9 +6,11 @@ import ma.investpro.entity.User
 import ma.investpro.service.AvenantConventionService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 /**
  * Contrôleur REST pour les avenants de conventions
@@ -24,7 +26,7 @@ class AvenantConventionController(
      * Récupère tous les avenants
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAll(): ResponseEntity<ApiResponse<List<AvenantConventionSummary>>> {
         val avenants = avenantService.getAll()
         return ResponseEntity.ok(
@@ -40,7 +42,7 @@ class AvenantConventionController(
      * Récupère un avenant par ID
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val avenant = avenantService.getById(id)
@@ -66,7 +68,7 @@ class AvenantConventionController(
      * Récupère tous les avenants d'une convention
      */
     @GetMapping("/convention/{conventionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getByConvention(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<List<AvenantConventionResponse>>> {
         val avenants = avenantService.getAllByConvention(conventionId)
         return ResponseEntity.ok(
@@ -82,7 +84,7 @@ class AvenantConventionController(
      * Récupère les avenants en attente de validation
      */
     @GetMapping("/pending")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun getPendingValidation(): ResponseEntity<ApiResponse<List<AvenantConventionSummary>>> {
         val avenants = avenantService.getPendingValidation()
         return ResponseEntity.ok(
@@ -98,7 +100,7 @@ class AvenantConventionController(
      * Récupère les statistiques des avenants d'une convention
      */
     @GetMapping("/convention/{conventionId}/statistics")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getStatistics(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<AvenantStatistics>> {
         val stats = avenantService.getStatistics(conventionId)
         return ResponseEntity.ok(
@@ -114,7 +116,7 @@ class AvenantConventionController(
      * Crée un nouvel avenant
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun create(@Valid @RequestBody request: AvenantConventionRequest): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val userId = getCurrentUserId()
@@ -149,7 +151,7 @@ class AvenantConventionController(
      * Met à jour un avenant (seulement si BROUILLON)
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody request: AvenantConventionRequest
@@ -194,7 +196,7 @@ class AvenantConventionController(
      * Soumet un avenant pour validation
      */
     @PostMapping("/{id}/soumettre")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun soumettre(@PathVariable id: Long): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val userId = getCurrentUserId()
@@ -229,7 +231,7 @@ class AvenantConventionController(
      * Valide un avenant et applique les modifications à la convention
      */
     @PostMapping("/valider")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun valider(@Valid @RequestBody request: ValiderAvenantRequest): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val userId = getCurrentUserId()
@@ -272,7 +274,7 @@ class AvenantConventionController(
      * Rejette un avenant (retour à BROUILLON)
      */
     @PostMapping("/rejeter")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun rejeter(@Valid @RequestBody request: RejeterAvenantRequest): ResponseEntity<ApiResponse<AvenantConventionResponse>> {
         return try {
             val avenant = avenantService.rejeter(request)
@@ -306,7 +308,7 @@ class AvenantConventionController(
      * Supprime un avenant (seulement si BROUILLON)
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<String>> {
         return try {
             avenantService.delete(id)

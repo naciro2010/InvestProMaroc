@@ -53,14 +53,17 @@ class VersementPrevisionnelController(
         return ResponseEntity.ok(ApiResponse.success(dtos))
     }
 
+    data class VersementStatsDTO(val total: Long, val montantTotal: java.math.BigDecimal)
+
     @GetMapping("/versements-previsionnels/stats")
     @ReadAccess
-    fun getStats(): ResponseEntity<ApiResponse<Map<String, Any>>> {
+
+    fun getStats(): ResponseEntity<ApiResponse<VersementStatsDTO>> {
         val total = versementRepository.count()
         val montantTotal = versementRepository.findAll().sumOf { it.montant }
-        return ResponseEntity.ok(ApiResponse.success(mapOf(
-            "total" to total,
-            "montantTotal" to montantTotal
+        return ResponseEntity.ok(ApiResponse.success(VersementStatsDTO(
+            total = total,
+            montantTotal = montantTotal
         )))
     }
 

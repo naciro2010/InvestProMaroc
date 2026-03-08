@@ -10,9 +10,11 @@ import ma.investpro.service.PartenaireService
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import jakarta.validation.Valid
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 private val logger = KotlinLogging.logger {}
 
@@ -32,7 +34,7 @@ class PartenaireController(
      * Get all partenaires
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAll(): ResponseEntity<ApiResponse<List<PartenaireDTO>>> {
         logger.info { "API: GET /api/partenaires" }
         return try {
@@ -50,7 +52,7 @@ class PartenaireController(
      * Get all active partenaires (for dropdowns)
      */
     @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllActive(): ResponseEntity<ApiResponse<List<PartenaireSimpleDTO>>> {
         logger.info { "API: GET /api/partenaires/active" }
         return try {
@@ -68,7 +70,7 @@ class PartenaireController(
      * Get list of active partenaires (optimized for dropdowns)
      */
     @GetMapping("/list")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getList(): ResponseEntity<ApiResponse<List<PartenaireSimpleDTO>>> {
         logger.info { "API: GET /api/partenaires/list" }
         return try {
@@ -86,7 +88,7 @@ class PartenaireController(
      * Get partenaire by ID
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<PartenaireDTO>> {
         logger.info { "API: GET /api/partenaires/$id" }
         return try {
@@ -108,7 +110,7 @@ class PartenaireController(
      * Create a new partenaire
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun create(@Valid @RequestBody dto: CreatePartenaireDTO): ResponseEntity<ApiResponse<PartenaireDTO>> {
         logger.info { "API: POST /api/partenaires - Creating partenaire: ${dto.code}" }
         return try {
@@ -132,7 +134,7 @@ class PartenaireController(
      * Update an existing partenaire
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody dto: UpdatePartenaireDTO
@@ -159,7 +161,7 @@ class PartenaireController(
      * Delete a partenaire (soft delete)
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         logger.info { "API: DELETE /api/partenaires/$id" }
         return try {

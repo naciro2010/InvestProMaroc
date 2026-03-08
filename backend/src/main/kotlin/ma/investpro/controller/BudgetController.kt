@@ -8,9 +8,11 @@ import ma.investpro.service.BudgetService
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 private val logger = KotlinLogging.logger {}
 
@@ -20,7 +22,7 @@ private val logger = KotlinLogging.logger {}
 class BudgetController(private val budgetService: BudgetService) {
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllBudgets(): ResponseEntity<ApiResponse<List<BudgetDTO>>> {
         logger.info { "GET /api/budgets" }
         val budgets = budgetService.findAllDTOs()
@@ -32,7 +34,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getBudgetById(@PathVariable id: Long): ResponseEntity<ApiResponse<BudgetDTO>> {
         logger.info { "GET /api/budgets/$id" }
         return try {
@@ -61,7 +63,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun createBudget(@Valid @RequestBody budget: Budget): ResponseEntity<ApiResponse<Budget>> {
         logger.info { "POST /api/budgets - Creation budget ${budget.version}" }
         return try {
@@ -89,7 +91,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun updateBudget(@PathVariable id: Long, @Valid @RequestBody budget: Budget): ResponseEntity<ApiResponse<Budget>> {
         logger.info { "PUT /api/budgets/$id" }
         return try {
@@ -117,7 +119,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun deleteBudget(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         logger.info { "DELETE /api/budgets/$id" }
         return try {
@@ -145,7 +147,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @PostMapping("/{id}/soumettre")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun soumettreBudget(@PathVariable id: Long): ResponseEntity<ApiResponse<Budget>> {
         logger.info { "POST /api/budgets/$id/soumettre" }
         return try {
@@ -173,7 +175,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @PostMapping("/{id}/valider")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun validerBudget(@PathVariable id: Long, @Valid @RequestBody body: Map<String, Long>): ResponseEntity<ApiResponse<Budget>> {
         logger.info { "POST /api/budgets/$id/valider" }
         return try {
@@ -202,7 +204,7 @@ class BudgetController(private val budgetService: BudgetService) {
     }
 
     @GetMapping("/statistiques")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getStatistiques(): ResponseEntity<ApiResponse<BudgetStatistiques>> {
         logger.info { "GET /api/budgets/statistiques" }
         return try {

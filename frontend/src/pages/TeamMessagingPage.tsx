@@ -22,7 +22,7 @@ const TeamMessagingPage = () => {
   const fetchUsers = async () => {
     const res = await api.get('/users')
     const list = Array.isArray(res.data?.data) ? res.data.data : res.data
-    setUsers((list || []).map((u: any) => ({ id: u.id, fullName: u.fullName || u.username, username: u.username })))
+    setUsers((list || []).map((u: { id: number; fullName?: string; username: string }) => ({ id: u.id, fullName: u.fullName || u.username, username: u.username })))
   }
 
   const fetchMessages = async (userId: number) => {

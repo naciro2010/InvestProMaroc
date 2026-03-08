@@ -8,16 +8,18 @@ import mu.KotlinLogging
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 private val logger = KotlinLogging.logger {}
 
 @RestController
 @RequestMapping("/api/export/excel")
-@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+@ReadAccess
 class ExcelExportController(
     private val excelExportService: ExcelExportService,
     private val reportingService: ReportingService

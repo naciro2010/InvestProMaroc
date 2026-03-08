@@ -111,7 +111,7 @@ export type TypeRetenue = 'GARANTIE' | 'RAS' | 'PENALITES' | 'AVANCES'
 
 export interface Decompte {
   id: number
-  marche: any // Marche type
+  marche: Marche
   numeroDecompte: string
   dateDecompte: string
   periodeDebut: string
@@ -290,7 +290,7 @@ export interface MarcheLigne {
   tauxTVA: number
   montantTVA: number
   montantTTC: number
-  imputationAnalytique?: any // JSONB
+  imputationAnalytique?: Record<string, string> // JSONB: {dimensionCode: valeurCode}
   remarques?: string
   actif?: boolean
   createdAt?: string

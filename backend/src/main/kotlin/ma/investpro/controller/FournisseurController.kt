@@ -10,9 +10,11 @@ import ma.investpro.service.FournisseurService
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import jakarta.validation.Valid
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 private val logger = KotlinLogging.logger {}
 
@@ -31,7 +33,7 @@ class FournisseurController(
      * Get all fournisseurs
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAll(): ResponseEntity<ApiResponse<List<FournisseurDTO>>> {
         logger.info { "API: GET /api/fournisseurs" }
         return try {
@@ -49,7 +51,7 @@ class FournisseurController(
      * Get all active fournisseurs (for dropdowns)
      */
     @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllActive(): ResponseEntity<ApiResponse<List<FournisseurSimpleDTO>>> {
         logger.info { "API: GET /api/fournisseurs/active" }
         return try {
@@ -67,7 +69,7 @@ class FournisseurController(
      * Search fournisseurs by raison sociale
      */
     @GetMapping("/search")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun search(@RequestParam q: String): ResponseEntity<ApiResponse<List<FournisseurSimpleDTO>>> {
         logger.info { "API: GET /api/fournisseurs/search?q=$q" }
         return try {
@@ -85,7 +87,7 @@ class FournisseurController(
      * Get fournisseur by ID
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<FournisseurDTO>> {
         logger.info { "API: GET /api/fournisseurs/$id" }
         return try {
@@ -107,7 +109,7 @@ class FournisseurController(
      * Create a new fournisseur
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun create(@Valid @RequestBody dto: CreateFournisseurDTO): ResponseEntity<ApiResponse<FournisseurDTO>> {
         logger.info { "API: POST /api/fournisseurs - Creating fournisseur: ${dto.code}" }
         return try {
@@ -131,7 +133,7 @@ class FournisseurController(
      * Update an existing fournisseur
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody dto: UpdateFournisseurDTO
@@ -158,7 +160,7 @@ class FournisseurController(
      * Delete a fournisseur (soft delete)
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         logger.info { "API: DELETE /api/fournisseurs/$id" }
         return try {

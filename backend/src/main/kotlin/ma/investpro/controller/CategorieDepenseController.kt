@@ -8,9 +8,11 @@ import ma.investpro.dto.ApiResponse
 import ma.investpro.service.CategorieDepenseService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 @RestController
 @RequestMapping("/api/categories-depenses")
@@ -62,7 +64,7 @@ class CategorieDepenseController(
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun create(@Valid @RequestBody dto: CreateCategorieDepenseDTO): ResponseEntity<ApiResponse<CategorieDepenseDTO>> {
         val created = service.create(dto)
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -70,7 +72,7 @@ class CategorieDepenseController(
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody dto: UpdateCategorieDepenseDTO
@@ -85,7 +87,7 @@ class CategorieDepenseController(
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<String>> {
         val deleted = service.delete(id)
         return if (deleted) {

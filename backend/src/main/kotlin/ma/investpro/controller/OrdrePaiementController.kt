@@ -7,9 +7,11 @@ import ma.investpro.service.OrdrePaiementService
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 private val logger = KotlinLogging.logger {}
 
@@ -19,7 +21,7 @@ private val logger = KotlinLogging.logger {}
 class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementService) {
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllOrdresPaiement(
         @RequestParam(required = false) decompteId: Long?
     ): ResponseEntity<ApiResponse<List<OrdrePaiement>>> {
@@ -37,7 +39,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getOrdrePaiementById(@PathVariable id: Long): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "GET /api/ordres-paiement/$id" }
         return try {
@@ -66,7 +68,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun createOrdrePaiement(@Valid @RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "POST /api/ordres-paiement - Creation OP ${ordrePaiement.numeroOP}" }
         return try {
@@ -94,7 +96,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun updateOrdrePaiement(@PathVariable id: Long, @Valid @RequestBody ordrePaiement: OrdrePaiement): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "PUT /api/ordres-paiement/$id" }
         return try {
@@ -122,7 +124,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun deleteOrdrePaiement(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         logger.info { "DELETE /api/ordres-paiement/$id" }
         return try {
@@ -150,7 +152,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @PostMapping("/{id}/valider")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun validerOrdrePaiement(@PathVariable id: Long, @Valid @RequestBody body: Map<String, Long>): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "POST /api/ordres-paiement/$id/valider" }
         return try {
@@ -179,7 +181,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @PostMapping("/{id}/executer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun executerOrdrePaiement(@PathVariable id: Long): ResponseEntity<ApiResponse<OrdrePaiement>> {
         logger.info { "POST /api/ordres-paiement/$id/executer" }
         return try {
@@ -207,7 +209,7 @@ class OrdrePaiementController(private val ordrePaiementService: OrdrePaiementSer
     }
 
     @GetMapping("/statistiques")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getStatistiques(): ResponseEntity<ApiResponse<OrdrePaiementStatistiques>> {
         logger.info { "GET /api/ordres-paiement/statistiques" }
         return try {

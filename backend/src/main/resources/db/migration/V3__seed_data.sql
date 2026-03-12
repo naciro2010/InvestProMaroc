@@ -121,16 +121,17 @@ INSERT INTO conventions (
 SELECT setval('conventions_id_seq', 13);
 
 -- Projets liés aux conventions
+-- COHERENCE: sum(projets.budget) <= convention.budget
 INSERT INTO projets (id, code, nom, budget_total, statut, date_debut, convention_id, description) VALUES
--- Projets liés à la Convention 1 (Infrastructure)
+-- Convention 1 (Infrastructure, budget=10M): PROJ-001(5M)+PROJ-002(2.5M) = 7.5M <= 10M ✓
 (1, 'PROJ-001', 'Infrastructure Routiere Casablanca', 5000000.00, 'EN_COURS', '2024-01-01', 1, 'Programme de renovation et extension du reseau routier de Casablanca'),
 (2, 'PROJ-002', 'Amenagement Boulevard Zerktouni', 2500000.00, 'EN_PREPARATION', '2024-03-01', 1, 'Amenagement et modernisation du boulevard principal'),
--- Projets liés à la Convention 2 (Équipement Public)
-(3, 'PROJ-003', 'Equipement Ecoles Rabat', 3000000.00, 'EN_COURS', '2024-02-01', 2, 'Equipement de 15 ecoles primaires avec mobilier et materiel pedagogique'),
-(4, 'PROJ-004', 'Centres de Sante Regionaux', 4000000.00, 'EN_PREPARATION', '2024-04-01', 2, 'Equipement medical pour 5 centres de sante'),
--- Projets liés à la Convention 8 (Aménagement Territorial)
+-- Convention 2 (Equipement Public, budget=5M): PROJ-003(2.5M)+PROJ-004(2M) = 4.5M <= 5M ✓
+(3, 'PROJ-003', 'Equipement Ecoles Rabat', 2500000.00, 'EN_COURS', '2024-02-01', 2, 'Equipement de 15 ecoles primaires avec mobilier et materiel pedagogique'),
+(4, 'PROJ-004', 'Centres de Sante Regionaux', 2000000.00, 'EN_PREPARATION', '2024-04-01', 2, 'Equipement medical pour 5 centres de sante'),
+-- Convention 8 (Amenagement, budget=15M): PROJ-005(6M) = 6M <= 15M ✓
 (5, 'PROJ-005', 'Zone Industrielle Kenitra', 6000000.00, 'EN_COURS', '2024-05-01', 8, 'Amenagement et viabilisation de la nouvelle zone industrielle'),
--- Projet sans convention (indépendant)
+-- Projet sans convention (independant)
 (6, 'PROJ-006', 'Amenagement Urbain Tanger', 4500000.00, 'EN_PREPARATION', '2024-03-01', NULL, 'Programme amenagement centre-ville Tanger');
 
 SELECT setval('projets_id_seq', 6);
@@ -199,17 +200,146 @@ INSERT INTO marche_lignes (marche_id, numero_ligne, designation, quantite, unite
 (3, 1, 'Construction structure batiment', 1.00, 'ENS', 1800000.00, 1800000.00, 20.00, 360000.00, 2160000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R003"}'),
 (3, 2, 'Equipements scolaires', 1.00, 'LOT', 700000.00, 700000.00, 20.00, 140000.00, 840000.00, '{"BUDGET":"B002","PROJET":"P002","SECTEUR":"S001","REGION":"R003"}');
 
--- Décomptes
-INSERT INTO decomptes (id, marche_id, numero_decompte, date_decompte, periode_debut, periode_fin, montant_brut_ht, montant_tva, montant_ttc, total_retenues, net_a_payer, statut) VALUES
-(1, 1, 'DEC-001-2024', '2024-05-30', '2024-02-20', '2024-05-30', 400000.00, 80000.00, 480000.00, 48000.00, 432000.00, 'VALIDE'),
-(2, 2, 'DEC-002-2024', '2024-06-15', '2024-03-10', '2024-06-15', 600000.00, 120000.00, 720000.00, 72000.00, 648000.00, 'BROUILLON');
+-- ============================================================================
+-- Comptes bancaires (needed for OP and Paiements)
+-- ============================================================================
+INSERT INTO comptes_bancaires (id, code, rib, banque, agence, type_compte, titulaire, devise) VALUES
+(1, 'CB-001', '011780000012345678901234', 'Attijariwafa Bank', 'Agence Casablanca Centre', 'COURANT', 'InvestPro Maroc', 'MAD'),
+(2, 'CB-002', '013780000098765432101234', 'BMCE Bank', 'Agence Rabat Agdal', 'COURANT', 'InvestPro Maroc', 'MAD');
 
-SELECT setval('decomptes_id_seq', 2);
+SELECT setval('comptes_bancaires_id_seq', 2, true);
+
+-- ============================================================================
+-- Décomptes - Chaîne financière cohérente
+-- ============================================================================
+-- COHERENCE MARCHE 1 (M-2024-001): montantHT=800K, TTC=960K
+--   DEC-001: 400K HT (50% du marché) → VALIDE → OP → Paiement TOTAL
+--   DEC-005: 250K HT (31.25%) → VALIDE → OP → Paiement PARTIEL
+--   Cumul = 650K/800K = 81.25% du marché
+-- COHERENCE MARCHE 2 (M-2024-002): montantHT=1.2M, TTC=1.44M
+--   DEC-002: 600K HT (50%) → BROUILLON (pas encore payé)
+--   DEC-003: 300K HT (25%) → VALIDE → OP → Paiement TOTAL
+--   Cumul = 900K/1.2M = 75% du marché
+-- COHERENCE MARCHE 4 (M-2024-004): montantHT=3.5M, TTC=4.2M
+--   DEC-004: 1M HT (28.6%) → VALIDE → OP → Paiement TOTAL
+--   Cumul = 1M/3.5M = 28.6% du marché
+INSERT INTO decomptes (id, marche_id, numero_decompte, date_decompte, periode_debut, periode_fin,
+  montant_brut_ht, montant_tva, montant_ttc, total_retenues, net_a_payer,
+  cumul_precedent, cumul_actuel, montant_paye, est_solde, statut, date_validation, valide_par_id) VALUES
+-- Marché 1: DEC-001 (premier décompte, validé et payé)
+(1, 1, 'DEC-001-2024', '2024-05-30', '2024-02-20', '2024-05-30',
+  400000.00, 80000.00, 480000.00, 48000.00, 432000.00,
+  0.00, 480000.00, 432000.00, true, 'PAYE_TOTAL', '2024-06-05', 2),
+-- Marché 2: DEC-002 (brouillon, pas encore soumis)
+(2, 2, 'DEC-002-2024', '2024-06-15', '2024-03-10', '2024-06-15',
+  600000.00, 120000.00, 720000.00, 72000.00, 648000.00,
+  0.00, 720000.00, 0.00, false, 'BROUILLON', NULL, NULL),
+-- Marché 2: DEC-003 (validé et payé - avancement)
+(3, 2, 'DEC-003-2024', '2024-07-15', '2024-06-16', '2024-07-15',
+  300000.00, 60000.00, 360000.00, 36000.00, 324000.00,
+  0.00, 360000.00, 324000.00, true, 'PAYE_TOTAL', '2024-07-20', 2),
+-- Marché 4: DEC-004 (validé et payé)
+(4, 4, 'DEC-004-2024', '2024-08-30', '2024-04-15', '2024-08-30',
+  1000000.00, 200000.00, 1200000.00, 120000.00, 1080000.00,
+  0.00, 1200000.00, 1080000.00, true, 'PAYE_TOTAL', '2024-09-10', 1),
+-- Marché 1: DEC-005 (validé, paiement partiel en cours)
+(5, 1, 'DEC-005-2024', '2024-08-15', '2024-06-01', '2024-08-15',
+  250000.00, 50000.00, 300000.00, 30000.00, 270000.00,
+  480000.00, 780000.00, 150000.00, false, 'PAYE_PARTIEL', '2024-08-25', 2);
+
+SELECT setval('decomptes_id_seq', 5);
 
 -- Retenues sur décomptes
 INSERT INTO decompte_retenues (decompte_id, type_retenue, taux_pourcent, montant, libelle) VALUES
 (1, 'GARANTIE', 10.00, 48000.00, 'Retenue de garantie 10%'),
-(2, 'GARANTIE', 10.00, 72000.00, 'Retenue de garantie 10%');
+(2, 'GARANTIE', 10.00, 72000.00, 'Retenue de garantie 10%'),
+(3, 'GARANTIE', 10.00, 36000.00, 'Retenue de garantie 10%'),
+(4, 'GARANTIE', 10.00, 120000.00, 'Retenue de garantie 10%'),
+(5, 'GARANTIE', 10.00, 30000.00, 'Retenue de garantie 10%');
+
+-- ============================================================================
+-- Ordres de Paiement - Chaîne OP cohérente avec décomptes
+-- ============================================================================
+-- COHERENCE: OP.montant_a_payer = Décompte.net_a_payer (sauf paiement partiel)
+INSERT INTO ordres_paiement (id, decompte_id, numero_op, date_op, statut,
+  montant_a_payer, est_paiement_partiel, date_prevue_paiement, mode_paiement,
+  compte_bancaire_id, date_validation, valide_par_id) VALUES
+-- OP pour DEC-001 (432K net, paiement total)
+(1, 1, 'OP-2024-001', '2024-06-10', 'EXECUTE',
+  432000.00, false, '2024-06-20', 'VIREMENT',
+  1, '2024-06-12', 1),
+-- OP pour DEC-003 (324K net, paiement total)
+(2, 3, 'OP-2024-002', '2024-07-25', 'EXECUTE',
+  324000.00, false, '2024-08-05', 'VIREMENT',
+  1, '2024-07-28', 1),
+-- OP pour DEC-004 (1.08M net, paiement total)
+(3, 4, 'OP-2024-003', '2024-09-15', 'EXECUTE',
+  1080000.00, false, '2024-09-25', 'VIREMENT',
+  2, '2024-09-18', 1),
+-- OP pour DEC-005 (270K net, paiement partiel - 150K payé sur 270K)
+(4, 5, 'OP-2024-004', '2024-09-01', 'VALIDE',
+  270000.00, true, '2024-09-15', 'VIREMENT',
+  1, '2024-09-05', 2);
+
+SELECT setval('ordres_paiement_id_seq', 4, true);
+
+-- ============================================================================
+-- Paiements - Chaîne Paiement cohérente avec OP
+-- ============================================================================
+-- COHERENCE: Paiement.montant_paye = OP.montant_a_payer (sauf partiel)
+INSERT INTO paiements (id, ordre_paiement_id, reference_paiement, date_valeur, date_execution,
+  montant_paye, est_paiement_partiel, mode_paiement, compte_bancaire_id, observations) VALUES
+-- Paiement pour OP-001 (DEC-001, 432K total)
+(1, 1, 'VIR-2024-00001', '2024-06-20', '2024-06-20',
+  432000.00, false, 'VIREMENT', 1, 'Paiement total DEC-001 - Voirie Casablanca'),
+-- Paiement pour OP-002 (DEC-003, 324K total)
+(2, 2, 'VIR-2024-00002', '2024-08-05', '2024-08-05',
+  324000.00, false, 'VIREMENT', 1, 'Paiement total DEC-003 - Avenue Mohammed V'),
+-- Paiement pour OP-003 (DEC-004, 1.08M total)
+(3, 3, 'VIR-2024-00003', '2024-09-25', '2024-09-25',
+  1080000.00, false, 'VIREMENT', 2, 'Paiement total DEC-004 - Route Nationale Agadir'),
+-- Paiement partiel pour OP-004 (DEC-005, 150K sur 270K)
+(4, 4, 'VIR-2024-00004', '2024-09-15', '2024-09-15',
+  150000.00, true, 'VIREMENT', 1, 'Paiement partiel 1/2 DEC-005 - Voirie Casablanca lot 2');
+
+SELECT setval('paiements_id_seq', 4, true);
+
+-- ============================================================================
+-- Budgets - Cohérent avec conventions
+-- ============================================================================
+-- COHERENCE: Budget.plafond_convention = Convention.budget
+-- COHERENCE: Budget.total_budget = sum(lignes_budget.montant)
+INSERT INTO budgets (id, convention_id, version, date_budget, statut,
+  plafond_convention, total_budget, date_validation, valide_par_id) VALUES
+-- Convention 1 (Infrastructure, budget=10M)
+(1, 1, 'V0', '2024-01-20', 'VALIDE', 10000000.00, 10000000.00, '2024-01-25', 1),
+-- Convention 2 (Equipement Public, budget=5M)
+(2, 2, 'V0', '2024-02-05', 'VALIDE', 5000000.00, 5000000.00, '2024-02-10', 1),
+-- Convention 8 (Amenagement, budget=15M)
+(3, 8, 'V0', '2024-04-05', 'VALIDE', 15000000.00, 15000000.00, '2024-04-10', 1);
+
+SELECT setval('budgets_id_seq', 3, true);
+
+-- Lignes de budget (postes budgétaires)
+-- COHERENCE: sum(lignes_budget.montant) = budget.total_budget
+INSERT INTO lignes_budget (id, budget_id, code, libelle, montant, ordre_affichage) VALUES
+-- Budget Convention 1 (10M total): 5M + 1.5M + 2M + 1.5M = 10M ✓
+(1, 1, 'CH-001', 'Travaux routiers et genie civil', 5000000.00, 1),
+(2, 1, 'CH-002', 'Etudes techniques et topographiques', 1500000.00, 2),
+(3, 1, 'CH-003', 'Equipements de signalisation', 2000000.00, 3),
+(4, 1, 'CH-004', 'Services de maitrise d''oeuvre', 1500000.00, 4),
+-- Budget Convention 2 (5M total): 2.5M + 1M + 750K + 750K = 5M ✓
+(5, 2, 'CH-001', 'Equipements scolaires et medicaux', 2500000.00, 1),
+(6, 2, 'CH-002', 'Fournitures de bureau et consommables', 1000000.00, 2),
+(7, 2, 'CH-003', 'Formation du personnel', 750000.00, 3),
+(8, 2, 'CH-004', 'Maintenance preventive', 750000.00, 4),
+-- Budget Convention 8 (15M total): 8M + 2M + 3M + 2M = 15M ✓
+(9, 3, 'CH-001', 'Travaux de viabilisation', 8000000.00, 1),
+(10, 3, 'CH-002', 'Etudes d''impact et faisabilite', 2000000.00, 2),
+(11, 3, 'CH-003', 'Equipements industriels', 3000000.00, 3),
+(12, 3, 'CH-004', 'Conseil et assistance technique', 2000000.00, 4);
+
+SELECT setval('lignes_budget_id_seq', 12, true);
 
 -- ============================================================================
 -- Paramétrage des conventions
@@ -379,9 +509,9 @@ INSERT INTO budget_ligne_imputations (id, budget_ligne_id, projet_id, projet_cod
 -- Ligne 3: Équipements signalisation (2M) → répartis
 (5, 3, 1, 'PROJ-001', 'Infrastructure Routière Casablanca', 50.00, 1000000.00, TRUE),
 (6, 3, 2, 'PROJ-002', 'Aménagement Boulevard Zerktouni', 50.00, 1000000.00, TRUE),
--- Ligne 5: Équipements scolaires et médicaux (2.5M) → répartis entre PROJ-003 et PROJ-004
-(7, 5, 3, 'PROJ-003', 'Équipement Écoles Rabat', 60.00, 1500000.00, TRUE),
-(8, 5, 4, 'PROJ-004', 'Centres de Santé Régionaux', 40.00, 1000000.00, TRUE),
+-- Ligne 5: Equipements scolaires et medicaux (2.5M) → coherent PROJ-003(2.5M)+PROJ-004(2M)
+(7, 5, 3, 'PROJ-003', 'Equipement Ecoles Rabat', 55.56, 1389000.00, TRUE),
+(8, 5, 4, 'PROJ-004', 'Centres de Sante Regionaux', 44.44, 1111000.00, TRUE),
 -- Ligne 9: Travaux viabilisation (8M) → PROJ-005
 (9, 9, 5, 'PROJ-005', 'Zone Industrielle Kénitra', 100.00, 8000000.00, TRUE);
 

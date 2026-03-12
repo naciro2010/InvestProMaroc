@@ -41,10 +41,10 @@ class MarcheController(
 
     @GetMapping("/stats")
     @ReadAccess
-    fun getMarchesStats(): ResponseEntity<Map<String, Any>> {
+    fun getMarchesStats(): ResponseEntity<ApiResponse<MarcheGlobalStatsDTO>> {
         logger.info { "🌐 API: GET /api/marches/stats" }
         val stats = marcheService.getMarcheStats()
-        return ResponseEntity.ok(stats)
+        return ResponseEntity.ok(ApiResponse.success(stats))
     }
 
     @GetMapping

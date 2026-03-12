@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { Box, Typography } from '@mui/material'
+import { colors } from '@/lib/designSystem'
 
 interface RichTextEditorProps {
   value: string
@@ -86,7 +87,7 @@ const RichTextEditor = ({
             borderTopRightRadius: 4,
             borderBottom: '1px solid',
             borderColor: 'divider',
-            bgcolor: '#fafafa',
+            bgcolor: colors.neutral[25],
             display: readOnly ? 'none' : 'block',
           },
           '& .ql-container': {
@@ -99,7 +100,7 @@ const RichTextEditor = ({
           '& .ql-editor': {
             minHeight: `${minHeight}px`,
             '&.ql-blank::before': {
-              color: '#9ca3af',
+              color: colors.neutral[400],
               fontStyle: 'normal',
             },
           },

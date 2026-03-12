@@ -1,6 +1,7 @@
 package ma.investpro.service
 
 import ma.investpro.dto.MarcheListDTO
+import ma.investpro.dto.MarcheGlobalStatsDTO
 import ma.investpro.dto.MarchePaiementDTO
 import ma.investpro.dto.MarcheSituationPaiementDTO
 import ma.investpro.entity.Marche
@@ -291,15 +292,15 @@ class MarcheService(
     /**
      * Get marche statistics (counts) without loading full collections
      */
-    fun getMarcheStats(): Map<String, Any> {
+    fun getMarcheStats(): MarcheGlobalStatsDTO {
         logger.debug { "Calculating marche statistics" }
         val allMarches = marcheRepository.findAll()
 
-        return mapOf(
-            "total" to allMarches.size,
-            "byStatus" to allMarches.groupingBy { it.statut }.eachCount(),
-            "totalAmount" to allMarches.sumOf { it.montantTtc },
-            "avgAmount" to if (allMarches.isNotEmpty()) allMarches.sumOf { it.montantTtc } / BigDecimal(allMarches.size) else BigDecimal.ZERO
+        return MarcheGlobalStatsDTO(
+            total = allMarches.size,
+            byStatus = allMarches.groupingBy { it.statut.name }.eachCount(),
+            totalAmount = allMarches.sumOf { it.montantTtc },
+            avgAmount = if (allMarches.isNotEmpty()) allMarches.sumOf { it.montantTtc } / BigDecimal(allMarches.size) else BigDecimal.ZERO
         )
     }
 

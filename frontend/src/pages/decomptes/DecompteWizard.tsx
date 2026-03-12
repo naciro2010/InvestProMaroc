@@ -10,6 +10,7 @@ import {
   Chip,
   IconButton,
   Button,
+  LinearProgress,
 } from '@mui/material'
 import { Add, Delete } from '@mui/icons-material'
 import { useMutation } from '@tanstack/react-query'
@@ -18,7 +19,7 @@ import DecimalInput from '@/components/ui/DecimalInput'
 import { WizardView } from '@/components/core'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
-import { decomptesAPI, marchesAPI } from '../../lib/api'
+import { decomptesAPI, marchesAPI, cascadeAPI, MarcheSummaryDTO } from '../../lib/api'
 import { colors } from '@/lib/designSystem'
 
 const steps = ['Informations generales', 'Montants & Retenues', 'Pieces jointes & Confirmation']
@@ -62,12 +63,18 @@ interface DecompteFormData {
   files: UploadedFile[]
 }
 
+const formatMAD = (value: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(value)
+
+const formatPct = (value: number) => `${value.toFixed(1)}%`
+
 const DecompteWizard = () => {
   const navigate = useNavigate()
   const { marcheId: routeMarcheId } = useParams<{ marcheId: string }>()
   const prefilledMarcheId = routeMarcheId ? parseInt(routeMarcheId) : null
   const [activeStep, setActiveStep] = useState(0)
   const [marches, setMarches] = useState<Marche[]>([])
+  const [marcheSummary, setMarcheSummary] = useState<MarcheSummaryDTO | null>(null)
 
   const [formData, setFormData] = useState<DecompteFormData>({
     numeroDecompte: '',
@@ -100,6 +107,25 @@ const DecompteWizard = () => {
     }
     loadMarches()
   }, [])
+
+  // Cascade: load marché summary when marché changes
+  useEffect(() => {
+    const marcheId = formData.marcheId
+    if (marcheId) {
+      cascadeAPI.getMarcheSummary(marcheId)
+        .then(res => {
+          const summary = res.data.data ?? null
+          setMarcheSummary(summary)
+          // Auto-fill TVA from marché
+          if (summary) {
+            setFormData(prev => ({ ...prev, tauxTVA: summary.tauxTva }))
+          }
+        })
+        .catch(() => setMarcheSummary(null))
+    } else {
+      setMarcheSummary(null)
+    }
+  }, [formData.marcheId])
 
   // Auto-calculate montants
   useEffect(() => {
@@ -267,6 +293,77 @@ const DecompteWizard = () => {
                   </MenuItem>
                 ))}
               </TextField>
+            )}
+
+            {/* Odoo-style: Marché summary info card */}
+            {marcheSummary && (
+              <Box sx={{
+                p: 2.5,
+                bgcolor: colors.primary[50],
+                border: `1px solid ${colors.primary[200]}`,
+                borderRadius: 2,
+              }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ color: colors.primary[700], mb: 1.5 }}>
+                  Marché: {marcheSummary.numeroMarche} — {marcheSummary.objet.substring(0, 80)}
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Montant HT</Typography>
+                    <Typography variant="body2" fontWeight={600}>{formatMAD(marcheSummary.montantHT)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Montant TTC</Typography>
+                    <Typography variant="body2" fontWeight={600}>{formatMAD(marcheSummary.montantTTC)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Cumul décomptes HT</Typography>
+                    <Typography variant="body2" fontWeight={600}>{formatMAD(marcheSummary.cumulDecomptesHT)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Restant HT</Typography>
+                    <Typography variant="body2" fontWeight={600} sx={{
+                      color: marcheSummary.montantRestantHT > 0 ? colors.success[600] : colors.danger[600],
+                    }}>
+                      {formatMAD(marcheSummary.montantRestantHT)}
+                    </Typography>
+                  </Box>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(marcheSummary.tauxAvancement, 100)}
+                  sx={{
+                    mt: 1.5,
+                    height: 6,
+                    borderRadius: 3,
+                    bgcolor: colors.primary[100],
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: marcheSummary.tauxAvancement > 90 ? colors.danger[500] : colors.primary[500],
+                      borderRadius: 3,
+                    },
+                  }}
+                />
+                <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Avancement: {formatPct(marcheSummary.tauxAvancement)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Fournisseur: {marcheSummary.fournisseurNom}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {marcheSummary.nombreDecomptes} décompte(s) · {marcheSummary.nombreLignes} ligne(s)
+                  </Typography>
+                </Box>
+                {marcheSummary.conventionNumero && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    Convention: {marcheSummary.conventionNumero} — {marcheSummary.conventionLibelle}
+                  </Typography>
+                )}
+                {marcheSummary.montantRestantHT <= 0 && (
+                  <Alert severity="warning" sx={{ mt: 1.5 }}>
+                    Ce marché est entièrement décompté. Aucun restant disponible.
+                  </Alert>
+                )}
+              </Box>
             )}
 
             <Typography variant="subtitle2" gutterBottom fontWeight={600}>

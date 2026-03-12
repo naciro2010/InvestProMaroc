@@ -723,6 +723,84 @@ export const conventionConfigurationAPI = {
   update: (data: ConventionConfigurationPayload) => api.put('/parametrage/conventions', data),
 }
 
+// Cascade API (Odoo-style auto-fill summaries)
+export interface ConventionSummaryDTO {
+  id: number
+  code: string
+  numero: string
+  libelle: string
+  typeConvention: string
+  statut: string
+  budget: number
+  tauxCommission: number
+  baseCalcul: string
+  tauxTva: number
+  dateDebut: string
+  dateFin: string | null
+  montantEngageHT: number
+  montantEngageTTC: number
+  montantDecaisseHT: number
+  montantDecaisseTTC: number
+  montantPaye: number
+  budgetRestant: number
+  tauxEngagement: number
+  tauxDecaissement: number
+  nombreMarches: number
+  nombreProjets: number
+  nombrePartenaires: number
+}
+
+export interface MarcheSummaryDTO {
+  id: number
+  numeroMarche: string
+  objet: string
+  montantHT: number
+  montantTTC: number
+  tauxTva: number
+  statut: string
+  typeMarche: string
+  naturePrestation: string
+  dateDebut: string | null
+  dateFinPrevue: string | null
+  delaiExecutionMois: number | null
+  fournisseurCode: string
+  fournisseurNom: string
+  fournisseurIce: string | null
+  conventionId: number | null
+  conventionNumero: string | null
+  conventionLibelle: string | null
+  cumulDecomptesHT: number
+  cumulDecomptesTTC: number
+  montantRestantHT: number
+  montantPayeTotal: number
+  tauxAvancement: number
+  nombreDecomptes: number
+  nombreLignes: number
+}
+
+export interface FournisseurSummaryDTO {
+  id: number
+  code: string
+  raisonSociale: string
+  ice: string | null
+  identifiantFiscal: string | null
+  adresse: string | null
+  ville: string | null
+  telephone: string | null
+  email: string | null
+  nombreMarches: number
+  montantTotalMarches: number
+}
+
+export const cascadeAPI = {
+  getConventionSummary: (id: number) =>
+    api.get<ApiResponse<ConventionSummaryDTO>>(`/cascade/conventions/${id}/summary`),
+  getMarcheSummary: (id: number) =>
+    api.get<ApiResponse<MarcheSummaryDTO>>(`/cascade/marches/${id}/summary`),
+  getFournisseurSummary: (id: number) =>
+    api.get<ApiResponse<FournisseurSummaryDTO>>(`/cascade/fournisseurs/${id}/summary`),
+}
+
 // Reporting API
 export const reportingAPI = {
   getDashboard: () =>

@@ -1,5 +1,6 @@
 import { Paper, Typography, Divider, Box, Stack } from '@mui/material'
 import { Calculate, Add, Remove, Check } from '@mui/icons-material'
+import { colors } from '@/lib/designSystem'
 
 interface DecompteCalculsCardProps {
   montantBrutHT: number
@@ -34,7 +35,7 @@ const DecompteCalculsCard = ({
           sx={{
             p: 2,
             borderRadius: 2,
-            bgcolor: '#f0f9ff',
+            bgcolor: colors.info[50],
             border: '1px solid',
             borderColor: 'primary.light',
           }}
@@ -59,7 +60,7 @@ const DecompteCalculsCard = ({
           <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
         </Stack>
 
-        <Box sx={{ p: 2, bgcolor: '#fafafa', borderRadius: 1 }}>
+        <Box sx={{ p: 2, bgcolor: colors.neutral[25], borderRadius: 1 }}>
           <Typography variant="caption" color="text.secondary">
             Montant TVA
           </Typography>
@@ -84,7 +85,7 @@ const DecompteCalculsCard = ({
           sx={{
             p: 2,
             borderRadius: 2,
-            bgcolor: '#f0fdf4',
+            bgcolor: colors.success[50],
             border: '1px solid',
             borderColor: 'success.light',
           }}
@@ -109,7 +110,7 @@ const DecompteCalculsCard = ({
           <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
         </Stack>
 
-        <Box sx={{ p: 2, bgcolor: '#fef2f2', borderRadius: 1, border: '1px solid', borderColor: 'error.light' }}>
+        <Box sx={{ p: 2, bgcolor: colors.danger[50], borderRadius: 1, border: '1px solid', borderColor: 'error.light' }}>
           <Typography variant="caption" color="text.secondary">
             Total Retenues
           </Typography>

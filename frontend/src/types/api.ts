@@ -410,7 +410,7 @@ export interface CreateProjetDTO extends Record<string, unknown> {
   dateFin?: Date | string
 }
 
-export interface UpdateProjetDTO extends Partial<CreateProjetDTO> {}
+export type UpdateProjetDTO = Partial<CreateProjetDTO>
 
 // ============================================================================
 // Marché Types
@@ -467,7 +467,7 @@ export interface CreateMarcheDTO extends Record<string, unknown> {
   conventionId?: number
 }
 
-export interface UpdateMarcheDTO extends Partial<CreateMarcheDTO> {}
+export type UpdateMarcheDTO = Partial<CreateMarcheDTO>
 
 // ============================================================================
 // MarcheLigne Types
@@ -528,7 +528,7 @@ export interface CreateDecompteDTO extends Record<string, unknown> {
   observation?: string
 }
 
-export interface UpdateDecompteDTO extends Partial<CreateDecompteDTO> {}
+export type UpdateDecompteDTO = Partial<CreateDecompteDTO>
 
 // ============================================================================
 // Fournisseur Types
@@ -568,7 +568,7 @@ export interface CreateFournisseurDTO extends Record<string, unknown> {
   remarques?: string
 }
 
-export interface UpdateFournisseurDTO extends Partial<CreateFournisseurDTO> {}
+export type UpdateFournisseurDTO = Partial<CreateFournisseurDTO>
 
 // ============================================================================
 // DimensionAnalytique Types

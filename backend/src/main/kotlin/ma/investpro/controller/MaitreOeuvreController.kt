@@ -6,9 +6,11 @@ import ma.investpro.dto.MaitreOeuvreResponse
 import ma.investpro.service.MaitreOeuvreService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 @RestController
 @RequestMapping("/api/maitres-oeuvre")
@@ -21,7 +23,7 @@ class MaitreOeuvreController(
      * Récupère tous les MO/MOD d'une convention
      */
     @GetMapping("/convention/{conventionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllByConvention(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<List<MaitreOeuvreResponse>>> {
         return try {
             val data = service.getAllByConvention(conventionId)
@@ -47,7 +49,7 @@ class MaitreOeuvreController(
      * Récupère tous les MO d'une convention
      */
     @GetMapping("/convention/{conventionId}/mo")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMOByConvention(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<List<MaitreOeuvreResponse>>> {
         return try {
             val data = service.getMOByConvention(conventionId)
@@ -73,7 +75,7 @@ class MaitreOeuvreController(
      * Récupère tous les MOD d'une convention
      */
     @GetMapping("/convention/{conventionId}/mod")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getMODByConvention(@PathVariable conventionId: Long): ResponseEntity<ApiResponse<List<MaitreOeuvreResponse>>> {
         return try {
             val data = service.getMODByConvention(conventionId)
@@ -99,7 +101,7 @@ class MaitreOeuvreController(
      * Récupère un MO/MOD par ID
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<MaitreOeuvreResponse>> {
         return try {
             val data = service.getById(id)
@@ -133,7 +135,7 @@ class MaitreOeuvreController(
      * Crée un nouveau MO/MOD
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun create(@Valid @RequestBody request: MaitreOeuvreRequest): ResponseEntity<ApiResponse<MaitreOeuvreResponse>> {
         return try {
             val data = service.create(request)
@@ -167,7 +169,7 @@ class MaitreOeuvreController(
      * Met à jour un MO/MOD existant
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody request: MaitreOeuvreRequest
@@ -204,7 +206,7 @@ class MaitreOeuvreController(
      * Supprime (soft delete) un MO/MOD
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         return try {
             service.delete(id)
@@ -238,7 +240,7 @@ class MaitreOeuvreController(
      * Restaure un MO/MOD inactif
      */
     @PutMapping("/{id}/restore")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun restore(@PathVariable id: Long): ResponseEntity<ApiResponse<MaitreOeuvreResponse>> {
         return try {
             val data = service.restore(id)

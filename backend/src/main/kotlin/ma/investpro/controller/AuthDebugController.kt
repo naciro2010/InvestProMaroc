@@ -2,9 +2,11 @@ package ma.investpro.controller
 
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 private val logger = KotlinLogging.logger {}
 
@@ -18,7 +20,7 @@ class AuthDebugController {
      * ADMIN-only endpoint for debugging purposes
      */
     @GetMapping("/whoami")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun getCurrentUserInfo(): ResponseEntity<Map<String, Any?>> {
         val authentication = SecurityContextHolder.getContext().authentication
 
@@ -54,7 +56,7 @@ class AuthDebugController {
      * ADMIN-only endpoint for debugging purposes
      */
     @GetMapping("/has-role/{role}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @AdminOnly
     fun checkUserRole(@PathVariable role: String): ResponseEntity<Map<String, Any?>> {
         val authentication = SecurityContextHolder.getContext().authentication
         val result: MutableMap<String, Any?> = mutableMapOf()

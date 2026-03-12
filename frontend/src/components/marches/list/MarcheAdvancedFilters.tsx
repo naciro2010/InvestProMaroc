@@ -130,7 +130,7 @@ const MarcheAdvancedFilters = ({
             sx={{
               ml: 0.75,
               bgcolor: colors.primary[600],
-              color: '#fff',
+              color: colors.textOnColor,
               borderRadius: '50%',
               width: 18,
               height: 18,

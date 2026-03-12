@@ -12,10 +12,12 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 @RestController
 @RequestMapping("/api/pieces-jointes")
@@ -29,7 +31,7 @@ class PieceJointeController(
      * Upload une pièce jointe
      */
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun uploadFile(
         @RequestParam("file") file: MultipartFile,
         @RequestParam("typeEntite") typeEntite: String,
@@ -73,7 +75,7 @@ class PieceJointeController(
      * Récupère toutes les pièces jointes pour une entité
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getPiecesJointes(
         @RequestParam("typeEntite") typeEntite: String,
         @RequestParam("entiteId") entiteId: Long
@@ -104,7 +106,7 @@ class PieceJointeController(
      * Récupère une pièce jointe par ID
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getPieceJointeById(@PathVariable id: Long): ResponseEntity<ApiResponse<PieceJointeDTO>> {
         return try {
             val result = pieceJointeService.getById(id)
@@ -131,7 +133,7 @@ class PieceJointeController(
      * Télécharge une pièce jointe
      */
     @GetMapping("/{id}/download")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun downloadFile(@PathVariable id: Long): ResponseEntity<Resource> {
         return try {
             val pieceJointe = pieceJointeService.getById(id)
@@ -153,7 +155,7 @@ class PieceJointeController(
      * Met à jour une pièce jointe
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun updatePieceJointe(
         @PathVariable id: Long,
         @Valid @RequestBody request: PieceJointeUpdateRequest
@@ -183,7 +185,7 @@ class PieceJointeController(
      * Supprime une pièce jointe (soft delete)
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun deletePieceJointe(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
         return try {
             pieceJointeService.deletePieceJointe(id)

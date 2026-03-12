@@ -10,9 +10,11 @@ import ma.investpro.entity.ConventionPartenaire
 import ma.investpro.mapper.ConventionPartenaireMapper
 import ma.investpro.service.ConventionPartenaireService
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
+import ma.investpro.security.annotations.ReadAccess
+import ma.investpro.security.annotations.WriteAccess
+import ma.investpro.security.annotations.AdminOnly
 
 /**
  * Contrôleur REST pour la gestion des partenaires de conventions
@@ -28,7 +30,7 @@ class ConventionPartenaireController(
      * Récupère tous les partenaires d'une convention
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
+    @ReadAccess
     fun getAllPartenaires(
         @PathVariable conventionId: Long
     ): ResponseEntity<ApiResponse<List<ConventionPartenaireDTO>>> {
@@ -41,7 +43,7 @@ class ConventionPartenaireController(
      * Ajoute un partenaire à une convention
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun addPartenaire(
         @PathVariable conventionId: Long,
         @Valid @RequestBody request: AddPartenaireRequest
@@ -64,7 +66,7 @@ class ConventionPartenaireController(
      * Met à jour un partenaire d'une convention
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun updatePartenaire(
         @PathVariable conventionId: Long,
         @PathVariable id: Long,
@@ -87,7 +89,7 @@ class ConventionPartenaireController(
      * Supprime un partenaire d'une convention
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @WriteAccess
     fun deletePartenaire(
         @PathVariable conventionId: Long,
         @PathVariable id: Long

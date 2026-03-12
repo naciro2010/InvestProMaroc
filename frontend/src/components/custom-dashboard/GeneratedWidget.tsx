@@ -9,7 +9,7 @@ import {
 } from '@mui/material'
 import {
   X, BarChart3, Table2, PieChart, TrendingUp, Download,
-  ChevronUp, ChevronDown, GripVertical,
+  ChevronUp, ChevronDown, GripVertical, Info,
 } from 'lucide-react'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
 import DynamicTable from './DynamicTable'
@@ -52,6 +52,7 @@ function exportToCSV(data: FetchedData, title: string): void {
 const GeneratedWidget = ({ instruction, data, onRemove, originalText }: GeneratedWidgetProps) => {
   const [vizType, setVizType] = useState<VisualizationType>(instruction.visualization)
   const [collapsed, setCollapsed] = useState(false)
+  const [showExplanation, setShowExplanation] = useState(false)
 
   const handleVizChange = (_: React.MouseEvent<HTMLElement>, newType: VisualizationType | null) => {
     if (newType) setVizType(newType)
@@ -145,6 +146,13 @@ const GeneratedWidget = ({ instruction, data, onRemove, originalText }: Generate
             </IconButton>
           </Tooltip>
 
+          {/* Explanation toggle */}
+          <Tooltip title="Comment l'instruction a été interprétée">
+            <IconButton size="small" onClick={() => setShowExplanation(!showExplanation)}>
+              <Info className="w-4 h-4" style={{ color: showExplanation ? colors.primary[600] : colors.textSecondary }} />
+            </IconButton>
+          </Tooltip>
+
           {/* Collapse */}
           <IconButton size="small" onClick={() => setCollapsed(!collapsed)}>
             {collapsed
@@ -174,6 +182,36 @@ const GeneratedWidget = ({ instruction, data, onRemove, originalText }: Generate
             }}>
               {warning}
             </Alert>
+          ))}
+        </Box>
+      )}
+
+      {/* Parsing explanation */}
+      {!collapsed && showExplanation && instruction.explanation.steps.length > 0 && (
+        <Box sx={{
+          px: 2.5,
+          py: 1.5,
+          backgroundColor: colors.primary[25],
+          borderBottom: `1px solid ${colors.primary[100]}`,
+        }}>
+          <Typography sx={{
+            fontSize: typography.sizes['2xs'],
+            fontWeight: typography.weights.semibold,
+            color: colors.primary[700],
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            mb: 0.75,
+          }}>
+            Interprétation
+          </Typography>
+          {instruction.explanation.steps.map((step: string, idx: number) => (
+            <Typography key={idx} sx={{
+              fontSize: typography.sizes.xs,
+              color: colors.textSecondary,
+              lineHeight: 1.6,
+            }}>
+              • {step}
+            </Typography>
           ))}
         </Box>
       )}

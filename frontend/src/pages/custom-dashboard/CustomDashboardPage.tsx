@@ -1,21 +1,26 @@
 /**
- * CustomDashboardPage - Main page for generating custom dashboards from text instructions.
+ * CustomDashboardPage - Chat-like interface for generating dashboards from French text.
  *
- * Users type instructions in French (e.g. "tableau des paiements par marché")
- * and the system generates the corresponding visualizations using rule-based parsing.
+ * Users type instructions (e.g. "tableau des paiements par marché") and the system
+ * generates visualizations using rule-based parsing. Supports follow-up modifications
+ * (e.g. "change en camembert", "top 5 seulement").
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material'
-import { Sparkles, LayoutDashboard, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel } from '@/components/core'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
 import {
   InstructionInput,
   GeneratedWidget,
+  WelcomeSplash,
+  ChatMessage,
   parseInstruction,
   fetchDataForInstruction,
+  detectFollowUp,
+  applyFollowUp,
   type ParsedInstruction,
   type FetchedData,
 } from '@/components/custom-dashboard'
@@ -24,12 +29,55 @@ import {
 // Types
 // ============================================================================
 
-interface GeneratedItem {
+interface ChatItem {
   id: string
-  instruction: ParsedInstruction
-  data: FetchedData
-  originalText: string
-  createdAt: Date
+  type: 'user' | 'system'
+  text: string
+  timestamp: Date
+  instruction?: ParsedInstruction
+  data?: FetchedData
+}
+
+const STORAGE_KEY = 'investpro-dashboard-chat'
+
+// ============================================================================
+// Persistence
+// ============================================================================
+
+function loadChatHistory(): ChatItem[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return []
+    const parsed = JSON.parse(stored) as Array<{
+      id: string
+      type: 'user' | 'system'
+      text: string
+      timestamp: string
+      instruction?: ParsedInstruction
+    }>
+    return parsed.map((item) => ({
+      ...item,
+      timestamp: new Date(item.timestamp),
+    }))
+  } catch {
+    return []
+  }
+}
+
+function saveChatHistory(items: ChatItem[]): void {
+  try {
+    // Save without data (too large), we'll refetch on load
+    const toSave = items.map((item) => ({
+      id: item.id,
+      type: item.type,
+      text: item.text,
+      timestamp: item.timestamp.toISOString(),
+      instruction: item.instruction,
+    }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
+  } catch {
+    // Silently fail if localStorage is full
+  }
 }
 
 // ============================================================================
@@ -37,58 +85,125 @@ interface GeneratedItem {
 // ============================================================================
 
 const CustomDashboardPage = () => {
-  const [items, setItems] = useState<GeneratedItem[]>([])
+  const [items, setItems] = useState<ChatItem[]>(() => loadChatHistory())
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [errorSuggestions, setErrorSuggestions] = useState<string[]>([])
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  // Persist to localStorage
+  useEffect(() => {
+    saveChatHistory(items)
+  }, [items])
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [items, isLoading])
+
+  // Get last system instruction for follow-up detection
+  const getLastInstruction = useCallback((): ParsedInstruction | null => {
+    for (let i = items.length - 1; i >= 0; i--) {
+      if (items[i].instruction) return items[i].instruction!
+    }
+    return null
+  }, [items])
+
+  const generateId = (): string => {
+    return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  }
 
   const handleSubmit = useCallback(async (instructionText: string) => {
     setError(null)
     setErrorSuggestions([])
 
-    // 1. Parse the instruction
-    const parseResult = parseInstruction(instructionText)
+    // Add user message
+    const userMsg: ChatItem = {
+      id: generateId(),
+      type: 'user',
+      text: instructionText,
+      timestamp: new Date(),
+    }
+    setItems((prev: ChatItem[]) => [...prev, userMsg])
 
-    if (!parseResult.success) {
-      setError(parseResult.error.message)
-      setErrorSuggestions(parseResult.error.suggestions)
-      return
+    // Check for follow-up
+    const lastInstruction = getLastInstruction()
+    let instruction: ParsedInstruction | null = null
+
+    if (lastInstruction) {
+      const followUp = detectFollowUp(instructionText, lastInstruction)
+      if (followUp) {
+        instruction = applyFollowUp(lastInstruction, followUp)
+      }
     }
 
-    // 2. Fetch data
+    // Parse as new instruction if not a follow-up
+    if (!instruction) {
+      const parseResult = parseInstruction(instructionText)
+      if (!parseResult.success) {
+        setError(parseResult.error.message)
+        setErrorSuggestions(parseResult.error.suggestions)
+        // Add error as system message
+        const errorMsg: ChatItem = {
+          id: generateId(),
+          type: 'system',
+          text: parseResult.error.message,
+          timestamp: new Date(),
+        }
+        setItems((prev: ChatItem[]) => [...prev, errorMsg])
+        return
+      }
+      instruction = parseResult.instruction
+    }
+
+    // Fetch data
     setIsLoading(true)
     try {
-      const data = await fetchDataForInstruction(parseResult.instruction)
+      const data = await fetchDataForInstruction(instruction)
 
-      const newItem: GeneratedItem = {
-        id: `widget-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        instruction: parseResult.instruction,
+      const systemMsg: ChatItem = {
+        id: generateId(),
+        type: 'system',
+        text: instruction.title,
+        timestamp: new Date(),
+        instruction,
         data,
-        originalText: instructionText,
-        createdAt: new Date(),
       }
-
-      // Add to beginning of list
-      setItems((prev: GeneratedItem[]) => [newItem, ...prev])
+      setItems((prev: ChatItem[]) => [...prev, systemMsg])
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erreur inconnue'
+      const errorMsg: ChatItem = {
+        id: generateId(),
+        type: 'system',
+        text: `Erreur lors du chargement: ${message}`,
+        timestamp: new Date(),
+      }
+      setItems((prev: ChatItem[]) => [...prev, errorMsg])
       setError(`Erreur lors du chargement des données: ${message}`)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [getLastInstruction])
 
-  const handleRemove = useCallback((id: string) => {
-    setItems((prev: GeneratedItem[]) => prev.filter((item: GeneratedItem) => item.id !== id))
+  const handleRemoveWidget = useCallback((id: string) => {
+    setItems((prev: ChatItem[]) => prev.filter((item: ChatItem) => item.id !== id))
   }, [])
 
   const handleClearAll = useCallback(() => {
     setItems([])
+    localStorage.removeItem(STORAGE_KEY)
   }, [])
+
+  const hasMessages = items.length > 0
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', backgroundColor: colors.neutral[25] }}>
+      <Box sx={{
+        minHeight: '100vh',
+        backgroundColor: colors.neutral[25],
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
         {/* Header */}
         <ControlPanel
           breadcrumbs={[
@@ -96,7 +211,7 @@ const CustomDashboardPage = () => {
             { label: 'Générateur de Dashboard' },
           ]}
           actions={
-            items.length > 0 ? (
+            hasMessages ? (
               <button
                 onClick={handleClearAll}
                 style={{
@@ -114,162 +229,108 @@ const CustomDashboardPage = () => {
                 }}
               >
                 <Trash2 className="w-4 h-4" />
-                Tout effacer ({items.length})
+                Nouvelle conversation
               </button>
             ) : undefined
           }
         />
 
-        <Box sx={{ maxWidth: 1100, mx: 'auto', px: 3, pb: 6 }}>
-          {/* Intro section */}
+        {/* Chat area */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <Box sx={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 2,
-            mb: 3,
-            p: 2.5,
-            ...componentStyles.card,
-            backgroundColor: colors.primary[25],
-            borderColor: colors.primary[100],
+            flex: 1,
+            overflowY: 'auto',
+            px: 3,
+            pb: 2,
           }}>
-            <Box sx={{
-              width: 40,
-              height: 40,
-              borderRadius: borders.radius.lg,
-              backgroundColor: colors.primary[100],
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <Sparkles className="w-5 h-5" style={{ color: colors.primary[600] }} />
-            </Box>
-            <Box>
-              <Typography sx={{
-                fontSize: typography.sizes.base,
-                fontWeight: typography.weights.semibold,
-                color: colors.textPrimary,
-                mb: 0.5,
-              }}>
-                Générez vos tableaux de bord en une instruction
-              </Typography>
-              <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary, lineHeight: 1.6 }}>
-                Décrivez en français ce que vous souhaitez voir.
-                Le système analyse votre instruction et génère automatiquement le tableau ou graphique correspondant.
-                Exemples : <em>&quot;tableau des paiements par marché&quot;</em>, <em>&quot;répartition des conventions par statut&quot;</em>, <em>&quot;top 10 fournisseurs par montant&quot;</em>
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Input */}
-          <Box sx={{ mb: 3 }}>
-            <InstructionInput onSubmit={handleSubmit} isLoading={isLoading} />
-          </Box>
-
-          {/* Error */}
-          {error && (
-            <Alert
-              severity="warning"
-              sx={{ mb: 3, borderRadius: borders.radius.lg }}
-              onClose={() => setError(null)}
-            >
-              <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, mb: errorSuggestions.length > 0 ? 1 : 0 }}>
-                {error}
-              </Typography>
-              {errorSuggestions.length > 0 && (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1 }}>
-                  {errorSuggestions.map((suggestion: string, idx: number) => (
-                    <Chip
-                      key={idx}
-                      label={suggestion}
-                      size="small"
-                      onClick={() => {
-                        setError(null)
-                        handleSubmit(suggestion)
-                      }}
-                      sx={{
-                        cursor: 'pointer',
-                        fontSize: typography.sizes.xs,
-                        '&:hover': { backgroundColor: colors.primary[50] },
-                      }}
-                    />
+            <Box sx={{ maxWidth: 900, mx: 'auto' }}>
+              {/* Welcome screen or messages */}
+              {!hasMessages ? (
+                <WelcomeSplash onSuggestionClick={handleSubmit} />
+              ) : (
+                <Box sx={{ pt: 2 }}>
+                  {items.map((item: ChatItem) => (
+                    <ChatMessage
+                      key={item.id}
+                      type={item.type}
+                      content={item.text}
+                      timestamp={item.timestamp}
+                    >
+                      {item.instruction && item.data && (
+                        <GeneratedWidget
+                          instruction={item.instruction}
+                          data={item.data}
+                          originalText={item.text}
+                          onRemove={() => handleRemoveWidget(item.id)}
+                        />
+                      )}
+                    </ChatMessage>
                   ))}
+
+                  {/* Loading indicator */}
+                  {isLoading && (
+                    <ChatMessage
+                      type="system"
+                      content="Génération en cours..."
+                      timestamp={new Date()}
+                    >
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        py: 2,
+                        ...componentStyles.card,
+                        px: 3,
+                      }}>
+                        <CircularProgress size={20} />
+                        <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+                          Analyse et chargement des données...
+                        </Typography>
+                      </Box>
+                    </ChatMessage>
+                  )}
                 </Box>
               )}
-            </Alert>
-          )}
 
-          {/* Loading */}
-          {isLoading && (
-            <Box sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 2,
-              py: 4,
-              mb: 3,
-              ...componentStyles.card,
-            }}>
-              <CircularProgress size={24} />
-              <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
-                Génération en cours...
-              </Typography>
+              {/* Error */}
+              {error && (
+                <Alert
+                  severity="warning"
+                  sx={{ mb: 2, borderRadius: borders.radius.lg, maxWidth: 600, mx: 'auto' }}
+                  onClose={() => setError(null)}
+                >
+                  <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, mb: errorSuggestions.length > 0 ? 1 : 0 }}>
+                    {error}
+                  </Typography>
+                  {errorSuggestions.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1 }}>
+                      {errorSuggestions.map((suggestion: string, idx: number) => (
+                        <Chip
+                          key={idx}
+                          label={suggestion}
+                          size="small"
+                          onClick={() => {
+                            setError(null)
+                            handleSubmit(suggestion)
+                          }}
+                          sx={{
+                            cursor: 'pointer',
+                            fontSize: typography.sizes.xs,
+                            '&:hover': { backgroundColor: colors.primary[50] },
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                </Alert>
+              )}
+
+              <div ref={chatEndRef} />
             </Box>
-          )}
+          </Box>
 
-          {/* Generated widgets */}
-          {items.map((item: GeneratedItem) => (
-            <GeneratedWidget
-              key={item.id}
-              instruction={item.instruction}
-              data={item.data}
-              originalText={item.originalText}
-              onRemove={() => handleRemove(item.id)}
-            />
-          ))}
-
-          {/* Empty state */}
-          {items.length === 0 && !isLoading && (
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              py: 8,
-              ...componentStyles.card,
-              backgroundColor: colors.surface,
-            }}>
-              <Box sx={{
-                width: 64,
-                height: 64,
-                borderRadius: borders.radius.xl,
-                backgroundColor: colors.neutral[100],
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 2,
-              }}>
-                <LayoutDashboard className="w-8 h-8" style={{ color: colors.neutral[400] }} />
-              </Box>
-              <Typography sx={{
-                fontSize: typography.sizes.lg,
-                fontWeight: typography.weights.semibold,
-                color: colors.textPrimary,
-                mb: 1,
-              }}>
-                Votre espace de création
-              </Typography>
-              <Typography sx={{
-                fontSize: typography.sizes.sm,
-                color: colors.textSecondary,
-                textAlign: 'center',
-                maxWidth: 420,
-              }}>
-                Tapez une instruction ci-dessus pour générer automatiquement un tableau de bord personnalisé.
-                Chaque widget peut être basculé entre tableau et graphique.
-              </Typography>
-            </Box>
-          )}
+          {/* Bottom input */}
+          <InstructionInput onSubmit={handleSubmit} isLoading={isLoading} />
         </Box>
       </Box>
     </AppLayout>

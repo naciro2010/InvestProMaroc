@@ -1,15 +1,11 @@
 /**
- * InstructionInput - Text input with autocomplete suggestions and example chips.
+ * InstructionInput - Bottom-fixed chat input bar (Claude-like).
  */
 
 import React, { useState, useRef, useCallback } from 'react'
-import {
-  Box, TextField, Typography, Chip, InputAdornment, IconButton,
-  Collapse, Paper,
-} from '@mui/material'
-import { Send, Sparkles, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
-import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
-import { EXAMPLE_INSTRUCTIONS } from './instructionParser'
+import { Box, TextField, InputAdornment, IconButton, Typography } from '@mui/material'
+import { Send, Sparkles } from 'lucide-react'
+import { colors, typography, borders } from '@/lib/designSystem'
 
 interface InstructionInputProps {
   onSubmit: (instruction: string) => void
@@ -18,13 +14,13 @@ interface InstructionInputProps {
 
 const InstructionInput = ({ onSubmit, isLoading }: InstructionInputProps) => {
   const [value, setValue] = useState('')
-  const [showExamples, setShowExamples] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = useCallback(() => {
     const trimmed = value.trim()
     if (trimmed && !isLoading) {
       onSubmit(trimmed)
+      setValue('')
     }
   }, [value, isLoading, onSubmit])
 
@@ -35,110 +31,75 @@ const InstructionInput = ({ onSubmit, isLoading }: InstructionInputProps) => {
     }
   }
 
-  const handleExampleClick = (text: string) => {
-    setValue(text)
-    onSubmit(text)
-    setShowExamples(false)
-  }
-
-  // Group examples by category
-  const categories = Array.from(new Set(EXAMPLE_INSTRUCTIONS.map((e) => e.category)))
-
   return (
-    <Box>
-      {/* Main input */}
-      <Paper sx={{
-        ...componentStyles.card,
-        p: 0,
-        overflow: 'hidden',
-        border: `2px solid ${colors.primary[200]}`,
-        '&:focus-within': {
-          borderColor: colors.primary[500],
-        },
-      }}>
-        <TextField
-          inputRef={inputRef}
-          value={value}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Décrivez le tableau ou graphique que vous souhaitez générer..."
-          fullWidth
-          multiline
-          maxRows={3}
-          disabled={isLoading}
-          variant="standard"
-          sx={{
-            '& .MuiInput-root': {
-              p: 2,
-              pb: 1,
-              '&:before, &:after': { display: 'none' },
-            },
-            '& .MuiInputBase-input': {
-              fontSize: typography.sizes.base,
-              color: colors.textPrimary,
-              '&::placeholder': {
-                color: colors.textSecondary,
-                opacity: 1,
-              },
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start" sx={{ mr: 1, mt: '2px !important', alignSelf: 'flex-start' }}>
-                <Sparkles className="w-5 h-5" style={{ color: colors.primary[500] }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-
-        {/* Action bar */}
+    <Box sx={{
+      position: 'sticky',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: colors.neutral[25],
+      borderTop: `1px solid ${colors.border}`,
+      px: 3,
+      py: 2,
+      zIndex: 10,
+    }}>
+      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
         <Box sx={{
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          px: 2,
-          py: 1,
-          borderTop: `1px solid ${colors.neutral[100]}`,
-          backgroundColor: colors.neutral[25],
+          alignItems: 'flex-end',
+          gap: 1,
+          backgroundColor: colors.surface,
+          border: `2px solid ${colors.primary[200]}`,
+          borderRadius: borders.radius.xl,
+          px: 1.5,
+          py: 0.5,
+          transition: 'border-color 0.2s',
+          '&:focus-within': {
+            borderColor: colors.primary[500],
+          },
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <button
-              onClick={() => setShowExamples(!showExamples)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 10px',
-                fontSize: typography.sizes.xs,
-                color: colors.primary[600],
-                backgroundColor: colors.primary[50],
-                border: `1px solid ${colors.primary[200]}`,
-                borderRadius: borders.radius.full,
-                cursor: 'pointer',
-                fontWeight: typography.weights.medium,
-              }}
-            >
-              <Lightbulb className="w-3.5 h-3.5" />
-              Exemples
-              {showExamples
-                ? <ChevronUp className="w-3 h-3" />
-                : <ChevronDown className="w-3 h-3" />
-              }
-            </button>
-            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-              Appuyez sur Entrée pour générer
-            </Typography>
-          </Box>
+          <InputAdornment position="start" sx={{ mb: 1, ml: 0.5 }}>
+            <Sparkles className="w-5 h-5" style={{ color: colors.primary[500] }} />
+          </InputAdornment>
+
+          <TextField
+            inputRef={inputRef}
+            value={value}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Décrivez le tableau ou graphique à générer..."
+            fullWidth
+            multiline
+            maxRows={4}
+            disabled={isLoading}
+            variant="standard"
+            sx={{
+              '& .MuiInput-root': {
+                py: 1,
+                '&:before, &:after': { display: 'none' },
+              },
+              '& .MuiInputBase-input': {
+                fontSize: typography.sizes.sm,
+                color: colors.textPrimary,
+                '&::placeholder': {
+                  color: colors.textSecondary,
+                  opacity: 1,
+                },
+              },
+            }}
+          />
 
           <IconButton
             onClick={handleSubmit}
             disabled={!value.trim() || isLoading}
             size="small"
             sx={{
+              mb: 0.5,
               backgroundColor: value.trim() ? colors.primary[600] : colors.neutral[200],
               color: colors.textOnColor,
-              width: 32,
-              height: 32,
+              width: 34,
+              height: 34,
+              borderRadius: borders.radius.lg,
               '&:hover': {
                 backgroundColor: value.trim() ? colors.primary[700] : colors.neutral[200],
               },
@@ -151,55 +112,16 @@ const InstructionInput = ({ onSubmit, isLoading }: InstructionInputProps) => {
             <Send className="w-4 h-4" />
           </IconButton>
         </Box>
-      </Paper>
 
-      {/* Examples panel */}
-      <Collapse in={showExamples}>
-        <Paper sx={{
-          ...componentStyles.card,
-          mt: 1,
-          p: 2.5,
+        <Typography sx={{
+          fontSize: typography.sizes['2xs'],
+          color: colors.neutral[400],
+          textAlign: 'center',
+          mt: 0.75,
         }}>
-          {categories.map((category) => (
-            <Box key={category} sx={{ mb: 2, '&:last-child': { mb: 0 } }}>
-              <Typography sx={{
-                fontSize: typography.sizes.xs,
-                fontWeight: typography.weights.semibold,
-                color: colors.textSecondary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                mb: 1,
-              }}>
-                {category}
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                {EXAMPLE_INSTRUCTIONS
-                  .filter((e) => e.category === category)
-                  .map((example) => (
-                    <Chip
-                      key={example.text}
-                      label={example.text}
-                      size="small"
-                      onClick={() => handleExampleClick(example.text)}
-                      sx={{
-                        fontSize: typography.sizes.xs,
-                        color: colors.textPrimary,
-                        backgroundColor: colors.neutral[50],
-                        border: `1px solid ${colors.neutral[200]}`,
-                        cursor: 'pointer',
-                        '&:hover': {
-                          backgroundColor: colors.primary[50],
-                          borderColor: colors.primary[300],
-                          color: colors.primary[700],
-                        },
-                      }}
-                    />
-                  ))}
-              </Box>
-            </Box>
-          ))}
-        </Paper>
-      </Collapse>
+          Appuyez sur Entrée pour générer · Exemples : &quot;tableau des marchés par statut&quot;, &quot;top 5 fournisseurs&quot;
+        </Typography>
+      </Box>
     </Box>
   )
 }

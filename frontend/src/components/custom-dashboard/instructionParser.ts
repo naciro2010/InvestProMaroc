@@ -2,13 +2,10 @@
  * InstructionParser - Rule-based French instruction parser for dashboard generation
  * Parses user text instructions into structured query configurations WITHOUT AI.
  *
- * Supported patterns:
- *   "tableau des paiements par marché"
- *   "graphique des conventions par statut"
- *   "nombre de marchés par fournisseur"
- *   "montant total des décomptes par convention"
- *   "évolution des paiements par mois"
- *   "top 10 fournisseurs par montant"
+ * Supports:
+ *   - New queries: "tableau des paiements par marché"
+ *   - Follow-up modifications: "change en camembert", "groupe par fournisseur"
+ *   - Refinement: "top 5 seulement", "en barres"
  */
 
 // ============================================================================
@@ -51,6 +48,15 @@ export interface ParsedInstruction {
   title: string
   confidence: number
   warnings: string[]
+  explanation: ParseExplanation
+}
+
+export interface ParseExplanation {
+  entityDetected: string
+  visualizationDetected: string
+  groupByDetected: string | null
+  metricDetected: string
+  steps: string[]
 }
 
 export interface ParserError {
@@ -67,133 +73,170 @@ export type ParseResult =
 // ============================================================================
 
 const VISUALIZATION_KEYWORDS: Record<string, VisualizationType> = {
-  // Table
-  tableau: 'table',
-  table: 'table',
-  liste: 'table',
-  lister: 'table',
-  afficher: 'table',
-  montrer: 'table',
-  voir: 'table',
-  // Bar chart
-  bar: 'bar',
-  barre: 'bar',
-  barres: 'bar',
-  histogramme: 'bar',
-  // Pie chart
-  camembert: 'pie',
-  pie: 'pie',
-  circulaire: 'pie',
-  repartition: 'pie',
-  répartition: 'pie',
-  distribution: 'pie',
-  // Line chart
-  ligne: 'line',
-  courbe: 'line',
-  evolution: 'line',
-  évolution: 'line',
-  tendance: 'line',
-  trend: 'line',
-  // KPI
-  kpi: 'kpi',
-  resume: 'kpi',
-  résumé: 'kpi',
-  synthese: 'kpi',
-  synthèse: 'kpi',
-  total: 'kpi',
-  // Chart (generic)
-  graphique: 'bar',
-  graph: 'bar',
-  chart: 'bar',
-  diagramme: 'bar',
+  tableau: 'table', table: 'table', liste: 'table', lister: 'table',
+  afficher: 'table', montrer: 'table', voir: 'table',
+  bar: 'bar', barre: 'bar', barres: 'bar', histogramme: 'bar',
+  camembert: 'pie', pie: 'pie', circulaire: 'pie',
+  repartition: 'pie', répartition: 'pie', distribution: 'pie',
+  ligne: 'line', courbe: 'line', evolution: 'line', évolution: 'line',
+  tendance: 'line', trend: 'line',
+  kpi: 'kpi', resume: 'kpi', résumé: 'kpi', synthese: 'kpi', synthèse: 'kpi',
+  graphique: 'bar', graph: 'bar', chart: 'bar', diagramme: 'bar',
 }
 
 const ENTITY_KEYWORDS: Record<string, EntityType> = {
-  convention: 'conventions',
-  conventions: 'conventions',
-  marche: 'marches',
-  marchés: 'marches',
-  marches: 'marches',
-  marché: 'marches',
-  projet: 'projets',
-  projets: 'projets',
-  decompte: 'decomptes',
-  decomptes: 'decomptes',
-  décompte: 'decomptes',
-  décomptes: 'decomptes',
-  paiement: 'paiements',
-  paiements: 'paiements',
-  payment: 'paiements',
-  payments: 'paiements',
-  fournisseur: 'fournisseurs',
-  fournisseurs: 'fournisseurs',
-  budget: 'budgets',
-  budgets: 'budgets',
+  convention: 'conventions', conventions: 'conventions',
+  marche: 'marches', marchés: 'marches', marches: 'marches', marché: 'marches',
+  projet: 'projets', projets: 'projets',
+  decompte: 'decomptes', decomptes: 'decomptes', décompte: 'decomptes', décomptes: 'decomptes',
+  paiement: 'paiements', paiements: 'paiements', payment: 'paiements', payments: 'paiements',
+  fournisseur: 'fournisseurs', fournisseurs: 'fournisseurs',
+  budget: 'budgets', budgets: 'budgets',
 }
 
 const GROUP_BY_KEYWORDS: Record<string, GroupByField> = {
-  statut: 'statut',
-  status: 'statut',
-  état: 'statut',
-  etat: 'statut',
-  type: 'type',
-  nature: 'type',
+  statut: 'statut', status: 'statut', état: 'statut', etat: 'statut',
+  type: 'type', nature: 'type',
   convention: 'convention',
-  marche: 'marche',
-  marché: 'marche',
-  fournisseur: 'fournisseur',
-  prestataire: 'fournisseur',
+  marche: 'marche', marché: 'marche',
+  fournisseur: 'fournisseur', prestataire: 'fournisseur',
   projet: 'projet',
-  mois: 'mois',
-  mensuel: 'mois',
-  annee: 'annee',
-  année: 'annee',
-  annuel: 'annee',
-  zone: 'zone',
-  région: 'zone',
-  region: 'zone',
-  géographique: 'zone',
-  geographique: 'zone',
+  mois: 'mois', mensuel: 'mois',
+  annee: 'annee', année: 'annee', annuel: 'annee',
+  zone: 'zone', région: 'zone', region: 'zone',
+  géographique: 'zone', geographique: 'zone',
 }
 
 const METRIC_KEYWORDS: Record<string, MetricType> = {
-  nombre: 'count',
-  count: 'count',
-  combien: 'count',
-  total: 'sum',
-  somme: 'sum',
-  montant: 'sum',
-  sum: 'sum',
-  moyenne: 'average',
-  average: 'average',
-  moy: 'average',
+  nombre: 'count', count: 'count', combien: 'count',
+  total: 'sum', somme: 'sum', montant: 'sum', sum: 'sum',
+  moyenne: 'average', average: 'average', moy: 'average',
 }
 
 const METRIC_FIELD_KEYWORDS: Record<string, MetricField> = {
   montant: 'montant',
-  montantht: 'montantHT',
-  'montant ht': 'montantHT',
-  ht: 'montantHT',
-  montantttc: 'montantTTC',
-  'montant ttc': 'montantTTC',
-  ttc: 'montantTTC',
+  montantht: 'montantHT', 'montant ht': 'montantHT', ht: 'montantHT',
+  montantttc: 'montantTTC', 'montant ttc': 'montantTTC', ttc: 'montantTTC',
   budget: 'budget',
-  netapayer: 'netAPayer',
-  'net a payer': 'netAPayer',
-  'net à payer': 'netAPayer',
+  netapayer: 'netAPayer', 'net a payer': 'netAPayer', 'net à payer': 'netAPayer',
+}
+
+const ENTITY_LABELS: Record<EntityType, string> = {
+  conventions: 'Conventions', marches: 'Marchés', projets: 'Projets',
+  decomptes: 'Décomptes', paiements: 'Paiements',
+  fournisseurs: 'Fournisseurs', budgets: 'Budgets',
+}
+
+const VIZ_LABELS: Record<VisualizationType, string> = {
+  table: 'Tableau', bar: 'Graphique en barres', pie: 'Camembert',
+  line: 'Courbe', kpi: 'KPI',
+}
+
+const GROUP_LABELS: Record<GroupByField, string> = {
+  statut: 'statut', type: 'type', convention: 'convention',
+  marche: 'marché', fournisseur: 'fournisseur', projet: 'projet',
+  mois: 'mois', annee: 'année', zone: 'zone géographique',
+}
+
+const METRIC_LABELS: Record<MetricType, string> = {
+  count: 'Nombre de', sum: 'Montant total des', average: 'Moyenne des',
 }
 
 // ============================================================================
-// Parser
+// Follow-up Detection
+// ============================================================================
+
+const FOLLOW_UP_VIZ_PATTERNS: Array<{ pattern: RegExp; viz: VisualizationType }> = [
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?)\s+(?:en|au?x?)\s+(tableau|table|liste)/i, viz: 'table' },
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?)\s+(?:en|au?x?)\s+(bar|barre|barres|histogramme)/i, viz: 'bar' },
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?)\s+(?:en|au?x?)\s+(camembert|pie|circulaire)/i, viz: 'pie' },
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?)\s+(?:en|au?x?)\s+(courbe|ligne|line)/i, viz: 'line' },
+  { pattern: /en\s+(camembert|pie)/i, viz: 'pie' },
+  { pattern: /en\s+(barres?|bar|histogramme)/i, viz: 'bar' },
+  { pattern: /en\s+(tableau|table|liste)/i, viz: 'table' },
+  { pattern: /en\s+(courbe|ligne)/i, viz: 'line' },
+]
+
+const FOLLOW_UP_GROUP_PATTERNS: Array<{ pattern: RegExp; extract: (m: RegExpMatchArray) => string }> = [
+  { pattern: /(?:groupe|regroupe|trie|class[eé])\s+par\s+(\w+)/i, extract: (m: RegExpMatchArray) => m[1] },
+  { pattern: /par\s+(\w+)\s+(?:plutôt|plut[oô]t|à la place|instead)/i, extract: (m: RegExpMatchArray) => m[1] },
+]
+
+const FOLLOW_UP_LIMIT_PATTERN = /(?:top|limite|seulement|juste)\s+(\d+)/i
+
+export interface FollowUpResult {
+  isFollowUp: true
+  vizChange: VisualizationType | null
+  groupByChange: GroupByField | null
+  limitChange: number | null
+}
+
+export function detectFollowUp(input: string, _previousInstruction: ParsedInstruction): FollowUpResult | null {
+  const normalized = input.toLowerCase().trim()
+  const words = normalized.split(/\s+/)
+
+  // Don't treat as follow-up if it has an entity keyword (it's a new query)
+  const hasEntity = words.some((w: string) => ENTITY_KEYWORDS[w] !== undefined)
+  if (hasEntity) return null
+
+  let vizChange: VisualizationType | null = null
+  let groupByChange: GroupByField | null = null
+  let limitChange: number | null = null
+
+  // Check viz changes
+  for (const { pattern, viz } of FOLLOW_UP_VIZ_PATTERNS) {
+    if (pattern.test(normalized)) {
+      vizChange = viz
+      break
+    }
+  }
+
+  // Check group by changes
+  for (const { pattern, extract } of FOLLOW_UP_GROUP_PATTERNS) {
+    const match = normalized.match(pattern)
+    if (match) {
+      const groupWord = extract(match)
+      if (GROUP_BY_KEYWORDS[groupWord]) {
+        groupByChange = GROUP_BY_KEYWORDS[groupWord]
+      }
+      break
+    }
+  }
+
+  // Check limit changes
+  const limitMatch = normalized.match(FOLLOW_UP_LIMIT_PATTERN)
+  if (limitMatch) {
+    limitChange = parseInt(limitMatch[1], 10)
+  }
+
+  if (!vizChange && !groupByChange && limitChange === null) return null
+
+  return { isFollowUp: true, vizChange, groupByChange, limitChange }
+}
+
+export function applyFollowUp(
+  previous: ParsedInstruction,
+  followUp: FollowUpResult
+): ParsedInstruction {
+  const updated: ParsedInstruction = { ...previous, warnings: [] }
+
+  if (followUp.vizChange) updated.visualization = followUp.vizChange
+  if (followUp.groupByChange) updated.groupBy = followUp.groupByChange
+  if (followUp.limitChange !== null) updated.limit = followUp.limitChange
+
+  updated.title = generateTitle(updated)
+  updated.explanation = buildExplanation(updated, true)
+  updated.confidence = Math.min(previous.confidence + 0.05, 1.0)
+
+  return updated
+}
+
+// ============================================================================
+// Parser Helpers
 // ============================================================================
 
 function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/['']/g, "'")
-    .replace(/[""]/g, '"')
-    .replace(/\s+/g, ' ')
+  return text.toLowerCase().trim().replace(/['']/g, "'").replace(/[""]/g, '"').replace(/\s+/g, ' ')
 }
 
 function extractNumber(text: string): number | null {
@@ -203,88 +246,48 @@ function extractNumber(text: string): number | null {
 
 function findVisualization(words: string[]): VisualizationType | null {
   for (const word of words) {
-    if (VISUALIZATION_KEYWORDS[word]) {
-      return VISUALIZATION_KEYWORDS[word]
-    }
+    if (VISUALIZATION_KEYWORDS[word]) return VISUALIZATION_KEYWORDS[word]
   }
   return null
 }
 
 function findEntity(words: string[]): EntityType | null {
   for (const word of words) {
-    if (ENTITY_KEYWORDS[word]) {
-      return ENTITY_KEYWORDS[word]
-    }
+    if (ENTITY_KEYWORDS[word]) return ENTITY_KEYWORDS[word]
   }
   return null
 }
 
 function findGroupBy(normalized: string): GroupByField | null {
-  // Look for "par X" pattern
-  const parMatch = normalized.match(/par\s+(\w+)/)
-  if (parMatch) {
-    const groupWord = parMatch[1]
-    if (GROUP_BY_KEYWORDS[groupWord]) {
-      return GROUP_BY_KEYWORDS[groupWord]
-    }
+  const patterns = [/par\s+(\w+)/, /selon\s+(\w+)/, /group[eéer]+\s+par\s+(\w+)/]
+  for (const pattern of patterns) {
+    const match = normalized.match(pattern)
+    if (match && GROUP_BY_KEYWORDS[match[1]]) return GROUP_BY_KEYWORDS[match[1]]
   }
-
-  // Look for "selon X" pattern
-  const selonMatch = normalized.match(/selon\s+(\w+)/)
-  if (selonMatch) {
-    const groupWord = selonMatch[1]
-    if (GROUP_BY_KEYWORDS[groupWord]) {
-      return GROUP_BY_KEYWORDS[groupWord]
-    }
-  }
-
-  // Look for "groupé par X" / "grouper par X"
-  const groupeMatch = normalized.match(/group[eéer]+\s+par\s+(\w+)/)
-  if (groupeMatch) {
-    const groupWord = groupeMatch[1]
-    if (GROUP_BY_KEYWORDS[groupWord]) {
-      return GROUP_BY_KEYWORDS[groupWord]
-    }
-  }
-
   return null
 }
 
 function findMetric(words: string[]): MetricType {
   for (const word of words) {
-    if (METRIC_KEYWORDS[word]) {
-      return METRIC_KEYWORDS[word]
-    }
+    if (METRIC_KEYWORDS[word]) return METRIC_KEYWORDS[word]
   }
   return 'count'
 }
 
 function findMetricField(normalized: string, entity: EntityType): MetricField {
   for (const [keyword, field] of Object.entries(METRIC_FIELD_KEYWORDS)) {
-    if (normalized.includes(keyword)) {
-      return field
-    }
+    if (normalized.includes(keyword)) return field
   }
-  // Defaults based on entity
   switch (entity) {
-    case 'marches':
-      return 'montantHT'
-    case 'decomptes':
-      return 'netAPayer'
-    case 'paiements':
-      return 'montant'
-    case 'budgets':
-      return 'budget'
-    default:
-      return 'montant'
+    case 'marches': return 'montantHT'
+    case 'decomptes': return 'netAPayer'
+    case 'paiements': return 'montant'
+    case 'budgets': return 'budget'
+    default: return 'montant'
   }
 }
 
-function inferVisualization(
-  metric: MetricType,
-  groupBy: GroupByField | null,
-  hasLimit: boolean
-): VisualizationType {
+function inferVisualization(metric: MetricType, groupBy: GroupByField | null, hasLimit: boolean): VisualizationType {
   if (!groupBy && metric === 'count') return 'kpi'
   if (groupBy === 'mois' || groupBy === 'annee') return 'line'
   if (groupBy === 'statut' || groupBy === 'type') return 'pie'
@@ -293,42 +296,42 @@ function inferVisualization(
 }
 
 function generateTitle(instruction: ParsedInstruction): string {
-  const entityNames: Record<EntityType, string> = {
-    conventions: 'Conventions',
-    marches: 'Marchés',
-    projets: 'Projets',
-    decomptes: 'Décomptes',
-    paiements: 'Paiements',
-    fournisseurs: 'Fournisseurs',
-    budgets: 'Budgets',
-  }
-
-  const groupNames: Record<GroupByField, string> = {
-    statut: 'statut',
-    type: 'type',
-    convention: 'convention',
-    marche: 'marché',
-    fournisseur: 'fournisseur',
-    projet: 'projet',
-    mois: 'mois',
-    annee: 'année',
-    zone: 'zone géographique',
-  }
-
-  const metricNames: Record<MetricType, string> = {
-    count: 'Nombre de',
-    sum: 'Montant total des',
-    average: 'Moyenne des',
-  }
-
-  const entityLabel = entityNames[instruction.entity]
-  const prefix = metricNames[instruction.metric]
-  const groupSuffix = instruction.groupBy
-    ? ` par ${groupNames[instruction.groupBy]}`
-    : ''
+  const entityLabel = ENTITY_LABELS[instruction.entity]
+  const prefix = METRIC_LABELS[instruction.metric]
+  const groupSuffix = instruction.groupBy ? ` par ${GROUP_LABELS[instruction.groupBy]}` : ''
   const limitPrefix = instruction.limit ? `Top ${instruction.limit} - ` : ''
-
   return `${limitPrefix}${prefix} ${entityLabel}${groupSuffix}`
+}
+
+function buildExplanation(instruction: ParsedInstruction, isFollowUp: boolean = false): ParseExplanation {
+  const steps: string[] = []
+
+  if (isFollowUp) {
+    steps.push('Modification appliquée au dernier résultat')
+  }
+
+  steps.push(`Données: ${ENTITY_LABELS[instruction.entity]}`)
+  steps.push(`Visualisation: ${VIZ_LABELS[instruction.visualization]}`)
+
+  if (instruction.groupBy) {
+    steps.push(`Regroupement: par ${GROUP_LABELS[instruction.groupBy]}`)
+  }
+
+  if (instruction.metric !== 'count') {
+    steps.push(`Métrique: ${METRIC_LABELS[instruction.metric]}`)
+  }
+
+  if (instruction.limit) {
+    steps.push(`Limite: top ${instruction.limit}`)
+  }
+
+  return {
+    entityDetected: ENTITY_LABELS[instruction.entity],
+    visualizationDetected: VIZ_LABELS[instruction.visualization],
+    groupByDetected: instruction.groupBy ? GROUP_LABELS[instruction.groupBy] : null,
+    metricDetected: METRIC_LABELS[instruction.metric],
+    steps,
+  }
 }
 
 // ============================================================================
@@ -354,7 +357,6 @@ export function parseInstruction(input: string): ParseResult {
     }
   }
 
-  // 1. Find entity (required)
   const entity = findEntity(words)
   if (!entity) {
     return {
@@ -369,54 +371,38 @@ export function parseInstruction(input: string): ParseResult {
     }
   }
 
-  // 2. Find group by
   const groupBy = findGroupBy(normalized)
-
-  // 3. Find metric
   const metric = findMetric(words)
-
-  // 4. Find metric field
   const metricField = findMetricField(normalized, entity)
-
-  // 5. Find limit (top N)
   const limit = extractNumber(normalized)
 
-  // 6. Find visualization (or infer)
   let visualization = findVisualization(words)
   if (!visualization) {
     visualization = inferVisualization(metric, groupBy, limit !== null)
     warnings.push('Type de visualisation inféré automatiquement. Vous pouvez préciser: tableau, graphique, camembert, courbe.')
   }
 
-  // 7. Confidence scoring
   let confidence = 0.5
   if (entity) confidence += 0.2
   if (groupBy) confidence += 0.15
   if (findVisualization(words)) confidence += 0.1
-  if (metric !== 'count' || words.some(w => METRIC_KEYWORDS[w])) confidence += 0.05
+  if (metric !== 'count' || words.some((w: string) => METRIC_KEYWORDS[w] !== undefined)) confidence += 0.05
 
-  // 8. Validation warnings
   if (visualization === 'line' && groupBy !== 'mois' && groupBy !== 'annee') {
     warnings.push('Les graphiques en ligne fonctionnent mieux avec un regroupement temporel (par mois ou par année).')
   }
-
   if (visualization === 'pie' && limit && limit > 10) {
     warnings.push('Les camemberts sont plus lisibles avec moins de 10 éléments.')
   }
 
   const instruction: ParsedInstruction = {
-    visualization,
-    entity,
-    groupBy,
-    metric,
-    metricField,
-    limit,
-    title: '',
-    confidence,
-    warnings,
+    visualization, entity, groupBy, metric, metricField, limit,
+    title: '', confidence, warnings,
+    explanation: { entityDetected: '', visualizationDetected: '', groupByDetected: null, metricDetected: '', steps: [] },
   }
 
   instruction.title = generateTitle(instruction)
+  instruction.explanation = buildExplanation(instruction)
 
   return { success: true, instruction }
 }
@@ -425,25 +411,13 @@ export function parseInstruction(input: string): ParseResult {
 // Suggestions
 // ============================================================================
 
-export const EXAMPLE_INSTRUCTIONS: Array<{ text: string; category: string }> = [
-  // Tables
-  { text: 'Tableau des conventions par statut', category: 'Tableaux' },
-  { text: 'Liste des marchés par fournisseur', category: 'Tableaux' },
-  { text: 'Tableau des paiements par marché et convention', category: 'Tableaux' },
-  { text: 'Afficher les décomptes par marché', category: 'Tableaux' },
-  { text: 'Liste des projets par statut', category: 'Tableaux' },
-  // Charts
-  { text: 'Graphique des conventions par statut', category: 'Graphiques' },
-  { text: 'Répartition des marchés par type', category: 'Graphiques' },
-  { text: 'Camembert des paiements par fournisseur', category: 'Graphiques' },
-  { text: 'Histogramme des budgets par projet', category: 'Graphiques' },
-  // Time series
-  { text: 'Évolution des paiements par mois', category: 'Évolution' },
-  { text: 'Courbe des décomptes par mois', category: 'Évolution' },
-  { text: 'Tendance des marchés par année', category: 'Évolution' },
-  // KPIs & Top N
-  { text: 'Top 10 fournisseurs par montant', category: 'Top / KPI' },
-  { text: 'Top 5 conventions par budget', category: 'Top / KPI' },
-  { text: 'Nombre total de marchés', category: 'Top / KPI' },
-  { text: 'Montant total des paiements', category: 'Top / KPI' },
+export const EXAMPLE_INSTRUCTIONS: Array<{ text: string; icon: string }> = [
+  { text: 'Tableau des conventions par statut', icon: 'table' },
+  { text: 'Graphique des marchés par type', icon: 'bar' },
+  { text: 'Répartition des paiements par fournisseur', icon: 'pie' },
+  { text: 'Évolution des décomptes par mois', icon: 'line' },
+  { text: 'Top 10 fournisseurs par montant', icon: 'bar' },
+  { text: 'Nombre total de conventions', icon: 'kpi' },
+  { text: 'Liste des projets par statut', icon: 'table' },
+  { text: 'Camembert des budgets par projet', icon: 'pie' },
 ]

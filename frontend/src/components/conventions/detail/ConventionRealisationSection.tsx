@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Button, Chip, CircularProgress } from '@mui/material'
+import { Box, Typography, Button, CircularProgress } from '@mui/material'
 import { ListAlt } from '@mui/icons-material'
 import { StatusBadge, InlineTable, Notebook, ResizableSection, ConfirmDialog } from '@/components/core'
 import ConventionAvenantsTab from './ConventionAvenantsTab'
 import { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedTab'
-import ConventionBudgetLignesCard from './ConventionBudgetLignesCard'
+import ConventionBudgetDistributionCard from './ConventionBudgetDistributionCard'
+import ConventionSubventionsCard from './ConventionSubventionsCard'
+import ConventionPartenairesCard from './ConventionPartenairesCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
 import LinkProjetDialog from '../LinkProjetDialog'
 import LinkMarcheDialog from '../LinkMarcheDialog'
@@ -16,18 +18,16 @@ import { colors, typography } from '@/lib/designSystem'
 import type { SousConvention, Avenant, Projet, Marche } from './types'
 import type { ConventionBudgetLigneDTO } from '@/types/api'
 
+// ──── Types ────
+
 interface ConventionBase {
   id: number; numero: string; libelle: string; dateSignature: string; dateDebut: string; dateFin?: string; budget: number
   typeConvention: 'CADRE' | 'SPECIFIQUE'; tauxCommission: number; baseCalcul: string; tauxTva: number
+  parentConventionId?: number | null
 }
 
-interface ProjetAssociation { projetId: number; projetCode: string; projetNom: string; projetBudgetTotal: number; projetStatut: string }
-
-interface ConventionRealisationSectionProps {
-  convention: ConventionBase
-  canEdit?: boolean
-  onRefresh?: () => void
-  refreshKey?: number
+interface ProjetAssociation {
+  projetId: number; projetCode: string; projetNom: string; projetBudgetTotal: number; projetStatut: string
 }
 
 interface CoherenceMetrics {
@@ -39,6 +39,24 @@ interface CoherenceMetrics {
   totalDecomptes: number
   totalPaiements: number
 }
+
+interface ConventionRealisationSectionProps {
+  convention: ConventionBase
+  canEdit?: boolean
+  onRefresh?: () => void
+  refreshKey?: number
+  onAddPartenaire?: () => void
+  onEditPartenaire?: (partenaire: PartenaireEditRef) => void
+}
+
+interface PartenaireEditRef {
+  id: number; partenaireId: number; partenaireCode: string; partenaireNom: string
+  partenaireSigle: string | null; budgetAlloue: number; pourcentage: number
+  commissionIntervention: number | null; estMaitreOeuvre: boolean; estMaitreOeuvreDelegue: boolean
+  remarques: string | null
+}
+
+// ──── Helpers ────
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
@@ -65,25 +83,24 @@ const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'se
 }
 
 const statusChip = (isOk: boolean, message: string) => (
-  <Chip
-    size="small"
-    label={message}
-    sx={{
-      bgcolor: isOk ? colors.success[50] : colors.warning[50],
-      color: isOk ? colors.success[700] : colors.warning[700],
-      border: `1px solid ${isOk ? colors.success[200] : colors.warning[200]}`,
-      fontWeight: typography.weights.semibold,
-      fontSize: typography.sizes.xs,
-      height: 22,
-    }}
-  />
+  <Box sx={{
+    display: 'inline-flex', px: 1.5, py: 0.25, borderRadius: '4px',
+    bgcolor: isOk ? colors.success[50] : colors.warning[50],
+    color: isOk ? colors.success[700] : colors.warning[700],
+    border: `1px solid ${isOk ? colors.success[200] : colors.warning[200]}`,
+    fontWeight: typography.weights.semibold,
+    fontSize: typography.sizes.xs,
+  }}>
+    {message}
+  </Box>
 )
 
-/**
- * Self-contained micro-component: loads projets, marches, sous-conventions, avenants.
- * Includes a coherence strip to keep budget/prevision/realisation crystal clear.
- */
-const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, refreshKey }: ConventionRealisationSectionProps) => {
+// ──── Main Component ────
+
+const ConventionRealisationSection = ({
+  convention, canEdit = false, onRefresh, refreshKey,
+  onAddPartenaire, onEditPartenaire,
+}: ConventionRealisationSectionProps) => {
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
 
@@ -147,38 +164,20 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
           marchesAPI.getDecomptes(m.id).catch(() => ({ data: { data: [] } })),
           marchesAPI.getPaiements(m.id).catch(() => ({ data: { data: [] } })),
         ])
-
         const decomptes = (decompteRes.data.data || decompteRes.data || []) as Array<{ netAPayer?: number; montantTtc?: number; montant?: number }>
         const paiements = (paiementRes.data.data || paiementRes.data || []) as Array<{ montantPaye?: number; montant?: number }>
-
-        const decompteTotal = decomptes.reduce(
-          (acc, d) => acc + toAmount(d.netAPayer ?? d.montantTtc ?? d.montant),
-          0,
-        )
-        const paiementTotal = paiements.reduce(
-          (acc, p) => acc + toAmount(p.montantPaye ?? p.montant),
-          0,
-        )
+        const decompteTotal = decomptes.reduce((acc, d) => acc + toAmount(d.netAPayer ?? d.montantTtc ?? d.montant), 0)
+        const paiementTotal = paiements.reduce((acc, p) => acc + toAmount(p.montantPaye ?? p.montant), 0)
         return { decompteTotal, paiementTotal }
       }))
 
-      const totalDecomptes = perMarche.reduce((acc, m) => acc + m.decompteTotal, 0)
-      const totalPaiements = perMarche.reduce((acc, m) => acc + m.paiementTotal, 0)
-
       setMetrics({
-        totalBudgetLignes,
-        totalPartenaires,
-        totalSubventions,
-        totalProjets,
-        totalMarches,
-        totalDecomptes,
-        totalPaiements,
+        totalBudgetLignes, totalPartenaires, totalSubventions, totalProjets, totalMarches,
+        totalDecomptes: perMarche.reduce((acc, m) => acc + m.decompteTotal, 0),
+        totalPaiements: perMarche.reduce((acc, m) => acc + m.paiementTotal, 0),
       })
-    } catch {
-      setMetrics(null)
-    } finally {
-      setLoadingMetrics(false)
-    }
+    } catch { setMetrics(null) }
+    finally { setLoadingMetrics(false) }
   }
 
   const handleConfirm = async () => {
@@ -189,6 +188,11 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
       loadCoherenceMetrics()
     } catch { showError('Erreur lors de l\'operation') }
     finally { setConfirmState({ open: false, type: null, id: null }) }
+  }
+
+  const refreshAll = () => {
+    loadCoherenceMetrics()
+    onRefresh?.()
   }
 
   const confirmProps = confirmState.type === 'unlinkProjet'
@@ -211,7 +215,7 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
         noPadding
       >
         <Box sx={{ px: { xs: 1, md: 2 }, pt: 1.5, pb: 1 }}>
-          {/* Dates clés de la convention */}
+          {/* Dates clés */}
           <Box sx={{ display: 'flex', gap: 2, mb: 1.5, flexWrap: 'wrap' }}>
             {[
               { label: 'Date signature', value: convention.dateSignature, color: colors.primary[600] },
@@ -235,7 +239,7 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
             )}
           </Box>
 
-          {/* Vue de coherence */}
+          {/* Coherence table */}
           <Box sx={{ border: `1px solid ${colors.border}`, borderRadius: '8px', bgcolor: colors.surface, overflow: 'hidden' }}>
             <Box sx={{ px: 2, py: 1.25, borderBottom: `1px solid ${colors.borderSubtle}`, bgcolor: colors.info[25], display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.info[700] }}>
@@ -250,8 +254,8 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
             ) : (
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0 }}>
                 {[
-                  { label: 'Budget convention', amount: convention.budget, hint: 'Montant de reference', icon: '📋', bg: colors.primary[25], labelWeight: typography.weights.bold },
-                  { label: 'Lignes budget (prevision detaillee)', amount: metrics.totalBudgetLignes, chip: { ok: Math.abs(budgetEcart) < 1, msg: Math.abs(budgetEcart) < 1 ? 'OK: aligne au budget' : `Ecart: ${formatCurrency(budgetEcart)}` } },
+                  { label: 'Budget convention', amount: convention.budget, hint: 'Montant de reference', bg: colors.primary[25], labelWeight: typography.weights.bold },
+                  { label: 'Lignes de depenses (prevision detaillee)', amount: metrics.totalBudgetLignes, chip: { ok: Math.abs(budgetEcart) < 1, msg: Math.abs(budgetEcart) < 1 ? 'OK: aligne au budget' : `Ecart: ${formatCurrency(budgetEcart)}` } },
                   { label: 'Partenaires alloues', amount: metrics.totalPartenaires, chip: { ok: Math.abs(partenairesEcart) < 1, msg: Math.abs(partenairesEcart) < 1 ? 'OK: allocation complete' : `Reste a allouer: ${formatCurrency(partenairesEcart)}` } },
                   { label: 'Subventions (ressources externes)', amount: metrics.totalSubventions, hint: 'A comparer au besoin de financement' },
                   { label: 'Projets rattaches', amount: metrics.totalProjets, hint: 'Vision programme (hors engagement comptable)' },
@@ -259,23 +263,16 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
                   { label: 'Decomptes constates', amount: metrics.totalDecomptes, chip: { ok: true, msg: `A engager en plus: ${formatCurrency(executionEcart)}` } },
                   { label: 'Paiements realises', amount: metrics.totalPaiements, chip: { ok: true, msg: `Reste a payer: ${formatCurrency(paiementEcart)}` } },
                 ].map((row, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      px: 2, py: 1.25, gap: 2,
-                      borderBottom: idx < 7 ? `1px solid ${colors.borderSubtle}` : 'none',
-                      bgcolor: row.bg || 'transparent',
-                      '&:hover': { bgcolor: colors.neutral[50] },
-                      transition: 'background-color 0.15s',
-                    }}
-                  >
+                  <Box key={idx} sx={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    px: 2, py: 1.25, gap: 2,
+                    borderBottom: idx < 7 ? `1px solid ${colors.borderSubtle}` : 'none',
+                    bgcolor: row.bg || 'transparent',
+                    '&:hover': { bgcolor: colors.neutral[50] },
+                    transition: 'background-color 0.15s',
+                  }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{
-                        fontSize: typography.sizes.sm,
-                        fontWeight: row.labelWeight || typography.weights.medium,
-                        color: colors.textPrimary,
-                      }}>
+                      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: row.labelWeight || typography.weights.medium, color: colors.textPrimary }}>
                         {row.label}
                       </Typography>
                     </Box>
@@ -296,7 +293,7 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
             )}
             <Box sx={{ px: 2, py: 1, borderTop: `1px dashed ${colors.borderSubtle}`, bgcolor: colors.neutral[25] }}>
               <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>
-                Budget → Lignes budget / Partenaires (prevision) → Marches (engagement) → Decomptes (realise technique) → Paiements (realise financier)
+                Budget → Lignes de depenses / Partenaires (prevision) → Marches (engagement) → Decomptes (realise technique) → Paiements (realise financier)
               </Typography>
             </Box>
           </Box>
@@ -304,6 +301,43 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
 
         <Notebook
           tabs={[
+            {
+              label: 'Partenaires',
+              content: (
+                <Box sx={{ px: { xs: 1, md: 2 } }}>
+                  <ConventionPartenairesCard
+                    conventionId={convention.id}
+                    conventionBudget={convention.budget}
+                    canEdit={canEdit}
+                    parentConventionId={convention.parentConventionId ?? undefined}
+                    onAddClick={() => onAddPartenaire?.()}
+                    onEditClick={(p) => onEditPartenaire?.(p)}
+                  />
+                </Box>
+              ),
+            },
+            {
+              label: 'Subventions',
+              content: (
+                <Box sx={{ px: { xs: 1, md: 2 } }}>
+                  <ConventionSubventionsCard
+                    conventionId={convention.id}
+                    conventionBudget={convention.budget}
+                    canEdit={canEdit}
+                  />
+                </Box>
+              ),
+            },
+            {
+              label: 'Lignes de depenses',
+              content: (
+                <ConventionBudgetDistributionCard
+                  conventionId={convention.id}
+                  canEdit={canEdit}
+                  onDataChanged={refreshAll}
+                />
+              ),
+            },
             {
               label: 'Projets', count: projets.length,
               content: <ConventionProjetsTab projets={projets} onLinkProjet={() => setLinkProjetOpen(true)} onUnlinkProjet={(pid) => setConfirmState({ open: true, type: 'unlinkProjet', id: pid })} />,
@@ -345,15 +379,8 @@ const ConventionRealisationSection = ({ convention, canEdit = false, onRefresh, 
               content: <ConventionAvenantsTab convention={convention} avenants={avenants} formatCurrency={formatCurrency} formatDate={formatDate} getStatusColor={getStatusColor} />,
             },
             {
-              label: 'Budget lignes',
-              content: <ConventionBudgetLignesCard conventionId={convention.id} conventionFinancials={{
-                budget: convention.budget, tauxCommission: convention.tauxCommission,
-                tauxTva: convention.tauxTva, baseCalcul: convention.baseCalcul,
-              }} />,
-            },
-            {
               label: 'Imputations',
-              content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} onRefresh={onRefresh} />,
+              content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} onRefresh={refreshAll} />,
             },
           ]}
         />

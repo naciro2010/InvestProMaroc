@@ -17,7 +17,7 @@ import {
   ParentConventionBanner,
 } from '../../components/conventions/detail'
 import ConventionSmartButtons from '../../components/conventions/detail/ConventionSmartButtons'
-import ConventionFinancialFlowCard from '../../components/conventions/detail/ConventionFinancialFlowCard'
+import ConventionSyntheseCard from '../../components/conventions/detail/ConventionSyntheseCard'
 import ConventionKeyInfoCard from '../../components/conventions/detail/ConventionKeyInfoCard'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
@@ -35,8 +35,6 @@ interface Convention {
   parentConventionId?: number | null; parentConventionNumero?: string | null
   heriteParametres?: boolean; commissionMode?: string
 }
-
-interface VersementPrevisionnel { id: number; partenaireId?: number; partenaireNom?: string; partenaireSigle?: string; volet?: string; dateVersement: string; montant: number; montantPrevu?: number; remarques?: string }
 
 interface DialogFieldState { key: string; label: string; value: string; mode: 'richtext' | 'textarea' }
 
@@ -78,7 +76,6 @@ const ConventionDetailPageModern = () => {
   const [addPartenaireDialogOpen, setAddPartenaireDialogOpen] = useState(false)
   const [editPartenaireData, setEditPartenaireData] = useState<PartenaireEditData | null>(null)
   const [versementDialogOpen, setVersementDialogOpen] = useState(false)
-  const [editingVersement, setEditingVersement] = useState<VersementPrevisionnel | null>(null)
   const [financialRefreshKey, setFinancialRefreshKey] = useState(0)
   const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
   const [chatterActivities, setChatterActivities] = useState<ChatterActivity[]>([])
@@ -272,30 +269,34 @@ const ConventionDetailPageModern = () => {
               />
             </Box>
 
+            {/* Synthèse financière (read-only) */}
             <Box sx={{ mb: 3 }}>
-              <ConventionFinancialFlowCard
-                conventionId={convention.id} conventionBudget={convention.budget}
-                tauxCommission={convention.tauxCommission} tauxTva={convention.tauxTva}
-                commissionTTC={enrichedData?.commissionTTC} commissionMode={convention.commissionMode}
-                baseCalcul={convention.baseCalcul} canEdit={canEdit} refreshKey={financialRefreshKey}
-                onAddPartenaire={() => setAddPartenaireDialogOpen(true)}
-                onEditPartenaire={(p) => {
-                  setEditPartenaireData({
-                    id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
-                    budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
-                    estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
-                    remarques: p.remarques || undefined,
-                  })
-                  setAddPartenaireDialogOpen(true)
-                }}
-                onAddVersement={() => { setEditingVersement(null); setVersementDialogOpen(true) }}
-                onRefresh={refreshFinancialData}
+              <ConventionSyntheseCard
+                conventionId={convention.id}
+                conventionBudget={convention.budget}
+                tauxCommission={convention.tauxCommission}
+                tauxTva={convention.tauxTva}
+                commissionTTC={enrichedData?.commissionTTC}
+                commissionMode={convention.commissionMode}
+                baseCalcul={convention.baseCalcul}
+                refreshKey={financialRefreshKey}
               />
             </Box>
 
+            {/* Tabs: Partenaires, Subventions, Lignes de dépenses, Projets, Marchés, etc. */}
             <ConventionRealisationSection
               convention={convention} canEdit={canEdit}
               onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
+              onAddPartenaire={() => { setEditPartenaireData(null); setAddPartenaireDialogOpen(true) }}
+              onEditPartenaire={(p) => {
+                setEditPartenaireData({
+                  id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
+                  budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
+                  estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
+                  remarques: p.remarques || undefined,
+                })
+                setAddPartenaireDialogOpen(true)
+              }}
             />
 
             <Chatter
@@ -314,9 +315,9 @@ const ConventionDetailPageModern = () => {
             onSuccess={() => { refreshFinancialData(); setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
             editData={editPartenaireData} />
           <VersementFormDialog open={versementDialogOpen} conventionId={convention.id}
-            onClose={() => { setVersementDialogOpen(false); setEditingVersement(null) }}
-            onSuccess={() => { refreshFinancialData(); setVersementDialogOpen(false); setEditingVersement(null) }}
-            editingVersement={editingVersement} />
+            onClose={() => { setVersementDialogOpen(false) }}
+            onSuccess={() => { refreshFinancialData(); setVersementDialogOpen(false) }}
+            editingVersement={null} />
         </>
       )}
       {dialogField && (

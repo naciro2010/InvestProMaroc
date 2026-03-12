@@ -60,6 +60,7 @@ const ReportingPage = lazy(() => import('./pages/reporting/ReportingPage'))
 const UsersPage = lazy(() => import('./pages/users/UsersPage'))
 const UnderConstruction = lazy(() => import('./pages/UnderConstruction'))
 const TeamMessagingPage = lazy(() => import('./pages/TeamMessagingPage'))
+const CustomDashboardPage = lazy(() => import('./pages/custom-dashboard/CustomDashboardPage'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -362,6 +363,16 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <SelectWithQuickCreateDemo />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Custom Dashboard Generator */}
+                    <Route
+                      path="/generateur"
+                      element={
+                        <ProtectedRoute>
+                          <CustomDashboardPage />
                         </ProtectedRoute>
                       }
                     />

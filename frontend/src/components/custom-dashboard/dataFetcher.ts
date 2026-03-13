@@ -45,37 +45,57 @@ interface RawRecord {
   id?: number
   code?: string
   numero?: string
+  numeroMarche?: string
+  numeroDecompte?: string
+  referencePaiement?: string
   designation?: string
   libelle?: string
   objet?: string
   raisonSociale?: string
+  nom?: string
   statut?: string
   status?: string
   type?: string
   typeConvention?: string
   typeMarche?: string
   montant?: number
+  montantHt?: number
   montantHT?: number
+  montantTtc?: number
   montantTTC?: number
+  montantBrutHT?: number
+  montantPaye?: number
   budget?: number
   budgetTotal?: number
+  totalBudget?: number
+  plafondConvention?: number
   netAPayer?: number
   datePaiement?: string
+  dateValeur?: string
+  dateExecution?: string
   dateDecompte?: string
   dateDebut?: string
   dateMarche?: string
+  dateBudget?: string
   createdAt?: string
   conventionId?: number
+  conventionNumero?: string
+  conventionLibelle?: string
   marcheId?: number
+  marcheNumero?: string
+  marcheFournisseur?: string
   fournisseurId?: number
+  fournisseurNom?: string
+  fournisseurCode?: string
   projetId?: number
   fournisseur?: { id?: number; raisonSociale?: string; code?: string }
   convention?: { id?: number; libelle?: string; code?: string; numero?: string }
   marche?: { id?: number; code?: string; designation?: string; objet?: string }
-  projet?: { id?: number; code?: string; designation?: string }
+  projet?: { id?: number; code?: string; designation?: string; nom?: string }
   zoneGeographique?: string
   ice?: string
   ville?: string
+  version?: string
   [key: string]: unknown
 }
 
@@ -126,14 +146,29 @@ async function fetchRawData(entity: EntityType): Promise<RawRecord[]> {
 // Field Extractors
 // ============================================================================
 
-function getLabel(record: RawRecord, _entity: EntityType): string {
+function getLabel(record: RawRecord): string {
   return (
     record.designation ||
     record.libelle ||
     record.objet ||
+    record.nom ||
     record.raisonSociale ||
     record.code ||
     record.numero ||
+    record.numeroMarche ||
+    record.numeroDecompte ||
+    record.referencePaiement ||
+    `#${record.id ?? '?'}`
+  )
+}
+
+function getCode(record: RawRecord): string {
+  return (
+    record.code ||
+    record.numero ||
+    record.numeroMarche ||
+    record.numeroDecompte ||
+    record.referencePaiement ||
     `#${record.id ?? '?'}`
   )
 }
@@ -146,28 +181,97 @@ function getType(record: RawRecord): string {
   return record.typeConvention || record.typeMarche || record.type || 'N/A'
 }
 
-function getGroupValue(record: RawRecord, groupBy: GroupByField): string {
+/** Get the best monetary amount from a record depending on entity context */
+function getAmount(record: RawRecord, entity: EntityType): number {
+  switch (entity) {
+    case 'marches':
+      return toNumber(record.montantHt ?? record.montantHT ?? 0)
+    case 'decomptes':
+      return toNumber(record.netAPayer ?? record.montantBrutHT ?? 0)
+    case 'paiements':
+      return toNumber(record.montantPaye ?? record.montant ?? 0)
+    case 'conventions':
+      return toNumber(record.budget ?? 0)
+    case 'projets':
+      return toNumber(record.budgetTotal ?? 0)
+    case 'budgets':
+      return toNumber(record.totalBudget ?? record.plafondConvention ?? 0)
+    default:
+      return toNumber(record.montant ?? 0)
+  }
+}
+
+function toNumber(val: unknown): number {
+  if (typeof val === 'number') return val
+  if (typeof val === 'string') {
+    const parsed = parseFloat(val)
+    return isNaN(parsed) ? 0 : parsed
+  }
+  return 0
+}
+
+/** Get the best date for temporal grouping */
+function getTemporalDate(record: RawRecord, entity: EntityType): string | null {
+  switch (entity) {
+    case 'paiements':
+      return record.dateValeur || record.dateExecution || record.createdAt || null
+    case 'decomptes':
+      return record.dateDecompte || record.createdAt || null
+    case 'marches':
+      return record.dateMarche || record.dateDebut || record.createdAt || null
+    case 'conventions':
+      return record.dateDebut || record.createdAt || null
+    case 'budgets':
+      return record.dateBudget || record.createdAt || null
+    default:
+      return record.dateDebut || record.createdAt || null
+  }
+}
+
+function getGroupValue(record: RawRecord, groupBy: GroupByField, entity: EntityType): string {
   switch (groupBy) {
     case 'statut':
       return getStatus(record)
     case 'type':
       return getType(record)
     case 'convention':
-      return record.convention?.libelle || record.convention?.numero || record.convention?.code || `Conv #${record.conventionId ?? '?'}`
+      return (
+        record.convention?.libelle ||
+        record.convention?.numero ||
+        record.convention?.code ||
+        record.conventionLibelle ||
+        record.conventionNumero ||
+        `Conv #${record.conventionId ?? '?'}`
+      )
     case 'marche':
-      return record.marche?.designation || record.marche?.code || `Marché #${record.marcheId ?? '?'}`
+      return (
+        record.marche?.designation ||
+        record.marche?.code ||
+        record.marcheNumero ||
+        `Marché #${record.marcheId ?? '?'}`
+      )
     case 'fournisseur':
-      return record.fournisseur?.raisonSociale || record.fournisseur?.code || `Fournisseur #${record.fournisseurId ?? '?'}`
+      return (
+        record.fournisseur?.raisonSociale ||
+        record.fournisseur?.code ||
+        record.fournisseurNom ||
+        `Fournisseur #${record.fournisseurId ?? '?'}`
+      )
     case 'projet':
-      return record.projet?.designation || record.projet?.code || `Projet #${record.projetId ?? '?'}`
+      return (
+        record.projet?.designation ||
+        record.projet?.nom ||
+        record.projet?.code ||
+        `Projet #${record.projetId ?? '?'}`
+      )
     case 'mois': {
-      const date = record.datePaiement || record.dateDecompte || record.dateDebut || record.dateMarche || record.createdAt
+      const date = getTemporalDate(record, entity)
       if (!date) return 'N/A'
       const d = new Date(date)
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     }
     case 'annee': {
-      const date = record.datePaiement || record.dateDecompte || record.dateDebut || record.dateMarche || record.createdAt
+      const date = getTemporalDate(record, entity)
       if (!date) return 'N/A'
       return String(new Date(date).getFullYear())
     }
@@ -178,14 +282,13 @@ function getGroupValue(record: RawRecord, groupBy: GroupByField): string {
   }
 }
 
-function getMetricValue(record: RawRecord, metricField: string): number {
-  const val = record[metricField]
-  if (typeof val === 'number') return val
-  if (typeof val === 'string') {
-    const parsed = parseFloat(val)
-    return isNaN(parsed) ? 0 : parsed
+function getMetricValue(record: RawRecord, metricField: string, entity: EntityType): number {
+  // Use entity-aware amount extraction for common metric fields
+  if (metricField === 'montant' || metricField === 'montantHT' || metricField === 'netAPayer' || metricField === 'budget') {
+    return getAmount(record, entity)
   }
-  return 0
+  const val = record[metricField]
+  return toNumber(val)
 }
 
 // ============================================================================
@@ -200,32 +303,37 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
       { key: 'code', label: 'Code', type: 'string' },
       { key: 'libelle', label: 'Libellé', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'type', label: 'Type', type: 'string' },
+      { key: 'typeConvention', label: 'Type', type: 'string' },
       { key: 'budget', label: 'Budget', type: 'number', align: 'right' },
     ],
     marches: [
       { key: 'code', label: 'Code', type: 'string' },
-      { key: 'designation', label: 'Désignation', type: 'string' },
+      { key: 'objet', label: 'Objet', type: 'string' },
+      { key: 'fournisseurNom', label: 'Fournisseur', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'montantHT', label: 'Montant HT', type: 'number', align: 'right' },
-      { key: 'montantTTC', label: 'Montant TTC', type: 'number', align: 'right' },
+      { key: 'montantHt', label: 'Montant HT', type: 'number', align: 'right' },
+      { key: 'montantTtc', label: 'Montant TTC', type: 'number', align: 'right' },
+      { key: 'zoneGeographique', label: 'Zone', type: 'string' },
     ],
     projets: [
       { key: 'code', label: 'Code', type: 'string' },
-      { key: 'designation', label: 'Désignation', type: 'string' },
+      { key: 'nom', label: 'Nom', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
       { key: 'budgetTotal', label: 'Budget Total', type: 'number', align: 'right' },
     ],
     decomptes: [
-      { key: 'code', label: 'Code', type: 'string' },
-      { key: 'montant', label: 'Montant', type: 'number', align: 'right' },
+      { key: 'code', label: 'N° Décompte', type: 'string' },
+      { key: 'marcheNumero', label: 'Marché', type: 'string' },
+      { key: 'montantBrutHT', label: 'Montant Brut HT', type: 'number', align: 'right' },
       { key: 'netAPayer', label: 'Net à Payer', type: 'number', align: 'right' },
       { key: 'statut', label: 'Statut', type: 'status' },
+      { key: 'dateDecompte', label: 'Date', type: 'date' },
     ],
     paiements: [
-      { key: 'code', label: 'Code', type: 'string' },
-      { key: 'montant', label: 'Montant', type: 'number', align: 'right' },
-      { key: 'datePaiement', label: 'Date', type: 'date' },
+      { key: 'code', label: 'Référence', type: 'string' },
+      { key: 'montantPaye', label: 'Montant', type: 'number', align: 'right' },
+      { key: 'modePaiement', label: 'Mode', type: 'string' },
+      { key: 'dateValeur', label: 'Date Valeur', type: 'date' },
     ],
     fournisseurs: [
       { key: 'code', label: 'Code', type: 'string' },
@@ -234,10 +342,11 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
       { key: 'ville', label: 'Ville', type: 'string' },
     ],
     budgets: [
-      { key: 'code', label: 'Code', type: 'string' },
-      { key: 'designation', label: 'Désignation', type: 'string' },
-      { key: 'montant', label: 'Montant', type: 'number', align: 'right' },
+      { key: 'code', label: 'Convention', type: 'string' },
+      { key: 'version', label: 'Version', type: 'string' },
+      { key: 'totalBudget', label: 'Total Budget', type: 'number', align: 'right' },
       { key: 'statut', label: 'Statut', type: 'status' },
+      { key: 'dateBudget', label: 'Date', type: 'date' },
     ],
   }
 
@@ -252,13 +361,48 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
         case 'statut':
           row[col.key] = getStatus(record)
           break
+        case 'typeConvention':
         case 'type':
           row[col.key] = getType(record)
           break
+        case 'code':
+          row[col.key] = getCode(record)
+          break
         case 'designation':
         case 'libelle':
+        case 'nom':
+        case 'objet':
         case 'label':
-          row[col.key] = getLabel(record, entity)
+          row[col.key] = getLabel(record)
+          break
+        case 'fournisseurNom':
+          row[col.key] = record.fournisseurNom || record.fournisseur?.raisonSociale || ''
+          break
+        case 'marcheNumero':
+          row[col.key] = record.marcheNumero || record.marche?.code || `#${record.marcheId ?? ''}`
+          break
+        case 'marcheFournisseur':
+          row[col.key] = record.marcheFournisseur || ''
+          break
+        case 'conventionNumero':
+          row[col.key] = record.conventionNumero || record.convention?.numero || ''
+          break
+        case 'montantHt':
+        case 'montantHT':
+          row[col.key] = toNumber(record.montantHt ?? record.montantHT ?? 0)
+          break
+        case 'montantTtc':
+        case 'montantTTC':
+          row[col.key] = toNumber(record.montantTtc ?? record.montantTTC ?? 0)
+          break
+        case 'montantBrutHT':
+          row[col.key] = toNumber(record.montantBrutHT ?? 0)
+          break
+        case 'montantPaye':
+          row[col.key] = toNumber(record.montantPaye ?? 0)
+          break
+        case 'totalBudget':
+          row[col.key] = toNumber(record.totalBudget ?? record.plafondConvention ?? 0)
           break
         default: {
           const val = record[col.key]
@@ -282,7 +426,7 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
 }
 
 function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction): FetchedData {
-  const { groupBy, metric, metricField, limit } = instruction
+  const { entity, groupBy, metric, metricField, limit } = instruction
 
   if (!groupBy) {
     return buildUngroupedTable(records, instruction)
@@ -291,7 +435,7 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
   // Group records
   const groups = new Map<string, RawRecord[]>()
   for (const record of records) {
-    const key = getGroupValue(record, groupBy)
+    const key = getGroupValue(record, groupBy, entity)
     if (!groups.has(key)) {
       groups.set(key, [])
     }
@@ -306,11 +450,12 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
         value = groupRecords.length
         break
       case 'sum':
-        value = groupRecords.reduce((sum, r) => sum + getMetricValue(r, metricField), 0)
+        value = groupRecords.reduce((sum, r) => sum + getMetricValue(r, metricField, entity), 0)
+        value = Math.round(value * 100) / 100
         break
       case 'average': {
-        const total = groupRecords.reduce((sum, r) => sum + getMetricValue(r, metricField), 0)
-        value = groupRecords.length > 0 ? total / groupRecords.length : 0
+        const total = groupRecords.reduce((sum, r) => sum + getMetricValue(r, metricField, entity), 0)
+        value = groupRecords.length > 0 ? Math.round((total / groupRecords.length) * 100) / 100 : 0
         break
       }
       default:
@@ -319,7 +464,7 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
 
     return {
       group: groupKey,
-      value: Math.round(value * 100) / 100,
+      value,
       count: groupRecords.length,
     }
   })
@@ -358,6 +503,15 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
 
 export async function fetchDataForInstruction(instruction: ParsedInstruction): Promise<FetchedData> {
   const records = await fetchRawData(instruction.entity)
+
+  if (records.length === 0) {
+    return {
+      rows: [],
+      columns: [{ key: 'message', label: 'Information', type: 'string' }],
+      totalCount: 0,
+      entityLabel: instruction.entity,
+    }
+  }
 
   if (instruction.groupBy) {
     return buildGroupedData(records, instruction)

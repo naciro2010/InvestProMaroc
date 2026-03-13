@@ -15,6 +15,13 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://repo.spring.io/milestone") }
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.ai:spring-ai-bom:1.0.0")
+    }
 }
 
 dependencies {
@@ -24,6 +31,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    // Spring AI + Ollama
+    implementation("org.springframework.ai:spring-ai-starter-model-ollama")
 
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")

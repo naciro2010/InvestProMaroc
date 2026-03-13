@@ -23,6 +23,12 @@ import {
   DashboardBudgetExecution,
   DashboardAlerts,
   DashboardRecentActivityExec,
+  // Legacy fallback
+  DashboardKPICards,
+  DashboardConventionChart,
+  DashboardBudgetOverview,
+  DashboardMarcheChart,
+  DashboardRecentActivity,
 } from '../components/dashboard'
 import { getGreeting } from '../components/dashboard/types'
 
@@ -31,14 +37,18 @@ const DashboardModern = () => {
   const [data, setData] = useState<ExecutiveDashboardDTO | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [useLegacy, setUseLegacy] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const fetchDashboard = async () => {
     try {
       const res = await reportingAPI.getExecutiveDashboard()
       const payload = res.data?.data ?? res.data
       setData(payload as ExecutiveDashboardDTO)
-    } catch (err) {
-      console.error('Failed to load executive dashboard', err)
+      setUseLegacy(false)
+    } catch {
+      // Endpoint not deployed yet — fall back to legacy dashboard
+      setUseLegacy(true)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -51,7 +61,12 @@ const DashboardModern = () => {
 
   const handleRefresh = () => {
     setRefreshing(true)
-    fetchDashboard()
+    if (useLegacy) {
+      setRefreshKey(prev => prev + 1)
+      setTimeout(() => setRefreshing(false), 1500)
+    } else {
+      fetchDashboard()
+    }
   }
 
   return (
@@ -111,6 +126,21 @@ const DashboardModern = () => {
 
           {loading ? (
             <DashboardSkeleton />
+          ) : useLegacy ? (
+            /* Legacy dashboard — used when executive endpoint is not yet deployed */
+            <>
+              <DashboardKPICards refreshKey={refreshKey} />
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr 1fr' },
+                gap: 2.5, mb: 3,
+              }}>
+                <DashboardConventionChart refreshKey={refreshKey} />
+                <DashboardBudgetOverview refreshKey={refreshKey} />
+                <DashboardMarcheChart refreshKey={refreshKey} />
+              </Box>
+              <DashboardRecentActivity refreshKey={refreshKey} />
+            </>
           ) : data ? (
             <>
               {/* Finance KPIs + Gauges */}

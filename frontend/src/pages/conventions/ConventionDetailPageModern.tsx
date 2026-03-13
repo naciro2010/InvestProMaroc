@@ -282,8 +282,9 @@ const ConventionDetailPageModern = () => {
             </Box>
 
             {/* Tabs: Partenaires, Subventions, Lignes de dépenses, Projets, Marchés, etc. */}
+            {/* Odoo pattern: related records (one2many) are always editable regardless of status */}
             <ConventionRealisationSection
-              convention={convention} canEdit={canEdit}
+              convention={convention} canEdit
               onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
               onAddPartenaire={() => { setEditPartenaireData(null); setAddPartenaireDialogOpen(true) }}
               onEditPartenaire={(p) => {

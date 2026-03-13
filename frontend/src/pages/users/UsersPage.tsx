@@ -1,13 +1,36 @@
-import { useState, useEffect } from 'react'
-import { Box, Button as MuiButton } from '@mui/material'
-import { Add, Refresh } from '@mui/icons-material'
-import { FaEdit, FaTrash, FaUserShield, FaUser } from 'react-icons/fa'
-import AppLayout from '../../components/layout/AppLayout'
-import { ControlPanel } from '../../components/core'
-import { Card } from '../../components/ui'
-import api from '../../lib/api'
+import { useState, useEffect, useMemo } from 'react'
+import {
+  Box,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Typography,
+  Chip,
+  IconButton,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Stack,
+  Avatar,
+} from '@mui/material'
+import { Plus, RefreshCw, Edit2, Trash2, Shield, User } from 'lucide-react'
+import AppLayout from '@/components/layout/AppLayout'
+import { ControlPanel, StatusBadge } from '@/components/core'
+import ConfirmDialog from '@/components/core/ConfirmDialog'
+import { useToast } from '@/contexts/ToastContext'
+import api from '@/lib/api'
+import { colors, typography, componentStyles } from '@/lib/designSystem'
 
-interface User {
+interface UserItem {
   id: number
   username: string
   email: string
@@ -18,87 +41,97 @@ interface User {
   createdAt: string
 }
 
+const styles = componentStyles.listPage
+const listStyles = componentStyles.listView
+
+type RoleFilter = 'ALL' | 'ADMIN' | 'MANAGER' | 'USER'
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Administrateur',
+  MANAGER: 'Gestionnaire',
+  USER: 'Utilisateur',
+}
+
+const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
+  ADMIN: { bg: colors.purple[50], text: colors.purple[700] },
+  MANAGER: { bg: colors.info[50], text: colors.info[700] },
+  USER: { bg: colors.success[50], text: colors.success[700] },
+}
+
+interface UserFormData {
+  username: string
+  email: string
+  nom: string
+  prenom: string
+  password: string
+  role: 'ADMIN' | 'MANAGER' | 'USER'
+}
+
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([])
+  const { showToast } = useToast()
+  const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [roleFilter, setRoleFilter] = useState<string>('ALL')
-  const [showModal, setShowModal] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL')
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(25)
 
-  const [formData, setFormData] = useState({
+  // Dialog states
+  const [openDialog, setOpenDialog] = useState(false)
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null })
+  const [formData, setFormData] = useState<UserFormData>({
     username: '',
     email: '',
     nom: '',
     prenom: '',
     password: '',
-    role: 'USER' as 'ADMIN' | 'MANAGER' | 'USER',
+    role: 'USER',
   })
 
-  // Stats
-  const [stats, setStats] = useState({
-    total: 0,
-    admins: 0,
-    managers: 0,
-    users: 0,
-  })
-
-  useEffect(() => {
-    fetchUsers()
-  }, [])
+  useEffect(() => { fetchUsers() }, [])
 
   const fetchUsers = async () => {
     try {
       setLoading(true)
       const response = await api.get('/users')
-      const data = response.data
-      setUsers(data)
-
-      // Calculate stats
-      setStats({
-        total: data.length,
-        admins: data.filter((u: User) => u.role === 'ADMIN').length,
-        managers: data.filter((u: User) => u.role === 'MANAGER').length,
-        users: data.filter((u: User) => u.role === 'USER').length,
-      })
-    } catch (error) {
-      console.error('Erreur lors du chargement des utilisateurs:', error)
+      setUsers(response.data)
+    } catch {
+      showToast('Erreur lors du chargement des utilisateurs', 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.nom && user.nom.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (user.prenom && user.prenom.toLowerCase().includes(searchTerm.toLowerCase()))
+  const stats = useMemo(() => ({
+    total: users.length,
+    ADMIN: users.filter(u => u.role === 'ADMIN').length,
+    MANAGER: users.filter(u => u.role === 'MANAGER').length,
+    USER: users.filter(u => u.role === 'USER').length,
+  }), [users])
 
-    const matchesRole = roleFilter === 'ALL' || user.role === roleFilter
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => {
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase()
+        if (!(
+          u.username.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          (u.nom?.toLowerCase() ?? '').includes(q) ||
+          (u.prenom?.toLowerCase() ?? '').includes(q)
+        )) return false
+      }
+      if (roleFilter !== 'ALL' && u.role !== roleFilter) return false
+      return true
+    })
+  }, [users, searchTerm, roleFilter])
 
-    return matchesSearch && matchesRole
-  })
+  const paginatedUsers = useMemo(() => {
+    const start = page * rowsPerPage
+    return filteredUsers.slice(start, start + rowsPerPage)
+  }, [filteredUsers, page, rowsPerPage])
 
-  const getRoleLabel = (role: string) => {
-    const labels: Record<string, string> = {
-      ADMIN: 'Administrateur',
-      MANAGER: 'Gestionnaire',
-      USER: 'Utilisateur',
-    }
-    return labels[role] || role
-  }
-
-  const getRoleBadgeClass = (role: string) => {
-    const classes: Record<string, string> = {
-      ADMIN: 'bg-soft-purple text-white',
-      MANAGER: 'bg-soft-blue text-white',
-      USER: 'bg-soft-green text-white',
-    }
-    return classes[role] || 'bg-neutral-300 text-neutral-700'
-  }
-
-  const handleOpenModal = (user?: User) => {
+  const handleOpenDialog = (user: UserItem | null = null) => {
     if (user) {
       setEditingUser(user)
       setFormData({
@@ -111,334 +144,250 @@ export default function UsersPage() {
       })
     } else {
       setEditingUser(null)
-      setFormData({
-        username: '',
-        email: '',
-        nom: '',
-        prenom: '',
-        password: '',
-        role: 'USER',
-      })
+      setFormData({ username: '', email: '', nom: '', prenom: '', password: '', role: 'USER' })
     }
-    setShowModal(true)
+    setOpenDialog(true)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCloseDialog = () => {
+    setOpenDialog(false)
+    setEditingUser(null)
+  }
+
+  const handleSubmit = async () => {
     try {
       if (editingUser) {
         await api.put(`/users/${editingUser.id}`, formData)
+        showToast('Utilisateur modifie avec succes', 'success')
       } else {
         await api.post('/users', formData)
+        showToast('Utilisateur cree avec succes', 'success')
       }
+      handleCloseDialog()
       fetchUsers()
-      setShowModal(false)
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
-      alert('Erreur lors de la sauvegarde de l\'utilisateur')
+    } catch {
+      showToast('Erreur lors de la sauvegarde', 'error')
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return
-
+  const confirmDelete = async () => {
+    if (!deleteConfirm.id) return
     try {
-      await api.delete(`/api/users/${id}`)
+      await api.delete(`/users/${deleteConfirm.id}`)
+      showToast('Utilisateur supprime', 'success')
       fetchUsers()
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
-      alert('Erreur lors de la suppression de l\'utilisateur')
+    } catch {
+      showToast('Erreur lors de la suppression', 'error')
+    } finally {
+      setDeleteConfirm({ open: false, id: null })
+    }
+  }
+
+  const getAvatarColor = (role: string): string => {
+    switch (role) {
+      case 'ADMIN': return colors.purple[600]
+      case 'MANAGER': return colors.info[600]
+      default: return colors.success[600]
     }
   }
 
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-soft-blue"></div>
-        </div>
+        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress size={40} />
+        </Box>
       </AppLayout>
     )
   }
 
+  const pStart = filteredUsers.length > 0 ? page * rowsPerPage + 1 : 0
+  const pEnd = Math.min((page + 1) * rowsPerPage, filteredUsers.length)
+
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
         <ControlPanel
-          breadcrumbs={[
-            { label: 'Utilisateurs' },
-          ]}
-          searchValue={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Rechercher par nom, email ou username..."
+          breadcrumbs={[{ label: 'Utilisateurs' }]}
           actions={
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <MuiButton variant="outlined" size="small" startIcon={<Refresh />}
-                onClick={fetchUsers} sx={{ textTransform: 'none' }}>
-                Actualiser
-              </MuiButton>
-              <MuiButton variant="contained" size="small" startIcon={<Add />}
-                onClick={() => handleOpenModal()} sx={{ textTransform: 'none' }}>
-                Nouvel Utilisateur
-              </MuiButton>
-            </Box>
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<Plus size={16} />}
+                onClick={() => handleOpenDialog()}
+                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
+              >
+                Nouveau
+              </Button>
+              <IconButton size="small" onClick={fetchUsers} sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </>
           }
-          hideBottomRow={false}
-        />
+          searchValue={searchTerm}
+          onSearchChange={(v) => { setSearchTerm(v); setPage(0) }}
+          searchPlaceholder="Rechercher par nom, email, username..."
+          paginationInfo={filteredUsers.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredUsers.length } : undefined}
+          onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
+          onNextPage={() => setPage(p => p + 1)}
+        >
+          {(['ALL', 'ADMIN', 'MANAGER', 'USER'] as const).map((role) => {
+            const count = role === 'ALL' ? users.length : (stats[role] || 0)
+            const isActive = roleFilter === role
+            return (
+              <Chip
+                key={role}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>{role === 'ALL' ? 'Tous' : ROLE_LABELS[role]}</span>
+                    <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
+                  </Box>
+                }
+                onClick={() => { setRoleFilter(role); setPage(0) }}
+                sx={isActive ? styles.filterPillActive : styles.filterPill}
+              />
+            )
+          })}
+        </ControlPanel>
 
-        {/* Stats rapides */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card title="Total Utilisateurs">
-            <div className="text-3xl font-bold font-rubik text-neutral-800">{stats.total}</div>
-          </Card>
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={listStyles.container}>
+            <TableContainer>
+              <Table size="small" sx={listStyles.table}>
+                <TableHead>
+                  <TableRow sx={listStyles.headerRow}>
+                    <TableCell>Utilisateur</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell align="center">Statut</TableCell>
+                    <TableCell>Date creation</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                        <Typography sx={{ color: colors.textSecondary }}>
+                          Aucun utilisateur trouve
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedUsers.map((user) => (
+                      <TableRow key={user.id} sx={listStyles.dataRow}>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Avatar sx={{ width: 32, height: 32, bgcolor: getAvatarColor(user.role), fontSize: typography.sizes.xs }}>
+                              {user.role === 'ADMIN' ? <Shield size={14} /> : <User size={14} />}
+                            </Avatar>
+                            <Box>
+                              <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+                                {user.prenom} {user.nom}
+                              </Typography>
+                              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                                @{user.username}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>
+                          {user.email}
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: '4px',
+                            bgcolor: ROLE_COLORS[user.role]?.bg || colors.neutral[100],
+                            color: ROLE_COLORS[user.role]?.text || colors.textSecondary,
+                            fontSize: typography.sizes.xs,
+                            fontWeight: typography.weights.semibold,
+                          }}>
+                            {ROLE_LABELS[user.role] || user.role}
+                          </Box>
+                        </TableCell>
+                        <TableCell align="center">
+                          <StatusBadge status={user.actif ? 'ACTIF' : 'INACTIF'} size="small" />
+                        </TableCell>
+                        <TableCell sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>
+                          {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
+                            <IconButton size="small" onClick={() => handleOpenDialog(user)} sx={{ color: colors.neutral[500] }}>
+                              <Edit2 size={14} />
+                            </IconButton>
+                            <IconButton size="small" onClick={() => setDeleteConfirm({ open: true, id: user.id })} sx={{ color: colors.danger[500] }}>
+                              <Trash2 size={14} />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              component="div"
+              count={filteredUsers.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0) }}
+              rowsPerPageOptions={[10, 25, 50]}
+              labelRowsPerPage="Lignes par page"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
+            />
+          </Box>
+        </Box>
+      </Box>
 
-          <Card title="Administrateurs">
-            <div className="text-3xl font-bold font-rubik text-soft-purple">
-              {stats.admins}
-            </div>
-          </Card>
-
-          <Card title="Gestionnaires">
-            <div className="text-3xl font-bold font-rubik text-soft-blue">{stats.managers}</div>
-          </Card>
-
-          <Card title="Utilisateurs">
-            <div className="text-3xl font-bold font-rubik text-soft-green">{stats.users}</div>
-          </Card>
-        </div>
-
-        {/* Filtre par role */}
-        <Card title="Filtres">
-          <div className="flex items-center gap-4">
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-2.5 bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue focus:border-transparent transition-all"
-            >
-              <option value="ALL">Tous les roles</option>
-              <option value="ADMIN">Administrateurs</option>
-              <option value="MANAGER">Gestionnaires</option>
-              <option value="USER">Utilisateurs</option>
-            </select>
-          </div>
-        </Card>
-
-        {/* Table des utilisateurs */}
-        <Card title="Liste des Utilisateurs">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-neutral-200">
-              <thead className="bg-neutral-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Utilisateur
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Rôle
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Date création
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-neutral-100">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-neutral-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-soft-blue rounded-full flex items-center justify-center">
-                          <FaUser className="text-white" />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-neutral-900">
-                            {user.prenom} {user.nom}
-                          </div>
-                          <div className="text-sm text-neutral-500">@{user.username}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-neutral-900">{user.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeClass(
-                          user.role
-                        )}`}
-                      >
-                        {user.role === 'ADMIN' && <FaUserShield className="mr-1" />}
-                        {getRoleLabel(user.role)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.actif
-                            ? 'bg-soft-green text-white'
-                            : 'bg-neutral-200 text-neutral-700'
-                        }`}
-                      >
-                        {user.actif ? 'Actif' : 'Inactif'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
-                      {new Date(user.createdAt).toLocaleDateString('fr-FR')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleOpenModal(user)}
-                          className="text-soft-blue hover:text-soft-indigo transition-colors"
-                        >
-                          <FaEdit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="text-danger hover:text-red-700 transition-colors"
-                        >
-                          <FaTrash className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {filteredUsers.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-neutral-500 text-lg">Aucun utilisateur trouvé</p>
-              </div>
+      {/* Create/Edit Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth PaperProps={{ sx: componentStyles.dialog.paper }}>
+        <DialogTitle sx={componentStyles.dialog.title}>
+          {editingUser ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ mt: 2 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <TextField fullWidth label="Prenom" value={formData.prenom} onChange={(e) => setFormData({ ...formData, prenom: e.target.value })} size="small" />
+              <TextField fullWidth label="Nom" value={formData.nom} onChange={(e) => setFormData({ ...formData, nom: e.target.value })} size="small" />
+            </Stack>
+            <TextField fullWidth required label="Username" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} size="small" />
+            <TextField fullWidth required label="Email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} size="small" />
+            {!editingUser && (
+              <TextField fullWidth required label="Mot de passe" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} size="small" />
             )}
-          </div>
-        </Card>
-      </div>
+            <TextField fullWidth required select label="Role" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value as UserFormData['role'] })} size="small">
+              <MenuItem value="USER">Utilisateur</MenuItem>
+              <MenuItem value="MANAGER">Gestionnaire</MenuItem>
+              <MenuItem value="ADMIN">Administrateur</MenuItem>
+            </TextField>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={handleCloseDialog} sx={componentStyles.buttonSecondary}>Annuler</Button>
+          <Button onClick={handleSubmit} sx={componentStyles.buttonPrimary}>
+            {editingUser ? 'Modifier' : 'Creer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-soft-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-neutral-200">
-              <h2 className="text-2xl font-bold text-neutral-800">
-                {editingUser ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}
-              </h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Prénom
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.prenom}
-                    onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Nom
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.nom}
-                    onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Username <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Email <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue"
-                />
-              </div>
-
-              {!editingUser && (
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Mot de passe <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Rôle <span className="text-danger">*</span>
-                </label>
-                <select
-                  value={formData.role}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      role: e.target.value as 'ADMIN' | 'MANAGER' | 'USER',
-                    })
-                  }
-                  className="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-blue"
-                >
-                  <option value="USER">Utilisateur</option>
-                  <option value="MANAGER">Gestionnaire</option>
-                  <option value="ADMIN">Administrateur</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-6 py-2.5 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-soft-blue text-white rounded-lg hover:bg-soft-indigo transition-colors"
-                >
-                  {editingUser ? 'Mettre à jour' : 'Créer'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title="Supprimer l'utilisateur"
+        message="Cette action est irreversible. Voulez-vous continuer ?"
+        variant="danger"
+        confirmLabel="Supprimer"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ open: false, id: null })}
+      />
     </AppLayout>
   )
 }

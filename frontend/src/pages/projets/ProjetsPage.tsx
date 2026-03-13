@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Button, Chip, IconButton, Alert, CircularProgress } from '@mui/material'
-import { Add, Refresh } from '@mui/icons-material'
+import { Plus, RefreshCw } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel } from '@/components/core'
 import ConfirmDialog from '@/components/core/ConfirmDialog'
@@ -15,7 +15,7 @@ import {
   closestCenter,
 } from '@/components/core/SortableTable'
 import { SortableProjetCard, ProjetActionDialogs } from '@/components/projets/list'
-import { colors, componentStyles, getStatusConfig } from '@/lib/designSystem'
+import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
 const styles = componentStyles.listPage
 
@@ -159,18 +159,24 @@ const ProjetsPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={styles.container}>
+      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
         <ControlPanel
           breadcrumbs={[{ label: 'Projets' }]}
           actions={
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <IconButton size="small" onClick={refresh} sx={{ color: colors.textSecondary }}>
-                <Refresh fontSize="small" />
-              </IconButton>
-              <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/projets/nouveau')} sx={componentStyles.buttonPrimary}>
-                Nouveau Projet
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<Plus size={16} />}
+                onClick={() => navigate('/projets/nouveau')}
+                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
+              >
+                Nouveau
               </Button>
-            </Box>
+              <IconButton size="small" onClick={refresh} sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </>
           }
           searchValue={searchTerm}
           onSearchChange={(value) => { setSearchTerm(value); setPage(0) }}

@@ -23,14 +23,8 @@ import {
   Chip,
   CircularProgress,
 } from '@mui/material'
-import {
-  Add,
-  Edit,
-  Delete,
-  AttachMoney,
-  Refresh,
-} from '@mui/icons-material'
-import { CreditCard } from 'lucide-react'
+import { AttachMoney } from '@mui/icons-material'
+import { Plus, RefreshCw, Edit2, Trash2, CreditCard } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import { paiementsAPI } from '../../lib/api'
 import FileUpload from '../../components/ui/FileUpload'
@@ -223,24 +217,21 @@ const PaiementsPage = () => {
         <ControlPanel
           breadcrumbs={[{ label: 'Paiements' }]}
           actions={
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <ExportButton onClick={() => { /* TODO: implement export */ }} label="Exporter" />
-              <IconButton
-                size="small"
-                onClick={() => loadPaiements()}
-                sx={{ color: colors.textSecondary }}
-              >
-                <Refresh fontSize="small" />
-              </IconButton>
+            <>
               <Button
                 variant="contained"
-                startIcon={<Add />}
+                size="small"
+                startIcon={<Plus size={16} />}
                 onClick={() => handleOpenDialog()}
-                sx={componentStyles.buttonPrimary}
+                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
               >
-                Nouveau Paiement
+                Nouveau
               </Button>
-            </Box>
+              <ExportButton onClick={() => { /* TODO: implement export */ }} />
+              <IconButton size="small" onClick={() => loadPaiements()} sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </>
           }
           searchValue={searchTerm}
           onSearchChange={(value) => { setSearchTerm(value); setPage(0) }}
@@ -355,10 +346,10 @@ const PaiementsPage = () => {
                         <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
                             <IconButton size="small" onClick={() => handleOpenDialog(paiement)} sx={{ color: colors.neutral[500] }}>
-                              <Edit fontSize="small" />
+                              <Edit2 size={14} />
                             </IconButton>
                             <IconButton size="small" onClick={() => handleDelete(paiement.id)} sx={{ color: colors.danger[500] }}>
-                              <Delete fontSize="small" />
+                              <Trash2 size={14} />
                             </IconButton>
                           </Box>
                         </TableCell>

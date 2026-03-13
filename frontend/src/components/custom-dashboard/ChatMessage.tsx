@@ -1,9 +1,11 @@
 /**
- * ChatMessage - Chat bubble component for conversational dashboard UI.
- * Displays user instructions and system responses in a chat-like format.
+ * ChatMessage - Claude-like message bubble for the dashboard chat.
+ *
+ * Renders user messages as right-aligned bubbles and system responses
+ * as left-aligned cards with full-width artifact children.
  */
 
-import { Box, Typography, Paper } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { User, Sparkles } from 'lucide-react'
 import { colors, typography, borders } from '@/lib/designSystem'
 
@@ -21,52 +23,62 @@ const ChatMessage = ({ type, content, timestamp, children }: ChatMessageProps) =
     <Box sx={{
       display: 'flex',
       gap: 1.5,
-      mb: 2.5,
+      mb: 2,
       flexDirection: isUser ? 'row-reverse' : 'row',
       alignItems: 'flex-start',
     }}>
       {/* Avatar */}
       <Box sx={{
-        width: 32,
-        height: 32,
+        width: 30,
+        height: 30,
         borderRadius: borders.radius.full,
         backgroundColor: isUser ? colors.primary[100] : colors.neutral[100],
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        mt: 0.5,
+        mt: 0.25,
       }}>
         {isUser
-          ? <User className="w-4 h-4" style={{ color: colors.primary[700] }} />
-          : <Sparkles className="w-4 h-4" style={{ color: colors.primary[600] }} />
+          ? <User className="w-3.5 h-3.5" style={{ color: colors.primary[700] }} />
+          : <Sparkles className="w-3.5 h-3.5" style={{ color: colors.primary[600] }} />
         }
       </Box>
 
       {/* Message body */}
-      <Box sx={{ maxWidth: '80%', minWidth: 0 }}>
-        <Paper sx={{
-          px: 2,
-          py: 1.5,
-          borderRadius: borders.radius.lg,
-          backgroundColor: isUser ? colors.primary[50] : colors.surface,
-          border: `1px solid ${isUser ? colors.primary[200] : colors.border}`,
-          boxShadow: 'none',
-        }}>
-          <Typography sx={{
-            fontSize: typography.sizes.sm,
-            color: colors.textPrimary,
-            lineHeight: 1.5,
-            whiteSpace: 'pre-wrap',
+      <Box sx={{
+        maxWidth: isUser ? '70%' : '100%',
+        minWidth: 0,
+        flex: isUser ? undefined : 1,
+      }}>
+        {/* Text bubble */}
+        {content && (
+          <Box sx={{
+            display: 'inline-block',
+            px: 1.75,
+            py: 1,
+            borderRadius: isUser
+              ? `${borders.radius.lg} ${borders.radius.lg} 4px ${borders.radius.lg}`
+              : `${borders.radius.lg} ${borders.radius.lg} ${borders.radius.lg} 4px`,
+            backgroundColor: isUser ? colors.primary[50] : colors.neutral[50],
+            border: `1px solid ${isUser ? colors.primary[100] : colors.neutral[100]}`,
+            maxWidth: isUser ? '100%' : 'fit-content',
           }}>
-            {content}
-          </Typography>
-        </Paper>
+            <Typography sx={{
+              fontSize: typography.sizes.sm,
+              color: colors.textPrimary,
+              lineHeight: 1.5,
+              whiteSpace: 'pre-wrap',
+            }}>
+              {content}
+            </Typography>
+          </Box>
+        )}
 
         {/* Timestamp */}
         <Typography sx={{
-          fontSize: typography.sizes['2xs'],
-          color: colors.neutral[400],
+          fontSize: '10px',
+          color: colors.neutral[300],
           mt: 0.5,
           px: 0.5,
           textAlign: isUser ? 'right' : 'left',
@@ -74,7 +86,7 @@ const ChatMessage = ({ type, content, timestamp, children }: ChatMessageProps) =
           {timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
         </Typography>
 
-        {/* Widget content (system messages only) */}
+        {/* Artifact content (system only) */}
         {!isUser && children && (
           <Box sx={{ mt: 1.5 }}>
             {children}

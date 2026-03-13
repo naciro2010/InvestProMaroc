@@ -1,6 +1,9 @@
 /**
  * DataFetcher - Maps parsed instructions to API calls and transforms data
  * for visualization rendering.
+ *
+ * Handles the full pipeline: API call → raw record extraction → grouping →
+ * metric calculation → chart/table-ready output.
  */
 
 import {
@@ -41,61 +44,118 @@ export interface ColumnDef {
   align?: 'left' | 'right' | 'center'
 }
 
+/**
+ * Loosely typed raw record from the API.
+ * Fields match actual backend DTO naming (camelCase).
+ */
 interface RawRecord {
   id?: number
+
+  // Identifiers
   code?: string
   numero?: string
   numeroMarche?: string
+  numAo?: string
   numeroDecompte?: string
   referencePaiement?: string
+
+  // Labels
   designation?: string
   libelle?: string
   objet?: string
   raisonSociale?: string
   nom?: string
+  description?: string
+
+  // Status & type
   statut?: string
   status?: string
-  type?: string
   typeConvention?: string
   typeMarche?: string
-  montant?: number
+  type?: string
+  naturePrestation?: string
+
+  // Convention amounts
+  budget?: number
+  tauxCommission?: number
+
+  // Marché amounts (camelCase from API)
   montantHt?: number
   montantHT?: number
   montantTtc?: number
   montantTTC?: number
+  montantTva?: number
+  montant?: number
+
+  // Décompte amounts
   montantBrutHT?: number
+  totalRetenues?: number
+  netAPayer?: number
+
+  // Paiement amounts
   montantPaye?: number
-  budget?: number
+
+  // Projet
   budgetTotal?: number
+  pourcentageAvancement?: number
+
+  // Budget entity
   totalBudget?: number
   plafondConvention?: number
-  netAPayer?: number
+  version?: string
+
+  // Dates
   datePaiement?: string
   dateValeur?: string
   dateExecution?: string
   dateDecompte?: string
   dateDebut?: string
+  dateFin?: string
   dateMarche?: string
+  dateSignature?: string
   dateBudget?: string
+  dateConvention?: string
   createdAt?: string
+
+  // Flat foreign key references (from backend DTOs)
   conventionId?: number
   conventionNumero?: string
   conventionLibelle?: string
+  conventionCode?: string
   marcheId?: number
   marcheNumero?: string
   marcheFournisseur?: string
   fournisseurId?: number
   fournisseurNom?: string
   fournisseurCode?: string
+  fournisseurIce?: string
   projetId?: number
+  chefProjetNom?: string
+
+  // Nested objects (some APIs may still return these)
   fournisseur?: { id?: number; raisonSociale?: string; code?: string }
   convention?: { id?: number; libelle?: string; code?: string; numero?: string }
   marche?: { id?: number; code?: string; designation?: string; objet?: string }
   projet?: { id?: number; code?: string; designation?: string; nom?: string }
+
+  // Geolocation
   zoneGeographique?: string
-  ice?: string
+  adresse?: string
   ville?: string
-  version?: string
+  localisation?: string
+
+  // Fournisseur specific
+  ice?: string
+  identifiantFiscal?: string
+  telephone?: string
+  email?: string
+
+  // Paiement specific
+  modePaiement?: string
+  ordrePaiementId?: number
+  numeroOP?: string
+
+  // Catch-all for unexpected fields
   [key: string]: unknown
 }
 
@@ -104,7 +164,7 @@ interface RawRecord {
 // ============================================================================
 
 async function fetchRawData(entity: EntityType): Promise<RawRecord[]> {
-  let response: { data: { data?: RawRecord[] | RawRecord } | RawRecord[] }
+  let response: { data: { data?: RawRecord[] | RawRecord; success?: boolean } | RawRecord[] }
 
   switch (entity) {
     case 'conventions':
@@ -132,18 +192,19 @@ async function fetchRawData(entity: EntityType): Promise<RawRecord[]> {
       throw new Error(`Entité non supportée: ${entity}`)
   }
 
-  // Handle ApiResponse<T> wrapper
+  // Handle ApiResponse<T> wrapper: { success, message, data }
   const data = response.data
   if (Array.isArray(data)) return data
   if (data && typeof data === 'object' && 'data' in data) {
     const inner = data.data
     if (Array.isArray(inner)) return inner
+    if (inner && typeof inner === 'object') return [inner as RawRecord]
   }
   return []
 }
 
 // ============================================================================
-// Field Extractors
+// Field Extractors - Match actual backend DTO field names
 // ============================================================================
 
 function getLabel(record: RawRecord): string {
@@ -153,6 +214,7 @@ function getLabel(record: RawRecord): string {
     record.objet ||
     record.nom ||
     record.raisonSociale ||
+    record.description ||
     record.code ||
     record.numero ||
     record.numeroMarche ||
@@ -178,33 +240,36 @@ function getStatus(record: RawRecord): string {
 }
 
 function getType(record: RawRecord): string {
-  return record.typeConvention || record.typeMarche || record.type || 'N/A'
+  return record.typeConvention || record.typeMarche || record.naturePrestation || record.type || 'N/A'
 }
 
 /** Get the best monetary amount from a record depending on entity context */
 function getAmount(record: RawRecord, entity: EntityType): number {
   switch (entity) {
     case 'marches':
-      return toNumber(record.montantHt ?? record.montantHT ?? 0)
+      // Backend returns montantHt (camelCase) - also check montantHT for safety
+      return toNumber(record.montantHt ?? record.montantHT ?? record.montantTtc ?? record.montantTTC ?? 0)
     case 'decomptes':
-      return toNumber(record.netAPayer ?? record.montantBrutHT ?? 0)
+      return toNumber(record.netAPayer ?? record.montantBrutHT ?? record.montant ?? 0)
     case 'paiements':
       return toNumber(record.montantPaye ?? record.montant ?? 0)
     case 'conventions':
-      return toNumber(record.budget ?? 0)
+      return toNumber(record.budget ?? record.montant ?? 0)
     case 'projets':
-      return toNumber(record.budgetTotal ?? 0)
+      return toNumber(record.budgetTotal ?? record.budget ?? 0)
     case 'budgets':
       return toNumber(record.totalBudget ?? record.plafondConvention ?? 0)
+    case 'fournisseurs':
+      return 0 // Fournisseurs don't have amounts
     default:
-      return toNumber(record.montant ?? 0)
+      return toNumber(record.montant ?? record.budget ?? 0)
   }
 }
 
 function toNumber(val: unknown): number {
   if (typeof val === 'number') return val
   if (typeof val === 'string') {
-    const parsed = parseFloat(val)
+    const parsed = parseFloat(val.replace(/\s/g, '').replace(',', '.'))
     return isNaN(parsed) ? 0 : parsed
   }
   return 0
@@ -218,11 +283,13 @@ function getTemporalDate(record: RawRecord, entity: EntityType): string | null {
     case 'decomptes':
       return record.dateDecompte || record.createdAt || null
     case 'marches':
-      return record.dateMarche || record.dateDebut || record.createdAt || null
+      return record.dateMarche || record.dateSignature || record.dateDebut || record.createdAt || null
     case 'conventions':
-      return record.dateDebut || record.createdAt || null
+      return record.dateConvention || record.dateDebut || record.createdAt || null
     case 'budgets':
       return record.dateBudget || record.createdAt || null
+    case 'projets':
+      return record.dateDebut || record.createdAt || null
     default:
       return record.dateDebut || record.createdAt || null
   }
@@ -236,47 +303,55 @@ function getGroupValue(record: RawRecord, groupBy: GroupByField, entity: EntityT
       return getType(record)
     case 'convention':
       return (
+        record.conventionLibelle ||
+        record.conventionNumero ||
+        record.conventionCode ||
         record.convention?.libelle ||
         record.convention?.numero ||
         record.convention?.code ||
-        record.conventionLibelle ||
-        record.conventionNumero ||
-        `Conv #${record.conventionId ?? '?'}`
+        (record.conventionId ? `Conv #${record.conventionId}` : 'Sans convention')
       )
     case 'marche':
       return (
+        record.marcheNumero ||
         record.marche?.designation ||
         record.marche?.code ||
-        record.marcheNumero ||
-        `Marché #${record.marcheId ?? '?'}`
+        record.numeroMarche ||
+        (record.marcheId ? `Marché #${record.marcheId}` : 'Sans marché')
       )
     case 'fournisseur':
       return (
-        record.fournisseur?.raisonSociale ||
-        record.fournisseur?.code ||
         record.fournisseurNom ||
-        `Fournisseur #${record.fournisseurId ?? '?'}`
+        record.fournisseur?.raisonSociale ||
+        record.fournisseurCode ||
+        record.fournisseur?.code ||
+        record.raisonSociale ||
+        (record.fournisseurId ? `Fournisseur #${record.fournisseurId}` : 'Sans fournisseur')
       )
     case 'projet':
       return (
         record.projet?.designation ||
         record.projet?.nom ||
         record.projet?.code ||
-        `Projet #${record.projetId ?? '?'}`
+        (record.projetId ? `Projet #${record.projetId}` : 'Sans projet')
       )
     case 'mois': {
       const date = getTemporalDate(record, entity)
       if (!date) return 'N/A'
       const d = new Date(date)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      if (isNaN(d.getTime())) return 'N/A'
+      const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+      return `${months[d.getMonth()]} ${d.getFullYear()}`
     }
     case 'annee': {
       const date = getTemporalDate(record, entity)
       if (!date) return 'N/A'
-      return String(new Date(date).getFullYear())
+      const d = new Date(date)
+      if (isNaN(d.getTime())) return 'N/A'
+      return String(d.getFullYear())
     }
     case 'zone':
-      return record.zoneGeographique || 'Non définie'
+      return record.zoneGeographique || record.ville || record.localisation || 'Non définie'
     default:
       return 'N/A'
   }
@@ -284,7 +359,7 @@ function getGroupValue(record: RawRecord, groupBy: GroupByField, entity: EntityT
 
 function getMetricValue(record: RawRecord, metricField: string, entity: EntityType): number {
   // Use entity-aware amount extraction for common metric fields
-  if (metricField === 'montant' || metricField === 'montantHT' || metricField === 'netAPayer' || metricField === 'budget') {
+  if (['montant', 'montantHT', 'montantHt', 'netAPayer', 'budget', 'montantTTC', 'montantTtc'].includes(metricField)) {
     return getAmount(record, entity)
   }
   const val = record[metricField]
@@ -292,7 +367,7 @@ function getMetricValue(record: RawRecord, metricField: string, entity: EntityTy
 }
 
 // ============================================================================
-// Data Transformation
+// Data Transformation - Table (ungrouped)
 // ============================================================================
 
 function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstruction): FetchedData {
@@ -302,28 +377,31 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
     conventions: [
       { key: 'code', label: 'Code', type: 'string' },
       { key: 'libelle', label: 'Libellé', type: 'string' },
-      { key: 'statut', label: 'Statut', type: 'status' },
       { key: 'typeConvention', label: 'Type', type: 'string' },
+      { key: 'statut', label: 'Statut', type: 'status' },
       { key: 'budget', label: 'Budget', type: 'number', align: 'right' },
+      { key: 'dateDebut', label: 'Date début', type: 'date' },
     ],
     marches: [
-      { key: 'code', label: 'Code', type: 'string' },
+      { key: 'code', label: 'N° Marché', type: 'string' },
       { key: 'objet', label: 'Objet', type: 'string' },
       { key: 'fournisseurNom', label: 'Fournisseur', type: 'string' },
+      { key: 'typeMarche', label: 'Type', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
       { key: 'montantHt', label: 'Montant HT', type: 'number', align: 'right' },
       { key: 'montantTtc', label: 'Montant TTC', type: 'number', align: 'right' },
-      { key: 'zoneGeographique', label: 'Zone', type: 'string' },
     ],
     projets: [
       { key: 'code', label: 'Code', type: 'string' },
       { key: 'nom', label: 'Nom', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
       { key: 'budgetTotal', label: 'Budget Total', type: 'number', align: 'right' },
+      { key: 'dateDebut', label: 'Date début', type: 'date' },
     ],
     decomptes: [
       { key: 'code', label: 'N° Décompte', type: 'string' },
       { key: 'marcheNumero', label: 'Marché', type: 'string' },
+      { key: 'marcheFournisseur', label: 'Fournisseur', type: 'string' },
       { key: 'montantBrutHT', label: 'Montant Brut HT', type: 'number', align: 'right' },
       { key: 'netAPayer', label: 'Net à Payer', type: 'number', align: 'right' },
       { key: 'statut', label: 'Statut', type: 'status' },
@@ -334,15 +412,17 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
       { key: 'montantPaye', label: 'Montant', type: 'number', align: 'right' },
       { key: 'modePaiement', label: 'Mode', type: 'string' },
       { key: 'dateValeur', label: 'Date Valeur', type: 'date' },
+      { key: 'dateExecution', label: 'Date Exécution', type: 'date' },
     ],
     fournisseurs: [
       { key: 'code', label: 'Code', type: 'string' },
       { key: 'raisonSociale', label: 'Raison Sociale', type: 'string' },
       { key: 'ice', label: 'ICE', type: 'string' },
       { key: 'ville', label: 'Ville', type: 'string' },
+      { key: 'telephone', label: 'Téléphone', type: 'string' },
     ],
     budgets: [
-      { key: 'code', label: 'Convention', type: 'string' },
+      { key: 'conventionLibelle', label: 'Convention', type: 'string' },
       { key: 'version', label: 'Version', type: 'string' },
       { key: 'totalBudget', label: 'Total Budget', type: 'number', align: 'right' },
       { key: 'statut', label: 'Statut', type: 'status' },
@@ -362,6 +442,7 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
           row[col.key] = getStatus(record)
           break
         case 'typeConvention':
+        case 'typeMarche':
         case 'type':
           row[col.key] = getType(record)
           break
@@ -376,17 +457,22 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
           row[col.key] = getLabel(record)
           break
         case 'fournisseurNom':
-          row[col.key] = record.fournisseurNom || record.fournisseur?.raisonSociale || ''
-          break
-        case 'marcheNumero':
-          row[col.key] = record.marcheNumero || record.marche?.code || `#${record.marcheId ?? ''}`
+          row[col.key] = record.fournisseurNom || record.fournisseur?.raisonSociale || record.marcheFournisseur || ''
           break
         case 'marcheFournisseur':
-          row[col.key] = record.marcheFournisseur || ''
+          row[col.key] = record.marcheFournisseur || record.fournisseurNom || ''
+          break
+        case 'marcheNumero':
+          row[col.key] = record.marcheNumero || record.marche?.code || record.numeroMarche || (record.marcheId ? `#${record.marcheId}` : '')
           break
         case 'conventionNumero':
-          row[col.key] = record.conventionNumero || record.convention?.numero || ''
+        case 'conventionLibelle':
+          row[col.key] = record.conventionLibelle || record.conventionNumero || record.conventionCode || record.convention?.libelle || ''
           break
+        case 'raisonSociale':
+          row[col.key] = record.raisonSociale || ''
+          break
+        // Amount fields - handle both camelCase variants
         case 'montantHt':
         case 'montantHT':
           row[col.key] = toNumber(record.montantHt ?? record.montantHT ?? 0)
@@ -398,15 +484,30 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
         case 'montantBrutHT':
           row[col.key] = toNumber(record.montantBrutHT ?? 0)
           break
+        case 'netAPayer':
+          row[col.key] = toNumber(record.netAPayer ?? 0)
+          break
         case 'montantPaye':
-          row[col.key] = toNumber(record.montantPaye ?? 0)
+          row[col.key] = toNumber(record.montantPaye ?? record.montant ?? 0)
+          break
+        case 'budget':
+          row[col.key] = toNumber(record.budget ?? 0)
+          break
+        case 'budgetTotal':
+          row[col.key] = toNumber(record.budgetTotal ?? record.budget ?? 0)
           break
         case 'totalBudget':
           row[col.key] = toNumber(record.totalBudget ?? record.plafondConvention ?? 0)
           break
         default: {
           const val = record[col.key]
-          row[col.key] = (typeof val === 'string' || typeof val === 'number') ? val : String(val ?? '')
+          if (val === null || val === undefined) {
+            row[col.key] = ''
+          } else if (typeof val === 'string' || typeof val === 'number') {
+            row[col.key] = val
+          } else {
+            row[col.key] = String(val)
+          }
         }
       }
     }
@@ -417,13 +518,27 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
     rows = rows.slice(0, limit)
   }
 
+  const ENTITY_LABELS: Record<EntityType, string> = {
+    conventions: 'Conventions',
+    marches: 'Marchés',
+    projets: 'Projets',
+    decomptes: 'Décomptes',
+    paiements: 'Paiements',
+    fournisseurs: 'Fournisseurs',
+    budgets: 'Budgets',
+  }
+
   return {
     rows,
     columns,
     totalCount: records.length,
-    entityLabel: entity,
+    entityLabel: ENTITY_LABELS[entity] || entity,
   }
 }
+
+// ============================================================================
+// Data Transformation - Grouped (for charts)
+// ============================================================================
 
 function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction): FetchedData {
   const { entity, groupBy, metric, metricField, limit } = instruction
@@ -483,6 +598,16 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
     average: 'Moyenne',
   }
 
+  const ENTITY_LABELS: Record<EntityType, string> = {
+    conventions: 'Conventions',
+    marches: 'Marchés',
+    projets: 'Projets',
+    decomptes: 'Décomptes',
+    paiements: 'Paiements',
+    fournisseurs: 'Fournisseurs',
+    budgets: 'Budgets',
+  }
+
   const columns: ColumnDef[] = [
     { key: 'group', label: 'Catégorie', type: 'string' },
     { key: 'value', label: metricLabels[metric], type: 'number', align: 'right' },
@@ -493,7 +618,7 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
     rows,
     columns,
     totalCount: records.length,
-    entityLabel: instruction.entity,
+    entityLabel: ENTITY_LABELS[entity] || entity,
   }
 }
 
@@ -505,11 +630,21 @@ export async function fetchDataForInstruction(instruction: ParsedInstruction): P
   const records = await fetchRawData(instruction.entity)
 
   if (records.length === 0) {
+    const ENTITY_LABELS: Record<EntityType, string> = {
+      conventions: 'Conventions',
+      marches: 'Marchés',
+      projets: 'Projets',
+      decomptes: 'Décomptes',
+      paiements: 'Paiements',
+      fournisseurs: 'Fournisseurs',
+      budgets: 'Budgets',
+    }
+
     return {
       rows: [],
       columns: [{ key: 'message', label: 'Information', type: 'string' }],
       totalCount: 0,
-      entityLabel: instruction.entity,
+      entityLabel: ENTITY_LABELS[instruction.entity] || instruction.entity,
     }
   }
 

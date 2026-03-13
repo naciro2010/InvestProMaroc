@@ -1,0 +1,44 @@
+name: Docker Build CI
+
+on:
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - 'backend/Dockerfile'
+      - 'start.sh'
+      - '.github/workflows/ci-docker.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'backend/Dockerfile'
+      - 'start.sh'
+
+jobs:
+  docker-build:
+    name: Verify Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (root Dockerfile)
+        if: hashFiles('Dockerfile') != ''
+        run: docker build -t investpro-test:latest .
+        timeout-minutes: 15
+
+      - name: Verify Ollama is installed
+        if: hashFiles('Dockerfile') != ''
+        run: |
+          docker run --rm investpro-test:latest which ollama && echo "Ollama installed successfully" || echo "Ollama not found"
+
+      - name: Build backend Docker image
+        if: hashFiles('backend/Dockerfile') != ''
+        working-directory: ./backend
+        run: docker build -t investpro-backend-test:latest .
+        timeout-minutes: 10

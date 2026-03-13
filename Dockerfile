@@ -25,7 +25,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Installer les outils nécessaires
-RUN apk add --no-cache curl bash
+RUN apk add --no-cache curl bash zstd
 
 # Installer Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh

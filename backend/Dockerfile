@@ -30,8 +30,8 @@ RUN apk add --no-cache curl
 COPY --from=builder /build/build/libs/investpro-backend-1.0.0.jar app.jar
 
 # Non-root user for security
-RUN addgroup -g 1001 appuser && \
-    adduser -u 1001 -G appuser -s /bin/false appuser && \
+RUN addgroup -S appuser && \
+    adduser -S -G appuser -s /bin/false appuser && \
     chown -R appuser:appuser /app
 
 USER appuser

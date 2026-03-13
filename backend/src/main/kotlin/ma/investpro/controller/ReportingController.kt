@@ -2,6 +2,7 @@ package ma.investpro.controller
 
 import ma.investpro.dto.*
 import ma.investpro.service.ReportingService
+import ma.investpro.service.ExecutiveDashboardService
 import mu.KotlinLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -14,7 +15,22 @@ private val logger = KotlinLogging.logger {}
 @RestController
 @RequestMapping("/api/reporting")
 @ReadAccess
-class ReportingController(private val reportingService: ReportingService) {
+class ReportingController(
+    private val reportingService: ReportingService,
+    private val executiveDashboardService: ExecutiveDashboardService
+) {
+
+    // ==================== EXECUTIVE DASHBOARD ====================
+
+    @GetMapping("/dashboard/executive")
+    fun getExecutiveDashboard() =
+        ResponseEntity.ok(
+            ApiResponse(
+                true,
+                "Tableau de bord executif",
+                executiveDashboardService.getExecutiveDashboard()
+            )
+        )
 
     // ==================== RECHERCHE AVANCÉE ====================
 

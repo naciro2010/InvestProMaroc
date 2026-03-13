@@ -805,6 +805,8 @@ export const cascadeAPI = {
 export const reportingAPI = {
   getDashboard: () =>
     api.get<ApiResponse<DashboardStatsDTO>>('/reporting/dashboard'),
+  getExecutiveDashboard: () =>
+    api.get<ApiResponse<ExecutiveDashboardDTO>>('/reporting/dashboard/executive'),
   getCommissionStatsByPeriod: (annee?: number, mois?: number) =>
     api.get<ApiResponse<CommissionStatsDTO[]>>('/reporting/commissions/stats/periode', {
       params: { annee, mois },
@@ -894,6 +896,118 @@ export interface DashboardStatsDTO {
   commissions: CommissionGlobalStatsDTO
   paiements: PaiementStatsDTO
   topFournisseurs: TopFournisseurStatsDTO[]
+}
+
+// ============================================================================
+// Executive Dashboard DTOs
+// ============================================================================
+
+export interface ExecutiveDashboardDTO {
+  kpis: ExecutiveKPIs
+  workflowFunnel: WorkflowFunnelDTO
+  monthlyTrends: MonthlyTrendDTO[]
+  topMarches: TopMarcheExecDTO[]
+  topFournisseurs: TopFournisseurExecDTO[]
+  alerts: DashboardAlertDTO[]
+  recentActivity: RecentActivityExecDTO[]
+  budgetExecution: BudgetExecutionDTO
+}
+
+export interface ExecutiveKPIs {
+  totalConventions: number
+  totalProjets: number
+  totalMarches: number
+  totalDecomptes: number
+  totalPaiements: number
+  totalFournisseurs: number
+  budgetConventions: number
+  budgetProjets: number
+  engagementMarches: number
+  totalPaye: number
+  tauxEngagement: number
+  tauxConsommation: number
+  marchesEnRetard: number
+  conventionsEnAttente: number
+  projetsActifs: number
+  decomptesEnAttente: number
+}
+
+export interface WorkflowFunnelDTO {
+  conventions: StatusCountsDTO
+  marches: StatusCountsDTO
+  projets: StatusCountsDTO
+  decomptes: StatusCountsDTO
+}
+
+export interface StatusCountsDTO {
+  counts: Record<string, number>
+  total: number
+}
+
+export interface MonthlyTrendDTO {
+  month: string
+  label: string
+  marchesCreated: number
+  decomptesEmis: number
+  paiementsEffectues: number
+  montantEngage: number
+  montantPaye: number
+}
+
+export interface TopMarcheExecDTO {
+  id: number
+  code: string
+  objet: string
+  montantTtc: number
+  statut: string
+  fournisseur: string | null
+  tauxAvancement: number
+}
+
+export interface TopFournisseurExecDTO {
+  id: number
+  nom: string
+  totalMarches: number
+  montantTotal: number
+  dernierMarche: string | null
+}
+
+export interface DashboardAlertDTO {
+  type: string
+  severity: string
+  message: string
+  count: number
+  link: string | null
+}
+
+export interface RecentActivityExecDTO {
+  id: number
+  entityType: string
+  code: string
+  label: string
+  statut: string
+  date: string | null
+  path: string
+}
+
+export interface BudgetExecutionDTO {
+  budgetTotal: number
+  engage: number
+  paye: number
+  resteBudget: number
+  resteAPayer: number
+  tauxEngagement: number
+  tauxPaiement: number
+  byConvention: ConventionBudgetDTO[]
+}
+
+export interface ConventionBudgetDTO {
+  id: number
+  code: string
+  budget: number
+  engage: number
+  paye: number
+  tauxEngagement: number
 }
 
 // ============================================================================

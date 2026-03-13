@@ -1,42 +1,64 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Typography,
   IconButton,
   Tooltip,
+  CircularProgress,
+  Skeleton,
 } from '@mui/material'
 import { RefreshCw } from 'lucide-react'
 import AppLayout from '../components/layout/AppLayout'
 import { ControlPanel } from '../components/core'
 import { colors, typography } from '../lib/designSystem'
 import { useAuth } from '../contexts/AuthContext'
+import { reportingAPI, ExecutiveDashboardDTO } from '../lib/api'
 import {
-  DashboardKPICards,
-  DashboardConventionChart,
-  DashboardBudgetOverview,
-  DashboardMarcheChart,
-  DashboardRecentActivity,
   DashboardQuickActions,
+  DashboardFinanceKPIs,
+  DashboardWorkflowFunnel,
+  DashboardMonthlyTrend,
+  DashboardTopMarches,
+  DashboardTopFournisseurs,
+  DashboardBudgetExecution,
+  DashboardAlerts,
+  DashboardRecentActivityExec,
 } from '../components/dashboard'
 import { getGreeting } from '../components/dashboard/types'
 
 const DashboardModern = () => {
   const { user } = useAuth()
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [data, setData] = useState<ExecutiveDashboardDTO | null>(null)
+  const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await reportingAPI.getExecutiveDashboard()
+      const payload = res.data?.data ?? res.data
+      setData(payload as ExecutiveDashboardDTO)
+    } catch (err) {
+      console.error('Failed to load executive dashboard', err)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDashboard()
+  }, [])
 
   const handleRefresh = () => {
     setRefreshing(true)
-    setRefreshKey(prev => prev + 1)
-    setTimeout(() => setRefreshing(false), 1500)
+    fetchDashboard()
   }
 
   return (
     <AppLayout>
       <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
-        {/* Control Panel */}
         <ControlPanel
-          breadcrumbs={[{ label: 'Dashboard' }]}
+          breadcrumbs={[{ label: 'Tableau de bord' }]}
           actions={
             <Tooltip title="Actualiser les donnees">
               <IconButton
@@ -45,7 +67,10 @@ const DashboardModern = () => {
                 size="small"
                 sx={{ color: colors.textSecondary, '&:hover': { bgcolor: colors.neutral[100] } }}
               >
-                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                {refreshing
+                  ? <CircularProgress size={16} sx={{ color: colors.textSecondary }} />
+                  : <RefreshCw size={16} />
+                }
               </IconButton>
             </Tooltip>
           }
@@ -67,14 +92,16 @@ const DashboardModern = () => {
             fontSize: typography.sizes.base,
             color: colors.textSecondary,
           }}>
-            Vue d'ensemble de vos investissements et operations
+            Tableau de bord executif — vue d'ensemble de vos investissements
           </Typography>
           <Typography sx={{
             fontSize: typography.sizes.sm,
             color: colors.neutral[400],
             mt: 0.25,
           }}>
-            {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}
+            {new Intl.DateTimeFormat('fr-FR', {
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+            }).format(new Date())}
           </Typography>
         </Box>
 
@@ -82,27 +109,74 @@ const DashboardModern = () => {
           {/* Quick Actions */}
           <DashboardQuickActions />
 
-          {/* KPI Cards */}
-          <DashboardKPICards refreshKey={refreshKey} />
+          {loading ? (
+            <DashboardSkeleton />
+          ) : data ? (
+            <>
+              {/* Finance KPIs + Gauges */}
+              <DashboardFinanceKPIs kpis={data.kpis} />
 
-          {/* Charts Row */}
-          <Box sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr 1fr' },
-            gap: 2.5,
-            mb: 3,
-          }}>
-            <DashboardConventionChart refreshKey={refreshKey} />
-            <DashboardBudgetOverview refreshKey={refreshKey} />
-            <DashboardMarcheChart refreshKey={refreshKey} />
-          </Box>
+              {/* Row: Workflow + Alerts */}
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+                gap: 2.5, mb: 3,
+              }}>
+                <DashboardWorkflowFunnel funnel={data.workflowFunnel} />
+                <DashboardAlerts alerts={data.alerts} />
+              </Box>
 
-          {/* Activity */}
-          <DashboardRecentActivity refreshKey={refreshKey} />
+              {/* Monthly Trend (full width) */}
+              <Box sx={{ mb: 3 }}>
+                <DashboardMonthlyTrend trends={data.monthlyTrends} />
+              </Box>
+
+              {/* Row: Top Marches + Top Fournisseurs + Budget Execution */}
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr 1fr' },
+                gap: 2.5, mb: 3,
+              }}>
+                <DashboardTopMarches marches={data.topMarches} />
+                <DashboardTopFournisseurs fournisseurs={data.topFournisseurs} />
+                <DashboardBudgetExecution budget={data.budgetExecution} />
+              </Box>
+
+              {/* Recent Activity (full width) */}
+              <DashboardRecentActivityExec items={data.recentActivity} />
+            </>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Typography sx={{ color: colors.textDisabled }}>
+                Impossible de charger le tableau de bord
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Box>
     </AppLayout>
   )
 }
+
+const DashboardSkeleton = () => (
+  <>
+    <Box sx={{
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' },
+      gap: 2, mb: 3,
+    }}>
+      {[1, 2, 3, 4].map(i => <Skeleton key={i} variant="rectangular" height={140} sx={{ borderRadius: 2 }} />)}
+    </Box>
+    <Box sx={{
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+      gap: 2.5, mb: 3,
+    }}>
+      <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 2 }} />
+      <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 2 }} />
+    </Box>
+    <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2, mb: 3 }} />
+  </>
+)
 
 export default DashboardModern

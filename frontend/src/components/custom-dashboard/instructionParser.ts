@@ -1,11 +1,16 @@
 /**
- * InstructionParser - Rule-based French instruction parser for dashboard generation
- * Parses user text instructions into structured query configurations WITHOUT AI.
+ * InstructionParser - Smart rule-based French instruction parser for dashboard generation.
  *
- * Supports:
- *   - New queries: "tableau des paiements par marché"
- *   - Follow-up modifications: "change en camembert", "groupe par fournisseur"
- *   - Refinement: "top 5 seulement", "en barres"
+ * Parses natural French instructions into structured query configurations WITHOUT AI.
+ * Handles fuzzy matching, implicit defaults, and conversational follow-ups.
+ *
+ * Examples of supported instructions:
+ *   - "montre moi les marchés" → table of all marchés
+ *   - "combien de conventions" → KPI count
+ *   - "répartition des paiements par fournisseur" → pie chart
+ *   - "top 5 marchés par montant" → bar chart, sum, limit 5
+ *   - "évolution mensuelle des décomptes" → line chart by month
+ *   - "change en camembert" → follow-up: change viz type
  */
 
 // ============================================================================
@@ -69,77 +74,136 @@ export type ParseResult =
   | { success: false; error: ParserError }
 
 // ============================================================================
-// Keyword Maps
+// Keyword Maps - Extended with many variants and typos
 // ============================================================================
 
-const VISUALIZATION_KEYWORDS: Record<string, VisualizationType> = {
-  tableau: 'table', table: 'table', liste: 'table', lister: 'table',
-  afficher: 'table', montrer: 'table', voir: 'table',
-  bar: 'bar', barre: 'bar', barres: 'bar', histogramme: 'bar',
-  camembert: 'pie', pie: 'pie', circulaire: 'pie',
-  repartition: 'pie', répartition: 'pie', distribution: 'pie',
-  ligne: 'line', courbe: 'line', evolution: 'line', évolution: 'line',
-  tendance: 'line', trend: 'line',
-  kpi: 'kpi', resume: 'kpi', résumé: 'kpi', synthese: 'kpi', synthèse: 'kpi',
-  graphique: 'bar', graph: 'bar', chart: 'bar', diagramme: 'bar',
-}
+const VISUALIZATION_KEYWORDS: Array<{ words: string[]; viz: VisualizationType }> = [
+  // Table
+  { words: ['tableau', 'table', 'liste', 'lister', 'afficher', 'montrer', 'voir', 'détail', 'detail', 'listing', 'données', 'donnees', 'data'], viz: 'table' },
+  // Bar
+  { words: ['bar', 'barre', 'barres', 'histogramme', 'graphique', 'graph', 'chart', 'diagramme', 'comparaison', 'comparer'], viz: 'bar' },
+  // Pie
+  { words: ['camembert', 'pie', 'circulaire', 'repartition', 'répartition', 'distribution', 'proportion', 'proportions', 'parts', 'part'], viz: 'pie' },
+  // Line
+  { words: ['ligne', 'courbe', 'evolution', 'évolution', 'tendance', 'trend', 'temporel', 'chronologique', 'historique'], viz: 'line' },
+  // KPI
+  { words: ['kpi', 'resume', 'résumé', 'synthese', 'synthèse', 'indicateur', 'chiffre', 'total', 'combien'], viz: 'kpi' },
+]
 
-const ENTITY_KEYWORDS: Record<string, EntityType> = {
-  convention: 'conventions', conventions: 'conventions',
-  marche: 'marches', marchés: 'marches', marches: 'marches', marché: 'marches',
-  projet: 'projets', projets: 'projets',
-  decompte: 'decomptes', decomptes: 'decomptes', décompte: 'decomptes', décomptes: 'decomptes',
-  paiement: 'paiements', paiements: 'paiements', payment: 'paiements', payments: 'paiements',
-  fournisseur: 'fournisseurs', fournisseurs: 'fournisseurs',
-  budget: 'budgets', budgets: 'budgets',
-}
+const ENTITY_PATTERNS: Array<{ pattern: RegExp; entity: EntityType }> = [
+  { pattern: /\bconventions?\b/i, entity: 'conventions' },
+  { pattern: /\bmarch[eéè]s?\b/i, entity: 'marches' },
+  { pattern: /\bcontrats?\b/i, entity: 'marches' },
+  { pattern: /\bprojets?\b/i, entity: 'projets' },
+  { pattern: /\bprogrammes?\b/i, entity: 'projets' },
+  { pattern: /\bd[eéè]comptes?\b/i, entity: 'decomptes' },
+  { pattern: /\bfactures?\b/i, entity: 'decomptes' },
+  { pattern: /\bsituations?\s+de\s+travaux\b/i, entity: 'decomptes' },
+  { pattern: /\bpaiements?\b/i, entity: 'paiements' },
+  { pattern: /\bpayments?\b/i, entity: 'paiements' },
+  { pattern: /\br[eè]glements?\b/i, entity: 'paiements' },
+  { pattern: /\bversements?\b/i, entity: 'paiements' },
+  { pattern: /\bfournisseurs?\b/i, entity: 'fournisseurs' },
+  { pattern: /\bprestataires?\b/i, entity: 'fournisseurs' },
+  { pattern: /\bsuppliers?\b/i, entity: 'fournisseurs' },
+  { pattern: /\bbudgets?\b/i, entity: 'budgets' },
+  { pattern: /\benveloppes?\b/i, entity: 'budgets' },
+]
 
-const GROUP_BY_KEYWORDS: Record<string, GroupByField> = {
-  statut: 'statut', status: 'statut', état: 'statut', etat: 'statut',
-  type: 'type', nature: 'type',
-  convention: 'convention',
-  marche: 'marche', marché: 'marche',
-  fournisseur: 'fournisseur', prestataire: 'fournisseur',
-  projet: 'projet',
-  mois: 'mois', mensuel: 'mois',
-  annee: 'annee', année: 'annee', annuel: 'annee',
-  zone: 'zone', région: 'zone', region: 'zone',
-  géographique: 'zone', geographique: 'zone',
-}
+const GROUP_BY_PATTERNS: Array<{ pattern: RegExp; groupBy: GroupByField }> = [
+  // Explicit "par ..." patterns
+  { pattern: /par\s+statut/i, groupBy: 'statut' },
+  { pattern: /par\s+[eéè]tat/i, groupBy: 'statut' },
+  { pattern: /par\s+status/i, groupBy: 'statut' },
+  { pattern: /par\s+types?/i, groupBy: 'type' },
+  { pattern: /par\s+nature/i, groupBy: 'type' },
+  { pattern: /par\s+cat[eéè]gorie/i, groupBy: 'type' },
+  { pattern: /par\s+conventions?/i, groupBy: 'convention' },
+  { pattern: /par\s+march[eéè]s?/i, groupBy: 'marche' },
+  { pattern: /par\s+contrats?/i, groupBy: 'marche' },
+  { pattern: /par\s+fournisseurs?/i, groupBy: 'fournisseur' },
+  { pattern: /par\s+prestataires?/i, groupBy: 'fournisseur' },
+  { pattern: /par\s+projets?/i, groupBy: 'projet' },
+  { pattern: /par\s+mois/i, groupBy: 'mois' },
+  { pattern: /mensuel/i, groupBy: 'mois' },
+  { pattern: /par\s+ann[eéè]e/i, groupBy: 'annee' },
+  { pattern: /annuel/i, groupBy: 'annee' },
+  { pattern: /par\s+an\b/i, groupBy: 'annee' },
+  { pattern: /par\s+zones?/i, groupBy: 'zone' },
+  { pattern: /par\s+r[eéè]gions?/i, groupBy: 'zone' },
+  { pattern: /par\s+g[eéè]ographi/i, groupBy: 'zone' },
+  // "selon ..." patterns
+  { pattern: /selon\s+(?:le\s+)?statut/i, groupBy: 'statut' },
+  { pattern: /selon\s+(?:le\s+)?type/i, groupBy: 'type' },
+  { pattern: /selon\s+(?:le\s+)?fournisseur/i, groupBy: 'fournisseur' },
+  { pattern: /selon\s+(?:le\s+)?mois/i, groupBy: 'mois' },
+  // "group(é|er) par ..." patterns
+  { pattern: /group[eéè]+\s+par\s+(\w+)/i, groupBy: 'statut' }, // will be refined below
+]
 
-const METRIC_KEYWORDS: Record<string, MetricType> = {
-  nombre: 'count', count: 'count', combien: 'count',
-  total: 'sum', somme: 'sum', montant: 'sum', sum: 'sum',
-  moyenne: 'average', average: 'average', moy: 'average',
-}
+const METRIC_PATTERNS: Array<{ pattern: RegExp; metric: MetricType }> = [
+  { pattern: /\bnombre\b/i, metric: 'count' },
+  { pattern: /\bcombien\b/i, metric: 'count' },
+  { pattern: /\bcount\b/i, metric: 'count' },
+  { pattern: /\bcompter\b/i, metric: 'count' },
+  { pattern: /\btotal\b/i, metric: 'sum' },
+  { pattern: /\bsomme\b/i, metric: 'sum' },
+  { pattern: /\bmontant\b/i, metric: 'sum' },
+  { pattern: /\bsum\b/i, metric: 'sum' },
+  { pattern: /\bchiffre\s+d'affaire/i, metric: 'sum' },
+  { pattern: /\bmoyenne\b/i, metric: 'average' },
+  { pattern: /\baverage\b/i, metric: 'average' },
+  { pattern: /\ben\s+moyenne\b/i, metric: 'average' },
+]
 
-const METRIC_FIELD_KEYWORDS: Record<string, MetricField> = {
-  montant: 'montant',
-  montantht: 'montantHT', 'montant ht': 'montantHT', ht: 'montantHT',
-  montantttc: 'montantTTC', 'montant ttc': 'montantTTC', ttc: 'montantTTC',
-  budget: 'budget',
-  netapayer: 'netAPayer', 'net a payer': 'netAPayer', 'net à payer': 'netAPayer',
-}
+const METRIC_FIELD_PATTERNS: Array<{ pattern: RegExp; field: MetricField }> = [
+  { pattern: /montant\s*ht/i, field: 'montantHT' },
+  { pattern: /\bht\b/i, field: 'montantHT' },
+  { pattern: /montant\s*ttc/i, field: 'montantTTC' },
+  { pattern: /\bttc\b/i, field: 'montantTTC' },
+  { pattern: /net\s*[aà]\s*payer/i, field: 'netAPayer' },
+  { pattern: /\bbudget\b/i, field: 'budget' },
+  { pattern: /\bmontant\b/i, field: 'montant' },
+]
+
+// ============================================================================
+// Label Maps
+// ============================================================================
 
 const ENTITY_LABELS: Record<EntityType, string> = {
-  conventions: 'Conventions', marches: 'Marchés', projets: 'Projets',
-  decomptes: 'Décomptes', paiements: 'Paiements',
-  fournisseurs: 'Fournisseurs', budgets: 'Budgets',
+  conventions: 'Conventions',
+  marches: 'Marchés',
+  projets: 'Projets',
+  decomptes: 'Décomptes',
+  paiements: 'Paiements',
+  fournisseurs: 'Fournisseurs',
+  budgets: 'Budgets',
 }
 
 const VIZ_LABELS: Record<VisualizationType, string> = {
-  table: 'Tableau', bar: 'Graphique en barres', pie: 'Camembert',
-  line: 'Courbe', kpi: 'KPI',
+  table: 'Tableau',
+  bar: 'Graphique en barres',
+  pie: 'Camembert',
+  line: 'Courbe',
+  kpi: 'KPI',
 }
 
 const GROUP_LABELS: Record<GroupByField, string> = {
-  statut: 'statut', type: 'type', convention: 'convention',
-  marche: 'marché', fournisseur: 'fournisseur', projet: 'projet',
-  mois: 'mois', annee: 'année', zone: 'zone géographique',
+  statut: 'statut',
+  type: 'type',
+  convention: 'convention',
+  marche: 'marché',
+  fournisseur: 'fournisseur',
+  projet: 'projet',
+  mois: 'mois',
+  annee: 'année',
+  zone: 'zone géographique',
 }
 
 const METRIC_LABELS: Record<MetricType, string> = {
-  count: 'Nombre de', sum: 'Montant total des', average: 'Moyenne des',
+  count: 'Nombre de',
+  sum: 'Montant total des',
+  average: 'Moyenne des',
 }
 
 // ============================================================================
@@ -147,22 +211,44 @@ const METRIC_LABELS: Record<MetricType, string> = {
 // ============================================================================
 
 const FOLLOW_UP_VIZ_PATTERNS: Array<{ pattern: RegExp; viz: VisualizationType }> = [
-  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?)\s+(?:en|au?x?)\s+(tableau|table|liste)/i, viz: 'table' },
-  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?)\s+(?:en|au?x?)\s+(bar|barre|barres|histogramme)/i, viz: 'bar' },
-  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?)\s+(?:en|au?x?)\s+(camembert|pie|circulaire)/i, viz: 'pie' },
-  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?)\s+(?:en|au?x?)\s+(courbe|ligne|line)/i, viz: 'line' },
-  { pattern: /en\s+(camembert|pie)/i, viz: 'pie' },
-  { pattern: /en\s+(barres?|bar|histogramme)/i, viz: 'bar' },
-  { pattern: /en\s+(tableau|table|liste)/i, viz: 'table' },
-  { pattern: /en\s+(courbe|ligne)/i, viz: 'line' },
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?|switch)\s+(?:en|au?x?|le|la)\s+(?:un\s+)?(tableau|table|liste)/i, viz: 'table' },
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?|switch)\s+(?:en|au?x?|le|la)\s+(?:un\s+)?(bar|barre|barres|histogramme)/i, viz: 'bar' },
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?|switch)\s+(?:en|au?x?|le|la)\s+(?:un\s+)?(camembert|pie|circulaire)/i, viz: 'pie' },
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?|switch)\s+(?:en|au?x?|le|la)\s+(?:un\s+)?(courbe|ligne|line)/i, viz: 'line' },
+  { pattern: /(?:change|passe|met[s]?|transforme|converti[s]?|switch)\s+(?:en|au?x?|le|la)\s+(?:un\s+)?(kpi|indicateur|chiffre)/i, viz: 'kpi' },
+  // Shorter patterns
+  { pattern: /^en\s+(camembert|pie)$/i, viz: 'pie' },
+  { pattern: /^en\s+(barres?|bar|histogramme)$/i, viz: 'bar' },
+  { pattern: /^en\s+(tableau|table|liste)$/i, viz: 'table' },
+  { pattern: /^en\s+(courbe|ligne)$/i, viz: 'line' },
+  { pattern: /^en\s+(kpi|indicateur)$/i, viz: 'kpi' },
+  // Very short
+  { pattern: /^(camembert|pie)$/i, viz: 'pie' },
+  { pattern: /^(barres?|histogramme)$/i, viz: 'bar' },
+  { pattern: /^(tableau|table)$/i, viz: 'table' },
+  { pattern: /^(courbe|ligne)$/i, viz: 'line' },
 ]
 
 const FOLLOW_UP_GROUP_PATTERNS: Array<{ pattern: RegExp; extract: (m: RegExpMatchArray) => string }> = [
-  { pattern: /(?:groupe|regroupe|trie|class[eé])\s+par\s+(\w+)/i, extract: (m: RegExpMatchArray) => m[1] },
-  { pattern: /par\s+(\w+)\s+(?:plutôt|plut[oô]t|à la place|instead)/i, extract: (m: RegExpMatchArray) => m[1] },
+  { pattern: /(?:groupe|regroupe|trie|class[eé]|organise)\s+par\s+(\w+)/i, extract: (m: RegExpMatchArray) => m[1] },
+  { pattern: /par\s+(\w+)\s+(?:plutôt|plutot|à la place|instead|maintenant)/i, extract: (m: RegExpMatchArray) => m[1] },
+  { pattern: /^par\s+(\w+)$/i, extract: (m: RegExpMatchArray) => m[1] },
 ]
 
-const FOLLOW_UP_LIMIT_PATTERN = /(?:top|limite|seulement|juste)\s+(\d+)/i
+const FOLLOW_UP_LIMIT_PATTERN = /(?:top|limite|seulement|juste|les)\s+(\d+)/i
+
+const GROUP_WORD_MAP: Record<string, GroupByField> = {
+  statut: 'statut', status: 'statut', état: 'statut', etat: 'statut',
+  type: 'type', nature: 'type', categorie: 'type', catégorie: 'type',
+  convention: 'convention',
+  marche: 'marche', marché: 'marche',
+  fournisseur: 'fournisseur', prestataire: 'fournisseur',
+  projet: 'projet',
+  mois: 'mois', mensuel: 'mois',
+  annee: 'annee', année: 'annee', annuel: 'annee', an: 'annee',
+  zone: 'zone', région: 'zone', region: 'zone',
+  géographique: 'zone', geographique: 'zone',
+}
 
 export interface FollowUpResult {
   isFollowUp: true
@@ -173,11 +259,11 @@ export interface FollowUpResult {
 
 export function detectFollowUp(input: string, _previousInstruction: ParsedInstruction): FollowUpResult | null {
   const normalized = input.toLowerCase().trim()
-  const words = normalized.split(/\s+/)
 
-  // Don't treat as follow-up if it has an entity keyword (it's a new query)
-  const hasEntity = words.some((w: string) => ENTITY_KEYWORDS[w] !== undefined)
-  if (hasEntity) return null
+  // Don't treat as follow-up if it contains an entity keyword (it's a new query)
+  for (const { pattern } of ENTITY_PATTERNS) {
+    if (pattern.test(normalized)) return null
+  }
 
   let vizChange: VisualizationType | null = null
   let groupByChange: GroupByField | null = null
@@ -196,8 +282,8 @@ export function detectFollowUp(input: string, _previousInstruction: ParsedInstru
     const match = normalized.match(pattern)
     if (match) {
       const groupWord = extract(match)
-      if (GROUP_BY_KEYWORDS[groupWord]) {
-        groupByChange = GROUP_BY_KEYWORDS[groupWord]
+      if (GROUP_WORD_MAP[groupWord]) {
+        groupByChange = GROUP_WORD_MAP[groupWord]
       }
       break
     }
@@ -232,66 +318,117 @@ export function applyFollowUp(
 }
 
 // ============================================================================
-// Parser Helpers
+// Smart Parser Helpers
 // ============================================================================
 
 function normalize(text: string): string {
-  return text.toLowerCase().trim().replace(/['']/g, "'").replace(/[""]/g, '"').replace(/\s+/g, ' ')
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/['']/g, "'")
+    .replace(/[""]/g, '"')
+    .replace(/\s+/g, ' ')
+    .replace(/[?!.;,]+$/g, '') // strip trailing punctuation
 }
 
 function extractNumber(text: string): number | null {
-  const match = text.match(/\b(?:top\s+)?(\d+)\b/i)
-  return match ? parseInt(match[1], 10) : null
-}
-
-function findVisualization(words: string[]): VisualizationType | null {
-  for (const word of words) {
-    if (VISUALIZATION_KEYWORDS[word]) return VISUALIZATION_KEYWORDS[word]
+  // "top 10", "les 5 plus gros", "5 premiers"
+  const patterns = [
+    /\btop\s+(\d+)/i,
+    /\bles\s+(\d+)\s+(?:plus|premiers?|derniers?|meilleurs?|principau?x)/i,
+    /(\d+)\s+(?:premiers?|principau?x|meilleurs?|plus\s+(?:gros|grands?|importants?))/i,
+  ]
+  for (const pat of patterns) {
+    const match = text.match(pat)
+    if (match) return parseInt(match[1], 10)
   }
   return null
 }
 
-function findEntity(words: string[]): EntityType | null {
-  for (const word of words) {
-    if (ENTITY_KEYWORDS[word]) return ENTITY_KEYWORDS[word]
+function findVisualization(text: string): VisualizationType | null {
+  const words = text.split(/[\s,;.!?]+/)
+  for (const { words: keywords, viz } of VISUALIZATION_KEYWORDS) {
+    for (const word of words) {
+      if (keywords.includes(word)) return viz
+    }
   }
   return null
 }
 
-function findGroupBy(normalized: string): GroupByField | null {
-  const patterns = [/par\s+(\w+)/, /selon\s+(\w+)/, /group[eéer]+\s+par\s+(\w+)/]
-  for (const pattern of patterns) {
-    const match = normalized.match(pattern)
-    if (match && GROUP_BY_KEYWORDS[match[1]]) return GROUP_BY_KEYWORDS[match[1]]
+function findEntity(text: string): EntityType | null {
+  for (const { pattern, entity } of ENTITY_PATTERNS) {
+    if (pattern.test(text)) return entity
   }
   return null
 }
 
-function findMetric(words: string[]): MetricType {
-  for (const word of words) {
-    if (METRIC_KEYWORDS[word]) return METRIC_KEYWORDS[word]
+function findGroupBy(text: string): GroupByField | null {
+  for (const { pattern, groupBy } of GROUP_BY_PATTERNS) {
+    if (pattern.test(text)) {
+      // Special case: "group(é) par X" needs to extract X
+      if (groupBy === 'statut' && pattern.toString().includes('group')) {
+        const match = text.match(pattern)
+        if (match && match[1] && GROUP_WORD_MAP[match[1].toLowerCase()]) {
+          return GROUP_WORD_MAP[match[1].toLowerCase()]
+        }
+      }
+      return groupBy
+    }
+  }
+  return null
+}
+
+function findMetric(text: string): MetricType {
+  for (const { pattern, metric } of METRIC_PATTERNS) {
+    if (pattern.test(text)) return metric
   }
   return 'count'
 }
 
-function findMetricField(normalized: string, entity: EntityType): MetricField {
-  for (const [keyword, field] of Object.entries(METRIC_FIELD_KEYWORDS)) {
-    if (normalized.includes(keyword)) return field
+function findMetricField(text: string, entity: EntityType): MetricField {
+  for (const { pattern, field } of METRIC_FIELD_PATTERNS) {
+    if (pattern.test(text)) return field
   }
+  // Entity-specific defaults
   switch (entity) {
     case 'marches': return 'montantHT'
     case 'decomptes': return 'netAPayer'
     case 'paiements': return 'montant'
     case 'budgets': return 'budget'
+    case 'conventions': return 'budget'
+    case 'projets': return 'budget'
     default: return 'montant'
   }
 }
 
-function inferVisualization(metric: MetricType, groupBy: GroupByField | null, hasLimit: boolean): VisualizationType {
-  if (!groupBy && metric === 'count') return 'kpi'
+/**
+ * Infer the best visualization type based on context.
+ */
+function inferVisualization(
+  metric: MetricType,
+  groupBy: GroupByField | null,
+  hasLimit: boolean,
+  text: string
+): VisualizationType {
+  // No groupBy → either KPI (for count/sum) or table
+  if (!groupBy) {
+    if (/combien|nombre\s+total|résumé|synthèse|total\b/i.test(text)) return 'kpi'
+    return 'table'
+  }
+
+  // Temporal grouping → line chart
   if (groupBy === 'mois' || groupBy === 'annee') return 'line'
-  if (groupBy === 'statut' || groupBy === 'type') return 'pie'
+
+  // Status/type → pie (good for categories)
+  if (groupBy === 'statut' || groupBy === 'type') {
+    if (hasLimit) return 'bar'
+    return 'pie'
+  }
+
+  // Top N → bar chart (ranking)
   if (hasLimit) return 'bar'
+
+  // Default for fournisseur, projet, etc. → bar
   return 'bar'
 }
 
@@ -299,7 +436,7 @@ function generateTitle(instruction: ParsedInstruction): string {
   const entityLabel = ENTITY_LABELS[instruction.entity]
   const prefix = METRIC_LABELS[instruction.metric]
   const groupSuffix = instruction.groupBy ? ` par ${GROUP_LABELS[instruction.groupBy]}` : ''
-  const limitPrefix = instruction.limit ? `Top ${instruction.limit} - ` : ''
+  const limitPrefix = instruction.limit ? `Top ${instruction.limit} – ` : ''
   return `${limitPrefix}${prefix} ${entityLabel}${groupSuffix}`
 }
 
@@ -310,19 +447,19 @@ function buildExplanation(instruction: ParsedInstruction, isFollowUp: boolean = 
     steps.push('Modification appliquée au dernier résultat')
   }
 
-  steps.push(`Données: ${ENTITY_LABELS[instruction.entity]}`)
-  steps.push(`Visualisation: ${VIZ_LABELS[instruction.visualization]}`)
+  steps.push(`Données : ${ENTITY_LABELS[instruction.entity]}`)
+  steps.push(`Visualisation : ${VIZ_LABELS[instruction.visualization]}`)
 
   if (instruction.groupBy) {
-    steps.push(`Regroupement: par ${GROUP_LABELS[instruction.groupBy]}`)
+    steps.push(`Regroupement : par ${GROUP_LABELS[instruction.groupBy]}`)
   }
 
   if (instruction.metric !== 'count') {
-    steps.push(`Métrique: ${METRIC_LABELS[instruction.metric]}`)
+    steps.push(`Métrique : ${METRIC_LABELS[instruction.metric]}`)
   }
 
   if (instruction.limit) {
-    steps.push(`Limite: top ${instruction.limit}`)
+    steps.push(`Limite : top ${instruction.limit}`)
   }
 
   return {
@@ -335,6 +472,20 @@ function buildExplanation(instruction: ParsedInstruction, isFollowUp: boolean = 
 }
 
 // ============================================================================
+// Smart heuristics for when entity is missing
+// ============================================================================
+
+function guessEntityFromContext(text: string): EntityType | null {
+  // If text mentions money-related words, guess marches
+  if (/\b(argent|dépenses?|engagements?|investissements?)\b/i.test(text)) return 'marches'
+  // If text mentions payment-related
+  if (/\b(payé|versé|réglé|virements?)\b/i.test(text)) return 'paiements'
+  // If text mentions supplier-related
+  if (/\b(entreprises?|sociétés?|prestataires?)\b/i.test(text)) return 'fournisseurs'
+  return null
+}
+
+// ============================================================================
 // Main Parse Function
 // ============================================================================
 
@@ -343,61 +494,109 @@ export function parseInstruction(input: string): ParseResult {
   const words = normalized.split(/[\s,;.!?]+/).filter(Boolean)
   const warnings: string[] = []
 
-  if (words.length < 2) {
+  // Too short
+  if (words.length < 1) {
     return {
       success: false,
       error: {
-        message: 'Instruction trop courte. Veuillez préciser ce que vous souhaitez générer.',
+        message: 'Instruction trop courte.',
         suggestions: [
-          'Tableau des paiements par marché',
-          'Graphique des conventions par statut',
-          'Nombre de marchés par fournisseur',
+          'Marchés par statut',
+          'Top 5 fournisseurs par montant',
+          'Répartition des conventions par type',
+          'Évolution des paiements par mois',
         ],
       },
     }
   }
 
-  const entity = findEntity(words)
+  // Find entity
+  let entity = findEntity(normalized)
+  if (!entity) {
+    entity = guessEntityFromContext(normalized)
+  }
   if (!entity) {
     return {
       success: false,
       error: {
-        message: 'Entité non reconnue. Précisez le type de données.',
+        message: 'Je n\'ai pas compris quelle donnée vous souhaitez visualiser.',
         suggestions: [
-          'conventions, marchés, projets',
-          'décomptes, paiements, fournisseurs, budgets',
+          'Tableau des conventions',
+          'Graphique des marchés par type',
+          'Répartition des paiements par fournisseur',
+          'Nombre de projets par statut',
         ],
       },
     }
   }
 
+  // Find groupBy
   const groupBy = findGroupBy(normalized)
-  const metric = findMetric(words)
+
+  // Find metric
+  let metric = findMetric(normalized)
+
+  // Find metric field
   const metricField = findMetricField(normalized, entity)
+
+  // Find limit (top N)
   const limit = extractNumber(normalized)
 
-  let visualization = findVisualization(words)
+  // If there's a limit, it implies ranking → sum is usually intended
+  if (limit && metric === 'count' && !groupBy) {
+    // "top 5 marchés" without groupBy → just show table with limit
+  } else if (limit && metric === 'count' && groupBy) {
+    // "top 5 marchés par fournisseur" → sum by fournisseur is more useful
+    if (groupBy === 'fournisseur' || groupBy === 'projet' || groupBy === 'convention') {
+      metric = 'sum'
+    }
+  }
+
+  // If groupBy is fournisseur/projet/convention and metric is count, often sum is more useful
+  if (groupBy && ['fournisseur', 'projet', 'convention', 'marche'].includes(groupBy)) {
+    if (metric === 'count' && /montant|budget|somme|total/i.test(normalized)) {
+      metric = 'sum'
+    }
+  }
+
+  // Find visualization
+  let visualization = findVisualization(normalized)
   if (!visualization) {
-    visualization = inferVisualization(metric, groupBy, limit !== null)
-    warnings.push('Type de visualisation inféré automatiquement. Vous pouvez préciser: tableau, graphique, camembert, courbe.')
+    visualization = inferVisualization(metric, groupBy, limit !== null, normalized)
+    if (groupBy || limit) {
+      // Only warn if it's a chart, not if we default to table
+      if (visualization !== 'table') {
+        warnings.push('Type de visualisation choisi automatiquement. Vous pouvez changer avec les boutons.')
+      }
+    }
   }
 
-  let confidence = 0.5
-  if (entity) confidence += 0.2
-  if (groupBy) confidence += 0.15
-  if (findVisualization(words)) confidence += 0.1
-  if (metric !== 'count' || words.some((w: string) => METRIC_KEYWORDS[w] !== undefined)) confidence += 0.05
-
+  // Smart warning for bad combos
   if (visualization === 'line' && groupBy !== 'mois' && groupBy !== 'annee') {
-    warnings.push('Les graphiques en ligne fonctionnent mieux avec un regroupement temporel (par mois ou par année).')
+    warnings.push('Les courbes fonctionnent mieux avec un regroupement temporel (par mois ou par année).')
   }
-  if (visualization === 'pie' && limit && limit > 10) {
-    warnings.push('Les camemberts sont plus lisibles avec moins de 10 éléments.')
+  if (visualization === 'pie' && limit && limit > 8) {
+    warnings.push('Les camemberts sont plus lisibles avec moins de 8 éléments.')
   }
+
+  // Calculate confidence
+  let confidence = 0.5
+  confidence += 0.2 // entity found
+  if (groupBy) confidence += 0.12
+  if (findVisualization(normalized)) confidence += 0.1
+  if (metric !== 'count' || /nombre|combien|count/i.test(normalized)) confidence += 0.05
+  if (limit) confidence += 0.03
 
   const instruction: ParsedInstruction = {
-    visualization, entity, groupBy, metric, metricField, limit,
-    title: '', confidence, warnings,
+    visualization,
+    entity,
+    groupBy,
+    metric,
+    metricField,
+    limit,
+    title: '',
+    confidence,
+    warnings,
     explanation: { entityDetected: '', visualizationDetected: '', groupByDetected: null, metricDetected: '', steps: [] },
   }
 
@@ -412,12 +611,12 @@ export function parseInstruction(input: string): ParseResult {
 // ============================================================================
 
 export const EXAMPLE_INSTRUCTIONS: Array<{ text: string; icon: string }> = [
-  { text: 'Tableau des conventions par statut', icon: 'table' },
-  { text: 'Graphique des marchés par type', icon: 'bar' },
+  { text: 'Tableau des conventions', icon: 'table' },
+  { text: 'Marchés par statut', icon: 'pie' },
+  { text: 'Top 5 fournisseurs par montant', icon: 'bar' },
   { text: 'Répartition des paiements par fournisseur', icon: 'pie' },
   { text: 'Évolution des décomptes par mois', icon: 'line' },
-  { text: 'Top 10 fournisseurs par montant', icon: 'bar' },
-  { text: 'Nombre total de conventions', icon: 'kpi' },
-  { text: 'Liste des projets par statut', icon: 'table' },
-  { text: 'Camembert des budgets par projet', icon: 'pie' },
+  { text: 'Nombre total de projets', icon: 'kpi' },
+  { text: 'Marchés par zone géographique', icon: 'bar' },
+  { text: 'Budget des conventions par type', icon: 'bar' },
 ]

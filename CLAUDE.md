@@ -557,9 +557,20 @@ All endpoints follow REST conventions with French naming:
 /marches             - Procurement contracts
 /marches/:id         - Market detail
 /decomptes           - Billing statements
+/decomptes/:id       - Decompte detail
 /paiements           - Payments
+/ordres-paiement     - Payment orders
+/commissions         - Commission calculations
+/budgets             - Budget management
+/fournisseurs        - Suppliers
+/messagerie          - Team messaging
+/generateur          - Custom dashboard generator
 /reporting           - Analytical reporting
-/parametrage/plan-analytique - Dimension config
+/parametrage/conventions        - Convention settings
+/parametrage/plan-analytique    - Dimension config
+/parametrage/categories-depenses - Expense categories
+/parametrage/partenaires        - Partners
+/users               - User management
 /profile             - User profile
 ```
 

@@ -45,8 +45,17 @@ const BudgetDetailPageModern = lazy(() => import('./pages/budgets/BudgetDetailPa
 // Fournisseurs
 const FournisseursPage = lazy(() => import('./pages/fournisseurs/FournisseursPage'))
 
-// Décomptes (marché-scoped)
+// Décomptes
+const DecomptesPageComplete = lazy(() => import('./pages/decomptes/DecomptesPageComplete'))
+const DecompteDetailPageModern = lazy(() => import('./pages/decomptes/DecompteDetailPageModern'))
 const DecompteWizard = lazy(() => import('./pages/decomptes/DecompteWizard'))
+
+// Paiements & Ordres de Paiement
+const PaiementsPageComplete = lazy(() => import('./pages/paiements/PaiementsPageComplete'))
+const OrdresPaiementPageComplete = lazy(() => import('./pages/paiements/OrdresPaiementPageComplete'))
+
+// Commissions
+const CommissionsPage = lazy(() => import('./pages/commissions/CommissionsPage'))
 
 // Settings & Parametrage
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
@@ -261,6 +270,42 @@ function App() {
                       }
                     />
 
+                    {/* Décomptes */}
+                    <Route
+                      path="/decomptes"
+                      element={
+                        <ProtectedRoute>
+                          <DecomptesPageComplete />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/decomptes/:id"
+                      element={
+                        <ProtectedRoute>
+                          <DecompteDetailPageModern />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Paiements & Ordres de Paiement */}
+                    <Route
+                      path="/paiements"
+                      element={
+                        <ProtectedRoute>
+                          <PaiementsPageComplete />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/ordres-paiement"
+                      element={
+                        <ProtectedRoute>
+                          <OrdresPaiementPageComplete />
+                        </ProtectedRoute>
+                      }
+                    />
+
                     {/* Projets */}
                     <Route
                       path="/projets"
@@ -440,10 +485,7 @@ function App() {
                       path="/commissions"
                       element={
                         <ProtectedRoute>
-                          <UnderConstruction
-                            featureName="Calcul des Commissions"
-                            description="Calculez automatiquement les commissions selon les conventions avec gestion des tranches et exclusions."
-                          />
+                          <CommissionsPage />
                         </ProtectedRoute>
                       }
                     />

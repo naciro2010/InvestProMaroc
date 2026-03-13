@@ -98,16 +98,40 @@ const VALID_GROUPBY: GroupByField[] = ['statut', 'type', 'convention', 'marche',
 const VALID_METRICS: MetricType[] = ['count', 'sum', 'average']
 const VALID_FIELDS: MetricField[] = ['montant', 'montantHT', 'montantTTC', 'budget', 'netAPayer']
 
+/** Map unsupported AI viz types to supported ones */
+const VIZ_FALLBACK: Record<string, VisualizationType> = {
+  donut: 'pie',
+  area: 'line',
+  stacked_bar: 'bar',
+  horizontal_bar: 'bar',
+  treemap: 'pie',
+  heatmap: 'bar',
+  scatter: 'bar',
+  radar: 'bar',
+  gauge: 'kpi',
+  number: 'kpi',
+}
+
+function mapVisualization(raw: string): VisualizationType {
+  if (VALID_VIZ.includes(raw as VisualizationType)) return raw as VisualizationType
+  return VIZ_FALLBACK[raw] || 'table'
+}
+
+/** Map unsupported AI metric types */
+function mapMetric(raw: string): MetricType {
+  if (VALID_METRICS.includes(raw as MetricType)) return raw as MetricType
+  if (['min', 'max', 'percentage'].includes(raw)) return 'sum'
+  return 'count'
+}
+
 function aiToParsedInstruction(ai: AiParsedInstruction): ParsedInstruction {
   return {
-    visualization: VALID_VIZ.includes(ai.visualization as VisualizationType)
-      ? ai.visualization as VisualizationType : 'table',
+    visualization: mapVisualization(ai.visualization),
     entity: VALID_ENTITIES.includes(ai.entity as EntityType)
       ? ai.entity as EntityType : 'conventions',
     groupBy: ai.groupBy && VALID_GROUPBY.includes(ai.groupBy as GroupByField)
       ? ai.groupBy as GroupByField : null,
-    metric: VALID_METRICS.includes(ai.metric as MetricType)
-      ? ai.metric as MetricType : 'count',
+    metric: mapMetric(ai.metric),
     metricField: VALID_FIELDS.includes(ai.metricField as MetricField)
       ? ai.metricField as MetricField : 'montant',
     limit: ai.limit,
@@ -121,6 +145,8 @@ function aiToParsedInstruction(ai: AiParsedInstruction): ParsedInstruction {
       metricDetected: ai.metric,
       steps: ai.explanation,
     },
+    filters: [],
+    sortDirection: 'desc',
   }
 }
 

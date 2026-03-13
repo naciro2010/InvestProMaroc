@@ -20,6 +20,7 @@ import type {
   EntityType,
   GroupByField,
   MetricType,
+  StatusFilter,
 } from './instructionParser'
 
 // ============================================================================
@@ -626,8 +627,51 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
 // Main Fetch Function
 // ============================================================================
 
+// ============================================================================
+// Filter Application
+// ============================================================================
+
+function applyFilters(records: RawRecord[], filters: StatusFilter[]): RawRecord[] {
+  if (!filters || filters.length === 0) return records
+
+  return records.filter((record) => {
+    return filters.every((filter) => {
+      const recordValue = filter.field === 'statut'
+        ? getStatus(record)
+        : getType(record)
+      return filter.values.some(v => recordValue.toUpperCase() === v.toUpperCase())
+    })
+  })
+}
+
+// ============================================================================
+// Sort Application
+// ============================================================================
+
+function applySortDirection(records: RawRecord[], instruction: ParsedInstruction): RawRecord[] {
+  if (!instruction.limit && instruction.sortDirection === 'desc') return records // default already
+
+  const sorted = [...records].sort((a, b) => {
+    const aVal = getAmount(a, instruction.entity)
+    const bVal = getAmount(b, instruction.entity)
+    return instruction.sortDirection === 'asc' ? aVal - bVal : bVal - aVal
+  })
+
+  return sorted
+}
+
 export async function fetchDataForInstruction(instruction: ParsedInstruction): Promise<FetchedData> {
-  const records = await fetchRawData(instruction.entity)
+  let records = await fetchRawData(instruction.entity)
+
+  // Apply filters
+  if (instruction.filters && instruction.filters.length > 0) {
+    records = applyFilters(records, instruction.filters)
+  }
+
+  // Apply sorting for ungrouped queries with limit
+  if (instruction.limit && !instruction.groupBy) {
+    records = applySortDirection(records, instruction)
+  }
 
   if (records.length === 0) {
     const ENTITY_LABELS: Record<EntityType, string> = {

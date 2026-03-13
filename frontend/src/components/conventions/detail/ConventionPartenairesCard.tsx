@@ -42,6 +42,7 @@ interface ConventionPartenairesCardProps {
   versements?: VersementPartenaireRef[]
   onAddClick: () => void
   onEditClick?: (partenaire: ConventionPartenaireData) => void
+  onDataChanged?: () => void
 }
 
 const formatCurrency = (amount: number): string => {
@@ -64,6 +65,7 @@ const ConventionPartenairesCard = ({
   versements = [],
   onAddClick,
   onEditClick,
+  onDataChanged,
 }: ConventionPartenairesCardProps) => {
   const [partenaires, setPartenaires] = useState<ConventionPartenaireData[]>([])
   const [parentPartenaires, setParentPartenaires] = useState<ConventionPartenaireData[]>([])
@@ -110,6 +112,7 @@ const ConventionPartenairesCard = ({
     try {
       await conventionsAPI.deletePartenaire(conventionId, partenaireId)
       loadPartenaires()
+      onDataChanged?.()
     } catch { /* handled silently */ }
   }
 

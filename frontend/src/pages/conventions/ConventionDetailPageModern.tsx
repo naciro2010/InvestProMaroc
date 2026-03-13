@@ -21,7 +21,6 @@ import ConventionSyntheseCard from '../../components/conventions/detail/Conventi
 import ConventionKeyInfoCard from '../../components/conventions/detail/ConventionKeyInfoCard'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
-import VersementFormDialog from '../../components/conventions/VersementFormDialog'
 import { ConventionDetailSkeleton, ConventionHeaderMetadata } from './detail'
 import type { ConventionDetailEnrichedDTO, UpdateConventionDTO } from '../../types/api'
 
@@ -75,7 +74,6 @@ const ConventionDetailPageModern = () => {
 
   const [addPartenaireDialogOpen, setAddPartenaireDialogOpen] = useState(false)
   const [editPartenaireData, setEditPartenaireData] = useState<PartenaireEditData | null>(null)
-  const [versementDialogOpen, setVersementDialogOpen] = useState(false)
   const [financialRefreshKey, setFinancialRefreshKey] = useState(0)
   const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
   const [chatterActivities, setChatterActivities] = useState<ChatterActivity[]>([])
@@ -314,10 +312,6 @@ const ConventionDetailPageModern = () => {
             onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
             onSuccess={() => { refreshFinancialData(); setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
             editData={editPartenaireData} />
-          <VersementFormDialog open={versementDialogOpen} conventionId={convention.id}
-            onClose={() => { setVersementDialogOpen(false) }}
-            onSuccess={() => { refreshFinancialData(); setVersementDialogOpen(false) }}
-            editingVersement={null} />
         </>
       )}
       {dialogField && (

@@ -106,6 +106,7 @@ const ConventionSyntheseCard = ({
   const [totalBudgetLignes, setTotalBudgetLignes] = useState(0)
   const [totalEngage, setTotalEngage] = useState(0)
   const [totalDepense, setTotalDepense] = useState(0)
+  const [totalPaiements, setTotalPaiements] = useState(0)
 
   const loadData = useCallback(async () => {
     try {
@@ -141,12 +142,18 @@ const ConventionSyntheseCard = ({
       // Budget lignes
       setTotalBudgetLignes(bLines.reduce((s, l) => s + l.montant, 0))
 
-      // Marchés + situations paiement
+      // Marchés + situations paiement + paiements réalisés
       const sitMap = new Map<number, SituationPaiement>()
+      let paiementsTotal = 0
       await Promise.all(marchesList.map(async m => {
         try {
-          const r = await marchesAPI.getSituationPaiement(m.id)
-          sitMap.set(m.id, r.data.data || r.data)
+          const [sitRes, paiRes] = await Promise.all([
+            marchesAPI.getSituationPaiement(m.id).catch(() => null),
+            marchesAPI.getPaiements(m.id).catch(() => ({ data: { data: [] } })),
+          ])
+          if (sitRes) sitMap.set(m.id, sitRes.data.data || sitRes.data)
+          const paiements = (paiRes.data.data || paiRes.data || []) as Array<{ montantPaye?: number; montant?: number }>
+          paiementsTotal += paiements.reduce((s, p) => s + ((p.montantPaye ?? p.montant ?? 0) as number), 0)
         } catch { /* */ }
       }))
 
@@ -159,6 +166,7 @@ const ConventionSyntheseCard = ({
 
       setTotalEngage(rows.reduce((s, r) => s + r.engage, 0))
       setTotalDepense(rows.reduce((s, r) => s + r.depense, 0))
+      setTotalPaiements(paiementsTotal)
     } catch { /* */ }
     finally { setLoading(false) }
   }, [conventionId])
@@ -253,7 +261,10 @@ const ConventionSyntheseCard = ({
         </Box>
         <SynthRow label="Marches engages" amount={totalEngage} indent />
         {totalDepense > 0 && (
-          <SynthRow label="Depenses realisees" amount={totalDepense} indent color={colors.info[600]} hint={`Reste a payer: ${fmt(totalEngage - totalDepense)}`} />
+          <SynthRow label="Decomptes constates" amount={totalDepense} indent color={colors.info[600]} hint={`Reste a engager: ${fmt(totalEngage - totalDepense)}`} />
+        )}
+        {totalPaiements > 0 && (
+          <SynthRow label="Paiements realises" amount={totalPaiements} indent color={colors.purple[600]} hint={`Reste a payer: ${fmt(totalDepense - totalPaiements)}`} />
         )}
         <SynthRow
           label={`Commission (${tauxCommission}% HT + TVA ${tauxTva}%)`}

@@ -145,6 +145,8 @@ function aiToParsedInstruction(ai: AiParsedInstruction): ParsedInstruction {
       metricDetected: ai.metric,
       steps: ai.explanation,
     },
+    filters: [],
+    sortDirection: 'desc',
   }
 }
 

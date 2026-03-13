@@ -28,7 +28,7 @@ import { ControlPanel, StatusBadge } from '@/components/core'
 import ConfirmDialog from '@/components/core/ConfirmDialog'
 import { useToast } from '@/contexts/ToastContext'
 import api from '@/lib/api'
-import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { colors, typography, componentStyles, borders } from '@/lib/designSystem'
 
 interface UserItem {
   id: number
@@ -302,7 +302,7 @@ export default function UsersPage() {
                             gap: 0.5,
                             px: 1.5,
                             py: 0.5,
-                            borderRadius: '4px',
+                            borderRadius: borders.radius.base,
                             bgcolor: ROLE_COLORS[user.role]?.bg || colors.neutral[100],
                             color: ROLE_COLORS[user.role]?.text || colors.textSecondary,
                             fontSize: typography.sizes.xs,

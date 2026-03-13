@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Box, Typography, Button, TextField, MenuItem, Select, InputLabel, FormControl } from '@mui/material'
+import { Send } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
+import ControlPanel from '@/components/core/ControlPanel'
 import { collaborationAPI, ConversationItem, TeamMessage } from '@/lib/collaborationAPI'
 import api from '@/lib/api'
+import { colors, typography, borders, shadows, spacing, componentStyles } from '@/lib/designSystem'
 
 interface SimpleUser { id: number; fullName: string; username: string }
 
@@ -52,45 +56,156 @@ const TeamMessagingPage = () => {
     fetchConversations()
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
   return (
     <AppLayout>
-      <div className="h-[calc(100vh-7rem)] grid grid-cols-12 gap-4">
-        <aside className="col-span-4 bg-white rounded-xl border border-gray-200 p-3 overflow-y-auto">
-          <h2 className="font-semibold mb-3">Conversations d'équipe</h2>
-          {conversations.map(conv => (
-            <button key={conv.userId} onClick={() => setSelectedUserId(conv.userId)} className={`w-full text-left p-3 rounded-lg mb-2 ${selectedUserId === conv.userId ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'}`}>
-              <div className="font-medium">{conv.userName}</div>
-              <div className="text-xs text-gray-500 truncate">{conv.lastMessage}</div>
-              {conv.unreadCount > 0 && <span className="text-xs text-blue-600">{conv.unreadCount} non lus</span>}
-            </button>
-          ))}
+      <Box sx={{ minHeight: '100vh', backgroundColor: colors.background }}>
+        <ControlPanel
+          breadcrumbs={[{ label: 'Messagerie' }]}
+          hideBottomRow
+        />
 
-          <div className="mt-4">
-            <label className="text-xs text-gray-500">Nouveau message vers</label>
-            <select className="w-full mt-1 border rounded-md p-2" value={selectedUserId ?? ''} onChange={(e) => setSelectedUserId(Number(e.target.value))}>
-              <option value="">Choisir membre</option>
-              {users.map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-            </select>
-          </div>
-        </aside>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: spacing.mui.lg, p: spacing.mui['2xl'], height: 'calc(100vh - 8rem)' }}>
+          {/* Sidebar - Conversations */}
+          <Box sx={{ ...componentStyles.card, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <Box sx={{ p: spacing.mui.lg, borderBottom: `1px solid ${colors.border}` }}>
+              <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.md, color: colors.textPrimary }}>
+                Conversations
+              </Typography>
+            </Box>
 
-        <section className="col-span-8 bg-white rounded-xl border border-gray-200 p-4 flex flex-col">
-          <h2 className="font-semibold mb-4">{selectedUser ? `Discussion avec ${selectedUser.fullName}` : 'Sélectionnez un membre'}</h2>
-          <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-            {messages.map(msg => (
-              <div key={msg.id} className={`max-w-[70%] p-3 rounded-xl ${msg.recipientId === selectedUserId ? 'bg-gray-100' : 'bg-blue-100 ml-auto'}`}>
-                <div className="text-xs text-gray-500 mb-1">{msg.senderName}</div>
-                <div>{msg.content}</div>
-              </div>
-            ))}
-          </div>
+            <Box sx={{ flex: 1, overflowY: 'auto', p: spacing.mui.sm }}>
+              {conversations.map(conv => (
+                <Box
+                  key={conv.userId}
+                  onClick={() => setSelectedUserId(conv.userId)}
+                  sx={{
+                    p: spacing.mui.md,
+                    mb: spacing.mui.xs,
+                    borderRadius: borders.radius.lg,
+                    cursor: 'pointer',
+                    backgroundColor: selectedUserId === conv.userId ? colors.primary[25] : 'transparent',
+                    border: selectedUserId === conv.userId ? `1px solid ${colors.primary[200]}` : '1px solid transparent',
+                    '&:hover': {
+                      backgroundColor: selectedUserId === conv.userId ? colors.primary[25] : colors.neutral[50],
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: spacing.mui.sm }}>
+                    <Box sx={{
+                      width: 32, height: 32, borderRadius: borders.radius.full,
+                      backgroundColor: colors.primary[600], display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', color: colors.textOnColor,
+                      fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, flexShrink: 0,
+                    }}>
+                      {conv.userName.charAt(0).toUpperCase()}
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm, color: colors.textPrimary }}>
+                        {conv.userName}
+                      </Typography>
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {conv.lastMessage}
+                      </Typography>
+                    </Box>
+                    {conv.unreadCount > 0 && (
+                      <Box sx={{
+                        minWidth: 20, height: 20, borderRadius: borders.radius.full,
+                        backgroundColor: colors.primary[600], color: colors.textOnColor,
+                        fontSize: typography.sizes['2xs'], fontWeight: typography.weights.semibold,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', px: 0.5,
+                      }}>
+                        {conv.unreadCount}
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
 
-          <div className="pt-3 border-t mt-3 flex gap-2">
-            <input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className="flex-1 border rounded-lg px-3 py-2" placeholder="Écrire un message..." />
-            <button onClick={handleSend} className="bg-blue-600 text-white px-4 rounded-lg">Envoyer</button>
-          </div>
-        </section>
-      </div>
+            <Box sx={{ p: spacing.mui.md, borderTop: `1px solid ${colors.border}` }}>
+              <FormControl fullWidth size="small">
+                <InputLabel sx={{ fontSize: typography.sizes.sm }}>Nouveau message vers</InputLabel>
+                <Select
+                  label="Nouveau message vers"
+                  value={selectedUserId ?? ''}
+                  onChange={(e) => setSelectedUserId(Number(e.target.value))}
+                  sx={{ fontSize: typography.sizes.sm }}
+                >
+                  {users.map(u => <MenuItem key={u.id} value={u.id}>{u.fullName}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          {/* Main - Messages */}
+          <Box sx={{ ...componentStyles.card, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <Box sx={{ p: spacing.mui.lg, borderBottom: `1px solid ${colors.border}` }}>
+              <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.md, color: colors.textPrimary }}>
+                {selectedUser ? `Discussion avec ${selectedUser.fullName}` : 'Sélectionnez un membre'}
+              </Typography>
+            </Box>
+
+            <Box sx={{ flex: 1, overflowY: 'auto', p: spacing.mui.lg, display: 'flex', flexDirection: 'column', gap: spacing.mui.md }}>
+              {messages.map(msg => {
+                const isSent = msg.recipientId === selectedUserId
+                return (
+                  <Box key={msg.id} sx={{
+                    maxWidth: '70%',
+                    alignSelf: isSent ? 'flex-end' : 'flex-start',
+                  }}>
+                    <Typography sx={{ fontSize: typography.sizes['2xs'], color: colors.textSecondary, mb: 0.5, textAlign: isSent ? 'right' : 'left' }}>
+                      {msg.senderName}
+                    </Typography>
+                    <Box sx={{
+                      p: spacing.mui.md,
+                      borderRadius: borders.radius.lg,
+                      backgroundColor: isSent ? colors.primary[50] : colors.neutral[50],
+                      border: `1px solid ${isSent ? colors.primary[100] : colors.neutral[100]}`,
+                    }}>
+                      <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary }}>
+                        {msg.content}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )
+              })}
+            </Box>
+
+            <Box sx={{ p: spacing.mui.lg, borderTop: `1px solid ${colors.border}`, display: 'flex', gap: spacing.mui.sm }}>
+              <TextField
+                fullWidth
+                size="small"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Écrire un message..."
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: borders.radius.lg } }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleSend}
+                disabled={!newMessage.trim()}
+                sx={{
+                  ...componentStyles.buttonPrimary,
+                  minWidth: 'auto',
+                  px: spacing.mui.lg,
+                  borderRadius: borders.radius.lg,
+                }}
+                startIcon={<Send size={16} />}
+              >
+                Envoyer
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     </AppLayout>
   )
 }

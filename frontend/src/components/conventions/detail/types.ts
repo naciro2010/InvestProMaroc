@@ -71,6 +71,8 @@ export interface Subvention {
   dateDebutValidite?: string
   dateFinValidite?: string
   conditions?: string
+  dateSignature?: string
+  observations?: string
 }
 
 // ---------- Sous-conventions & Avenants ----------

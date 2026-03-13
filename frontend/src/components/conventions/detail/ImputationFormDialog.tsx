@@ -23,7 +23,8 @@ interface ImputationFormDialogProps {
   open: boolean
   conventionId: number
   onClose: () => void
-  onSuccess: (imputation: ImputationPrevisionnelle) => void
+  onSuccess: () => void
+  editingImputation?: ImputationPrevisionnelle | null
 }
 
 interface ImputationFormData {
@@ -48,7 +49,8 @@ const sectionTitleSx = {
   letterSpacing: '0.04em',
 }
 
-const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: ImputationFormDialogProps) => {
+const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess, editingImputation }: ImputationFormDialogProps) => {
+  const isEditMode = Boolean(editingImputation)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<ImputationFormData>({
@@ -59,6 +61,25 @@ const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: Imputa
     remarques: '',
   })
   const [categoryAllocations, setCategoryAllocations] = useState<CategoryAllocation[]>([])
+
+  // Pre-fill form when editing
+  React.useEffect(() => {
+    if (open) {
+      if (editingImputation) {
+        setFormData({
+          volet: editingImputation.volet || '',
+          dateDemarrage: editingImputation.dateDemarrage?.split('T')[0] || new Date().toISOString().split('T')[0],
+          delaiMois: editingImputation.delaiMois,
+          montantPrevu: editingImputation.montantPrevu ? String(editingImputation.montantPrevu) : '',
+          remarques: editingImputation.remarques || '',
+        })
+      } else {
+        setFormData({ volet: '', dateDemarrage: new Date().toISOString().split('T')[0], delaiMois: 12, montantPrevu: '', remarques: '' })
+      }
+      setError(null)
+      setCategoryAllocations([])
+    }
+  }, [open, editingImputation])
 
   const handleChange = (field: keyof ImputationFormData, value: string | number) => {
     setFormData((prev: ImputationFormData) => ({ ...prev, [field]: value }))
@@ -78,14 +99,17 @@ const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: Imputa
         montantPrevu: formData.montantPrevu ? parseFloat(formData.montantPrevu) : null,
         remarques: formData.remarques || null,
       }
-      const res = await conventionsAPI.ajouterImputation(conventionId, payload)
-      const newImputation = res.data.data || res.data
-      onSuccess(newImputation)
+      if (isEditMode && editingImputation) {
+        await conventionsAPI.modifierImputation(conventionId, editingImputation.id, payload)
+      } else {
+        await conventionsAPI.ajouterImputation(conventionId, payload)
+      }
+      onSuccess()
       // Reset form
       setFormData({ volet: '', dateDemarrage: new Date().toISOString().split('T')[0], delaiMois: 12, montantPrevu: '', remarques: '' })
       setCategoryAllocations([])
     } catch {
-      setError("Erreur lors de l'ajout de l'imputation")
+      setError(isEditMode ? "Erreur lors de la modification de l'imputation" : "Erreur lors de l'ajout de l'imputation")
     } finally {
       setLoading(false)
     }
@@ -101,7 +125,7 @@ const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: Imputa
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ color: colors.primary[700], fontWeight: typography.weights.semibold }}>
-        Ajouter une imputation previsionnelle
+        {isEditMode ? 'Modifier l\'imputation previsionnelle' : 'Ajouter une imputation previsionnelle'}
       </DialogTitle>
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -142,7 +166,7 @@ const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess }: Imputa
         <Button onClick={handleClose} disabled={loading} startIcon={<Cancel />}>Annuler</Button>
         <Button variant="contained" onClick={handleSubmit} disabled={loading}
           startIcon={loading ? <CircularProgress size={16} /> : <Save />}>
-          Enregistrer
+          {isEditMode ? 'Mettre a jour' : 'Enregistrer'}
         </Button>
       </DialogActions>
     </Dialog>

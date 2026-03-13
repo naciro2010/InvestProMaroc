@@ -26,6 +26,7 @@ interface ConventionSubventionsCardProps {
   conventionId: number
   conventionBudget?: number
   canEdit?: boolean
+  refreshKey?: number
   onDataChanged?: () => void
 }
 
@@ -43,7 +44,7 @@ const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('
  * ConventionSubventionsCard - Pure content for ResizableSection.
  * No Paper wrapper or redundant header.
  */
-const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit = false, onDataChanged }: ConventionSubventionsCardProps) => {
+const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit = false, refreshKey, onDataChanged }: ConventionSubventionsCardProps) => {
   const [subventions, setSubventions] = useState<Subvention[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -63,7 +64,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
     }
   }
 
-  useEffect(() => { loadSubventions() }, [conventionId])
+  useEffect(() => { loadSubventions() }, [conventionId, refreshKey])
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Supprimer cette subvention ?')) return
@@ -105,7 +106,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
     )
   }
 
-  const totalColSpan = canEdit ? 7 : 6
+  const totalColSpan = canEdit ? 8 : 7
 
   return (
     <Box>
@@ -115,6 +116,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
             <TableRow sx={{ bgcolor: colors.neutral[50] }}>
               <TableCell sx={thStyle}>Organisme bailleur</TableCell>
               <TableCell sx={thStyle}>Type</TableCell>
+              <TableCell sx={thStyle}>Date signature</TableCell>
               <TableCell align="right" sx={thStyle}>Montant</TableCell>
               <TableCell sx={thStyle}>Validite</TableCell>
               {canEdit && <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>}
@@ -141,6 +143,11 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
                     <Chip label={TYPE_LABELS[s.typeSubvention] || s.typeSubvention} size="small"
                       sx={{ bgcolor: colors.info[50], color: colors.info[700], fontSize: typography.sizes.xs, height: 22 }} />
                   ) : <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>-</Typography>}
+                </TableCell>
+                <TableCell>
+                  <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textPrimary }}>
+                    {s.dateSignature ? formatDate(s.dateSignature) : '-'}
+                  </Typography>
                 </TableCell>
                 <TableCell align="right">
                   <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.sm, color: colors.success[600] }}>
@@ -182,7 +189,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
             ))}
             {/* Total */}
             <TableRow sx={{ bgcolor: colors.neutral[50] }}>
-              <TableCell colSpan={2} sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>Total</TableCell>
+              <TableCell colSpan={3} sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm }}>Total</TableCell>
               <TableCell align="right" sx={{ fontWeight: typography.weights.bold, fontSize: typography.sizes.sm, color: colors.success[700] }}>
                 {formatCurrency(totalMAD, 'MAD')}
               </TableCell>

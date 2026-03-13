@@ -262,6 +262,8 @@ export const conventionsAPI = {
   getImputations: (conventionId: number) => api.get(`/conventions/${conventionId}/imputations`),
   ajouterImputation: (conventionId: number, imputation: Record<string, unknown>) =>
     api.post(`/conventions/${conventionId}/imputations`, imputation),
+  modifierImputation: (conventionId: number, imputationId: number, data: Record<string, unknown>) =>
+    api.put(`/conventions/${conventionId}/imputations/${imputationId}`, data),
   supprimerImputation: (conventionId: number, imputationId: number) =>
     api.delete(`/conventions/${conventionId}/imputations/${imputationId}`),
   ajouterVersement: (conventionId: number, versement: Record<string, unknown>) =>

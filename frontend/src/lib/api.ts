@@ -896,4 +896,43 @@ export interface DashboardStatsDTO {
   topFournisseurs: TopFournisseurStatsDTO[]
 }
 
+// ============================================================================
+// AI Dashboard API
+// ============================================================================
+
+export interface AiParsedInstruction {
+  visualization: string
+  entity: string
+  groupBy: string | null
+  metric: string
+  metricField: string
+  limit: number | null
+  title: string
+  confidence: number
+  explanation: string[]
+  warnings: string[]
+}
+
+export interface AiDashboardResponse {
+  instruction: AiParsedInstruction
+  aiEnabled: boolean
+  model: string | null
+}
+
+export interface AiStatusResponse {
+  available: boolean
+  model: string | null
+  baseUrl: string | null
+}
+
+export const aiDashboardAPI = {
+  parse: (instruction: string, conversationId?: string) =>
+    api.post<ApiResponse<AiDashboardResponse>>('/ai/dashboard/parse', {
+      instruction,
+      conversationId,
+    }),
+  status: () =>
+    api.get<ApiResponse<AiStatusResponse>>('/ai/dashboard/status'),
+}
+
 export default api

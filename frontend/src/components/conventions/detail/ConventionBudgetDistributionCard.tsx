@@ -20,6 +20,7 @@ interface ProjetOption { id: number; code: string; nom: string }
 interface Props {
   conventionId: number
   canEdit: boolean
+  refreshKey?: number
   onDataChanged?: () => void
 }
 
@@ -47,7 +48,7 @@ const montantCol = { ...td, ...tnum, whiteSpace: 'nowrap' as const }
 
 /* ──── Component ──── */
 
-const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged }: Props) => {
+const ConventionBudgetDistributionCard = ({ conventionId, canEdit, refreshKey, onDataChanged }: Props) => {
   const [distribution, setDistribution] = useState<BudgetLigneWithImputationsDTO[]>([])
   const [categories, setCategories] = useState<CategorieDepenseListDTO[]>([])
   const [projets, setProjets] = useState<ProjetOption[]>([])
@@ -83,7 +84,7 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, onDataChanged
       )
     } catch { setDistribution([]) }
     finally { setLoading(false) }
-  }, [conventionId])
+  }, [conventionId, refreshKey])
 
   useEffect(() => { loadData() }, [loadData])
 

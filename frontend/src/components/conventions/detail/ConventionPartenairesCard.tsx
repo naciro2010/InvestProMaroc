@@ -40,6 +40,7 @@ interface ConventionPartenairesCardProps {
   canEdit?: boolean
   parentConventionId?: number
   versements?: VersementPartenaireRef[]
+  refreshKey?: number
   onAddClick: () => void
   onEditClick?: (partenaire: ConventionPartenaireData) => void
   onDataChanged?: () => void
@@ -63,6 +64,7 @@ const ConventionPartenairesCard = ({
   canEdit = false,
   parentConventionId,
   versements = [],
+  refreshKey,
   onAddClick,
   onEditClick,
   onDataChanged,
@@ -78,7 +80,7 @@ const ConventionPartenairesCard = ({
   useEffect(() => {
     loadPartenaires()
     if (parentConventionId) loadParentPartenaires()
-  }, [conventionId, parentConventionId])
+  }, [conventionId, parentConventionId, refreshKey])
 
   const loadPartenaires = async () => {
     try {

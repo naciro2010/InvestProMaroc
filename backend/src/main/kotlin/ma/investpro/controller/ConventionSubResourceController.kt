@@ -86,6 +86,40 @@ class ConventionSubResourceController(
         }
     }
 
+    @PutMapping("/{conventionId}/imputations/{imputationId}")
+    @WriteAccess
+    fun modifierImputation(
+        @PathVariable conventionId: Long,
+        @PathVariable imputationId: Long,
+        @Valid @RequestBody request: ImputationPrevisionnelle
+    ): ResponseEntity<ApiResponse<ImputationPrevisionnelleDTO>> {
+        return try {
+            val existing = imputationRepository.findById(imputationId).orElse(null)
+                ?: return ResponseEntity.notFound().build()
+
+            existing.volet = request.volet
+            existing.dateDemarrage = request.dateDemarrage
+            existing.delaiMois = request.delaiMois
+            existing.montantPrevu = request.montantPrevu
+            existing.remarques = request.remarques
+            existing.dateFinPrevue = request.dateFinPrevue
+                ?: request.dateDemarrage.plusMonths(request.delaiMois.toLong())
+
+            val saved = imputationRepository.save(existing)
+            val dto = ImputationPrevisionnelleDTO(
+                id = saved.id, conventionId = saved.convention?.id ?: 0,
+                volet = saved.volet, dateDemarrage = saved.dateDemarrage,
+                delaiMois = saved.delaiMois, dateFinPrevue = saved.dateFinPrevue,
+                montantPrevu = saved.montantPrevu, remarques = saved.remarques,
+                actif = saved.actif, createdAt = saved.createdAt, updatedAt = saved.updatedAt
+            )
+            ResponseEntity.ok(ApiResponse.success(dto, "Imputation modifiée avec succès"))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Erreur lors de la modification de l'imputation"))
+        }
+    }
+
     @DeleteMapping("/{conventionId}/imputations/{imputationId}")
     @WriteAccess
     fun supprimerImputation(

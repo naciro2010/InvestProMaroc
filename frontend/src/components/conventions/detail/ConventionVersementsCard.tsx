@@ -25,6 +25,7 @@ interface ConventionVersementsCardProps {
   conventionId: number
   conventionBudget?: number
   canEdit?: boolean
+  refreshKey?: number
   onDataChanged?: () => void
 }
 
@@ -42,6 +43,7 @@ const ConventionVersementsCard = ({
   conventionId,
   conventionBudget = 0,
   canEdit = false,
+  refreshKey,
   onDataChanged,
 }: ConventionVersementsCardProps) => {
   const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
@@ -63,7 +65,7 @@ const ConventionVersementsCard = ({
     }
   }
 
-  useEffect(() => { loadVersements() }, [conventionId])
+  useEffect(() => { loadVersements() }, [conventionId, refreshKey])
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Supprimer ce versement ?')) return

@@ -139,6 +139,7 @@ const ConventionRealisationSection = ({
                     conventionBudget={convention.budget}
                     canEdit={canEdit}
                     parentConventionId={convention.parentConventionId ?? undefined}
+                    refreshKey={refreshKey}
                     onAddClick={() => onAddPartenaire?.()}
                     onEditClick={(p) => onEditPartenaire?.(p)}
                     onDataChanged={refreshAll}
@@ -154,6 +155,7 @@ const ConventionRealisationSection = ({
                     conventionId={convention.id}
                     conventionBudget={convention.budget}
                     canEdit={canEdit}
+                    refreshKey={refreshKey}
                     onDataChanged={refreshAll}
                   />
                 </Box>
@@ -167,6 +169,7 @@ const ConventionRealisationSection = ({
                     conventionId={convention.id}
                     conventionBudget={convention.budget}
                     canEdit={canEdit}
+                    refreshKey={refreshKey}
                     onDataChanged={refreshAll}
                   />
                 </Box>
@@ -178,6 +181,7 @@ const ConventionRealisationSection = ({
                 <ConventionBudgetDistributionCard
                   conventionId={convention.id}
                   canEdit={canEdit}
+                  refreshKey={refreshKey}
                   onDataChanged={refreshAll}
                 />
               ),
@@ -224,7 +228,7 @@ const ConventionRealisationSection = ({
             },
             {
               label: 'Imputations',
-              content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} onRefresh={refreshAll} />,
+              content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} refreshKey={refreshKey} onRefresh={refreshAll} />,
             },
           ]}
         />

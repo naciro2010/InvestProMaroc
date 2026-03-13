@@ -14,7 +14,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'
-import { Delete, TrendingUp, Schedule, ChevronRight, AddCircleOutline } from '@mui/icons-material'
+import { Delete, Edit, TrendingUp, Schedule, ChevronRight, AddCircleOutline } from '@mui/icons-material'
 import { conventionsAPI } from '@/lib/api'
 import { colors, typography } from '@/lib/designSystem'
 import ImputationFormDialog from './ImputationFormDialog'
@@ -26,6 +26,7 @@ interface ConventionImputationsCardProps {
   conventionId: number
   conventionBudget?: number
   canEdit?: boolean
+  refreshKey?: number
   onRefresh?: () => void
 }
 
@@ -44,28 +45,30 @@ const formatCurrency = (amount: number) =>
  * ConventionImputationsCard - Pure content for ResizableSection.
  * No Paper wrapper or redundant header. Dialog extracted to ImputationFormDialog.
  */
-const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit = false, onRefresh }: ConventionImputationsCardProps) => {
+const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit = false, refreshKey, onRefresh }: ConventionImputationsCardProps) => {
   const [imputations, setImputations] = useState<ImputationPrevisionnelle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingImputation, setEditingImputation] = useState<ImputationPrevisionnelle | null>(null)
   const [selectedImputation, setSelectedImputation] = useState<ImputationPrevisionnelle | null>(null)
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true)
-        const res = await conventionsAPI.getImputations(conventionId)
-        setImputations(res.data.data || [])
-        setError(null)
-      } catch {
-        setError('Erreur lors du chargement des imputations')
-      } finally {
-        setLoading(false)
-      }
+  const loadImputations = async () => {
+    try {
+      setLoading(true)
+      const res = await conventionsAPI.getImputations(conventionId)
+      setImputations(res.data.data || [])
+      setError(null)
+    } catch {
+      setError('Erreur lors du chargement des imputations')
+    } finally {
+      setLoading(false)
     }
-    load()
-  }, [conventionId])
+  }
+
+  useEffect(() => {
+    loadImputations()
+  }, [conventionId, refreshKey])
 
   const handleDelete = async (imputationId: number) => {
     if (!window.confirm('Supprimer cette imputation ?')) return
@@ -102,8 +105,9 @@ const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit
 
         <ImputationFormDialog
           open={dialogOpen} conventionId={conventionId}
-          onClose={() => setDialogOpen(false)}
-          onSuccess={(newImp) => { setImputations(prev => [...prev, newImp]); setDialogOpen(false); onRefresh?.() }}
+          onClose={() => { setDialogOpen(false); setEditingImputation(null) }}
+          onSuccess={() => { loadImputations(); setDialogOpen(false); setEditingImputation(null); onRefresh?.() }}
+          editingImputation={editingImputation}
         />
       </Box>
     )
@@ -123,7 +127,7 @@ const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit
               <TableCell sx={thStyle}>Date fin prevue</TableCell>
               <TableCell align="right" sx={thStyle}>Montant prevu</TableCell>
               <TableCell sx={thStyle}>Remarques</TableCell>
-              {canEdit && <TableCell align="center" sx={{ ...thStyle, width: 60 }}>Actions</TableCell>}
+              {canEdit && <TableCell align="center" sx={{ ...thStyle, width: 80 }}>Actions</TableCell>}
               <TableCell sx={{ ...thStyle, width: 32 }} />
             </TableRow>
           </TableHead>
@@ -168,11 +172,18 @@ const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit
                 </TableCell>
                 {canEdit && (
                   <TableCell align="center">
-                    <Tooltip title="Supprimer">
-                      <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(imp.id) }} sx={{ color: colors.danger[500] }}>
-                        <Delete sx={{ fontSize: 15 }} />
-                      </IconButton>
-                    </Tooltip>
+                    <Box sx={{ display: 'flex', gap: 0.25, justifyContent: 'center' }}>
+                      <Tooltip title="Modifier">
+                        <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingImputation(imp); setDialogOpen(true) }} sx={{ color: colors.primary[600] }}>
+                          <Edit sx={{ fontSize: 15 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Supprimer">
+                        <IconButton size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(imp.id) }} sx={{ color: colors.danger[500] }}>
+                          <Delete sx={{ fontSize: 15 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                 )}
                 <TableCell sx={{ px: 0.5 }}>
@@ -184,7 +195,7 @@ const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit
             {/* Add line */}
             {canEdit && (
               <TableRow
-                onClick={() => setDialogOpen(true)}
+                onClick={() => { setEditingImputation(null); setDialogOpen(true) }}
                 sx={{ cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }, '& td': { borderBottom: 0 } }}
               >
                 <TableCell colSpan={totalColSpan}>
@@ -203,8 +214,9 @@ const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit
 
       <ImputationFormDialog
         open={dialogOpen} conventionId={conventionId}
-        onClose={() => setDialogOpen(false)}
-        onSuccess={(newImp) => { setImputations(prev => [...prev, newImp]); setDialogOpen(false); onRefresh?.() }}
+        onClose={() => { setDialogOpen(false); setEditingImputation(null) }}
+        onSuccess={() => { loadImputations(); setDialogOpen(false); setEditingImputation(null); onRefresh?.() }}
+        editingImputation={editingImputation}
       />
 
       {/* Detail Drawer */}

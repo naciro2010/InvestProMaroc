@@ -4,3 +4,12 @@ export { default as DashboardMarcheChart } from './DashboardMarcheChart'
 export { default as DashboardRecentActivity } from './DashboardRecentActivity'
 export { default as DashboardBudgetOverview } from './DashboardBudgetOverview'
 export { default as DashboardQuickActions } from './DashboardQuickActions'
+
+// Executive Dashboard (v2)
+export { default as DashboardFinanceKPIs } from './DashboardFinanceKPIs'
+export { default as DashboardWorkflowFunnel } from './DashboardWorkflowFunnel'
+export { default as DashboardMonthlyTrend } from './DashboardMonthlyTrend'
+export { default as DashboardTopMarches } from './DashboardTopMarches'
+export { default as DashboardTopFournisseurs } from './DashboardTopFournisseurs'
+export { default as DashboardBudgetExecution } from './DashboardBudgetExecution'
+export { DashboardAlerts, DashboardRecentActivityExec } from './DashboardAlerts'

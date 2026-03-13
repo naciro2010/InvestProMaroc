@@ -12,16 +12,16 @@ import org.springframework.ai.ollama.OllamaChatModel
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val logger = KotlinLogging.logger {}
 
 /**
  * Service for AI-powered dashboard instruction parsing via Ollama.
  *
- * Uses Spring AI's ChatClient with structured output (BeanOutputConverter)
- * to convert French text instructions into structured ParsedInstruction objects.
- *
- * Falls back gracefully when Ollama is not available.
+ * Resilient to Ollama startup delays — on Railway, Ollama starts in the same
+ * container and may need time to pull the model on first deploy.
+ * The service caches availability status and retries periodically.
  */
 @Service
 class AiDashboardService(
@@ -30,8 +30,13 @@ class AiDashboardService(
     @Value("\${spring.ai.ollama.base-url:http://localhost:11434}") private val baseUrl: String
 ) {
     private val conversationClients = ConcurrentHashMap<String, ChatClient>()
+    private val ollamaReady = AtomicBoolean(false)
+    @Volatile private var lastStatusCheck: Long = 0
+    @Volatile private var lastStatusResult: Boolean = false
 
     companion object {
+        private const val STATUS_CACHE_MS = 30_000L // Re-check every 30s
+
         private const val SYSTEM_PROMPT = """Tu es un assistant qui convertit des instructions en français en requêtes structurées pour un tableau de bord financier.
 
 Tu dois répondre UNIQUEMENT avec un objet JSON valide, sans texte avant ou après.
@@ -81,9 +86,14 @@ Format de réponse (JSON uniquement):
 
     /**
      * Parse a French instruction using Ollama LLM.
-     * Returns null if Ollama is unavailable.
+     * Returns null if Ollama is unavailable or still starting up.
      */
     fun parseInstruction(instruction: String, conversationId: String?): AiDashboardResponse? {
+        if (!isOllamaAvailable()) {
+            logger.debug { "Ollama not available, skipping AI parsing" }
+            return null
+        }
+
         return try {
             val client = getOrCreateClient(conversationId)
 
@@ -93,6 +103,7 @@ Format de réponse (JSON uniquement):
                 .entity(AiParsedInstruction::class.java)
 
             if (response != null) {
+                ollamaReady.set(true)
                 logger.info { "AI parsed instruction: ${response.title} (confidence: ${response.confidence})" }
                 AiDashboardResponse(
                     instruction = response,
@@ -104,25 +115,44 @@ Format de réponse (JSON uniquement):
                 null
             }
         } catch (e: Exception) {
-            logger.warn { "Ollama unavailable or error: ${e.message}" }
+            logger.warn { "Ollama error during parsing: ${e.message}" }
             null
         }
     }
 
     /**
-     * Check if Ollama is available and responding.
+     * Check if Ollama is available. Caches result for 30s to avoid
+     * hammering the Ollama API on every request.
      */
     fun checkStatus(): AiStatusResponse {
+        val available = isOllamaAvailable()
+        return AiStatusResponse(
+            available = available,
+            model = if (available) modelName else null,
+            baseUrl = baseUrl
+        )
+    }
+
+    private fun isOllamaAvailable(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastStatusCheck < STATUS_CACHE_MS) {
+            return lastStatusResult
+        }
+
         return try {
             val response = chatModel.call("ping")
-            AiStatusResponse(
-                available = response != null && response.isNotBlank(),
-                model = modelName,
-                baseUrl = baseUrl
-            )
+            val available = response != null && response.isNotBlank()
+            lastStatusResult = available
+            lastStatusCheck = now
+            if (available && !ollamaReady.getAndSet(true)) {
+                logger.info { "Ollama is now available with model: $modelName" }
+            }
+            available
         } catch (e: Exception) {
             logger.debug { "Ollama status check failed: ${e.message}" }
-            AiStatusResponse(available = false, model = modelName, baseUrl = baseUrl)
+            lastStatusResult = false
+            lastStatusCheck = now
+            false
         }
     }
 

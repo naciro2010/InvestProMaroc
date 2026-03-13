@@ -7,7 +7,6 @@ import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
 import ConventionBudgetLignesCard from './ConventionBudgetLignesCard'
 import { colors, typography } from '@/lib/designSystem'
-import type { VersementPrevisionnel } from './types'
 
 interface ConventionData {
   id: number
@@ -44,12 +43,8 @@ interface ConventionPrevisionnelSectionProps {
   convention: ConventionData
   canEdit: boolean
   partenairesRefreshKey: number
-  versements: VersementPrevisionnel[]
   onAddPartenaire: () => void
   onEditPartenaire: (p: PartenaireCallbackData) => void
-  onAddVersement: () => void
-  onEditVersement: (v: VersementPrevisionnel) => void
-  onDeleteVersement: (id: number) => void
   onRefresh: () => void
 }
 
@@ -80,12 +75,8 @@ const ConventionPrevisionnelSection = ({
   convention,
   canEdit,
   partenairesRefreshKey,
-  versements,
   onAddPartenaire,
   onEditPartenaire,
-  onAddVersement,
-  onEditVersement,
-  onDeleteVersement,
   onRefresh,
 }: ConventionPrevisionnelSectionProps) => {
   return (
@@ -126,7 +117,6 @@ const ConventionPrevisionnelSection = ({
           conventionBudget={convention.budget}
           canEdit={canEdit}
           parentConventionId={convention.parentConventionId ?? undefined}
-          versements={versements}
           onAddClick={onAddPartenaire}
           onEditClick={onEditPartenaire}
         />
@@ -137,20 +127,13 @@ const ConventionPrevisionnelSection = ({
         title="Versements previsionnels"
         storageKey="conv-prev-versements"
         icon={<AccountBalance sx={{ color: colors.warning[500], fontSize: 16 }} />}
-        actions={canEdit ? (
-          <Button variant="outlined" size="small" startIcon={<Add />} onClick={onAddVersement} sx={addBtnSx}>
-            Ajouter
-          </Button>
-        ) : undefined}
         noPadding
       >
         <ConventionVersementsCard
-          versements={versements}
+          conventionId={convention.id}
           conventionBudget={convention.budget}
           canEdit={canEdit}
-          onAdd={onAddVersement}
-          onEdit={onEditVersement}
-          onDelete={onDeleteVersement}
+          onDataChanged={onRefresh}
         />
       </ResizableSection>
 

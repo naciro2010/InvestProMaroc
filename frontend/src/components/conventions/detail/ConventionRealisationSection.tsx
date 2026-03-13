@@ -9,6 +9,7 @@ import ConventionBudgetDistributionCard from './ConventionBudgetDistributionCard
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
+import ConventionVersementsCard from './ConventionVersementsCard'
 import LinkProjetDialog from '../LinkProjetDialog'
 import LinkMarcheDialog from '../LinkMarcheDialog'
 import SousConventionFormSimple from '@/pages/conventions/SousConventionFormSimple'
@@ -150,6 +151,19 @@ const ConventionRealisationSection = ({
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
                   <ConventionSubventionsCard
+                    conventionId={convention.id}
+                    conventionBudget={convention.budget}
+                    canEdit={canEdit}
+                    onDataChanged={refreshAll}
+                  />
+                </Box>
+              ),
+            },
+            {
+              label: 'Versements',
+              content: (
+                <Box sx={{ px: { xs: 1, md: 2 } }}>
+                  <ConventionVersementsCard
                     conventionId={convention.id}
                     conventionBudget={convention.budget}
                     canEdit={canEdit}

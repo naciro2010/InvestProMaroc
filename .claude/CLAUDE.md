@@ -828,20 +828,26 @@ VITE_API_URL=https://investpromaroc-production.up.railway.app/api
   - No gradients in content areas - flat, professional design
   - SimpleConventionForm refactored as reference example using all core components
 
+- **Menu & Routes Cleanup:** Unified navigation and wired all pages (March 2026)
+  - Wired Décomptes, Paiements, Ordres de Paiement, Commissions routes in App.tsx
+  - Replaced Commissions UnderConstruction placeholder with real CommissionsPage
+  - Fixed Commissions "Bientot" badge (page is fully implemented)
+  - Refactored TeamMessagingPage from raw Tailwind to MUI + design system
+  - Fixed UsersPage hardcoded borderRadius to use design system tokens
+  - Removed legacy PaiementsPage.tsx (replaced by PaiementsPageComplete)
+  - All pages now use ControlPanel, StatusBadge, and design system consistently
+
 ## Current Implementation Status
 
 ### Fully Implemented (90%+)
 - Backend: Conventions, Sous-Conventions, Projets, Marchés, Fournisseurs, Analytical Dimensions
-- Frontend: Dashboards, Conventions, Sous-Conventions, Marchés, Projets, Analytical Reporting, User Profile
+- Frontend: Dashboards, Conventions, Sous-Conventions, Marchés, Projets, Décomptes, Paiements, Ordres de Paiement, Commissions, Budgets, Fournisseurs, Users, Team Messaging, Analytical Reporting, User Profile
 
 ### Partial Implementation (60-75%)
-- Décomptes: Backend ready, frontend basic list page only
-- Ordres de Paiement: Backend ready, frontend incomplete
-- Paiements: Backend ready, frontend incomplete
-- Budgets: Backend exists, frontend minimal
+- Comptes Bancaires: Under construction
+- Dépenses: Under construction
 
 ### Missing Features
-- Sub-conventions (sous-conventions)
 - Budget versions and revisions
 - Document management (PDF uploads)
 - Advanced commission calculation (tranches, exclusions)

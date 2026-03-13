@@ -37,8 +37,11 @@ export { default as ConventionSummaryTable } from './ConventionSummaryTable'
 export { default as ConventionPrevisionnelSection } from './ConventionPrevisionnelSection'
 export { default as ConventionRealisationSection } from './ConventionRealisationSection'
 
-// Financial flow card (unified IN/OUT view)
+// Financial flow card (unified IN/OUT view) - kept for backward compatibility
 export { default as ConventionFinancialFlowCard } from './ConventionFinancialFlowCard'
+
+// Clean read-only synthese card (replaces FinancialFlowCard in detail page)
+export { default as ConventionSyntheseCard } from './ConventionSyntheseCard'
 
 // Smart buttons bar
 export { default as ConventionSmartButtons } from './ConventionSmartButtons'

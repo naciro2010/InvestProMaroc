@@ -26,6 +26,7 @@ interface ConventionSubventionsCardProps {
   conventionId: number
   conventionBudget?: number
   canEdit?: boolean
+  onDataChanged?: () => void
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -42,7 +43,7 @@ const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('
  * ConventionSubventionsCard - Pure content for ResizableSection.
  * No Paper wrapper or redundant header.
  */
-const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit = false }: ConventionSubventionsCardProps) => {
+const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit = false, onDataChanged }: ConventionSubventionsCardProps) => {
   const [subventions, setSubventions] = useState<Subvention[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -66,7 +67,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Supprimer cette subvention ?')) return
-    try { await subventionsAPI.delete(id); loadSubventions() }
+    try { await subventionsAPI.delete(id); loadSubventions(); onDataChanged?.() }
     catch { setError('Erreur lors de la suppression') }
   }
 
@@ -97,7 +98,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
         <SubventionFormDialog
           open={dialogOpen} conventionId={conventionId}
           onClose={() => { setDialogOpen(false); setEditingSubvention(null) }}
-          onSuccess={() => { loadSubventions(); setDialogOpen(false); setEditingSubvention(null) }}
+          onSuccess={() => { loadSubventions(); setDialogOpen(false); setEditingSubvention(null); onDataChanged?.() }}
           editingSubvention={editingSubvention}
         />
       </Box>
@@ -219,7 +220,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
       <SubventionFormDialog
         open={dialogOpen} conventionId={conventionId}
         onClose={() => { setDialogOpen(false); setEditingSubvention(null) }}
-        onSuccess={() => { loadSubventions(); setDialogOpen(false); setEditingSubvention(null) }}
+        onSuccess={() => { loadSubventions(); setDialogOpen(false); setEditingSubvention(null); onDataChanged?.() }}
         editingSubvention={editingSubvention}
       />
     </Box>

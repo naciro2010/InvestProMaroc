@@ -12,10 +12,11 @@ import {
   FormControlLabel,
 } from '@mui/material'
 import { Star as StarIcon } from '@mui/icons-material'
-import { Plus, RefreshCw, Layers, Columns3, Map as MapIcon } from 'lucide-react'
+import { Plus, RefreshCw, Layers, Columns3, Map as MapIcon, TrendingUp } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import MarchesMapView from '@/components/ui/MarchesMapView'
-import { ControlPanel, ExportButton } from '@/components/core'
+import { ControlPanel, ExportButton, KanbanBoard, StatusBadge } from '@/components/core'
+import type { KanbanColumn } from '@/components/core'
 import ConfirmDialog from '@/components/core/ConfirmDialog'
 import {
   MarcheListTable,
@@ -52,6 +53,60 @@ const GROUPBY_OPTIONS = [
   { value: 'fournisseurNom', label: 'Fournisseur' },
 ]
 
+// ==================== KANBAN SECTION ====================
+
+const MARCHE_KANBAN_STATUSES = [
+  { id: 'BROUILLON', title: 'Brouillon', color: colors.neutral[500] },
+  { id: 'EN_COURS', title: 'En cours', color: colors.info[600] },
+  { id: 'TERMINE', title: 'Termine', color: colors.success[600] },
+  { id: 'RESILIE', title: 'Resilie', color: colors.danger[600] },
+]
+
+const formatCurrencyShort = (amount: number): string => {
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`
+  return amount.toLocaleString('fr-FR')
+}
+
+const MarcheKanbanSection = ({ data, onCardClick }: { data: MarcheListItem[]; onCardClick: (id: number) => void }) => {
+  const columns: KanbanColumn<MarcheListItem>[] = MARCHE_KANBAN_STATUSES.map(col => ({
+    ...col,
+    items: data.filter(m => m.statut === col.id),
+  }))
+
+  return (
+    <KanbanBoard<MarcheListItem>
+      columns={columns}
+      getItemId={(m) => String(m.id)}
+      renderCard={(m) => (
+        <Box onClick={() => onCardClick(m.id)} sx={{ cursor: 'pointer' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.primary[600] }}>
+              {m.numeroMarche}
+            </Typography>
+            <StatusBadge status={m.statut} size="small" />
+          </Box>
+          <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.textPrimary, mb: 0.75, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {m.objet}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <TrendingUp size={12} style={{ color: colors.textSecondary }} />
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+              {formatCurrencyShort(m.montantTtc)} MAD
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: '11px', color: colors.neutral[400], mt: 0.5 }}>
+            {m.fournisseurNom}
+          </Typography>
+        </Box>
+      )}
+      emptyMessage="Aucun marche"
+    />
+  )
+}
+
+// ==================== MAIN PAGE ====================
+
 export default function MarchesPage() {
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
@@ -61,7 +116,7 @@ export default function MarchesPage() {
   const [advancedFilters, setAdvancedFilters] = useState<MarcheFilterState>(EMPTY_FILTERS)
   const [groupBy, setGroupBy] = useState('')
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'map'>('list')
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: number | null }>({ open: false, id: null })
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(25)
@@ -223,8 +278,8 @@ export default function MarchesPage() {
           onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
           onNextPage={() => setPage(p => p + 1)}
           viewMode={viewMode}
-          onViewModeChange={(mode) => setViewMode(mode as 'list' | 'map')}
-          availableViews={['list', 'map']}
+          onViewModeChange={(mode) => setViewMode(mode as 'list' | 'kanban' | 'map')}
+          availableViews={['list', 'kanban', 'map']}
         >
           <MarcheAdvancedFilters
             filters={advancedFilters}
@@ -292,6 +347,10 @@ export default function MarchesPage() {
             <Box sx={{ mt: 0 }}>
               <MarchesMapView marches={filteredMarches} />
             </Box>
+          )}
+
+          {viewMode === 'kanban' && (
+            <MarcheKanbanSection data={filteredMarches} onCardClick={(id) => navigate(`/marches/${id}`)} />
           )}
 
           {viewMode === 'list' && (

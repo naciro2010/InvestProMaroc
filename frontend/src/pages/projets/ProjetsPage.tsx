@@ -7,11 +7,12 @@ import {
   Chip,
 } from '@mui/material'
 import { Star as StarIcon } from '@mui/icons-material'
-import { Plus, RefreshCw, Layers, Columns3 } from 'lucide-react'
+import { Plus, RefreshCw, Layers, Columns3, TrendingUp } from 'lucide-react'
 import { projetsAPI, type Projet } from '@/lib/projetsAPI'
 import { useToast } from '@/contexts/ToastContext'
 import AppLayout from '@/components/layout/AppLayout'
-import { ControlPanel, ExportButton } from '@/components/core'
+import { ControlPanel, ExportButton, KanbanBoard, StatusBadge } from '@/components/core'
+import type { KanbanColumn } from '@/components/core'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '@/lib/exportUtils'
 import { GroupByPopover, ColumnVisibilityPopover } from '@/components/conventions/list'
@@ -43,6 +44,59 @@ const GROUPBY_OPTIONS = [
   { value: 'chefProjet', label: 'Chef de projet' },
 ]
 
+// ==================== KANBAN SECTION ====================
+
+const PROJET_KANBAN_STATUSES = [
+  { id: 'PLANIFIE', title: 'Planifie', color: colors.neutral[500] },
+  { id: 'EN_COURS', title: 'En cours', color: colors.info[600] },
+  { id: 'SUSPENDU', title: 'Suspendu', color: colors.warning[600] },
+  { id: 'TERMINE', title: 'Termine', color: colors.success[600] },
+  { id: 'ANNULE', title: 'Annule', color: colors.danger[600] },
+]
+
+const formatBudget = (amount: number): string => {
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`
+  return amount.toLocaleString('fr-FR')
+}
+
+const ProjetKanbanSection = ({ data, onCardClick }: { data: Projet[]; onCardClick: (id: number) => void }) => {
+  const columns: KanbanColumn<Projet>[] = PROJET_KANBAN_STATUSES.map(col => ({
+    ...col,
+    items: data.filter(p => p.statut === col.id),
+  }))
+
+  return (
+    <KanbanBoard<Projet>
+      columns={columns}
+      getItemId={(p) => String(p.id)}
+      renderCard={(p) => (
+        <Box onClick={() => onCardClick(p.id!)} sx={{ cursor: 'pointer' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+            <Box sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.primary[600] }}>{p.code}</Box>
+            <StatusBadge status={p.statut} size="small" />
+          </Box>
+          <Box sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.textPrimary, mb: 0.75, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {p.nom}
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <TrendingUp size={12} style={{ color: colors.textSecondary }} />
+            <Box sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+              {formatBudget(p.budgetTotal)} MAD
+            </Box>
+          </Box>
+          {p.pourcentageAvancement > 0 && (
+            <Box sx={{ mt: 0.75, height: 4, bgcolor: colors.neutral[200], borderRadius: 2, overflow: 'hidden' }}>
+              <Box sx={{ width: `${Math.min(p.pourcentageAvancement, 100)}%`, height: '100%', bgcolor: colors.success[500], borderRadius: 2 }} />
+            </Box>
+          )}
+        </Box>
+      )}
+      emptyMessage="Aucun projet"
+    />
+  )
+}
+
 // ==================== MAIN PAGE ====================
 
 const ProjetsPage = () => {
@@ -57,6 +111,7 @@ const ProjetsPage = () => {
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(25)
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
 
   // Favorites
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(() => {
@@ -223,7 +278,10 @@ const ProjetsPage = () => {
           searchValue={searchQuery}
           onSearchChange={(v) => { setSearchQuery(v); setPage(0) }}
           searchPlaceholder="Rechercher par code, designation, description..."
-          paginationInfo={filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
+          viewMode={viewMode}
+          onViewModeChange={(mode) => setViewMode(mode as 'list' | 'kanban')}
+          availableViews={['list', 'kanban']}
+          paginationInfo={viewMode === 'list' && filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
           onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
           onNextPage={() => setPage(p => p + 1)}
         >
@@ -254,9 +312,13 @@ const ProjetsPage = () => {
         </ControlPanel>
 
         <Box sx={{ p: { xs: 2, md: 3 } }}>
-          <ProjetListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
-            onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/projets/${id}`)} onMenuOpen={handleMenuOpen}
-            favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
+          {viewMode === 'kanban' ? (
+            <ProjetKanbanSection data={filteredData} onCardClick={(id) => navigate(`/projets/${id}`)} />
+          ) : (
+            <ProjetListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
+              onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/projets/${id}`)} onMenuOpen={handleMenuOpen}
+              favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
+          )}
         </Box>
       </Box>
 

@@ -1,183 +1,91 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles'
+import { colors, typography, borders } from '../lib/designSystem'
 
 /**
- * ERP-inspired Theme
+ * ERP Theme - Generated from designSystem.ts tokens
  *
- * Design principles:
- * - Minimaliste et épuré
- * - Backgrounds blancs
- * - Bordures subtiles
- * - Typography sobre
- * - Spacing cohérent (8px base)
- * - Couleurs naturelles
+ * Single source of truth: designSystem.ts
+ * This file converts those tokens into a MUI ThemeOptions object.
  */
-
-// Professional ERP-style palette
-const colors = {
-  // Neutrals
-  gray50: '#f8f9fa',
-  gray100: '#e9ecef',
-  gray200: '#dee2e6',
-  gray300: '#ced4da',
-  gray400: '#adb5bd',
-  gray500: '#6c757d',
-  gray600: '#495057',
-  gray700: '#343a40',
-  gray800: '#212529',
-
-  // Primary (bleu sobre)
-  primary: '#007bff',
-  primaryHover: '#0056b3',
-  primaryLight: '#e7f3ff',
-
-  // Status colors
-  success: '#28a745',
-  successLight: '#d4edda',
-  warning: '#ffc107',
-  warningLight: '#fff3cd',
-  danger: '#dc3545',
-  dangerLight: '#f8d7da',
-  info: '#17a2b8',
-  infoLight: '#d1ecf1',
-
-  // Backgrounds
-  bgPage: '#f8f9fa',
-  bgCard: '#ffffff',
-  bgHover: '#f1f3f5',
-  bgActive: '#e7f3ff',
-}
 
 const themeOptions: ThemeOptions = {
   palette: {
     mode: 'light',
     primary: {
-      main: colors.primary,
-      light: colors.primaryLight,
-      dark: colors.primaryHover,
+      main: colors.primary[600],
+      light: colors.primary[100],
+      dark: colors.primary[700],
       contrastText: '#ffffff',
     },
     secondary: {
-      main: colors.gray600,
-      light: colors.gray400,
-      dark: colors.gray800,
+      main: colors.neutral[600],
+      light: colors.neutral[400],
+      dark: colors.neutral[800],
       contrastText: '#ffffff',
     },
     error: {
-      main: colors.danger,
-      light: colors.dangerLight,
+      main: colors.danger[600],
+      light: colors.danger[100],
+      dark: colors.danger[700],
     },
     warning: {
-      main: colors.warning,
-      light: colors.warningLight,
+      main: colors.warning[600],
+      light: colors.warning[100],
+      dark: colors.warning[700],
     },
     info: {
-      main: colors.info,
-      light: colors.infoLight,
+      main: colors.info[600],
+      light: colors.info[100],
+      dark: colors.info[700],
     },
     success: {
-      main: colors.success,
-      light: colors.successLight,
+      main: colors.success[600],
+      light: colors.success[100],
+      dark: colors.success[700],
     },
     background: {
-      default: colors.bgPage,
-      paper: colors.bgCard,
+      default: colors.background,
+      paper: colors.surface,
     },
     text: {
-      primary: colors.gray800,
-      secondary: colors.gray600,
-      disabled: colors.gray400,
+      primary: colors.textPrimary,
+      secondary: colors.textSecondary,
+      disabled: colors.textDisabled,
     },
-    divider: colors.gray200,
+    divider: colors.border,
   },
 
   typography: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily: typography.fontFamily,
     fontSize: 14,
-
-    h1: {
-      fontSize: 28,
-      fontWeight: 600,
-      color: colors.gray800,
-      lineHeight: 1.3,
-    },
-    h2: {
-      fontSize: 24,
-      fontWeight: 600,
-      color: colors.gray800,
-      lineHeight: 1.3,
-    },
-    h3: {
-      fontSize: 20,
-      fontWeight: 600,
-      color: colors.gray700,
-      lineHeight: 1.4,
-    },
-    h4: {
-      fontSize: 18,
-      fontWeight: 600,
-      color: colors.gray700,
-      lineHeight: 1.4,
-    },
-    h5: {
-      fontSize: 16,
-      fontWeight: 600,
-      color: colors.gray600,
-      lineHeight: 1.4,
-    },
-    h6: {
-      fontSize: 14,
-      fontWeight: 600,
-      color: colors.gray600,
-      lineHeight: 1.4,
-    },
-    subtitle1: {
-      fontSize: 14,
-      fontWeight: 600,
-      color: colors.gray700,
-      lineHeight: 1.5,
-    },
-    subtitle2: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: colors.gray600,
-      lineHeight: 1.5,
-    },
-    body1: {
-      fontSize: 14,
-      color: colors.gray700,
-      lineHeight: 1.5,
-    },
-    body2: {
-      fontSize: 13,
-      color: colors.gray600,
-      lineHeight: 1.5,
-    },
-    caption: {
-      fontSize: 12,
-      color: colors.gray500,
-      lineHeight: 1.4,
-    },
-    button: {
-      textTransform: 'none',
-      fontWeight: 500,
-      fontSize: 14,
-    },
+    h1: { fontSize: 28, fontWeight: 600, color: colors.textPrimary, lineHeight: 1.3 },
+    h2: { fontSize: 24, fontWeight: 600, color: colors.textPrimary, lineHeight: 1.3 },
+    h3: { fontSize: 20, fontWeight: 600, color: colors.neutral[700], lineHeight: 1.4 },
+    h4: { fontSize: 18, fontWeight: 600, color: colors.neutral[700], lineHeight: 1.4 },
+    h5: { fontSize: 16, fontWeight: 600, color: colors.neutral[600], lineHeight: 1.4 },
+    h6: { fontSize: 14, fontWeight: 600, color: colors.neutral[600], lineHeight: 1.4 },
+    subtitle1: { fontSize: 14, fontWeight: 600, color: colors.neutral[700], lineHeight: 1.5 },
+    subtitle2: { fontSize: 13, fontWeight: 600, color: colors.neutral[600], lineHeight: 1.5 },
+    body1: { fontSize: 14, color: colors.neutral[700], lineHeight: 1.5 },
+    body2: { fontSize: 13, color: colors.neutral[600], lineHeight: 1.5 },
+    caption: { fontSize: 12, color: colors.neutral[500], lineHeight: 1.4 },
+    button: { textTransform: 'none' as const, fontWeight: 500, fontSize: 14 },
   },
 
-  spacing: 8, // Base unit: 8px
+  spacing: 8,
 
   shape: {
-    borderRadius: 4, // Subtle rounded corners
+    borderRadius: parseInt(borders.radius.md, 10) || 6,
   },
 
   shadows: [
     'none',
-    '0 1px 3px rgba(0, 0, 0, 0.08)',
-    '0 2px 4px rgba(0, 0, 0, 0.08)',
-    '0 3px 6px rgba(0, 0, 0, 0.08)',
-    '0 4px 8px rgba(0, 0, 0, 0.08)',
-    '0 6px 12px rgba(0, 0, 0, 0.10)',
-    '0 8px 16px rgba(0, 0, 0, 0.10)',
+    '0 1px 3px rgba(0,0,0,0.06)',
+    '0 2px 4px rgba(0,0,0,0.06)',
+    '0 3px 6px rgba(0,0,0,0.07)',
+    '0 4px 8px rgba(0,0,0,0.07)',
+    '0 6px 12px rgba(0,0,0,0.08)',
+    '0 8px 16px rgba(0,0,0,0.08)',
     'none', 'none', 'none', 'none', 'none', 'none',
     'none', 'none', 'none', 'none', 'none', 'none',
     'none', 'none', 'none', 'none', 'none', 'none',
@@ -187,23 +95,17 @@ const themeOptions: ThemeOptions = {
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none',
+          textTransform: 'none' as const,
           fontWeight: 500,
           boxShadow: 'none',
-          '&:hover': {
-            boxShadow: 'none',
-          },
+          '&:hover': { boxShadow: 'none' },
         },
         contained: {
-          '&:hover': {
-            boxShadow: 'none',
-          },
+          '&:hover': { boxShadow: 'none' },
         },
         containedPrimary: {
-          backgroundColor: colors.primary,
-          '&:hover': {
-            backgroundColor: colors.primaryHover,
-          },
+          backgroundColor: colors.primary[600],
+          '&:hover': { backgroundColor: colors.primary[700] },
         },
       },
       defaultProps: {
@@ -213,20 +115,16 @@ const themeOptions: ThemeOptions = {
 
     MuiPaper: {
       styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-        },
-        elevation1: {
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-        },
+        root: { backgroundImage: 'none' },
+        elevation1: { boxShadow: '0 1px 3px rgba(0,0,0,0.06)' },
       },
     },
 
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
-          border: `1px solid ${colors.gray200}`,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          border: `1px solid ${colors.border}`,
         },
       },
     },
@@ -235,16 +133,9 @@ const themeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            '& fieldset': {
-              borderColor: colors.gray300,
-            },
-            '&:hover fieldset': {
-              borderColor: colors.gray400,
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: colors.primary,
-              borderWidth: '1px', // Thin borders
-            },
+            '& fieldset': { borderColor: colors.neutral[300] },
+            '&:hover fieldset': { borderColor: colors.neutral[400] },
+            '&.Mui-focused fieldset': { borderColor: colors.primary[600], borderWidth: '1px' },
           },
         },
       },
@@ -253,119 +144,75 @@ const themeOptions: ThemeOptions = {
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: colors.gray400,
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: colors.primary,
-            borderWidth: '1px',
-          },
+          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: colors.neutral[400] },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: colors.primary[600], borderWidth: '1px' },
         },
       },
     },
 
     MuiTableHead: {
       styleOverrides: {
-        root: {
-          backgroundColor: colors.gray50,
-        },
+        root: { backgroundColor: colors.neutral[50] },
       },
     },
 
     MuiTableCell: {
       styleOverrides: {
-        root: {
-          borderColor: colors.gray200,
-          fontSize: 14,
-        },
-        head: {
-          fontWeight: 600,
-          color: colors.gray700,
-        },
+        root: { borderColor: colors.neutral[200], fontSize: 14 },
+        head: { fontWeight: 600, color: colors.neutral[700] },
       },
     },
 
     MuiTableRow: {
       styleOverrides: {
         root: {
-          '&:hover': {
-            backgroundColor: colors.bgHover,
-          },
+          '&:hover': { backgroundColor: colors.neutral[50] },
         },
       },
     },
 
     MuiChip: {
       styleOverrides: {
-        root: {
-          fontWeight: 500,
-          fontSize: 12,
-        },
+        root: { fontWeight: 500, fontSize: 12 },
       },
     },
 
     MuiTabs: {
       styleOverrides: {
-        root: {
-          borderBottom: `1px solid ${colors.gray200}`,
-        },
-        indicator: {
-          backgroundColor: colors.primary,
-          height: 2,
-        },
+        root: { borderBottom: `1px solid ${colors.neutral[200]}` },
+        indicator: { backgroundColor: colors.primary[600], height: 2 },
       },
     },
 
     MuiTab: {
       styleOverrides: {
         root: {
-          textTransform: 'none',
+          textTransform: 'none' as const,
           fontWeight: 500,
           fontSize: 14,
-          color: colors.gray600,
-          '&.Mui-selected': {
-            color: colors.primary,
-          },
+          color: colors.neutral[600],
+          '&.Mui-selected': { color: colors.primary[600] },
         },
       },
     },
 
     MuiAlert: {
       styleOverrides: {
-        root: {
-          borderRadius: 4,
-        },
-        standardInfo: {
-          backgroundColor: colors.infoLight,
-          color: colors.gray800,
-        },
-        standardSuccess: {
-          backgroundColor: colors.successLight,
-          color: colors.gray800,
-        },
-        standardWarning: {
-          backgroundColor: colors.warningLight,
-          color: colors.gray800,
-        },
-        standardError: {
-          backgroundColor: colors.dangerLight,
-          color: colors.gray800,
-        },
+        root: { borderRadius: 4 },
+        standardInfo: { backgroundColor: colors.info[50], color: colors.textPrimary },
+        standardSuccess: { backgroundColor: colors.success[50], color: colors.textPrimary },
+        standardWarning: { backgroundColor: colors.warning[50], color: colors.textPrimary },
+        standardError: { backgroundColor: colors.danger[50], color: colors.textPrimary },
       },
     },
 
     MuiBreadcrumbs: {
       styleOverrides: {
-        separator: {
-          color: colors.gray400,
-        },
+        separator: { color: colors.neutral[400] },
       },
     },
   },
 }
 
 export const erpTheme = createTheme(themeOptions)
-/** @deprecated Use erpTheme instead */
-export const investProTheme = erpTheme
-
-export { colors }
+export default erpTheme

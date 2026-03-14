@@ -16,13 +16,14 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material'
-import { Plus, RefreshCw, Eye, Edit2, Trash2 } from 'lucide-react'
+import { Plus, RefreshCw, Eye, Edit2, Trash2, List, LayoutGrid } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel, StatusBadge, ExportButton } from '@/components/core'
 import { budgetsAPI } from '@/lib/api'
 import type { Budget, StatutBudget } from '@/types/entities'
 import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
 import { useTableSort } from '@/hooks/useTableSort'
+import { BudgetKanbanView } from './components'
 
 // Styles from design system
 const styles = componentStyles.listPage
@@ -34,6 +35,7 @@ export default function BudgetsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statutFilter, setStatutFilter] = useState<string>('ALL')
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
 
   // Pagination
   const [page, setPage] = useState(0)
@@ -143,6 +145,14 @@ export default function BudgetsPage() {
               >
                 Nouveau Budget
               </Button>
+              <Box sx={{ display: 'flex', border: `1px solid ${colors.border}`, borderRadius: 1, overflow: 'hidden' }}>
+                <IconButton size="small" onClick={() => setViewMode('list')} sx={{ borderRadius: 0, bgcolor: viewMode === 'list' ? colors.primary[50] : 'transparent', color: viewMode === 'list' ? colors.primary[600] : colors.textSecondary }}>
+                  <List size={16} />
+                </IconButton>
+                <IconButton size="small" onClick={() => setViewMode('kanban')} sx={{ borderRadius: 0, bgcolor: viewMode === 'kanban' ? colors.primary[50] : 'transparent', color: viewMode === 'kanban' ? colors.primary[600] : colors.textSecondary }}>
+                  <LayoutGrid size={16} />
+                </IconButton>
+              </Box>
               <IconButton size="small" onClick={fetchBudgets} sx={{ color: colors.textSecondary }}>
                 <RefreshCw size={16} />
               </IconButton>
@@ -180,8 +190,18 @@ export default function BudgetsPage() {
           })}
         </ControlPanel>
 
-        {/* Main Content Area */}
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        {/* Kanban View */}
+        {viewMode === 'kanban' && (
+          <BudgetKanbanView
+            budgets={filteredBudgets}
+            onCardMove={() => { /* Status change via DnD - could implement API call */ }}
+            formatCurrency={formatCurrency}
+            onBudgetClick={(id) => navigate(`/budgets/${id}`)}
+          />
+        )}
+
+        {/* List View */}
+        {viewMode === 'list' && <Box sx={{ p: { xs: 2, md: 3 } }}>
           <Box sx={listStyles.container}>
             <TableContainer>
               <Table size="small" sx={listStyles.table}>
@@ -327,7 +347,7 @@ export default function BudgetsPage() {
               labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
             />
           </Box>
-        </Box>
+        </Box>}
       </Box>
     </AppLayout>
   )

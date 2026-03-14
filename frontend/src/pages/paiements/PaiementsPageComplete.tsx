@@ -1,72 +1,21 @@
 import { useState, useEffect, useMemo } from 'react'
-import {
-  Box,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  TableSortLabel,
-  Typography,
-  IconButton,
-  TextField,
-  InputAdornment,
-  Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-  Chip,
-  CircularProgress,
-} from '@mui/material'
-import { AttachMoney } from '@mui/icons-material'
-import { Plus, RefreshCw, Edit2, Trash2, CreditCard } from 'lucide-react'
+import { Box, Button, IconButton, Chip, CircularProgress } from '@mui/material'
+import { Plus, RefreshCw, List, LayoutGrid } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import { paiementsAPI } from '../../lib/api'
-import FileUpload from '../../components/ui/FileUpload'
-import DecimalInput from '@/components/ui/DecimalInput'
-import { ControlPanel, StatusBadge, ExportButton } from '../../components/core'
-import { colors, typography, componentStyles, getStatusConfig, borders } from '../../lib/designSystem'
+import { ControlPanel, ExportButton } from '../../components/core'
+import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
 import { useTableSort } from '@/hooks/useTableSort'
-
-// Types
-interface Paiement {
-  id: number
-  numeroPaiement: string
-  datePaiement: string
-  montant: number
-  modeReglement: string
-  referenceBancaire?: string
-  beneficiaire?: string
-  observation?: string
-  statut?: string
-  ordrePaiementId?: number
-}
-
-interface PaiementFormData {
-  numeroPaiement: string
-  datePaiement: string
-  montant: number
-  modeReglement: string
-  referenceBancaire: string
-  beneficiaire: string
-  observation: string
-  ordrePaiementId: number
-}
+import { PaiementTable, PaiementFormDialog, PaiementKanbanView } from './components'
+import type { Paiement, PaiementFormData } from './components'
 
 const styles = componentStyles.listPage
-const listStyles = componentStyles.listView
+type ViewMode = 'list' | 'kanban'
 
-const modeReglementLabels: Record<string, string> = {
-  'VIREMENT': 'Virement',
-  'CHEQUE': 'Cheque',
-  'ESPECES': 'Especes',
-  'CARTE': 'Carte Bancaire',
-  'PRELEVEMENT': 'Prelevement',
+const INITIAL_FORM: PaiementFormData = {
+  numeroPaiement: '', datePaiement: new Date().toISOString().split('T')[0],
+  montant: 0, modeReglement: 'VIREMENT', referenceBancaire: '',
+  beneficiaire: '', observation: '', ordrePaiementId: 0,
 }
 
 const PaiementsPage = () => {
@@ -78,31 +27,15 @@ const PaiementsPage = () => {
   const [selectedPaiement, setSelectedPaiement] = useState<Paiement | null>(null)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(25)
-  const [formData, setFormData] = useState<PaiementFormData>({
-    numeroPaiement: '',
-    datePaiement: new Date().toISOString().split('T')[0],
-    montant: 0,
-    modeReglement: 'VIREMENT',
-    referenceBancaire: '',
-    beneficiaire: '',
-    observation: '',
-    ordrePaiementId: 0,
-  })
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [formData, setFormData] = useState<PaiementFormData>(INITIAL_FORM)
 
-  useEffect(() => {
-    loadPaiements()
-  }, [])
+  useEffect(() => { loadPaiements() }, [])
 
   const loadPaiements = async () => {
     setLoading(true)
-    try {
-      const { data } = await paiementsAPI.getAll()
-      setPaiements(data.data || [])
-    } catch {
-      // silently handle
-    } finally {
-      setLoading(false)
-    }
+    try { const { data } = await paiementsAPI.getAll(); setPaiements(data.data || []) }
+    catch { /* silently handle */ } finally { setLoading(false) }
   }
 
   const stats = useMemo(() => ({
@@ -112,384 +45,109 @@ const PaiementsPage = () => {
     ANNULE: paiements.filter(p => p.statut === 'ANNULE').length,
   }), [paiements])
 
-  const filteredPaiements = useMemo(() => {
-    return paiements.filter(p => {
-      if (searchTerm && !p.numeroPaiement?.toLowerCase().includes(searchTerm.toLowerCase())
-        && !p.beneficiaire?.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false
-      }
-      if (statutFilter !== 'ALL' && p.statut !== statutFilter) return false
-      return true
-    })
-  }, [paiements, searchTerm, statutFilter])
+  const filteredPaiements = useMemo(() => paiements.filter(p => {
+    const term = searchTerm.toLowerCase()
+    if (term && !p.numeroPaiement?.toLowerCase().includes(term) && !p.beneficiaire?.toLowerCase().includes(term)) return false
+    return statutFilter === 'ALL' || p.statut === statutFilter
+  }), [paiements, searchTerm, statutFilter])
 
-  const { sortedItems: sortedPaiements, sortConfig, requestSort } = useTableSort<Paiement>(filteredPaiements, { key: 'numeroPaiement', direction: 'asc' })
-
-  const paginatedPaiements = useMemo(() => {
-    const start = page * rowsPerPage
-    return sortedPaiements.slice(start, start + rowsPerPage)
-  }, [sortedPaiements, page, rowsPerPage])
+  const { sortedItems, sortConfig, requestSort } = useTableSort<Paiement>(filteredPaiements, { key: 'numeroPaiement', direction: 'asc' })
+  const paginatedPaiements = useMemo(() => sortedItems.slice(page * rowsPerPage, (page + 1) * rowsPerPage), [sortedItems, page, rowsPerPage])
 
   const handleOpenDialog = (paiement: Paiement | null = null) => {
-    if (paiement) {
-      setSelectedPaiement(paiement)
-      setFormData({
-        numeroPaiement: paiement.numeroPaiement,
-        datePaiement: paiement.datePaiement,
-        montant: paiement.montant,
-        modeReglement: paiement.modeReglement || 'VIREMENT',
-        referenceBancaire: paiement.referenceBancaire || '',
-        beneficiaire: paiement.beneficiaire || '',
-        observation: paiement.observation || '',
-        ordrePaiementId: paiement.ordrePaiementId || 0,
-      })
-    } else {
-      setSelectedPaiement(null)
-      setFormData({
-        numeroPaiement: '',
-        datePaiement: new Date().toISOString().split('T')[0],
-        montant: 0,
-        modeReglement: 'VIREMENT',
-        referenceBancaire: '',
-        beneficiaire: '',
-        observation: '',
-        ordrePaiementId: 0,
-      })
-    }
+    setSelectedPaiement(paiement)
+    setFormData(paiement ? {
+      numeroPaiement: paiement.numeroPaiement, datePaiement: paiement.datePaiement,
+      montant: paiement.montant, modeReglement: paiement.modeReglement || 'VIREMENT',
+      referenceBancaire: paiement.referenceBancaire || '', beneficiaire: paiement.beneficiaire || '',
+      observation: paiement.observation || '', ordrePaiementId: paiement.ordrePaiementId || 0,
+    } : INITIAL_FORM)
     setOpenDialog(true)
   }
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
-    setSelectedPaiement(null)
-  }
+  const handleCloseDialog = () => { setOpenDialog(false); setSelectedPaiement(null) }
 
   const handleSubmit = async () => {
     try {
-      const payload = {
-        ...formData,
-        montant: formData.montant,
-        ordrePaiementId: formData.ordrePaiementId,
-      }
-      if (selectedPaiement) {
-        await paiementsAPI.update(selectedPaiement.id, payload)
-      } else {
-        await paiementsAPI.create(payload)
-      }
-      handleCloseDialog()
-      loadPaiements()
-    } catch {
-      // silently handle
-    }
+      const payload = formData as unknown as Record<string, unknown>
+      if (selectedPaiement) await paiementsAPI.update(selectedPaiement.id, payload)
+      else await paiementsAPI.create(payload)
+      handleCloseDialog(); loadPaiements()
+    } catch { /* silently handle */ }
   }
 
   const handleDelete = async (id: number) => {
     if (!confirm('Confirmer la suppression ?')) return
-    try {
-      await paiementsAPI.delete(id)
-      loadPaiements()
-    } catch {
-      // silently handle
-    }
+    try { await paiementsAPI.delete(id); loadPaiements() } catch { /* silently handle */ }
   }
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount) + ' MAD'
+  const handleCardMove = (itemId: string, _from: string, toColumnId: string) => {
+    const p = paiements.find(x => String(x.id) === itemId)
+    if (p) paiementsAPI.update(p.id, { ...p, statut: toColumnId } as Record<string, unknown>).then(() => loadPaiements()).catch(() => {})
   }
 
-  if (loading) {
-    return (
-      <AppLayout>
-        <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <CircularProgress size={40} />
-        </Box>
-      </AppLayout>
-    )
-  }
+  const formatCurrency = (amount: number): string =>
+    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' MAD'
+
+  if (loading) return (
+    <AppLayout>
+      <Box sx={{ ...styles.container, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={40} /></Box>
+    </AppLayout>
+  )
+
+  const isList = viewMode === 'list'
+  const viewBtn = (mode: ViewMode, Icon: typeof List) => (
+    <IconButton size="small" onClick={() => setViewMode(mode)} sx={{ borderRadius: 0, bgcolor: viewMode === mode ? colors.primary[50] : 'transparent', color: viewMode === mode ? colors.primary[600] : colors.textSecondary }}>
+      <Icon size={16} />
+    </IconButton>
+  )
 
   return (
     <AppLayout>
       <Box sx={styles.container}>
-        {/* Control Panel */}
         <ControlPanel
           breadcrumbs={[{ label: 'Paiements' }]}
-          actions={
-            <>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<Plus size={16} />}
-                onClick={() => handleOpenDialog()}
-                sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}
-              >
-                Nouveau
-              </Button>
-              <ExportButton onClick={() => { /* TODO: implement export */ }} />
-              <IconButton size="small" onClick={() => loadPaiements()} sx={{ color: colors.textSecondary }}>
-                <RefreshCw size={16} />
-              </IconButton>
-            </>
-          }
+          actions={<>
+            <Box sx={{ display: 'flex', border: `1px solid ${colors.border}`, borderRadius: 1, overflow: 'hidden' }}>
+              {viewBtn('list', List)}{viewBtn('kanban', LayoutGrid)}
+            </Box>
+            <Button variant="contained" size="small" startIcon={<Plus size={16} />} onClick={() => handleOpenDialog()} sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}>Nouveau</Button>
+            <ExportButton onClick={() => {}} />
+            <IconButton size="small" onClick={() => loadPaiements()} sx={{ color: colors.textSecondary }}><RefreshCw size={16} /></IconButton>
+          </>}
           searchValue={searchTerm}
-          onSearchChange={(value) => { setSearchTerm(value); setPage(0) }}
+          onSearchChange={(v) => { setSearchTerm(v); setPage(0) }}
           searchPlaceholder="Rechercher par numero, fournisseur..."
-          paginationInfo={{
-            currentStart: filteredPaiements.length === 0 ? 0 : page * rowsPerPage + 1,
-            currentEnd: Math.min((page + 1) * rowsPerPage, filteredPaiements.length),
-            total: filteredPaiements.length,
-          }}
-          onPreviousPage={() => setPage((prev) => Math.max(0, prev - 1))}
-          onNextPage={() => setPage((prev) => prev + 1)}
+          paginationInfo={isList ? { currentStart: filteredPaiements.length === 0 ? 0 : page * rowsPerPage + 1, currentEnd: Math.min((page + 1) * rowsPerPage, filteredPaiements.length), total: filteredPaiements.length } : undefined}
+          onPreviousPage={isList ? () => setPage(p => Math.max(0, p - 1)) : undefined}
+          onNextPage={isList ? () => setPage(p => p + 1) : undefined}
         >
-          {/* Status filter chips */}
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {['ALL', 'EN_ATTENTE', 'EFFECTUE', 'ANNULE'].map((statut) => {
-              const count = statut === 'ALL' ? paiements.length : (stats[statut as keyof typeof stats] || 0)
+            {(['ALL', 'EN_ATTENTE', 'EFFECTUE', 'ANNULE'] as const).map((statut) => {
+              const count = statut === 'ALL' ? paiements.length : stats[statut]
               const isActive = statutFilter === statut
               return (
-                <Chip
-                  key={statut}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
-                      <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>
-                        {count}
-                      </Box>
-                    </Box>
-                  }
-                  onClick={() => { setStatutFilter(statut); setPage(0) }}
-                  sx={isActive ? styles.filterPillActive : styles.filterPill}
-                />
+                <Chip key={statut} onClick={() => { setStatutFilter(statut); setPage(0) }} sx={isActive ? styles.filterPillActive : styles.filterPill}
+                  label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>{statut === 'ALL' ? 'Tous' : getStatusConfig(statut).label}</span>
+                    <Box component="span" sx={isActive ? styles.countBadge : styles.countBadgeInactive}>{count}</Box>
+                  </Box>} />
               )
             })}
           </Box>
         </ControlPanel>
 
-        {/* Table */}
-        <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
-          <Box sx={listStyles.container}>
-            <TableContainer>
-              <Table size="small" sx={listStyles.table}>
-                <TableHead>
-                  <TableRow sx={listStyles.headerRow}>
-                    <TableCell sortDirection={sortConfig?.key === 'numeroPaiement' ? sortConfig.direction : false}>
-                      <TableSortLabel active={sortConfig?.key === 'numeroPaiement'} direction={sortConfig?.key === 'numeroPaiement' ? sortConfig.direction : 'asc'} onClick={() => requestSort('numeroPaiement')}>Numero</TableSortLabel>
-                    </TableCell>
-                    <TableCell sortDirection={sortConfig?.key === 'datePaiement' ? sortConfig.direction : false}>
-                      <TableSortLabel active={sortConfig?.key === 'datePaiement'} direction={sortConfig?.key === 'datePaiement' ? sortConfig.direction : 'asc'} onClick={() => requestSort('datePaiement')}>Date</TableSortLabel>
-                    </TableCell>
-                    <TableCell>Beneficiaire</TableCell>
-                    <TableCell sortDirection={sortConfig?.key === 'modeReglement' ? sortConfig.direction : false}>
-                      <TableSortLabel active={sortConfig?.key === 'modeReglement'} direction={sortConfig?.key === 'modeReglement' ? sortConfig.direction : 'asc'} onClick={() => requestSort('modeReglement')}>Mode Reglement</TableSortLabel>
-                    </TableCell>
-                    <TableCell align="right" sortDirection={sortConfig?.key === 'montant' ? sortConfig.direction : false}>
-                      <TableSortLabel active={sortConfig?.key === 'montant'} direction={sortConfig?.key === 'montant' ? sortConfig.direction : 'asc'} onClick={() => requestSort('montant')}>Montant</TableSortLabel>
-                    </TableCell>
-                    <TableCell align="center" sortDirection={sortConfig?.key === 'statut' ? sortConfig.direction : false}>
-                      <TableSortLabel active={sortConfig?.key === 'statut'} direction={sortConfig?.key === 'statut' ? sortConfig.direction : 'asc'} onClick={() => requestSort('statut')}>Statut</TableSortLabel>
-                    </TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedPaiements.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
-                        <Box>
-                          <CreditCard size={40} color={colors.textDisabled} style={{ marginBottom: 12 }} />
-                          <Typography sx={{ color: colors.textSecondary, fontWeight: typography.weights.medium }}>
-                            Aucun paiement trouve
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    paginatedPaiements.map((paiement) => (
-                      <TableRow
-                        key={paiement.id}
-                        sx={listStyles.dataRow}
-                        onClick={() => handleOpenDialog(paiement)}
-                      >
-                        <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
-                          {paiement.numeroPaiement}
-                        </TableCell>
-                        <TableCell sx={{ color: colors.textSecondary }}>
-                          {new Date(paiement.datePaiement).toLocaleDateString('fr-FR')}
-                        </TableCell>
-                        <TableCell>{paiement.beneficiaire || '-'}</TableCell>
-                        <TableCell>
-                          <Box sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 0.75,
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: borders.radius.full,
-                            bgcolor: colors.neutral[100],
-                            fontSize: typography.sizes.xs,
-                            fontWeight: typography.weights.medium,
-                            color: colors.textSecondary,
-                          }}>
-                            <CreditCard size={12} />
-                            {modeReglementLabels[paiement.modeReglement] || paiement.modeReglement}
-                          </Box>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: typography.weights.bold, color: colors.primary[700] }}>
-                          {formatCurrency(paiement.montant)}
-                        </TableCell>
-                        <TableCell align="center">
-                          <StatusBadge status={paiement.statut || 'EN_ATTENTE'} size="small" />
-                        </TableCell>
-                        <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                            <IconButton size="small" onClick={() => handleOpenDialog(paiement)} sx={{ color: colors.neutral[500] }}>
-                              <Edit2 size={14} />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => handleDelete(paiement.id)} sx={{ color: colors.danger[500] }}>
-                              <Trash2 size={14} />
-                            </IconButton>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              component="div"
-              count={filteredPaiements.length}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10))
-                setPage(0)
-              }}
-              rowsPerPageOptions={[10, 25, 50, 100]}
-              labelRowsPerPage="Lignes par page"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
-            />
-          </Box>
-        </Box>
+        {isList ? (
+          <PaiementTable paiements={paginatedPaiements} sortConfig={sortConfig} requestSort={requestSort}
+            onEdit={handleOpenDialog} onDelete={handleDelete} page={page} rowsPerPage={rowsPerPage}
+            totalCount={filteredPaiements.length} onPageChange={setPage}
+            onRowsPerPageChange={(rpp) => { setRowsPerPage(rpp); setPage(0) }} formatCurrency={formatCurrency} />
+        ) : (
+          <PaiementKanbanView paiements={filteredPaiements} onCardMove={handleCardMove} formatCurrency={formatCurrency} />
+        )}
 
-        {/* Dialog */}
-        <Dialog
-          open={openDialog}
-          onClose={handleCloseDialog}
-          maxWidth="md"
-          fullWidth
-          PaperProps={{ sx: componentStyles.dialog.paper }}
-        >
-          <DialogTitle sx={componentStyles.dialog.title}>
-            {selectedPaiement ? 'Modifier le Paiement' : 'Nouveau Paiement'}
-          </DialogTitle>
-          <DialogContent>
-            <Stack spacing={3} sx={{ mt: 2 }}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Numero Paiement"
-                  value={formData.numeroPaiement}
-                  onChange={(e) => setFormData({ ...formData, numeroPaiement: e.target.value })}
-                  placeholder="PAI-001"
-                />
-                <TextField
-                  fullWidth
-                  required
-                  type="date"
-                  label="Date de Paiement"
-                  value={formData.datePaiement}
-                  onChange={(e) => setFormData({ ...formData, datePaiement: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Stack>
-
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <DecimalInput
-                  fullWidth
-                  required
-                  label="Montant"
-                  value={formData.montant}
-                  onChange={(value) => setFormData({ ...formData, montant: value })}
-                  decimalPlaces={2}
-                  min={0}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><AttachMoney /></InputAdornment>,
-                    endAdornment: <InputAdornment position="end">MAD</InputAdornment>,
-                  }}
-                />
-                <TextField
-                  fullWidth
-                  required
-                  select
-                  label="Mode de Reglement"
-                  value={formData.modeReglement}
-                  onChange={(e) => setFormData({ ...formData, modeReglement: e.target.value })}
-                >
-                  <MenuItem value="VIREMENT">Virement</MenuItem>
-                  <MenuItem value="CHEQUE">Cheque</MenuItem>
-                  <MenuItem value="ESPECES">Especes</MenuItem>
-                  <MenuItem value="CARTE">Carte Bancaire</MenuItem>
-                  <MenuItem value="PRELEVEMENT">Prelevement</MenuItem>
-                </TextField>
-              </Stack>
-
-              <TextField
-                fullWidth
-                required
-                label="Beneficiaire"
-                value={formData.beneficiaire}
-                onChange={(e) => setFormData({ ...formData, beneficiaire: e.target.value })}
-              />
-
-              <TextField
-                fullWidth
-                label="Reference Bancaire"
-                value={formData.referenceBancaire}
-                onChange={(e) => setFormData({ ...formData, referenceBancaire: e.target.value })}
-              />
-
-              <DecimalInput
-                fullWidth
-                required
-                label="Ordre de Paiement (ID)"
-                value={formData.ordrePaiementId}
-                onChange={(value) => setFormData({ ...formData, ordrePaiementId: value })}
-                decimalPlaces={0}
-                min={0}
-              />
-
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Observation"
-                value={formData.observation}
-                onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
-              />
-
-              {selectedPaiement && (
-                <Box>
-                  <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary, mb: 1 }}>
-                    Pieces jointes
-                  </Typography>
-                  <FileUpload typeEntite="PAIEMENT" entiteId={selectedPaiement.id} maxFiles={10} maxFileSize={10} />
-                </Box>
-              )}
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button onClick={handleCloseDialog} sx={componentStyles.buttonSecondary}>Annuler</Button>
-            <Button onClick={handleSubmit} sx={componentStyles.buttonPrimary}>
-              {selectedPaiement ? 'Modifier' : 'Creer'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <PaiementFormDialog open={openDialog} onClose={handleCloseDialog} onSubmit={handleSubmit}
+          selectedPaiement={selectedPaiement} formData={formData} onFormDataChange={setFormData} />
       </Box>
     </AppLayout>
   )

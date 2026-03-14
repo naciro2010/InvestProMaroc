@@ -1,19 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Alert,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
+  Box, Container, Typography, Button, Alert, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
 } from '@mui/material'
-import { Send, CheckCircle, Cancel, Edit } from '@mui/icons-material'
+import { Cancel } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import {
   ControlPanel,
@@ -33,6 +24,7 @@ import { avenantConventionsAPI, conventionsAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { colors, typography } from '../../lib/designSystem'
 import { AvenantConventionResponse } from '../../types/avenantConvention'
+import { AvenantHistoryTab, AvenantDetailsTab, AvenantWorkflowActions } from './avenant'
 
 interface ConventionPartenaireAllocation {
   id: number
@@ -48,6 +40,21 @@ const STATUS_STEPS: StatusStep[] = [
   { value: 'VALIDE', label: 'Valide' },
 ]
 
+const formatCurrency = (amount: number | undefined) => {
+  if (amount === undefined || amount === null) return '-'
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(amount)
+}
+
+const formatDate = (dateStr: string | undefined) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+const formatPercentage = (value: number | undefined) => {
+  if (value === undefined || value === null) return '-'
+  return `${value.toFixed(2)}%`
+}
+
 const AvenantDetailPage = () => {
   const { conventionId, avenantId } = useParams<{ conventionId: string; avenantId: string }>()
   const navigate = useNavigate()
@@ -59,17 +66,14 @@ const AvenantDetailPage = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [workflowLoading, setWorkflowLoading] = useState(false)
   const [partenaires, setPartenaires] = useState<ConventionPartenaireAllocation[]>([])
-
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectMotif, setRejectMotif] = useState('')
   const avenantIdNum = avenantId ? parseInt(avenantId) : 0
   const { activities: chatterActivities, loading: chatterLoading, refresh: refreshChatter } = useEntityHistory('AVENANT_CONVENTION', avenantIdNum)
 
   useEffect(() => {
-    if (avenantId) {
-      loadAvenant(parseInt(avenantId))
-    }
-  }, [avenantId])
+    if (avenantId) loadAvenant(parseInt(avenantId))
+  }, [avenantId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAvenant = async (id: number) => {
     try {
@@ -78,7 +82,6 @@ const AvenantDetailPage = () => {
       const response = await avenantConventionsAPI.getById(id)
       const avenantData = response.data.data || response.data
       setAvenant(avenantData)
-
       try {
         const partRes = await conventionsAPI.getPartenaires(avenantData.conventionId)
         const partData = partRes.data.data || partRes.data || []
@@ -95,47 +98,25 @@ const AvenantDetailPage = () => {
     }
   }
 
-  const handleSoumettre = async () => {
+  const handleWorkflow = async (action: 'soumettre' | 'valider' | 'rejeter') => {
     if (!avenant) return
     try {
       setWorkflowLoading(true)
-      await avenantConventionsAPI.soumettre(avenant.id)
-      setSuccessMessage('Avenant soumis avec succes')
+      if (action === 'soumettre') {
+        await avenantConventionsAPI.soumettre(avenant.id)
+        setSuccessMessage('Avenant soumis avec succes')
+      } else if (action === 'valider') {
+        await avenantConventionsAPI.valider({ avenantId: avenant.id, remarques: '' })
+        setSuccessMessage('Avenant valide avec succes')
+      } else if (action === 'rejeter' && rejectMotif.trim()) {
+        await avenantConventionsAPI.rejeter({ avenantId: avenant.id, motifRejet: rejectMotif })
+        setSuccessMessage('Avenant rejete')
+        setRejectDialogOpen(false)
+        setRejectMotif('')
+      }
       loadAvenant(avenant.id)
     } catch (err) {
-      setError('Erreur lors de la soumission')
-      console.error(err)
-    } finally {
-      setWorkflowLoading(false)
-    }
-  }
-
-  const handleValider = async () => {
-    if (!avenant) return
-    try {
-      setWorkflowLoading(true)
-      await avenantConventionsAPI.valider({ avenantId: avenant.id, remarques: '' })
-      setSuccessMessage('Avenant valide avec succes')
-      loadAvenant(avenant.id)
-    } catch (err) {
-      setError('Erreur lors de la validation')
-      console.error(err)
-    } finally {
-      setWorkflowLoading(false)
-    }
-  }
-
-  const handleRejeter = async () => {
-    if (!avenant || !rejectMotif.trim()) return
-    try {
-      setWorkflowLoading(true)
-      await avenantConventionsAPI.rejeter({ avenantId: avenant.id, motifRejet: rejectMotif })
-      setSuccessMessage('Avenant rejete')
-      setRejectDialogOpen(false)
-      setRejectMotif('')
-      loadAvenant(avenant.id)
-    } catch (err) {
-      setError('Erreur lors du rejet')
+      setError(`Erreur lors de l'action`)
       console.error(err)
     } finally {
       setWorkflowLoading(false)
@@ -143,70 +124,20 @@ const AvenantDetailPage = () => {
   }
 
   useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(null), 5000)
-      return () => clearTimeout(timer)
-    }
+    if (successMessage) { const t = setTimeout(() => setSuccessMessage(null), 5000); return () => clearTimeout(t) }
   }, [successMessage])
 
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 5000)
-      return () => clearTimeout(timer)
-    }
+    if (error) { const t = setTimeout(() => setError(null), 5000); return () => clearTimeout(t) }
   }, [error])
 
-  const formatCurrency = (amount: number | undefined) => {
-    if (amount === undefined || amount === null) return '-'
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(amount)
-  }
-
-  const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return '-'
-    return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
-  }
-
-  const formatPercentage = (value: number | undefined) => {
-    if (value === undefined || value === null) return '-'
-    return `${value.toFixed(2)}%`
-  }
-
-  if (loading) {
-    return (
-      <AppLayout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      </AppLayout>
-    )
-  }
-
-  if (error && !avenant) {
-    return (
-      <AppLayout>
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Alert severity="error">{error}</Alert>
-          <Button onClick={() => navigate(`/conventions/${conventionId}`)} sx={{ mt: 2 }}>
-            Retour a la convention
-          </Button>
-        </Container>
-      </AppLayout>
-    )
-  }
-
+  if (loading) return <AppLayout><Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box></AppLayout>
+  if (error && !avenant) return <AppLayout><Container maxWidth="xl" sx={{ py: 4 }}><Alert severity="error">{error}</Alert><Button onClick={() => navigate(`/conventions/${conventionId}`)} sx={{ mt: 2 }}>Retour a la convention</Button></Container></AppLayout>
   if (!avenant) return null
 
-  const budgetChangeRequested = Boolean(
-    avenant.nouveauBudget !== undefined ||
-    avenant.deltaBudget !== undefined ||
-    (avenant.modifications && Object.prototype.hasOwnProperty.call(avenant.modifications, 'budget'))
-  )
+  const budgetChangeRequested = Boolean(avenant.nouveauBudget !== undefined || avenant.deltaBudget !== undefined || (avenant.modifications && Object.prototype.hasOwnProperty.call(avenant.modifications, 'budget')))
   const totalBudgetAlloue = partenaires.reduce((sum, p) => sum + (p.budgetAlloue || 0), 0)
   const totalPourcentage = partenaires.reduce((sum, p) => sum + (p.pourcentage || 0), 0)
-
-  const canEdit = avenant.isEditable
-  const canSoumettre = avenant.canSoumettre
-  const canValider = avenant.canValider && (isAdmin || isManager)
 
   const breadcrumbs: BreadcrumbSegment[] = [
     { label: 'Conventions', path: '/conventions' },
@@ -214,67 +145,9 @@ const AvenantDetailPage = () => {
     { label: `Avenant ${avenant.numeroAvenant}` },
   ]
 
-  const workflowActions = (
-    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-      {workflowLoading && <CircularProgress size={20} />}
-      {canSoumettre && (
-        <Button variant="contained" color="primary" size="small" startIcon={<Send />} onClick={handleSoumettre} disabled={workflowLoading}>
-          Soumettre
-        </Button>
-      )}
-      {canValider && (
-        <>
-          <Button variant="contained" color="success" size="small" startIcon={<CheckCircle />} onClick={handleValider} disabled={workflowLoading}>
-            Valider
-          </Button>
-          <Button variant="outlined" color="error" size="small" startIcon={<Cancel />} onClick={() => setRejectDialogOpen(true)} disabled={workflowLoading}>
-            Rejeter
-          </Button>
-        </>
-      )}
-      {canEdit && (
-        <Button variant="outlined" size="small" startIcon={<Edit />} onClick={() => navigate(`/conventions/${conventionId}/avenants/${avenantId}/edit`)}>
-          Modifier
-        </Button>
-      )}
-    </Box>
-  )
-
   const notebookTabs: Array<{ label: string; content: React.ReactNode }> = [
-    {
-      label: 'Details',
-      content: (
-        <Box sx={{ display: 'grid', gap: 2 }}>
-          {avenant.dateEffet && (
-            <Box>
-              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Date d'effet</Typography>
-              <Typography sx={{ fontSize: typography.sizes.base }}>{formatDate(avenant.dateEffet)}</Typography>
-            </Box>
-          )}
-          {avenant.ordreApplication !== undefined && (
-            <Box>
-              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Ordre d'application</Typography>
-              <Typography sx={{ fontSize: typography.sizes.base }}>{avenant.ordreApplication}</Typography>
-            </Box>
-          )}
-          {avenant.detailsModifications && (
-            <Box>
-              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Details des modifications</Typography>
-              <Typography sx={{ fontSize: typography.sizes.sm, mt: 0.5, whiteSpace: 'pre-wrap' }}>{avenant.detailsModifications}</Typography>
-            </Box>
-          )}
-          {avenant.remarques && (
-            <Box>
-              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Remarques</Typography>
-              <Typography sx={{ fontSize: typography.sizes.sm, mt: 0.5 }}>{avenant.remarques}</Typography>
-            </Box>
-          )}
-          {!avenant.dateEffet && !avenant.ordreApplication && !avenant.detailsModifications && !avenant.remarques && (
-            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>Aucun detail complementaire.</Typography>
-          )}
-        </Box>
-      ),
-    },
+    { label: 'Historique', content: <AvenantHistoryTab avenant={avenant} formatDate={formatDate} /> },
+    { label: 'Details', content: <AvenantDetailsTab avenant={avenant} formatDate={formatDate} /> },
   ]
 
   if (budgetChangeRequested) {
@@ -285,11 +158,7 @@ const AvenantDetailPage = () => {
       ) : (
         <Box>
           <InlineTable
-            headers={[
-              { label: 'Partenaire' },
-              { label: 'Budget alloue', align: 'right' },
-              { label: '%', align: 'right' },
-            ]}
+            headers={[{ label: 'Partenaire' }, { label: 'Budget alloue', align: 'right' }, { label: '%', align: 'right' }]}
             rows={partenaires.map((p) => [
               <Typography key="name" sx={{ fontSize: typography.sizes.sm }}>{p.partenaireSigle || p.partenaireNom}</Typography>,
               <Typography key="budget" sx={{ fontSize: typography.sizes.sm }}>{formatCurrency(p.budgetAlloue)}</Typography>,
@@ -314,62 +183,51 @@ const AvenantDetailPage = () => {
       <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
         <ControlPanel
           breadcrumbs={breadcrumbs}
-          actions={workflowActions}
+          actions={
+            <AvenantWorkflowActions
+              canSoumettre={avenant.canSoumettre}
+              canValider={avenant.canValider && (isAdmin || isManager)}
+              canEdit={avenant.isEditable}
+              workflowLoading={workflowLoading}
+              onSoumettre={() => handleWorkflow('soumettre')}
+              onValider={() => handleWorkflow('valider')}
+              onReject={() => setRejectDialogOpen(true)}
+              onEdit={() => navigate(`/conventions/${conventionId}/avenants/${avenantId}/edit`)}
+            />
+          }
           hideBottomRow
         />
-
         <Container maxWidth="xl" sx={{ py: 3 }}>
-          {successMessage && (
-            <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage(null)}>{successMessage}</Alert>
-          )}
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>
-          )}
+          {successMessage && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage(null)}>{successMessage}</Alert>}
+          {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
           <FormView isEditing={false} statusSteps={STATUS_STEPS} currentStatus={avenant.statut}>
             <Typography sx={{ fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold, mb: 0.5 }}>
               Avenant {avenant.numeroAvenant}
             </Typography>
-            <Box sx={{ mb: 3 }}>
-              <RichTextDisplay html={avenant.objet || ''} variant="compact" collapseLength={200} />
-            </Box>
-
+            <Box sx={{ mb: 3 }}><RichTextDisplay html={avenant.objet || ''} variant="compact" collapseLength={200} /></Box>
             {avenant.motifRejet && (
               <Alert severity="error" sx={{ mb: 3 }}>
                 <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.sm }}>Motif de rejet</Typography>
                 <Typography sx={{ fontSize: typography.sizes.sm }}>{avenant.motifRejet}</Typography>
               </Alert>
             )}
-
             <Box sx={{ mb: 3 }}>
               <FieldGroup title="Informations" columns={3}>
                 <Field label="Numero" value={avenant.numeroAvenant} />
                 <Field label="Statut" value={<StatusBadge status={avenant.statut} />} />
                 <Field label="Date" value={formatDate(avenant.dateAvenant)} />
-                <Field
-                  label="Convention"
-                  value={`${avenant.conventionNumero} - ${avenant.conventionLibelle}`}
-                  isLink
-                  onLinkClick={() => navigate(`/conventions/${conventionId}`)}
-                />
+                <Field label="Convention" value={`${avenant.conventionNumero} - ${avenant.conventionLibelle}`} isLink onLinkClick={() => navigate(`/conventions/${conventionId}`)} />
                 <Field label="Budget avant" value={formatCurrency(avenant.ancienBudget)} isMoney />
                 <Field label="Budget apres" value={formatCurrency(avenant.nouveauBudget)} isMoney />
-                <Field
-                  label="Variation"
-                  value={`${(avenant.deltaBudget || 0) >= 0 ? '+' : ''}${formatCurrency(avenant.deltaBudget)}`}
-                  isMoney
-                />
+                <Field label="Variation" value={`${(avenant.deltaBudget || 0) >= 0 ? '+' : ''}${formatCurrency(avenant.deltaBudget)}`} isMoney />
                 {(avenant.ancienTauxCommission !== undefined || avenant.nouveauTauxCommission !== undefined) && (
-                  <Field
-                    label="Taux commission"
-                    value={`${formatPercentage(avenant.ancienTauxCommission)} \u2192 ${formatPercentage(avenant.nouveauTauxCommission)}`}
-                  />
+                  <Field label="Taux commission" value={`${formatPercentage(avenant.ancienTauxCommission)} \u2192 ${formatPercentage(avenant.nouveauTauxCommission)}`} />
                 )}
                 <Field label="Objet" value={avenant.objet} fullWidth />
                 {avenant.motif && <Field label="Motif" value={avenant.motif} fullWidth />}
               </FieldGroup>
             </Box>
-
             <Notebook tabs={notebookTabs} />
 
             <Chatter
@@ -384,30 +242,12 @@ const AvenantDetailPage = () => {
       <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ color: colors.danger[700] }}>Rejeter l'avenant</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2, color: colors.textSecondary }}>
-            Veuillez indiquer le motif du rejet.
-          </Typography>
-          <TextField
-            autoFocus
-            fullWidth
-            multiline
-            rows={3}
-            label="Motif du rejet"
-            value={rejectMotif}
-            onChange={(e) => setRejectMotif(e.target.value)}
-            placeholder="Decrivez les raisons du rejet..."
-            required
-          />
+          <Typography variant="body2" sx={{ mb: 2, color: colors.textSecondary }}>Veuillez indiquer le motif du rejet.</Typography>
+          <TextField autoFocus fullWidth multiline rows={3} label="Motif du rejet" value={rejectMotif} onChange={(e) => setRejectMotif(e.target.value)} placeholder="Decrivez les raisons du rejet..." required />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setRejectDialogOpen(false)} disabled={workflowLoading}>Annuler</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleRejeter}
-            disabled={workflowLoading || !rejectMotif.trim()}
-            startIcon={workflowLoading ? <CircularProgress size={16} /> : <Cancel />}
-          >
+          <Button variant="contained" color="error" onClick={() => handleWorkflow('rejeter')} disabled={workflowLoading || !rejectMotif.trim()} startIcon={workflowLoading ? <CircularProgress size={16} /> : <Cancel />}>
             Confirmer le rejet
           </Button>
         </DialogActions>

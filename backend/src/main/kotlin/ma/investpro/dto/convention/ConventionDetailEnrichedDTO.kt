@@ -34,11 +34,15 @@ data class ConventionDetailEnrichedDTO(
     val nombrePartenaires: Long,
 
     // --- Financial summaries ---
-    val montantTotalMarches: BigDecimal,
+    val montantTotalMarches: BigDecimal,       // Total marches TTC
+    val montantTotalMarchesHt: BigDecimal,     // Total marches HT
     val montantTotalProjets: BigDecimal,
     val tauxRealisation: BigDecimal,
-    val commissionEstimee: BigDecimal,
-    val commissionTTC: BigDecimal,
+    val commissionEstimee: BigDecimal,         // Commission HT sur engagements
+    val commissionTVA: BigDecimal,             // TVA sur commission
+    val commissionTTC: BigDecimal,             // Commission TTC (HT + TVA)
+    val commissionEstimeeBudget: BigDecimal,   // Commission estimee sur budget total
+    val resteAEngager: BigDecimal,             // Budget - total marches TTC
 
     // --- Effective rates (after inheritance) ---
     val tauxCommissionEffectif: BigDecimal,

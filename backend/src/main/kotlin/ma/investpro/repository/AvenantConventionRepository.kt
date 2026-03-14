@@ -84,7 +84,20 @@ interface AvenantConventionRepository : JpaRepository<AvenantConvention, Long> {
     fun findByStatutOrderByDateSoumissionAsc(statut: StatutAvenantConvention = StatutAvenantConvention.SOUMIS): List<AvenantConvention>
 
     /**
-     * Somme des deltas budget pour une convention
+     * Somme des deltas budget pour une convention (seulement avenants validés)
+     */
+    @Query(
+        """
+        SELECT SUM(COALESCE(a.deltaBudget, 0))
+        FROM AvenantConvention a
+        WHERE a.convention.id = :conventionId
+        AND a.statut = ma.investpro.entity.StatutAvenantConvention.VALIDE
+        """
+    )
+    fun sumDeltaBudgetByConvention(@Param("conventionId") conventionId: Long): java.math.BigDecimal?
+
+    /**
+     * Somme des deltas budget pour tous les avenants (inclus brouillons et soumis)
      */
     @Query(
         """
@@ -93,5 +106,5 @@ interface AvenantConventionRepository : JpaRepository<AvenantConvention, Long> {
         WHERE a.convention.id = :conventionId
         """
     )
-    fun sumDeltaBudgetByConvention(@Param("conventionId") conventionId: Long): java.math.BigDecimal?
+    fun sumDeltaBudgetAllByConvention(@Param("conventionId") conventionId: Long): java.math.BigDecimal?
 }

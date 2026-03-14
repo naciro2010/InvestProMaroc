@@ -121,12 +121,21 @@ class AvenantConvention(
 ) : BaseEntity() {
 
     /**
-     * Calcule le delta de budget
+     * Calcule les deltas (budget et taux commission)
      */
     fun calculerDeltaBudget() {
         val ancien = ancienBudget ?: return
         val nouveau = nouveauBudget ?: return
         deltaBudget = nouveau - ancien
+    }
+
+    /**
+     * Calcule le delta du taux de commission
+     */
+    fun calculerDeltaTauxCommission(): BigDecimal? {
+        val ancien = ancienTauxCommission ?: return null
+        val nouveau = nouveauTauxCommission ?: return null
+        return nouveau - ancien
     }
 
     /**

@@ -5,7 +5,7 @@ import java.math.BigDecimal
 /**
  * Micro-DTO: Convention Financial Information
  *
- * Contains all financial data for the convention.
+ * Contains all financial data for the convention including commission breakdown.
  * Loaded lazily when user expands financial section (~3-5 KB payload).
  *
  * Follows micro-services architecture from CLAUDE.md:
@@ -16,9 +16,13 @@ import java.math.BigDecimal
 data class ConventionFinancesDTO(
     val id: Long,
     val tauxCommission: BigDecimal,
+    val tauxCommissionEffectif: BigDecimal,
     val budget: BigDecimal,
     val baseCalcul: String,
+    val baseCalculEffective: String,
     val tauxTva: BigDecimal,
     val tauxTvaLignes: BigDecimal,
-    val montantCommissionEstime: BigDecimal? = null // Calculated field
+    val montantCommissionEstime: BigDecimal = BigDecimal.ZERO, // Commission HT estimee sur budget
+    val montantTvaCommission: BigDecimal = BigDecimal.ZERO,    // TVA sur commission
+    val montantCommissionTtc: BigDecimal = BigDecimal.ZERO     // Commission TTC (HT + TVA)
 )

@@ -48,6 +48,14 @@ class AvenantConventionService(
         avenant.ordreApplication = ordreApplication
         avenant.createdById = userId
 
+        // Auto-populate ancien budget/taux from convention if not provided
+        if (avenant.ancienBudget == null && avenant.nouveauBudget != null) {
+            avenant.ancienBudget = convention.budget
+        }
+        if (avenant.ancienTauxCommission == null && avenant.nouveauTauxCommission != null) {
+            avenant.ancienTauxCommission = convention.tauxCommission
+        }
+
         // Calcule le delta de budget si nécessaire
         if (avenant.ancienBudget != null && avenant.nouveauBudget != null) {
             avenant.calculerDeltaBudget()
@@ -263,6 +271,10 @@ class AvenantConventionService(
             if (newBudget > java.math.BigDecimal.ZERO) {
                 conventionPartenaireService.recalculerProportionnellement(convention.id!!, newBudget)
             }
+        }
+        // Si le taux de commission a changé (sans changement de budget), recalculer les commissions partenaires
+        else if (modifications.containsKey("tauxCommission")) {
+            conventionPartenaireService.recalculerProportionnellement(convention.id!!, convention.budget)
         }
     }
 

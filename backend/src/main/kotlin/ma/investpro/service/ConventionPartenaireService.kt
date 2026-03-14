@@ -55,6 +55,16 @@ class ConventionPartenaireService(
             throw IllegalStateException("Ce partenaire est déjà lié à cette convention")
         }
 
+        // Vérifier que la somme des pourcentages ne dépasse pas 100%
+        val existingPartenaires: List<ConventionPartenaire> = conventionPartenaireRepository.findByConventionId(conventionId)
+        val totalPourcentageExistant: BigDecimal = existingPartenaires.fold(BigDecimal.ZERO) { acc, cp ->
+            acc.add(cp.pourcentage)
+        }
+        val totalPourcentageApres: BigDecimal = totalPourcentageExistant.add(pourcentage)
+        require(totalPourcentageApres <= BigDecimal(100)) {
+            "La somme des pourcentages des partenaires (${totalPourcentageApres}%) dépasse 100%"
+        }
+
         // Si on définit un nouveau MO/MOD, retirer l'ancien
         if (estMaitreOeuvre) {
             conventionPartenaireRepository.findMaitreOeuvreByConventionId(conventionId)?.let { existingMO: ConventionPartenaire ->
@@ -70,8 +80,9 @@ class ConventionPartenaireService(
             }
         }
 
-        // Calculer la commission d'intervention
-        val commissionIntervention: BigDecimal = budgetAlloue.multiply(convention.tauxCommission).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+        // Calculer la commission d'intervention avec le taux effectif (héritage sous-convention)
+        val tauxEffectif: BigDecimal = convention.getTauxCommissionEffectif()
+        val commissionIntervention: BigDecimal = budgetAlloue.multiply(tauxEffectif).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
         // Créer le lien
         val conventionPartenaire = ConventionPartenaire(
@@ -123,9 +134,9 @@ class ConventionPartenaireService(
             }
         }
 
-        // Recalculer la commission
-        val tauxCommission: BigDecimal = conventionPartenaire.convention?.tauxCommission ?: BigDecimal.ZERO
-        val commissionIntervention: BigDecimal = budgetAlloue.multiply(tauxCommission).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+        // Recalculer la commission avec le taux effectif (héritage sous-convention)
+        val tauxEffectif: BigDecimal = conventionPartenaire.convention?.getTauxCommissionEffectif() ?: BigDecimal.ZERO
+        val commissionIntervention: BigDecimal = budgetAlloue.multiply(tauxEffectif).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
         conventionPartenaire.apply {
             this.budgetAlloue = budgetAlloue
@@ -198,11 +209,11 @@ class ConventionPartenaireService(
                 .multiply(nouveauBudget)
                 .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
-            // Recalcule la commission d'intervention si le taux de commission existe
-            val tauxCommission: BigDecimal = cp.convention?.tauxCommission ?: BigDecimal.ZERO
-            if (tauxCommission > BigDecimal.ZERO) {
+            // Recalcule la commission d'intervention avec le taux effectif (héritage sous-convention)
+            val tauxEffectif: BigDecimal = cp.convention?.getTauxCommissionEffectif() ?: BigDecimal.ZERO
+            if (tauxEffectif > BigDecimal.ZERO) {
                 cp.commissionIntervention = cp.budgetAlloue
-                    .multiply(tauxCommission)
+                    .multiply(tauxEffectif)
                     .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
             }
         }

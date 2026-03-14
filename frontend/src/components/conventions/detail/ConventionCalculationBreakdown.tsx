@@ -12,6 +12,7 @@ interface ConventionCalculationBreakdownProps {
   tauxTva: number
   baseCalcul: string
   montantTotalMarches: number
+  montantTotalMarchesHt?: number
   tauxRealisation: number
   heriteParametres?: boolean
   parentConventionNumero?: string
@@ -130,20 +131,34 @@ const Metric = ({ label, value, valueColor }: MetricProps) => (
 
 const ConventionCalculationBreakdown = ({
   budget, tauxCommission, tauxCommissionEffectif, tauxTva,
-  baseCalcul, montantTotalMarches, tauxRealisation,
-  heriteParametres, parentConventionNumero,
+  baseCalcul, montantTotalMarches, montantTotalMarchesHt,
+  tauxRealisation, heriteParametres, parentConventionNumero,
 }: ConventionCalculationBreakdownProps) => {
   const [expanded, setExpanded] = useState(false)
 
   const calc = useMemo(() => {
     const rate = tauxCommissionEffectif ?? tauxCommission
-    const commHT = budget * (rate / 100)
-    const tva = commHT * (tauxTva / 100)
-    const commTTC = commHT + tva
-    const commEng = montantTotalMarches * (rate / 100)
+    const isBaseHT = baseCalcul === 'DECAISSEMENTS_HT'
+
+    // Commission estimee sur budget
+    const commBudgetHT = budget * (rate / 100)
+    const tvaBudget = commBudgetHT * (tauxTva / 100)
+    const commBudgetTTC = commBudgetHT + tvaBudget
+
+    // Commission sur engagements reels (respect du baseCalcul)
+    const baseEngagements = isBaseHT ? (montantTotalMarchesHt ?? montantTotalMarches) : montantTotalMarches
+    const commEngHT = baseEngagements * (rate / 100)
+    const tvaEng = commEngHT * (tauxTva / 100)
+    const commEngTTC = commEngHT + tvaEng
+
     const reste = budget - montantTotalMarches
-    return { rate, commHT, tva, commTTC, commEng, reste }
-  }, [budget, tauxCommission, tauxCommissionEffectif, tauxTva, montantTotalMarches])
+    return {
+      rate, isBaseHT,
+      commHT: commBudgetHT, tva: tvaBudget, commTTC: commBudgetTTC,
+      baseEngagements, commEngHT, tvaEng, commEngTTC,
+      reste,
+    }
+  }, [budget, tauxCommission, tauxCommissionEffectif, tauxTva, baseCalcul, montantTotalMarches, montantTotalMarchesHt])
 
   const tauxSource = heriteParametres && parentConventionNumero
     ? `Herite de ${parentConventionNumero}`
@@ -215,8 +230,19 @@ const ConventionCalculationBreakdown = ({
               Engagements actuels
             </Typography>
 
-            <Metric label="Total marches" value={fmtMAD(montantTotalMarches)} />
-            <Metric label="Commission sur engagements" value={fmtMAD(calc.commEng)} />
+            <Metric label="Total marches (TTC)" value={fmtMAD(montantTotalMarches)} />
+            {calc.isBaseHT && montantTotalMarchesHt !== undefined && (
+              <Metric label="Total marches (HT)" value={fmtMAD(montantTotalMarchesHt)} />
+            )}
+            <Metric label={`Base commission (${calc.isBaseHT ? 'HT' : 'TTC'})`} value={fmtMAD(calc.baseEngagements)} />
+
+            <Divider />
+
+            <Metric label="Commission HT sur engagements" value={fmtMAD(calc.commEngHT)} />
+            <Metric label="TVA sur commission" value={fmtMAD(calc.tvaEng)} />
+            <Metric label="Commission TTC sur engagements" value={fmtMAD(calc.commEngTTC)}
+              valueColor={colors.primary[600]} />
+
             <Metric label="Taux de realisation" value={fmtPct(tauxRealisation)}
               valueColor={tauxRealisation >= 80 ? colors.success[600] : tauxRealisation >= 50 ? colors.warning[600] : colors.danger[600]} />
 

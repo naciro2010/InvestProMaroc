@@ -56,19 +56,33 @@ class ConventionMicroMapper(
      * Payload: ~3-5 KB
      */
     fun toFinancesDTO(convention: Convention): ConventionFinancesDTO {
-        // Calculate estimated commission
+        // Use effective rate (handles sous-convention inheritance)
+        val tauxEffectif = convention.getTauxCommissionEffectif()
+
+        // Calculate estimated commission HT on budget
         val montantCommissionEstime = convention.budget
-            .multiply(convention.tauxCommission)
+            .multiply(tauxEffectif)
             .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+
+        // Calculate commission TVA and TTC
+        val montantTvaCommission = montantCommissionEstime
+            .multiply(convention.tauxTva)
+            .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+
+        val montantCommissionTtc = montantCommissionEstime.add(montantTvaCommission)
 
         return ConventionFinancesDTO(
             id = convention.id ?: 0,
             tauxCommission = convention.tauxCommission,
+            tauxCommissionEffectif = tauxEffectif,
             budget = convention.budget,
             baseCalcul = convention.baseCalcul,
+            baseCalculEffective = convention.getBaseCalculEffective(),
             tauxTva = convention.tauxTva,
             tauxTvaLignes = convention.tauxTvaLignes,
-            montantCommissionEstime = montantCommissionEstime
+            montantCommissionEstime = montantCommissionEstime,
+            montantTvaCommission = montantTvaCommission,
+            montantCommissionTtc = montantCommissionTtc
         )
     }
 
@@ -113,28 +127,58 @@ class ConventionMicroMapper(
         val nombreMarches = marcheRepository.countByConventionId(conventionId)
         val nombreSousConventions = conventionRepository.countByParentConventionId(conventionId)
 
-        // Calculate totals (simple sums for now - can be optimized with JPQL queries)
+        // Calculate totals
         val projets = projetRepository.findByConventionId(conventionId)
         val montantTotalProjets = projets.fold(BigDecimal.ZERO) { acc, projet ->
             acc.add(projet.budgetTotal)
         }
 
         val marches = marcheRepository.findByConventionId(conventionId)
-        val montantTotalMarches = marches.fold(BigDecimal.ZERO) { acc, marche ->
+
+        // Use correct base (HT or TTC) based on convention's baseCalcul setting
+        val baseCalculEffective = convention.getBaseCalculEffective()
+        val montantTotalMarchesHt = marches.fold(BigDecimal.ZERO) { acc, marche ->
+            acc.add(marche.montantHt)
+        }
+        val montantTotalMarchesTtc = marches.fold(BigDecimal.ZERO) { acc, marche ->
             acc.add(marche.montantTtc)
         }
 
-        // Calculate realization rate
+        // Select the correct base for commission calculation
+        val montantBaseCommission = if (baseCalculEffective == "DECAISSEMENTS_HT") {
+            montantTotalMarchesHt
+        } else {
+            montantTotalMarchesTtc
+        }
+
+        // Calculate realization rate (always based on TTC for budget comparison)
         val tauxRealisation = if (convention.budget > BigDecimal.ZERO) {
-            montantTotalMarches
+            montantTotalMarchesTtc
                 .multiply(BigDecimal(100))
                 .divide(convention.budget, 2, RoundingMode.HALF_UP)
         } else BigDecimal.ZERO
 
-        // Calculate total commission (simplified - based on budget consumption)
-        val commissionTotale = montantTotalMarches
-            .multiply(convention.tauxCommission)
+        // Use effective rate (handles sous-convention inheritance)
+        val tauxCommissionEffectif = convention.getTauxCommissionEffectif()
+
+        // Calculate commission breakdown
+        val commissionHT = montantBaseCommission
+            .multiply(tauxCommissionEffectif)
             .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+
+        val commissionTVA = commissionHT
+            .multiply(convention.tauxTva)
+            .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+
+        val commissionTTC = commissionHT.add(commissionTVA)
+
+        // Estimated commission on budget (pre-execution reference)
+        val commissionEstimeeBudget = convention.budget
+            .multiply(tauxCommissionEffectif)
+            .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+
+        // Remaining budget to engage
+        val resteAEngager = convention.budget.subtract(montantTotalMarchesTtc)
 
         return ConventionStatsDTO(
             id = conventionId,
@@ -142,9 +186,17 @@ class ConventionMicroMapper(
             nombreMarches = nombreMarches,
             nombreSousConventions = nombreSousConventions,
             montantTotalProjets = montantTotalProjets,
-            montantTotalMarches = montantTotalMarches,
+            montantTotalMarches = montantTotalMarchesTtc,
+            montantTotalMarchesHt = montantTotalMarchesHt,
             tauxRealisation = tauxRealisation,
-            commissionTotale = commissionTotale
+            commissionTotale = commissionTTC,
+            commissionHT = commissionHT,
+            commissionTVA = commissionTVA,
+            commissionTTC = commissionTTC,
+            commissionEstimeeBudget = commissionEstimeeBudget,
+            resteAEngager = resteAEngager,
+            tauxCommissionEffectif = tauxCommissionEffectif,
+            baseCalculEffective = baseCalculEffective
         )
     }
 
@@ -175,6 +227,9 @@ class ConventionMicroMapper(
 
         // --- Financial summaries ---
         val marches = if (conventionId > 0) marcheRepository.findByConventionId(conventionId) else emptyList()
+        val montantTotalMarchesHt: BigDecimal = marches.fold(BigDecimal.ZERO) { acc, marche ->
+            acc.add(marche.montantHt)
+        }
         val montantTotalMarches: BigDecimal = marches.fold(BigDecimal.ZERO) { acc, marche ->
             acc.add(marche.montantTtc)
         }
@@ -191,15 +246,35 @@ class ConventionMicroMapper(
         } else BigDecimal.ZERO
 
         val tauxCommissionEffectif: BigDecimal = convention.getTauxCommissionEffectif()
-        val commissionEstimee: BigDecimal = montantTotalMarches
+        val baseCalculEffective: String = convention.getBaseCalculEffective()
+
+        // Select the correct base for commission calculation (HT or TTC)
+        val montantBaseCommission: BigDecimal = if (baseCalculEffective == "DECAISSEMENTS_HT") {
+            montantTotalMarchesHt
+        } else {
+            montantTotalMarches
+        }
+
+        // Commission HT = base × taux effectif / 100
+        val commissionEstimee: BigDecimal = montantBaseCommission
             .multiply(tauxCommissionEffectif)
             .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
-        val commissionTTC: BigDecimal = commissionEstimee
-            .multiply(BigDecimal.ONE.add(convention.tauxTva.divide(BigDecimal(100), 4, RoundingMode.HALF_UP)))
-            .setScale(2, RoundingMode.HALF_UP)
+        // Commission TVA = commission HT × taux TVA / 100
+        val commissionTVA: BigDecimal = commissionEstimee
+            .multiply(convention.tauxTva)
+            .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
 
-        val baseCalculEffective: String = convention.getBaseCalculEffective()
+        // Commission TTC = commission HT + TVA
+        val commissionTTC: BigDecimal = commissionEstimee.add(commissionTVA)
+
+        // Estimated commission on full budget (for reference)
+        val commissionEstimeeBudget: BigDecimal = convention.budget
+            .multiply(tauxCommissionEffectif)
+            .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+
+        // Remaining budget to engage
+        val resteAEngager: BigDecimal = convention.budget.subtract(montantTotalMarches)
 
         // --- Duration info ---
         val dateFin = convention.dateFin
@@ -231,10 +306,14 @@ class ConventionMicroMapper(
 
             // Financial summaries
             montantTotalMarches = montantTotalMarches,
+            montantTotalMarchesHt = montantTotalMarchesHt,
             montantTotalProjets = montantTotalProjets,
             tauxRealisation = tauxRealisation,
             commissionEstimee = commissionEstimee,
+            commissionTVA = commissionTVA,
             commissionTTC = commissionTTC,
+            commissionEstimeeBudget = commissionEstimeeBudget,
+            resteAEngager = resteAEngager,
 
             // Effective rates
             tauxCommissionEffectif = tauxCommissionEffectif,

@@ -1,89 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Box,
-  Typography,
-  TextField,
-  MenuItem,
-  Alert,
-  Divider,
-  LinearProgress,
-} from '@mui/material'
+import { Alert } from '@mui/material'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
 import { WizardView } from '@/components/core'
-import FileUploadZone from '../../components/common/FileUploadZone'
-import RichTextEditor from '../../components/common/RichTextEditor'
-import DecimalInput from '@/components/ui/DecimalInput'
-import {
-  marchesAPI,
-  conventionsAPI,
-  fournisseursAPI,
-  cascadeAPI,
-  ConventionSummaryDTO,
-  FournisseurSummaryDTO,
-} from '../../lib/api'
-import { colors } from '@/lib/designSystem'
+import { marchesAPI, conventionsAPI, fournisseursAPI, cascadeAPI } from '../../lib/api'
+import type { ConventionSummaryDTO, FournisseurSummaryDTO } from '../../lib/api'
+import { StepInfoGenerales, StepMontantsDates, StepLocalisation } from './wizard'
+import type { MarcheFormData, Convention, Fournisseur, ApiErrorResponse } from './wizard'
+import { INITIAL_FORM_DATA } from './wizard'
 
 const steps = ['Informations générales', 'Montants & Dates', 'Localisation & Confirmation']
-
-interface UploadedFile {
-  id: string
-  name: string
-  size: number
-  type: string
-  url?: string
-}
-
-interface Convention {
-  id: number
-  code: string
-  objet: string
-}
-
-interface Fournisseur {
-  id: number
-  code: string
-  raisonSociale: string
-}
-
-interface MarcheFormData {
-  code: string
-  numeroMarche: string
-  numAO: string
-  objet: string
-  objetRich: string
-  typeMarche: 'MARCHE' | 'CONTRAT' | 'BON_DE_COMMANDE' | 'LETTRE_DE_COMMANDE'
-  naturePrestation: 'TRAVAUX' | 'FOURNITURES' | 'SERVICES' | 'ETUDES'
-  fournisseurId: number | null
-  conventionId: number | null
-  montantHT: number
-  montantTTC: number
-  tauxTVA: number
-  tauxPenalite: number
-  dateSignature: string
-  dateNotification: string
-  dateOrdreService: string
-  delaiExecution: number
-  adresse: string
-  latitude: number | null
-  longitude: number | null
-  zoneGeographique: string
-  files: UploadedFile[]
-}
-
-interface ApiErrorResponse {
-  response?: {
-    data?: {
-      message?: string
-    }
-  }
-}
-
-const formatMAD = (value: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(value)
-
-const formatPct = (value: number) => `${value.toFixed(1)}%`
 
 const MarcheWizard = () => {
   const navigate = useNavigate()
@@ -92,40 +19,12 @@ const MarcheWizard = () => {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [conventionSummary, setConventionSummary] = useState<ConventionSummaryDTO | null>(null)
   const [fournisseurSummary, setFournisseurSummary] = useState<FournisseurSummaryDTO | null>(null)
+  const [formData, setFormData] = useState<MarcheFormData>(INITIAL_FORM_DATA)
 
-  const [formData, setFormData] = useState<MarcheFormData>({
-    code: '',
-    numeroMarche: '',
-    numAO: '',
-    objet: '',
-    objetRich: '',
-    typeMarche: 'MARCHE',
-    naturePrestation: 'TRAVAUX',
-    fournisseurId: null,
-    conventionId: null,
-    montantHT: 0,
-    montantTTC: 0,
-    tauxTVA: 20,
-    tauxPenalite: 0.05,
-    dateSignature: new Date().toISOString().split('T')[0],
-    dateNotification: new Date().toISOString().split('T')[0],
-    dateOrdreService: '',
-    delaiExecution: 12,
-    adresse: '',
-    latitude: null,
-    longitude: null,
-    zoneGeographique: '',
-    files: [],
-  })
-
-  // Load conventions and fournisseurs
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [convRes, fournRes] = await Promise.all([
-          conventionsAPI.getAll(),
-          fournisseursAPI.getAll(),
-        ])
+        const [convRes, fournRes] = await Promise.all([conventionsAPI.getAll(), fournisseursAPI.getAll()])
         setConventions(convRes.data.data || [])
         setFournisseurs(fournRes.data.data || [])
       } catch (error) {
@@ -135,64 +34,45 @@ const MarcheWizard = () => {
     loadData()
   }, [])
 
-  // Cascade: load convention summary when convention changes
   useEffect(() => {
     if (formData.conventionId) {
       cascadeAPI.getConventionSummary(formData.conventionId)
         .then(res => setConventionSummary(res.data.data ?? null))
         .catch(() => setConventionSummary(null))
-    } else {
-      setConventionSummary(null)
-    }
+    } else { setConventionSummary(null) }
   }, [formData.conventionId])
 
-  // Cascade: load fournisseur summary when fournisseur changes
   useEffect(() => {
     if (formData.fournisseurId) {
       cascadeAPI.getFournisseurSummary(formData.fournisseurId)
         .then(res => setFournisseurSummary(res.data.data ?? null))
         .catch(() => setFournisseurSummary(null))
-    } else {
-      setFournisseurSummary(null)
-    }
+    } else { setFournisseurSummary(null) }
   }, [formData.fournisseurId])
 
-  // React Query mutation pour la création
+  useEffect(() => {
+    const montantTVA = formData.montantHT * (formData.tauxTVA / 100)
+    setFormData(prev => ({ ...prev, montantTTC: formData.montantHT + montantTVA }))
+  }, [formData.montantHT, formData.tauxTVA])
+
   const createMutation = useMutation({
     mutationFn: async (data: MarcheFormData) => {
       const payload = {
-        code: data.code,
-        numeroMarche: data.numeroMarche,
-        numAo: data.numAO || null,
-        objet: data.objet,
-        objetRich: data.objetRich,
-        typeMarche: data.typeMarche,
-        naturePrestation: data.naturePrestation,
-        fournisseurId: data.fournisseurId,
-        conventionId: data.conventionId,
-        montantHt: data.montantHT,
-        montantTtc: data.montantTTC,
-        tauxTva: data.tauxTVA,
-        tauxPenalite: data.tauxPenalite,
-        dateSignature: data.dateSignature,
-        dateNotification: data.dateNotification,
-        dateOrdreService: data.dateOrdreService || null,
-        delaiExecutionMois: data.delaiExecution,
-        adresse: data.adresse || null,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        zoneGeographique: data.zoneGeographique || null,
+        code: data.code, numeroMarche: data.numeroMarche, numAo: data.numAO || null,
+        objet: data.objet, objetRich: data.objetRich, typeMarche: data.typeMarche,
+        naturePrestation: data.naturePrestation, fournisseurId: data.fournisseurId,
+        conventionId: data.conventionId, montantHt: data.montantHT, montantTtc: data.montantTTC,
+        tauxTva: data.tauxTVA, tauxPenalite: data.tauxPenalite, dateSignature: data.dateSignature,
+        dateNotification: data.dateNotification, dateOrdreService: data.dateOrdreService || null,
+        delaiExecutionMois: data.delaiExecution, adresse: data.adresse || null,
+        latitude: data.latitude, longitude: data.longitude, zoneGeographique: data.zoneGeographique || null,
       }
       return await marchesAPI.create(payload)
     },
-    onSuccess: () => {
-      navigate('/marches')
-    },
+    onSuccess: () => navigate('/marches'),
   })
 
-  const handleChange = (field: keyof MarcheFormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleChange = (field: keyof MarcheFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setFormData({
       ...formData,
@@ -206,36 +86,19 @@ const MarcheWizard = () => {
     })
   }
 
-  // Auto-calculate TTC when HT or TVA changes
-  useEffect(() => {
-    const montantTVA = formData.montantHT * (formData.tauxTVA / 100)
-    const montantTTC = formData.montantHT + montantTVA
-    setFormData(prev => ({ ...prev, montantTTC }))
-  }, [formData.montantHT, formData.tauxTVA])
+  const onFormDataChange = (updates: Partial<MarcheFormData>) => setFormData(prev => ({ ...prev, ...updates }))
 
   const handleNext = () => {
-    if (activeStep === steps.length - 1) {
-      createMutation.mutate(formData)
-    } else {
-      setActiveStep((prev) => prev + 1)
-    }
+    if (activeStep === steps.length - 1) createMutation.mutate(formData)
+    else setActiveStep(prev => prev + 1)
   }
 
   const isStepValid = () => {
     switch (activeStep) {
-      case 0:
-        return (
-          formData.code &&
-          formData.numeroMarche &&
-          formData.objetRich &&
-          formData.fournisseurId
-        )
-      case 1:
-        return formData.montantHT > 0 && formData.montantTTC > 0
-      case 2:
-        return true
-      default:
-        return false
+      case 0: return formData.code && formData.numeroMarche && formData.objetRich && formData.fournisseurId
+      case 1: return formData.montantHT > 0 && formData.montantTTC > 0
+      case 2: return true
+      default: return false
     }
   }
 
@@ -245,510 +108,13 @@ const MarcheWizard = () => {
     return err.response?.data?.message || 'Erreur lors de la création du marché'
   }
 
-  const renderStepContent = () => {
+  const renderStep = () => {
     switch (activeStep) {
-      case 0:
-        return (
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Informations de base
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-            </Box>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-              <TextField
-                fullWidth
-                label="Code"
-                required
-                value={formData.code}
-                onChange={handleChange('code')}
-                placeholder="MRC-001"
-              />
-
-              <TextField
-                fullWidth
-                label="Numéro de marché"
-                required
-                value={formData.numeroMarche}
-                onChange={handleChange('numeroMarche')}
-                placeholder="N°2024/001"
-              />
-
-              <TextField
-                fullWidth
-                label="Numéro d'AO"
-                value={formData.numAO}
-                onChange={handleChange('numAO')}
-                placeholder="AO-2024/001"
-              />
-
-              <TextField
-                fullWidth
-                select
-                label="Type de marché"
-                required
-                value={formData.typeMarche}
-                onChange={handleChange('typeMarche')}
-              >
-                <MenuItem value="MARCHE">Marché</MenuItem>
-                <MenuItem value="CONTRAT">Contrat</MenuItem>
-                <MenuItem value="BON_DE_COMMANDE">Bon de commande</MenuItem>
-                <MenuItem value="LETTRE_DE_COMMANDE">Lettre de commande</MenuItem>
-              </TextField>
-            </Box>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-              <TextField
-                fullWidth
-                select
-                label="Nature de la prestation"
-                required
-                value={formData.naturePrestation}
-                onChange={handleChange('naturePrestation')}
-              >
-                <MenuItem value="TRAVAUX">Travaux</MenuItem>
-                <MenuItem value="FOURNITURES">Fournitures</MenuItem>
-                <MenuItem value="SERVICES">Services</MenuItem>
-                <MenuItem value="ETUDES">Études</MenuItem>
-              </TextField>
-            </Box>
-
-            <RichTextEditor
-              label="Objet du marché"
-              value={formData.objetRich}
-              onChange={(value) => {
-                setFormData({
-                  ...formData,
-                  objetRich: value,
-                  objet: value.replace(/<[^>]*>/g, '').substring(0, 500),
-                })
-              }}
-              placeholder="Décrivez l'objet du marché en détail..."
-              required
-              minHeight={200}
-            />
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-              <TextField
-                fullWidth
-                select
-                label="Fournisseur"
-                required
-                value={formData.fournisseurId || ''}
-                onChange={handleChange('fournisseurId')}
-              >
-                <MenuItem value="">-- Sélectionner --</MenuItem>
-                {fournisseurs.map((f) => (
-                  <MenuItem key={f.id} value={f.id}>
-                    {f.code} - {f.raisonSociale}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                fullWidth
-                select
-                label="Convention"
-                value={formData.conventionId || ''}
-                onChange={handleChange('conventionId')}
-              >
-                <MenuItem value="">-- Optionnel --</MenuItem>
-                {conventions.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
-                    {c.code} - {c.objet.substring(0, 50)}...
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-
-            {/* Odoo-style: Convention summary info card */}
-            {conventionSummary && (
-              <Box sx={{
-                p: 2.5,
-                bgcolor: colors.primary[50],
-                border: `1px solid ${colors.primary[200]}`,
-                borderRadius: 2,
-                mt: 1,
-              }}>
-                <Typography variant="subtitle2" fontWeight={700} sx={{ color: colors.primary[700], mb: 1.5 }}>
-                  Convention: {conventionSummary.numero} — {conventionSummary.libelle}
-                </Typography>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Budget</Typography>
-                    <Typography variant="body2" fontWeight={600}>{formatMAD(conventionSummary.budget)}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Engagé HT</Typography>
-                    <Typography variant="body2" fontWeight={600}>{formatMAD(conventionSummary.montantEngageHT)}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Budget restant</Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{
-                      color: conventionSummary.budgetRestant > 0 ? colors.success[600] : colors.danger[600],
-                    }}>
-                      {formatMAD(conventionSummary.budgetRestant)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Taux engagement</Typography>
-                    <Typography variant="body2" fontWeight={600}>{formatPct(conventionSummary.tauxEngagement)}</Typography>
-                  </Box>
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={Math.min(conventionSummary.tauxEngagement, 100)}
-                  sx={{
-                    mt: 1.5,
-                    height: 6,
-                    borderRadius: 3,
-                    bgcolor: colors.primary[100],
-                    '& .MuiLinearProgress-bar': {
-                      bgcolor: conventionSummary.tauxEngagement > 90 ? colors.danger[500] : colors.primary[500],
-                      borderRadius: 3,
-                    },
-                  }}
-                />
-                <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Taux commission: {formatPct(conventionSummary.tauxCommission)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    TVA: {formatPct(conventionSummary.tauxTva)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {conventionSummary.nombreMarches} marché(s) · {conventionSummary.nombreProjets} projet(s)
-                  </Typography>
-                </Box>
-                {conventionSummary.budgetRestant <= 0 && (
-                  <Alert severity="warning" sx={{ mt: 1.5 }}>
-                    Le budget de cette convention est entièrement engagé.
-                  </Alert>
-                )}
-              </Box>
-            )}
-
-            {/* Odoo-style: Fournisseur summary info card */}
-            {fournisseurSummary && (
-              <Box sx={{
-                p: 2.5,
-                bgcolor: colors.neutral[50],
-                border: `1px solid ${colors.neutral[200]}`,
-                borderRadius: 2,
-                mt: 1,
-              }}>
-                <Typography variant="subtitle2" fontWeight={700} sx={{ color: colors.neutral[700], mb: 1 }}>
-                  Fournisseur: {fournisseurSummary.raisonSociale}
-                </Typography>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">ICE</Typography>
-                    <Typography variant="body2" fontWeight={600}>{fournisseurSummary.ice || '—'}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">IF</Typography>
-                    <Typography variant="body2" fontWeight={600}>{fournisseurSummary.identifiantFiscal || '—'}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Marchés</Typography>
-                    <Typography variant="body2" fontWeight={600}>{fournisseurSummary.nombreMarches}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Total marchés</Typography>
-                    <Typography variant="body2" fontWeight={600}>{formatMAD(fournisseurSummary.montantTotalMarches)}</Typography>
-                  </Box>
-                </Box>
-                {fournisseurSummary.ville && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    {fournisseurSummary.adresse ? `${fournisseurSummary.adresse}, ` : ''}{fournisseurSummary.ville}
-                    {fournisseurSummary.telephone ? ` · Tél: ${fournisseurSummary.telephone}` : ''}
-                  </Typography>
-                )}
-              </Box>
-            )}
-          </Box>
-        )
-
-      case 1:
-        return (
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Montants et dates
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-            </Box>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
-              <DecimalInput
-                fullWidth
-                label="Montant HT (DH)"
-                required
-                value={formData.montantHT}
-                onChange={(value) => setFormData({ ...formData, montantHT: value })}
-                min={0}
-                decimalPlaces={2}
-              />
-
-              <DecimalInput
-                fullWidth
-                label="Taux TVA (%)"
-                required
-                value={formData.tauxTVA}
-                onChange={(value) => setFormData({ ...formData, tauxTVA: value })}
-                min={0}
-                max={100}
-                decimalPlaces={2}
-              />
-
-              <DecimalInput
-                fullWidth
-                label="Montant TTC (DH)"
-                required
-                value={formData.montantTTC}
-                onChange={() => {}}
-                decimalPlaces={2}
-                InputProps={{ readOnly: true }}
-                sx={{
-                  '& .MuiInputBase-input': {
-                    bgcolor: colors.neutral[50],
-                    fontWeight: 600,
-                    color: colors.primary[600],
-                  },
-                }}
-              />
-            </Box>
-
-            <Typography variant="subtitle2" gutterBottom fontWeight={600} sx={{ mt: 2 }}>
-              Dates
-            </Typography>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-              <TextField
-                fullWidth
-                label="Date de signature"
-                type="date"
-                required
-                value={formData.dateSignature}
-                onChange={handleChange('dateSignature')}
-                InputLabelProps={{ shrink: true }}
-              />
-
-              <TextField
-                fullWidth
-                label="Date de notification"
-                type="date"
-                required
-                value={formData.dateNotification}
-                onChange={handleChange('dateNotification')}
-                InputLabelProps={{ shrink: true }}
-              />
-
-              <TextField
-                fullWidth
-                label="Date d'ordre de service"
-                type="date"
-                value={formData.dateOrdreService}
-                onChange={handleChange('dateOrdreService')}
-                InputLabelProps={{ shrink: true }}
-              />
-
-              <DecimalInput
-                fullWidth
-                label="Délai d'exécution (mois)"
-                required
-                value={formData.delaiExecution}
-                onChange={(value) => setFormData({ ...formData, delaiExecution: value })}
-                min={0}
-                decimalPlaces={0}
-              />
-
-              <DecimalInput
-                fullWidth
-                label="Taux pénalité / jour (ex: 1/2000 = 0.0005)"
-                value={formData.tauxPenalite}
-                onChange={(value) => setFormData({ ...formData, tauxPenalite: value })}
-                min={0}
-                max={1}
-                decimalPlaces={4}
-                helperText="Standard marchés publics: 1/2000 par jour = 0.0005"
-              />
-            </Box>
-          </Box>
-        )
-
-      case 2:
-        return (
-          <Box sx={{ display: 'grid', gap: 3 }}>
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Localisation
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-            </Box>
-
-            <TextField
-              fullWidth
-              label="Adresse"
-              value={formData.adresse}
-              onChange={handleChange('adresse')}
-              placeholder="Adresse complète du chantier..."
-              multiline
-              rows={2}
-            />
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
-              <DecimalInput
-                fullWidth
-                label="Latitude"
-                value={formData.latitude || 0}
-                onChange={(value) => setFormData({ ...formData, latitude: value || null })}
-                placeholder="33.5731"
-                decimalPlaces={6}
-              />
-
-              <DecimalInput
-                fullWidth
-                label="Longitude"
-                value={formData.longitude || 0}
-                onChange={(value) => setFormData({ ...formData, longitude: value || null })}
-                placeholder="-7.5898"
-                decimalPlaces={6}
-              />
-
-              <TextField
-                fullWidth
-                label="Zone géographique"
-                value={formData.zoneGeographique}
-                onChange={handleChange('zoneGeographique')}
-                placeholder="Casablanca, Rabat..."
-              />
-            </Box>
-
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 3 }}>
-                Pièces jointes
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-            </Box>
-
-            <FileUploadZone
-              files={formData.files}
-              onFilesChange={(files) => setFormData({ ...formData, files })}
-              maxFiles={10}
-              maxSizeMB={10}
-              label="Documents du marché"
-            />
-
-            <Box>
-              <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 3 }}>
-                Récapitulatif
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-            </Box>
-
-            <Box sx={{ p: 3, bgcolor: colors.neutral[50], borderRadius: 2 }}>
-              <Box sx={{ display: 'grid', gap: 2 }}>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Code
-                    </Typography>
-                    <Typography variant="body1" fontWeight={600}>
-                      {formData.code}
-                    </Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Numéro de marché
-                    </Typography>
-                    <Typography variant="body1" fontWeight={600}>
-                      {formData.numeroMarche}
-                    </Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Type
-                    </Typography>
-                    <Typography variant="body1">
-                      {formData.typeMarche} - {formData.naturePrestation}
-                    </Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Fournisseur
-                    </Typography>
-                    <Typography variant="body1">
-                      {fournisseurs.find(f => f.id === formData.fournisseurId)?.raisonSociale || '-'}
-                    </Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Montant HT
-                    </Typography>
-                    <Typography variant="h6" color="text.secondary">
-                      {new Intl.NumberFormat('fr-FR', {
-                        style: 'currency',
-                        currency: 'MAD',
-                      }).format(formData.montantHT)}
-                    </Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Montant TTC
-                    </Typography>
-                    <Typography variant="h6" color="primary">
-                      {new Intl.NumberFormat('fr-FR', {
-                        style: 'currency',
-                        currency: 'MAD',
-                      }).format(formData.montantTTC)}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Date de signature
-                  </Typography>
-                  <Typography variant="body1">
-                    {new Date(formData.dateSignature).toLocaleDateString('fr-FR')}
-                  </Typography>
-                </Box>
-
-                {formData.adresse && (
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Localisation
-                    </Typography>
-                    <Typography variant="body1">
-                      {formData.adresse}
-                      {formData.zoneGeographique && ` - ${formData.zoneGeographique}`}
-                    </Typography>
-                  </Box>
-                )}
-
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Pièces jointes
-                  </Typography>
-                  <Typography variant="body1">
-                    {formData.files.length} fichier(s)
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        )
-
-      default:
-        return null
+      case 0: return <StepInfoGenerales formData={formData} conventions={conventions} fournisseurs={fournisseurs}
+        conventionSummary={conventionSummary} fournisseurSummary={fournisseurSummary} onChange={handleChange} onFormDataChange={onFormDataChange} />
+      case 1: return <StepMontantsDates formData={formData} onChange={handleChange} onFormDataChange={onFormDataChange} />
+      case 2: return <StepLocalisation formData={formData} fournisseurs={fournisseurs} onChange={handleChange} onFormDataChange={onFormDataChange} />
+      default: return null
     }
   }
 
@@ -766,10 +132,8 @@ const MarcheWizard = () => {
         isSubmitting={createMutation.isPending}
         submitLabel="Créer le marché"
       >
-        {renderStepContent()}
-        {createMutation.error && (
-          <Alert severity="error" sx={{ mt: 3 }}>{getErrorMessage()}</Alert>
-        )}
+        {renderStep()}
+        {createMutation.error && <Alert severity="error" sx={{ mt: 3 }}>{getErrorMessage()}</Alert>}
       </WizardView>
     </AppLayout>
   )

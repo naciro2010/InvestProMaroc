@@ -86,3 +86,14 @@ export { default as EditFieldDialog } from './EditFieldDialog'
 // Chatter (activity log / history timeline)
 export { default as Chatter } from './chatter'
 export type { ChatterActivity, ChatterProps } from './chatter'
+
+// Smart Button (Odoo-style stat buttons for related record counts)
+export { SmartButton, SmartButtonsRow } from './SmartButton'
+
+// Kanban Board (DnD cards between status columns)
+export { KanbanBoard } from './KanbanBoard'
+export type { KanbanColumn, KanbanBoardProps } from './KanbanBoard'
+
+// Dashboard Grid (draggable + resizable widget layout)
+export { DashboardGrid } from './DashboardGrid'
+export type { WidgetConfig, DashboardGridProps } from './DashboardGrid'

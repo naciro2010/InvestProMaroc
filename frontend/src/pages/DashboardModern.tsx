@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Typography,
@@ -9,7 +9,8 @@ import {
 } from '@mui/material'
 import { RefreshCw } from 'lucide-react'
 import AppLayout from '../components/layout/AppLayout'
-import { ControlPanel } from '../components/core'
+import { ControlPanel, DashboardGrid } from '../components/core'
+import type { WidgetConfig } from '../components/core'
 import { colors, typography } from '../lib/designSystem'
 import { useAuth } from '../contexts/AuthContext'
 import { reportingAPI, ExecutiveDashboardDTO } from '../lib/api'
@@ -32,6 +33,94 @@ import {
 } from '../components/dashboard'
 import { getGreeting } from '../components/dashboard/types'
 
+// ==================== WIDGET BUILDER ====================
+
+const buildExecutiveWidgets = (data: ExecutiveDashboardDTO): WidgetConfig[] => [
+  {
+    id: 'finance-kpis',
+    title: 'KPIs Finance',
+    component: <DashboardFinanceKPIs kpis={data.kpis} />,
+    defaultLayout: { x: 0, y: 0, w: 12, h: 3, minW: 6, minH: 2 },
+  },
+  {
+    id: 'workflow-funnel',
+    title: 'Workflow',
+    component: <DashboardWorkflowFunnel funnel={data.workflowFunnel} />,
+    defaultLayout: { x: 0, y: 3, w: 6, h: 4, minW: 4, minH: 3 },
+  },
+  {
+    id: 'alerts',
+    title: 'Alertes',
+    component: <DashboardAlerts alerts={data.alerts} />,
+    defaultLayout: { x: 6, y: 3, w: 6, h: 4, minW: 4, minH: 3 },
+  },
+  {
+    id: 'monthly-trend',
+    title: 'Tendance Mensuelle',
+    component: <DashboardMonthlyTrend trends={data.monthlyTrends} />,
+    defaultLayout: { x: 0, y: 7, w: 12, h: 5, minW: 6, minH: 3 },
+  },
+  {
+    id: 'top-marches',
+    title: 'Top Marches',
+    component: <DashboardTopMarches marches={data.topMarches} />,
+    defaultLayout: { x: 0, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
+  },
+  {
+    id: 'top-fournisseurs',
+    title: 'Top Fournisseurs',
+    component: <DashboardTopFournisseurs fournisseurs={data.topFournisseurs} />,
+    defaultLayout: { x: 4, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
+  },
+  {
+    id: 'budget-execution',
+    title: 'Execution Budgetaire',
+    component: <DashboardBudgetExecution budget={data.budgetExecution} />,
+    defaultLayout: { x: 8, y: 12, w: 4, h: 4, minW: 3, minH: 3 },
+  },
+  {
+    id: 'recent-activity',
+    title: 'Activite Recente',
+    component: <DashboardRecentActivityExec items={data.recentActivity} />,
+    defaultLayout: { x: 0, y: 16, w: 12, h: 5, minW: 6, minH: 3 },
+  },
+]
+
+const buildLegacyWidgets = (refreshKey: number): WidgetConfig[] => [
+  {
+    id: 'legacy-kpis',
+    title: 'Indicateurs Cles',
+    component: <DashboardKPICards refreshKey={refreshKey} />,
+    defaultLayout: { x: 0, y: 0, w: 12, h: 3, minW: 6, minH: 2 },
+  },
+  {
+    id: 'legacy-conventions',
+    title: 'Conventions',
+    component: <DashboardConventionChart refreshKey={refreshKey} />,
+    defaultLayout: { x: 0, y: 3, w: 4, h: 5, minW: 3, minH: 3 },
+  },
+  {
+    id: 'legacy-budget',
+    title: 'Budget',
+    component: <DashboardBudgetOverview refreshKey={refreshKey} />,
+    defaultLayout: { x: 4, y: 3, w: 4, h: 5, minW: 3, minH: 3 },
+  },
+  {
+    id: 'legacy-marches',
+    title: 'Marches',
+    component: <DashboardMarcheChart refreshKey={refreshKey} />,
+    defaultLayout: { x: 8, y: 3, w: 4, h: 5, minW: 3, minH: 3 },
+  },
+  {
+    id: 'legacy-activity',
+    title: 'Activite Recente',
+    component: <DashboardRecentActivity refreshKey={refreshKey} />,
+    defaultLayout: { x: 0, y: 8, w: 12, h: 5, minW: 6, minH: 3 },
+  },
+]
+
+// ==================== MAIN COMPONENT ====================
+
 const DashboardModern = () => {
   const { user } = useAuth()
   const [data, setData] = useState<ExecutiveDashboardDTO | null>(null)
@@ -47,7 +136,6 @@ const DashboardModern = () => {
       setData(payload as ExecutiveDashboardDTO)
       setUseLegacy(false)
     } catch {
-      // Endpoint not deployed yet — fall back to legacy dashboard
       setUseLegacy(true)
     } finally {
       setLoading(false)
@@ -55,9 +143,7 @@ const DashboardModern = () => {
     }
   }
 
-  useEffect(() => {
-    fetchDashboard()
-  }, [])
+  useEffect(() => { fetchDashboard() }, [])
 
   const handleRefresh = () => {
     setRefreshing(true)
@@ -69,6 +155,12 @@ const DashboardModern = () => {
     }
   }
 
+  const widgets = useMemo(() => {
+    if (useLegacy) return buildLegacyWidgets(refreshKey)
+    if (data) return buildExecutiveWidgets(data)
+    return []
+  }, [data, useLegacy, refreshKey])
+
   return (
     <AppLayout>
       <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
@@ -76,16 +168,9 @@ const DashboardModern = () => {
           breadcrumbs={[{ label: 'Tableau de bord' }]}
           actions={
             <Tooltip title="Actualiser les donnees">
-              <IconButton
-                onClick={handleRefresh}
-                disabled={refreshing}
-                size="small"
-                sx={{ color: colors.textSecondary, '&:hover': { bgcolor: colors.neutral[100] } }}
-              >
-                {refreshing
-                  ? <CircularProgress size={16} sx={{ color: colors.textSecondary }} />
-                  : <RefreshCw size={16} />
-                }
+              <IconButton onClick={handleRefresh} disabled={refreshing} size="small"
+                sx={{ color: colors.textSecondary, '&:hover': { bgcolor: colors.neutral[100] } }}>
+                {refreshing ? <CircularProgress size={16} sx={{ color: colors.textSecondary }} /> : <RefreshCw size={16} />}
               </IconButton>
             </Tooltip>
           }
@@ -94,87 +179,28 @@ const DashboardModern = () => {
 
         {/* Welcome */}
         <Box sx={{ px: { xs: 2, md: 3 }, pt: 3, pb: 1 }}>
-          <Typography sx={{
-            fontSize: typography.sizes['2xl'],
-            fontWeight: typography.weights.bold,
-            color: colors.textPrimary,
-            letterSpacing: '-0.01em',
-            mb: 0.5,
-          }}>
+          <Typography sx={{ fontSize: typography.sizes['2xl'], fontWeight: typography.weights.bold, color: colors.textPrimary, letterSpacing: '-0.01em', mb: 0.5 }}>
             {getGreeting()}, {user?.fullName || 'Utilisateur'}
           </Typography>
-          <Typography sx={{
-            fontSize: typography.sizes.base,
-            color: colors.textSecondary,
-          }}>
+          <Typography sx={{ fontSize: typography.sizes.base, color: colors.textSecondary }}>
             Tableau de bord executif — vue d'ensemble de vos investissements
           </Typography>
-          <Typography sx={{
-            fontSize: typography.sizes.sm,
-            color: colors.neutral[400],
-            mt: 0.25,
-          }}>
-            {new Intl.DateTimeFormat('fr-FR', {
-              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-            }).format(new Date())}
+          <Typography sx={{ fontSize: typography.sizes.sm, color: colors.neutral[400], mt: 0.25 }}>
+            {new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}
           </Typography>
         </Box>
 
         <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
-          {/* Quick Actions */}
           <DashboardQuickActions />
 
           {loading ? (
             <DashboardSkeleton />
-          ) : useLegacy ? (
-            /* Legacy dashboard — used when executive endpoint is not yet deployed */
-            <>
-              <DashboardKPICards refreshKey={refreshKey} />
-              <Box sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr 1fr' },
-                gap: 2.5, mb: 3,
-              }}>
-                <DashboardConventionChart refreshKey={refreshKey} />
-                <DashboardBudgetOverview refreshKey={refreshKey} />
-                <DashboardMarcheChart refreshKey={refreshKey} />
-              </Box>
-              <DashboardRecentActivity refreshKey={refreshKey} />
-            </>
-          ) : data ? (
-            <>
-              {/* Finance KPIs + Gauges */}
-              <DashboardFinanceKPIs kpis={data.kpis} />
-
-              {/* Row: Workflow + Alerts */}
-              <Box sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-                gap: 2.5, mb: 3,
-              }}>
-                <DashboardWorkflowFunnel funnel={data.workflowFunnel} />
-                <DashboardAlerts alerts={data.alerts} />
-              </Box>
-
-              {/* Monthly Trend (full width) */}
-              <Box sx={{ mb: 3 }}>
-                <DashboardMonthlyTrend trends={data.monthlyTrends} />
-              </Box>
-
-              {/* Row: Top Marches + Top Fournisseurs + Budget Execution */}
-              <Box sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr 1fr' },
-                gap: 2.5, mb: 3,
-              }}>
-                <DashboardTopMarches marches={data.topMarches} />
-                <DashboardTopFournisseurs fournisseurs={data.topFournisseurs} />
-                <DashboardBudgetExecution budget={data.budgetExecution} />
-              </Box>
-
-              {/* Recent Activity (full width) */}
-              <DashboardRecentActivityExec items={data.recentActivity} />
-            </>
+          ) : widgets.length > 0 ? (
+            <DashboardGrid
+              widgets={widgets}
+              storageKey={useLegacy ? 'investpro-dashboard-legacy' : 'investpro-dashboard-exec'}
+              rowHeight={60}
+            />
           ) : (
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <Typography sx={{ color: colors.textDisabled }}>
@@ -190,18 +216,10 @@ const DashboardModern = () => {
 
 const DashboardSkeleton = () => (
   <>
-    <Box sx={{
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' },
-      gap: 2, mb: 3,
-    }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
       {[1, 2, 3, 4].map(i => <Skeleton key={i} variant="rectangular" height={140} sx={{ borderRadius: 2 }} />)}
     </Box>
-    <Box sx={{
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-      gap: 2.5, mb: 3,
-    }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2.5, mb: 3 }}>
       <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 2 }} />
       <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 2 }} />
     </Box>

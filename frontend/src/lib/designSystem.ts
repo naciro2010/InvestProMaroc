@@ -1,10 +1,11 @@
 /**
- * Design System v3.0 - InvestPro Maroc
+ * Design System v4.0 - InvestPro Maroc
  *
- * STYLE: Sobre et professionnel, adapte ERP
+ * STYLE: Bleu ardoise professionnel - ERP financier
  * Professional design system: ergonomic density + clean whitespace + enterprise accents
  *
  * PRINCIPES:
+ * - Palette bleu ardoise (deep slate blue) - sobre, financier, autoritaire
  * - Couleurs desaturees et douces (pas de couleurs "flashy")
  * - Beaucoup de blanc et gris clair
  * - Micro-interactions subtiles (pas de translateY, pas de glow)
@@ -16,172 +17,172 @@
 
 export const colors = {
   /**
-   * Primaire - Violet InvestPro (accent ERP)
+   * Primaire - Bleu ardoise InvestPro (deep slate blue - ERP financier)
    */
   primary: {
-    25: '#f8f6f9',
-    50: '#f2edf3',
-    100: '#e4d8e7',
-    200: '#cab3d0',
-    300: '#af8db8',
-    400: '#946aa0',
-    500: '#7f5189',
-    600: '#714B67', // Main - InvestPro purple
-    700: '#5f4058',
-    800: '#473043',
-    900: '#332431',
+    25: '#f5f7fa',
+    50: '#edf1f7',
+    100: '#d5dde9',
+    200: '#adbdd4',
+    300: '#849cbd',
+    400: '#617fa8',
+    500: '#476693',
+    600: '#2D4A6F', // Main - InvestPro slate blue
+    700: '#253d5c',
+    800: '#1b2e45',
+    900: '#131f30',
   },
 
   /**
-   * Succes - Vert sauge (desature, doux)
+   * Succes - Vert foret (desature, professionnel)
    */
   success: {
-    25: '#f6f9f7',
-    50: '#edf5ef',
-    100: '#d4e8d9',
-    200: '#a8d4b2',
-    300: '#7cbe8c',
-    400: '#5aab6d',
-    500: '#4a9660',
-    600: '#3d7f52', // Main
-    700: '#336a45',
-    800: '#234a31',
-    900: '#1a3724',
+    25: '#f4f8f5',
+    50: '#eaf3ec',
+    100: '#cfe3d4',
+    200: '#a2ccac',
+    300: '#74b384',
+    400: '#539e66',
+    500: '#3f8a54',
+    600: '#347545', // Main
+    700: '#2b6239',
+    800: '#1e4428',
+    900: '#16321e',
   },
 
   /**
-   * Danger - Rouge terre (desature, calme)
+   * Danger - Rouge brique (desature, serieux)
    */
   danger: {
-    25: '#fdf7f7',
-    50: '#faeeed',
-    100: '#f2d5d2',
-    200: '#e0a8a3',
-    300: '#cc7e77',
-    400: '#bb5f57',
-    500: '#a84d45',
-    600: '#93403a', // Main
-    700: '#7b3531',
-    800: '#542422',
-    900: '#3d1b19',
+    25: '#fcf6f5',
+    50: '#f9edeb',
+    100: '#f0d3cf',
+    200: '#dea9a2',
+    300: '#c98078',
+    400: '#b86258',
+    500: '#a44e44',
+    600: '#8c3e36', // Main
+    700: '#75332d',
+    800: '#512320',
+    900: '#3a1a17',
   },
 
   /**
-   * Warning - Ambre doux (desature)
+   * Warning - Ocre dore (chaud, sobre)
    */
   warning: {
-    25: '#fdfaf5',
-    50: '#faf3e3',
-    100: '#f0e0b8',
-    200: '#e2c880',
-    300: '#d4af4d',
-    400: '#c49d30',
-    500: '#ad8a20',
-    600: '#8f7218', // Main
-    700: '#755e15',
-    800: '#4d3e0e',
-    900: '#382d0a',
+    25: '#fdf9f3',
+    50: '#f9f1e1',
+    100: '#eedcb3',
+    200: '#dfc27a',
+    300: '#d0a84a',
+    400: '#c0962e',
+    500: '#a8831f',
+    600: '#8a6c17', // Main
+    700: '#725913',
+    800: '#4b3b0d',
+    900: '#362b09',
   },
 
   /**
-   * Info - Bleu ardoise (calme, subtil)
+   * Info - Bleu cyan (frais, informatif)
    */
   info: {
-    25: '#f6f9fa',
-    50: '#eaf1f4',
-    100: '#cedfea',
-    200: '#a3c5d6',
-    300: '#78abc2',
-    400: '#5695b0',
-    500: '#42809d',
-    600: '#366b84', // Main
-    700: '#2d596e',
-    800: '#1f3d4c',
-    900: '#162d38',
+    25: '#f4f9fb',
+    50: '#e8f2f6',
+    100: '#cbe2ec',
+    200: '#9dcada',
+    300: '#6fb2c8',
+    400: '#4d9db6',
+    500: '#3888a0',
+    600: '#2e7187', // Main
+    700: '#265e70',
+    800: '#1b424e',
+    900: '#133039',
   },
 
   /**
-   * Purple - Accent subtil (lavande desature)
+   * Purple - Accent secondaire (indigo desature)
    */
   purple: {
-    25: '#f9f8fb',
-    50: '#f0eef6',
-    100: '#ddd8ec',
-    200: '#b9b0d4',
-    300: '#9a8dbe',
-    400: '#8074ab',
-    500: '#6d6199',
-    600: '#5b5187', // Main
-    700: '#4c4372',
-    800: '#342f50',
-    900: '#27233c',
+    25: '#f7f7fb',
+    50: '#efeff6',
+    100: '#dbdaec',
+    200: '#b5b2d5',
+    300: '#928ebe',
+    400: '#7671aa',
+    500: '#635d96',
+    600: '#524d80', // Main
+    700: '#44406b',
+    800: '#302d4b',
+    900: '#232138',
   },
 
   /**
-   * Gris - Palette neutre (tons chauds, pas froids)
+   * Gris - Palette neutre (tons bleu-gris, cohesion avec primary)
    */
   neutral: {
     0: '#ffffff',
-    25: '#fafafa',
-    50: '#f5f5f6',
-    100: '#eeeff0',
-    200: '#dddee0',
-    300: '#b8babe',
-    400: '#8e9196',
-    500: '#6b6f75',
-    600: '#4f5359',
-    700: '#383c42',
-    800: '#24272d',
-    900: '#16181c',
+    25: '#f9fafb',
+    50: '#f4f5f7',
+    100: '#ebedf0',
+    200: '#dadde2',
+    300: '#b4b9c1',
+    400: '#8a909a',
+    500: '#676d79',
+    600: '#4c5260',
+    700: '#363b47',
+    800: '#222730',
+    900: '#14171d',
   },
 
   // Aliases
   gray: {
-    50: '#f5f5f6',
-    100: '#eeeff0',
-    200: '#dddee0',
-    300: '#b8babe',
-    400: '#8e9196',
-    500: '#6b6f75',
-    600: '#4f5359',
-    700: '#383c42',
-    800: '#24272d',
-    900: '#16181c',
+    50: '#f4f5f7',
+    100: '#ebedf0',
+    200: '#dadde2',
+    300: '#b4b9c1',
+    400: '#8a909a',
+    500: '#676d79',
+    600: '#4c5260',
+    700: '#363b47',
+    800: '#222730',
+    900: '#14171d',
   },
 
-  /** Fond de page - gris tres clair, presque blanc */
-  background: '#f5f5f6',
+  /** Fond de page - gris bleu tres clair */
+  background: '#f4f5f7',
 
   /** Fond blanc */
   surface: '#ffffff',
 
   /** Sidebar */
-  sidebarBg: '#f6f4f7',
+  sidebarBg: '#f3f5f8',
 
-  /** Bordure standard - tres douce */
-  border: '#e2e3e5',
+  /** Bordure standard - douce, bleu-gris */
+  border: '#dfe1e6',
 
   /** Bordure subtile */
-  borderSubtle: '#eeeff0',
+  borderSubtle: '#ebedf0',
 
   /** Separateur */
-  divider: '#f0f0f1',
+  divider: '#edeef1',
 
-  /** Texte principal - gris fonce, pas noir */
-  textPrimary: '#24272d',
+  /** Texte principal - gris ardoise fonce */
+  textPrimary: '#222730',
 
   /** Texte secondaire */
-  textSecondary: '#6b6f75',
+  textSecondary: '#676d79',
 
   /** Texte desactive */
-  textDisabled: '#8e9196',
+  textDisabled: '#8a909a',
 
   /** Texte sur fond colore */
   textOnColor: '#ffffff',
 
-  /** Lien - violet primaire */
-  link: '#714B67',
-  linkHover: '#5f4058',
+  /** Lien - bleu ardoise primaire */
+  link: '#2D4A6F',
+  linkHover: '#253d5c',
 } as const
 
 // ==================== TYPOGRAPHIE ====================

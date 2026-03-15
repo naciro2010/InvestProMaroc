@@ -18,7 +18,7 @@ import {
 import {
   X, BarChart3, Table2, PieChart, TrendingUp, Download,
   ChevronUp, ChevronDown, Info, LayoutDashboard,
-  Maximize2, Minimize2, Image, Filter,
+  Maximize2, Minimize2, Image, Filter, Cpu, Zap,
 } from 'lucide-react'
 import { colors, typography, borders } from '@/lib/designSystem'
 import DynamicTable from './DynamicTable'
@@ -31,6 +31,8 @@ interface GeneratedWidgetProps {
   data: FetchedData
   onRemove: () => void
   originalText: string
+  aiPowered?: boolean
+  aiModel?: string | null
 }
 
 const VISUALIZATION_OPTIONS: Array<{ value: VisualizationType; icon: React.ReactNode; label: string }> = [
@@ -114,7 +116,7 @@ const VIZ_ICON_MAP: Record<VisualizationType, React.ReactNode> = {
   bar: <BarChart3 className="w-3.5 h-3.5" style={{ color: colors.primary[600] }} />,
 }
 
-const GeneratedWidget = ({ instruction, data, onRemove, originalText }: GeneratedWidgetProps) => {
+const GeneratedWidget = ({ instruction, data, onRemove, originalText, aiPowered, aiModel }: GeneratedWidgetProps) => {
   const [vizType, setVizType] = useState<VisualizationType>(instruction.visualization)
   const [collapsed, setCollapsed] = useState(false)
   const [showExplanation, setShowExplanation] = useState(false)
@@ -216,6 +218,40 @@ const GeneratedWidget = ({ instruction, data, onRemove, originalText }: Generate
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
+          {/* AI / Rules source badge */}
+          {aiPowered !== undefined && (
+            <Tooltip title={aiPowered
+              ? `Résultat généré par l'IA${aiModel ? ` (${aiModel})` : ''} — l'interprétation est automatique et peut contenir des erreurs`
+              : 'Résultat généré par le moteur de règles intégré (hors-ligne)'
+            }>
+              <Box sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                px: 1,
+                py: 0.375,
+                mr: 1,
+                borderRadius: borders.radius.full,
+                fontSize: '11px',
+                fontWeight: typography.weights.semibold,
+                backgroundColor: aiPowered ? colors.purple[50] : colors.neutral[50],
+                color: aiPowered ? colors.purple[700] : colors.neutral[500],
+                border: `1px solid ${aiPowered ? colors.purple[200] : colors.neutral[200]}`,
+                cursor: 'help',
+                userSelect: 'none',
+                transition: 'all 0.15s ease',
+                '&:hover': {
+                  backgroundColor: aiPowered ? colors.purple[100] : colors.neutral[100],
+                },
+              }}>
+                {aiPowered
+                  ? <><Cpu className="w-3 h-3" /> IA{aiModel ? ` · ${aiModel}` : ''}</>
+                  : <><Zap className="w-3 h-3" /> Règles</>
+                }
+              </Box>
+            </Tooltip>
+          )}
+
           {/* Visualization toggle */}
           <ToggleButtonGroup
             value={vizType}

@@ -210,9 +210,9 @@ async function fetchRawData(entity: EntityType): Promise<RawRecord[]> {
 
 function getLabel(record: RawRecord): string {
   return (
-    record.designation ||
     record.libelle ||
     record.objet ||
+    record.designation ||
     record.nom ||
     record.raisonSociale ||
     record.description ||
@@ -221,6 +221,7 @@ function getLabel(record: RawRecord): string {
     record.numeroMarche ||
     record.numeroDecompte ||
     record.referencePaiement ||
+    record.version ||
     `#${record.id ?? '?'}`
   )
 }
@@ -377,14 +378,14 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
   const entityColumns: Record<EntityType, ColumnDef[]> = {
     conventions: [
       { key: 'code', label: 'Code', type: 'string' },
+      { key: 'numero', label: 'Numéro', type: 'string' },
       { key: 'libelle', label: 'Libellé', type: 'string' },
-      { key: 'typeConvention', label: 'Type', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
       { key: 'budget', label: 'Budget', type: 'number', align: 'right' },
       { key: 'dateDebut', label: 'Date début', type: 'date' },
     ],
     marches: [
-      { key: 'code', label: 'N° Marché', type: 'string' },
+      { key: 'numeroMarche', label: 'N° Marché', type: 'string' },
       { key: 'objet', label: 'Objet', type: 'string' },
       { key: 'fournisseurNom', label: 'Fournisseur', type: 'string' },
       { key: 'typeMarche', label: 'Type', type: 'string' },
@@ -409,7 +410,7 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
       { key: 'dateDecompte', label: 'Date', type: 'date' },
     ],
     paiements: [
-      { key: 'code', label: 'Référence', type: 'string' },
+      { key: 'referencePaiement', label: 'Référence', type: 'string' },
       { key: 'montantPaye', label: 'Montant', type: 'number', align: 'right' },
       { key: 'modePaiement', label: 'Mode', type: 'string' },
       { key: 'dateValeur', label: 'Date Valeur', type: 'date' },
@@ -419,11 +420,8 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
       { key: 'code', label: 'Code', type: 'string' },
       { key: 'raisonSociale', label: 'Raison Sociale', type: 'string' },
       { key: 'ice', label: 'ICE', type: 'string' },
-      { key: 'ville', label: 'Ville', type: 'string' },
-      { key: 'telephone', label: 'Téléphone', type: 'string' },
     ],
     budgets: [
-      { key: 'conventionLibelle', label: 'Convention', type: 'string' },
       { key: 'version', label: 'Version', type: 'string' },
       { key: 'totalBudget', label: 'Total Budget', type: 'number', align: 'right' },
       { key: 'statut', label: 'Statut', type: 'status' },
@@ -448,14 +446,18 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
           row[col.key] = getType(record)
           break
         case 'code':
-          row[col.key] = getCode(record)
+        case 'numeroMarche':
+        case 'referencePaiement':
+        case 'numero':
+          row[col.key] = record[col.key] as string || getCode(record)
           break
         case 'designation':
         case 'libelle':
         case 'nom':
         case 'objet':
         case 'label':
-          row[col.key] = getLabel(record)
+        case 'version':
+          row[col.key] = record[col.key] as string || getLabel(record)
           break
         case 'fournisseurNom':
           row[col.key] = record.fournisseurNom || record.fournisseur?.raisonSociale || record.marcheFournisseur || ''

@@ -534,32 +534,13 @@ const CustomDashboardPage = () => {
                     >
                       {item.instruction && item.data && (
                         <Box>
-                          {/* AI vs Rule badge */}
-                          {item.aiPowered !== undefined && (
-                            <Box sx={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                              mb: 1,
-                              px: 0.75,
-                              py: 0.25,
-                              borderRadius: borders.radius.base,
-                              fontSize: '10px',
-                              fontWeight: typography.weights.medium,
-                              backgroundColor: item.aiPowered ? colors.primary[25] : colors.neutral[25],
-                              color: item.aiPowered ? colors.primary[600] : colors.neutral[400],
-                            }}>
-                              {item.aiPowered
-                                ? <><Cpu className="w-2.5 h-2.5" /> IA</>
-                                : <><Zap className="w-2.5 h-2.5" /> Règles</>
-                              }
-                            </Box>
-                          )}
                           <GeneratedWidget
                             instruction={item.instruction}
                             data={item.data}
                             originalText={item.text}
                             onRemove={() => handleRemoveWidget(item.id)}
+                            aiPowered={item.aiPowered}
+                            aiModel={item.aiPowered ? aiModel : null}
                           />
                         </Box>
                       )}

@@ -37,3 +37,23 @@ data class AiStatusResponse(
     val model: String?,
     val baseUrl: String?
 )
+
+/** SSE stream event sent to frontend during streaming response */
+data class AiStreamEvent(
+    val type: String,
+    val content: String = "",
+    val instruction: AiParsedInstruction? = null
+) {
+    companion object {
+        const val TYPE_TEXT = "text"
+        const val TYPE_VISUALIZATION = "visualization"
+        const val TYPE_DONE = "done"
+        const val TYPE_ERROR = "error"
+
+        fun text(content: String): AiStreamEvent = AiStreamEvent(type = TYPE_TEXT, content = content)
+        fun visualization(instruction: AiParsedInstruction): AiStreamEvent =
+            AiStreamEvent(type = TYPE_VISUALIZATION, instruction = instruction)
+        fun done(): AiStreamEvent = AiStreamEvent(type = TYPE_DONE)
+        fun error(message: String): AiStreamEvent = AiStreamEvent(type = TYPE_ERROR, content = message)
+    }
+}

@@ -8,3 +8,5 @@ export { parseInstruction, detectFollowUp, applyFollowUp, EXAMPLE_INSTRUCTIONS }
 export type { ParsedInstruction, VisualizationType, EntityType, GroupByField, MetricType, MetricField, ParseResult, ParseExplanation, FollowUpResult, StatusFilter } from './instructionParser'
 export { fetchDataForInstruction } from './dataFetcher'
 export type { FetchedData, ColumnDef } from './dataFetcher'
+export { default as StreamingMarkdown } from './StreamingMarkdown'
+export { useAiStream } from './useAiStream'

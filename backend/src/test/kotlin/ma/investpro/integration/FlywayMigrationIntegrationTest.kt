@@ -399,7 +399,7 @@ class FlywayMigrationIntegrationTest {
             "convention_type_configurations" to 4L,
             "categories_depenses" to 10L,
             "partenaires" to 8L,
-            "convention_partenaires" to 7L,
+            "convention_partenaires" to 27L,
             "versements_previsionnels" to 13L,
             "subventions" to 8L,
             "imputations_analytiques" to 12L
@@ -436,7 +436,7 @@ class FlywayMigrationIntegrationTest {
             "convention_type_configurations_id_seq" to 4L,
             "categories_depenses_id_seq" to 10L,
             "partenaires_id_seq" to 8L,
-            "convention_partenaires_id_seq" to 7L,
+            "convention_partenaires_id_seq" to 27L,
             "versements_previsionnels_id_seq" to 13L,
             "subventions_id_seq" to 8L,
             "imputations_analytiques_id_seq" to 12L

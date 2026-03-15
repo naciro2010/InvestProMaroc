@@ -119,7 +119,7 @@ const VIZ_ICON_MAP: Record<VisualizationType, React.ReactNode> = {
 const GeneratedWidget = ({ instruction, data, onRemove, originalText, aiPowered, aiModel }: GeneratedWidgetProps) => {
   const [vizType, setVizType] = useState<VisualizationType>(instruction.visualization)
   const [collapsed, setCollapsed] = useState(false)
-  const [showExplanation, setShowExplanation] = useState(false)
+  const [showExplanation, setShowExplanation] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const chartRef = useRef<HTMLDivElement | null>(null)
 

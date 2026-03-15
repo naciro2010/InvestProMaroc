@@ -141,6 +141,52 @@ const DynamicTable = ({ data, title }: DynamicTableProps) => {
                 </TableCell>
               </TableRow>
             )}
+            {/* Summary footer row for numeric columns */}
+            {data.rows.length > 0 && data.columns.some(c => c.type === 'number') && (
+              <TableRow sx={{ backgroundColor: colors.primary[25], borderTop: `2px solid ${colors.primary[200]}` }}>
+                {data.columns.map((col: ColumnDef) => {
+                  if (col.type === 'number') {
+                    const allValues = data.rows.map(r => typeof r[col.key] === 'number' ? r[col.key] as number : 0)
+                    const total = allValues.reduce((s, v) => s + v, 0)
+                    return (
+                      <TableCell
+                        key={`total-${col.key}`}
+                        align="right"
+                        sx={{
+                          fontSize: typography.sizes.sm,
+                          fontWeight: typography.weights.bold,
+                          color: colors.primary[700],
+                          py: 1.5,
+                        }}
+                      >
+                        {col.key === 'rank' || col.key === 'percentage'
+                          ? ''
+                          : `Σ ${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(total)}`
+                        }
+                      </TableCell>
+                    )
+                  }
+                  // First string column shows "TOTAL"
+                  const isFirstStringCol = data.columns.findIndex(c => c.type === 'string' || c.type === 'status') === data.columns.indexOf(col)
+                  return (
+                    <TableCell
+                      key={`total-${col.key}`}
+                      align="left"
+                      sx={{
+                        fontSize: typography.sizes.sm,
+                        fontWeight: typography.weights.bold,
+                        color: colors.primary[700],
+                        py: 1.5,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      {isFirstStringCol ? `TOTAL (${data.totalCount} éléments)` : ''}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+            )}
           </TableBody>
         </Table>
         {data.rows.length > 10 && (

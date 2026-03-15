@@ -53,6 +53,69 @@ interface ChatItem {
 const STORAGE_KEY = 'investpro-dashboard-chat'
 const AI_STATUS_KEY = 'investpro-ai-status'
 
+/** Generate a rich summary text from data insights */
+function generateDataSummary(instruction: ParsedInstruction, data: FetchedData): string {
+  const parts: string[] = []
+
+  parts.push(`**${instruction.title}** — ${data.totalCount} élément${data.totalCount > 1 ? 's' : ''} trouvé${data.totalCount > 1 ? 's' : ''}`)
+
+  if (data.rows.length === 0) {
+    parts.push('\nAucune donnée ne correspond aux critères.')
+    return parts.join('')
+  }
+
+  // For grouped data, add insights
+  if (instruction.groupBy && data.rows.length > 1) {
+    const numericValues = data.rows.map(r => typeof r.value === 'number' ? r.value : 0)
+    const total = numericValues.reduce((s, v) => s + v, 0)
+    const topRow = data.rows[0]
+    const topName = topRow.group as string || ''
+    const topValue = typeof topRow.value === 'number' ? topRow.value : 0
+
+    if (instruction.metric === 'sum' || instruction.metric === 'average') {
+      const formatted = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(total)
+      parts.push(`\n\n**Total** : ${formatted} MAD sur ${data.rows.length} catégories.`)
+    } else {
+      parts.push(`\n\n**Total** : ${total} répartis sur ${data.rows.length} catégories.`)
+    }
+
+    if (topName) {
+      const topPct = total > 0 ? Math.round((topValue / total) * 100) : 0
+      const topFormatted = instruction.metric !== 'count'
+        ? new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(topValue) + ' MAD'
+        : String(topValue)
+      parts.push(` Le leader est **${topName}** avec ${topFormatted} (${topPct}%).`)
+    }
+
+    // Show top 3
+    if (data.rows.length >= 3) {
+      const top3 = data.rows.slice(0, 3).map((r, i) => {
+        const name = r.group as string || '?'
+        const val = typeof r.value === 'number' ? r.value : 0
+        const pct = total > 0 ? Math.round((val / total) * 100) : 0
+        return `${i + 1}. ${name} (${pct}%)`
+      })
+      parts.push(`\n\n**Top 3** : ${top3.join(', ')}`)
+    }
+  } else if (!instruction.groupBy && data.rows.length > 0) {
+    // For table/ungrouped, show quick stats on numeric columns
+    const numCols = data.columns.filter(c => c.type === 'number' && c.key !== 'rank' && c.key !== 'percentage')
+    if (numCols.length > 0) {
+      const mainCol = numCols[0]
+      const values = data.rows.map(r => typeof r[mainCol.key] === 'number' ? r[mainCol.key] as number : 0).filter(v => v > 0)
+      if (values.length > 0) {
+        const total = values.reduce((s, v) => s + v, 0)
+        const avg = total / values.length
+        const formatted = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(total)
+        const avgFormatted = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(avg)
+        parts.push(`\n\n**${mainCol.label}** — Total : ${formatted} | Moyenne : ${avgFormatted} | ${values.length} entrées avec valeur.`)
+      }
+    }
+  }
+
+  return parts.join('')
+}
+
 // ============================================================================
 // Persistence
 // ============================================================================
@@ -334,7 +397,7 @@ const CustomDashboardPage = () => {
           const systemMsg: ChatItem = {
             id: generateId(),
             type: 'system',
-            text: `${instruction.title} (${data.totalCount} résultat${data.totalCount > 1 ? 's' : ''})`,
+            text: generateDataSummary(instruction, data),
             timestamp: new Date(),
             instruction,
             data,
@@ -355,7 +418,7 @@ const CustomDashboardPage = () => {
             const systemMsg: ChatItem = {
               id: generateId(),
               type: 'system',
-              text: `${instruction.title} (${data.totalCount} résultat${data.totalCount > 1 ? 's' : ''})`,
+              text: generateDataSummary(instruction, data),
               timestamp: new Date(),
               instruction,
               data,
@@ -376,7 +439,7 @@ const CustomDashboardPage = () => {
         const systemMsg: ChatItem = {
           id: generateId(),
           type: 'system',
-          text: `${result.instruction.title} (${data.totalCount} résultat${data.totalCount > 1 ? 's' : ''})`,
+          text: generateDataSummary(result.instruction, data),
           timestamp: new Date(),
           instruction: result.instruction,
           data,

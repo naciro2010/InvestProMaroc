@@ -1069,7 +1069,84 @@ COMMENT ON COLUMN budget_ligne_imputations.montant IS 'Montant calculé (pourcen
 COMMENT ON COLUMN budget_ligne_imputations.type_imputation IS 'Type d''imputation: BUDGET, ENGAGEMENT, DEPENSE';
 
 -- ============================================================================
--- SECTION 14: NOTIFICATIONS & TEAM MESSAGING
+-- SECTION 14: CONVENTION COMMENTS, TAGS, FOLLOWERS (ERP Features)
+-- ============================================================================
+
+-- Convention Comments (Chatter style Odoo)
+CREATE TABLE IF NOT EXISTS convention_comments (
+    id BIGSERIAL PRIMARY KEY,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    author_id BIGINT NOT NULL REFERENCES users(id),
+    content TEXT NOT NULL,
+    parent_comment_id BIGINT REFERENCES convention_comments(id) ON DELETE CASCADE,
+    comment_type VARCHAR(20) NOT NULL DEFAULT 'COMMENT',
+    mentions TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_conv_comments_convention ON convention_comments(convention_id);
+CREATE INDEX IF NOT EXISTS idx_conv_comments_author ON convention_comments(author_id);
+CREATE INDEX IF NOT EXISTS idx_conv_comments_parent ON convention_comments(parent_comment_id);
+CREATE INDEX IF NOT EXISTS idx_conv_comments_created ON convention_comments(created_at);
+
+COMMENT ON TABLE convention_comments IS 'Commentaires/discussions sur les conventions (chatter style Odoo)';
+COMMENT ON COLUMN convention_comments.comment_type IS 'Type: COMMENT, NOTE_INTERNE, SYSTEM';
+COMMENT ON COLUMN convention_comments.mentions IS 'IDs utilisateurs mentionnés (séparés par virgules)';
+
+-- Convention Tags (étiquettes)
+CREATE TABLE IF NOT EXISTS convention_tags (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    color VARCHAR(7) NOT NULL DEFAULT '#6e5dc6',
+    description VARCHAR(200),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_conv_tags_name ON convention_tags(name);
+
+COMMENT ON TABLE convention_tags IS 'Tags/étiquettes pour catégoriser les conventions';
+
+-- Convention Tag Assignments (many-to-many)
+CREATE TABLE IF NOT EXISTS convention_tag_assignments (
+    tag_id BIGINT NOT NULL REFERENCES convention_tags(id) ON DELETE CASCADE,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    PRIMARY KEY (tag_id, convention_id)
+);
+
+COMMENT ON TABLE convention_tag_assignments IS 'Association tags <-> conventions';
+
+-- Convention Followers (abonnés)
+CREATE TABLE IF NOT EXISTS convention_followers (
+    id BIGSERIAL PRIMARY KEY,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    subscription_type VARCHAR(20) NOT NULL DEFAULT 'ALL',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT uk_conv_follower UNIQUE (convention_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_conv_followers_convention ON convention_followers(convention_id);
+CREATE INDEX IF NOT EXISTS idx_conv_followers_user ON convention_followers(user_id);
+
+COMMENT ON TABLE convention_followers IS 'Abonnés d''une convention (reçoivent les notifications)';
+COMMENT ON COLUMN convention_followers.subscription_type IS 'Type: ALL, WORKFLOW_ONLY, COMMENTS_ONLY';
+
+-- Add priority and deadline to conventions
+ALTER TABLE conventions ADD COLUMN IF NOT EXISTS priorite VARCHAR(15) NOT NULL DEFAULT 'NORMALE';
+ALTER TABLE conventions ADD COLUMN IF NOT EXISTS date_echeance DATE;
+ALTER TABLE conventions ADD COLUMN IF NOT EXISTS responsable_id BIGINT REFERENCES users(id);
+
+CREATE INDEX IF NOT EXISTS idx_conventions_priorite ON conventions(priorite);
+CREATE INDEX IF NOT EXISTS idx_conventions_echeance ON conventions(date_echeance);
+
+-- ============================================================================
+-- SECTION 15: NOTIFICATIONS & TEAM MESSAGING
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS notifications (

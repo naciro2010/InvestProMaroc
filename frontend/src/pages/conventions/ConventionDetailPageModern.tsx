@@ -15,6 +15,9 @@ import {
   ConventionWorkflowActions,
   ConventionRealisationSection,
   ParentConventionBanner,
+  ConventionTagsCard,
+  ConventionFollowersCard,
+  ConventionCommentsCard,
 } from '../../components/conventions/detail'
 import ConventionSmartButtons from '../../components/conventions/detail/ConventionSmartButtons'
 import ConventionSyntheseCard from '../../components/conventions/detail/ConventionSyntheseCard'
@@ -229,6 +232,12 @@ const ConventionDetailPageModern = () => {
               canEdit={canEdit} onEditField={openFieldDialog}
             />
 
+            {/* Tags & Followers bar */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+              <ConventionTagsCard conventionId={convention.id} canEdit={canEdit} />
+              <ConventionFollowersCard conventionId={convention.id} />
+            </Box>
+
             {convention.parentConventionId && convention.parentConventionNumero && (
               <Box sx={{ mb: 1.5 }}>
                 <ParentConventionBanner
@@ -298,6 +307,12 @@ const ConventionDetailPageModern = () => {
               }}
             />
 
+            {/* Discussion / Chatter ERP */}
+            <Box sx={{ mt: 2 }}>
+              <ConventionCommentsCard conventionId={convention.id} />
+            </Box>
+
+            {/* Activity log (historique des modifications) */}
             <Chatter
               entityType="convention" entityId={convention.id}
               activities={chatterActivities} loading={chatterLoading}

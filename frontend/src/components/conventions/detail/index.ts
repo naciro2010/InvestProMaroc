@@ -55,6 +55,12 @@ export { default as ConventionTraceabilityCard } from './ConventionTraceabilityC
 // Key info card (convention parameters + dates + audit trail)
 export { default as ConventionKeyInfoCard } from './ConventionKeyInfoCard'
 
+// ERP Features: Comments, Tags, Followers, Documents
+export { default as ConventionCommentsCard } from './ConventionCommentsCard'
+export { default as ConventionTagsCard } from './ConventionTagsCard'
+export { default as ConventionFollowersCard } from './ConventionFollowersCard'
+export { default as ConventionDocumentsCard } from './ConventionDocumentsCard'
+
 // Form dialogs
 export { default as ImputationFormDialog } from './ImputationFormDialog'
 

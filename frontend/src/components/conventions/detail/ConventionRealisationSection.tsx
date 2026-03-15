@@ -8,6 +8,7 @@ import { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedT
 import ConventionBudgetDistributionCard from './ConventionBudgetDistributionCard'
 import ConventionSubventionsCard from './ConventionSubventionsCard'
 import ConventionPartenairesCard from './ConventionPartenairesCard'
+import ConventionDocumentsCard from './ConventionDocumentsCard'
 import ConventionImputationsCard from './ConventionImputationsCard'
 import ConventionVersementsCard from './ConventionVersementsCard'
 import LinkProjetDialog from '../LinkProjetDialog'
@@ -219,6 +220,14 @@ const ConventionRealisationSection = ({
             {
               label: 'Imputations',
               content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} refreshKey={refreshKey} onRefresh={refreshAll} />,
+            },
+            {
+              label: 'Documents',
+              content: (
+                <Box sx={{ px: { xs: 1, md: 2 } }}>
+                  <ConventionDocumentsCard conventionId={convention.id} canEdit={canEdit} />
+                </Box>
+              ),
             },
           ]}
         />

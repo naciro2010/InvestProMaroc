@@ -6,8 +6,10 @@ import ma.investpro.entity.EntityType
 import ma.investpro.entity.User
 import ma.investpro.entity.StatutConvention
 import ma.investpro.entity.TypeConvention
+import ma.investpro.events.ActivityNotificationEvent
 import ma.investpro.repository.ConventionRepository
 import ma.investpro.repository.ConventionModificationRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,7 +22,8 @@ import java.time.LocalDateTime
 class ConventionService(
     private val conventionRepository: ConventionRepository,
     private val conventionModificationRepository: ConventionModificationRepository,
-    private val modificationEventPublisher: ModificationEventPublisher
+    private val modificationEventPublisher: ModificationEventPublisher,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
 
     // ========== CRUD Operations ==========
@@ -160,6 +163,7 @@ class ConventionService(
             description = "Convention ${saved.code} soumise pour validation",
             ancienStatut = ancienStatut, nouveauStatut = "SOUMIS"
         )
+        publishWorkflowEvent(saved, "SOUMIS", "Convention soumise pour validation")
         return saved
     }
 
@@ -191,6 +195,7 @@ class ConventionService(
             description = "Convention ${saved.code} validee",
             ancienStatut = ancienStatut, nouveauStatut = "VALIDE"
         )
+        publishWorkflowEvent(saved, "VALIDE", "Convention validée")
         return saved
     }
 
@@ -219,6 +224,7 @@ class ConventionService(
             description = "Convention ${saved.code} rejetee: $motif",
             ancienStatut = ancienStatut, nouveauStatut = "BROUILLON"
         )
+        publishWorkflowEvent(saved, "REJETE", "Convention rejetée: $motif")
         return saved
     }
 
@@ -474,4 +480,21 @@ class ConventionService(
         "description" to (convention.description ?: ""),
         "statut" to convention.statut.name
     )
+
+    /**
+     * Publier un événement de workflow pour notifier les utilisateurs.
+     */
+    private fun publishWorkflowEvent(convention: Convention, newStatus: String, message: String) {
+        val actorId = convention.createdById ?: 0L
+        eventPublisher.publishEvent(
+            ActivityNotificationEvent(
+                actorUserId = actorId,
+                title = "Convention ${convention.code} - $newStatus",
+                message = message,
+                type = "workflow",
+                contextType = "convention",
+                contextId = convention.id.toString()
+            )
+        )
+    }
 }

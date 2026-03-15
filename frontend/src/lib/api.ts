@@ -1041,6 +1041,12 @@ export interface AiStatusResponse {
   baseUrl: string | null
 }
 
+// Historique generique des modifications (Odoo-style chatter)
+export const historiqueAPI = {
+  getByEntity: (entityType: string, entityId: number) =>
+    api.get(`/historique/${entityType}/${entityId}`),
+}
+
 export const aiDashboardAPI = {
   parse: (instruction: string, conversationId?: string) =>
     api.post<ApiResponse<AiDashboardResponse>>('/ai/dashboard/parse', {

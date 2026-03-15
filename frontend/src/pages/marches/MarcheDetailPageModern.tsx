@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import {
   ControlPanel, FormView, FieldGroup, Notebook, StatusBadge,
-  InlineEditField, EditFieldDialog,
+  InlineEditField, EditFieldDialog, Chatter, useEntityHistory,
   type StatusStep, type InlineEditFieldConfig,
 } from '@/components/core'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
@@ -66,6 +66,7 @@ const MarcheDetailPageModern = () => {
   const [fournisseurs, setFournisseurs] = useState<FournisseurRef[]>([])
   const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
   const marcheId = id ? parseInt(id) : 0
+  const { activities: chatterActivities, loading: chatterLoading, refresh: refreshChatter } = useEntityHistory('MARCHE', marcheId)
 
   const loadMarche = useCallback(async (mid: number) => {
     try {
@@ -312,6 +313,12 @@ const MarcheDetailPageModern = () => {
                 { label: 'Avenants', content: <MarcheAvenantsSection marcheId={marcheId} /> },
               ]} />
             </Box>
+
+            <Chatter
+              entityType="marche" entityId={marcheId}
+              activities={chatterActivities} loading={chatterLoading}
+              onRefresh={refreshChatter}
+            />
           </FormView>
         </Container>
       </Box>

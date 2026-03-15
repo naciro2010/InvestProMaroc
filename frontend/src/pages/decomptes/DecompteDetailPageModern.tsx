@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Container, Button, Skeleton, Alert, Typography, CircularProgress } from '@mui/material'
 import { Pencil, Lock, Printer, CheckCircle, XCircle } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge } from '@/components/core'
+import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge, Chatter, useEntityHistory } from '@/components/core'
 import type { StatusStep } from '@/components/core'
 import { api } from '../../lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
@@ -59,6 +59,8 @@ const DecompteDetailPageModern = () => {
   const [decompte, setDecompte] = useState<Decompte | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [workflowLoading, setWorkflowLoading] = useState(false)
+  const decompteId = id ? parseInt(id) : 0
+  const { activities: chatterActivities, loading: chatterLoading, refresh: refreshChatter } = useEntityHistory('DECOMPTE', decompteId)
 
   useEffect(() => {
     if (id) loadDecompte(parseInt(id))
@@ -293,6 +295,12 @@ const DecompteDetailPageModern = () => {
                 ]}
               />
             </Box>
+
+            <Chatter
+              entityType="decompte" entityId={decompteId}
+              activities={chatterActivities} loading={chatterLoading}
+              onRefresh={refreshChatter}
+            />
           </FormView>
         </Container>
       </Box>

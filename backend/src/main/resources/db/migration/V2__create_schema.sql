@@ -1108,6 +1108,38 @@ CREATE INDEX IF NOT EXISTS idx_team_messages_recipient_read ON team_messages(rec
 COMMENT ON TABLE team_messages IS 'Messages internes entre membres de l''équipe';
 
 -- ============================================================================
+-- SECTION 16: HISTORIQUE GENERIQUE DES MODIFICATIONS (ODOO-STYLE)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS entity_modifications (
+    id BIGSERIAL PRIMARY KEY,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id BIGINT NOT NULL,
+    modifie_par_id BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    date_modification TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    type_modification VARCHAR(50) NOT NULL DEFAULT 'UPDATE',
+    description TEXT NOT NULL,
+    donnees_avant JSONB,
+    donnees_apres JSONB,
+    champs_modifies TEXT[] NOT NULL DEFAULT '{}',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_entity_modifications_entity ON entity_modifications(entity_type, entity_id, date_modification DESC);
+CREATE INDEX IF NOT EXISTS idx_entity_modifications_user ON entity_modifications(modifie_par_id);
+CREATE INDEX IF NOT EXISTS idx_entity_modifications_date ON entity_modifications(date_modification DESC);
+CREATE INDEX IF NOT EXISTS idx_entity_modifications_type ON entity_modifications(entity_type, type_modification);
+
+COMMENT ON TABLE entity_modifications IS 'Historique generique des modifications pour toutes les entites (style Odoo chatter)';
+COMMENT ON COLUMN entity_modifications.entity_type IS 'Type d''entite: MARCHE, PROJET, DECOMPTE, BUDGET, AVENANT_CONVENTION, etc.';
+COMMENT ON COLUMN entity_modifications.entity_id IS 'ID de l''entite modifiee';
+COMMENT ON COLUMN entity_modifications.type_modification IS 'Type: CREATION, UPDATE, STATUS_CHANGE, WORKFLOW, DELETE';
+COMMENT ON COLUMN entity_modifications.description IS 'Description lisible de la modification';
+COMMENT ON COLUMN entity_modifications.donnees_avant IS 'Snapshot JSONB avant modification (optionnel)';
+COMMENT ON COLUMN entity_modifications.donnees_apres IS 'Snapshot JSONB apres modification (optionnel)';
+COMMENT ON COLUMN entity_modifications.champs_modifies IS 'Liste des champs modifies';
+
+-- ============================================================================
 -- END OF SCHEMA DEFINITION
 -- ============================================================================
 -- Total Tables: 42+

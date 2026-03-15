@@ -86,6 +86,7 @@ export { default as EditFieldDialog } from './EditFieldDialog'
 // Chatter (activity log / history timeline)
 export { default as Chatter } from './chatter'
 export type { ChatterActivity, ChatterProps } from './chatter'
+export { useEntityHistory } from './chatter'
 
 // Smart Button (Odoo-style stat buttons for related record counts)
 export { SmartButton, SmartButtonsRow } from './SmartButton'

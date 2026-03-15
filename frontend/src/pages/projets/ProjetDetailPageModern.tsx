@@ -4,7 +4,7 @@ import { Box, Container, Skeleton, Alert } from '@mui/material'
 import AppLayout from '@/components/layout/AppLayout'
 import {
   ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge,
-  InlineEditField, EditFieldDialog,
+  InlineEditField, EditFieldDialog, Chatter, useEntityHistory,
   type StatusStep,
 } from '@/components/core'
 import { useToast } from '@/contexts/ToastContext'
@@ -58,6 +58,7 @@ const ProjetDetailPageModern = () => {
   const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
 
   const projetId = id ? parseInt(id) : 0
+  const { activities: chatterActivities, loading: chatterLoading, refresh: refreshChatter } = useEntityHistory('PROJET', projetId)
 
   const loadProjet = useCallback(async (pid: number) => {
     try {
@@ -249,6 +250,12 @@ const ProjetDetailPageModern = () => {
                 ]}
               />
             </Box>
+
+            <Chatter
+              entityType="projet" entityId={projetId}
+              activities={chatterActivities} loading={chatterLoading}
+              onRefresh={refreshChatter}
+            />
           </FormView>
         </Container>
       </Box>

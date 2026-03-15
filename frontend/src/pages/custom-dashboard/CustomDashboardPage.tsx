@@ -1,7 +1,10 @@
 /**
  * CustomDashboardPage - Claude-inspired chat interface for dashboard generation.
  *
- * Flow: User instruction → AI (Ollama) or rule-based parser → fetch data → render artifact.
+ * Flow:
+ * - AI available: User instruction → SSE streaming (markdown analysis + viz config) → render
+ * - AI offline: User instruction → rule-based parser → fetch data → render artifact
+ *
  * Supports follow-up modifications (e.g. "change en camembert", "top 5 seulement").
  */
 
@@ -21,6 +24,7 @@ import {
   fetchDataForInstruction,
   detectFollowUp,
   applyFollowUp,
+  useAiStream,
   type ParsedInstruction,
   type FetchedData,
   type VisualizationType,
@@ -42,6 +46,8 @@ interface ChatItem {
   instruction?: ParsedInstruction
   data?: FetchedData
   aiPowered?: boolean
+  isStreaming?: boolean
+  markdownContent?: string
 }
 
 const STORAGE_KEY = 'investpro-dashboard-chat'
@@ -51,18 +57,21 @@ const AI_STATUS_KEY = 'investpro-ai-status'
 // Persistence
 // ============================================================================
 
+interface StoredChatItem {
+  id: string
+  type: 'user' | 'system'
+  text: string
+  timestamp: string
+  instruction?: ParsedInstruction
+  aiPowered?: boolean
+  markdownContent?: string
+}
+
 function loadChatHistory(): ChatItem[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return []
-    const parsed = JSON.parse(stored) as Array<{
-      id: string
-      type: 'user' | 'system'
-      text: string
-      timestamp: string
-      instruction?: ParsedInstruction
-      aiPowered?: boolean
-    }>
+    const parsed = JSON.parse(stored) as StoredChatItem[]
     return parsed.map((item) => ({
       ...item,
       timestamp: new Date(item.timestamp),
@@ -74,14 +83,17 @@ function loadChatHistory(): ChatItem[] {
 
 function saveChatHistory(items: ChatItem[]): void {
   try {
-    const toSave = items.map((item) => ({
-      id: item.id,
-      type: item.type,
-      text: item.text,
-      timestamp: item.timestamp.toISOString(),
-      instruction: item.instruction,
-      aiPowered: item.aiPowered,
-    }))
+    const toSave: StoredChatItem[] = items
+      .filter((item) => !item.isStreaming)
+      .map((item) => ({
+        id: item.id,
+        type: item.type,
+        text: item.text,
+        timestamp: item.timestamp.toISOString(),
+        instruction: item.instruction,
+        aiPowered: item.aiPowered,
+        markdownContent: item.markdownContent,
+      }))
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
   } catch {
     // Silently fail if localStorage is full
@@ -89,7 +101,7 @@ function saveChatHistory(items: ChatItem[]): void {
 }
 
 // ============================================================================
-// AI → ParsedInstruction conversion
+// AI → ParsedInstruction conversion (for sync fallback)
 // ============================================================================
 
 const VALID_VIZ: VisualizationType[] = ['table', 'bar', 'pie', 'line', 'kpi']
@@ -98,18 +110,9 @@ const VALID_GROUPBY: GroupByField[] = ['statut', 'type', 'convention', 'marche',
 const VALID_METRICS: MetricType[] = ['count', 'sum', 'average']
 const VALID_FIELDS: MetricField[] = ['montant', 'montantHT', 'montantTTC', 'budget', 'netAPayer']
 
-/** Map unsupported AI viz types to supported ones */
 const VIZ_FALLBACK: Record<string, VisualizationType> = {
-  donut: 'pie',
-  area: 'line',
-  stacked_bar: 'bar',
-  horizontal_bar: 'bar',
-  treemap: 'pie',
-  heatmap: 'bar',
-  scatter: 'bar',
-  radar: 'bar',
-  gauge: 'kpi',
-  number: 'kpi',
+  donut: 'pie', area: 'line', stacked_bar: 'bar', horizontal_bar: 'bar',
+  treemap: 'pie', heatmap: 'bar', scatter: 'bar', radar: 'bar', gauge: 'kpi', number: 'kpi',
 }
 
 function mapVisualization(raw: string): VisualizationType {
@@ -117,7 +120,6 @@ function mapVisualization(raw: string): VisualizationType {
   return VIZ_FALLBACK[raw] || 'table'
 }
 
-/** Map unsupported AI metric types */
 function mapMetric(raw: string): MetricType {
   if (VALID_METRICS.includes(raw as MetricType)) return raw as MetricType
   if (['min', 'max', 'percentage'].includes(raw)) return 'sum'
@@ -127,13 +129,10 @@ function mapMetric(raw: string): MetricType {
 function aiToParsedInstruction(ai: AiParsedInstruction): ParsedInstruction {
   return {
     visualization: mapVisualization(ai.visualization),
-    entity: VALID_ENTITIES.includes(ai.entity as EntityType)
-      ? ai.entity as EntityType : 'conventions',
-    groupBy: ai.groupBy && VALID_GROUPBY.includes(ai.groupBy as GroupByField)
-      ? ai.groupBy as GroupByField : null,
+    entity: VALID_ENTITIES.includes(ai.entity as EntityType) ? ai.entity as EntityType : 'conventions',
+    groupBy: ai.groupBy && VALID_GROUPBY.includes(ai.groupBy as GroupByField) ? ai.groupBy as GroupByField : null,
     metric: mapMetric(ai.metric),
-    metricField: VALID_FIELDS.includes(ai.metricField as MetricField)
-      ? ai.metricField as MetricField : 'montant',
+    metricField: VALID_FIELDS.includes(ai.metricField as MetricField) ? ai.metricField as MetricField : 'montant',
     limit: ai.limit,
     title: ai.title || 'Résultat',
     confidence: ai.confidence,
@@ -163,6 +162,16 @@ const CustomDashboardPage = () => {
   const [aiModel, setAiModel] = useState<string | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const conversationId = useRef(`conv-${Date.now()}`)
+  const streamingMsgId = useRef<string | null>(null)
+
+  // SSE streaming hook
+  const {
+    streamedText,
+    instruction: streamInstruction,
+    isStreaming: isAiStreaming,
+    error: streamError,
+    startStream,
+  } = useAiStream()
 
   // Check AI status on mount (with 60s cache)
   useEffect(() => {
@@ -200,7 +209,67 @@ const CustomDashboardPage = () => {
   // Auto-scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [items, isLoading])
+  }, [items, isLoading, streamedText])
+
+  // Update streaming message as text arrives
+  useEffect(() => {
+    if (streamingMsgId.current && streamedText) {
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === streamingMsgId.current
+            ? { ...item, text: streamedText, markdownContent: streamedText, isStreaming: isAiStreaming }
+            : item
+        )
+      )
+    }
+  }, [streamedText, isAiStreaming])
+
+  // Handle stream completion - fetch data and attach visualization
+  useEffect(() => {
+    if (!isAiStreaming && streamInstruction && streamingMsgId.current) {
+      const msgId = streamingMsgId.current
+      streamingMsgId.current = null
+
+      // Fetch data for the visualization
+      fetchDataForInstruction(streamInstruction)
+        .then((data) => {
+          setItems((prev) =>
+            prev.map((item) =>
+              item.id === msgId
+                ? { ...item, instruction: streamInstruction, data, isStreaming: false, aiPowered: true }
+                : item
+            )
+          )
+        })
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : 'Erreur inconnue'
+          setItems((prev) =>
+            prev.map((item) =>
+              item.id === msgId
+                ? { ...item, text: item.text + `\n\n*Erreur de chargement des données: ${message}*`, isStreaming: false }
+                : item
+            )
+          )
+        })
+        .finally(() => setIsLoading(false))
+    }
+  }, [isAiStreaming, streamInstruction])
+
+  // Handle stream errors
+  useEffect(() => {
+    if (streamError && streamingMsgId.current) {
+      const msgId = streamingMsgId.current
+      streamingMsgId.current = null
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === msgId
+            ? { ...item, text: `Erreur IA: ${streamError}`, isStreaming: false }
+            : item
+        )
+      )
+      setIsLoading(false)
+    }
+  }, [streamError])
 
   const getLastInstruction = useCallback((): ParsedInstruction | null => {
     for (let i = items.length - 1; i >= 0; i--) {
@@ -211,43 +280,36 @@ const CustomDashboardPage = () => {
 
   const generateId = (): string => `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-  /** Try AI parsing, then rule-based fallback. */
-  const parseWithFallback = useCallback(async (
-    text: string,
-    lastInstruction: ParsedInstruction | null
-  ): Promise<{ instruction: ParsedInstruction; aiPowered: boolean } | { error: string; suggestions: string[] }> => {
-
-    // 1. Follow-up detection (rule-based, fast)
-    if (lastInstruction) {
-      const followUp = detectFollowUp(text, lastInstruction)
-      if (followUp) {
-        return { instruction: applyFollowUp(lastInstruction, followUp), aiPowered: false }
-      }
+  /** Handle AI streaming mode */
+  const handleStreamSubmit = useCallback((instructionText: string) => {
+    const userMsg: ChatItem = {
+      id: generateId(),
+      type: 'user',
+      text: instructionText,
+      timestamp: new Date(),
     }
 
-    // 2. AI parsing if available
-    if (aiAvailable) {
-      try {
-        const { data } = await aiDashboardAPI.parse(text, conversationId.current)
-        if (data.success && data.data) {
-          const parsed = aiToParsedInstruction(data.data.instruction)
-          return { instruction: parsed, aiPowered: true }
-        }
-      } catch {
-        // AI failed, fall through to rule-based
-      }
+    const systemMsgId = generateId()
+    const systemMsg: ChatItem = {
+      id: systemMsgId,
+      type: 'system',
+      text: '',
+      timestamp: new Date(),
+      isStreaming: true,
+      aiPowered: true,
     }
 
-    // 3. Rule-based fallback
-    const result = parseInstruction(text)
-    if (result.success) {
-      return { instruction: result.instruction, aiPowered: false }
-    }
+    streamingMsgId.current = systemMsgId
+    setItems((prev) => [...prev, userMsg, systemMsg])
+    setIsLoading(true)
+    setErrorText(null)
+    setErrorSuggestions([])
 
-    return { error: result.error.message, suggestions: result.error.suggestions }
-  }, [aiAvailable])
+    startStream(instructionText, conversationId.current)
+  }, [startStream])
 
-  const handleSubmit = useCallback(async (instructionText: string) => {
+  /** Handle rule-based (sync) mode */
+  const handleSyncSubmit = useCallback(async (instructionText: string) => {
     setErrorText(null)
     setErrorSuggestions([])
 
@@ -257,39 +319,81 @@ const CustomDashboardPage = () => {
       text: instructionText,
       timestamp: new Date(),
     }
-    setItems((prev: ChatItem[]) => [...prev, userMsg])
-
+    setItems((prev) => [...prev, userMsg])
     setIsLoading(true)
+
     try {
       const lastInstruction = getLastInstruction()
-      const parseResult = await parseWithFallback(instructionText, lastInstruction)
 
-      if ('error' in parseResult) {
-        setErrorText(parseResult.error)
-        setErrorSuggestions(parseResult.suggestions)
+      // 1. Follow-up detection (rule-based, fast)
+      if (lastInstruction) {
+        const followUp = detectFollowUp(instructionText, lastInstruction)
+        if (followUp) {
+          const instruction = applyFollowUp(lastInstruction, followUp)
+          const data = await fetchDataForInstruction(instruction)
+          const systemMsg: ChatItem = {
+            id: generateId(),
+            type: 'system',
+            text: `${instruction.title} (${data.totalCount} résultat${data.totalCount > 1 ? 's' : ''})`,
+            timestamp: new Date(),
+            instruction,
+            data,
+            aiPowered: false,
+          }
+          setItems((prev) => [...prev, systemMsg])
+          return
+        }
+      }
+
+      // 2. Try sync AI parsing if available
+      if (aiAvailable) {
+        try {
+          const { data: apiData } = await aiDashboardAPI.parse(instructionText, conversationId.current)
+          if (apiData.success && apiData.data) {
+            const instruction = aiToParsedInstruction(apiData.data.instruction)
+            const data = await fetchDataForInstruction(instruction)
+            const systemMsg: ChatItem = {
+              id: generateId(),
+              type: 'system',
+              text: `${instruction.title} (${data.totalCount} résultat${data.totalCount > 1 ? 's' : ''})`,
+              timestamp: new Date(),
+              instruction,
+              data,
+              aiPowered: true,
+            }
+            setItems((prev) => [...prev, systemMsg])
+            return
+          }
+        } catch {
+          // AI failed, fall through to rule-based
+        }
+      }
+
+      // 3. Rule-based fallback
+      const result = parseInstruction(instructionText)
+      if (result.success) {
+        const data = await fetchDataForInstruction(result.instruction)
+        const systemMsg: ChatItem = {
+          id: generateId(),
+          type: 'system',
+          text: `${result.instruction.title} (${data.totalCount} résultat${data.totalCount > 1 ? 's' : ''})`,
+          timestamp: new Date(),
+          instruction: result.instruction,
+          data,
+          aiPowered: false,
+        }
+        setItems((prev) => [...prev, systemMsg])
+      } else {
+        setErrorText(result.error.message)
+        setErrorSuggestions(result.error.suggestions)
         const errorMsg: ChatItem = {
           id: generateId(),
           type: 'system',
-          text: parseResult.error,
+          text: result.error.message,
           timestamp: new Date(),
         }
-        setItems((prev: ChatItem[]) => [...prev, errorMsg])
-        return
+        setItems((prev) => [...prev, errorMsg])
       }
-
-      const { instruction, aiPowered } = parseResult
-      const data = await fetchDataForInstruction(instruction)
-
-      const systemMsg: ChatItem = {
-        id: generateId(),
-        type: 'system',
-        text: `${instruction.title} (${data.totalCount} résultat${data.totalCount > 1 ? 's' : ''})`,
-        timestamp: new Date(),
-        instruction,
-        data,
-        aiPowered,
-      }
-      setItems((prev: ChatItem[]) => [...prev, systemMsg])
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erreur inconnue'
       const errorMsg: ChatItem = {
@@ -298,15 +402,33 @@ const CustomDashboardPage = () => {
         text: `Erreur lors du chargement: ${message}`,
         timestamp: new Date(),
       }
-      setItems((prev: ChatItem[]) => [...prev, errorMsg])
+      setItems((prev) => [...prev, errorMsg])
       setErrorText(`Erreur: ${message}`)
     } finally {
       setIsLoading(false)
     }
-  }, [getLastInstruction, parseWithFallback])
+  }, [aiAvailable, getLastInstruction])
+
+  /** Main submit handler - routes to streaming or sync mode */
+  const handleSubmit = useCallback((instructionText: string) => {
+    if (aiAvailable) {
+      // Check follow-up first (rule-based, no streaming needed)
+      const lastInstruction = getLastInstruction()
+      if (lastInstruction) {
+        const followUp = detectFollowUp(instructionText, lastInstruction)
+        if (followUp) {
+          handleSyncSubmit(instructionText)
+          return
+        }
+      }
+      handleStreamSubmit(instructionText)
+    } else {
+      handleSyncSubmit(instructionText)
+    }
+  }, [aiAvailable, getLastInstruction, handleStreamSubmit, handleSyncSubmit])
 
   const handleRemoveWidget = useCallback((id: string) => {
-    setItems((prev: ChatItem[]) => prev.filter((item: ChatItem) => item.id !== id))
+    setItems((prev) => prev.filter((item) => item.id !== id))
   }, [])
 
   const handleClearAll = useCallback(() => {
@@ -402,12 +524,13 @@ const CustomDashboardPage = () => {
                 <WelcomeSplash onSuggestionClick={handleSubmit} />
               ) : (
                 <Box sx={{ pt: 2 }}>
-                  {items.map((item: ChatItem) => (
+                  {items.map((item) => (
                     <ChatMessage
                       key={item.id}
                       type={item.type}
-                      content={item.text}
+                      content={item.markdownContent || item.text}
                       timestamp={item.timestamp}
+                      isStreaming={item.isStreaming}
                     >
                       {item.instruction && item.data && (
                         <Box>
@@ -443,8 +566,8 @@ const CustomDashboardPage = () => {
                     </ChatMessage>
                   ))}
 
-                  {/* Loading indicator */}
-                  {isLoading && (
+                  {/* Loading indicator (non-streaming mode only) */}
+                  {isLoading && !isAiStreaming && (
                     <ChatMessage
                       type="system"
                       content=""
@@ -463,7 +586,7 @@ const CustomDashboardPage = () => {
                       }}>
                         <CircularProgress size={16} sx={{ color: colors.primary[400] }} />
                         <Typography sx={{ fontSize: typography.sizes.xs, color: colors.neutral[400] }}>
-                          {aiAvailable ? 'Analyse IA en cours...' : 'Chargement des données...'}
+                          Chargement des données...
                         </Typography>
                       </Box>
                     </ChatMessage>
@@ -493,7 +616,7 @@ const CustomDashboardPage = () => {
                   </Typography>
                   {errorSuggestions.length > 0 && (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                      {errorSuggestions.map((suggestion: string, idx: number) => (
+                      {errorSuggestions.map((suggestion, idx) => (
                         <Chip
                           key={idx}
                           label={suggestion}

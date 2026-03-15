@@ -35,6 +35,9 @@ dependencies {
     // Spring AI + Ollama
     implementation("org.springframework.ai:spring-ai-starter-model-ollama")
 
+    // WebFlux for SSE streaming
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

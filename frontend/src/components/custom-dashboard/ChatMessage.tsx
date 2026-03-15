@@ -1,22 +1,24 @@
 /**
  * ChatMessage - Claude-like message bubble for the dashboard chat.
  *
- * Renders user messages as right-aligned bubbles and system responses
- * as left-aligned cards with full-width artifact children.
+ * Renders user messages as right-aligned bubbles (plain text) and system responses
+ * as left-aligned cards with markdown rendering and full-width artifact children.
  */
 
 import { Box, Typography } from '@mui/material'
 import { User, Sparkles } from 'lucide-react'
 import { colors, typography, borders } from '@/lib/designSystem'
+import StreamingMarkdown from './StreamingMarkdown'
 
 interface ChatMessageProps {
   type: 'user' | 'system'
   content: string
   timestamp: Date
+  isStreaming?: boolean
   children?: React.ReactNode
 }
 
-const ChatMessage = ({ type, content, timestamp, children }: ChatMessageProps) => {
+const ChatMessage = ({ type, content, timestamp, isStreaming = false, children }: ChatMessageProps) => {
   const isUser = type === 'user'
 
   return (
@@ -64,14 +66,32 @@ const ChatMessage = ({ type, content, timestamp, children }: ChatMessageProps) =
             border: `1px solid ${isUser ? colors.primary[100] : colors.neutral[100]}`,
             maxWidth: isUser ? '100%' : 'fit-content',
           }}>
-            <Typography sx={{
-              fontSize: typography.sizes.sm,
-              color: colors.textPrimary,
-              lineHeight: 1.5,
-              whiteSpace: 'pre-wrap',
-            }}>
-              {content}
-            </Typography>
+            {isUser ? (
+              <Typography sx={{
+                fontSize: typography.sizes.sm,
+                color: colors.textPrimary,
+                lineHeight: 1.5,
+                whiteSpace: 'pre-wrap',
+              }}>
+                {content}
+              </Typography>
+            ) : (
+              <StreamingMarkdown content={content} isStreaming={isStreaming} />
+            )}
+          </Box>
+        )}
+
+        {/* Streaming indicator when no content yet */}
+        {!content && isStreaming && (
+          <Box sx={{
+            display: 'inline-block',
+            px: 1.75,
+            py: 1,
+            borderRadius: `${borders.radius.lg} ${borders.radius.lg} ${borders.radius.lg} 4px`,
+            backgroundColor: colors.neutral[50],
+            border: `1px solid ${colors.neutral[100]}`,
+          }}>
+            <StreamingMarkdown content="" isStreaming />
           </Box>
         )}
 

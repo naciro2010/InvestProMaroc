@@ -3,21 +3,26 @@ package ma.investpro.controller
 import ma.investpro.dto.AiDashboardResponse
 import ma.investpro.dto.AiInstructionRequest
 import ma.investpro.dto.AiStatusResponse
+import ma.investpro.dto.AiStreamEvent
 import ma.investpro.dto.ApiResponse
 import ma.investpro.security.annotations.ReadAccess
 import ma.investpro.service.AiDashboardService
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.http.codec.ServerSentEvent
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import reactor.core.publisher.Flux
 
 /**
  * Controller for AI-powered dashboard generation.
  *
- * POST /api/ai/dashboard/parse - Parse a French instruction into a structured query
- * GET  /api/ai/dashboard/status - Check if Ollama AI is available
+ * POST /api/ai/dashboard/parse   - Parse instruction (sync, JSON only)
+ * POST /api/ai/dashboard/stream  - Stream instruction (SSE, markdown + viz)
+ * GET  /api/ai/dashboard/status  - Check if Ollama AI is available
  */
 @RestController
 @RequestMapping("/api/ai/dashboard")
@@ -26,7 +31,35 @@ class AiDashboardController(
     private val aiDashboardService: AiDashboardService
 ) {
     /**
-     * Parse a French text instruction into a structured dashboard query.
+     * Stream a rich AI response via Server-Sent Events.
+     * Returns markdown analysis text progressively, then a visualization config.
+     *
+     * SSE event types:
+     * - text: chunk of markdown content
+     * - visualization: ParsedInstruction JSON
+     * - done: stream complete
+     * - error: error occurred
+     */
+    @PostMapping("/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+    fun streamInstruction(@RequestBody request: AiInstructionRequest): Flux<ServerSentEvent<AiStreamEvent>> {
+        if (request.instruction.isBlank()) {
+            return Flux.just(
+                ServerSentEvent.builder(AiStreamEvent.error("L'instruction ne peut pas être vide"))
+                    .event("error")
+                    .build()
+            )
+        }
+
+        return aiDashboardService.streamInstruction(request.instruction, request.conversationId)
+            .map { event ->
+                ServerSentEvent.builder(event)
+                    .event(event.type)
+                    .build()
+            }
+    }
+
+    /**
+     * Parse a French text instruction into a structured dashboard query (sync).
      * Uses Ollama LLM for intelligent parsing with conversation memory.
      *
      * Returns 200 with parsed instruction if AI succeeds.

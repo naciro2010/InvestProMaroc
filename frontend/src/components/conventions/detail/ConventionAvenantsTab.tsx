@@ -1,3 +1,4 @@
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -15,6 +16,7 @@ import {
 import { Visibility, History } from '@mui/icons-material'
 import StatusBadge from '@/components/core/StatusBadge'
 import { colors, typography } from '@/lib/designSystem'
+import { thStyle, type Avenant } from './types'
 
 interface Convention {
   id: number
@@ -23,28 +25,18 @@ interface Convention {
   budget: number
 }
 
-interface Avenant {
-  id: number
-  numeroAvenant: string
-  dateAvenant: string
-  statut: string
-  objet: string
-  type: string
-}
-
 interface ConventionAvenantsTabProps {
   convention: Convention
   avenants: Avenant[]
   formatCurrency: (amount: number) => string
   formatDate: (date: string) => string
-  getStatusColor: (statut: string) => 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
 }
 
 /**
  * ConventionAvenantsTab - Avenants list using design system tokens.
  * Clean table with StatusBadge, consistent typography.
  */
-const ConventionAvenantsTab = ({ convention, avenants, formatCurrency, formatDate }: ConventionAvenantsTabProps) => {
+const ConventionAvenantsTab = ({ convention, avenants, formatCurrency, formatDate }: ConventionAvenantsTabProps): React.ReactElement => {
   const navigate = useNavigate()
 
   if (avenants.length === 0) {
@@ -123,14 +115,6 @@ const ConventionAvenantsTab = ({ convention, avenants, formatCurrency, formatDat
       </TableContainer>
     </Box>
   )
-}
-
-const thStyle = {
-  fontWeight: typography.weights.semibold,
-  fontSize: typography.sizes.xs,
-  color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
 }
 
 export default ConventionAvenantsTab

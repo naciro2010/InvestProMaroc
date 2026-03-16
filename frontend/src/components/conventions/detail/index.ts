@@ -61,6 +61,14 @@ export { default as ConventionTagsCard } from './ConventionTagsCard'
 export { default as ConventionFollowersCard } from './ConventionFollowersCard'
 export { default as ConventionDocumentsCard } from './ConventionDocumentsCard'
 
+// ERP v2: Advanced features (Odoo-inspired)
+export { default as ConventionAlertBanner } from './ConventionAlertBanner'
+export { default as ConventionProgressCard } from './ConventionProgressCard'
+export { default as ConventionScheduledActivities } from './ConventionScheduledActivities'
+export { default as ConventionActionsMenu } from './ConventionActionsMenu'
+export { default as ConventionTimelineCard } from './ConventionTimelineCard'
+export { default as ConventionQuickSummary } from './ConventionQuickSummary'
+
 // Form dialogs
 export { default as ImputationFormDialog } from './ImputationFormDialog'
 

@@ -590,3 +590,16 @@ INSERT INTO avenant_conventions (id, convention_id, numero_avenant, date_avenant
   1, '2023-06-02', '2023-06-10', 2, 'Extension programme avec ligne tramway T3');
 
 SELECT setval('avenant_conventions_id_seq', 5, true);
+
+-- ============================================================================
+-- Historique generique des modifications (entity_modifications)
+-- ============================================================================
+INSERT INTO entity_modifications (id, entity_type, entity_id, modifie_par_id, date_modification, type_modification, description, champs_modifies) VALUES
+(1, 'MARCHE', 1, 1, NOW() - INTERVAL '10 days', 'CREATION', 'Creation du marche MARCHE-001', ARRAY['numeroMarche','objet','montantHt','statut']),
+(2, 'MARCHE', 1, 2, NOW() - INTERVAL '5 days', 'STATUS_CHANGE', 'Changement de statut: BROUILLON → EN_COURS', ARRAY['statut']),
+(3, 'PROJET', 1, 1, NOW() - INTERVAL '15 days', 'CREATION', 'Creation du projet PROJ-001', ARRAY['code','nom','budgetTotal','statut']),
+(4, 'PROJET', 1, 2, NOW() - INTERVAL '8 days', 'UPDATE', 'Mise a jour du budget total', ARRAY['budgetTotal']),
+(5, 'DECOMPTE', 1, 2, NOW() - INTERVAL '7 days', 'CREATION', 'Creation du decompte DC-001', ARRAY['numeroDecompte','montantBrutHT','statut']),
+(6, 'BUDGET', 1, 1, NOW() - INTERVAL '12 days', 'CREATION', 'Creation du budget V0', ARRAY['version','totalBudget','statut']);
+
+SELECT setval('entity_modifications_id_seq', 6, true);

@@ -2,6 +2,7 @@ package ma.investpro.service
 
 import ma.investpro.entity.Convention
 import ma.investpro.entity.ConventionModification
+import ma.investpro.entity.EntityType
 import ma.investpro.entity.User
 import ma.investpro.entity.StatutConvention
 import ma.investpro.entity.TypeConvention
@@ -18,7 +19,8 @@ import java.time.LocalDateTime
 @Transactional
 class ConventionService(
     private val conventionRepository: ConventionRepository,
-    private val conventionModificationRepository: ConventionModificationRepository
+    private val conventionModificationRepository: ConventionModificationRepository,
+    private val modificationEventPublisher: ModificationEventPublisher
 ) {
 
     // ========== CRUD Operations ==========
@@ -53,7 +55,15 @@ class ConventionService(
         convention.statut = StatutConvention.BROUILLON
         convention.isLocked = false
 
-        return conventionRepository.save(convention)
+        val saved = conventionRepository.save(convention)
+
+        modificationEventPublisher.publishCreation(
+            entityType = "CONVENTION",
+            entityId = saved.id!!,
+            description = "Creation de la convention ${saved.code}"
+        )
+
+        return saved
     }
 
     fun update(id: Long, convention: Convention): Convention {
@@ -70,6 +80,9 @@ class ConventionService(
             "Seules les conventions en BROUILLON peuvent être modifiées"
         }
 
+        // Snapshot avant modification
+        val avant = snapshotConvention(existing)
+
         // Mise à jour des champs
         existing.apply {
             libelle = convention.libelle
@@ -85,7 +98,24 @@ class ConventionService(
             description = convention.description
         }
 
-        return conventionRepository.save(existing)
+        val saved = conventionRepository.save(existing)
+
+        // Snapshot apres et calcul des champs modifies
+        val apres = snapshotConvention(saved)
+        val champsModifies = avant.keys.filter { avant[it] != apres[it] }
+        if (champsModifies.isNotEmpty()) {
+            modificationEventPublisher.publish(
+                entityType = "CONVENTION",
+                entityId = id,
+                typeModification = "UPDATE",
+                description = "Mise a jour de la convention ${saved.code}",
+                champsModifies = champsModifies,
+                donneesAvant = avant.filterKeys { it in champsModifies },
+                donneesApres = apres.filterKeys { it in champsModifies }
+            )
+        }
+
+        return saved
     }
 
     fun delete(id: Long) {
@@ -120,10 +150,17 @@ class ConventionService(
         // Validations métier avant soumission
         validateConventionComplete(convention)
 
+        val ancienStatut = convention.statut.name
         convention.statut = StatutConvention.SOUMIS
         convention.dateSoumission = LocalDate.now()
 
-        return conventionRepository.save(convention)
+        val saved = conventionRepository.save(convention)
+        modificationEventPublisher.publishStatusChange(
+            entityType = "CONVENTION", entityId = id,
+            description = "Convention ${saved.code} soumise pour validation",
+            ancienStatut = ancienStatut, nouveauStatut = "SOUMIS"
+        )
+        return saved
     }
 
     /**
@@ -138,6 +175,7 @@ class ConventionService(
             "Seules les conventions SOUMISES peuvent être validées"
         }
 
+        val ancienStatut = convention.statut.name
         convention.apply {
             statut = StatutConvention.VALIDE
             dateValidation = LocalDate.now()
@@ -147,7 +185,13 @@ class ConventionService(
             motifVerrouillage = "Convention validée"
         }
 
-        return conventionRepository.save(convention)
+        val saved = conventionRepository.save(convention)
+        modificationEventPublisher.publishStatusChange(
+            entityType = "CONVENTION", entityId = id,
+            description = "Convention ${saved.code} validee",
+            ancienStatut = ancienStatut, nouveauStatut = "VALIDE"
+        )
+        return saved
     }
 
     /**
@@ -162,13 +206,20 @@ class ConventionService(
             "Seules les conventions SOUMISES peuvent être rejetées"
         }
 
+        val ancienStatut = convention.statut.name
         convention.apply {
             statut = StatutConvention.BROUILLON
             motifRejet = motif
             dateSoumission = null
         }
 
-        return conventionRepository.save(convention)
+        val saved = conventionRepository.save(convention)
+        modificationEventPublisher.publishStatusChange(
+            entityType = "CONVENTION", entityId = id,
+            description = "Convention ${saved.code} rejetee: $motif",
+            ancienStatut = ancienStatut, nouveauStatut = "BROUILLON"
+        )
+        return saved
     }
 
     // Legacy methods kept for backward compatibility but simplified
@@ -404,4 +455,23 @@ class ConventionService(
             else -> "UPDATE"
         }
     }
+
+    /**
+     * Cree un snapshot string des champs principaux d'une convention
+     * pour comparaison avant/apres dans l'historique.
+     */
+    private fun snapshotConvention(convention: Convention): Map<String, String> = mapOf(
+        "libelle" to (convention.libelle ?: ""),
+        "numero" to convention.numero,
+        "objet" to (convention.objet ?: ""),
+        "typeConvention" to convention.typeConvention.name,
+        "tauxCommission" to convention.tauxCommission.toString(),
+        "budget" to convention.budget.toString(),
+        "baseCalcul" to (convention.baseCalcul ?: ""),
+        "tauxTva" to convention.tauxTva.toString(),
+        "dateDebut" to convention.dateDebut.toString(),
+        "dateFin" to (convention.dateFin?.toString() ?: ""),
+        "description" to (convention.description ?: ""),
+        "statut" to convention.statut.name
+    )
 }

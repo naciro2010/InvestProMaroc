@@ -1041,6 +1041,30 @@ export interface AiStatusResponse {
   baseUrl: string | null
 }
 
+// Historique generique des modifications (Odoo-style chatter)
+export const historiqueAPI = {
+  getByEntity: (entityType: string, entityId: number) =>
+    api.get(`/historique/${entityType}/${entityId}`),
+  getRecent: (limit: number = 50) =>
+    api.get(`/historique/recent?limit=${limit}`),
+}
+
+// SSE (Server-Sent Events) endpoints pour le streaming temps reel
+export const sseAPI = {
+  /** URL SSE pour une entite specifique */
+  getEntityStreamUrl: (entityType: string, entityId: number): string => {
+    const base = resolveApiUrl().replace('/api', '')
+    return `${base}/api/sse/entity/${entityType}/${entityId}`
+  },
+  /** URL SSE globale (toutes les modifications) */
+  getGlobalStreamUrl: (): string => {
+    const base = resolveApiUrl().replace('/api', '')
+    return `${base}/api/sse/global`
+  },
+  /** Stats des connexions SSE */
+  getStats: () => api.get('/sse/stats'),
+}
+
 export const aiDashboardAPI = {
   parse: (instruction: string, conversationId?: string) =>
     api.post<ApiResponse<AiDashboardResponse>>('/ai/dashboard/parse', {

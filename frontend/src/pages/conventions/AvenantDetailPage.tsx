@@ -23,6 +23,8 @@ import {
   Notebook,
   InlineTable,
   StatusBadge,
+  Chatter,
+  useEntityHistory,
 } from '@/components/core'
 import type { StatusStep } from '@/components/core'
 import type { BreadcrumbSegment } from '@/components/core/ModernBreadcrumb'
@@ -60,6 +62,8 @@ const AvenantDetailPage = () => {
 
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [rejectMotif, setRejectMotif] = useState('')
+  const avenantIdNum = avenantId ? parseInt(avenantId) : 0
+  const { activities: chatterActivities, loading: chatterLoading, refresh: refreshChatter } = useEntityHistory('AVENANT_CONVENTION', avenantIdNum)
 
   useEffect(() => {
     if (avenantId) {
@@ -238,52 +242,6 @@ const AvenantDetailPage = () => {
 
   const notebookTabs: Array<{ label: string; content: React.ReactNode }> = [
     {
-      label: 'Historique',
-      content: (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: colors.neutral[400] }} />
-              <Box sx={{ width: 2, height: 40, bgcolor: colors.border }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>Cree</Typography>
-              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-                {formatDate(avenant.createdAt)} par {avenant.createdByName || 'Systeme'}
-              </Typography>
-            </Box>
-          </Box>
-          {avenant.dateSoumission && (
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: colors.info[500] }} />
-                <Box sx={{ width: 2, height: 40, bgcolor: colors.border }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>Soumis pour validation</Typography>
-                <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-                  {formatDate(avenant.dateSoumission)} par {avenant.soumisParName || 'Utilisateur'}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-          {avenant.dateValidation && (
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: colors.success[500] }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>Valide</Typography>
-                <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-                  {formatDate(avenant.dateValidation)} par {avenant.valideParName || 'Administrateur'}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-        </Box>
-      ),
-    },
-    {
       label: 'Details',
       content: (
         <Box sx={{ display: 'grid', gap: 2 }}>
@@ -413,6 +371,12 @@ const AvenantDetailPage = () => {
             </Box>
 
             <Notebook tabs={notebookTabs} />
+
+            <Chatter
+              entityType="avenant_convention" entityId={avenantIdNum}
+              activities={chatterActivities} loading={chatterLoading}
+              onRefresh={refreshChatter}
+            />
           </FormView>
         </Container>
       </Box>

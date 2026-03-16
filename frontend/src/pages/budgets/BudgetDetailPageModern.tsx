@@ -8,7 +8,7 @@ import { Trash2 } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import {
   ControlPanel, FormView, FieldGroup, Notebook, StatusBadge,
-  InlineEditField, EditFieldDialog,
+  InlineEditField, EditFieldDialog, Chatter, useEntityHistory,
   type StatusStep, type InlineEditFieldConfig,
 } from '@/components/core'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
@@ -57,6 +57,8 @@ const BudgetDetailPageModern = () => {
   const [error, setError] = useState<string | null>(null)
   const [conventions, setConventions] = useState<ConventionOption[]>([])
   const [dialogField, setDialogField] = useState<DialogFieldState | null>(null)
+  const budgetId = id ? parseInt(id) : 0
+  const { activities: chatterActivities, loading: chatterLoading, refresh: refreshChatter } = useEntityHistory('BUDGET', budgetId)
 
   const loadBudget = useCallback(async (budgetId: number) => {
     try {
@@ -230,26 +232,14 @@ const BudgetDetailPageModern = () => {
                     </TableContainer>
                   ),
                 },
-                {
-                  label: 'Historique',
-                  content: (
-                    <Box sx={{ py: 2 }}>
-                      <Box sx={{ display: 'flex', gap: 2, p: 2, bgcolor: colors.neutral[50], borderRadius: 1 }}>
-                        <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: colors.primary[500], mt: 0.5, flexShrink: 0 }} />
-                        <Box>
-                          <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium }}>
-                            Budget cree
-                          </Typography>
-                          <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-                            {formatDate(budget.dateBudget)} - Version: {budget.version} - Statut: {budget.statut}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  ),
-                },
               ]} />
             </Box>
+
+            <Chatter
+              entityType="budget" entityId={budgetId}
+              activities={chatterActivities} loading={chatterLoading}
+              onRefresh={refreshChatter}
+            />
           </FormView>
         </Container>
       </Box>

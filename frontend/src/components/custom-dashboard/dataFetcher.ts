@@ -2,8 +2,8 @@
  * DataFetcher - Maps parsed instructions to API calls and transforms data
  * for visualization rendering.
  *
- * Handles the full pipeline: API call → raw record extraction → grouping →
- * metric calculation → chart/table-ready output.
+ * Uses dynamic column inference from actual API data instead of hardcoded
+ * column definitions, ensuring all available fields are displayed.
  */
 
 import {
@@ -112,11 +112,13 @@ interface RawRecord {
   dateDecompte?: string
   dateDebut?: string
   dateFin?: string
+  dateFinPrevue?: string
   dateMarche?: string
   dateSignature?: string
   dateBudget?: string
   dateConvention?: string
   createdAt?: string
+  updatedAt?: string
 
   // Flat foreign key references (from backend DTOs)
   conventionId?: number
@@ -164,6 +166,8 @@ interface RawRecord {
   nbLignes?: number
   nbAvenants?: number
   nbDecomptes?: number
+  delaiExecutionMois?: number
+  tauxTva?: number
 
   // Décompte specific (totalRetenues already declared above)
   cumulPrecedent?: number
@@ -174,6 +178,155 @@ interface RawRecord {
 
   // Catch-all for unexpected fields
   [key: string]: unknown
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const ENTITY_LABELS: Record<EntityType, string> = {
+  conventions: 'Conventions',
+  marches: 'Marchés',
+  projets: 'Projets',
+  decomptes: 'Décomptes',
+  paiements: 'Paiements',
+  fournisseurs: 'Fournisseurs',
+  budgets: 'Budgets',
+}
+
+/** Keys to hide from dynamic column inference (internal/technical fields) */
+const HIDDEN_KEYS = new Set([
+  'id', 'actif', 'createdAt', 'updatedAt',
+  'conventionId', 'marcheId', 'fournisseurId', 'projetId', 'ordrePaiementId',
+  'fournisseur', 'convention', 'marche', 'projet', // nested objects
+])
+
+/** Human-readable labels for all known fields */
+const FIELD_LABELS: Record<string, string> = {
+  // Identifiers
+  code: 'Code',
+  numero: 'Numéro',
+  numeroMarche: 'N° Marché',
+  numAo: "N° Appel d'Offres",
+  numeroDecompte: 'N° Décompte',
+  referencePaiement: 'Référence',
+  // Labels
+  libelle: 'Libellé',
+  objet: 'Objet',
+  designation: 'Désignation',
+  nom: 'Nom',
+  raisonSociale: 'Raison Sociale',
+  description: 'Description',
+  version: 'Version',
+  // Status & Type
+  statut: 'Statut',
+  status: 'Statut',
+  typeConvention: 'Type Convention',
+  typeMarche: 'Type Marché',
+  type: 'Type',
+  naturePrestation: 'Nature Prestation',
+  // Amounts
+  montantHt: 'Montant HT (MAD)',
+  montantHT: 'Montant HT (MAD)',
+  montantTtc: 'Montant TTC (MAD)',
+  montantTTC: 'Montant TTC (MAD)',
+  montantTva: 'TVA (MAD)',
+  montant: 'Montant (MAD)',
+  budget: 'Budget (MAD)',
+  budgetTotal: 'Budget Total (MAD)',
+  totalBudget: 'Total Budget (MAD)',
+  plafondConvention: 'Plafond Convention (MAD)',
+  montantBrutHT: 'Montant Brut HT (MAD)',
+  totalRetenues: 'Retenues (MAD)',
+  netAPayer: 'Net à Payer (MAD)',
+  montantPaye: 'Montant Payé (MAD)',
+  tauxCommission: 'Taux Commission (%)',
+  tauxTva: 'Taux TVA (%)',
+  pourcentageAvancement: 'Avancement (%)',
+  cumulPrecedent: 'Cumul Précédent (MAD)',
+  cumulActuel: 'Cumul Actuel (MAD)',
+  delaiExecutionMois: 'Délai Exécution (mois)',
+  // Dates
+  dateDebut: 'Date Début',
+  dateFin: 'Date Fin',
+  dateFinPrevue: 'Date Fin Prévue',
+  dateMarche: 'Date Marché',
+  dateDecompte: 'Date Décompte',
+  dateValeur: 'Date Valeur',
+  dateExecution: 'Date Exécution',
+  dateSignature: 'Date Signature',
+  dateBudget: 'Date Budget',
+  dateConvention: 'Date Convention',
+  datePaiement: 'Date Paiement',
+  // Relations
+  fournisseurNom: 'Fournisseur',
+  fournisseurCode: 'Code Fournisseur',
+  fournisseurIce: 'ICE Fournisseur',
+  marcheNumero: 'N° Marché',
+  marcheFournisseur: 'Fournisseur Marché',
+  conventionNumero: 'N° Convention',
+  conventionLibelle: 'Convention',
+  conventionCode: 'Code Convention',
+  chefProjetNom: 'Chef de Projet',
+  numeroOP: "N° Ordre Paiement",
+  // Geolocation
+  zoneGeographique: 'Zone Géographique',
+  adresse: 'Adresse',
+  ville: 'Ville',
+  localisation: 'Localisation',
+  // Fournisseur specific
+  ice: 'ICE',
+  identifiantFiscal: 'IF',
+  telephone: 'Téléphone',
+  email: 'Email',
+  // Misc
+  modePaiement: 'Mode Paiement',
+  createdByNom: 'Créé par',
+  estPaiementPartiel: 'Paiement Partiel',
+  estSolde: 'Soldé',
+  nbLignes: 'Nb Lignes',
+  nbAvenants: 'Nb Avenants',
+  nbDecomptes: 'Nb Décomptes',
+  nbRetenues: 'Nb Retenues',
+  nbImputations: 'Nb Imputations',
+}
+
+/** Priority column ordering per entity (controls which columns appear first) */
+const PRIORITY_KEYS: Record<EntityType, string[]> = {
+  conventions: [
+    'code', 'numero', 'libelle', 'typeConvention', 'statut',
+    'budget', 'tauxCommission', 'dateDebut', 'dateFin', 'createdByNom',
+  ],
+  marches: [
+    'numeroMarche', 'objet', 'fournisseurNom', 'typeMarche', 'naturePrestation',
+    'statut', 'montantHt', 'montantTtc', 'tauxTva', 'zoneGeographique',
+    'dateMarche', 'dateDebut', 'delaiExecutionMois',
+    'nbLignes', 'nbDecomptes', 'nbAvenants',
+  ],
+  projets: [
+    'code', 'nom', 'statut', 'budgetTotal', 'pourcentageAvancement',
+    'dateDebut', 'dateFinPrevue', 'chefProjetNom',
+  ],
+  decomptes: [
+    'numeroDecompte', 'marcheNumero', 'marcheFournisseur',
+    'montantBrutHT', 'totalRetenues', 'netAPayer', 'montantPaye',
+    'cumulPrecedent', 'cumulActuel',
+    'statut', 'estSolde', 'dateDecompte',
+    'nbRetenues', 'nbImputations',
+  ],
+  paiements: [
+    'referencePaiement', 'montantPaye', 'modePaiement',
+    'estPaiementPartiel', 'numeroOP',
+    'dateValeur', 'dateExecution',
+  ],
+  fournisseurs: [
+    'code', 'raisonSociale', 'ice', 'identifiantFiscal',
+    'telephone', 'email', 'adresse', 'ville',
+  ],
+  budgets: [
+    'version', 'totalBudget', 'plafondConvention',
+    'statut', 'dateBudget',
+  ],
 }
 
 // ============================================================================
@@ -221,37 +374,146 @@ async function fetchRawData(entity: EntityType): Promise<RawRecord[]> {
 }
 
 // ============================================================================
-// Field Extractors - Match actual backend DTO field names
+// Dynamic Column Inference
 // ============================================================================
 
-function getLabel(record: RawRecord): string {
-  return (
-    record.libelle ||
-    record.objet ||
-    record.designation ||
-    record.nom ||
-    record.raisonSociale ||
-    record.description ||
-    record.code ||
-    record.numero ||
-    record.numeroMarche ||
-    record.numeroDecompte ||
-    record.referencePaiement ||
-    record.version ||
-    `#${record.id ?? '?'}`
-  )
+/** Known date field patterns */
+const DATE_FIELD_PATTERN = /^date|At$/
+
+/** Known status fields */
+const STATUS_FIELDS = new Set(['statut', 'status'])
+
+/** Known numeric field patterns */
+const NUMERIC_FIELD_PATTERNS = [
+  /^montant/, /^budget/, /^total/, /^net/, /^taux/, /^cumul/,
+  /^nb/, /^nombre/, /^pourcentage/, /^plafond/, /^delai/,
+]
+
+/** Infer the column type from a field key and a sample value */
+function inferFieldType(key: string, sampleValue: unknown): 'string' | 'number' | 'date' | 'status' {
+  if (STATUS_FIELDS.has(key)) return 'status'
+  if (DATE_FIELD_PATTERN.test(key)) return 'date'
+  if (typeof sampleValue === 'number') return 'number'
+  if (NUMERIC_FIELD_PATTERNS.some(p => p.test(key))) return 'number'
+  if (typeof sampleValue === 'boolean') return 'string' // will convert to Oui/Non
+  return 'string'
 }
 
-function getCode(record: RawRecord): string {
-  return (
-    record.code ||
-    record.numero ||
-    record.numeroMarche ||
-    record.numeroDecompte ||
-    record.referencePaiement ||
-    `#${record.id ?? '?'}`
-  )
+/** Convert camelCase key to human-readable label */
+function humanizeKey(key: string): string {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, s => s.toUpperCase())
+    .trim()
 }
+
+/**
+ * Dynamically infer columns from actual API records.
+ * Priority keys appear first; remaining data keys follow.
+ * Hidden/technical keys are excluded.
+ */
+function inferColumns(records: RawRecord[], entity: EntityType): ColumnDef[] {
+  if (records.length === 0) return []
+
+  // Scan actual data keys from first few records (union of all keys)
+  const allKeys = new Set<string>()
+  const sampleSize = Math.min(records.length, 5)
+  for (let i = 0; i < sampleSize; i++) {
+    for (const key of Object.keys(records[i])) {
+      const val = records[i][key]
+      // Only include primitive, non-null values (skip nested objects and nulls)
+      if (val !== null && val !== undefined && typeof val !== 'object') {
+        allKeys.add(key)
+      }
+    }
+  }
+
+  // Build ordered column list: priority keys first (if present), then remaining
+  const priority = PRIORITY_KEYS[entity] || []
+  const orderedKeys: string[] = [
+    ...priority.filter(k => allKeys.has(k)),
+    ...[...allKeys].filter(k => !priority.includes(k) && !HIDDEN_KEYS.has(k)),
+  ]
+
+  // Find a record with non-null values for type inference
+  const sampleRecord = records[0]
+
+  return orderedKeys.map(key => {
+    const fieldType = inferFieldType(key, sampleRecord[key])
+    return {
+      key,
+      label: FIELD_LABELS[key] || humanizeKey(key),
+      type: fieldType,
+      align: fieldType === 'number' ? 'right' as const : 'left' as const,
+    }
+  })
+}
+
+// ============================================================================
+// Cell Value Extraction
+// ============================================================================
+
+/**
+ * Extract a display-ready cell value from a raw record.
+ * Handles nested objects, booleans, and special field resolution.
+ */
+function extractCellValue(record: RawRecord, key: string, colType: 'string' | 'number' | 'date' | 'status'): string | number {
+  // Special handling for fields that need cross-field resolution
+  switch (key) {
+    case 'statut':
+      return getStatus(record)
+    case 'fournisseurNom':
+      return record.fournisseurNom || record.fournisseur?.raisonSociale || record.marcheFournisseur || ''
+    case 'marcheFournisseur':
+      return record.marcheFournisseur || record.fournisseurNom || record.fournisseur?.raisonSociale || ''
+    case 'marcheNumero':
+      return record.marcheNumero || record.marche?.code || record.numeroMarche || (record.marcheId ? `#${record.marcheId}` : '')
+    case 'conventionLibelle':
+      return record.conventionLibelle || record.conventionNumero || record.convention?.libelle || ''
+    case 'conventionNumero':
+      return record.conventionNumero || record.conventionCode || record.convention?.numero || ''
+    default:
+      break
+  }
+
+  const val = record[key]
+
+  // Handle booleans → Oui/Non
+  if (typeof val === 'boolean') {
+    return val ? 'Oui' : 'Non'
+  }
+
+  // Handle null/undefined
+  if (val === null || val === undefined) {
+    return colType === 'number' ? 0 : ''
+  }
+
+  // Handle numbers
+  if (colType === 'number') {
+    return toNumber(val)
+  }
+
+  // Handle montantHt/montantHT casing variants
+  if (key === 'montantHt' && (val === undefined || val === null || val === 0)) {
+    const alt = record.montantHT
+    if (alt !== undefined && alt !== null) return toNumber(alt)
+  }
+  if (key === 'montantTtc' && (val === undefined || val === null || val === 0)) {
+    const alt = record.montantTTC
+    if (alt !== undefined && alt !== null) return toNumber(alt)
+  }
+
+  // Handle string/number primitives
+  if (typeof val === 'string' || typeof val === 'number') {
+    return val
+  }
+
+  return String(val)
+}
+
+// ============================================================================
+// Field Extractors
+// ============================================================================
 
 function getStatus(record: RawRecord): string {
   return record.statut || record.status || 'N/A'
@@ -265,7 +527,6 @@ function getType(record: RawRecord): string {
 function getAmount(record: RawRecord, entity: EntityType): number {
   switch (entity) {
     case 'marches':
-      // Backend returns montantHt (camelCase) - also check montantHT for safety
       return toNumber(record.montantHt ?? record.montantHT ?? record.montantTtc ?? record.montantTTC ?? 0)
     case 'decomptes':
       return toNumber(record.netAPayer ?? record.montantBrutHT ?? record.montant ?? 0)
@@ -278,7 +539,7 @@ function getAmount(record: RawRecord, entity: EntityType): number {
     case 'budgets':
       return toNumber(record.totalBudget ?? record.plafondConvention ?? 0)
     case 'fournisseurs':
-      return 0 // Fournisseurs don't have amounts
+      return 0
     default:
       return toNumber(record.montant ?? record.budget ?? 0)
   }
@@ -355,17 +616,17 @@ function getGroupValue(record: RawRecord, groupBy: GroupByField, entity: EntityT
       )
     case 'mois': {
       const date = getTemporalDate(record, entity)
-      if (!date) return 'N/A'
+      if (!date) return 'Date inconnue'
       const d = new Date(date)
-      if (isNaN(d.getTime())) return 'N/A'
+      if (isNaN(d.getTime())) return 'Date invalide'
       const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
       return `${months[d.getMonth()]} ${d.getFullYear()}`
     }
     case 'annee': {
       const date = getTemporalDate(record, entity)
-      if (!date) return 'N/A'
+      if (!date) return 'Date inconnue'
       const d = new Date(date)
-      if (isNaN(d.getTime())) return 'N/A'
+      if (isNaN(d.getTime())) return 'Date invalide'
       return String(d.getFullYear())
     }
     case 'zone':
@@ -375,211 +636,63 @@ function getGroupValue(record: RawRecord, groupBy: GroupByField, entity: EntityT
   }
 }
 
+/**
+ * Get the metric value for a record.
+ * Tries the exact requested field first, then casing variants, then entity default.
+ */
 function getMetricValue(record: RawRecord, metricField: string, entity: EntityType): number {
-  // Use entity-aware amount extraction for common metric fields
-  if (['montant', 'montantHT', 'montantHt', 'netAPayer', 'budget', 'montantTTC', 'montantTtc'].includes(metricField)) {
-    return getAmount(record, entity)
+  // Try the exact requested field first
+  const directValue = record[metricField]
+  if (directValue !== null && directValue !== undefined && directValue !== '') {
+    const num = toNumber(directValue)
+    if (num !== 0 || directValue === 0 || directValue === '0') return num
   }
-  const val = record[metricField]
-  return toNumber(val)
+
+  // Handle common casing variants (montantHT vs montantHt)
+  const casingVariants: Record<string, string[]> = {
+    montantHT: ['montantHt'],
+    montantHt: ['montantHT'],
+    montantTTC: ['montantTtc'],
+    montantTtc: ['montantTTC'],
+  }
+  const variants = casingVariants[metricField]
+  if (variants) {
+    for (const v of variants) {
+      const val = record[v]
+      if (val !== null && val !== undefined && val !== '') {
+        return toNumber(val)
+      }
+    }
+  }
+
+  // Last resort: entity-aware default
+  return getAmount(record, entity)
 }
 
 // ============================================================================
-// Data Transformation - Table (ungrouped)
+// Data Transformation - Table (ungrouped) — Dynamic columns
 // ============================================================================
 
 function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstruction): FetchedData {
-  const { entity, limit } = instruction
-
-  const entityColumns: Record<EntityType, ColumnDef[]> = {
-    conventions: [
-      { key: 'code', label: 'Code', type: 'string' },
-      { key: 'numero', label: 'Numéro', type: 'string' },
-      { key: 'libelle', label: 'Libellé', type: 'string' },
-      { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'budget', label: 'Budget (MAD)', type: 'number', align: 'right' },
-      { key: 'dateDebut', label: 'Date début', type: 'date' },
-      { key: 'dateFin', label: 'Date fin', type: 'date' },
-      { key: 'createdByNom', label: 'Créé par', type: 'string' },
-    ],
-    marches: [
-      { key: 'numeroMarche', label: 'N° Marché', type: 'string' },
-      { key: 'objet', label: 'Objet', type: 'string' },
-      { key: 'fournisseurNom', label: 'Fournisseur', type: 'string' },
-      { key: 'typeMarche', label: 'Type', type: 'string' },
-      { key: 'naturePrestation', label: 'Nature', type: 'string' },
-      { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'montantHt', label: 'Montant HT (MAD)', type: 'number', align: 'right' },
-      { key: 'montantTtc', label: 'Montant TTC (MAD)', type: 'number', align: 'right' },
-      { key: 'zoneGeographique', label: 'Zone', type: 'string' },
-      { key: 'dateMarche', label: 'Date', type: 'date' },
-    ],
-    projets: [
-      { key: 'code', label: 'Code', type: 'string' },
-      { key: 'nom', label: 'Nom', type: 'string' },
-      { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'budgetTotal', label: 'Budget Total (MAD)', type: 'number', align: 'right' },
-      { key: 'pourcentageAvancement', label: 'Avancement %', type: 'number', align: 'right' },
-      { key: 'dateDebut', label: 'Date début', type: 'date' },
-      { key: 'dateFinPrevue', label: 'Date fin prévue', type: 'date' },
-    ],
-    decomptes: [
-      { key: 'numeroDecompte', label: 'N° Décompte', type: 'string' },
-      { key: 'marcheNumero', label: 'Marché', type: 'string' },
-      { key: 'marcheFournisseur', label: 'Fournisseur', type: 'string' },
-      { key: 'montantBrutHT', label: 'Montant Brut HT (MAD)', type: 'number', align: 'right' },
-      { key: 'totalRetenues', label: 'Retenues (MAD)', type: 'number', align: 'right' },
-      { key: 'netAPayer', label: 'Net à Payer (MAD)', type: 'number', align: 'right' },
-      { key: 'montantPaye', label: 'Montant Payé (MAD)', type: 'number', align: 'right' },
-      { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'dateDecompte', label: 'Date', type: 'date' },
-    ],
-    paiements: [
-      { key: 'referencePaiement', label: 'Référence', type: 'string' },
-      { key: 'montantPaye', label: 'Montant Payé (MAD)', type: 'number', align: 'right' },
-      { key: 'modePaiement', label: 'Mode', type: 'string' },
-      { key: 'estPaiementPartiel', label: 'Partiel', type: 'string' },
-      { key: 'dateValeur', label: 'Date Valeur', type: 'date' },
-      { key: 'dateExecution', label: 'Date Exécution', type: 'date' },
-    ],
-    fournisseurs: [
-      { key: 'code', label: 'Code', type: 'string' },
-      { key: 'raisonSociale', label: 'Raison Sociale', type: 'string' },
-      { key: 'ice', label: 'ICE', type: 'string' },
-    ],
-    budgets: [
-      { key: 'version', label: 'Version', type: 'string' },
-      { key: 'totalBudget', label: 'Total Budget (MAD)', type: 'number', align: 'right' },
-      { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'dateBudget', label: 'Date', type: 'date' },
-    ],
-  }
-
-  const columns = entityColumns[entity] || [
-    { key: 'label', label: 'Élément', type: 'string' as const },
-  ]
+  const columns = inferColumns(records, instruction.entity)
 
   let rows: DataRow[] = records.map((record) => {
     const row: DataRow = {}
     for (const col of columns) {
-      switch (col.key) {
-        case 'statut':
-          row[col.key] = getStatus(record)
-          break
-        case 'typeConvention':
-        case 'typeMarche':
-        case 'type':
-          row[col.key] = getType(record)
-          break
-        case 'code':
-        case 'numeroMarche':
-        case 'referencePaiement':
-        case 'numero':
-          row[col.key] = record[col.key] as string || getCode(record)
-          break
-        case 'designation':
-        case 'libelle':
-        case 'nom':
-        case 'objet':
-        case 'label':
-        case 'version':
-          row[col.key] = record[col.key] as string || getLabel(record)
-          break
-        case 'fournisseurNom':
-          row[col.key] = record.fournisseurNom || record.fournisseur?.raisonSociale || record.marcheFournisseur || ''
-          break
-        case 'marcheFournisseur':
-          row[col.key] = record.marcheFournisseur || record.fournisseurNom || ''
-          break
-        case 'marcheNumero':
-          row[col.key] = record.marcheNumero || record.marche?.code || record.numeroMarche || (record.marcheId ? `#${record.marcheId}` : '')
-          break
-        case 'conventionNumero':
-        case 'conventionLibelle':
-          row[col.key] = record.conventionLibelle || record.conventionNumero || record.conventionCode || record.convention?.libelle || ''
-          break
-        case 'raisonSociale':
-          row[col.key] = record.raisonSociale || ''
-          break
-        case 'naturePrestation':
-          row[col.key] = record.naturePrestation || ''
-          break
-        case 'zoneGeographique':
-          row[col.key] = record.zoneGeographique || 'Non définie'
-          break
-        case 'createdByNom':
-          row[col.key] = record.createdByNom || ''
-          break
-        case 'pourcentageAvancement':
-          row[col.key] = toNumber(record.pourcentageAvancement ?? 0)
-          break
-        case 'totalRetenues':
-          row[col.key] = toNumber(record.totalRetenues ?? 0)
-          break
-        case 'estPaiementPartiel':
-          row[col.key] = record.estPaiementPartiel ? 'Oui' : 'Non'
-          break
-        // Amount fields - handle both camelCase variants
-        case 'montantHt':
-        case 'montantHT':
-          row[col.key] = toNumber(record.montantHt ?? record.montantHT ?? 0)
-          break
-        case 'montantTtc':
-        case 'montantTTC':
-          row[col.key] = toNumber(record.montantTtc ?? record.montantTTC ?? 0)
-          break
-        case 'montantBrutHT':
-          row[col.key] = toNumber(record.montantBrutHT ?? 0)
-          break
-        case 'netAPayer':
-          row[col.key] = toNumber(record.netAPayer ?? 0)
-          break
-        case 'montantPaye':
-          row[col.key] = toNumber(record.montantPaye ?? record.montant ?? 0)
-          break
-        case 'budget':
-          row[col.key] = toNumber(record.budget ?? 0)
-          break
-        case 'budgetTotal':
-          row[col.key] = toNumber(record.budgetTotal ?? record.budget ?? 0)
-          break
-        case 'totalBudget':
-          row[col.key] = toNumber(record.totalBudget ?? record.plafondConvention ?? 0)
-          break
-        default: {
-          const val = record[col.key]
-          if (val === null || val === undefined) {
-            row[col.key] = ''
-          } else if (typeof val === 'string' || typeof val === 'number') {
-            row[col.key] = val
-          } else {
-            row[col.key] = String(val)
-          }
-        }
-      }
+      row[col.key] = extractCellValue(record, col.key, col.type)
     }
     return row
   })
 
-  if (limit) {
-    rows = rows.slice(0, limit)
-  }
-
-  const ENTITY_LABELS: Record<EntityType, string> = {
-    conventions: 'Conventions',
-    marches: 'Marchés',
-    projets: 'Projets',
-    decomptes: 'Décomptes',
-    paiements: 'Paiements',
-    fournisseurs: 'Fournisseurs',
-    budgets: 'Budgets',
+  if (instruction.limit) {
+    rows = rows.slice(0, instruction.limit)
   }
 
   return {
     rows,
     columns,
     totalCount: records.length,
-    entityLabel: ENTITY_LABELS[entity] || entity,
+    entityLabel: ENTITY_LABELS[instruction.entity] || instruction.entity,
   }
 }
 
@@ -628,8 +741,8 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
       group: groupKey,
       value,
       count: groupRecords.length,
-      percentage: 0, // will be calculated below
-      rank: 0,       // will be calculated below
+      percentage: 0,
+      rank: 0,
     }
   })
 
@@ -654,16 +767,6 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
     average: 'Moyenne (MAD)',
   }
 
-  const ENTITY_LABELS: Record<EntityType, string> = {
-    conventions: 'Conventions',
-    marches: 'Marchés',
-    projets: 'Projets',
-    decomptes: 'Décomptes',
-    paiements: 'Paiements',
-    fournisseurs: 'Fournisseurs',
-    budgets: 'Budgets',
-  }
-
   const columns: ColumnDef[] = [
     { key: 'rank', label: '#', type: 'number', align: 'center' },
     { key: 'group', label: 'Catégorie', type: 'string' },
@@ -681,18 +784,15 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
 }
 
 // ============================================================================
-// Main Fetch Function
-// ============================================================================
-
-// ============================================================================
-// Filter Application
+// Filter Application — OR logic (not AND)
 // ============================================================================
 
 function applyFilters(records: RawRecord[], filters: StatusFilter[]): RawRecord[] {
   if (!filters || filters.length === 0) return records
 
   return records.filter((record) => {
-    return filters.every((filter) => {
+    // Use OR: record matches if ANY filter matches
+    return filters.some((filter) => {
       const recordValue = filter.field === 'statut'
         ? getStatus(record)
         : getType(record)
@@ -706,7 +806,7 @@ function applyFilters(records: RawRecord[], filters: StatusFilter[]): RawRecord[
 // ============================================================================
 
 function applySortDirection(records: RawRecord[], instruction: ParsedInstruction): RawRecord[] {
-  if (!instruction.limit && instruction.sortDirection === 'desc') return records // default already
+  if (!instruction.limit && instruction.sortDirection === 'desc') return records
 
   const sorted = [...records].sort((a, b) => {
     const aVal = getAmount(a, instruction.entity)
@@ -716,6 +816,10 @@ function applySortDirection(records: RawRecord[], instruction: ParsedInstruction
 
   return sorted
 }
+
+// ============================================================================
+// Main Fetch Function
+// ============================================================================
 
 export async function fetchDataForInstruction(instruction: ParsedInstruction): Promise<FetchedData> {
   let records = await fetchRawData(instruction.entity)
@@ -731,16 +835,6 @@ export async function fetchDataForInstruction(instruction: ParsedInstruction): P
   }
 
   if (records.length === 0) {
-    const ENTITY_LABELS: Record<EntityType, string> = {
-      conventions: 'Conventions',
-      marches: 'Marchés',
-      projets: 'Projets',
-      decomptes: 'Décomptes',
-      paiements: 'Paiements',
-      fournisseurs: 'Fournisseurs',
-      budgets: 'Budgets',
-    }
-
     return {
       rows: [],
       columns: [{ key: 'message', label: 'Information', type: 'string' }],

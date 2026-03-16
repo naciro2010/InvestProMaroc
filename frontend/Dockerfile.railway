@@ -39,4 +39,4 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 # Servir l'application en mode SPA (fallback vers index.html)
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["serve", "-s", "dist", "-p", "3000"]

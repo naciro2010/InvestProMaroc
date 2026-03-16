@@ -222,6 +222,7 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
         subvention={selectedSubvention}
         allSubventions={subventions}
         conventionBudget={conventionBudget}
+        onEdit={canEdit ? (s) => { setSelectedSubvention(null); setEditingSubvention(s); setDialogOpen(true) } : undefined}
       />
 
       <SubventionFormDialog

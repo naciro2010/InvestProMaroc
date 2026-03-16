@@ -243,6 +243,7 @@ const ConventionVersementsCard = ({
         versement={selectedVersement}
         allVersements={versements}
         conventionBudget={conventionBudget}
+        onEdit={canEdit ? (v) => { setSelectedVersement(null); setEditingVersement(v); setDialogOpen(true) } : undefined}
       />
 
       {/* Form Dialog */}

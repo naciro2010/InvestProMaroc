@@ -308,8 +308,8 @@ export const conventionsAPI = {
   updatePartenaire: (conventionId: number, id: number, data: {
     budgetAlloue: number;
     pourcentage: number;
-    estMaitreOeuvre?: boolean;
-    estMaitreOeuvreDelegue?: boolean;
+    estMaitreOeuvre: boolean;
+    estMaitreOeuvreDelegue: boolean;
     remarques?: string;
   }) => api.put(`/conventions/${conventionId}/partenaires/${id}`, data),
   deletePartenaire: (conventionId: number, id: number) =>

@@ -22,6 +22,12 @@ import {
 import ConventionSmartButtons from '../../components/conventions/detail/ConventionSmartButtons'
 import ConventionSyntheseCard from '../../components/conventions/detail/ConventionSyntheseCard'
 import ConventionKeyInfoCard from '../../components/conventions/detail/ConventionKeyInfoCard'
+import ConventionAlertBanner from '../../components/conventions/detail/ConventionAlertBanner'
+import ConventionProgressCard from '../../components/conventions/detail/ConventionProgressCard'
+import ConventionScheduledActivities from '../../components/conventions/detail/ConventionScheduledActivities'
+import ConventionActionsMenu from '../../components/conventions/detail/ConventionActionsMenu'
+import ConventionTimelineCard from '../../components/conventions/detail/ConventionTimelineCard'
+import ConventionQuickSummary from '../../components/conventions/detail/ConventionQuickSummary'
 import { colors, typography, componentStyles } from '../../lib/designSystem'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import { ConventionDetailSkeleton, ConventionHeaderMetadata } from './detail'
@@ -36,6 +42,7 @@ interface Convention {
   dateSignature: string; dateDebut: string; dateFin?: string; tauxTva: number; tauxTvaLignes: number
   parentConventionId?: number | null; parentConventionNumero?: string | null
   heriteParametres?: boolean; commissionMode?: string
+  priorite?: string; responsableNom?: string
 }
 
 interface DialogFieldState { key: string; label: string; value: string; mode: 'richtext' | 'textarea' }
@@ -82,7 +89,7 @@ const ConventionDetailPageModern = () => {
   const [chatterActivities, setChatterActivities] = useState<ChatterActivity[]>([])
   const [chatterLoading, setChatterLoading] = useState(false)
 
-  const refreshFinancialData = useCallback(() => setFinancialRefreshKey(k => k + 1), [])
+  const refreshFinancialData = useCallback(() => setFinancialRefreshKey((k: number) => k + 1), [])
 
   const loadChatterActivities = useCallback(async (cid: number) => {
     setChatterLoading(true)
@@ -141,6 +148,13 @@ const ConventionDetailPageModern = () => {
     await conventionsAPI.update(parseInt(id), payload)
     await loadConvention(parseInt(id))
     showSuccess('Convention mise a jour')
+  }
+
+  const handlePriorityChange = async (priority: string) => {
+    if (!convention || !id) return
+    try {
+      await handleFieldSave('priorite', priority)
+    } catch { showError('Erreur lors du changement de priorite') }
   }
 
   const openFieldDialog = (fieldKey: string, value: string) => {
@@ -211,6 +225,8 @@ const ConventionDetailPageModern = () => {
                   <Plus size={14} style={{ marginRight: 4 }} /> Avenant
                 </Button>
               </Tooltip>
+              {/* ERP: Actions menu (print, export, duplicate, share, archive) */}
+              <ConventionActionsMenu convention={convention} onReload={() => loadConvention(convention.id)} />
             </>
           }
           hideBottomRow
@@ -223,112 +239,153 @@ const ConventionDetailPageModern = () => {
         )}
 
         <Container maxWidth="xl" sx={{ py: 2 }}>
-          <FormView isEditing={false} statusSteps={effectiveSteps} currentStatus={convention.statut}>
-            <ConventionHeaderMetadata
-              code={convention.code} numero={convention.numero}
-              libelle={convention.libelle} objet={convention.objet}
-              typeConvention={convention.typeConvention}
-              dateSignature={convention.dateSignature} dateDebut={convention.dateDebut} dateFin={convention.dateFin}
-              canEdit={canEdit} onEditField={openFieldDialog}
-            />
+          {/* ERP Layout: Main content + Sidebar */}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
 
-            {/* Tags & Followers bar */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
-              <ConventionTagsCard conventionId={convention.id} canEdit={canEdit} />
-              <ConventionFollowersCard conventionId={convention.id} />
-            </Box>
+            {/* ═══════ MAIN CONTENT (left) ═══════ */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <FormView isEditing={false} statusSteps={effectiveSteps} currentStatus={convention.statut}>
 
-            {convention.parentConventionId && convention.parentConventionNumero && (
-              <Box sx={{ mb: 1.5 }}>
-                <ParentConventionBanner
-                  parentConventionId={convention.parentConventionId}
-                  parentConventionNumero={convention.parentConventionNumero}
-                  heriteParametres={convention.heriteParametres ?? false}
+                {/* Header with priority, responsible, deadline */}
+                <ConventionHeaderMetadata
+                  code={convention.code} numero={convention.numero}
+                  libelle={convention.libelle} objet={convention.objet}
+                  typeConvention={convention.typeConvention}
+                  dateSignature={convention.dateSignature} dateDebut={convention.dateDebut} dateFin={convention.dateFin}
+                  canEdit={canEdit} onEditField={openFieldDialog}
+                  priorite={convention.priorite}
+                  responsable={convention.responsableNom}
+                  onPriorityChange={handlePriorityChange}
                 />
-              </Box>
-            )}
 
-            {enrichedData && (
-              <Box sx={{ mb: 2 }}>
-                <ConventionSmartButtons
-                  conventionId={convention.id} typeConvention={convention.typeConvention}
-                  nombreMarches={enrichedData.nombreMarches} nombreProjets={enrichedData.nombreProjets}
-                  nombreSousConventions={enrichedData.nombreSousConventions} nombreAvenants={enrichedData.nombreAvenants}
-                  nombrePartenaires={enrichedData.nombrePartenaires} montantTotalMarches={enrichedData.montantTotalMarches}
-                  montantTotalProjets={enrichedData.montantTotalProjets} commissionTTC={enrichedData.commissionTTC}
-                  tauxRealisation={enrichedData.tauxRealisation}
+                {/* Tags & Followers bar */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                  <ConventionTagsCard conventionId={convention.id} canEdit={canEdit} />
+                  <ConventionFollowersCard conventionId={convention.id} />
+                </Box>
+
+                {/* ERP: Smart Alert Banner */}
+                <ConventionAlertBanner
+                  convention={convention}
+                  enrichedData={enrichedData}
+                  refreshKey={financialRefreshKey}
                 />
-              </Box>
-            )}
 
-            <Box sx={{ mb: 2 }}>
-              <FieldGroup title="Informations generales" columns={3}>
-                {field({ fieldKey: 'code', label: 'Code', type: 'text', value: convention.code, editable: false })}
-                {field({ fieldKey: 'numero', label: 'Numero', type: 'text', value: convention.numero, editable: canEdit })}
-                {field({ fieldKey: 'typeConvention', label: 'Type', type: 'select', value: convention.typeConvention, options: TYPE_OPTIONS, displayValue: <StatusBadge status={convention.typeConvention} size="small" />, editable: canEdit })}
-              </FieldGroup>
+                {convention.parentConventionId && convention.parentConventionNumero && (
+                  <Box sx={{ mb: 1.5 }}>
+                    <ParentConventionBanner
+                      parentConventionId={convention.parentConventionId}
+                      parentConventionNumero={convention.parentConventionNumero}
+                      heriteParametres={convention.heriteParametres ?? false}
+                    />
+                  </Box>
+                )}
+
+                {/* ERP: Progress tracker with milestones */}
+                {enrichedData && (
+                  <Box sx={{ mb: 2 }}>
+                    <ConventionProgressCard convention={convention} enrichedData={enrichedData} />
+                  </Box>
+                )}
+
+                {/* Smart buttons */}
+                {enrichedData && (
+                  <Box sx={{ mb: 2 }}>
+                    <ConventionSmartButtons
+                      conventionId={convention.id} typeConvention={convention.typeConvention}
+                      nombreMarches={enrichedData.nombreMarches} nombreProjets={enrichedData.nombreProjets}
+                      nombreSousConventions={enrichedData.nombreSousConventions} nombreAvenants={enrichedData.nombreAvenants}
+                      nombrePartenaires={enrichedData.nombrePartenaires} montantTotalMarches={enrichedData.montantTotalMarches}
+                      montantTotalProjets={enrichedData.montantTotalProjets} commissionTTC={enrichedData.commissionTTC}
+                      tauxRealisation={enrichedData.tauxRealisation}
+                    />
+                  </Box>
+                )}
+
+                <Box sx={{ mb: 2 }}>
+                  <FieldGroup title="Informations generales" columns={3}>
+                    {field({ fieldKey: 'code', label: 'Code', type: 'text', value: convention.code, editable: false })}
+                    {field({ fieldKey: 'numero', label: 'Numero', type: 'text', value: convention.numero, editable: canEdit })}
+                    {field({ fieldKey: 'typeConvention', label: 'Type', type: 'select', value: convention.typeConvention, options: TYPE_OPTIONS, displayValue: <StatusBadge status={convention.typeConvention} size="small" />, editable: canEdit })}
+                  </FieldGroup>
+                </Box>
+
+                <Box sx={{ mb: 2 }}>
+                  <ConventionKeyInfoCard
+                    convention={convention} enrichedData={enrichedData}
+                    canEdit={canEdit} onFieldSave={handleFieldSave}
+                  />
+                </Box>
+
+                {/* Synthese financiere */}
+                <Box sx={{ mb: 3 }}>
+                  <ConventionSyntheseCard
+                    conventionId={convention.id}
+                    conventionBudget={convention.budget}
+                    tauxCommission={convention.tauxCommission}
+                    tauxTva={convention.tauxTva}
+                    commissionTTC={enrichedData?.commissionTTC}
+                    commissionMode={convention.commissionMode}
+                    baseCalcul={convention.baseCalcul}
+                    refreshKey={financialRefreshKey}
+                  />
+                </Box>
+
+                {/* Tabs: Partenaires, Subventions, Lignes de depenses, Projets, Marches, etc. */}
+                <ConventionRealisationSection
+                  convention={convention} canEdit
+                  onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
+                  onAddPartenaire={() => { setEditPartenaireData(null); setAddPartenaireDialogOpen(true) }}
+                  onEditPartenaire={(p) => {
+                    setEditPartenaireData({
+                      id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
+                      budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
+                      estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
+                      remarques: p.remarques || undefined,
+                    })
+                    setAddPartenaireDialogOpen(true)
+                  }}
+                />
+
+                {/* Discussion / Chatter ERP */}
+                <Box sx={{ mt: 2 }}>
+                  <ConventionCommentsCard conventionId={convention.id} />
+                </Box>
+
+                {/* Activity log */}
+                <Chatter
+                  entityType="convention" entityId={convention.id}
+                  activities={chatterActivities} loading={chatterLoading}
+                  onRefresh={() => loadChatterActivities(convention.id)}
+                />
+              </FormView>
             </Box>
 
-            <Box sx={{ mb: 2 }}>
-              <ConventionKeyInfoCard
-                convention={convention} enrichedData={enrichedData}
-                canEdit={canEdit} onFieldSave={handleFieldSave}
-              />
+            {/* ═══════ SIDEBAR (right) ═══════ */}
+            <Box sx={{
+              width: 280, flexShrink: 0,
+              display: { xs: 'none', lg: 'flex' },
+              flexDirection: 'column', gap: 2,
+              position: 'sticky', top: 80,
+            }}>
+              {/* Quick Summary */}
+              <ConventionQuickSummary convention={convention} enrichedData={enrichedData} />
+
+              {/* Timeline */}
+              <ConventionTimelineCard convention={convention} enrichedData={enrichedData} />
+
+              {/* Scheduled Activities (Odoo-style) */}
+              <ConventionScheduledActivities conventionId={convention.id} />
             </Box>
-
-            {/* Synthèse financière (read-only) */}
-            <Box sx={{ mb: 3 }}>
-              <ConventionSyntheseCard
-                conventionId={convention.id}
-                conventionBudget={convention.budget}
-                tauxCommission={convention.tauxCommission}
-                tauxTva={convention.tauxTva}
-                commissionTTC={enrichedData?.commissionTTC}
-                commissionMode={convention.commissionMode}
-                baseCalcul={convention.baseCalcul}
-                refreshKey={financialRefreshKey}
-              />
-            </Box>
-
-            {/* Tabs: Partenaires, Subventions, Lignes de dépenses, Projets, Marchés, etc. */}
-            {/* Odoo pattern: related records (one2many) are always editable regardless of status */}
-            <ConventionRealisationSection
-              convention={convention} canEdit
-              onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
-              onAddPartenaire={() => { setEditPartenaireData(null); setAddPartenaireDialogOpen(true) }}
-              onEditPartenaire={(p) => {
-                setEditPartenaireData({
-                  id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
-                  budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
-                  estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
-                  remarques: p.remarques || undefined,
-                })
-                setAddPartenaireDialogOpen(true)
-              }}
-            />
-
-            {/* Discussion / Chatter ERP */}
-            <Box sx={{ mt: 2 }}>
-              <ConventionCommentsCard conventionId={convention.id} />
-            </Box>
-
-            {/* Activity log (historique des modifications) */}
-            <Chatter
-              entityType="convention" entityId={convention.id}
-              activities={chatterActivities} loading={chatterLoading}
-              onRefresh={() => loadChatterActivities(convention.id)}
-            />
-          </FormView>
+          </Box>
         </Container>
       </Box>
 
       {convention && (
-        <>
-          <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget}
-            onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
-            onSuccess={() => { refreshFinancialData(); setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
-            editData={editPartenaireData} />
-        </>
+        <AddPartenaireDialog open={addPartenaireDialogOpen} conventionId={convention.id} conventionBudget={convention.budget}
+          onClose={() => { setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
+          onSuccess={() => { refreshFinancialData(); setAddPartenaireDialogOpen(false); setEditPartenaireData(null) }}
+          editData={editPartenaireData} />
       )}
       {dialogField && (
         <EditFieldDialog

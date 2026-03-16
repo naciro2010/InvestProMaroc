@@ -419,34 +419,64 @@ INSERT INTO convention_partenaires (id, convention_id, partenaire_id, budget_all
 -- Convention 2 - Équipement Public
 (4, 2, 4, 2500000.00, 50.00, 75000.00, true, false, 'Maître d''ouvrage'),
 (5, 2, 5, 2500000.00, 50.00, 75000.00, false, false, 'Partenaire technique'),
--- Convention 8 - Aménagement Territorial
+-- Convention 8 - Aménagement Territorial (budget=15M)
 (6, 8, 1, 7500000.00, 50.00, 150000.00, true, false, 'Maître d''ouvrage'),
-(7, 8, 8, 7500000.00, 50.00, 150000.00, false, true, 'Gestion foncière');
+(7, 8, 8, 7500000.00, 50.00, 150000.00, false, true, 'Gestion foncière'),
+-- Convention 9 - Eau et Assainissement (budget=8M)
+(8, 9, 1, 4000000.00, 50.00, 100000.00, true, false, 'Maître d''ouvrage principal'),
+(9, 9, 5, 4000000.00, 50.00, 100000.00, false, false, 'Raccordement et distribution'),
+-- Convention 10 - Energie Renouvelable (budget=6.5M)
+(10, 10, 5, 3250000.00, 50.00, 113750.00, true, false, 'Maître d''ouvrage'),
+(11, 10, 3, 3250000.00, 50.00, 113750.00, false, false, 'Co-financement régional'),
+-- Convention 11 - Transport Urbain (budget=12M)
+(12, 11, 1, 6000000.00, 50.00, 120000.00, true, false, 'Maître d''ouvrage'),
+(13, 11, 4, 6000000.00, 50.00, 120000.00, false, true, 'Maître d''ouvrage délégué'),
+-- Convention 12 - Numérique (budget=4.5M)
+(14, 12, 4, 2250000.00, 50.00, 90000.00, true, false, 'Maître d''ouvrage'),
+(15, 12, 8, 2250000.00, 50.00, 90000.00, false, false, 'Appui conservation foncière'),
+-- Convention 13 - Sport (budget=7.5M)
+(16, 13, 6, 3750000.00, 50.00, 93750.00, true, false, 'Maître d''ouvrage'),
+(17, 13, 7, 3750000.00, 50.00, 93750.00, false, false, 'Partenaire santé sportive'),
+-- Sous-convention SC-001 (id=3, budget=3.5M, parent=1)
+(18, 3, 1, 1750000.00, 50.00, 43750.00, true, false, 'Maître d''ouvrage délégué voirie'),
+(19, 3, 2, 1750000.00, 50.00, 43750.00, false, false, 'Appui urbanisme'),
+-- Sous-convention SC-002 (id=4, budget=4M, parent=1)
+(20, 4, 1, 2000000.00, 50.00, 50000.00, true, false, 'Maître d''ouvrage routes'),
+(21, 4, 3, 2000000.00, 50.00, 50000.00, false, false, 'Co-financement régional'),
+-- Sous-convention SC-003 (id=5, budget=2.5M, parent=1, heriteParametres=false)
+(22, 5, 1, 1250000.00, 50.00, 37500.00, true, false, 'Maître d''ouvrage ponts'),
+(23, 5, 3, 1250000.00, 50.00, 37500.00, false, false, 'Co-financement régional ponts'),
+-- Sous-convention SC-004 (id=6, budget=2M, parent=2)
+(24, 6, 4, 1000000.00, 50.00, 30000.00, true, false, 'Maître d''ouvrage scolaire'),
+(25, 6, 6, 1000000.00, 50.00, 30000.00, false, false, 'Tutelle éducation'),
+-- Sous-convention SC-005 (id=7, budget=3M, parent=2)
+(26, 7, 7, 1500000.00, 50.00, 45000.00, true, false, 'Maître d''ouvrage sanitaire'),
+(27, 7, 5, 1500000.00, 50.00, 45000.00, false, false, 'Raccordement électrique hôpitaux');
 
-SELECT setval('convention_partenaires_id_seq', 7, true);
+SELECT setval('convention_partenaires_id_seq', 27, true);
 
 -- ============================================================================
 -- Versements prévisionnels
 -- ============================================================================
-INSERT INTO versements_previsionnels (id, convention_id, partenaire_id, volet, date_versement, montant, remarques) VALUES
--- Convention 1 - Infrastructure (partenaire 1 = MEE)
-(1, 1, 1, 'Tranche 1 - Démarrage', '2024-03-15', 1500000.00, 'Premier versement après validation'),
-(2, 1, 1, 'Tranche 2 - Avancement 50%', '2024-06-15', 1500000.00, 'Deuxième versement à 50% avancement'),
-(3, 1, 2, 'Tranche 1 - Études', '2024-04-01', 1000000.00, 'Études préliminaires'),
-(4, 1, 2, 'Tranche 2 - Travaux', '2024-09-01', 2000000.00, 'Lancement travaux'),
+INSERT INTO versements_previsionnels (id, convention_id, partenaire_id, volet, date_versement, montant, montant_prevu, remarques) VALUES
+-- Convention 1 - Infrastructure (partenaire 1 = MEE, partenaire 2 = AUC)
+(1, 1, 1, 'Tranche 1 - Démarrage', '2024-03-15', 1500000.00, 1500000.00, 'Premier versement après validation'),
+(2, 1, 1, 'Tranche 2 - Avancement 50%', '2024-06-15', 1500000.00, 1800000.00, 'Deuxième versement à 50% avancement'),
+(3, 1, 2, 'Tranche 1 - Études', '2024-04-01', 1000000.00, 1000000.00, 'Études préliminaires'),
+(4, 1, 2, 'Tranche 2 - Travaux', '2024-09-01', 2000000.00, 2000000.00, 'Lancement travaux'),
 -- Convention 2 - Équipement Public (partenaire 4 = DCL)
-(5, 2, 4, 'Mobilier scolaire', '2024-05-01', 1200000.00, 'Commande mobilier'),
-(6, 2, 4, 'Matériel médical', '2024-06-01', 1800000.00, 'Équipement centres de santé'),
--- Convention 8 - Aménagement Territorial (partenaire 1 = MEE)
-(7, 8, 1, 'Phase 1 - Viabilisation', '2024-05-01', 3000000.00, 'Viabilisation terrain'),
-(8, 8, 1, 'Phase 2 - Construction', '2024-09-01', 4000000.00, 'Construction bâtiments'),
-(9, 8, 8, 'Phase 1 - Foncier', '2024-06-15', 3500000.00, 'Acquisition foncière'),
+(5, 2, 4, 'Mobilier scolaire', '2024-05-01', 1200000.00, 1250000.00, 'Commande mobilier'),
+(6, 2, 4, 'Matériel médical', '2024-06-01', 1800000.00, 1800000.00, 'Équipement centres de santé'),
+-- Convention 8 - Aménagement Territorial (partenaire 1 = MEE, partenaire 8 = ANCFCC)
+(7, 8, 1, 'Phase 1 - Viabilisation', '2024-05-01', 3000000.00, 3000000.00, 'Viabilisation terrain'),
+(8, 8, 1, 'Phase 2 - Construction', '2024-09-01', 4000000.00, 4500000.00, 'Construction bâtiments'),
+(9, 8, 8, 'Phase 1 - Foncier', '2024-06-15', 3500000.00, 3500000.00, 'Acquisition foncière'),
 -- Convention 12 - Numérique (partenaire 4 = DCL)
-(10, 12, 4, 'Développement', '2024-10-01', 1500000.00, 'Développement plateforme'),
-(11, 12, 4, 'Déploiement', '2025-02-01', 1200000.00, 'Formation et déploiement'),
+(10, 12, 4, 'Développement', '2024-10-01', 1500000.00, 1500000.00, 'Développement plateforme'),
+(11, 12, 4, 'Déploiement', '2025-02-01', 1200000.00, 1500000.00, 'Formation et déploiement'),
 -- Convention 13 - Sport (partenaire 6 = MEN)
-(12, 13, 6, 'Construction stades', '2024-11-01', 2500000.00, 'Construction stade municipal'),
-(13, 13, 6, 'Réhabilitation', '2025-01-15', 2000000.00, 'Rénovation complexes sportifs');
+(12, 13, 6, 'Construction stades', '2024-11-01', 2500000.00, 2500000.00, 'Construction stade municipal'),
+(13, 13, 6, 'Réhabilitation', '2025-01-15', 2000000.00, 2200000.00, 'Rénovation complexes sportifs');
 
 SELECT setval('versements_previsionnels_id_seq', 13, true);
 
@@ -516,3 +546,47 @@ INSERT INTO budget_ligne_imputations (id, budget_ligne_id, projet_id, projet_cod
 (9, 9, 5, 'PROJ-005', 'Zone Industrielle Kénitra', 100.00, 8000000.00, TRUE);
 
 SELECT setval('budget_ligne_imputations_id_seq', 9, true);
+
+-- ============================================================================
+-- Projet-Convention associations (junction table used by frontend)
+-- ============================================================================
+-- COHERENCE: Mirrors projets.convention_id but via the junction table
+-- The frontend loads projects via projetConventionsAPI.getByConvention()
+INSERT INTO projet_conventions (id, projet_id, convention_id, ordre) VALUES
+(1, 1, 1, 1),   -- PROJ-001 → Convention 1 (Infrastructure)
+(2, 2, 1, 2),   -- PROJ-002 → Convention 1 (Infrastructure)
+(3, 3, 2, 1),   -- PROJ-003 → Convention 2 (Équipement Public)
+(4, 4, 2, 2),   -- PROJ-004 → Convention 2 (Équipement Public)
+(5, 5, 8, 1);   -- PROJ-005 → Convention 8 (Aménagement Territorial)
+-- Note: PROJ-006 is independent (no convention_id), not linked here
+
+SELECT setval('projet_conventions_id_seq', 5, true);
+
+-- ============================================================================
+-- Avenants conventions (amendments to conventions)
+-- ============================================================================
+INSERT INTO avenant_conventions (id, convention_id, numero_avenant, date_avenant, objet, statut,
+  ancien_budget, nouveau_budget, delta_budget, ancien_taux_commission, nouveau_taux_commission,
+  created_by_id, date_soumission, date_validation, valide_par_id, remarques) VALUES
+-- Convention 1 - Infrastructure: avenant augmentation budget
+(1, 1, 'AV-CONV001-001', '2024-06-15', 'Augmentation budget suite extension périmètre voirie', 'VALIDE',
+  10000000.00, 12000000.00, 2000000.00, 2.5, 2.5,
+  2, '2024-06-16', '2024-06-20', 1, 'Extension du périmètre pour inclure Boulevard Anfa'),
+-- Convention 1 - Infrastructure: avenant modification taux
+(2, 1, 'AV-CONV001-002', '2024-09-01', 'Révision taux commission suite audit', 'SOUMIS',
+  12000000.00, 12000000.00, 0.00, 2.5, 3.0,
+  2, '2024-09-02', NULL, NULL, 'Alignement taux commission sur recommandations audit'),
+-- Convention 2 - Équipement Public: avenant en brouillon
+(3, 2, 'AV-CONV002-001', '2024-08-01', 'Extension équipement centres de santé ruraux', 'BROUILLON',
+  5000000.00, 6500000.00, 1500000.00, 3.0, 3.0,
+  1, NULL, NULL, NULL, 'Ajout de 3 centres de santé ruraux au programme'),
+-- Convention 8 - Aménagement: avenant validé
+(4, 8, 'AV-CONV008-001', '2024-07-15', 'Intégration zone logistique au programme', 'VALIDE',
+  15000000.00, 18000000.00, 3000000.00, 2.0, 2.0,
+  2, '2024-07-16', '2024-07-22', 1, 'Extension zone industrielle avec composante logistique'),
+-- Convention 11 - Transport: avenant validé (convention achevée)
+(5, 11, 'AV-CONV006-001', '2023-06-01', 'Prolongation durée et ajout ligne tramway', 'VALIDE',
+  12000000.00, 14000000.00, 2000000.00, 2.0, 2.0,
+  1, '2023-06-02', '2023-06-10', 2, 'Extension programme avec ligne tramway T3');
+
+SELECT setval('avenant_conventions_id_seq', 5, true);

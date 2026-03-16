@@ -13,12 +13,11 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material'
-import { Edit, Delete, ArrowUpward, ChevronRight, AddCircleOutline } from '@mui/icons-material'
+import { Edit, Delete, ArrowUpward, AddCircleOutline } from '@mui/icons-material'
 import { conventionsAPI } from '@/lib/api'
 import { colors, borders, typography } from '@/lib/designSystem'
 import PartenaireDetailDrawer from './PartenaireDetailDrawer'
-import { thStyle } from './types'
-import type { VersementPartenaireRef } from './types'
+import { thStyle, type VersementPartenaireRef } from './types'
 
 interface ConventionPartenaireData {
   id: number

@@ -53,16 +53,6 @@ const formatCurrency = (amount: number) =>
 
 const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
 
-const getStatusColor = (statut: string | undefined): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-  if (!statut) return 'default'
-  const map: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
-    BROUILLON: 'default', SOUMIS: 'info', VALIDEE: 'success', VALIDE: 'success',
-    EN_COURS: 'primary', EN_EXECUTION: 'primary', ACHEVE: 'secondary', TERMINE: 'secondary',
-    REJETE: 'error', ANNULE: 'error',
-  }
-  return map[statut.toUpperCase()] || 'default'
-}
-
 // ──── Main Component ────
 
 const ConventionRealisationSection = ({
@@ -224,7 +214,7 @@ const ConventionRealisationSection = ({
             }] : []),
             {
               label: 'Avenants', count: avenants.length,
-              content: <ConventionAvenantsTab convention={convention} avenants={avenants} formatCurrency={formatCurrency} formatDate={formatDate} getStatusColor={getStatusColor} />,
+              content: <ConventionAvenantsTab convention={convention} avenants={avenants} formatCurrency={formatCurrency} formatDate={formatDate} />,
             },
             {
               label: 'Imputations',

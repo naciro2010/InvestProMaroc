@@ -53,6 +53,11 @@ interface ChatItem {
 const STORAGE_KEY = 'investpro-dashboard-chat'
 const AI_STATUS_KEY = 'investpro-ai-status'
 
+/** Format a number in French locale */
+function fmtNum(val: number): string {
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(val)
+}
+
 /** Generate a rich summary text from data insights */
 function generateDataSummary(instruction: ParsedInstruction, data: FetchedData): string {
   const parts: string[] = []
@@ -60,7 +65,7 @@ function generateDataSummary(instruction: ParsedInstruction, data: FetchedData):
   parts.push(`**${instruction.title}** — ${data.totalCount} élément${data.totalCount > 1 ? 's' : ''} trouvé${data.totalCount > 1 ? 's' : ''}`)
 
   if (data.rows.length === 0) {
-    parts.push('\nAucune donnée ne correspond aux critères.')
+    parts.push('\n\nAucune donnée ne correspond aux critères.')
     return parts.join('')
   }
 
@@ -73,8 +78,7 @@ function generateDataSummary(instruction: ParsedInstruction, data: FetchedData):
     const topValue = typeof topRow.value === 'number' ? topRow.value : 0
 
     if (instruction.metric === 'sum' || instruction.metric === 'average') {
-      const formatted = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(total)
-      parts.push(`\n\n**Total** : ${formatted} MAD sur ${data.rows.length} catégories.`)
+      parts.push(`\n\n**Total** : ${fmtNum(total)} MAD sur ${data.rows.length} catégories.`)
     } else {
       parts.push(`\n\n**Total** : ${total} répartis sur ${data.rows.length} catégories.`)
     }
@@ -82,35 +86,65 @@ function generateDataSummary(instruction: ParsedInstruction, data: FetchedData):
     if (topName) {
       const topPct = total > 0 ? Math.round((topValue / total) * 100) : 0
       const topFormatted = instruction.metric !== 'count'
-        ? new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(topValue) + ' MAD'
+        ? fmtNum(topValue) + ' MAD'
         : String(topValue)
       parts.push(` Le leader est **${topName}** avec ${topFormatted} (${topPct}%).`)
     }
 
-    // Show top 3
-    if (data.rows.length >= 3) {
-      const top3 = data.rows.slice(0, 3).map((r, i) => {
+    // Show ranking
+    const rankCount = Math.min(data.rows.length, 5)
+    if (data.rows.length >= 2) {
+      parts.push('\n\n**Classement** :')
+      for (let i = 0; i < rankCount; i++) {
+        const r = data.rows[i]
         const name = r.group as string || '?'
         const val = typeof r.value === 'number' ? r.value : 0
         const pct = total > 0 ? Math.round((val / total) * 100) : 0
-        return `${i + 1}. ${name} (${pct}%)`
-      })
-      parts.push(`\n\n**Top 3** : ${top3.join(', ')}`)
-    }
-  } else if (!instruction.groupBy && data.rows.length > 0) {
-    // For table/ungrouped, show quick stats on numeric columns
-    const numCols = data.columns.filter(c => c.type === 'number' && c.key !== 'rank' && c.key !== 'percentage')
-    if (numCols.length > 0) {
-      const mainCol = numCols[0]
-      const values = data.rows.map(r => typeof r[mainCol.key] === 'number' ? r[mainCol.key] as number : 0).filter(v => v > 0)
-      if (values.length > 0) {
-        const total = values.reduce((s, v) => s + v, 0)
-        const avg = total / values.length
-        const formatted = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(total)
-        const avgFormatted = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(avg)
-        parts.push(`\n\n**${mainCol.label}** — Total : ${formatted} | Moyenne : ${avgFormatted} | ${values.length} entrées avec valeur.`)
+        const valStr = instruction.metric !== 'count' ? `${fmtNum(val)} MAD` : String(val)
+        parts.push(`\n${i + 1}. **${name}** — ${valStr} (${pct}%)`)
+      }
+      if (data.rows.length > rankCount) {
+        parts.push(`\n... et ${data.rows.length - rankCount} autres catégories`)
       }
     }
+  } else if (!instruction.groupBy && data.rows.length > 0) {
+    // For table/ungrouped, show stats on all numeric columns
+    const numCols = data.columns.filter(c => c.type === 'number' && c.key !== 'rank' && c.key !== 'percentage')
+    if (numCols.length > 0) {
+      parts.push('\n\n**Statistiques** :')
+      const displayCols = numCols.slice(0, 4) // Show stats for up to 4 numeric columns
+      for (const col of displayCols) {
+        const values = data.rows
+          .map(r => typeof r[col.key] === 'number' ? r[col.key] as number : 0)
+          .filter(v => v > 0)
+        if (values.length > 0) {
+          const total = values.reduce((s, v) => s + v, 0)
+          const avg = total / values.length
+          const min = Math.min(...values)
+          const max = Math.max(...values)
+          parts.push(`\n- **${col.label}** : Total ${fmtNum(total)} | Moy. ${fmtNum(avg)} | Min ${fmtNum(min)} | Max ${fmtNum(max)}`)
+        }
+      }
+    }
+
+    // Show status distribution if available
+    const statusCol = data.columns.find(c => c.type === 'status')
+    if (statusCol) {
+      const statusCounts = new Map<string, number>()
+      for (const row of data.rows) {
+        const status = String(row[statusCol.key] || 'N/A')
+        statusCounts.set(status, (statusCounts.get(status) || 0) + 1)
+      }
+      if (statusCounts.size > 1) {
+        const statusParts = [...statusCounts.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .map(([status, count]) => `${status} (${count})`)
+        parts.push(`\n\n**Répartition par statut** : ${statusParts.join(' · ')}`)
+      }
+    }
+
+    // Column count info
+    parts.push(`\n\n*${data.columns.length} colonnes affichées*`)
   }
 
   return parts.join('')

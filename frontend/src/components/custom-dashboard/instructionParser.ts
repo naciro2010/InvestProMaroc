@@ -624,11 +624,14 @@ function buildExplanation(instruction: ParsedInstruction, isFollowUp: boolean = 
 // ============================================================================
 
 function guessEntityFromContext(text: string): EntityType | null {
-  if (/\b(argent|dépenses?|engagements?|investissements?)\b/i.test(text)) return 'marches'
-  if (/\b(payé|versé|réglé|virements?)\b/i.test(text)) return 'paiements'
+  if (/\b(argent|dépenses?|engagements?|investissements?|contrats?)\b/i.test(text)) return 'marches'
+  if (/\b(payé|versé|réglé|virements?|payer|r[eè]glement)\b/i.test(text)) return 'paiements'
   if (/\b(entreprises?|sociétés?|prestataires?)\b/i.test(text)) return 'fournisseurs'
-  if (/\b(factur[eé]|situation\s+de\s+travaux)\b/i.test(text)) return 'decomptes'
-  if (/\b(programme|chantier)\b/i.test(text)) return 'projets'
+  if (/\b(factur[eé]|situation\s+de\s+travaux|d[eé]compter)\b/i.test(text)) return 'decomptes'
+  if (/\b(programme|chantier|travaux)\b/i.test(text)) return 'projets'
+  if (/\b(commission|cadre\s+juridique|accord)\b/i.test(text)) return 'conventions'
+  // If groupBy is fournisseur but no entity found, use marches
+  if (/par\s+fournisseur/i.test(text)) return 'marches'
   return null
 }
 
@@ -701,13 +704,13 @@ export function parseInstruction(input: string): ParseResult {
   }
 
   // Find groupBy
-  const groupBy = findGroupBy(normalized)
+  let groupBy = findGroupBy(normalized)
 
   // Find metric
   let metric = findMetric(normalized)
 
-  // Find metric field
-  const metricField = findMetricField(normalized, entity)
+  // Find metric field (will be recalculated after entity redirect if needed)
+  let metricField = findMetricField(normalized, entity)
 
   // Find limit (top N)
   let limit = extractNumber(normalized)
@@ -746,6 +749,17 @@ export function parseInstruction(input: string): ParseResult {
   // "les plus coûteux" implies sum metric
   if (/\b(?:co[uû]teux|chers?|[eé]lev[eé]s?|importants?)\b/i.test(normalized) && metric === 'count') {
     metric = 'sum'
+  }
+
+  // Smart entity redirect: "top 5 fournisseurs par montant" should query marchés grouped by fournisseur
+  // because fournisseurs don't have monetary amounts
+  if (entity === 'fournisseurs' && metric === 'sum') {
+    entity = 'marches'
+    metricField = findMetricField(normalized, entity)
+    if (!groupBy) {
+      groupBy = 'fournisseur'
+    }
+    warnings.push('Requête redirigée vers les marchés regroupés par fournisseur (les fournisseurs n\'ont pas de montants propres).')
   }
 
   // Find visualization
@@ -806,16 +820,20 @@ export function parseInstruction(input: string): ParseResult {
 // ============================================================================
 
 export const EXAMPLE_INSTRUCTIONS: Array<{ text: string; icon: string }> = [
-  { text: 'Tableau des conventions', icon: 'table' },
+  // Conventions
+  { text: 'Tableau des conventions validées', icon: 'table' },
+  { text: 'Répartition des conventions par type', icon: 'pie' },
+  { text: 'Budget total des conventions par statut', icon: 'bar' },
+  // Marchés
   { text: 'Marchés par statut', icon: 'pie' },
-  { text: 'Top 5 fournisseurs par montant', icon: 'bar' },
-  { text: 'Répartition des paiements par fournisseur', icon: 'pie' },
-  { text: 'Évolution des décomptes par mois', icon: 'line' },
-  { text: 'Nombre total de projets', icon: 'kpi' },
-  { text: 'Marchés par zone géographique', icon: 'bar' },
-  { text: 'Budget des conventions par type', icon: 'bar' },
-  { text: 'Conventions validées par type', icon: 'pie' },
-  { text: 'Marchés en cours par fournisseur', icon: 'bar' },
+  { text: 'Top 10 fournisseurs par montant', icon: 'bar' },
+  { text: 'Marchés en cours par zone géographique', icon: 'bar' },
+  // Projets
   { text: 'Quels sont les projets les plus coûteux ?', icon: 'bar' },
+  { text: 'Nombre total de projets', icon: 'kpi' },
+  // Finance
+  { text: 'Évolution des paiements par mois', icon: 'line' },
+  { text: 'Décomptes par fournisseur', icon: 'bar' },
+  { text: 'Montant total des décomptes par statut', icon: 'bar' },
   { text: 'Bilan des paiements', icon: 'kpi' },
 ]

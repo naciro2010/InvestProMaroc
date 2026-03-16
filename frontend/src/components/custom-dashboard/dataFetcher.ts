@@ -155,6 +155,22 @@ interface RawRecord {
   modePaiement?: string
   ordrePaiementId?: number
   numeroOP?: string
+  estPaiementPartiel?: boolean
+
+  // Convention specific
+  createdByNom?: string
+
+  // Marché specific
+  nbLignes?: number
+  nbAvenants?: number
+  nbDecomptes?: number
+
+  // Décompte specific (totalRetenues already declared above)
+  cumulPrecedent?: number
+  cumulActuel?: number
+  estSolde?: boolean
+  nbRetenues?: number
+  nbImputations?: number
 
   // Catch-all for unexpected fields
   [key: string]: unknown
@@ -210,9 +226,9 @@ async function fetchRawData(entity: EntityType): Promise<RawRecord[]> {
 
 function getLabel(record: RawRecord): string {
   return (
-    record.designation ||
     record.libelle ||
     record.objet ||
+    record.designation ||
     record.nom ||
     record.raisonSociale ||
     record.description ||
@@ -221,6 +237,7 @@ function getLabel(record: RawRecord): string {
     record.numeroMarche ||
     record.numeroDecompte ||
     record.referencePaiement ||
+    record.version ||
     `#${record.id ?? '?'}`
   )
 }
@@ -377,41 +394,51 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
   const entityColumns: Record<EntityType, ColumnDef[]> = {
     conventions: [
       { key: 'code', label: 'Code', type: 'string' },
+      { key: 'numero', label: 'Numéro', type: 'string' },
       { key: 'libelle', label: 'Libellé', type: 'string' },
-      { key: 'typeConvention', label: 'Type', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'budget', label: 'Budget', type: 'number', align: 'right' },
+      { key: 'budget', label: 'Budget (MAD)', type: 'number', align: 'right' },
       { key: 'dateDebut', label: 'Date début', type: 'date' },
+      { key: 'dateFin', label: 'Date fin', type: 'date' },
+      { key: 'createdByNom', label: 'Créé par', type: 'string' },
     ],
     marches: [
-      { key: 'code', label: 'N° Marché', type: 'string' },
+      { key: 'numeroMarche', label: 'N° Marché', type: 'string' },
       { key: 'objet', label: 'Objet', type: 'string' },
       { key: 'fournisseurNom', label: 'Fournisseur', type: 'string' },
       { key: 'typeMarche', label: 'Type', type: 'string' },
+      { key: 'naturePrestation', label: 'Nature', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'montantHt', label: 'Montant HT', type: 'number', align: 'right' },
-      { key: 'montantTtc', label: 'Montant TTC', type: 'number', align: 'right' },
+      { key: 'montantHt', label: 'Montant HT (MAD)', type: 'number', align: 'right' },
+      { key: 'montantTtc', label: 'Montant TTC (MAD)', type: 'number', align: 'right' },
+      { key: 'zoneGeographique', label: 'Zone', type: 'string' },
+      { key: 'dateMarche', label: 'Date', type: 'date' },
     ],
     projets: [
       { key: 'code', label: 'Code', type: 'string' },
       { key: 'nom', label: 'Nom', type: 'string' },
       { key: 'statut', label: 'Statut', type: 'status' },
-      { key: 'budgetTotal', label: 'Budget Total', type: 'number', align: 'right' },
+      { key: 'budgetTotal', label: 'Budget Total (MAD)', type: 'number', align: 'right' },
+      { key: 'pourcentageAvancement', label: 'Avancement %', type: 'number', align: 'right' },
       { key: 'dateDebut', label: 'Date début', type: 'date' },
+      { key: 'dateFinPrevue', label: 'Date fin prévue', type: 'date' },
     ],
     decomptes: [
-      { key: 'code', label: 'N° Décompte', type: 'string' },
+      { key: 'numeroDecompte', label: 'N° Décompte', type: 'string' },
       { key: 'marcheNumero', label: 'Marché', type: 'string' },
       { key: 'marcheFournisseur', label: 'Fournisseur', type: 'string' },
-      { key: 'montantBrutHT', label: 'Montant Brut HT', type: 'number', align: 'right' },
-      { key: 'netAPayer', label: 'Net à Payer', type: 'number', align: 'right' },
+      { key: 'montantBrutHT', label: 'Montant Brut HT (MAD)', type: 'number', align: 'right' },
+      { key: 'totalRetenues', label: 'Retenues (MAD)', type: 'number', align: 'right' },
+      { key: 'netAPayer', label: 'Net à Payer (MAD)', type: 'number', align: 'right' },
+      { key: 'montantPaye', label: 'Montant Payé (MAD)', type: 'number', align: 'right' },
       { key: 'statut', label: 'Statut', type: 'status' },
       { key: 'dateDecompte', label: 'Date', type: 'date' },
     ],
     paiements: [
-      { key: 'code', label: 'Référence', type: 'string' },
-      { key: 'montantPaye', label: 'Montant', type: 'number', align: 'right' },
+      { key: 'referencePaiement', label: 'Référence', type: 'string' },
+      { key: 'montantPaye', label: 'Montant Payé (MAD)', type: 'number', align: 'right' },
       { key: 'modePaiement', label: 'Mode', type: 'string' },
+      { key: 'estPaiementPartiel', label: 'Partiel', type: 'string' },
       { key: 'dateValeur', label: 'Date Valeur', type: 'date' },
       { key: 'dateExecution', label: 'Date Exécution', type: 'date' },
     ],
@@ -419,13 +446,10 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
       { key: 'code', label: 'Code', type: 'string' },
       { key: 'raisonSociale', label: 'Raison Sociale', type: 'string' },
       { key: 'ice', label: 'ICE', type: 'string' },
-      { key: 'ville', label: 'Ville', type: 'string' },
-      { key: 'telephone', label: 'Téléphone', type: 'string' },
     ],
     budgets: [
-      { key: 'conventionLibelle', label: 'Convention', type: 'string' },
       { key: 'version', label: 'Version', type: 'string' },
-      { key: 'totalBudget', label: 'Total Budget', type: 'number', align: 'right' },
+      { key: 'totalBudget', label: 'Total Budget (MAD)', type: 'number', align: 'right' },
       { key: 'statut', label: 'Statut', type: 'status' },
       { key: 'dateBudget', label: 'Date', type: 'date' },
     ],
@@ -448,14 +472,18 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
           row[col.key] = getType(record)
           break
         case 'code':
-          row[col.key] = getCode(record)
+        case 'numeroMarche':
+        case 'referencePaiement':
+        case 'numero':
+          row[col.key] = record[col.key] as string || getCode(record)
           break
         case 'designation':
         case 'libelle':
         case 'nom':
         case 'objet':
         case 'label':
-          row[col.key] = getLabel(record)
+        case 'version':
+          row[col.key] = record[col.key] as string || getLabel(record)
           break
         case 'fournisseurNom':
           row[col.key] = record.fournisseurNom || record.fournisseur?.raisonSociale || record.marcheFournisseur || ''
@@ -472,6 +500,24 @@ function buildUngroupedTable(records: RawRecord[], instruction: ParsedInstructio
           break
         case 'raisonSociale':
           row[col.key] = record.raisonSociale || ''
+          break
+        case 'naturePrestation':
+          row[col.key] = record.naturePrestation || ''
+          break
+        case 'zoneGeographique':
+          row[col.key] = record.zoneGeographique || 'Non définie'
+          break
+        case 'createdByNom':
+          row[col.key] = record.createdByNom || ''
+          break
+        case 'pourcentageAvancement':
+          row[col.key] = toNumber(record.pourcentageAvancement ?? 0)
+          break
+        case 'totalRetenues':
+          row[col.key] = toNumber(record.totalRetenues ?? 0)
+          break
+        case 'estPaiementPartiel':
+          row[col.key] = record.estPaiementPartiel ? 'Oui' : 'Non'
           break
         // Amount fields - handle both camelCase variants
         case 'montantHt':
@@ -582,11 +628,20 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
       group: groupKey,
       value,
       count: groupRecords.length,
+      percentage: 0, // will be calculated below
+      rank: 0,       // will be calculated below
     }
   })
 
   // Sort by value descending
   rows.sort((a, b) => (b.value as number) - (a.value as number))
+
+  // Calculate percentages and ranks
+  const grandTotal = rows.reduce((s, r) => s + (r.value as number), 0)
+  rows.forEach((row, idx) => {
+    row.percentage = grandTotal > 0 ? Math.round(((row.value as number) / grandTotal) * 10000) / 100 : 0
+    row.rank = idx + 1
+  })
 
   // Apply limit
   if (limit) {
@@ -595,8 +650,8 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
 
   const metricLabels: Record<MetricType, string> = {
     count: 'Nombre',
-    sum: 'Montant Total',
-    average: 'Moyenne',
+    sum: 'Montant Total (MAD)',
+    average: 'Moyenne (MAD)',
   }
 
   const ENTITY_LABELS: Record<EntityType, string> = {
@@ -610,8 +665,10 @@ function buildGroupedData(records: RawRecord[], instruction: ParsedInstruction):
   }
 
   const columns: ColumnDef[] = [
+    { key: 'rank', label: '#', type: 'number', align: 'center' },
     { key: 'group', label: 'Catégorie', type: 'string' },
     { key: 'value', label: metricLabels[metric], type: 'number', align: 'right' },
+    { key: 'percentage', label: 'Part %', type: 'number', align: 'right' },
     { key: 'count', label: 'Nombre', type: 'number', align: 'right' },
   ]
 

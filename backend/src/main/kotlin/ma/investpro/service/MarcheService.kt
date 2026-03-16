@@ -32,7 +32,8 @@ class MarcheService(
     private val projetRepository: ProjetRepository,
     private val conventionRepository: ConventionRepository,
     private val ordrePaiementRepository: OrdrePaiementRepository,
-    private val paiementRepository: PaiementRepository
+    private val paiementRepository: PaiementRepository,
+    private val modificationEventPublisher: ModificationEventPublisher
 ) {
 
     fun findAll(): List<Marche> {
@@ -75,9 +76,16 @@ class MarcheService(
             logger.debug { "Auto-calculated TVA: ${marche.montantTva}, TTC: ${marche.montantTtc}" }
         }
 
-        return marcheRepository.save(marche).also { saved ->
-            logger.info { "Marche created - ID: ${saved.id}, numero: ${saved.numeroMarche}" }
-        }
+        val saved = marcheRepository.save(marche)
+        logger.info { "Marche created - ID: ${saved.id}, numero: ${saved.numeroMarche}" }
+
+        modificationEventPublisher.publishCreation(
+            entityType = "MARCHE",
+            entityId = saved.id!!,
+            description = "Creation du marche ${saved.numeroMarche}"
+        )
+
+        return saved
     }
 
     fun update(id: Long, marche: Marche): Marche {
@@ -88,6 +96,9 @@ class MarcheService(
                 logger.warn { "Marche not found for update - ID: $id" }
                 IllegalArgumentException("Marche avec ID $id non trouve")
             }
+
+        val ancienStatut = existingMarche.statut.name
+        val ancienMontant = existingMarche.montantTtc.toString()
 
         // Log significant changes
         if (existingMarche.statut != marche.statut) {
@@ -119,9 +130,30 @@ class MarcheService(
             remarques = marche.remarques
         }
 
-        return marcheRepository.save(existingMarche).also { updated ->
-            logger.info { "Marche updated - ID: ${updated.id}" }
+        val updated = marcheRepository.save(existingMarche)
+        logger.info { "Marche updated - ID: ${updated.id}" }
+
+        // Publier l'event de modification
+        val champsModifies = mutableListOf<String>()
+        if (ancienStatut != updated.statut.name) champsModifies.add("statut")
+        if (ancienMontant != updated.montantTtc.toString()) champsModifies.add("montantTtc")
+
+        if (ancienStatut != updated.statut.name) {
+            modificationEventPublisher.publishStatusChange(
+                entityType = "MARCHE", entityId = id,
+                description = "Changement de statut du marche ${updated.numeroMarche}",
+                ancienStatut = ancienStatut, nouveauStatut = updated.statut.name
+            )
+        } else {
+            modificationEventPublisher.publish(
+                entityType = "MARCHE", entityId = id,
+                typeModification = "UPDATE",
+                description = "Mise a jour du marche ${updated.numeroMarche}",
+                champsModifies = champsModifies
+            )
         }
+
+        return updated
     }
 
     fun delete(id: Long) {
@@ -139,8 +171,14 @@ class MarcheService(
             logger.warn { "Cascade delete: marche ${marche.numeroMarche} has ${marche.bonsCommande.size} bons and ${marche.decomptes.size} decomptes" }
         }
 
+        val numero = marche.numeroMarche
         marcheRepository.delete(marche)
-        logger.info { "Marche deleted - ID: $id, numero: ${marche.numeroMarche}" }
+        logger.info { "Marche deleted - ID: $id, numero: $numero" }
+
+        modificationEventPublisher.publishDeletion(
+            entityType = "MARCHE", entityId = id,
+            description = "Suppression du marche $numero"
+        )
     }
 
     fun findByFournisseur(fournisseurId: Long): List<Marche> {

@@ -13,4 +13,6 @@ interface EntityModificationRepository : JpaRepository<EntityModification, Long>
     ): List<EntityModification>
 
     fun countByEntityTypeAndEntityId(entityType: String, entityId: Long): Long
+
+    fun findTop50ByOrderByDateModificationDesc(): List<EntityModification>
 }

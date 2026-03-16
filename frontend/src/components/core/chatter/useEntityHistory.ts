@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { historiqueAPI } from '@/lib/api'
 import type { ChatterActivity } from './ActivityItem'
+import { useEntitySSE } from './useEntitySSE'
 
 interface EntityModificationResponse {
   id: number
@@ -33,23 +34,36 @@ interface UseEntityHistoryResult {
   activities: ChatterActivity[]
   loading: boolean
   refresh: () => void
+  /** SSE connecte (temps reel actif) */
+  connected: boolean
+  /** Nombre d'events recus en temps reel */
+  realtimeCount: number
 }
 
 /**
  * Hook reutilisable pour charger l'historique des modifications d'une entite.
- * Utilise l'endpoint generique /api/historique/{entityType}/{entityId}.
+ * Combine le chargement initial via REST + les mises a jour temps reel via SSE.
  *
  * @param entityType - Type d'entite (MARCHE, PROJET, DECOMPTE, BUDGET, etc.)
  * @param entityId - ID de l'entite
  * @param entityCreatedAt - Date de creation de l'entite (pour ajouter un evenement "Creation")
+ * @param enableSSE - Activer le streaming SSE temps reel (defaut: true)
  */
 export function useEntityHistory(
   entityType: string,
   entityId: number,
-  entityCreatedAt?: string
+  entityCreatedAt?: string,
+  enableSSE: boolean = true
 ): UseEntityHistoryResult {
-  const [activities, setActivities] = useState<ChatterActivity[]>([])
+  const [fetchedActivities, setFetchedActivities] = useState<ChatterActivity[]>([])
   const [loading, setLoading] = useState(false)
+
+  // SSE pour les mises a jour temps reel
+  const { realtimeActivities, connected, eventCount } = useEntitySSE({
+    entityType,
+    entityId,
+    enabled: enableSSE,
+  })
 
   const loadHistory = useCallback(async () => {
     if (!entityId) return
@@ -84,11 +98,11 @@ export function useEntityHistory(
         })
       }
 
-      setActivities(mapped)
+      setFetchedActivities(mapped)
     } catch {
       // If endpoint not available, show creation event only
       if (entityCreatedAt) {
-        setActivities([{
+        setFetchedActivities([{
           id: -1,
           type: 'creation',
           date: entityCreatedAt,
@@ -98,7 +112,7 @@ export function useEntityHistory(
           details: undefined,
         }])
       } else {
-        setActivities([])
+        setFetchedActivities([])
       }
     } finally {
       setLoading(false)
@@ -109,5 +123,19 @@ export function useEntityHistory(
     loadHistory()
   }, [loadHistory])
 
-  return { activities, loading, refresh: loadHistory }
+  // Fusionner les activites chargees + les activites temps reel SSE
+  // en evitant les doublons (meme id)
+  const activities = useMemo(() => {
+    const existingIds = new Set(fetchedActivities.map(a => a.id))
+    const newFromSSE = realtimeActivities.filter(a => !existingIds.has(a.id))
+    return [...newFromSSE, ...fetchedActivities]
+  }, [fetchedActivities, realtimeActivities])
+
+  return {
+    activities,
+    loading,
+    refresh: loadHistory,
+    connected,
+    realtimeCount: eventCount,
+  }
 }

@@ -26,4 +26,17 @@ class EntityModificationController(
         val historique = entityModificationService.getHistorique(entityType.uppercase(), entityId)
         return ResponseEntity.ok(ApiResponse.success(historique))
     }
+
+    /**
+     * Micro-endpoint: dernieres modifications globales (tous types d'entites).
+     * Utile pour un flux d'activite global.
+     */
+    @GetMapping("/recent")
+    @ReadAccess
+    fun getRecentModifications(
+        @RequestParam(defaultValue = "50") limit: Int
+    ): ResponseEntity<ApiResponse<List<EntityModificationDTO>>> {
+        val modifications = entityModificationService.getRecentModifications(limit.coerceIn(1, 100))
+        return ResponseEntity.ok(ApiResponse.success(modifications))
+    }
 }

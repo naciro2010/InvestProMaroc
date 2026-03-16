@@ -30,6 +30,8 @@ export interface ChatterProps {
   onAddNote?: (note: string) => Promise<void>
   onRefresh?: () => void
   maxVisible?: number
+  /** SSE connecte (temps reel actif) */
+  connected?: boolean
 }
 
 // ==================== MAIN COMPONENT ====================
@@ -40,6 +42,7 @@ const Chatter = ({
   onAddNote,
   onRefresh,
   maxVisible = 5,
+  connected = false,
 }: ChatterProps) => {
   const [expanded, setExpanded] = useState(false)
   const [noteText, setNoteText] = useState('')
@@ -80,6 +83,20 @@ const Chatter = ({
           }}>
             {activities.length}
           </Typography>
+          {connected && (
+            <Tooltip title="Temps reel actif (SSE)">
+              <Box sx={{
+                width: 8, height: 8, borderRadius: '50%',
+                bgcolor: colors.success[500],
+                animation: 'pulse 2s infinite',
+                '@keyframes pulse': {
+                  '0%': { opacity: 1 },
+                  '50%': { opacity: 0.4 },
+                  '100%': { opacity: 1 },
+                },
+              }} />
+            </Tooltip>
+          )}
         </Box>
 
         <Box sx={{ display: 'flex', gap: 0.5 }}>

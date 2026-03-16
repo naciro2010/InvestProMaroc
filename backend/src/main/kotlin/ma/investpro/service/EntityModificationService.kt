@@ -11,11 +11,22 @@ import java.time.LocalDateTime
 @Service
 @Transactional
 class EntityModificationService(
-    private val repository: EntityModificationRepository
+    private val repository: EntityModificationRepository,
+    private val sseEmitterService: SseEmitterService
 ) {
 
     fun getHistorique(entityType: String, entityId: Long): List<EntityModificationDTO> {
         return repository.findByEntityTypeAndEntityIdOrderByDateModificationDesc(entityType, entityId)
+            .map { toDTO(it) }
+    }
+
+    /**
+     * Recuperer les N dernieres modifications tous types confondus.
+     * Utile pour un flux global d'activite.
+     */
+    fun getRecentModifications(limit: Int = 50): List<EntityModificationDTO> {
+        return repository.findTop50ByOrderByDateModificationDesc()
+            .take(limit)
             .map { toDTO(it) }
     }
 
@@ -40,7 +51,12 @@ class EntityModificationService(
             donneesAvant = donneesAvant,
             donneesApres = donneesApres
         )
-        return repository.save(modification)
+        val saved = repository.save(modification)
+
+        // Diffuser via SSE aux clients connectes
+        sseEmitterService.broadcast(toDTO(saved))
+
+        return saved
     }
 
     private fun toDTO(entity: EntityModification): EntityModificationDTO {

@@ -62,6 +62,16 @@ interface FormData {
   imputationMontant: string
 }
 
+interface ExistingVersement {
+  id: number
+  partenaireId?: number
+  dateVersement: string
+  montant: number
+  montantPrevu?: number
+  volet?: string
+  remarques?: string
+}
+
 interface ValidationErrors {
   partenaireId?: string
   budgetAlloue?: string
@@ -93,8 +103,10 @@ export default function AddPartenaireDialog({
   const [categoryAllocations, setCategoryAllocations] = useState<CategoryAllocation[]>([])
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [quickCreateName, setQuickCreateName] = useState('')
+  const [existingVersements, setExistingVersements] = useState<ExistingVersement[]>([])
   const syncSourceRef = useRef<SyncSource>('none')
 
+  // Load edit data
   useEffect(() => {
     if (open && editData) {
       setFormData({
@@ -106,12 +118,35 @@ export default function AddPartenaireDialog({
         estMaitreOeuvreDelegue: editData.estMaitreOeuvreDelegue,
         remarques: editData.remarques || '',
       })
+      // Load existing versements for this partenaire
+      loadExistingVersements(editData.partenaireId)
     }
   }, [open, editData])
 
   useEffect(() => {
     if (open) fetchPartenaires()
   }, [open])
+
+  const loadExistingVersements = async (partenaireId: number) => {
+    try {
+      const res = await versementsPrevisionnelsAPI.getByConvention(conventionId)
+      const allVersements: ExistingVersement[] = res.data.data || res.data || []
+      const filtered = allVersements.filter(v => v.partenaireId === partenaireId)
+      setExistingVersements(filtered)
+      // Pre-fill first versement if exists
+      if (filtered.length > 0) {
+        const first = filtered[0]
+        setFormData((prev: FormData) => ({
+          ...prev,
+          versementDate: first.dateVersement?.split('T')[0] || '',
+          versementMontant: (first.montantPrevu || first.montant || 0).toString(),
+          versementVolet: first.volet || '',
+        }))
+      }
+    } catch {
+      setExistingVersements([])
+    }
+  }
 
   const fetchPartenaires = async () => {
     try {
@@ -147,27 +182,87 @@ export default function AddPartenaireDialog({
         estMaitreOeuvreDelegue: formData.estMaitreOeuvreDelegue,
         remarques: formData.remarques || undefined,
       }
+
       if (isEditMode && editData) {
+        // Update partenaire
         await conventionsAPI.updatePartenaire(conventionId, editData.id, payload)
-      } else {
-        await conventionsAPI.addPartenaire(conventionId, { partenaireId: formData.partenaireId, ...payload })
+
+        // Handle versement update/create
         const versementMontant = parseFloat(formData.versementMontant)
         if (formData.versementDate && !isNaN(versementMontant) && versementMontant > 0) {
-          try {
-            await versementsPrevisionnelsAPI.create(conventionId, {
-              partenaireId: formData.partenaireId,
+          if (existingVersements.length > 0) {
+            // Update existing versement
+            await versementsPrevisionnelsAPI.update(existingVersements[0].id, {
+              partenaireId: editData.partenaireId,
               dateVersement: formData.versementDate,
               montant: versementMontant,
               montantPrevu: versementMontant,
               volet: formData.versementVolet || null,
             })
-          } catch { /* versement optional */ }
+          } else {
+            // Create new versement
+            await versementsPrevisionnelsAPI.create(conventionId, {
+              partenaireId: editData.partenaireId,
+              dateVersement: formData.versementDate,
+              montant: versementMontant,
+              montantPrevu: versementMontant,
+              volet: formData.versementVolet || null,
+            })
+          }
         }
+      } else {
+        // Create new partenaire
+        const response = await conventionsAPI.addPartenaire(conventionId, { partenaireId: formData.partenaireId, ...payload })
+        const newPartenaireId = formData.partenaireId
+
+        // Create versement if provided
+        const versementMontant = parseFloat(formData.versementMontant)
+        if (formData.versementDate && !isNaN(versementMontant) && versementMontant > 0) {
+          try {
+            await versementsPrevisionnelsAPI.create(conventionId, {
+              partenaireId: newPartenaireId,
+              dateVersement: formData.versementDate,
+              montant: versementMontant,
+              montantPrevu: versementMontant,
+              volet: formData.versementVolet || null,
+            })
+          } catch { /* versement optional - silently handle */ }
+        }
+
+        // Create imputation if provided
+        const imputationMontant = parseFloat(formData.imputationMontant)
+        if (formData.imputationPoste && !isNaN(imputationMontant) && imputationMontant > 0) {
+          try {
+            await conventionsAPI.ajouterImputation(conventionId, {
+              volet: formData.imputationPoste,
+              montantPrevu: imputationMontant,
+              dateDemarrage: new Date().toISOString().split('T')[0],
+              delaiMois: 12,
+              remarques: formData.remarques || undefined,
+            })
+          } catch { /* imputation optional */ }
+        }
+
+        void response // Avoid unused variable warning
       }
       onSuccess()
       handleClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'operation')
+      // Extract meaningful error message from API response
+      let errorMessage = 'Erreur lors de l\'operation'
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { message?: string }; status?: number } }
+        if (axiosErr.response?.data?.message) {
+          errorMessage = axiosErr.response.data.message
+        } else if (axiosErr.response?.status === 400) {
+          errorMessage = 'Donnees invalides. Verifiez les champs obligatoires.'
+        } else if (axiosErr.response?.status === 409) {
+          errorMessage = 'Ce partenaire est deja associe a cette convention.'
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
+      setError(errorMessage)
     } finally { setLoading(false) }
   }
 
@@ -177,6 +272,7 @@ export default function AddPartenaireDialog({
     setValidationErrors({})
     setError('')
     setCategoryAllocations([])
+    setExistingVersements([])
     syncSourceRef.current = 'none'
     onClose()
   }
@@ -189,7 +285,7 @@ export default function AddPartenaireDialog({
       if (!isNaN(budgetNum) && budgetNum >= 0) newForm.pourcentage = ((budgetNum / conventionBudget) * 100).toFixed(2)
     }
     setFormData(newForm)
-    setValidationErrors((prev) => { const next = { ...prev }; delete next.budgetAlloue; return next })
+    setValidationErrors((prev: ValidationErrors) => { const next = { ...prev }; delete next.budgetAlloue; return next })
   }
 
   const handlePourcentageChange = (value: string) => {
@@ -200,11 +296,11 @@ export default function AddPartenaireDialog({
       if (!isNaN(pctNum) && pctNum >= 0) newForm.budgetAlloue = ((pctNum / 100) * conventionBudget).toFixed(2)
     }
     setFormData(newForm)
-    setValidationErrors((prev) => { const next = { ...prev }; delete next.pourcentage; return next })
+    setValidationErrors((prev: ValidationErrors) => { const next = { ...prev }; delete next.pourcentage; return next })
   }
 
   const handleFieldChange = (field: keyof FormData, value: string | number | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev: FormData) => ({ ...prev, [field]: value }))
   }
 
   const budgetNum = parseFloat(formData.budgetAlloue) || 0
@@ -224,7 +320,7 @@ export default function AddPartenaireDialog({
         </DialogTitle>
 
         <DialogContent>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
 
           {loadingPartenaires && !isEditMode ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
@@ -263,10 +359,10 @@ export default function AddPartenaireDialog({
               {/* Roles */}
               <Box sx={{ display: 'flex', gap: 3 }}>
                 <FormControlLabel
-                  control={<Checkbox size="small" checked={formData.estMaitreOeuvre} onChange={(e) => handleFieldChange('estMaitreOeuvre', e.target.checked)} />}
+                  control={<Checkbox size="small" checked={formData.estMaitreOeuvre} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange('estMaitreOeuvre', e.target.checked)} />}
                   label={<Typography sx={{ fontSize: typography.sizes.sm }}>Maitre d'oeuvre (MO)</Typography>} />
                 <FormControlLabel
-                  control={<Checkbox size="small" checked={formData.estMaitreOeuvreDelegue} onChange={(e) => handleFieldChange('estMaitreOeuvreDelegue', e.target.checked)} />}
+                  control={<Checkbox size="small" checked={formData.estMaitreOeuvreDelegue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange('estMaitreOeuvreDelegue', e.target.checked)} />}
                   label={<Typography sx={{ fontSize: typography.sizes.sm }}>Maitre d'oeuvre delegue (MOD)</Typography>} />
               </Box>
 
@@ -281,14 +377,16 @@ export default function AddPartenaireDialog({
               <Divider sx={{ borderColor: colors.borderSubtle }} />
 
               {/* Versement */}
-              <Typography sx={sectionTitleSx}>Versement previsionnel (optionnel)</Typography>
+              <Typography sx={sectionTitleSx}>
+                Versement previsionnel {isEditMode && existingVersements.length > 0 ? `(${existingVersements.length} existant${existingVersements.length > 1 ? 's' : ''})` : '(optionnel)'}
+              </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
                 <TextField fullWidth size="small" label="Date versement" type="date" value={formData.versementDate}
-                  onChange={(e) => handleFieldChange('versementDate', e.target.value)} InputLabelProps={{ shrink: true }} />
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange('versementDate', e.target.value)} InputLabelProps={{ shrink: true }} />
                 <DecimalInput fullWidth size="small" label="Montant (MAD)" value={parseFloat(formData.versementMontant) || 0}
                   onChange={(value) => handleFieldChange('versementMontant', value.toString())} decimalPlaces={2} min={0} />
                 <TextField fullWidth size="small" label="Volet" value={formData.versementVolet}
-                  onChange={(e) => handleFieldChange('versementVolet', e.target.value)} placeholder="Ex: Tranche 1" />
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange('versementVolet', e.target.value)} placeholder="Ex: Tranche 1" />
               </Box>
 
               <Divider sx={{ borderColor: colors.borderSubtle }} />
@@ -297,14 +395,14 @@ export default function AddPartenaireDialog({
               <Typography sx={sectionTitleSx}>Imputation previsionnelle (optionnel)</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                 <TextField fullWidth size="small" label="Poste / Compte" value={formData.imputationPoste}
-                  onChange={(e) => handleFieldChange('imputationPoste', e.target.value)} placeholder="Ex: 6141 - Fournitures" />
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange('imputationPoste', e.target.value)} placeholder="Ex: 6141 - Fournitures" />
                 <DecimalInput fullWidth size="small" label="Montant (MAD)" value={parseFloat(formData.imputationMontant) || 0}
                   onChange={(value) => handleFieldChange('imputationMontant', value.toString())} decimalPlaces={2} min={0} />
               </Box>
 
               {/* Remarques */}
               <TextField fullWidth size="small" multiline rows={2} label="Remarques" value={formData.remarques}
-                onChange={(e) => handleFieldChange('remarques', e.target.value)} placeholder="Notes complementaires (optionnel)" />
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange('remarques', e.target.value)} placeholder="Notes complementaires (optionnel)" />
             </Box>
           )}
         </DialogContent>
@@ -312,7 +410,8 @@ export default function AddPartenaireDialog({
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={handleClose} disabled={loading} size="small">Annuler</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={loading || (loadingPartenaires && !isEditMode)} size="small">
-            {loading ? (isEditMode ? 'Modification...' : 'Ajout en cours...') : (isEditMode ? 'Modifier' : 'Ajouter')}
+            {loading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+            {loading ? (isEditMode ? 'Enregistrement...' : 'Ajout en cours...') : (isEditMode ? 'Enregistrer' : 'Ajouter')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -322,10 +421,10 @@ export default function AddPartenaireDialog({
         initialName={quickCreateName}
         onClose={() => setQuickCreateOpen(false)}
         onCreated={(newP) => {
-          setPartenaires((prev) => [...prev, newP])
+          setPartenaires((prev: PartenaireSimple[]) => [...prev, newP])
           setSelectedPartenaire({ ...newP })
-          setFormData((prev) => ({ ...prev, partenaireId: newP.id }))
-          setValidationErrors((prev) => { const next = { ...prev }; delete next.partenaireId; return next })
+          setFormData((prev: FormData) => ({ ...prev, partenaireId: newP.id }))
+          setValidationErrors((prev: ValidationErrors) => { const next = { ...prev }; delete next.partenaireId; return next })
         }}
       />
     </>

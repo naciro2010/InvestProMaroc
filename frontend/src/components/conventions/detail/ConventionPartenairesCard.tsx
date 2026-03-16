@@ -306,13 +306,7 @@ const ConventionPartenairesCard = ({
         partenaire={selectedPartenaire}
         conventionId={conventionId}
         conventionBudget={conventionBudget}
-        versements={versements.map(v => ({
-          id: v.id,
-          partenaireId: v.partenaireId,
-          dateVersement: '',
-          montant: v.montant,
-          montantPrevu: v.montantPrevu,
-        }))}
+        onEdit={onEditClick ? (p) => { setSelectedPartenaire(null); onEditClick(p) } : undefined}
       />
     </Box>
   )

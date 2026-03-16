@@ -1,8 +1,8 @@
 import React from 'react'
 import {
-  Drawer, Box, Typography, IconButton, Chip, Divider,
+  Drawer, Box, Typography, IconButton, Chip, Divider, Tooltip,
 } from '@mui/material'
-import { Close, AccountBalance, CalendarMonth, ArrowForward, CurrencyExchange } from '@mui/icons-material'
+import { Close, Edit, AccountBalance, CalendarMonth, ArrowForward, CurrencyExchange } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
 import type { Subvention } from './types'
 
@@ -12,6 +12,7 @@ interface SubventionDetailDrawerProps {
   subvention: Subvention | null
   allSubventions: Subvention[]
   conventionBudget: number
+  onEdit?: (subvention: Subvention) => void
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -27,7 +28,7 @@ const fmtDate = (d?: string): string => d ? new Date(d).toLocaleDateString('fr-F
 const fmtPct = (v: number): string => `${v.toFixed(1)}%`
 
 const SubventionDetailDrawer = ({
-  open, onClose, subvention, allSubventions, conventionBudget,
+  open, onClose, subvention, allSubventions, conventionBudget, onEdit,
 }: SubventionDetailDrawerProps) => {
   if (!subvention) return null
 
@@ -73,7 +74,16 @@ const SubventionDetailDrawer = ({
               <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>~ {fmtMAD(montantMAD)}</Typography>
             )}
           </Box>
-          <IconButton size="small" onClick={onClose}><Close fontSize="small" /></IconButton>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {onEdit && (
+              <Tooltip title="Modifier cette subvention">
+                <IconButton size="small" onClick={() => { onEdit(subvention); onClose() }}>
+                  <Edit fontSize="small" sx={{ color: colors.primary[600] }} />
+                </IconButton>
+              </Tooltip>
+            )}
+            <IconButton size="small" onClick={onClose}><Close fontSize="small" /></IconButton>
+          </Box>
         </Box>
       </Box>
 

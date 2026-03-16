@@ -78,6 +78,7 @@ const ExpenseCategoryRepartition = ({
   const [budgetLignes, setBudgetLignes] = useState<ConventionBudgetLigneDTO[]>([])
   const [allCategories, setAllCategories] = useState<CategorieDepenseListDTO[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [showAddRow, setShowAddRow] = useState(false)
 
   // New category quick-create state
@@ -97,16 +98,17 @@ const ExpenseCategoryRepartition = ({
   const loadData = async () => {
     try {
       setLoading(true)
+      setLoadError(null)
       const [budgetRes, catRes] = await Promise.all([
-        conventionsAPI.getBudgetLignes(conventionId),
-        categoriesDepensesAPI.getList(),
+        conventionsAPI.getBudgetLignes(conventionId).catch(() => ({ data: { data: [] } })),
+        categoriesDepensesAPI.getList().catch(() => ({ data: { data: [] } })),
       ])
       const lignes: ConventionBudgetLigneDTO[] = budgetRes.data.data ?? []
       const cats: CategorieDepenseListDTO[] = catRes.data.data ?? []
       setBudgetLignes(lignes)
       setAllCategories(cats)
     } catch {
-      // Silently handle
+      setLoadError('Erreur lors du chargement des categories')
     } finally {
       setLoading(false)
     }
@@ -169,7 +171,6 @@ const ExpenseCategoryRepartition = ({
       const catRes = await categoriesDepensesAPI.create({
         libelle: pendingCategoryName,
         code,
-        actif: true,
       })
       const newCat = catRes.data.data || catRes.data
 
@@ -196,8 +197,12 @@ const ExpenseCategoryRepartition = ({
       setCreateWarningOpen(false)
       setPendingCategoryName('')
       setPendingCategoryCode('')
-    } catch {
-      // Silently handle
+    } catch (err: unknown) {
+      const errMsg = err && typeof err === 'object' && 'response' in err
+        ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erreur lors de la creation')
+        : 'Erreur lors de la creation'
+      setLoadError(errMsg)
+      setCreateWarningOpen(false)
     } finally {
       setCreating(false)
     }
@@ -207,6 +212,16 @@ const ExpenseCategoryRepartition = ({
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
         <CircularProgress size={20} />
+      </Box>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <Box sx={{ py: 2, px: 1.5 }}>
+        <Alert severity="error" onClose={() => setLoadError(null)} sx={{ fontSize: typography.sizes.xs }}>
+          {loadError}
+        </Alert>
       </Box>
     )
   }

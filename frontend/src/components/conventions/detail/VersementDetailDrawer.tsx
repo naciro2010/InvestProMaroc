@@ -1,8 +1,8 @@
 import React from 'react'
 import {
-  Drawer, Box, Typography, IconButton, Chip, LinearProgress, Divider,
+  Drawer, Box, Typography, IconButton, Chip, LinearProgress, Divider, Tooltip,
 } from '@mui/material'
-import { Close, CalendarMonth, TrendingUp, ArrowForward, AccountBalance } from '@mui/icons-material'
+import { Close, Edit, CalendarMonth, TrendingUp, ArrowForward, AccountBalance } from '@mui/icons-material'
 import { colors, typography } from '@/lib/designSystem'
 import type { VersementPrevisionnel } from './types'
 
@@ -12,6 +12,7 @@ interface VersementDetailDrawerProps {
   versement: VersementPrevisionnel | null
   allVersements: VersementPrevisionnel[]
   conventionBudget: number
+  onEdit?: (versement: VersementPrevisionnel) => void
 }
 
 const fmtMAD = (v: number): string =>
@@ -20,7 +21,7 @@ const fmtDate = (d: string): string => new Date(d).toLocaleDateString('fr-FR')
 const fmtPct = (v: number): string => `${v.toFixed(1)}%`
 
 const VersementDetailDrawer = ({
-  open, onClose, versement, allVersements, conventionBudget,
+  open, onClose, versement, allVersements, conventionBudget, onEdit,
 }: VersementDetailDrawerProps) => {
   if (!versement) return null
 
@@ -53,7 +54,16 @@ const VersementDetailDrawer = ({
               {fmtMAD(versement.montant)}
             </Typography>
           </Box>
-          <IconButton size="small" onClick={onClose}><Close fontSize="small" /></IconButton>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {onEdit && (
+              <Tooltip title="Modifier ce versement">
+                <IconButton size="small" onClick={() => { onEdit(versement); onClose() }}>
+                  <Edit fontSize="small" sx={{ color: colors.primary[600] }} />
+                </IconButton>
+              </Tooltip>
+            )}
+            <IconButton size="small" onClick={onClose}><Close fontSize="small" /></IconButton>
+          </Box>
         </Box>
       </Box>
 

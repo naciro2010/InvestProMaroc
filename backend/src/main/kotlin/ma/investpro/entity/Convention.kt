@@ -109,6 +109,19 @@ class Convention(
     @Column(name = "created_by_id")
     var createdById: Long? = null, // ID de l'utilisateur qui a créé la convention
 
+    // Priorité de la convention
+    @Column(name = "priorite", nullable = false, length = 15)
+    @Enumerated(EnumType.STRING)
+    var priorite: PrioriteConvention = PrioriteConvention.NORMALE,
+
+    // Date d'échéance (deadline)
+    @Column(name = "date_echeance")
+    var dateEcheance: java.time.LocalDate? = null,
+
+    // Responsable assigné
+    @Column(name = "responsable_id")
+    var responsableId: Long? = null,
+
     // Sous-convention fields (self-referencing parent-child)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_convention_id")
@@ -196,4 +209,14 @@ enum class StatutConvention {
     EN_EXECUTION,   // Convention en cours d'exécution
     ACHEVE,         // Convention achevée/terminée
     REJETE          // Convention rejetée (retour à brouillon possible)
+}
+
+/**
+ * Priorité de la convention
+ */
+enum class PrioriteConvention {
+    BASSE,          // Basse priorité
+    NORMALE,        // Priorité normale (défaut)
+    HAUTE,          // Haute priorité
+    URGENTE         // Urgente
 }

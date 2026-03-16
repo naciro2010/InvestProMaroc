@@ -603,3 +603,48 @@ INSERT INTO entity_modifications (id, entity_type, entity_id, modifie_par_id, da
 (6, 'BUDGET', 1, 1, NOW() - INTERVAL '12 days', 'CREATION', 'Creation du budget V0', ARRAY['version','totalBudget','statut']);
 
 SELECT setval('entity_modifications_id_seq', 6, true);
+
+-- ============================================================================
+-- Convention Tags (étiquettes)
+-- ============================================================================
+INSERT INTO convention_tags (id, name, color, description) VALUES
+(1, 'Urgent', '#c9372c', 'Convention nécessitant un traitement urgent'),
+(2, 'Infrastructure', '#0c66e4', 'Conventions liées à l''infrastructure'),
+(3, 'Éducation', '#6e5dc6', 'Conventions liées au secteur éducatif'),
+(4, 'Santé', '#1f845a', 'Conventions liées au secteur de la santé'),
+(5, 'Environnement', '#227d9b', 'Conventions liées à l''environnement'),
+(6, 'Immobilier', '#946f00', 'Conventions liées à l''immobilier');
+
+SELECT setval('convention_tags_id_seq', 6, true);
+
+-- Assign tags to conventions
+INSERT INTO convention_tag_assignments (tag_id, convention_id) VALUES
+(2, 1), -- CONV-001: Infrastructure
+(1, 1), -- CONV-001: Urgent
+(3, 2), -- CONV-002: Éducation
+(4, 2), -- CONV-002: Santé
+(5, 3); -- CONV-003: Environnement
+
+-- ============================================================================
+-- Convention Followers (abonnés)
+-- ============================================================================
+INSERT INTO convention_followers (id, convention_id, user_id, subscription_type) VALUES
+(1, 1, 1, 'ALL'),     -- Admin suit CONV-001
+(2, 1, 2, 'ALL'),     -- Manager suit CONV-001
+(3, 2, 1, 'WORKFLOW_ONLY'), -- Admin suit CONV-002 (workflow seulement)
+(4, 2, 2, 'ALL'),     -- Manager suit CONV-002
+(5, 3, 2, 'ALL');     -- Manager suit CONV-003
+
+SELECT setval('convention_followers_id_seq', 5, true);
+
+-- ============================================================================
+-- Convention Comments (chatter)
+-- ============================================================================
+INSERT INTO convention_comments (id, convention_id, author_id, content, comment_type) VALUES
+(1, 1, 1, 'Convention créée et en attente de validation des documents techniques.', 'COMMENT'),
+(2, 1, 2, 'Les documents ont été vérifiés, tout est conforme. Prêt pour soumission.', 'COMMENT'),
+(3, 1, 1, 'Note interne: vérifier le budget avant la fin du mois.', 'NOTE_INTERNE'),
+(4, 2, 2, 'Budget validé par le département financier.', 'COMMENT'),
+(5, 2, 1, 'Convention soumise pour validation', 'SYSTEM');
+
+SELECT setval('convention_comments_id_seq', 5, true);

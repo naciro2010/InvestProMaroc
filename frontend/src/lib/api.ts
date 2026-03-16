@@ -381,6 +381,42 @@ export const conventionsAPI = {
   getDates: (id: number) => api.get(`/conventions/${id}/dates`),
   getStats: (id: number) => api.get(`/conventions/${id}/stats`),
   getDetailEnriched: (id: number) => api.get(`/conventions/${id}/detail-enriched`),
+
+  // Comments / Chatter
+  getComments: (conventionId: number) => api.get(`/conventions/${conventionId}/comments`),
+  countComments: (conventionId: number) => api.get(`/conventions/${conventionId}/comments/count`),
+  addComment: (conventionId: number, data: { content: string; commentType?: string; parentCommentId?: number; mentions?: number[] }) =>
+    api.post(`/conventions/${conventionId}/comments`, data),
+  updateComment: (conventionId: number, commentId: number, data: { content: string }) =>
+    api.put(`/conventions/${conventionId}/comments/${commentId}`, data),
+  deleteComment: (conventionId: number, commentId: number) =>
+    api.delete(`/conventions/${conventionId}/comments/${commentId}`),
+
+  // Followers / Abonnés
+  getFollowers: (conventionId: number) => api.get(`/conventions/${conventionId}/followers`),
+  countFollowers: (conventionId: number) => api.get(`/conventions/${conventionId}/followers/count`),
+  isFollowing: (conventionId: number) => api.get(`/conventions/${conventionId}/followers/is-following`),
+  followMe: (conventionId: number) => api.post(`/conventions/${conventionId}/followers/follow-me`),
+  unfollowMe: (conventionId: number) => api.delete(`/conventions/${conventionId}/followers/unfollow-me`),
+  addFollower: (conventionId: number, data: { userId: number; subscriptionType?: string }) =>
+    api.post(`/conventions/${conventionId}/followers`, data),
+  removeFollower: (conventionId: number, userId: number) =>
+    api.delete(`/conventions/${conventionId}/followers/${userId}`),
+}
+
+// Convention Tags API
+export const conventionTagsAPI = {
+  getAll: () => api.get('/convention-tags'),
+  getForConvention: (conventionId: number) => api.get(`/convention-tags/convention/${conventionId}`),
+  create: (data: { name: string; color?: string; description?: string }) =>
+    api.post('/convention-tags', data),
+  update: (tagId: number, data: { name?: string; color?: string; description?: string }) =>
+    api.put(`/convention-tags/${tagId}`, data),
+  delete: (tagId: number) => api.delete(`/convention-tags/${tagId}`),
+  assign: (conventionId: number, tagId: number) =>
+    api.post(`/convention-tags/convention/${conventionId}/assign/${tagId}`),
+  remove: (conventionId: number, tagId: number) =>
+    api.delete(`/convention-tags/convention/${conventionId}/remove/${tagId}`),
 }
 
 // Projets API

@@ -20,6 +20,8 @@ const Notebook = ({ tabs, tabActions }: NotebookProps) => {
         <Tabs
           value={activeTab}
           onChange={(_, val: number) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
           sx={styles.notebookTabs}
         >
           {tabs.map((tab, index) => (
@@ -57,9 +59,11 @@ const Notebook = ({ tabs, tabActions }: NotebookProps) => {
       </Box>
 
       {tabs.map((tab, index) => (
-        <Box key={index} role="tabpanel" hidden={activeTab !== index}>
-          {activeTab === index && <Box sx={{ py: 2 }}>{tab.content}</Box>}
-        </Box>
+        activeTab === index ? (
+          <Box key={index} role="tabpanel" sx={{ py: 2 }}>
+            {tab.content}
+          </Box>
+        ) : null
       ))}
     </Box>
   )

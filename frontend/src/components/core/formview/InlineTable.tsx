@@ -103,7 +103,7 @@ const InlineTable = ({
             {headers.map((header, i) => (
               <th key={i} style={{
                 padding: '8px 12px', textAlign: header.align || 'left',
-                fontWeight: typography.weights.semibold as number, fontSize: typography.sizes.xs,
+                fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs,
                 textTransform: 'uppercase', letterSpacing: '0.04em', color: colors.textSecondary,
                 borderBottom: `2px solid ${colors.border}`, width: header.width,
               }}>
@@ -138,7 +138,7 @@ const InlineTable = ({
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.primary[25] }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.neutral[25] }}
             >
-              <td colSpan={totalCols} style={{ padding: '8px 12px', fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium as number }}>
+              <td colSpan={totalCols} style={{ padding: '8px 12px', fontSize: typography.sizes.sm, color: colors.primary[600], fontWeight: typography.weights.medium }}>
                 + Ajouter une ligne
               </td>
             </tr>
@@ -148,7 +148,7 @@ const InlineTable = ({
             <tr style={{ backgroundColor: colors.neutral[50], borderTop: `2px solid ${colors.border}` }}>
               {sortable && <td />}
               {footerCells.map((cell, i) => (
-                <td key={i} style={{ padding: '8px 12px', fontWeight: typography.weights.semibold as number, fontSize: typography.sizes.sm, color: colors.textPrimary, textAlign: headers[i]?.align || 'left' }}>
+                <td key={i} style={{ padding: '8px 12px', fontWeight: typography.weights.semibold, fontSize: typography.sizes.sm, color: colors.textPrimary, textAlign: headers[i]?.align || 'left' }}>
                   {cell}
                 </td>
               ))}

@@ -23,7 +23,7 @@ import ConventionSmartButtons from '../../components/conventions/detail/Conventi
 import ConventionSyntheseCard from '../../components/conventions/detail/ConventionSyntheseCard'
 import ConventionKeyInfoCard from '../../components/conventions/detail/ConventionKeyInfoCard'
 import ConventionAlertBanner from '../../components/conventions/detail/ConventionAlertBanner'
-import ConventionProgressCard from '../../components/conventions/detail/ConventionProgressCard'
+
 import ConventionScheduledActivities from '../../components/conventions/detail/ConventionScheduledActivities'
 import ConventionActionsMenu from '../../components/conventions/detail/ConventionActionsMenu'
 import ConventionTimelineCard from '../../components/conventions/detail/ConventionTimelineCard'
@@ -130,6 +130,21 @@ const ConventionDetailPageModern = () => {
     } catch { setError('Erreur lors du chargement de la convention') }
     finally { setLoading(false) }
   }
+
+  // Reload enriched data (sidebar summary) whenever financial data changes
+  useEffect(() => {
+    if (financialRefreshKey > 0 && id) {
+      const cid = parseInt(id)
+      Promise.all([
+        conventionsAPI.getById(cid),
+        conventionsAPI.getDetailEnriched(cid).catch(() => null),
+      ]).then(([res, enrichedRes]) => {
+        const raw = res.data.data || res.data
+        setConvention((prev: Convention | null) => prev ? { ...prev, ...raw, statut: normalizeStatut(raw.statut) } : null)
+        if (enrichedRes) setEnrichedData(enrichedRes.data.data || enrichedRes.data || null)
+      }).catch(() => { /* silent refresh failure */ })
+    }
+  }, [financialRefreshKey, id])
 
   useEffect(() => { if (error) { const t = setTimeout(() => setError(null), 5000); return () => clearTimeout(t) } }, [error])
 
@@ -278,13 +293,6 @@ const ConventionDetailPageModern = () => {
                       parentConventionNumero={convention.parentConventionNumero}
                       heriteParametres={convention.heriteParametres ?? false}
                     />
-                  </Box>
-                )}
-
-                {/* ERP: Progress tracker with milestones */}
-                {enrichedData && (
-                  <Box sx={{ mb: 2 }}>
-                    <ConventionProgressCard convention={convention} enrichedData={enrichedData} />
                   </Box>
                 )}
 

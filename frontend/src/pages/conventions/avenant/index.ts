@@ -1,5 +1,7 @@
+export { default as AvenantHistoryTab } from './AvenantHistoryTab'
+export { default as AvenantDetailsTab } from './AvenantDetailsTab'
+export { default as AvenantWorkflowActions } from './AvenantWorkflowActions'
 export { default as AvenantStepFieldSelection } from './AvenantStepFieldSelection'
 export type { SelectedFields } from './AvenantStepFieldSelection'
-
 export { default as AvenantStepValues } from './AvenantStepValues'
 export type { AvenantFormData, PartenaireAllocation } from './AvenantStepValues'

@@ -380,6 +380,46 @@ export default function AddPartenaireDialog({
               <Typography sx={sectionTitleSx}>
                 Versement previsionnel {isEditMode && existingVersements.length > 0 ? `(${existingVersements.length} existant${existingVersements.length > 1 ? 's' : ''})` : '(optionnel)'}
               </Typography>
+              {/* Show all existing versements in edit mode */}
+              {isEditMode && existingVersements.length > 1 && (
+                <Box sx={{ border: `1px solid ${colors.border}`, borderRadius: borders.radius.md, overflow: 'hidden', mb: 1 }}>
+                  <Box sx={{ bgcolor: colors.neutral[50], px: 1.5, py: 0.75 }}>
+                    <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary }}>
+                      Versements existants
+                    </Typography>
+                  </Box>
+                  {existingVersements.map((v, idx) => (
+                    <Box
+                      key={v.id}
+                      onClick={() => {
+                        setFormData((prev: FormData) => ({
+                          ...prev,
+                          versementDate: v.dateVersement?.split('T')[0] || '',
+                          versementMontant: (v.montantPrevu || v.montant || 0).toString(),
+                          versementVolet: v.volet || '',
+                        }))
+                      }}
+                      sx={{
+                        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1.5,
+                        px: 1.5, py: 1, cursor: 'pointer',
+                        borderTop: idx > 0 ? `1px solid ${colors.borderSubtle}` : 'none',
+                        bgcolor: formData.versementDate === (v.dateVersement?.split('T')[0] || '') && formData.versementVolet === (v.volet || '') ? colors.primary[25] : 'transparent',
+                        '&:hover': { bgcolor: colors.primary[25] },
+                      }}
+                    >
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textPrimary }}>
+                        {v.dateVersement ? new Date(v.dateVersement).toLocaleDateString('fr-FR') : '-'}
+                      </Typography>
+                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.medium, textAlign: 'right' }}>
+                        {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(v.montantPrevu || v.montant || 0)}
+                      </Typography>
+                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                        {v.volet || '-'}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
                 <TextField fullWidth size="small" label="Date versement" type="date" value={formData.versementDate}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange('versementDate', e.target.value)} InputLabelProps={{ shrink: true }} />

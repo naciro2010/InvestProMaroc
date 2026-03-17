@@ -228,30 +228,87 @@ const ExpenseCategoryRepartition = ({
 
   if (budgetLignes.length === 0 && allocations.length === 0) {
     return (
-      <Box sx={{ py: 2, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, mb: 1 }}>
-          Aucune categorie de depenses dans la convention
-        </Typography>
-        {!readOnly && (
-          <Box
-            onClick={() => {
-              setPendingCategoryName('')
-              setPendingCategoryCode('')
-              setCreateWarningOpen(true)
-            }}
-            sx={{
-              display: 'inline-flex', alignItems: 'center', gap: 0.75,
-              cursor: 'pointer', py: 0.5, px: 1.5, borderRadius: 1,
-              '&:hover': { bgcolor: colors.primary[25] },
-            }}
-          >
-            <AddCircleOutline sx={{ fontSize: 14, color: colors.primary[500] }} />
-            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.primary[600], fontWeight: typography.weights.medium }}>
-              Creer une categorie
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      <>
+        <Box sx={{ py: 2, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, mb: 1 }}>
+            Aucune categorie de depenses dans la convention
+          </Typography>
+          {!readOnly && (
+            <Box
+              onClick={() => {
+                setPendingCategoryName('')
+                setPendingCategoryCode('')
+                setCreateWarningOpen(true)
+              }}
+              sx={{
+                display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                cursor: 'pointer', py: 0.5, px: 1.5, borderRadius: 1,
+                '&:hover': { bgcolor: colors.primary[25] },
+              }}
+            >
+              <AddCircleOutline sx={{ fontSize: 14, color: colors.primary[500] }} />
+              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.primary[600], fontWeight: typography.weights.medium }}>
+                Creer une categorie
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        {/* Warning dialog for creating a new category */}
+        <Dialog open={createWarningOpen} onClose={() => setCreateWarningOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ pb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CategoryIcon sx={{ color: colors.warning[500] }} />
+              Creer une nouvelle categorie
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2, mt: 1 }}>
+              <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, mb: 0.5 }}>
+                Attention
+              </Typography>
+              <Typography sx={{ fontSize: typography.sizes.xs }}>
+                Cette categorie sera automatiquement ajoutee a la convention.
+                Elle apparaitra dans la repartition budgetaire de la convention.
+              </Typography>
+            </Alert>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth size="small"
+                label="Libelle de la categorie *"
+                value={pendingCategoryName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPendingCategoryName(e.target.value)}
+                autoFocus
+                placeholder="Ex: Travaux supplementaires"
+              />
+              <TextField
+                fullWidth size="small"
+                label="Code"
+                value={pendingCategoryCode}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPendingCategoryCode(e.target.value.toUpperCase())}
+                placeholder="Ex: TRAV-SUP"
+                helperText="Auto-genere si vide"
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={() => setCreateWarningOpen(false)} size="small" disabled={creating}>
+              Annuler
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleCreateCategoryConfirm}
+              disabled={!pendingCategoryName || creating}
+              startIcon={creating ? <CircularProgress size={14} /> : <CategoryIcon />}
+              sx={{ bgcolor: colors.warning[600], '&:hover': { bgcolor: colors.warning[700] } }}
+            >
+              {creating ? 'Creation...' : 'Creer et ajouter a la convention'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     )
   }
 

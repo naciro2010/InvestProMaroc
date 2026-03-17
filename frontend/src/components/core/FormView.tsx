@@ -344,6 +344,8 @@ const Notebook = ({ tabs, tabActions }: NotebookProps) => {
         <Tabs
           value={activeTab}
           onChange={(_, val: number) => setActiveTab(val)}
+          variant="scrollable"
+          scrollButtons="auto"
           sx={styles.notebookTabs}
         >
           {tabs.map((tab, index) => (

@@ -648,3 +648,15 @@ INSERT INTO convention_comments (id, convention_id, author_id, content, comment_
 (5, 2, 1, 'Convention soumise pour validation', 'SYSTEM');
 
 SELECT setval('convention_comments_id_seq', 5, true);
+
+-- ============================================================================
+-- Activites Planifiees (scheduled activities for conventions)
+-- ============================================================================
+INSERT INTO activites_planifiees (id, convention_id, type_activite, titre, date_prevue, note, fait, created_by_id) VALUES
+(1, 1, 'task', 'Préparer les documents de validation', '2026-03-20', 'Documents techniques et financiers requis', false, 1),
+(2, 1, 'meeting', 'Réunion de suivi convention', '2026-03-25', null, false, 2),
+(3, 1, 'call', 'Appeler le partenaire principal', '2026-03-15', 'Confirmer les montants', true, 1),
+(4, 2, 'email', 'Envoyer le rapport mensuel', '2026-03-18', null, false, 2),
+(5, 2, 'reminder', 'Vérifier les échéances budgétaires', '2026-03-22', 'Budget Q1 à valider', false, 1);
+
+SELECT setval('activites_planifiees_id_seq', 5, true);

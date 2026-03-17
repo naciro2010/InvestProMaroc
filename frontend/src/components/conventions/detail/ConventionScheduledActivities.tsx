@@ -1,26 +1,18 @@
-import { useState, type ChangeEvent, type ReactNode, type MouseEvent, type KeyboardEvent } from 'react'
+import { useState, useEffect, useCallback, type ChangeEvent, type ReactNode, type MouseEvent, type KeyboardEvent } from 'react'
 import {
   Box, Typography, IconButton, Tooltip, Chip, TextField,
-  MenuItem, Button, Collapse,
+  MenuItem, Button, Collapse, CircularProgress,
 } from '@mui/material'
 import {
   Schedule, Add, Phone, Email, Event, Assignment,
   Delete, CheckCircle, ExpandMore, ExpandLess,
 } from '@mui/icons-material'
 import { colors, typography, borders, transitions } from '@/lib/designSystem'
+import { activitesPlanifieesAPI, type ActivitePlanifieeDTO } from '@/lib/api'
 
 // ──── Types ────
 
 type ActivityType = 'call' | 'email' | 'meeting' | 'task' | 'reminder'
-
-interface ScheduledActivity {
-  id: string
-  type: ActivityType
-  title: string
-  date: string
-  note?: string
-  done: boolean
-}
 
 interface ConventionScheduledActivitiesProps {
   conventionId: number
@@ -31,25 +23,12 @@ interface ConventionScheduledActivitiesProps {
 const ACTIVITY_TYPES: Record<ActivityType, { label: string; icon: ReactNode; color: string }> = {
   call: { label: 'Appel', icon: <Phone sx={{ fontSize: 14 }} />, color: colors.success[500] },
   email: { label: 'Email', icon: <Email sx={{ fontSize: 14 }} />, color: colors.primary[500] },
-  meeting: { label: 'Reunion', icon: <Event sx={{ fontSize: 14 }} />, color: colors.purple[500] },
-  task: { label: 'Tache', icon: <Assignment sx={{ fontSize: 14 }} />, color: colors.warning[500] },
+  meeting: { label: 'Réunion', icon: <Event sx={{ fontSize: 14 }} />, color: colors.purple[500] },
+  task: { label: 'Tâche', icon: <Assignment sx={{ fontSize: 14 }} />, color: colors.warning[500] },
   reminder: { label: 'Rappel', icon: <Schedule sx={{ fontSize: 14 }} />, color: colors.info[500] },
 }
 
-const STORAGE_KEY_PREFIX = 'conv-activities-'
-
 // ──── Helpers ────
-
-const loadActivities = (conventionId: number): ScheduledActivity[] => {
-  try {
-    const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${conventionId}`)
-    return raw ? JSON.parse(raw) as ScheduledActivity[] : []
-  } catch { return [] }
-}
-
-const saveActivities = (conventionId: number, activities: ScheduledActivity[]) => {
-  localStorage.setItem(`${STORAGE_KEY_PREFIX}${conventionId}`, JSON.stringify(activities))
-}
 
 const isOverdue = (date: string) => new Date(date) < new Date(new Date().toISOString().split('T')[0])
 const isToday = (date: string) => date === new Date().toISOString().split('T')[0]
@@ -57,28 +36,31 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2
 
 // ──── Sub-components ────
 
-const ActivityItem = ({ activity, onToggle, onDelete }: {
-  key?: string; activity: ScheduledActivity; onToggle: () => void; onDelete: () => void
+const ActivityItem = ({ activity, onToggle, onDelete, disabled }: {
+  activity: ActivitePlanifieeDTO
+  onToggle: () => void
+  onDelete: () => void
+  disabled: boolean
 }) => {
-  const cfg = ACTIVITY_TYPES[activity.type]
-  const overdue = !activity.done && isOverdue(activity.date)
-  const today = isToday(activity.date)
+  const cfg = ACTIVITY_TYPES[activity.typeActivite as ActivityType] ?? ACTIVITY_TYPES.task
+  const overdue = !activity.fait && isOverdue(activity.datePrevue)
+  const today = isToday(activity.datePrevue)
 
   return (
     <Box sx={{
       display: 'flex', alignItems: 'center', gap: 1,
       px: 1.5, py: 0.75, borderRadius: borders.radius.sm,
-      opacity: activity.done ? 0.5 : 1,
+      opacity: activity.fait ? 0.5 : 1,
       bgcolor: overdue ? colors.danger[25] : today ? colors.warning[25] : 'transparent',
       borderLeft: `3px solid ${overdue ? colors.danger[400] : today ? colors.warning[400] : cfg.color}`,
       transition: `all ${transitions.normal}`,
       '&:hover': { bgcolor: overdue ? colors.danger[50] : colors.neutral[50] },
     }}>
-      <Tooltip title={activity.done ? 'Marquer non fait' : 'Marquer fait'}>
-        <IconButton size="small" onClick={onToggle} sx={{ p: 0.25 }}>
+      <Tooltip title={activity.fait ? 'Marquer non fait' : 'Marquer fait'}>
+        <IconButton size="small" onClick={onToggle} disabled={disabled} sx={{ p: 0.25 }}>
           <CheckCircle sx={{
             fontSize: 18,
-            color: activity.done ? colors.success[500] : colors.neutral[300],
+            color: activity.fait ? colors.success[500] : colors.neutral[300],
             '&:hover': { color: colors.success[400] },
           }} />
         </IconButton>
@@ -91,11 +73,11 @@ const ActivityItem = ({ activity, onToggle, onDelete }: {
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{
           fontSize: typography.sizes.xs, fontWeight: typography.weights.medium,
-          color: activity.done ? colors.textDisabled : colors.textPrimary,
-          textDecoration: activity.done ? 'line-through' : 'none',
+          color: activity.fait ? colors.textDisabled : colors.textPrimary,
+          textDecoration: activity.fait ? 'line-through' : 'none',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         }}>
-          {activity.title}
+          {activity.titre}
         </Typography>
         {activity.note && (
           <Typography sx={{ fontSize: '10px', color: colors.textSecondary, lineHeight: 1.2 }}>
@@ -104,13 +86,13 @@ const ActivityItem = ({ activity, onToggle, onDelete }: {
         )}
       </Box>
 
-      <Chip label={fmtDate(activity.date)} size="small" sx={{
+      <Chip label={fmtDate(activity.datePrevue)} size="small" sx={{
         height: 20, fontSize: '10px',
         bgcolor: overdue ? colors.danger[100] : today ? colors.warning[100] : colors.neutral[100],
         color: overdue ? colors.danger[700] : today ? colors.warning[700] : colors.textSecondary,
       }} />
 
-      <IconButton size="small" onClick={onDelete} sx={{ p: 0.25, color: colors.neutral[400], '&:hover': { color: colors.danger[500] } }}>
+      <IconButton size="small" onClick={onDelete} disabled={disabled} sx={{ p: 0.25, color: colors.neutral[400], '&:hover': { color: colors.danger[500] } }}>
         <Delete sx={{ fontSize: 14 }} />
       </IconButton>
     </Box>
@@ -120,7 +102,9 @@ const ActivityItem = ({ activity, onToggle, onDelete }: {
 // ──── Main Component ────
 
 const ConventionScheduledActivities = ({ conventionId }: ConventionScheduledActivitiesProps) => {
-  const [activities, setActivities] = useState<ScheduledActivity[]>(() => loadActivities(conventionId))
+  const [activities, setActivities] = useState<ActivitePlanifieeDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [expanded, setExpanded] = useState(true)
   const [newType, setNewType] = useState<ActivityType>('task')
@@ -128,38 +112,77 @@ const ConventionScheduledActivities = ({ conventionId }: ConventionScheduledActi
   const [newDate, setNewDate] = useState(new Date().toISOString().split('T')[0])
   const [newNote, setNewNote] = useState('')
 
-  const updateActivities = (updated: ScheduledActivity[]) => {
-    setActivities(updated)
-    saveActivities(conventionId, updated)
-  }
-
-  const handleAdd = () => {
-    if (!newTitle.trim()) return
-    const activity: ScheduledActivity = {
-      id: `act-${Date.now()}`,
-      type: newType,
-      title: newTitle.trim(),
-      date: newDate,
-      note: newNote.trim() || undefined,
-      done: false,
+  const fetchActivities = useCallback(async () => {
+    try {
+      const { data } = await activitesPlanifieesAPI.getByConvention(conventionId)
+      if (data.success) {
+        setActivities(data.data)
+      }
+    } catch {
+      // Silently fail - activities are non-critical
+    } finally {
+      setLoading(false)
     }
-    updateActivities([...activities, activity])
-    setNewTitle(''); setNewNote(''); setShowForm(false)
+  }, [conventionId])
+
+  useEffect(() => {
+    fetchActivities()
+  }, [fetchActivities])
+
+  const handleAdd = async () => {
+    if (!newTitle.trim()) return
+    setSaving(true)
+    try {
+      const { data } = await activitesPlanifieesAPI.create(conventionId, {
+        typeActivite: newType,
+        titre: newTitle.trim(),
+        datePrevue: newDate,
+        note: newNote.trim() || null,
+      })
+      if (data.success) {
+        setActivities((prev: ActivitePlanifieeDTO[]) => [...prev, data.data])
+        setNewTitle('')
+        setNewNote('')
+        setShowForm(false)
+      }
+    } catch {
+      // Could show toast error here
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const toggleDone = (id: string) => {
-    updateActivities(activities.map((a: ScheduledActivity) => a.id === id ? { ...a, done: !a.done } : a))
+  const toggleDone = async (id: number) => {
+    setSaving(true)
+    try {
+      const { data } = await activitesPlanifieesAPI.toggleDone(conventionId, id)
+      if (data.success) {
+        setActivities((prev: ActivitePlanifieeDTO[]) => prev.map((a: ActivitePlanifieeDTO) => a.id === id ? data.data : a))
+      }
+    } catch {
+      // Could show toast error here
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const deleteActivity = (id: string) => {
-    updateActivities(activities.filter((a: ScheduledActivity) => a.id !== id))
+  const deleteActivity = async (id: number) => {
+    setSaving(true)
+    try {
+      await activitesPlanifieesAPI.delete(conventionId, id)
+      setActivities((prev: ActivitePlanifieeDTO[]) => prev.filter((a: ActivitePlanifieeDTO) => a.id !== id))
+    } catch {
+      // Could show toast error here
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const pendingCount = activities.filter((a: ScheduledActivity) => !a.done).length
-  const overdueCount = activities.filter((a: ScheduledActivity) => !a.done && isOverdue(a.date)).length
-  const sorted = [...activities].sort((a: ScheduledActivity, b: ScheduledActivity) => {
-    if (a.done !== b.done) return a.done ? 1 : -1
-    return new Date(a.date).getTime() - new Date(b.date).getTime()
+  const pendingCount = activities.filter((a: ActivitePlanifieeDTO) => !a.fait).length
+  const overdueCount = activities.filter((a: ActivitePlanifieeDTO) => !a.fait && isOverdue(a.datePrevue)).length
+  const sorted = [...activities].sort((a: ActivitePlanifieeDTO, b: ActivitePlanifieeDTO) => {
+    if (a.fait !== b.fait) return a.fait ? 1 : -1
+    return new Date(a.datePrevue).getTime() - new Date(b.datePrevue).getTime()
   })
 
   return (
@@ -176,7 +199,7 @@ const ConventionScheduledActivities = ({ conventionId }: ConventionScheduledActi
       >
         <Schedule sx={{ fontSize: 16, color: colors.purple[500] }} />
         <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em', flex: 1 }}>
-          Activites planifiees
+          Activités planifiées
         </Typography>
         {pendingCount > 0 && (
           <Chip label={pendingCount} size="small" sx={{
@@ -194,49 +217,111 @@ const ConventionScheduledActivities = ({ conventionId }: ConventionScheduledActi
 
       <Collapse in={expanded}>
         <Box sx={{ py: 0.5 }}>
-          {/* Activity list */}
-          {sorted.length === 0 && !showForm && (
+          {/* Loading state */}
+          {loading && (
+            <Box sx={{ px: 2, py: 2, textAlign: 'center' }}>
+              <CircularProgress size={20} />
+            </Box>
+          )}
+
+          {/* Empty state */}
+          {!loading && sorted.length === 0 && !showForm && (
             <Box sx={{ px: 2, py: 2, textAlign: 'center' }}>
               <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textDisabled }}>
-                Aucune activite planifiee
+                Aucune activité planifiée
               </Typography>
               <Button size="small" startIcon={<Add />} onClick={() => setShowForm(true)}
                 sx={{ mt: 0.5, textTransform: 'none', fontSize: typography.sizes.xs, color: colors.primary[600] }}>
-                Planifier une activite
+                Planifier une activité
               </Button>
             </Box>
           )}
 
-          {sorted.map((a: ScheduledActivity) => (
-            <ActivityItem key={a.id} activity={a} onToggle={() => toggleDone(a.id)} onDelete={() => deleteActivity(a.id)} />
+          {/* Activity list */}
+          {sorted.map((a) => (
+            <ActivityItem
+              key={a.id}
+              activity={a}
+              onToggle={() => toggleDone(a.id)}
+              onDelete={() => deleteActivity(a.id)}
+              disabled={saving}
+            />
           ))}
 
           {/* Add form */}
           <Collapse in={showForm}>
-            <Box sx={{ px: 1.5, py: 1, display: 'flex', flexDirection: 'column', gap: 1, borderTop: `1px solid ${colors.borderSubtle}`, bgcolor: colors.neutral[25] }}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField select size="small" value={newType} onChange={(e: ChangeEvent<HTMLInputElement>) => setNewType(e.target.value as ActivityType)}
-                  sx={{ minWidth: 100, '& .MuiInputBase-input': { fontSize: typography.sizes.xs, py: 0.5 } }}>
+            <Box sx={{ px: 1.5, py: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5, borderTop: `1px solid ${colors.borderSubtle}`, bgcolor: colors.neutral[25] }}>
+              {/* Row 1: Type + Date */}
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <TextField
+                  select
+                  size="small"
+                  value={newType}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewType(e.target.value as ActivityType)}
+                  sx={{
+                    minWidth: 130,
+                    '& .MuiInputBase-input': { fontSize: typography.sizes.xs, py: 0.75 },
+                  }}
+                >
                   {Object.entries(ACTIVITY_TYPES).map(([k, v]) => (
                     <MenuItem key={k} value={k} sx={{ fontSize: typography.sizes.xs }}>{v.label}</MenuItem>
                   ))}
                 </TextField>
-                <TextField size="small" placeholder="Titre de l'activite" fullWidth value={newTitle}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewTitle(e.target.value)}
-                  onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Enter') handleAdd() }}
-                  sx={{ '& .MuiInputBase-input': { fontSize: typography.sizes.xs, py: 0.5 } }} />
-                <TextField type="date" size="small" value={newDate} onChange={(e: ChangeEvent<HTMLInputElement>) => setNewDate(e.target.value)}
-                  sx={{ minWidth: 130, '& .MuiInputBase-input': { fontSize: typography.sizes.xs, py: 0.5 } }} />
+                <TextField
+                  type="date"
+                  size="small"
+                  value={newDate}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewDate(e.target.value)}
+                  sx={{
+                    minWidth: 150,
+                    '& .MuiInputBase-input': { fontSize: typography.sizes.xs, py: 0.75 },
+                  }}
+                />
               </Box>
-              <TextField size="small" placeholder="Note (optionnel)" fullWidth value={newNote}
+
+              {/* Row 2: Title (full width) */}
+              <TextField
+                size="small"
+                placeholder="Titre de l'activité"
+                fullWidth
+                value={newTitle}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setNewTitle(e.target.value)}
+                onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Enter' && newTitle.trim()) handleAdd() }}
+                sx={{ '& .MuiInputBase-input': { fontSize: typography.sizes.xs, py: 0.75 } }}
+              />
+
+              {/* Row 3: Note (optional) */}
+              <TextField
+                size="small"
+                placeholder="Note (optionnel)"
+                fullWidth
+                value={newNote}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setNewNote(e.target.value)}
-                sx={{ '& .MuiInputBase-input': { fontSize: typography.sizes.xs, py: 0.5 } }} />
+                sx={{ '& .MuiInputBase-input': { fontSize: typography.sizes.xs, py: 0.75 } }}
+              />
+
+              {/* Row 4: Actions */}
               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                <Button size="small" onClick={() => { setShowForm(false); setNewTitle(''); setNewNote('') }}
-                  sx={{ textTransform: 'none', fontSize: typography.sizes.xs }}>Annuler</Button>
-                <Button size="small" variant="contained" onClick={handleAdd} disabled={!newTitle.trim()}
-                  sx={{ textTransform: 'none', fontSize: typography.sizes.xs, bgcolor: colors.primary[600], '&:hover': { bgcolor: colors.primary[700] } }}>
-                  Ajouter
+                <Button
+                  size="small"
+                  onClick={() => { setShowForm(false); setNewTitle(''); setNewNote('') }}
+                  sx={{ textTransform: 'none', fontSize: typography.sizes.xs }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={handleAdd}
+                  disabled={!newTitle.trim() || saving}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: typography.sizes.xs,
+                    bgcolor: colors.primary[600],
+                    '&:hover': { bgcolor: colors.primary[700] },
+                  }}
+                >
+                  {saving ? 'Ajout...' : 'Ajouter'}
                 </Button>
               </Box>
             </Box>

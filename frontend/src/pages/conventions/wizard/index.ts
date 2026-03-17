@@ -28,6 +28,4 @@ export { default as WizardStepPartenaires } from './WizardStepPartenaires'
 export { default as WizardStepRecapitulatif } from './WizardStepRecapitulatif'
 
 // Smart components
-export { SmartTemplates, TEMPLATES } from './SmartTemplates'
-export type { ConventionTemplate } from './SmartTemplates'
 export { default as ConventionSmartSidebar } from './ConventionSmartSidebar'

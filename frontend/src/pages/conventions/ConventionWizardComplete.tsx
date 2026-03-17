@@ -28,8 +28,6 @@ import {
   WizardStepRecapitulatif,
 } from './wizard'
 import type { ConventionWizardFormData } from './wizard'
-import SmartTemplates from './wizard/SmartTemplates'
-import type { ConventionTemplate } from './wizard/SmartTemplates'
 import { useConventionAutosave } from './wizard/useConventionAutosave'
 import ConventionSmartSidebar from './wizard/ConventionSmartSidebar'
 
@@ -62,7 +60,6 @@ const calculateCompletion = (
 
 const ConventionWizardComplete = () => {
   const [activeStep, setActiveStep] = useState(0)
-  const [selectedTemplate, setSelectedTemplate] = useState<string | undefined>(undefined)
   const [showDraftBanner, setShowDraftBanner] = useState(false)
   const [showSavedSnack, setShowSavedSnack] = useState(false)
 
@@ -105,9 +102,9 @@ const ConventionWizardComplete = () => {
   // Autosave on every change
   useEffect(() => {
     if (!isEditing && formData.code) {
-      saveDraft(formData, activeStep, selectedTemplate)
+      saveDraft(formData, activeStep)
     }
-  }, [formData, activeStep, selectedTemplate, isEditing, saveDraft])
+  }, [formData, activeStep, isEditing, saveDraft])
 
   // Show saved indicator (only when not already showing)
   useEffect(() => {
@@ -123,7 +120,6 @@ const ConventionWizardComplete = () => {
     if (draft) {
       setFormData(draft.formData)
       setActiveStep(draft.activeStep)
-      if (draft.templateId) setSelectedTemplate(draft.templateId)
     }
     setShowDraftBanner(false)
   }, [restoreDraft, setFormData])
@@ -132,16 +128,6 @@ const ConventionWizardComplete = () => {
     clearDraft()
     setShowDraftBanner(false)
   }, [clearDraft])
-
-  const handleTemplateSelect = (template: ConventionTemplate) => {
-    setSelectedTemplate(template.id)
-    if (template.id === 'vide') return
-
-    setFormData((prev: ConventionWizardFormData) => ({
-      ...prev,
-      ...template.defaults,
-    }))
-  }
 
   const handleNext = () => {
     if (activeStep === WIZARD_STEPS.length - 1) {
@@ -413,14 +399,6 @@ const ConventionWizardComplete = () => {
             }
             summaryBar={wizardSummaryBar}
           >
-            {/* Smart Templates (only on step 0 + creation mode) */}
-            {activeStep === 0 && !isEditing && (
-              <SmartTemplates
-                onSelect={handleTemplateSelect}
-                selectedId={selectedTemplate}
-              />
-            )}
-
             {renderStepContent(activeStep)}
 
             {activeStep === WIZARD_STEPS.length - 1 && (

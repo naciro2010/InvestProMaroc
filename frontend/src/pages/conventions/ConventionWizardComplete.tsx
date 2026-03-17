@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Alert,
   Box,
@@ -93,7 +93,7 @@ const ConventionWizardComplete = () => {
     saveDraft,
   } = useConventionAutosave(isEditing)
 
-  const completionPercent = calculateCompletion(formData, activeStep)
+  const completionPercent = useMemo(() => calculateCompletion(formData, activeStep), [formData, activeStep])
 
   // Show draft restoration banner on mount
   useEffect(() => {
@@ -109,14 +109,14 @@ const ConventionWizardComplete = () => {
     }
   }, [formData, activeStep, selectedTemplate, isEditing, saveDraft])
 
-  // Show saved indicator
+  // Show saved indicator (only when not already showing)
   useEffect(() => {
-    if (lastSaved) {
+    if (lastSaved && !showSavedSnack) {
       setShowSavedSnack(true)
       const timer = setTimeout(() => setShowSavedSnack(false), 2000)
       return () => clearTimeout(timer)
     }
-  }, [lastSaved])
+  }, [lastSaved]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRestoreDraft = useCallback(() => {
     const draft = restoreDraft()
@@ -227,34 +227,25 @@ const ConventionWizardComplete = () => {
   }
 
   // Build summary chips for the persistent info bar
-  const summaryChips: Array<{
-    label: string
-    color: 'primary' | 'info' | 'success' | 'default' | 'warning'
-  }> = []
-  if (formData.code)
-    summaryChips.push({ label: formData.code, color: 'primary' })
-  if (formData.type)
-    summaryChips.push({ label: formData.type, color: 'info' })
-  if (formData.budgetGlobal > 0)
-    summaryChips.push({
-      label: `Budget: ${formatCurrency(formData.budgetGlobal)}`,
-      color: 'default',
-    })
-  if (totals.commissionTTC > 0)
-    summaryChips.push({
-      label: `Commission: ${formatCurrency(totals.commissionTTC)}`,
-      color: 'success',
-    })
-  if (formData.lignesBudget.length > 0)
-    summaryChips.push({
-      label: `${formData.lignesBudget.length} ligne(s)`,
-      color: 'default',
-    })
-  if (formData.partenaires.length > 0)
-    summaryChips.push({
-      label: `${formData.partenaires.length} partenaire(s)`,
-      color: 'default',
-    })
+  const summaryChips = useMemo(() => {
+    const chips: Array<{
+      label: string
+      color: 'primary' | 'info' | 'success' | 'default' | 'warning'
+    }> = []
+    if (formData.code)
+      chips.push({ label: formData.code, color: 'primary' })
+    if (formData.type)
+      chips.push({ label: formData.type, color: 'info' })
+    if (formData.budgetGlobal > 0)
+      chips.push({ label: `Budget: ${formatCurrency(formData.budgetGlobal)}`, color: 'default' })
+    if (totals.commissionTTC > 0)
+      chips.push({ label: `Commission: ${formatCurrency(totals.commissionTTC)}`, color: 'success' })
+    if (formData.lignesBudget.length > 0)
+      chips.push({ label: `${formData.lignesBudget.length} ligne(s)`, color: 'default' })
+    if (formData.partenaires.length > 0)
+      chips.push({ label: `${formData.partenaires.length} partenaire(s)`, color: 'default' })
+    return chips
+  }, [formData.code, formData.type, formData.budgetGlobal, totals.commissionTTC, formData.lignesBudget.length, formData.partenaires.length])
 
   const wizardSummaryBar =
     summaryChips.length > 0 ? (

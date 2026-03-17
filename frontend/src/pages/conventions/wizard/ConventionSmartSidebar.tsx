@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { Box, Typography, Divider, LinearProgress, Tooltip } from '@mui/material'
 import {
@@ -87,24 +88,21 @@ const KpiItem = ({ icon, label, value, color, subValue, subColor }: KpiItemProps
 
 const STEP_LABELS = ['Informations', 'Budget', 'Partenaires', 'Recapitulatif']
 
-const ConventionSmartSidebar = ({
+const ConventionSmartSidebar = memo(({
   formData,
   totals,
   activeStep,
   completionPercent,
 }: ConventionSmartSidebarProps) => {
-  const reliquat = formData.budgetGlobal - totals.totalPartenaires
-  const allocationPct =
-    formData.budgetGlobal > 0
-      ? (totals.totalPartenaires / formData.budgetGlobal) * 100
-      : 0
+  const reliquat = useMemo(() => formData.budgetGlobal - totals.totalPartenaires, [formData.budgetGlobal, totals.totalPartenaires])
+  const allocationPct = useMemo(
+    () => formData.budgetGlobal > 0 ? (totals.totalPartenaires / formData.budgetGlobal) * 100 : 0,
+    [formData.budgetGlobal, totals.totalPartenaires]
+  )
 
-  const daysRemaining = formData.dateFin
-    ? Math.ceil(
-        (new Date(formData.dateFin).getTime() - new Date().getTime()) /
-          (1000 * 60 * 60 * 24)
-      )
-    : null
+  const daysRemaining = useMemo(() => formData.dateFin
+    ? Math.ceil((new Date(formData.dateFin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : null, [formData.dateFin])
 
   return (
     <Box
@@ -382,6 +380,8 @@ const ConventionSmartSidebar = ({
       </Box>
     </Box>
   )
-}
+})
+
+ConventionSmartSidebar.displayName = 'ConventionSmartSidebar'
 
 export default ConventionSmartSidebar

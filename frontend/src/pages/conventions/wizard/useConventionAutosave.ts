@@ -7,7 +7,6 @@ const AUTOSAVE_DELAY_MS = 2000
 interface AutosaveState {
   formData: ConventionWizardFormData
   activeStep: number
-  templateId?: string
   savedAt: string
 }
 
@@ -23,7 +22,7 @@ interface UseConventionAutosaveResult {
   /** Clear the saved draft */
   clearDraft: () => void
   /** Trigger save */
-  saveDraft: (data: ConventionWizardFormData, activeStep: number, templateId?: string) => void
+  saveDraft: (data: ConventionWizardFormData, activeStep: number) => void
 }
 
 export const useConventionAutosave = (
@@ -51,7 +50,7 @@ export const useConventionAutosave = (
   }, [isEditing])
 
   const saveDraft = useCallback(
-    (data: ConventionWizardFormData, activeStep: number, templateId?: string) => {
+    (data: ConventionWizardFormData, activeStep: number) => {
       if (isEditing) return
 
       // Debounce saves
@@ -65,7 +64,6 @@ export const useConventionAutosave = (
           const state: AutosaveState = {
             formData: data,
             activeStep,
-            templateId,
             savedAt: new Date().toISOString(),
           }
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state))

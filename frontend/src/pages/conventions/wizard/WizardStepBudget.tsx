@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Box, Typography, TextField, Card, Chip, Divider, Alert,
-  Button, Autocomplete, CircularProgress,
+  Button, Autocomplete, CircularProgress, LinearProgress,
   MenuItem, ToggleButtonGroup, ToggleButton,
   Dialog, DialogTitle, DialogContent, DialogActions,
   createFilterOptions,
@@ -12,11 +12,12 @@ import {
   Lock as LockIcon,
   Info as InfoIcon,
   Category as CategoryIcon,
+  AutoAwesome as SmartIcon,
 } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { categoriesDepensesAPI } from '@/lib/api'
 import type { CategorieDepenseListDTO, ApiResponse } from '@/types/api'
-import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { colors, typography, componentStyles, borders } from '@/lib/designSystem'
 import {
   formatCurrency,
   type ConventionWizardFormData,
@@ -26,6 +27,16 @@ import {
   type BudgetLigne,
 } from './types'
 import BudgetLinesTable from './BudgetLinesTable'
+
+// Quick budget presets (Odoo-style)
+const BUDGET_PRESETS = [
+  { label: '1M', value: 1_000_000 },
+  { label: '5M', value: 5_000_000 },
+  { label: '10M', value: 10_000_000 },
+  { label: '50M', value: 50_000_000 },
+  { label: '100M', value: 100_000_000 },
+  { label: '500M', value: 500_000_000 },
+]
 
 interface CategorieOption extends CategorieDepenseListDTO {
   inputValue?: string
@@ -174,51 +185,190 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
     }))
   }
 
+  // Budget allocation progress
+  const budgetAllocated = totals.totalLignesTTC
+  const budgetAllocPct = formData.budgetGlobal > 0 ? (budgetAllocated / formData.budgetGlobal) * 100 : 0
+
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
-      {/* Title */}
-      <Box>
-        <Typography variant="h6" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
-          Budget & Commission
-        </Typography>
-        <Divider />
+      {/* Budget Global + TVA */}
+      <Box
+        sx={{
+          bgcolor: colors.surface,
+          border: `1px solid ${colors.border}`,
+          borderRadius: borders.radius.lg,
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            px: 2.5,
+            py: 1.5,
+            bgcolor: colors.neutral[25],
+            borderBottom: `1px solid ${colors.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}
+          >
+            Budget Global
+          </Typography>
+          {formData.budgetGlobal > 0 && (
+            <Chip
+              label={formatCurrency(formData.budgetGlobal)}
+              size="small"
+              sx={{
+                bgcolor: colors.primary[600],
+                color: colors.surface,
+                fontWeight: typography.weights.bold,
+              }}
+            />
+          )}
+        </Box>
+        <Box sx={{ p: 2.5 }}>
+          {/* Quick budget presets */}
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              sx={{
+                fontSize: typography.sizes.xs,
+                color: colors.textSecondary,
+                fontWeight: typography.weights.medium,
+                mb: 1,
+              }}
+            >
+              Montant rapide (MAD)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {BUDGET_PRESETS.map((preset) => {
+                const isActive = formData.budgetGlobal === preset.value
+                return (
+                  <Chip
+                    key={preset.value}
+                    label={preset.label}
+                    size="small"
+                    onClick={() =>
+                      setFormData((prev: ConventionWizardFormData) => ({
+                        ...prev,
+                        budgetGlobal: preset.value,
+                      }))
+                    }
+                    sx={{
+                      bgcolor: isActive ? colors.primary[600] : 'transparent',
+                      color: isActive ? colors.surface : colors.textPrimary,
+                      border: `1px solid ${isActive ? colors.primary[600] : colors.border}`,
+                      fontWeight: isActive ? typography.weights.bold : typography.weights.medium,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        bgcolor: isActive ? colors.primary[700] : colors.primary[25],
+                        borderColor: colors.primary[300],
+                      },
+                    }}
+                  />
+                )
+              })}
+            </Box>
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
+            <DecimalInput
+              fullWidth
+              label="Montant (MAD) *"
+              value={formData.budgetGlobal}
+              onChange={(value) => setFormData((prev: ConventionWizardFormData) => ({ ...prev, budgetGlobal: value }))}
+              decimalPlaces={2}
+              min={0}
+              size="small"
+              sx={{ bgcolor: colors.surface }}
+            />
+            <DecimalInput
+              fullWidth
+              label="Taux TVA (%)"
+              value={formData.tauxTvaLignes}
+              onChange={handleTvaLignesChange}
+              decimalPlaces={2}
+              min={0}
+              max={100}
+              size="small"
+              helperText="Applique aux lignes et a la commission"
+            />
+          </Box>
+
+          {/* Budget allocation progress (shows when lines exist) */}
+          {hasLines && (
+            <Box sx={{ mt: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
+                  Repartition des lignes
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: typography.sizes.xs,
+                    fontWeight: typography.weights.semibold,
+                    color: budgetAllocPct > 100 ? colors.danger[600] : colors.success[600],
+                  }}
+                >
+                  {budgetAllocPct.toFixed(1)}% alloue
+                </Typography>
+              </Box>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(budgetAllocPct, 100)}
+                color={budgetAllocPct > 100 ? 'error' : 'primary'}
+                sx={{ height: 6, borderRadius: 3, bgcolor: colors.neutral[100] }}
+              />
+            </Box>
+          )}
+        </Box>
       </Box>
 
-      {/* Budget Global + TVA */}
-      <Card sx={{ ...componentStyles.card, p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, mb: 2, color: colors.textPrimary }}>
-          Budget Global
-        </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 2 }}>
-          <DecimalInput
-            fullWidth
-            label="Montant (MAD) *"
-            value={formData.budgetGlobal}
-            onChange={(value) => setFormData((prev: ConventionWizardFormData) => ({ ...prev, budgetGlobal: value }))}
-            decimalPlaces={2}
-            min={0}
-            size="small"
-            sx={{ bgcolor: colors.surface }}
-          />
-          <DecimalInput
-            fullWidth
-            label="Taux TVA (%)"
-            value={formData.tauxTvaLignes}
-            onChange={handleTvaLignesChange}
-            decimalPlaces={2}
-            min={0}
-            max={100}
-            size="small"
-            helperText="Appliqué aux lignes et à la commission"
-          />
-        </Box>
-      </Card>
-
       {/* Commission Configuration */}
-      <Card sx={{ ...componentStyles.card, p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, mb: 2 }}>
-          Configuration de la Commission
-        </Typography>
+      <Box
+        sx={{
+          bgcolor: colors.surface,
+          border: `1px solid ${colors.border}`,
+          borderRadius: borders.radius.lg,
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            px: 2.5,
+            py: 1.5,
+            bgcolor: colors.neutral[25],
+            borderBottom: `1px solid ${colors.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary }}
+          >
+            Configuration de la Commission
+          </Typography>
+          {totals.commissionTTC > 0 && (
+            <Chip
+              icon={<SmartIcon sx={{ fontSize: 14 }} />}
+              label={`Commission: ${formatCurrency(totals.commissionTTC)}`}
+              size="small"
+              sx={{
+                bgcolor: colors.success[50],
+                color: colors.success[700],
+                fontWeight: typography.weights.semibold,
+                '& .MuiChip-icon': { color: colors.success[500] },
+              }}
+            />
+          )}
+        </Box>
+        <Box sx={{ p: 2.5 }}>
 
         <Box sx={{ mb: 2 }}>
           <Typography variant="caption" sx={{ color: colors.textSecondary, mb: 1, display: 'block' }}>
@@ -267,7 +417,8 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
             Ajoutez des lignes de budget ci-dessous pour configurer le taux et plafond par categorie.
           </Alert>
         )}
-      </Card>
+        </Box>
+      </Box>
 
       {/* Lines Section */}
       <Box>
@@ -511,11 +662,34 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
       </Dialog>
 
       {/* Summary Card */}
-      <Card sx={{ ...componentStyles.card, p: 3, border: `2px solid ${colors.primary[200]}` }}>
-        <Typography variant="h6" sx={{ fontWeight: typography.weights.bold, color: colors.primary[700], mb: 2 }}>
-          Resume Budget & Commission
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
+      <Box
+        sx={{
+          bgcolor: colors.surface,
+          border: `2px solid ${colors.primary[200]}`,
+          borderRadius: borders.radius.lg,
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            px: 2.5,
+            py: 1.5,
+            bgcolor: colors.primary[25],
+            borderBottom: `1px solid ${colors.primary[200]}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <SmartIcon sx={{ fontSize: 18, color: colors.primary[600] }} />
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: typography.weights.bold, color: colors.primary[700] }}
+          >
+            Resume Budget & Commission
+          </Typography>
+        </Box>
+        <Box sx={{ p: 2.5 }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
           <Box>
             <Typography variant="caption" sx={{ color: colors.textSecondary, fontWeight: typography.weights.semibold }}>Budget Global</Typography>
@@ -571,7 +745,8 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
             </Box>
           </>
         )}
-      </Card>
+        </Box>
+      </Box>
     </Box>
   )
 }

@@ -1,16 +1,27 @@
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Typography,
   TextField,
   MenuItem,
-  Card,
   Divider,
   Alert,
+  Chip,
+  InputAdornment,
+  Tooltip,
+  IconButton,
 } from '@mui/material'
+import {
+  CheckCircle,
+  Error as ErrorIcon,
+  AutoAwesome as SmartIcon,
+  ContentCopy as CopyIcon,
+  CalendarMonth as CalendarIcon,
+} from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
 import RichTextEditor from '@/components/common/RichTextEditor'
 import { getPlainTextLength, stripHtml } from '@/utils/textUtils'
-import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { colors, typography, borders } from '@/lib/designSystem'
 import type { ConventionSettings } from '@/lib/settings/conventionSettings'
 import type {
   ConventionWizardFormData,
@@ -18,6 +29,7 @@ import type {
   HandleChangeFunction,
   SetFormDataFunction,
 } from './types'
+import { SectionCard, PresetChips } from './WizardShared'
 
 interface WizardStepInformationsProps {
   formData: ConventionWizardFormData
@@ -29,6 +41,59 @@ interface WizardStepInformationsProps {
   typeOptionsWithCurrent: ConventionTypeOptionDisplay[]
 }
 
+const DURATION_PRESETS = [
+  { label: '6 mois', value: 6 },
+  { label: '1 an', value: 12 },
+  { label: '2 ans', value: 24 },
+  { label: '3 ans', value: 36 },
+  { label: '5 ans', value: 60 },
+] as const
+
+const TYPE_DESCRIPTIONS: Record<string, { description: string; color: string; bgColor: string }> = {
+  CADRE: {
+    description: 'Convention cadre — Permet de creer des sous-conventions apres validation. Ideale pour les programmes multi-projets.',
+    color: colors.primary[600],
+    bgColor: colors.primary[25],
+  },
+  NON_CADRE: {
+    description: 'Convention directe — Convention simple sans sous-conventions. Pour les projets uniques et autonomes.',
+    color: colors.info[600],
+    bgColor: colors.info[25],
+  },
+  SPECIFIQUE: {
+    description: 'Convention specifique — Liee a une convention cadre parente. Herite les parametres du cadre.',
+    color: colors.purple[600],
+    bgColor: colors.purple[25],
+  },
+  AVENANT: {
+    description: 'Avenant — Modification d\'une convention existante.',
+    color: colors.warning[600],
+    bgColor: colors.warning[25],
+  },
+}
+
+interface FieldStatus {
+  valid: boolean
+  message: string
+}
+
+const getFieldStatus = (richText: string, maxLen?: number): FieldStatus => {
+  const len = getPlainTextLength(richText)
+  if (len === 0) return { valid: false, message: 'Obligatoire' }
+  if (maxLen && len > maxLen) return { valid: false, message: `${len}/${maxLen} — Trop long` }
+  return { valid: true, message: maxLen ? `${len}/${maxLen}` : `${len} caracteres` }
+}
+
+const FieldStatusIcon = ({ status }: { status: FieldStatus }) => (
+  <Tooltip title={status.message}>
+    {status.valid ? (
+      <CheckCircle sx={{ fontSize: 16, color: colors.success[500] }} />
+    ) : (
+      <ErrorIcon sx={{ fontSize: 16, color: status.message === 'Obligatoire' ? colors.neutral[300] : colors.danger[500] }} />
+    )}
+  </Tooltip>
+)
+
 const WizardStepInformations = ({
   formData,
   setFormData,
@@ -38,177 +103,193 @@ const WizardStepInformations = ({
   onDureeMoisChange,
   typeOptionsWithCurrent,
 }: WizardStepInformationsProps) => {
+  const [codeCopied, setCodeCopied] = useState(false)
+  const typeInfo = TYPE_DESCRIPTIONS[formData.type]
+
+  // Memoize expensive validation computations
+  const libelleStatus = useMemo(() => getFieldStatus(formData.libelleRich, 200), [formData.libelleRich])
+  const objetStatus = useMemo(() => getFieldStatus(formData.objetRich), [formData.objetRich])
+
+  const codeStatus = useMemo((): FieldStatus => {
+    if (!formData.code) return { valid: false, message: 'Obligatoire' }
+    if (settings.codeMaskPattern) {
+      const regex = new RegExp(`^${settings.codeMaskPattern}$`)
+      if (!regex.test(formData.code)) return { valid: false, message: 'Format invalide' }
+    }
+    return { valid: true, message: 'Valide' }
+  }, [formData.code, settings.codeMaskPattern])
+
+  // Auto-generate numero from code
+  useEffect(() => {
+    if (formData.code && !formData.numeroConvention) {
+      const year = new Date().getFullYear()
+      const suggested = `${formData.code}/${year}`
+      setFormData((prev: ConventionWizardFormData) => ({
+        ...prev,
+        numeroConvention: prev.numeroConvention || suggested,
+      }))
+    }
+  }, [formData.code, formData.numeroConvention, setFormData])
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(formData.code)
+    setCodeCopied(true)
+    setTimeout(() => setCodeCopied(false), 2000)
+  }
+
   return (
     <Box sx={{ display: 'grid', gap: 3 }}>
-      <Box>
-        <Typography variant="h6" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
-          Informations générales
-        </Typography>
-        <Divider />
-      </Box>
-
-      {/* Code, Numéro, Type */}
-      <Card sx={{ ...componentStyles.card, p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, mb: 2, color: colors.textPrimary }}>
-          Identification
-        </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-            gap: 2,
-          }}
-        >
+      {/* Identification */}
+      <SectionCard
+        title="Identification"
+        action={
+          formData.code ? (
+            <Chip label={formData.code} size="small" color="primary" variant="outlined" sx={{ fontWeight: typography.weights.bold }} />
+          ) : undefined
+        }
+      >
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
           <TextField
-            fullWidth
-            label="Code *"
-            value={formData.code}
+            fullWidth label="Code" value={formData.code}
             onChange={handleChange('code')}
             placeholder={settings.codeMaskPlaceholder}
             inputProps={{ pattern: settings.codeMaskPattern }}
-            helperText={`Format attendu : ${settings.codeMaskPlaceholder}`}
-            size="small"
+            helperText={settings.codeMaskPlaceholder ? `Format : ${settings.codeMaskPlaceholder}` : undefined}
+            size="small" required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <FieldStatusIcon status={codeStatus} />
+                    {formData.code && (
+                      <Tooltip title={codeCopied ? 'Copie !' : 'Copier'}>
+                        <IconButton size="small" onClick={handleCopyCode}>
+                          <CopyIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </InputAdornment>
+              ),
+            }}
           />
           <TextField
-            fullWidth
-            label="Numéro de convention"
-            value={formData.numeroConvention}
+            fullWidth label="Numero de convention" value={formData.numeroConvention}
             onChange={handleChange('numeroConvention')}
             placeholder={settings.numeroMaskPlaceholder}
             inputProps={{ pattern: settings.numeroMaskPattern }}
-            helperText={`Format attendu : ${settings.numeroMaskPlaceholder}`}
+            helperText={formData.numeroConvention ? undefined : 'Auto-genere a partir du code'}
             size="small"
+            InputProps={{
+              startAdornment: formData.numeroConvention ? (
+                <InputAdornment position="start">
+                  <SmartIcon sx={{ fontSize: 16, color: colors.primary[400] }} />
+                </InputAdornment>
+              ) : undefined,
+            }}
           />
-          <TextField
-            fullWidth
-            select
-            label="Type *"
-            value={formData.type}
-            onChange={handleChange('type')}
-            size="small"
-          >
+          <TextField fullWidth select label="Type" value={formData.type} onChange={handleChange('type')} size="small" required>
             {typeOptionsWithCurrent.map((option) => (
               <MenuItem key={option.value} value={option.value}>
-                {option.label}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: TYPE_DESCRIPTIONS[option.value]?.color || colors.neutral[400] }} />
+                  {option.label}
+                </Box>
               </MenuItem>
             ))}
           </TextField>
         </Box>
 
-        {/* Info alert */}
-        <Alert severity="info" sx={{ mt: 2 }}>
-          {formData.type === 'CADRE'
-            ? 'Convention CADRE - Permet de créer des sous-conventions après validation.'
-            : 'Convention NON_CADRE - Convention simple et directe.'}
-        </Alert>
-      </Card>
+        {typeInfo && (
+          <Box sx={{ mt: 2, p: 1.5, borderRadius: borders.radius.md, bgcolor: typeInfo.bgColor, border: `1px solid ${typeInfo.color}25`, display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+            <SmartIcon sx={{ fontSize: 18, color: typeInfo.color, mt: 0.25 }} />
+            <Typography sx={{ fontSize: typography.sizes.xs, color: typeInfo.color, lineHeight: 1.5 }}>
+              {typeInfo.description}
+            </Typography>
+          </Box>
+        )}
+      </SectionCard>
 
-      {/* Libellé & Objet */}
-      <Card sx={{ ...componentStyles.card, p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, mb: 2, color: colors.textPrimary }}>
-          Description
-        </Typography>
-
-        {/* Libellé */}
+      {/* Description */}
+      <SectionCard
+        title="Description"
+        action={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <FieldStatusIcon status={libelleStatus} />
+              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Libelle</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <FieldStatusIcon status={objetStatus} />
+              <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Objet</Typography>
+            </Box>
+          </Box>
+        }
+      >
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary, fontSize: typography.sizes.sm }}>
-            Libellé de la convention *
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary, fontSize: typography.sizes.sm }}>
+              Libelle de la convention *
+            </Typography>
+            <Typography variant="caption" sx={{ color: libelleStatus.valid ? colors.textSecondary : colors.danger[500], fontWeight: typography.weights.medium }}>
+              {libelleStatus.message}
+            </Typography>
+          </Box>
           <RichTextEditor
             value={formData.libelleRich}
-            onChange={(value) => {
+            onChange={(value: string) => {
               const plain = stripHtml(value).substring(0, 200)
-              setFormData((prev) => ({
-                ...prev,
-                libelleRich: value,
-                libelle: plain,
-              }))
+              setFormData((prev: ConventionWizardFormData) => ({ ...prev, libelleRich: value, libelle: plain }))
             }}
-            placeholder="Libellé de la convention..."
-            minHeight={120}
+            placeholder="Ex: Convention cadre pour l'amenagement de la zone industrielle..."
+            minHeight={100}
           />
-          <Typography variant="caption" sx={{ mt: 0.5, display: 'block', color: colors.textSecondary }}>
-            {getPlainTextLength(formData.libelleRich)} / 200 caractères
-          </Typography>
         </Box>
 
-        {/* Objet (Rich Text) */}
         <Box>
-          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary, fontSize: typography.sizes.sm }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary, fontSize: typography.sizes.sm, mb: 1 }}>
             Objet de la convention *
           </Typography>
           <RichTextEditor
             value={formData.objetRich}
-            onChange={(value) => {
-              setFormData((prev) => ({
-                ...prev,
-                objetRich: value,
-                objet: stripHtml(value).substring(0, 500),
-              }))
+            onChange={(value: string) => {
+              setFormData((prev: ConventionWizardFormData) => ({ ...prev, objetRich: value, objet: stripHtml(value).substring(0, 500) }))
             }}
-            placeholder="Décrivez l'objet de la convention en détail..."
-            minHeight={200}
+            placeholder="Decrivez l'objet de la convention en detail : perimetre, objectifs, livrables attendus..."
+            minHeight={180}
           />
         </Box>
-      </Card>
+      </SectionCard>
 
-      {/* Dates */}
-      <Card sx={{ ...componentStyles.card, p: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: typography.weights.semibold, mb: 2, color: colors.textPrimary }}>
-          Dates
-        </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
-            gap: 2,
-          }}
-        >
-          <TextField
-            fullWidth
-            label="Date de signature"
-            type="date"
-            value={formData.dateSignature}
-            onChange={handleChange('dateSignature')}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-          <TextField
-            fullWidth
-            label="Date de début *"
-            type="date"
-            value={formData.dateDebut}
-            onChange={handleChange('dateDebut')}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-          <TextField
-            fullWidth
-            label="Date de fin"
-            type="date"
-            value={formData.dateFin}
-            onChange={handleChange('dateFin')}
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
+      {/* Dates & Duration */}
+      <SectionCard
+        title="Periode et duree"
+        icon={<CalendarIcon sx={{ fontSize: 18, color: colors.textSecondary }} />}
+      >
+        <PresetChips
+          label="Duree rapide"
+          presets={DURATION_PRESETS}
+          activeValue={formData.dureeMois}
+          onSelect={onDureeMoisChange}
+        />
+
+        <Divider sx={{ mb: 2.5 }} />
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+          <TextField fullWidth label="Date de signature" type="date" value={formData.dateSignature} onChange={handleChange('dateSignature')} InputLabelProps={{ shrink: true }} size="small" />
+          <TextField fullWidth label="Date de debut" type="date" value={formData.dateDebut} onChange={handleChange('dateDebut')} InputLabelProps={{ shrink: true }} size="small" required />
+          <TextField fullWidth label="Date de fin" type="date" value={formData.dateFin} onChange={handleChange('dateFin')} InputLabelProps={{ shrink: true }} size="small" helperText={autoDateFin ? 'Calculee automatiquement' : undefined} />
+          <DecimalInput fullWidth label="Duree (mois)" value={Number(formData.dureeMois) || 0} onChange={onDureeMoisChange} decimalPlaces={0} min={0} size="small" />
         </Box>
-        <Box sx={{ mt: 2, maxWidth: 260 }}>
-          <DecimalInput
-            fullWidth
-            label="Durée (mois)"
-            value={Number(formData.dureeMois) || 0}
-            onChange={onDureeMoisChange}
-            decimalPlaces={0}
-            min={0}
-            helperText={
-              autoDateFin
-                ? 'La date de fin est calculée automatiquement.'
-                : 'Modifiez la durée pour recalculer la date de fin.'
-            }
-            size="small"
-          />
-        </Box>
-      </Card>
+
+        {formData.dureeMois > 0 && formData.dateDebut && formData.dateFin && (
+          <Alert severity="info" icon={<SmartIcon sx={{ fontSize: 18 }} />} sx={{ mt: 2, fontSize: typography.sizes.xs, '& .MuiAlert-message': { fontSize: typography.sizes.xs } }}>
+            Du <strong>{new Date(formData.dateDebut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>{' '}
+            au <strong>{new Date(formData.dateFin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>{' '}
+            — {formData.dureeMois} mois
+          </Alert>
+        )}
+      </SectionCard>
     </Box>
   )
 }

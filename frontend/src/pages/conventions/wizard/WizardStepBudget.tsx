@@ -323,8 +323,8 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
           <Chip label={`${formData.lignesBudget.length} ligne(s)`} color="primary" size="small" variant="outlined" />
         </Box>
 
-        {/* Add line form + table in unified Card */}
-        <Card sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
+        {/* Add line form + table in unified card */}
+        <Box sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
         <Box sx={{ p: 2 }}>
           {/* Line 1: Category with CAYT (full width) */}
           <Autocomplete<CategorieOption, false, false, true>
@@ -491,7 +491,7 @@ const WizardStepBudget = ({ formData, setFormData, handleChange, totals }: Wizar
               onDeleteLigne={handleDeleteLigne}
             />
           )}
-        </Card>
+        </Box>
       </Box>
 
       {/* Quick-create category dialog (CAYT) */}

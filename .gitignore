@@ -1,4 +1,7 @@
 # Backend
+backend/.kotlin/
+backend/.gradle/
+backend/build/
 backend/target/
 backend/.mvn/
 backend/mvnw

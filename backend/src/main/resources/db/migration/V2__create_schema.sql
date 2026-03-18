@@ -1185,7 +1185,32 @@ CREATE INDEX IF NOT EXISTS idx_team_messages_recipient_read ON team_messages(rec
 COMMENT ON TABLE team_messages IS 'Messages internes entre membres de l''équipe';
 
 -- ============================================================================
--- SECTION 16: HISTORIQUE GENERIQUE DES MODIFICATIONS (ODOO-STYLE)
+-- SECTION 16: ACTIVITES PLANIFIEES (CONVENTION SCHEDULED ACTIVITIES)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS activites_planifiees (
+    id BIGSERIAL PRIMARY KEY,
+    convention_id BIGINT NOT NULL REFERENCES conventions(id) ON DELETE CASCADE,
+    type_activite VARCHAR(20) NOT NULL,
+    titre VARCHAR(200) NOT NULL,
+    date_prevue DATE NOT NULL,
+    note VARCHAR(500),
+    fait BOOLEAN NOT NULL DEFAULT FALSE,
+    created_by_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actif BOOLEAN DEFAULT TRUE NOT NULL,
+    CONSTRAINT chk_type_activite CHECK (type_activite IN ('call', 'email', 'meeting', 'task', 'reminder'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_activites_planifiees_convention ON activites_planifiees(convention_id);
+CREATE INDEX IF NOT EXISTS idx_activites_planifiees_date ON activites_planifiees(date_prevue);
+CREATE INDEX IF NOT EXISTS idx_activites_planifiees_fait ON activites_planifiees(fait);
+
+COMMENT ON TABLE activites_planifiees IS 'Activites planifiees liees aux conventions (appels, emails, reunions, taches, rappels)';
+
+-- ============================================================================
+-- SECTION 17: HISTORIQUE GENERIQUE DES MODIFICATIONS (ODOO-STYLE)
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS entity_modifications (

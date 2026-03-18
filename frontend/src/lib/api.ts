@@ -1077,6 +1077,47 @@ export interface AiStatusResponse {
   baseUrl: string | null
 }
 
+// Activites Planifiees (convention scheduled activities)
+export interface ActivitePlanifieeDTO {
+  id: number
+  conventionId: number
+  typeActivite: string
+  titre: string
+  datePrevue: string
+  note: string | null
+  fait: boolean
+  createdByName: string | null
+  createdAt: string | null
+}
+
+export interface CreateActivitePlanifieeDTO {
+  typeActivite: string
+  titre: string
+  datePrevue: string
+  note?: string | null
+}
+
+export interface UpdateActivitePlanifieeDTO {
+  typeActivite?: string
+  titre?: string
+  datePrevue?: string
+  note?: string | null
+  fait?: boolean
+}
+
+export const activitesPlanifieesAPI = {
+  getByConvention: (conventionId: number) =>
+    api.get<ApiResponse<ActivitePlanifieeDTO[]>>(`/conventions/${conventionId}/activites`),
+  create: (conventionId: number, data: CreateActivitePlanifieeDTO) =>
+    api.post<ApiResponse<ActivitePlanifieeDTO>>(`/conventions/${conventionId}/activites`, data),
+  update: (conventionId: number, id: number, data: UpdateActivitePlanifieeDTO) =>
+    api.put<ApiResponse<ActivitePlanifieeDTO>>(`/conventions/${conventionId}/activites/${id}`, data),
+  toggleDone: (conventionId: number, id: number) =>
+    api.put<ApiResponse<ActivitePlanifieeDTO>>(`/conventions/${conventionId}/activites/${id}/toggle`),
+  delete: (conventionId: number, id: number) =>
+    api.delete<ApiResponse<string>>(`/conventions/${conventionId}/activites/${id}`),
+}
+
 // Historique generique des modifications (Odoo-style chatter)
 export const historiqueAPI = {
   getByEntity: (entityType: string, entityId: number) =>

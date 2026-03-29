@@ -594,6 +594,7 @@ SELECT setval('avenant_conventions_id_seq', 5, true);
 -- ============================================================================
 -- Historique generique des modifications (entity_modifications)
 -- ============================================================================
+TRUNCATE TABLE entity_modifications CASCADE;
 INSERT INTO entity_modifications (id, entity_type, entity_id, modifie_par_id, date_modification, type_modification, description, champs_modifies) VALUES
 (1, 'MARCHE', 1, 1, NOW() - INTERVAL '10 days', 'CREATION', 'Creation du marche MARCHE-001', ARRAY['numeroMarche','objet','montantHt','statut']),
 (2, 'MARCHE', 1, 2, NOW() - INTERVAL '5 days', 'STATUS_CHANGE', 'Changement de statut: BROUILLON → EN_COURS', ARRAY['statut']),
@@ -607,6 +608,8 @@ SELECT setval('entity_modifications_id_seq', 6, true);
 -- ============================================================================
 -- Convention Tags (étiquettes)
 -- ============================================================================
+TRUNCATE TABLE convention_tag_assignments CASCADE;
+TRUNCATE TABLE convention_tags CASCADE;
 INSERT INTO convention_tags (id, name, color, description) VALUES
 (1, 'Urgent', '#c9372c', 'Convention nécessitant un traitement urgent'),
 (2, 'Infrastructure', '#0c66e4', 'Conventions liées à l''infrastructure'),
@@ -628,6 +631,7 @@ INSERT INTO convention_tag_assignments (tag_id, convention_id) VALUES
 -- ============================================================================
 -- Convention Followers (abonnés)
 -- ============================================================================
+TRUNCATE TABLE convention_followers CASCADE;
 INSERT INTO convention_followers (id, convention_id, user_id, subscription_type) VALUES
 (1, 1, 1, 'ALL'),     -- Admin suit CONV-001
 (2, 1, 2, 'ALL'),     -- Manager suit CONV-001
@@ -640,6 +644,7 @@ SELECT setval('convention_followers_id_seq', 5, true);
 -- ============================================================================
 -- Convention Comments (chatter)
 -- ============================================================================
+TRUNCATE TABLE convention_comments CASCADE;
 INSERT INTO convention_comments (id, convention_id, author_id, content, comment_type) VALUES
 (1, 1, 1, 'Convention créée et en attente de validation des documents techniques.', 'COMMENT'),
 (2, 1, 2, 'Les documents ont été vérifiés, tout est conforme. Prêt pour soumission.', 'COMMENT'),
@@ -652,6 +657,7 @@ SELECT setval('convention_comments_id_seq', 5, true);
 -- ============================================================================
 -- Activites Planifiees (scheduled activities for conventions)
 -- ============================================================================
+TRUNCATE TABLE activites_planifiees CASCADE;
 INSERT INTO activites_planifiees (id, convention_id, type_activite, titre, date_prevue, note, fait, created_by_id) VALUES
 (1, 1, 'task', 'Préparer les documents de validation', '2026-03-20', 'Documents techniques et financiers requis', false, 1),
 (2, 1, 'meeting', 'Réunion de suivi convention', '2026-03-25', null, false, 2),

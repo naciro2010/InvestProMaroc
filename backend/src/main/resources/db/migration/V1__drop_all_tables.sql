@@ -64,6 +64,16 @@ DROP TABLE IF EXISTS projets CASCADE;
 DROP TABLE IF EXISTS user_roles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
+-- Convention management extensions
+DROP TABLE IF EXISTS convention_tag_assignments CASCADE;
+DROP TABLE IF EXISTS convention_tags CASCADE;
+DROP TABLE IF EXISTS convention_followers CASCADE;
+DROP TABLE IF EXISTS convention_comments CASCADE;
+
+-- Activity and audit tracking
+DROP TABLE IF EXISTS activites_planifiees CASCADE;
+DROP TABLE IF EXISTS entity_modifications CASCADE;
+
 -- Notifications & Messaging
 DROP TABLE IF EXISTS team_messages CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;

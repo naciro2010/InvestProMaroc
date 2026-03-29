@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, Briefcase, ShoppingCart, UserCog, Wallet, Tags,
-  Handshake, BarChart3, Search, X, Command, Sparkles, Settings, MessageSquare,
+  Handshake, Search, X, Command, Sparkles, Settings, MessageSquare,
 } from 'lucide-react'
 import { colors, typography, borders, transitions, shadows } from '@/lib/designSystem'
 import NotificationCenter from '@/components/core/NotificationCenter'
@@ -12,8 +12,9 @@ import {
   useSensor, useSensors, DragEndEvent,
 } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import SortableGroup, { MenuGroup } from './SortableGroup'
+import SortableGroup, { MenuGroup, MenuItem as MenuItemType } from './SortableGroup'
 import SidebarLink from './SidebarLink'
+import SidebarSubLink from './SidebarSubLink'
 import SidebarUserMenu from './SidebarUserMenu'
 
 export const SIDEBAR_WIDTH = '256px'
@@ -30,7 +31,11 @@ const saveMenuOrder = (order: string[]) => {
 
 const defaultMenuGroups: MenuGroup[] = [
   { key: 'operations', label: 'Operations', items: [
-    { icon: <FileText className="w-4 h-4" />, label: 'Conventions', path: '/conventions', implemented: true },
+    { icon: <FileText className="w-4 h-4" />, label: 'Conventions', path: '/conventions', implemented: true, subItems: [
+      { label: 'Actives', path: '/conventions?section=actives' },
+      { label: 'En attente', path: '/conventions?section=en_attente' },
+      { label: 'Terminees', path: '/conventions?section=terminees' },
+    ]},
     { icon: <ShoppingCart className="w-4 h-4" />, label: 'Marches', path: '/marches', implemented: true },
     { icon: <Building2 className="w-4 h-4" />, label: 'Projets', path: '/projets', implemented: true },
     { icon: <Receipt className="w-4 h-4" />, label: 'Decomptes', path: '/decomptes', implemented: true },
@@ -168,7 +173,6 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
       {/* Navigation */}
       <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
         <SidebarLink path="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" isActive={isActive} onNavigate={handleMobileNavigate} />
-        <SidebarLink path="/reporting" icon={<BarChart3 className="w-4 h-4" />} label="Reporting" isActive={isActive} onNavigate={handleMobileNavigate} />
         <SidebarLink path="/generateur" icon={<Sparkles className="w-4 h-4" />} label="Générateur" isActive={isActive} onNavigate={handleMobileNavigate} />
         <SidebarLink path="/messagerie" icon={<MessageSquare className="w-4 h-4" />} label="Messagerie" isActive={isActive} onNavigate={handleMobileNavigate} />
 
@@ -180,7 +184,12 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
               <SortableGroup key={group.key} group={group} isExpanded={expandedGroups[group.key] || !!searchQuery} hasActiveItem={group.items.some(item => isActive(item.path))} onToggle={() => toggleGroup(group.key)} isActive={isActive}>
                 <div style={{ paddingBottom: '2px' }}>
                   {group.items.map((item, itemIndex) => (
-                    <SidebarLink key={itemIndex} path={item.path} icon={item.icon} label={item.label} isActive={isActive} indent badge={!item.implemented ? 'Bientot' : undefined} onNavigate={handleMobileNavigate} />
+                    <div key={itemIndex}>
+                      <SidebarLink path={item.path} icon={item.icon} label={item.label} isActive={isActive} indent badge={!item.implemented ? 'Bientot' : undefined} onNavigate={handleMobileNavigate} />
+                      {item.subItems && isActive(item.path) && item.subItems.map((sub, subIdx) => (
+                        <SidebarSubLink key={subIdx} path={sub.path} label={sub.label} isParentActive={isActive(item.path)} onNavigate={handleMobileNavigate} />
+                      ))}
+                    </div>
                   ))}
                 </div>
               </SortableGroup>

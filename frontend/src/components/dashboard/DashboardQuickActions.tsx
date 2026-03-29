@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { Box, Typography } from '@mui/material'
 import {
-  FileText, ShoppingCart, Building2, Wallet, BarChart3,
-  Plus, ArrowRight,
+  FileText, ShoppingCart, Building2, Wallet,
+  Plus,
 } from 'lucide-react'
 import { colors, typography, borders, transitions } from '@/lib/designSystem'
 
@@ -68,20 +68,6 @@ const DashboardQuickActions = () => {
         }}>
           Actions rapides
         </Typography>
-        <Box
-          component="button"
-          onClick={() => navigate('/reporting')}
-          sx={{
-            display: 'flex', alignItems: 'center', gap: 0.5,
-            backgroundColor: 'transparent', border: 'none', cursor: 'pointer',
-            fontSize: typography.sizes.sm, color: colors.primary[600],
-            fontWeight: typography.weights.medium, padding: 0,
-            '&:hover': { color: colors.primary[700] },
-          }}
-        >
-          <BarChart3 size={14} /> Reporting
-          <ArrowRight size={14} />
-        </Box>
       </Box>
 
       <Box sx={{

@@ -19,7 +19,8 @@ export {
 
 // Custom hooks
 export { useConventionWizardData } from './useConventionWizardData'
-export { useConventionAutosave } from './useConventionAutosave'
+export { useConventionAutosave, getLocalDrafts } from './useConventionAutosave'
+export type { AutosaveState } from './useConventionAutosave'
 
 // Step components
 export { default as WizardStepInformations } from './WizardStepInformations'

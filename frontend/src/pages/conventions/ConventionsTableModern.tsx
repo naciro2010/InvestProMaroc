@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Box,
   Button,
@@ -16,6 +16,8 @@ import { ControlPanel, ExportButton } from '@/components/core'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '@/lib/exportUtils'
 import ImportConventionsDialog from '@/components/conventions/ImportConventionsDialog'
+import { getLocalDrafts } from './wizard'
+import type { AutosaveState } from './wizard'
 import {
   ConventionAdvancedFilters,
   SavedFiltersMenu,
@@ -24,11 +26,14 @@ import {
   ConventionKanbanView,
   GroupByPopover,
   ColumnVisibilityPopover,
+  ConventionSectionTabs,
+  ConventionLocalDrafts,
   EMPTY_FILTERS,
   type ConventionFilterState,
   type Convention,
   type ConventionWithChildren,
   type ColumnConfig,
+  type ConventionSection,
 } from '@/components/conventions/list'
 
 // ==================== CONFIG ====================
@@ -49,12 +54,19 @@ const GROUPBY_OPTIONS = [
   { value: 'createdBy', label: 'Cree par' },
 ]
 
+const ACTIVE_STATUSES = new Set(['VALIDE', 'VALIDEE', 'EN_EXECUTION'])
+const PENDING_STATUSES = new Set(['BROUILLON', 'SOUMIS', 'REJETE'])
+const DONE_STATUSES = new Set(['ACHEVE'])
+
 // ==================== MAIN PAGE ====================
 
 type ViewMode = 'list' | 'kanban'
 
+const VALID_SECTIONS: ConventionSection[] = ['actives', 'en_attente', 'terminees', 'brouillons_locaux']
+
 const ConventionsTableModern = () => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const { showToast } = useToast()
 
@@ -67,6 +79,11 @@ const ConventionsTableModern = () => {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(25)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [localDrafts, setLocalDrafts] = useState<AutosaveState[]>([])
+
+  // Read section from URL search params, default to 'actives'
+  const sectionParam = searchParams.get('section') as ConventionSection | null
+  const activeSection: ConventionSection = sectionParam && VALID_SECTIONS.includes(sectionParam) ? sectionParam : 'actives'
 
   // Favorites (row-level, localStorage-backed)
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(() => {
@@ -97,12 +114,18 @@ const ConventionsTableModern = () => {
 
   useEffect(() => { fetchConventions() }, [])
 
+  // Refresh local drafts on section change or mount
+  useEffect(() => {
+    setLocalDrafts(getLocalDrafts())
+  }, [activeSection])
+
   const fetchConventions = async () => {
     try {
       setLoading(true)
       const response = await conventionsAPI.getAll()
       const data = Array.isArray(response.data) ? response.data : (response.data?.data || [])
       setConventions(data)
+      setLocalDrafts(getLocalDrafts())
     } catch { showToast('Erreur lors du chargement', 'error') }
     finally { setLoading(false) }
   }
@@ -118,8 +141,29 @@ const ConventionsTableModern = () => {
     return parents.map(p => ({ ...p, sousConventions: children.filter(c => c.parentConventionId === p.id) }))
   }, [conventions])
 
-  const filteredData = useMemo(() => {
+  // Section counts for tabs
+  const sectionCounts = useMemo(() => ({
+    actives: groupedData.filter(c => ACTIVE_STATUSES.has(c.statut)).length,
+    en_attente: groupedData.filter(c => PENDING_STATUSES.has(c.statut)).length,
+    terminees: groupedData.filter(c => DONE_STATUSES.has(c.statut)).length,
+    brouillons_locaux: localDrafts.length,
+  }), [groupedData, localDrafts])
+
+  // Filter by active section first, then apply other filters
+  const sectionFilteredData = useMemo(() => {
+    if (activeSection === 'brouillons_locaux') return []
     return groupedData.filter(conv => {
+      switch (activeSection) {
+        case 'actives': return ACTIVE_STATUSES.has(conv.statut)
+        case 'en_attente': return PENDING_STATUSES.has(conv.statut)
+        case 'terminees': return DONE_STATUSES.has(conv.statut)
+        default: return true
+      }
+    })
+  }, [groupedData, activeSection])
+
+  const filteredData = useMemo(() => {
+    return sectionFilteredData.filter(conv => {
       if (showFavoritesOnly && !favoriteIds.has(conv.id)) return false
       if (searchQuery) {
         const q = searchQuery.toLowerCase()
@@ -139,7 +183,7 @@ const ConventionsTableModern = () => {
       if (f.createdBy && conv.createdByNom !== f.createdBy) return false
       return true
     })
-  }, [groupedData, searchQuery, advancedFilters, showFavoritesOnly, favoriteIds])
+  }, [sectionFilteredData, searchQuery, advancedFilters, showFavoritesOnly, favoriteIds])
 
   const stats = useMemo(() => ({
     total: filteredData.length,
@@ -211,8 +255,27 @@ const ConventionsTableModern = () => {
     setColumns(prev => prev.map(c => c.key === key ? { ...c, visible: !c.visible } : c))
   }
 
+  const handleSectionChange = (section: ConventionSection) => {
+    setSearchParams(section === 'actives' ? {} : { section })
+    setPage(0)
+    if (section === 'brouillons_locaux') {
+      setLocalDrafts(getLocalDrafts())
+    }
+  }
+
+  const handleDeleteLocalDraft = () => {
+    localStorage.removeItem('convention-wizard-draft')
+    setLocalDrafts([])
+    showToast('Brouillon local supprime', 'info')
+  }
+
+  const handleResumeLocalDraft = () => {
+    navigate('/conventions/nouvelle')
+  }
+
   const pStart = filteredData.length > 0 ? page * rowsPerPage + 1 : 0
   const pEnd = Math.min((page + 1) * rowsPerPage, filteredData.length)
+  const showTable = activeSection !== 'brouillons_locaux'
 
   return (
     <AppLayout>
@@ -233,48 +296,70 @@ const ConventionsTableModern = () => {
           viewMode={viewMode}
           onViewModeChange={(mode) => setViewMode(mode as ViewMode)}
           availableViews={['list', 'kanban']}
-          paginationInfo={viewMode === 'list' && filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
+          paginationInfo={showTable && viewMode === 'list' && filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
           onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
           onNextPage={() => setPage(p => p + 1)}
         >
-          <ConventionAdvancedFilters filters={advancedFilters} onFiltersChange={(f) => { setAdvancedFilters(f); setPage(0) }} creators={creators} />
-          <Button variant="outlined" size="small" startIcon={<Layers size={14} />} onClick={(e) => setGroupByAnchor(e.currentTarget)}
-            sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5, px: 1.5, ...(groupBy && { borderColor: colors.info[300], bgcolor: colors.info[50], color: colors.info[700] }) }}>
-            {groupBy ? `Grouper: ${GROUPBY_OPTIONS.find(o => o.value === groupBy)?.label}` : 'Grouper'}
-          </Button>
-          <Button
-            variant={showFavoritesOnly ? 'contained' : 'outlined'}
-            size="small"
-            startIcon={<StarIcon sx={{ fontSize: 16 }} />}
-            onClick={() => { setShowFavoritesOnly(prev => !prev); setPage(0) }}
-            sx={{
-              ...(showFavoritesOnly ? componentStyles.buttonPrimary : componentStyles.buttonSecondary),
-              fontSize: typography.sizes.sm, py: 0.5, px: 1.5,
-              ...(showFavoritesOnly && { bgcolor: colors.warning[500], '&:hover': { bgcolor: colors.warning[600] } }),
-            }}
-          >
-            Favoris{favoriteIds.size > 0 ? ` (${favoriteIds.size})` : ''}
-          </Button>
-          <SavedFiltersMenu currentFilters={advancedFilters} currentGroupBy={groupBy} onLoadFilter={handleLoadSavedFilter} />
-          <IconButton size="small" onClick={(e) => setColumnsAnchor(e.currentTarget)} sx={{ color: colors.textSecondary, p: 0.75 }}><Columns3 size={16} /></IconButton>
-          {!loading && (
+          {showTable && (
+            <>
+              <ConventionAdvancedFilters filters={advancedFilters} onFiltersChange={(f) => { setAdvancedFilters(f); setPage(0) }} creators={creators} />
+              <Button variant="outlined" size="small" startIcon={<Layers size={14} />} onClick={(e) => setGroupByAnchor(e.currentTarget)}
+                sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5, px: 1.5, ...(groupBy && { borderColor: colors.info[300], bgcolor: colors.info[50], color: colors.info[700] }) }}>
+                {groupBy ? `Grouper: ${GROUPBY_OPTIONS.find(o => o.value === groupBy)?.label}` : 'Grouper'}
+              </Button>
+              <Button
+                variant={showFavoritesOnly ? 'contained' : 'outlined'}
+                size="small"
+                startIcon={<StarIcon sx={{ fontSize: 16 }} />}
+                onClick={() => { setShowFavoritesOnly(prev => !prev); setPage(0) }}
+                sx={{
+                  ...(showFavoritesOnly ? componentStyles.buttonPrimary : componentStyles.buttonSecondary),
+                  fontSize: typography.sizes.sm, py: 0.5, px: 1.5,
+                  ...(showFavoritesOnly && { bgcolor: colors.warning[500], '&:hover': { bgcolor: colors.warning[600] } }),
+                }}
+              >
+                Favoris{favoriteIds.size > 0 ? ` (${favoriteIds.size})` : ''}
+              </Button>
+              <SavedFiltersMenu currentFilters={advancedFilters} currentGroupBy={groupBy} onLoadFilter={handleLoadSavedFilter} />
+              <IconButton size="small" onClick={(e) => setColumnsAnchor(e.currentTarget)} sx={{ color: colors.textSecondary, p: 0.75 }}><Columns3 size={16} /></IconButton>
+            </>
+          )}
+          {!loading && showTable && (
             <Chip label={`${stats.total} conventions — ${(stats.totalBudget / 1000000).toFixed(1)}M MAD`} size="small"
               sx={{ bgcolor: colors.neutral[100], color: colors.textSecondary, fontSize: typography.sizes.xs, fontWeight: typography.weights.medium, height: 24, ml: 'auto' }} />
           )}
         </ControlPanel>
 
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
-          {viewMode === 'kanban' ? (
-            <ConventionKanbanView
-              data={filteredData.flatMap(c => [c, ...(c.sousConventions || [])])}
-              onCardClick={(id) => navigate(`/conventions/${id}`)}
-            />
-          ) : (
-            <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
-              onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
-              favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
-          )}
+        {/* Gmail-like section tabs */}
+        <Box sx={{ px: { xs: 2, md: 3 }, pt: 1 }}>
+          <ConventionSectionTabs
+            activeSection={activeSection}
+            onSectionChange={handleSectionChange}
+            counts={sectionCounts}
+          />
         </Box>
+
+        {/* Content based on active section */}
+        {activeSection === 'brouillons_locaux' ? (
+          <ConventionLocalDrafts
+            drafts={localDrafts}
+            onResume={handleResumeLocalDraft}
+            onDelete={handleDeleteLocalDraft}
+          />
+        ) : (
+          <Box sx={{ p: { xs: 2, md: 3 } }}>
+            {viewMode === 'kanban' ? (
+              <ConventionKanbanView
+                data={filteredData.flatMap(c => [c, ...(c.sousConventions || [])])}
+                onCardClick={(id) => navigate(`/conventions/${id}`)}
+              />
+            ) : (
+              <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
+                onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
+                favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
+            )}
+          </Box>
+        )}
       </Box>
 
       <GroupByPopover anchorEl={groupByAnchor} onClose={() => setGroupByAnchor(null)} options={GROUPBY_OPTIONS} currentValue={groupBy} onChange={setGroupBy} />

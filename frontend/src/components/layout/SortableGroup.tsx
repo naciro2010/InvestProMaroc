@@ -4,11 +4,17 @@ import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, ChevronRight, GripVertical } from 'lucide-react'
 import { colors, typography, spacing, borders, transitions } from '@/lib/designSystem'
 
+export interface SubMenuItem {
+  label: string
+  path: string
+}
+
 export interface MenuItem {
   icon: React.ReactElement
   label: string
   path: string
   implemented: boolean
+  subItems?: SubMenuItem[]
 }
 
 export interface MenuGroup {

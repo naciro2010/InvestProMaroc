@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   FileText, ShoppingCart, Building2, Wallet, Receipt,
-  LayoutDashboard, BarChart3, Users, Settings, Search,
+  LayoutDashboard, Users, Settings, Search,
   Handshake, Tags, Map, UserCog, CreditCard, Plus,
   ArrowRight,
 } from 'lucide-react'
@@ -59,7 +59,6 @@ const CommandPalette = () => {
     { id: 'decomptes', label: 'Decomptes', icon: <Receipt size={18} />, action: () => goTo('/decomptes'), category: 'Navigation', keywords: ['facture', 'paiement'] },
     { id: 'paiements', label: 'Paiements', icon: <CreditCard size={18} />, action: () => goTo('/paiements'), category: 'Navigation', keywords: ['reglement', 'virement'] },
     { id: 'fournisseurs', label: 'Fournisseurs', icon: <Users size={18} />, action: () => goTo('/fournisseurs'), category: 'Navigation', keywords: ['prestataire', 'entreprise'] },
-    { id: 'reporting', label: 'Reporting', icon: <BarChart3 size={18} />, action: () => goTo('/reporting'), category: 'Navigation', keywords: ['rapport', 'statistiques', 'analyse'] },
     { id: 'partenaires', label: 'Partenaires', icon: <Handshake size={18} />, action: () => goTo('/parametrage/partenaires'), category: 'Navigation' },
     { id: 'utilisateurs', label: 'Utilisateurs', icon: <UserCog size={18} />, action: () => goTo('/users'), category: 'Navigation' },
     { id: 'axes', label: 'Axes Analytiques', icon: <Map size={18} />, action: () => goTo('/parametrage/plan-analytique'), category: 'Configuration', keywords: ['dimension', 'analytique'] },

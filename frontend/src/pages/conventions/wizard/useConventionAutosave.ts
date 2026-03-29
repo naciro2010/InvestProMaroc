@@ -4,7 +4,7 @@ import type { ConventionWizardFormData } from './types'
 const STORAGE_KEY = 'convention-wizard-draft'
 const AUTOSAVE_DELAY_MS = 2000
 
-interface AutosaveState {
+export interface AutosaveState {
   formData: ConventionWizardFormData
   activeStep: number
   savedAt: string
@@ -21,8 +21,35 @@ interface UseConventionAutosaveResult {
   restoreDraft: () => AutosaveState | null
   /** Clear the saved draft */
   clearDraft: () => void
-  /** Trigger save */
+  /** Trigger save (debounced) */
   saveDraft: (data: ConventionWizardFormData, activeStep: number) => void
+}
+
+/** Save draft immediately to localStorage (no debounce) */
+const saveToStorage = (data: ConventionWizardFormData, activeStep: number): void => {
+  try {
+    const state: AutosaveState = {
+      formData: data,
+      activeStep,
+      savedAt: new Date().toISOString(),
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    // localStorage full or unavailable
+  }
+}
+
+/** Get all local drafts from localStorage */
+export const getLocalDrafts = (): AutosaveState[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return []
+    const parsed = JSON.parse(stored) as AutosaveState
+    if (parsed?.formData?.code) return [parsed]
+    return []
+  } catch {
+    return []
+  }
 }
 
 export const useConventionAutosave = (
@@ -32,6 +59,10 @@ export const useConventionAutosave = (
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Keep a ref to the latest data so we can save on unmount/beforeunload
+  const latestDataRef = useRef<{ data: ConventionWizardFormData; step: number } | null>(null)
+  const isEditingRef = useRef(isEditing)
+  isEditingRef.current = isEditing
 
   // Check for existing draft on mount
   useEffect(() => {
@@ -53,7 +84,10 @@ export const useConventionAutosave = (
     (data: ConventionWizardFormData, activeStep: number) => {
       if (isEditing) return
 
-      // Debounce saves
+      // Always update the ref with latest data for unmount save
+      latestDataRef.current = { data, step: activeStep }
+
+      // Debounce saves for normal typing
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
@@ -61,12 +95,7 @@ export const useConventionAutosave = (
       timerRef.current = setTimeout(() => {
         setIsSaving(true)
         try {
-          const state: AutosaveState = {
-            formData: data,
-            activeStep,
-            savedAt: new Date().toISOString(),
-          }
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+          saveToStorage(data, activeStep)
           setHasDraft(true)
           setLastSaved(new Date())
         } catch {
@@ -91,14 +120,30 @@ export const useConventionAutosave = (
 
   const clearDraft = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY)
+    latestDataRef.current = null
     setHasDraft(false)
     setLastSaved(null)
   }, [])
 
-  // Cleanup timer on unmount
+  // Save immediately on beforeunload (browser close/refresh)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!isEditingRef.current && latestDataRef.current) {
+        saveToStorage(latestDataRef.current.data, latestDataRef.current.step)
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
+
+  // On unmount: flush any pending debounced save immediately
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
+      // Save immediately on unmount (navigation away from form)
+      if (!isEditingRef.current && latestDataRef.current) {
+        saveToStorage(latestDataRef.current.data, latestDataRef.current.step)
+      }
     }
   }, [])
 

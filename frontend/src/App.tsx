@@ -65,7 +65,6 @@ const PartenairesPage = lazy(() => import('./pages/parametrage/PartenairesPage')
 
 // Reporting & Others
 const SelectWithQuickCreateDemo = lazy(() => import('./pages/examples/SelectWithQuickCreateDemo'))
-const ReportingPage = lazy(() => import('./pages/reporting/ReportingPage'))
 const UsersPage = lazy(() => import('./pages/users/UsersPage'))
 const UnderConstruction = lazy(() => import('./pages/UnderConstruction'))
 const TeamMessagingPage = lazy(() => import('./pages/TeamMessagingPage'))
@@ -422,15 +421,6 @@ function App() {
                       }
                     />
 
-                    {/* Reporting */}
-                    <Route
-                      path="/reporting"
-                      element={
-                        <ProtectedRoute>
-                          <ReportingPage />
-                        </ProtectedRoute>
-                      }
-                    />
                     <Route
                       path="/messagerie"
                       element={

@@ -18,3 +18,8 @@ export { default as GroupByPopover } from './GroupByPopover'
 export type { GroupByOption } from './GroupByPopover'
 
 export { default as ColumnVisibilityPopover } from './ColumnVisibilityPopover'
+
+export { default as ConventionSectionTabs } from './ConventionSectionTabs'
+export type { ConventionSection } from './ConventionSectionTabs'
+
+export { default as ConventionLocalDrafts } from './ConventionLocalDrafts'

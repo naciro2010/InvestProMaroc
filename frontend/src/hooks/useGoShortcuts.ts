@@ -44,7 +44,6 @@ export function useGoShortcuts(): void {
           c: '/conventions',
           m: '/marches',
           p: '/projets',
-          r: '/reporting',
           b: '/budgets',
           f: '/fournisseurs',
           u: '/users',

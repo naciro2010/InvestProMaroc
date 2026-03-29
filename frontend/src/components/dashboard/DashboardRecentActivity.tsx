@@ -15,7 +15,6 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
-  TrendingUp,
   Eye,
   Plus,
   BarChart3,
@@ -48,7 +47,6 @@ const QUICK_ACTIONS = [
   { label: 'Nouvelle convention', path: '/conventions/new', icon: <FileText size={16} /> },
   { label: 'Nouveau projet', path: '/projets/new', icon: <FolderOpen size={16} /> },
   { label: 'Nouveau marche', path: '/marches/new', icon: <BarChart3 size={16} /> },
-  { label: 'Reporting', path: '/reporting', icon: <TrendingUp size={16} /> },
 ]
 
 const DashboardRecentActivity = ({ refreshKey }: DashboardSectionProps) => {

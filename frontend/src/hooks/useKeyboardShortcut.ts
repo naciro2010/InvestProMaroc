@@ -70,6 +70,5 @@ export const SHORTCUTS: ShortcutEntry[] = [
   { keys: 'G C', description: 'Aller aux Conventions', category: 'Navigation' },
   { keys: 'G M', description: 'Aller aux Marches', category: 'Navigation' },
   { keys: 'G P', description: 'Aller aux Projets', category: 'Navigation' },
-  { keys: 'G R', description: 'Aller au Reporting', category: 'Navigation' },
   { keys: 'Esc', description: 'Fermer la modale', category: 'General' },
 ]

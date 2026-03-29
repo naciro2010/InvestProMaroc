@@ -23,7 +23,7 @@ export interface Convention {
   code: string
   numero: string
   libelle: string
-  statut: 'BROUILLON' | 'SOUMIS' | 'VALIDE'
+  statut: 'BROUILLON' | 'SOUMIS' | 'VALIDE' | 'VALIDEE' | 'EN_EXECUTION' | 'ACHEVE' | 'REJETE'
   type?: 'CADRE' | 'SPECIFIQUE' | 'NON_CADRE' | 'AVENANT'
   budget: number
   tauxCommission: number

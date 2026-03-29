@@ -7,15 +7,8 @@ import {
 import { Cancel } from '@mui/icons-material'
 import AppLayout from '../../components/layout/AppLayout'
 import {
-  ControlPanel,
-  FormView,
-  FieldGroup,
-  Field,
-  Notebook,
-  InlineTable,
-  StatusBadge,
-  Chatter,
-  useEntityHistory,
+  ControlPanel, FormView, FieldGroup, Field, Notebook, InlineTable, StatusBadge,
+  Chatter, useEntityHistory,
 } from '@/components/core'
 import type { StatusStep } from '@/components/core'
 import type { BreadcrumbSegment } from '@/components/core/ModernBreadcrumb'

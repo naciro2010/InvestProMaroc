@@ -23,7 +23,7 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+;(globalThis as Record<string, unknown>).IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}
   observe() {}

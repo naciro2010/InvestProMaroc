@@ -51,8 +51,7 @@ export interface ApiErrorResponse {
   }
 }
 
-export const formatMAD = (value: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(value)
+export { formatCurrency as formatMAD } from '@/lib/utils'
 
 export const formatPct = (value: number) => `${value.toFixed(1)}%`
 

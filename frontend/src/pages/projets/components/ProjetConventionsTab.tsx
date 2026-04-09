@@ -16,6 +16,7 @@ import { Visibility } from '@mui/icons-material'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { StatusBadge } from '@/components/core'
 import { conventionsAPI, projetConventionsAPI } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { projetsAPI } from '@/lib/projetsAPI'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { Convention, ProjetConventionAssociation, Projet, formatCurrency, formatDate } from './projetDetailTypes'
@@ -26,6 +27,7 @@ interface ProjetConventionsTabProps {
 
 const ProjetConventionsTab = ({ projetId }: ProjetConventionsTabProps) => {
   const navigate = useNavigate()
+  const { showError } = useToast()
   const [conventions, setConventions] = useState<Convention[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -71,8 +73,8 @@ const ProjetConventionsTab = ({ projetId }: ProjetConventionsTabProps) => {
         }
 
         setConventions(allConventions)
-      } catch (err: unknown) {
-        console.error(err instanceof Error ? err.message : 'Erreur chargement conventions')
+      } catch {
+        showError('Erreur lors du chargement des conventions du projet')
       } finally {
         setLoading(false)
       }

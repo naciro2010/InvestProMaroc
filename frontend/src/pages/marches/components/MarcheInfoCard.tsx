@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Box, Typography, CircularProgress, Divider } from '@mui/material'
 import { marchesAPI } from '../../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import StatusBadge from '@/components/core/StatusBadge'
 import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 interface MarcheInfoCardProps {
   marcheId: number
@@ -44,6 +46,7 @@ interface MarcheDetails {
  * Charge les détails complets du marché
  */
 const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
+  const { showError } = useToast()
   const [details, setDetails] = useState<MarcheDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -57,20 +60,13 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
       const { data } = await marchesAPI.getById(marcheId)
       const marcheData = data.data || data
       setDetails(marcheData)
-    } catch (err) {
-      console.error('Erreur chargement détails:', err)
+    } catch {
+      showError('Erreur lors du chargement des détails du marché')
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number | undefined | null): string => {
-    if (amount === undefined || amount === null) return '0,00'
-    return amount.toLocaleString('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   const formatDate = (date: string): string => {
     return new Date(date).toLocaleDateString('fr-FR')
@@ -164,13 +160,13 @@ const MarcheInfoCard = ({ marcheId }: MarcheInfoCardProps) => {
         {/* Section: Montants - 2 columns */}
         <SectionTitle>Montants</SectionTitle>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 0 }}>
-          <InfoRow label="Montant HT" value={`${formatCurrency(details.montantHt)} DH`} />
-          <InfoRow label={`TVA (${details.tauxTva || 20}%)`} value={`${formatCurrency(details.montantTva)} DH`} />
+          <InfoRow label="Montant HT" value={formatCurrency(details.montantHt ?? 0)} />
+          <InfoRow label={`TVA (${details.tauxTva || 20}%)`} value={formatCurrency(details.montantTva ?? 0)} />
           <InfoRow
             label="Montant TTC"
             value={
               <Typography sx={{ fontSize: typography.sizes.base, fontWeight: typography.weights.bold, color: colors.primary[700] }}>
-                {formatCurrency(details.montantTtc)} DH
+                {formatCurrency(details.montantTtc ?? 0)}
               </Typography>
             }
           />

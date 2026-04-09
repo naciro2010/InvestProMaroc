@@ -16,6 +16,7 @@ import { Visibility } from '@mui/icons-material'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { StatusBadge } from '@/components/core'
 import { api } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { Marche, formatCurrency } from './projetDetailTypes'
 
@@ -25,6 +26,7 @@ interface ProjetMarchesTabProps {
 
 const ProjetMarchesTab = ({ projetId }: ProjetMarchesTabProps) => {
   const navigate = useNavigate()
+  const { showError } = useToast()
   const [marches, setMarches] = useState<Marche[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -34,8 +36,8 @@ const ProjetMarchesTab = ({ projetId }: ProjetMarchesTabProps) => {
         setLoading(true)
         const res = await api.get(`/marches/projet/${projetId}`)
         setMarches(res.data.data || res.data || [])
-      } catch (err: unknown) {
-        console.error(err instanceof Error ? err.message : 'Erreur chargement marches')
+      } catch {
+        showError('Erreur lors du chargement des marchés du projet')
         setMarches([])
       } finally {
         setLoading(false)

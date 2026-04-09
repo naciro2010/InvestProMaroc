@@ -18,7 +18,9 @@ import {
 import { Add, KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { marchesAPI } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 import StatusBadge from '@/components/core/StatusBadge'
 import DecomptePaiementsSubRow from './DecomptePaiementsSubRow'
 
@@ -68,10 +70,6 @@ function getPaymentStatus(decompte: Decompte): PaymentStatusKey {
   return 'NON_PAYE'
 }
 
-const formatCurrency = (amount: number | undefined | null): string => {
-  if (amount === undefined || amount === null) return '0,00'
-  return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 const formatDate = (date: string): string => new Date(date).toLocaleDateString('fr-FR')
 
@@ -96,6 +94,7 @@ const filterChips: FilterChipDef[] = [
  */
 const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
   const navigate = useNavigate()
+  const { showError } = useToast()
   const [decomptes, setDecomptes] = useState<Decompte[]>([])
   const [paiements, setPaiements] = useState<MarchePaiement[]>([])
   const [loading, setLoading] = useState(true)
@@ -120,9 +119,8 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
           : paiementsRes.data.data?.data || []
         setDecomptes(dData)
         setPaiements(pData)
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Erreur inconnue'
-        console.error('Erreur chargement decomptes/paiements:', msg)
+      } catch {
+        showError('Impossible de charger les décomptes')
         setError('Impossible de charger les decomptes')
       } finally {
         setLoading(false)
@@ -194,8 +192,8 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
             Decomptes &amp; Paiements
           </Typography>
           <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
-            {decomptes.length} decompte(s) - Total: {formatCurrency(totalDecomptes)} DH
-            {totalPaye > 0 && ` - Paye: ${formatCurrency(totalPaye)} DH`}
+            {decomptes.length} decompte(s) - Total: {formatCurrency(totalDecomptes ?? 0)}
+            {totalPaye > 0 && ` - Paye: ${formatCurrency(totalPaye ?? 0)}`}
           </Typography>
         </Box>
         <Button
@@ -313,7 +311,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
                         <Typography
                           sx={{ fontSize: typography.sizes.base, fontWeight: typography.weights.semibold, color: colors.primary[700] }}
                         >
-                          {formatCurrency(decompte.netAPayer)} DH
+                          {formatCurrency(decompte.netAPayer ?? 0)}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
@@ -324,7 +322,7 @@ const MarcheDecomptesSection = ({ marcheId }: MarcheDecomptesSectionProps) => {
                             color: decompte.montantPaye > 0 ? colors.success[700] : colors.textSecondary,
                           }}
                         >
-                          {formatCurrency(decompte.montantPaye)} DH
+                          {formatCurrency(decompte.montantPaye ?? 0)}
                         </Typography>
                       </TableCell>
                       <TableCell>

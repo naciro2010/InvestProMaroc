@@ -14,7 +14,9 @@ import {
 } from '@mui/icons-material'
 import type { SvgIconComponent } from '@mui/icons-material'
 import { marchesAPI } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 interface MarcheFinanceDashboardProps {
   marcheId: number
@@ -42,13 +44,6 @@ interface KpiCardConfig {
   valueColor: string
 }
 
-const formatCurrency = (amount: number | undefined | null): string => {
-  if (amount === undefined || amount === null) return '0,00'
-  return amount.toLocaleString('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
 
 /**
  * MICRO-COMPONENT: MarcheFinanceDashboard
@@ -56,6 +51,7 @@ const formatCurrency = (amount: number | undefined | null): string => {
  * Endpoint: GET /marches/{id}/situation-paiement
  */
 const MarcheFinanceDashboard = ({ marcheId }: MarcheFinanceDashboardProps) => {
+  const { showError } = useToast()
   const [situation, setSituation] = useState<SituationPaiement | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -65,9 +61,8 @@ const MarcheFinanceDashboard = ({ marcheId }: MarcheFinanceDashboardProps) => {
         setLoading(true)
         const { data } = await marchesAPI.getSituationPaiement(marcheId)
         setSituation(data.data || data)
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Erreur inconnue'
-        console.error('Erreur chargement situation paiement:', msg)
+      } catch {
+        showError('Erreur lors du chargement du tableau de bord financier')
       } finally {
         setLoading(false)
       }
@@ -95,7 +90,7 @@ const MarcheFinanceDashboard = ({ marcheId }: MarcheFinanceDashboardProps) => {
   const kpiCards: KpiCardConfig[] = [
     {
       label: 'Total Decomptes',
-      value: `${formatCurrency(situation.totalNetAPayer)} DH`,
+      value: formatCurrency(situation.totalNetAPayer ?? 0),
       icon: Receipt,
       bgColor: colors.primary[50],
       iconColor: colors.primary[600],
@@ -103,7 +98,7 @@ const MarcheFinanceDashboard = ({ marcheId }: MarcheFinanceDashboardProps) => {
     },
     {
       label: 'Total Paye',
-      value: `${formatCurrency(situation.totalMontantPaye)} DH`,
+      value: formatCurrency(situation.totalMontantPaye ?? 0),
       icon: Payments,
       bgColor: colors.success[50],
       iconColor: colors.success[600],
@@ -111,7 +106,7 @@ const MarcheFinanceDashboard = ({ marcheId }: MarcheFinanceDashboardProps) => {
     },
     {
       label: 'Reste a Payer',
-      value: `${formatCurrency(situation.resteAPayer)} DH`,
+      value: formatCurrency(situation.resteAPayer ?? 0),
       icon: AccountBalanceWallet,
       bgColor: colors.warning[50],
       iconColor: colors.warning[600],

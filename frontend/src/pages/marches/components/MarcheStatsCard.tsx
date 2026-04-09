@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { Box, Card, Typography, Stack, CircularProgress } from '@mui/material'
 import { TrendingUp, Receipt, Payments, CheckCircle } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, componentStyles, borders, typography } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 interface MarcheStatsCardProps {
   marcheId: number
@@ -23,6 +25,7 @@ interface MarcheStats {
  * Charge uniquement les statistiques calculées
  */
 const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
+  const { showError } = useToast()
   const [stats, setStats] = useState<MarcheStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -44,20 +47,13 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
         nombreDecomptes: marcheData.decomptes?.length || 0,
         nombreLignes: marcheData.lignes?.length || 0,
       })
-    } catch (err) {
-      console.error('Erreur chargement stats:', err)
+    } catch {
+      showError('Erreur lors du chargement des statistiques du marché')
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number | undefined | null): string => {
-    if (amount === undefined || amount === null) return '0,00'
-    return amount.toLocaleString('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   if (loading) {
     return (
@@ -73,21 +69,21 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
   const statCards = [
     {
       label: 'Montant Total TTC',
-      value: `${formatCurrency(stats.montantTotal)} DH`,
+      value: formatCurrency(stats.montantTotal ?? 0),
       icon: TrendingUp,
       iconColor: colors.primary[600],
       valueColor: colors.primary[700],
     },
     {
       label: 'Montant Payé',
-      value: `${formatCurrency(stats.montantPaye)} DH`,
+      value: formatCurrency(stats.montantPaye ?? 0),
       icon: Payments,
       iconColor: colors.success[600],
       valueColor: colors.success[700],
     },
     {
       label: 'Reste à Payer',
-      value: `${formatCurrency(stats.resteAPayer)} DH`,
+      value: formatCurrency(stats.resteAPayer ?? 0),
       icon: Receipt,
       iconColor: colors.warning[600],
       valueColor: colors.warning[700],

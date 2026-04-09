@@ -6,6 +6,7 @@ import {
 import { Download as DownloadIcon, Save as SaveIcon, Bookmark as BookmarkIcon, Delete as DeleteIcon } from '@mui/icons-material'
 import * as ExcelJS from 'exceljs'
 import { dimensionsAPI, imputationsAPI } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { ReportingFilterPanel, ReportingChartSection, ReportingCrossTable, type Aggregation2DItem } from './components'
 
 interface Dimension {
@@ -33,6 +34,7 @@ const formatMontant = (montant: number) => {
 }
 
 export default function ReportingAnalytiquePage() {
+  const { showToast } = useToast()
   const [dimensions, setDimensions] = useState<Dimension[]>([])
   const [selectedType, setSelectedType] = useState('BUDGET')
   const [selectedDim1, setSelectedDim1] = useState('')
@@ -56,9 +58,8 @@ export default function ReportingAnalytiquePage() {
         if (data.length > 0) setSelectedDim1(data[0].code)
         if (data.length > 1) setSelectedDim2(data[1].code)
       })
-      .catch((error: unknown) => {
-        const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-        console.error('Erreur chargement dimensions:', msg)
+      .catch(() => {
+        showToast('Erreur lors du chargement des dimensions', 'error')
       })
     const stored = localStorage.getItem('reporting_saved_views')
     if (stored) setSavedViews(JSON.parse(stored))
@@ -81,9 +82,8 @@ export default function ReportingAnalytiquePage() {
         const { data } = await imputationsAPI.aggregateByTwoDimensions({ type: selectedType, dimension1: selectedDim1, dimension2: selectedDim2 })
         setAggregation2D(data.data || [])
       }
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur agrégation:', msg)
+    } catch {
+      showToast("Erreur lors de l'agregation des donnees", 'error')
     } finally {
       setLoading(false)
     }

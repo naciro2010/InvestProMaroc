@@ -108,12 +108,7 @@ export const WIZARD_STEPS = [
 
 // --- Utility functions ---
 
-export const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'MAD',
-  }).format(value)
-}
+export { formatCurrency } from '@/lib/utils'
 
 export const calculateTotals = (formData: ConventionWizardFormData): WizardTotals => {
   const totalLignesHT = formData.lignesBudget.reduce((sum, ligne) => sum + ligne.montantHT, 0)

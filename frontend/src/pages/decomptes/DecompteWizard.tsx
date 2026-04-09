@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
 import { WizardView } from '@/components/core'
+import { useToast } from '@/contexts/ToastContext'
 import { decomptesAPI, marchesAPI, cascadeAPI } from '../../lib/api'
 import type { MarcheSummaryDTO } from '../../lib/api'
 import { StepInfoGenerales, StepMontantsRetenues, StepConfirmation } from './wizard'
@@ -13,17 +14,21 @@ const steps = ['Informations generales', 'Montants & Retenues', 'Pieces jointes 
 
 const DecompteWizard = () => {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { marcheId: routeMarcheId } = useParams<{ marcheId: string }>()
   const prefilledMarcheId = routeMarcheId ? parseInt(routeMarcheId) : null
   const [activeStep, setActiveStep] = useState(0)
   const [marches, setMarches] = useState<Marche[]>([])
+  const [loadingMarches, setLoadingMarches] = useState(true)
   const [marcheSummary, setMarcheSummary] = useState<MarcheSummaryDTO | null>(null)
   const [formData, setFormData] = useState<DecompteFormData>(createInitialFormData(prefilledMarcheId))
 
   useEffect(() => {
+    setLoadingMarches(true)
     marchesAPI.getAll()
       .then(res => setMarches(res.data.data || []))
-      .catch(error => console.error('Error loading marches:', error))
+      .catch(() => showToast('Erreur lors du chargement des marches', 'error'))
+      .finally(() => setLoadingMarches(false))
   }, [])
 
   useEffect(() => {
@@ -40,9 +45,11 @@ const DecompteWizard = () => {
   }, [formData.marcheId])
 
   useEffect(() => {
-    const montantTVA = formData.montantBrutHT * (formData.tauxTVA / 100)
-    const montantTTC = formData.montantBrutHT + montantTVA
-    const totalRetenues = formData.retenues.reduce((sum, r) => sum + r.montant, 0)
+    const brutHT = formData.montantBrutHT || 0
+    const tva = formData.tauxTVA || 0
+    const montantTVA = brutHT * (tva / 100)
+    const montantTTC = brutHT + montantTVA
+    const totalRetenues = formData.retenues.reduce((sum, r) => sum + (r.montant || 0), 0)
     setFormData(prev => ({ ...prev, montantTVA, montantTTC, totalRetenues, netAPayer: montantTTC - totalRetenues }))
   }, [formData.montantBrutHT, formData.tauxTVA, formData.retenues])
 
@@ -92,7 +99,7 @@ const DecompteWizard = () => {
   const isStepValid = () => {
     switch (activeStep) {
       case 0: return formData.numeroDecompte && formData.marcheId && formData.dateDecompte && formData.periodeDebut && formData.periodeFin
-      case 1: return formData.montantBrutHT > 0
+      case 1: return formData.montantBrutHT > 0 && formData.totalRetenues <= formData.montantTTC && formData.netAPayer >= 0
       case 2: return true
       default: return false
     }
@@ -120,7 +127,7 @@ const DecompteWizard = () => {
         onBack={() => setActiveStep(s => s - 1)}
         onNext={handleNext}
         onCancel={() => navigate(prefilledMarcheId ? `/marches/${prefilledMarcheId}` : '/decomptes')}
-        isNextDisabled={!isStepValid() || createMutation.isPending}
+        isNextDisabled={!isStepValid() || createMutation.isPending || loadingMarches}
         isSubmitting={createMutation.isPending}
         submitLabel="Creer le decompte"
       >

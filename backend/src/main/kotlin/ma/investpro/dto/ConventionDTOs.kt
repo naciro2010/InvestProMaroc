@@ -69,10 +69,13 @@ data class ConventionSimpleDTO(
     val code: String,
     val numero: String,
     val libelle: String,
+    val typeConvention: String,
     val statut: String,
     val budget: BigDecimal,
+    val tauxCommission: BigDecimal,
     val dateDebut: LocalDate,
     val dateFin: LocalDate?,
+    val parentConventionId: Long?,
     val createdByNom: String?,
     val createdAt: LocalDateTime?,
     val actif: Boolean

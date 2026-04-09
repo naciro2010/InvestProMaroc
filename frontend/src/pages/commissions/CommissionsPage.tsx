@@ -20,8 +20,10 @@ import { Calculator, RefreshCw } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel, ExportButton } from '@/components/core'
 import api from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { exportToExcel, formatCurrencyForExport } from '@/lib/exportUtils'
+import { formatCurrency } from '@/lib/utils'
 
 interface Commission {
   id: number
@@ -51,6 +53,7 @@ const styles = componentStyles.listPage
 const listStyles = componentStyles.listView
 
 export default function CommissionsPage() {
+  const { showToast } = useToast()
   const [commissions, setCommissions] = useState<Commission[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -65,9 +68,8 @@ export default function CommissionsPage() {
       setLoading(true)
       const response = await api.get('/commissions', { params: { year: yearFilter } })
       setCommissions(response.data)
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur chargement commissions:', msg)
+    } catch {
+      showToast('Erreur lors du chargement des commissions', 'error')
     } finally {
       setLoading(false)
     }
@@ -96,8 +98,6 @@ export default function CommissionsPage() {
     return filteredCommissions.slice(start, start + rowsPerPage)
   }, [filteredCommissions, page, rowsPerPage])
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' MAD'
 
   const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('fr-FR') : '-'
 

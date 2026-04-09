@@ -51,8 +51,8 @@ export {
   Field,
   Notebook,
   InlineTable,
-} from './FormView'
-export type { StatusStep } from './FormView'
+} from './formview'
+export type { StatusStep } from './formview'
 
 export { default as ListView } from './ListView'
 export type { ColumnDef } from './ListView'

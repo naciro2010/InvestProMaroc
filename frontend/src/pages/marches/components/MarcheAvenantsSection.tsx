@@ -14,8 +14,10 @@ import {
 } from '@mui/material'
 import { Add } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 interface MarcheAvenantsSectionProps {
   marcheId: number
@@ -41,6 +43,7 @@ interface Avenant {
  * Endpoint: GET /marches/{id}/avenants
  */
 const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
+  const { showError } = useToast()
   const [avenants, setAvenants] = useState<Avenant[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,21 +61,14 @@ const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
       const { data } = await marchesAPI.getAvenants(marcheId)
       const avenantsData = Array.isArray(data.data) ? data.data : data.data?.data || []
       setAvenants(avenantsData)
-    } catch (err) {
-      console.error('Erreur chargement avenants:', err)
+    } catch {
+      showError('Impossible de charger les avenants')
       setError('Impossible de charger les avenants')
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number | undefined | null): string => {
-    if (amount === undefined || amount === null) return '0,00'
-    return amount.toLocaleString('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   const formatDate = (date: string): string => {
     return new Date(date).toLocaleDateString('fr-FR')
@@ -178,7 +174,7 @@ const MarcheAvenantsSection = ({ marcheId }: MarcheAvenantsSectionProps) => {
                         }}
                       >
                         {impactValue >= 0 ? '+' : ''}
-                        {formatCurrency(avenant.impact)} DH
+                        {formatCurrency(avenant.impact ?? 0)}
                       </Typography>
                     </TableCell>
                     <TableCell>

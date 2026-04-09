@@ -15,6 +15,7 @@ import DecimalInput from '@/components/ui/DecimalInput'
 import FileUploadZone from '../../components/common/FileUploadZone'
 import RichTextEditor from '../../components/common/RichTextEditor'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 
 const steps = ['Informations générales', 'Montants & Statut', 'Pièces jointes & Confirmation']
 
@@ -46,6 +47,7 @@ interface BudgetFormData {
 
 const BudgetWizard = () => {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [activeStep, setActiveStep] = useState(0)
   const [conventions, setConventions] = useState<Convention[]>([])
 
@@ -67,8 +69,8 @@ const BudgetWizard = () => {
       try {
         const res = await conventionsAPI.getAll()
         setConventions(res.data.data || [])
-      } catch (error) {
-        console.error('Error loading conventions:', error)
+      } catch {
+        showToast('Erreur lors du chargement des conventions', 'error')
       }
     }
     loadConventions()

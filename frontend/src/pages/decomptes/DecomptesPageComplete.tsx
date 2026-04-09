@@ -9,9 +9,11 @@ import {
 import { Plus, RefreshCw, List, LayoutGrid } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import api, { decomptesAPI } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { ControlPanel, ExportButton } from '../../components/core'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '../../lib/exportUtils'
+import { formatCurrency } from '@/lib/utils'
 import { useTableSort } from '@/hooks/useTableSort'
 import { DecompteTable, DecompteFormDialog, DecompteKanbanView } from './components'
 import type { Decompte, DecompteFormData } from './components'
@@ -29,6 +31,7 @@ const INITIAL_FORM_DATA: DecompteFormData = {
 }
 
 const DecomptesPage = () => {
+  const { showToast } = useToast()
   const [decomptes, setDecomptes] = useState<Decompte[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -47,8 +50,8 @@ const DecomptesPage = () => {
     try {
       const response = await api.get('/decomptes/list')
       setDecomptes(response.data)
-    } catch (error) {
-      console.error('Erreur chargement décomptes:', error)
+    } catch {
+      showToast('Erreur lors du chargement des decomptes', 'error')
     } finally {
       setLoading(false)
     }
@@ -106,8 +109,8 @@ const DecomptesPage = () => {
       setOpenDialog(false)
       setSelectedDecompte(null)
       loadDecomptes()
-    } catch (error) {
-      console.error('Erreur sauvegarde décompte:', error)
+    } catch {
+      showToast('Erreur lors de la sauvegarde du decompte', 'error')
     }
   }
 
@@ -116,8 +119,8 @@ const DecomptesPage = () => {
     try {
       await decomptesAPI.delete(id)
       loadDecomptes()
-    } catch (error) {
-      console.error('Erreur suppression:', error)
+    } catch {
+      showToast('Erreur lors de la suppression du decompte', 'error')
     }
   }
 
@@ -126,8 +129,6 @@ const DecomptesPage = () => {
     setFormData(prev => ({ ...prev, netAPayer: net }))
   }
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' MAD'
 
   const handleExport = () => {
     const exportData: Record<string, unknown>[] = filteredDecomptes.map(d => ({

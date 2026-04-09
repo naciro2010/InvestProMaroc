@@ -51,5 +51,4 @@ export interface SousConventionFormData {
   tauxTva: string
 }
 
-export const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
+export { formatCurrency } from '@/lib/utils'

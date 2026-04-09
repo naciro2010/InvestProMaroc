@@ -42,11 +42,14 @@ class ProjetConventionMapper {
             code = convention.code,
             numero = convention.numero,
             libelle = convention.libelle,
+            typeConvention = convention.typeConvention.name,
             statut = convention.statut.name,
             budget = convention.budget,
+            tauxCommission = convention.tauxCommission,
             dateDebut = convention.dateDebut,
             dateFin = convention.dateFin,
-            createdByNom = null, // Peut être complété si besoin
+            parentConventionId = convention.parentConvention?.id,
+            createdByNom = null,
             createdAt = convention.createdAt,
             actif = true
         )

@@ -6,7 +6,9 @@ import AppLayout from '../../components/layout/AppLayout'
 import { ControlPanel, FormView, FieldGroup, Field, Notebook, StatusBadge, Chatter, useEntityHistory } from '@/components/core'
 import type { StatusStep } from '@/components/core'
 import { api } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 import { DecompteInfoCard, DecompteCalculsCard, DecompteRetentionsCard } from '../../components/decomptes/detail'
 
 interface Retenue {
@@ -46,8 +48,6 @@ const STATUS_STEPS: StatusStep[] = [
   { value: 'PAYE_TOTAL', label: 'Paye total' },
 ]
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString('fr-FR')
@@ -55,6 +55,7 @@ const formatDate = (date: string) =>
 const DecompteDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [decompte, setDecompte] = useState<Decompte | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -74,7 +75,7 @@ const DecompteDetailPageModern = () => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erreur lors du chargement du decompte'
       setError(message)
-      console.error(err)
+      showToast('Erreur lors du chargement du decompte', 'error')
     } finally {
       setLoading(false)
     }

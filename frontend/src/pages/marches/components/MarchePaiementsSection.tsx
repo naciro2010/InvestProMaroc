@@ -12,7 +12,9 @@ import {
   Alert,
 } from '@mui/material'
 import { marchesAPI } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, borders, componentStyles, getStatusConfig } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 interface MarchePaiementsSectionProps {
   marcheId: number
@@ -50,6 +52,7 @@ const modePaiementLabels: Record<string, string> = {
  * Endpoint: GET /marches/{id}/paiements
  */
 const MarchePaiementsSection = ({ marcheId }: MarchePaiementsSectionProps) => {
+  const { showError } = useToast()
   const [paiements, setPaiements] = useState<MarchePaiement[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -65,22 +68,14 @@ const MarchePaiementsSection = ({ marcheId }: MarchePaiementsSectionProps) => {
       const { data } = await marchesAPI.getPaiements(marcheId)
       const paiementsData = Array.isArray(data.data) ? data.data : data.data?.data || []
       setPaiements(paiementsData)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erreur inconnue'
-      console.error('Erreur chargement paiements:', msg)
+    } catch {
+      showError('Impossible de charger les paiements')
       setError('Impossible de charger les paiements')
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number | undefined | null): string => {
-    if (amount === undefined || amount === null) return '0,00'
-    return amount.toLocaleString('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   const formatDate = (date: string | null): string => {
     if (!date) return '-'
@@ -116,7 +111,7 @@ const MarchePaiementsSection = ({ marcheId }: MarchePaiementsSectionProps) => {
           }}
         >
           {paiements.length} paiement(s)
-          {totalPaye > 0 && ` - Total: ${formatCurrency(totalPaye)} DH`}
+          {totalPaye > 0 && ` - Total: ${formatCurrency(totalPaye)}`}
         </Typography>
       </Box>
 
@@ -197,7 +192,7 @@ const MarchePaiementsSection = ({ marcheId }: MarchePaiementsSectionProps) => {
                           color: colors.success[700],
                         }}
                       >
-                        {formatCurrency(paiement.montantPaye)} DH
+                        {formatCurrency(paiement.montantPaye ?? 0)}
                       </Typography>
                     </TableCell>
                     <TableCell>

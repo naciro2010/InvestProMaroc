@@ -8,6 +8,7 @@ import {
   Alert,
 } from '@mui/material'
 import { conventionsAPI } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
 import { WizardView } from '@/components/core'
 import Step1Informations from './wizard/Step1Informations'
@@ -36,6 +37,7 @@ const steps = [
 const SousConventionWizard = () => {
   const { parentId } = useParams<{ parentId: string }>()
   const navigate = useNavigate()
+  const { showError } = useToast()
   const [activeStep, setActiveStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -81,7 +83,7 @@ const SousConventionWizard = () => {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Impossible de charger la convention parente'
-      console.error('Erreur chargement convention parent:', message)
+      showError(message)
       setError(message)
     }
   }
@@ -121,7 +123,7 @@ const SousConventionWizard = () => {
       }
       const apiErr = err as ApiError
       const message = apiErr.response?.data?.message || 'Erreur lors de la création'
-      console.error('Erreur création sous-convention:', message)
+      showError(message)
       setError(message)
     } finally {
       setLoading(false)

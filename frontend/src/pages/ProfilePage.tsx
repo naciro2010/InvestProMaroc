@@ -4,6 +4,7 @@ import AppLayout from '../components/layout/AppLayout'
 import { Card, Button } from '../components/ui'
 import { useAuth } from '../contexts/AuthContext'
 import { usersAPI } from '../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 
 interface UserProfile {
   id: number
@@ -18,6 +19,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const { user: authUser } = useAuth()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [passwordMode, setPasswordMode] = useState(false)
@@ -63,9 +65,8 @@ export default function ProfilePage() {
       await usersAPI.updateProfile(formData)
       alert('Profil mis à jour avec succès')
       setEditMode(false)
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour:', error)
-      alert('Erreur lors de la mise à jour du profil')
+    } catch {
+      showToast('Erreur lors de la mise a jour du profil', 'error')
     } finally {
       setLoading(false)
     }
@@ -86,9 +87,8 @@ export default function ProfilePage() {
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
       alert('Mot de passe changé avec succès')
     } catch (error: unknown) {
-      console.error('Erreur lors du changement de mot de passe:', error)
       const axiosErr = error as { response?: { data?: { message?: string } } }
-      alert(axiosErr.response?.data?.message || 'Erreur lors du changement de mot de passe. Endpoint non disponible.')
+      showToast(axiosErr.response?.data?.message || 'Erreur lors du changement de mot de passe', 'error')
     } finally {
       setLoading(false)
     }

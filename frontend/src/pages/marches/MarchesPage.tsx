@@ -29,6 +29,7 @@ import { useToast } from '@/contexts/ToastContext'
 import api from '@/lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { exportToExcel, formatCurrencyForExport } from '@/lib/exportUtils'
+import { formatCurrencyCompact } from '@/lib/utils'
 
 interface ColumnConfig {
   key: string
@@ -62,11 +63,6 @@ const MARCHE_KANBAN_STATUSES = [
   { id: 'RESILIE', title: 'Resilie', color: colors.danger[600] },
 ]
 
-const formatCurrencyShort = (amount: number): string => {
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`
-  return amount.toLocaleString('fr-FR')
-}
 
 const MarcheKanbanSection = ({ data, onCardClick }: { data: MarcheListItem[]; onCardClick: (id: number) => void }) => {
   const columns: KanbanColumn<MarcheListItem>[] = MARCHE_KANBAN_STATUSES.map(col => ({
@@ -92,7 +88,7 @@ const MarcheKanbanSection = ({ data, onCardClick }: { data: MarcheListItem[]; on
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TrendingUp size={12} style={{ color: colors.textSecondary }} />
             <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
-              {formatCurrencyShort(m.montantTtc)} MAD
+              {formatCurrencyCompact(m.montantTtc)}
             </Typography>
           </Box>
           <Typography sx={{ fontSize: '11px', color: colors.neutral[400], mt: 0.5 }}>

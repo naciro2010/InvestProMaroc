@@ -106,7 +106,7 @@ const ProgressBar = ({ label, value, color, hint }: { label: string; value: numb
 const ConventionProgressCard = ({ convention, enrichedData }: ConventionProgressCardProps) => {
   const milestones = buildMilestones(convention, enrichedData)
   const completedCount = milestones.filter(m => m.done).length
-  const overallProgress = (completedCount / milestones.length) * 100
+  const overallProgress = milestones.length > 0 ? (completedCount / milestones.length) * 100 : 0
   const timeProgress = computeTimeProgress(convention.dateDebut, convention.dateFin)
   const realisationProgress = enrichedData?.tauxRealisation ?? 0
 
@@ -141,7 +141,7 @@ const ConventionProgressCard = ({ convention, enrichedData }: ConventionProgress
           <Box sx={{
             position: 'absolute', top: 9, left: 25, zIndex: 0,
             height: 2, bgcolor: colors.success[400],
-            width: `${Math.max(0, ((completedCount - 1) / (milestones.length - 1)) * 100)}%`,
+            width: `${milestones.length > 1 ? Math.max(0, ((completedCount - 1) / (milestones.length - 1)) * 100) : 0}%`,
             transition: 'width 0.5s ease',
           }} />
           {milestones.map((m: Milestone, i: number) => (

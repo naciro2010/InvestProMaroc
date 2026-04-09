@@ -49,9 +49,7 @@ const FournisseursPage = () => {
       const response = await fournisseursAPI.getAll()
       const data = Array.isArray(response.data) ? response.data : (response.data?.data || [])
       setFournisseurs(data as Fournisseur[])
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur chargement fournisseurs:', msg)
+    } catch {
       showToast('Erreur lors du chargement des fournisseurs', 'error')
     } finally {
       setLoading(false)

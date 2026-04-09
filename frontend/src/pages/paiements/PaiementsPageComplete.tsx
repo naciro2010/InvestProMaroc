@@ -8,6 +8,7 @@ import { colors, typography, componentStyles, getStatusConfig } from '../../lib/
 import { useTableSort } from '@/hooks/useTableSort'
 import { PaiementTable, PaiementFormDialog, PaiementKanbanView } from './components'
 import type { Paiement, PaiementFormData } from './components'
+import { formatCurrency } from '@/lib/utils'
 
 const styles = componentStyles.listPage
 type ViewMode = 'list' | 'kanban'
@@ -86,8 +87,6 @@ const PaiementsPage = () => {
     if (p) paiementsAPI.update(p.id, { ...p, statut: toColumnId } as Record<string, unknown>).then(() => loadPaiements()).catch(() => {})
   }
 
-  const formatCurrency = (amount: number): string =>
-    new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' MAD'
 
   if (loading) return (
     <AppLayout>

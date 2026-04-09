@@ -15,6 +15,7 @@ import { ControlPanel, ExportButton, KanbanBoard, StatusBadge } from '@/componen
 import type { KanbanColumn } from '@/components/core'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '@/lib/exportUtils'
+import { formatCurrencyCompact } from '@/lib/utils'
 import { GroupByPopover, ColumnVisibilityPopover } from '@/components/conventions/list'
 import {
   ProjetAdvancedFilters,
@@ -54,11 +55,6 @@ const PROJET_KANBAN_STATUSES = [
   { id: 'ANNULE', title: 'Annule', color: colors.danger[600] },
 ]
 
-const formatBudget = (amount: number): string => {
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`
-  return amount.toLocaleString('fr-FR')
-}
 
 const ProjetKanbanSection = ({ data, onCardClick }: { data: Projet[]; onCardClick: (id: number) => void }) => {
   const columns: KanbanColumn<Projet>[] = PROJET_KANBAN_STATUSES.map(col => ({
@@ -82,7 +78,7 @@ const ProjetKanbanSection = ({ data, onCardClick }: { data: Projet[]; onCardClic
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TrendingUp size={12} style={{ color: colors.textSecondary }} />
             <Box sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
-              {formatBudget(p.budgetTotal)} MAD
+              {formatCurrencyCompact(p.budgetTotal)}
             </Box>
           </Box>
           {p.pourcentageAvancement > 0 && (

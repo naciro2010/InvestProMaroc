@@ -1,6 +1,7 @@
 import { Box, Typography, Divider, Chip, Alert } from '@mui/material'
 import FileUploadZone from '../../../components/common/FileUploadZone'
 import { colors } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 import type { DecompteFormData, Marche } from './types'
 
 interface StepConfirmationProps {
@@ -10,8 +11,6 @@ interface StepConfirmationProps {
   error: Error | null
 }
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(value)
 
 const StepConfirmation = ({ formData, marches, onFormDataChange, error }: StepConfirmationProps) => (
   <Box sx={{ display: 'grid', gap: 3 }}>

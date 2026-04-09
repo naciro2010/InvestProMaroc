@@ -20,9 +20,11 @@ import { Plus, RefreshCw, Eye, Edit2, Trash2, List, LayoutGrid } from 'lucide-re
 import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel, StatusBadge, ExportButton } from '@/components/core'
 import { budgetsAPI } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import type { Budget, StatutBudget } from '@/types/entities'
 import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
 import { useTableSort } from '@/hooks/useTableSort'
+import { formatCurrency } from '@/lib/utils'
 import { BudgetKanbanView } from './components'
 
 // Styles from design system
@@ -31,6 +33,7 @@ const listStyles = componentStyles.listView
 
 export default function BudgetsPage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -50,9 +53,8 @@ export default function BudgetsPage() {
       setLoading(true)
       const response = await budgetsAPI.getAll()
       setBudgets(response.data.data || response.data || [])
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur chargement budgets:', msg)
+    } catch {
+      showToast('Erreur lors du chargement des budgets', 'error')
     } finally {
       setLoading(false)
     }
@@ -91,13 +93,6 @@ export default function BudgetsPage() {
     return sortedBudgets.slice(start, start + rowsPerPage)
   }, [sortedBudgets, page, rowsPerPage])
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'MAD',
-      minimumFractionDigits: 0,
-    }).format(amount / 1000000) + ' M'
-  }
 
   const formatDate = (date?: string) => {
     if (!date) return '-'
@@ -109,9 +104,8 @@ export default function BudgetsPage() {
     try {
       await budgetsAPI.delete(id)
       fetchBudgets()
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Erreur inconnue'
-      console.error('Erreur suppression:', msg)
+    } catch {
+      showToast('Erreur lors de la suppression du budget', 'error')
     }
   }
 

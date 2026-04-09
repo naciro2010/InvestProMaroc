@@ -37,7 +37,9 @@ import AppLayout from '../../components/layout/AppLayout'
 import { ControlPanel } from '@/components/core'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { versementsPrevisionnelsAPI, conventionsAPI } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, componentStyles, borders, typography } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 interface VersementPrevisionnel {
   id: number
@@ -69,6 +71,7 @@ interface Convention {
 }
 
 const VersementsPrevisionnelsPage = () => {
+  const { showToast } = useToast()
   const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
@@ -172,8 +175,8 @@ const VersementsPrevisionnelsPage = () => {
         conventionsCount: uniqueConventions.size,
         versementsProches,
       })
-    } catch (error) {
-      console.error('Erreur chargement:', error)
+    } catch {
+      showToast('Erreur lors du chargement des versements', 'error')
     } finally {
       setLoading(false)
     }
@@ -232,9 +235,8 @@ const VersementsPrevisionnelsPage = () => {
 
       handleCloseDialog()
       loadData()
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
-      alert('Erreur lors de la sauvegarde')
+    } catch {
+      showToast('Erreur lors de la sauvegarde du versement', 'error')
     }
   }
 
@@ -244,18 +246,11 @@ const VersementsPrevisionnelsPage = () => {
     try {
       await versementsPrevisionnelsAPI.delete(id)
       loadData()
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
-      alert('Erreur lors de la suppression')
+    } catch {
+      showToast('Erreur lors de la suppression du versement', 'error')
     }
   }
 
-  const formatCurrency = (amount: number): string => {
-    return amount.toLocaleString('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   const formatDate = (date: string): string => {
     return new Date(date).toLocaleDateString('fr-FR')
@@ -282,7 +277,7 @@ const VersementsPrevisionnelsPage = () => {
     },
     {
       label: 'Montant Total',
-      value: `${formatCurrency(stats.montantTotal)} DH`,
+      value: formatCurrency(stats.montantTotal),
       icon: TrendingUp,
       bgColor: colors.success[50],
       iconBgColor: colors.success[100],
@@ -495,7 +490,7 @@ const VersementsPrevisionnelsPage = () => {
                           variant="body2"
                           sx={{ fontSize: typography.sizes.sm, color: versement.montantPrevu ? colors.textPrimary : colors.textSecondary }}
                         >
-                          {versement.montantPrevu ? `${formatCurrency(versement.montantPrevu)} DH` : '-'}
+                          {versement.montantPrevu ? formatCurrency(versement.montantPrevu) : '-'}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
@@ -503,7 +498,7 @@ const VersementsPrevisionnelsPage = () => {
                           variant="body2"
                           sx={{ fontWeight: typography.weights.semibold, color: colors.success[600] }}
                         >
-                          {formatCurrency(versement.montant)} DH
+                          {formatCurrency(versement.montant)}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ ...componentStyles.table.cell, textAlign: 'right' }}>
@@ -520,7 +515,7 @@ const VersementsPrevisionnelsPage = () => {
                                   : colors.info[600],
                             }}
                           >
-                            {formatCurrency(versement.montant - versement.montantPrevu)} DH
+                            {formatCurrency(versement.montant - versement.montantPrevu)}
                           </Typography>
                         ) : (
                           <Typography variant="body2" sx={{ color: colors.textSecondary }}>-</Typography>

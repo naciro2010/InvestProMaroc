@@ -15,7 +15,9 @@ import {
 } from '@mui/icons-material'
 import type { SvgIconComponent } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 interface MarcheSituationPaiementCardProps {
   marcheId: number
@@ -51,6 +53,7 @@ interface MetricCardConfig {
  * Endpoint: GET /marches/{id}/situation-paiement
  */
 const MarcheSituationPaiementCard = ({ marcheId }: MarcheSituationPaiementCardProps) => {
+  const { showError } = useToast()
   const [situation, setSituation] = useState<SituationPaiement | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -64,20 +67,13 @@ const MarcheSituationPaiementCard = ({ marcheId }: MarcheSituationPaiementCardPr
       const { data } = await marchesAPI.getSituationPaiement(marcheId)
       const situationData = data.data || data
       setSituation(situationData)
-    } catch (err) {
-      console.error('Erreur chargement situation paiement:', err)
+    } catch {
+      showError('Erreur lors du chargement de la situation des paiements')
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number | undefined | null): string => {
-    if (amount === undefined || amount === null) return '0,00'
-    return amount.toLocaleString('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   if (loading) {
     return (
@@ -98,7 +94,7 @@ const MarcheSituationPaiementCard = ({ marcheId }: MarcheSituationPaiementCardPr
   const metricCards: MetricCardConfig[] = [
     {
       label: 'Reste a payer',
-      value: `${formatCurrency(situation.resteAPayer)} DH`,
+      value: formatCurrency(situation.resteAPayer ?? 0),
       icon: AccountBalance,
       iconBgColor: colors.warning[50],
       iconColor: colors.warning[600],
@@ -183,10 +179,10 @@ const MarcheSituationPaiementCard = ({ marcheId }: MarcheSituationPaiementCardPr
         />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
           <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-            Paye: {formatCurrency(situation.totalMontantPaye)} DH
+            Paye: {formatCurrency(situation.totalMontantPaye ?? 0)}
           </Typography>
           <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-            Total: {formatCurrency(situation.totalNetAPayer)} DH
+            Total: {formatCurrency(situation.totalNetAPayer ?? 0)}
           </Typography>
         </Box>
       </Box>

@@ -163,7 +163,7 @@ const SelectWithQuickCreateDemo = () => {
                 </Typography>
                 <SelectWithQuickCreate
                   name="categorieDepenseId"
-                  control={control}
+                  control={control as never}
                   label="Catégorie de Dépense"
                   options={categories.map((cat) => ({
                     id: cat.id,
@@ -208,7 +208,7 @@ const SelectWithQuickCreateDemo = () => {
                 </Typography>
                 <SelectWithQuickCreate
                   name="partenaireId"
-                  control={control}
+                  control={control as never}
                   label="Partenaire"
                   options={partenaires.map((p) => ({
                     id: p.id,

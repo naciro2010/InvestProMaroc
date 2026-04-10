@@ -58,7 +58,7 @@ const ReportingChartSection = ({
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip formatter={(value: number | undefined) => formatMontant(value ?? 0)}
+                <Tooltip formatter={(value) => formatMontant(Number(value) || 0)}
                   labelStyle={{ color: dsColors.textPrimary }} />
                 <Legend />
                 <Bar dataKey="value" fill={dsColors.primary[600]} name="Montant (MAD)" />
@@ -81,7 +81,7 @@ const ReportingChartSection = ({
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number | undefined) => formatMontant(value ?? 0)} />
+                <Tooltip formatter={(value) => formatMontant(Number(value) || 0)} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

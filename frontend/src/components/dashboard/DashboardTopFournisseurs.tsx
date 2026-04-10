@@ -53,9 +53,10 @@ const DashboardTopFournisseurs = ({ fournisseurs }: Props) => {
                 <Tooltip
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [formatLargeCurrency(Number(value) || 0), 'Montant']}
-                  labelFormatter={(label: string) => {
-                    const f = fournisseurs.find(fn => fn.nom.startsWith(label.replace('...', '')))
-                    return f ? f.nom : label
+                  labelFormatter={(label) => {
+                    const labelStr = String(label)
+                    const f = fournisseurs.find(fn => fn.nom.startsWith(labelStr.replace('...', '')))
+                    return f ? f.nom : labelStr
                   }}
                   contentStyle={{
                     fontSize: 11, borderRadius: 8,

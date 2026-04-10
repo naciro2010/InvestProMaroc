@@ -68,7 +68,7 @@ const DecimalInput = ({
 
     let cleaned = trimmed.replace(/\s/g, '')
     cleaned = cleaned.replace(',', '.')
-    cleaned = cleaned.replace(/[^\d.\-]/g, '')
+    cleaned = cleaned.replace(/[^\d.-]/g, '')
 
     const parsed = parseFloat(cleaned)
     return isNaN(parsed) ? 0 : parsed
@@ -76,7 +76,7 @@ const DecimalInput = ({
 
   const evaluateExpression = (expression: string): number => {
     const cleaned = expression.replace(/\s/g, '').replace(',', '.')
-    if (!/^[\d+*/().\-]+$/.test(cleaned)) {
+    if (!/^[\d+*/().-]+$/.test(cleaned)) {
       return NaN
     }
     try {

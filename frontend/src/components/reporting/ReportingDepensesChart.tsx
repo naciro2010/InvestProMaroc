@@ -115,7 +115,7 @@ const ReportingDepensesChart = ({ refreshKey }: ReportingDepensesChartProps) => 
                 tickFormatter={(v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `${(v / 1_000).toFixed(0)}K` : String(v)}
               />
               <Tooltip
-                formatter={(value: number | undefined) => formatMontant(value ?? 0)}
+                formatter={(value) => formatMontant(Number(value) || 0)}
                 contentStyle={{
                   backgroundColor: colors.surface,
                   border: `1px solid ${colors.border}`,

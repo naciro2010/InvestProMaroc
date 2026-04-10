@@ -14,8 +14,10 @@ import type { StatusStep } from '@/components/core'
 import type { BreadcrumbSegment } from '@/components/core/ModernBreadcrumb'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { avenantConventionsAPI, conventionsAPI } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { colors, typography } from '../../lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 import { AvenantConventionResponse } from '../../types/avenantConvention'
 import { AvenantHistoryTab, AvenantDetailsTab, AvenantWorkflowActions } from './avenant'
 
@@ -33,10 +35,6 @@ const STATUS_STEPS: StatusStep[] = [
   { value: 'VALIDE', label: 'Valide' },
 ]
 
-const formatCurrency = (amount: number | undefined) => {
-  if (amount === undefined || amount === null) return '-'
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(amount)
-}
 
 const formatDate = (dateStr: string | undefined) => {
   if (!dateStr) return '-'
@@ -52,6 +50,7 @@ const AvenantDetailPage = () => {
   const { conventionId, avenantId } = useParams<{ conventionId: string; avenantId: string }>()
   const navigate = useNavigate()
   const { isAdmin, isManager } = useAuth()
+  const { showToast } = useToast()
 
   const [avenant, setAvenant] = useState<AvenantConventionResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -83,8 +82,8 @@ const AvenantDetailPage = () => {
         console.warn('Impossible de charger la repartition des partenaires:', partErr)
         setPartenaires([])
       }
-    } catch (err) {
-      console.error('Error loading avenant:', err)
+    } catch {
+      showToast("Erreur lors du chargement de l'avenant", 'error')
       setError("Erreur lors du chargement de l'avenant")
     } finally {
       setLoading(false)
@@ -108,9 +107,9 @@ const AvenantDetailPage = () => {
         setRejectMotif('')
       }
       loadAvenant(avenant.id)
-    } catch (err) {
+    } catch {
       setError(`Erreur lors de l'action`)
-      console.error(err)
+      showToast("Erreur lors de l'action sur l'avenant", 'error')
     } finally {
       setWorkflowLoading(false)
     }
@@ -154,12 +153,12 @@ const AvenantDetailPage = () => {
             headers={[{ label: 'Partenaire' }, { label: 'Budget alloue', align: 'right' }, { label: '%', align: 'right' }]}
             rows={partenaires.map((p) => [
               <Typography key="name" sx={{ fontSize: typography.sizes.sm }}>{p.partenaireSigle || p.partenaireNom}</Typography>,
-              <Typography key="budget" sx={{ fontSize: typography.sizes.sm }}>{formatCurrency(p.budgetAlloue)}</Typography>,
+              <Typography key="budget" sx={{ fontSize: typography.sizes.sm }}>{formatCurrency(p.budgetAlloue ?? 0)}</Typography>,
               <Typography key="pct" sx={{ fontSize: typography.sizes.sm }}>{formatPercentage(p.pourcentage)}</Typography>,
             ])}
             footerCells={[
               <strong key="label">Total alloue</strong>,
-              <strong key="budget">{formatCurrency(totalBudgetAlloue)}</strong>,
+              <strong key="budget">{formatCurrency(totalBudgetAlloue ?? 0)}</strong>,
               <strong key="pct">{formatPercentage(totalPourcentage)}</strong>,
             ]}
           />
@@ -211,9 +210,9 @@ const AvenantDetailPage = () => {
                 <Field label="Statut" value={<StatusBadge status={avenant.statut} />} />
                 <Field label="Date" value={formatDate(avenant.dateAvenant)} />
                 <Field label="Convention" value={`${avenant.conventionNumero} - ${avenant.conventionLibelle}`} isLink onLinkClick={() => navigate(`/conventions/${conventionId}`)} />
-                <Field label="Budget avant" value={formatCurrency(avenant.ancienBudget)} isMoney />
-                <Field label="Budget apres" value={formatCurrency(avenant.nouveauBudget)} isMoney />
-                <Field label="Variation" value={`${(avenant.deltaBudget || 0) >= 0 ? '+' : ''}${formatCurrency(avenant.deltaBudget)}`} isMoney />
+                <Field label="Budget avant" value={formatCurrency(avenant.ancienBudget ?? 0)} isMoney />
+                <Field label="Budget apres" value={formatCurrency(avenant.nouveauBudget ?? 0)} isMoney />
+                <Field label="Variation" value={`${(avenant.deltaBudget || 0) >= 0 ? '+' : ''}${formatCurrency(avenant.deltaBudget ?? 0)}`} isMoney />
                 {(avenant.ancienTauxCommission !== undefined || avenant.nouveauTauxCommission !== undefined) && (
                   <Field label="Taux commission" value={`${formatPercentage(avenant.ancienTauxCommission)} \u2192 ${formatPercentage(avenant.nouveauTauxCommission)}`} />
                 )}

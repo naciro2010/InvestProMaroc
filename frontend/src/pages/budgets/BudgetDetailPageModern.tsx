@@ -13,6 +13,7 @@ import {
 } from '@/components/core'
 import { budgetsAPI, conventionsAPI } from '../../lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 import { useToast } from '@/contexts/ToastContext'
 import type { Budget } from '../../types/entities'
 
@@ -32,8 +33,6 @@ const STATUS_STEPS: StatusStep[] = [
 
 const STATUT_OPTIONS = STATUS_STEPS.map(s => ({ value: s.value, label: s.label }))
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
 const formatDate = (date?: string) =>
   date ? new Date(date).toLocaleDateString('fr-FR') : '-'

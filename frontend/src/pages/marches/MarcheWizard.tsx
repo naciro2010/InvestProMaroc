@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import AppLayout from '../../components/layout/AppLayout'
 import { WizardView } from '@/components/core'
 import { marchesAPI, conventionsAPI, fournisseursAPI, cascadeAPI } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import type { ConventionSummaryDTO, FournisseurSummaryDTO } from '../../lib/api'
 import { StepInfoGenerales, StepMontantsDates, StepLocalisation } from './wizard'
 import type { MarcheFormData, Convention, Fournisseur, ApiErrorResponse } from './wizard'
@@ -14,21 +15,26 @@ const steps = ['Informations générales', 'Montants & Dates', 'Localisation & C
 
 const MarcheWizard = () => {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [activeStep, setActiveStep] = useState(0)
   const [conventions, setConventions] = useState<Convention[]>([])
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [conventionSummary, setConventionSummary] = useState<ConventionSummaryDTO | null>(null)
   const [fournisseurSummary, setFournisseurSummary] = useState<FournisseurSummaryDTO | null>(null)
   const [formData, setFormData] = useState<MarcheFormData>(INITIAL_FORM_DATA)
+  const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => {
     const loadData = async () => {
+      setLoadingData(true)
       try {
         const [convRes, fournRes] = await Promise.all([conventionsAPI.getAll(), fournisseursAPI.getAll()])
         setConventions(convRes.data.data || [])
         setFournisseurs(fournRes.data.data || [])
-      } catch (error) {
-        console.error('Error loading data:', error)
+      } catch {
+        showToast('Erreur lors du chargement des donnees', 'error')
+      } finally {
+        setLoadingData(false)
       }
     }
     loadData()
@@ -96,7 +102,7 @@ const MarcheWizard = () => {
   const isStepValid = () => {
     switch (activeStep) {
       case 0: return formData.code && formData.numeroMarche && formData.objetRich && formData.fournisseurId
-      case 1: return formData.montantHT > 0 && formData.montantTTC > 0
+      case 1: return formData.montantHT > 0 && formData.montantTTC > 0 && formData.montantTTC >= formData.montantHT && (!formData.dateNotification || !formData.dateSignature || formData.dateNotification >= formData.dateSignature)
       case 2: return true
       default: return false
     }
@@ -128,7 +134,7 @@ const MarcheWizard = () => {
         onBack={() => setActiveStep(s => s - 1)}
         onNext={handleNext}
         onCancel={() => navigate('/marches')}
-        isNextDisabled={!isStepValid()}
+        isNextDisabled={!isStepValid() || loadingData}
         isSubmitting={createMutation.isPending}
         submitLabel="Créer le marché"
       >

@@ -95,10 +95,13 @@ class ConventionMapper(
             code = entity.code,
             numero = entity.numero,
             libelle = entity.libelle,
+            typeConvention = entity.typeConvention.name,
             statut = entity.statut.name,
             budget = entity.budget,
+            tauxCommission = entity.tauxCommission,
             dateDebut = entity.dateDebut,
             dateFin = entity.dateFin,
+            parentConventionId = entity.parentConvention?.id,
             createdByNom = createdByNom,
             createdAt = entity.createdAt,
             actif = entity.actif

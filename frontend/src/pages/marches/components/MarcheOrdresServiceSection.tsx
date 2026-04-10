@@ -9,7 +9,9 @@ import {
   Add, PlayArrow, Pause, Refresh, Flag, Warning, CheckCircle,
 } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 import StatusBadge from '@/components/core/StatusBadge'
 
 interface OrdreServiceDTO {
@@ -73,6 +75,7 @@ const sectionHeaderSx = {
  * Loads data from /api/marches/{id}/ordres-service/duree-penalites
  */
 const MarcheOrdresServiceSection = ({ marcheId }: MarcheOrdresServiceSectionProps) => {
+  const { showError } = useToast()
   const [dureeCalc, setDureeCalc] = useState<DureeCalcul | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -99,8 +102,8 @@ const MarcheOrdresServiceSection = ({ marcheId }: MarcheOrdresServiceSectionProp
       setError(null)
       const { data } = await marchesAPI.getDureePenalites(marcheId)
       setDureeCalc(data.data || data)
-    } catch (err) {
-      console.error('Erreur chargement ordres de service:', err)
+    } catch {
+      showError('Erreur lors du chargement des ordres de service')
       setError('Erreur lors du chargement des ordres de service')
     } finally {
       setLoading(false)
@@ -124,8 +127,8 @@ const MarcheOrdresServiceSection = ({ marcheId }: MarcheOrdresServiceSectionProp
       setDialogOpen(false)
       resetForm()
       loadData()
-    } catch (err) {
-      console.error('Erreur création ordre de service:', err)
+    } catch {
+      showError('Erreur lors de la création de l\'ordre de service')
     } finally {
       setSaving(false)
     }
@@ -149,9 +152,6 @@ const MarcheOrdresServiceSection = ({ marcheId }: MarcheOrdresServiceSectionProp
     return new Date(date).toLocaleDateString('fr-FR')
   }
 
-  const formatCurrency = (amount: number): string => {
-    return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  }
 
   if (loading) {
     return (
@@ -380,11 +380,11 @@ const DureeSummary = ({ dureeCalc, formatCurrency, formatDate }: DureeSummaryPro
         <Alert severity="warning" icon={<Warning />}>
           <Stack spacing={0.5}>
             <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.sm }}>
-              Pénalités de retard: {formatCurrency(penalitesPlafonnees)} DH
+              Pénalités de retard: {formatCurrency(penalitesPlafonnees)}
             </Typography>
             <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-              {joursDepassement} jours de retard x taux {dureeCalc.tauxPenaliteJour} x {formatCurrency(montantMarcheHT)} DH HT
-              (plafond 10%: {formatCurrency(plafondPenalites)} DH)
+              {joursDepassement} jours de retard x taux {dureeCalc.tauxPenaliteJour} x {formatCurrency(montantMarcheHT)} HT
+              (plafond 10%: {formatCurrency(plafondPenalites)})
             </Typography>
           </Stack>
         </Alert>

@@ -2,6 +2,7 @@ import { Box, Typography, TextField, MenuItem, Divider, IconButton, Button } fro
 import { Add, Delete } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
 import { colors } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 import type { DecompteFormData, Retenue } from './types'
 
 interface StepMontantsRetenuesProps {
@@ -12,8 +13,6 @@ interface StepMontantsRetenuesProps {
   onRemoveRetenue: (index: number) => void
 }
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(value)
 
 const StepMontantsRetenues = ({
   formData, onFormDataChange, onAddRetenue, onUpdateRetenue, onRemoveRetenue,
@@ -93,8 +92,13 @@ const StepMontantsRetenues = ({
         <Divider />
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="h6">Net a payer</Typography>
-          <Typography variant="h5" color="success.main" fontWeight={700}>{formatCurrency(formData.netAPayer)}</Typography>
+          <Typography variant="h5" color={formData.netAPayer < 0 ? 'error' : 'success.main'} fontWeight={700}>{formatCurrency(formData.netAPayer)}</Typography>
         </Box>
+        {formData.netAPayer < 0 && (
+          <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+            Les retenues depassent le montant TTC. Veuillez corriger les montants.
+          </Typography>
+        )}
       </Box>
     </Box>
   </Box>

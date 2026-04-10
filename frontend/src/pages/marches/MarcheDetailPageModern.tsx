@@ -12,6 +12,7 @@ import {
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { marchesAPI, conventionsAPI, fournisseursAPI } from '@/lib/api'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 import { useToast } from '@/contexts/ToastContext'
 import MarcheSmartButtons from './components/MarcheSmartButtons'
 import MarcheConventionCard from './components/MarcheConventionCard'
@@ -50,8 +51,6 @@ const STATUS_STEPS: StatusStep[] = [
 ]
 const STATUT_OPTIONS = STATUS_STEPS.map(s => ({ value: s.value, label: s.label }))
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(amount)
 
 // ==================== COMPONENT ====================
 

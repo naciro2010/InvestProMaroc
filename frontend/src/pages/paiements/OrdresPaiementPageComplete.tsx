@@ -31,6 +31,7 @@ import DecimalInput from '@/components/ui/DecimalInput'
 import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
 import { AttachMoney } from '@mui/icons-material'
+import { formatCurrency } from '@/lib/utils'
 
 interface OrdrePaiementItem {
   id: number
@@ -176,9 +177,6 @@ const OrdresPaiementPage = () => {
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' MAD'
-  }
 
   if (loading) {
     return (

@@ -12,7 +12,9 @@ import {
   Alert,
 } from '@mui/material'
 import { marchesAPI } from '../../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 interface MarcheLignesSectionProps {
   marcheId: number
@@ -40,6 +42,7 @@ interface MarcheLigne {
  * Endpoint: GET /marches/{id}/lignes
  */
 const MarcheLignesSection = ({ marcheId }: MarcheLignesSectionProps) => {
+  const { showError } = useToast()
   const [lignes, setLignes] = useState<MarcheLigne[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -55,21 +58,14 @@ const MarcheLignesSection = ({ marcheId }: MarcheLignesSectionProps) => {
       const { data } = await marchesAPI.getLignes(marcheId)
       const lignesData = Array.isArray(data.data) ? data.data : data.data?.data || []
       setLignes(lignesData)
-    } catch (err) {
-      console.error('Erreur chargement lignes:', err)
+    } catch {
+      showError('Impossible de charger les lignes du marché')
       setError('Impossible de charger les lignes')
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number | undefined | null): string => {
-    if (amount === undefined || amount === null) return '0,00'
-    return amount.toLocaleString('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   const totalLignes = lignes.reduce((sum, ligne) => sum + (ligne.montantTTC || 0), 0)
 
@@ -152,7 +148,7 @@ const MarcheLignesSection = ({ marcheId }: MarcheLignesSectionProps) => {
                     {ligne.quantite?.toLocaleString('fr-FR') || '-'}
                   </TableCell>
                   <TableCell align="right" sx={{ color: colors.textSecondary }}>
-                    {formatCurrency(ligne.prixUnitaireHT)} DH
+                    {formatCurrency(ligne.prixUnitaireHT ?? 0)}
                   </TableCell>
                   <TableCell align="right">
                     <Typography
@@ -162,7 +158,7 @@ const MarcheLignesSection = ({ marcheId }: MarcheLignesSectionProps) => {
                         color: colors.primary[700],
                       }}
                     >
-                      {formatCurrency(ligne.montantTTC)} DH
+                      {formatCurrency(ligne.montantTTC ?? 0)}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -188,7 +184,7 @@ const MarcheLignesSection = ({ marcheId }: MarcheLignesSectionProps) => {
                       color: colors.primary[700],
                     }}
                   >
-                    {formatCurrency(totalLignes)} DH
+                    {formatCurrency(totalLignes)}
                   </Typography>
                 </TableCell>
               </TableRow>

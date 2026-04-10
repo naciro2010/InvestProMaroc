@@ -28,9 +28,9 @@ const computeLineCommission = (
   ligne: BudgetLigne,
   baseCalcul: 'DECAISSEMENTS_TTC' | 'DECAISSEMENTS_HT'
 ): number => {
-  const base = baseCalcul === 'DECAISSEMENTS_HT' ? ligne.montantHT : ligne.montantTTC
-  const assiette = ligne.plafond > 0 ? Math.min(base, ligne.plafond) : base
-  return (assiette * ligne.tauxCommissionLigne) / 100
+  const base = baseCalcul === 'DECAISSEMENTS_HT' ? (ligne.montantHT || 0) : (ligne.montantTTC || 0)
+  const assiette = (ligne.plafond || 0) > 0 ? Math.min(base, ligne.plafond) : base
+  return (assiette * (ligne.tauxCommissionLigne || 0)) / 100
 }
 
 const BudgetLinesTable = ({

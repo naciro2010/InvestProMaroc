@@ -39,9 +39,9 @@ class ConventionController(
 
     @GetMapping
     @ReadAccess
-    fun getAll(): ResponseEntity<List<ConventionDTO>> {
+    fun getAll(): ResponseEntity<List<ConventionSimpleDTO>> {
         val conventions = conventionService.findAll()
-        return ResponseEntity.ok(conventionMapper.toDTOList(conventions))
+        return ResponseEntity.ok(conventionMapper.toSimpleDTOList(conventions))
     }
 
     @GetMapping("/{id}")
@@ -62,8 +62,8 @@ class ConventionController(
 
     @GetMapping("/statut/{statut}")
     @ReadAccess
-    fun getByStatut(@PathVariable statut: StatutConvention): ResponseEntity<List<ConventionDTO>> {
-        return ResponseEntity.ok(conventionMapper.toDTOList(conventionService.findByStatut(statut)))
+    fun getByStatut(@PathVariable statut: StatutConvention): ResponseEntity<List<ConventionSimpleDTO>> {
+        return ResponseEntity.ok(conventionMapper.toSimpleDTOList(conventionService.findByStatut(statut)))
     }
 
     @GetMapping("/actives")
@@ -74,8 +74,8 @@ class ConventionController(
 
     @GetMapping("/racine")
     @ReadAccess
-    fun getConventionsRacine(): ResponseEntity<List<ConventionDTO>> {
-        return ResponseEntity.ok(conventionMapper.toDTOList(conventionService.findConventionsRacine()))
+    fun getConventionsRacine(): ResponseEntity<List<ConventionSimpleDTO>> {
+        return ResponseEntity.ok(conventionMapper.toSimpleDTOList(conventionService.findConventionsRacine()))
     }
 
     @PostMapping

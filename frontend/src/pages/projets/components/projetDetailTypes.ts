@@ -47,12 +47,7 @@ export interface Marche {
   fournisseurNom?: string
 }
 
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'MAD',
-  }).format(amount)
-}
+export { formatCurrency } from '@/lib/utils'
 
 export const formatDate = (date: string): string => {
   return new Date(date).toLocaleDateString('fr-FR')

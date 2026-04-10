@@ -9,6 +9,7 @@ import {
   Collapse,
 } from '@mui/material'
 import { colors, typography, borders, getStatusConfig } from '@/lib/designSystem'
+import { formatCurrency } from '@/lib/utils'
 
 /** Matches backend MarchePaiementDTO */
 interface MarchePaiement {
@@ -39,13 +40,6 @@ const modePaiementLabels: Record<string, string> = {
   AUTRE: 'Autre',
 }
 
-const formatCurrency = (amount: number | undefined | null): string => {
-  if (amount === undefined || amount === null) return '0,00'
-  return amount.toLocaleString('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
 
 const formatDate = (date: string | null): string => {
   if (!date) return '-'
@@ -209,7 +203,7 @@ const DecomptePaiementsSubRow = ({ open, paiements, colSpan }: DecomptePaiements
                             py: 0.75,
                           }}
                         >
-                          {formatCurrency(p.montantPaye)} DH
+                          {formatCurrency(p.montantPaye ?? 0)}
                         </TableCell>
                         <TableCell
                           sx={{

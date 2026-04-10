@@ -94,7 +94,7 @@ const LandingPage = () => {
     {
       icon: <FaMapMarkerAlt className="text-3xl" />,
       title: "March\u00e9s G\u00e9olocalis\u00e9s",
-      description: "Pilotez chaque marché ligne par ligne avec géolocalisation OpenStreetMap, suivi des délais, indicateurs d\'avancement et gestion des avenants avec impact automatique sur montants et calendrier.",
+      description: "Pilotez chaque marché ligne par ligne avec géolocalisation OpenStreetMap, suivi des délais, indicateurs d'avancement et gestion des avenants avec impact automatique sur montants et calendrier.",
       benefits: [
         'Carte interactive avec Leaflet',
         'Suivi ligne par ligne avec imputations',
@@ -105,7 +105,7 @@ const LandingPage = () => {
     {
       icon: <FaFileInvoiceDollar className="text-3xl" />,
       title: "D\u00e9comptes & Paiements",
-      description: "Du constat d\'avancement à l\'ordre de paiement, sécurisez chaque étape: calcul des retenues (garantie, RAS, pénalités), contrôle des montants engagés et conformité avant règlement fournisseur.",
+      description: "Du constat d'avancement à l'ordre de paiement, sécurisez chaque étape: calcul des retenues (garantie, RAS, pénalités), contrôle des montants engagés et conformité avant règlement fournisseur.",
       benefits: [
         "Workflow D\u00e9compte \u2192 OP \u2192 Paiement",
         'Calcul automatique des retenues',

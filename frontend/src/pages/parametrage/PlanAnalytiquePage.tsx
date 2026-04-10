@@ -29,6 +29,7 @@ import AppLayout from '@/components/layout/AppLayout'
 import { ControlPanel } from '@/components/core'
 import { colors, typography } from '@/lib/designSystem'
 import { dimensionsAPI } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import DecimalInput from '@/components/ui/DecimalInput'
 
 interface Dimension {
@@ -52,6 +53,7 @@ interface Valeur {
 }
 
 export default function PlanAnalytiquePage() {
+  const { showToast } = useToast()
   const [dimensions, setDimensions] = useState<Dimension[]>([])
   const [loading, setLoading] = useState(true)
   const [openDimDialog, setOpenDimDialog] = useState(false)
@@ -101,8 +103,8 @@ export default function PlanAnalytiquePage() {
         })
       )
       setDimensions(dimensionsWithValeurs.sort((a, b) => a.ordre - b.ordre))
-    } catch (error) {
-      console.error('Erreur chargement dimensions:', error)
+    } catch {
+      showToast('Erreur lors du chargement des dimensions', 'error')
     } finally {
       setLoading(false)
     }
@@ -114,8 +116,8 @@ export default function PlanAnalytiquePage() {
       fetchDimensions()
       setOpenDimDialog(false)
       resetForm()
-    } catch (error) {
-      console.error('Erreur creation dimension:', error)
+    } catch {
+      showToast('Erreur lors de la creation de la dimension', 'error')
     }
   }
 
@@ -123,8 +125,8 @@ export default function PlanAnalytiquePage() {
     try {
       await dimensionsAPI.toggleActive(id)
       fetchDimensions()
-    } catch (error) {
-      console.error('Erreur toggle active:', error)
+    } catch {
+      showToast('Erreur lors de la modification du statut', 'error')
     }
   }
 
@@ -133,8 +135,8 @@ export default function PlanAnalytiquePage() {
     try {
       await dimensionsAPI.delete(id)
       fetchDimensions()
-    } catch (error) {
-      console.error('Erreur suppression:', error)
+    } catch {
+      showToast('Erreur lors de la suppression de la dimension', 'error')
     }
   }
 
@@ -145,8 +147,8 @@ export default function PlanAnalytiquePage() {
       fetchDimensions()
       setOpenValDialog(false)
       resetValeurForm()
-    } catch (error) {
-      console.error('Erreur creation valeur:', error)
+    } catch {
+      showToast('Erreur lors de la creation de la valeur', 'error')
     }
   }
 
@@ -155,8 +157,8 @@ export default function PlanAnalytiquePage() {
     try {
       await dimensionsAPI.deleteValeur(valeurId)
       fetchDimensions()
-    } catch (error) {
-      console.error('Erreur suppression valeur:', error)
+    } catch {
+      showToast('Erreur lors de la suppression de la valeur', 'error')
     }
   }
 

@@ -111,7 +111,7 @@ const ReportingPaiementsCard = ({ refreshKey }: ReportingPaiementsCardProps) => 
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number | undefined) => formatMontant(value ?? 0)}
+                formatter={(value) => formatMontant(Number(value) || 0)}
                 contentStyle={{
                   backgroundColor: colors.surface,
                   border: `1px solid ${colors.border}`,

@@ -1,16 +1,16 @@
 /**
- * Design System v4.0 - InvestPro Maroc
+ * Design System v5.0 - InvestPro Maroc
  *
- * STYLE: Bleu ardoise professionnel - ERP financier
- * Professional design system: ergonomic density + clean whitespace + enterprise accents
+ * STYLE: Professional ERP - lisibilite et ergonomie
+ * Clean, information-dense UI with excellent readability
  *
  * PRINCIPES:
- * - Palette bleu ardoise (deep slate blue) - sobre, financier, autoritaire
- * - Couleurs desaturees et douces (pas de couleurs "flashy")
- * - Beaucoup de blanc et gris clair
- * - Micro-interactions subtiles (pas de translateY, pas de glow)
- * - Espacement genereux, hierarchie visuelle claire
- * - Flat design, ombres quasi-inexistantes
+ * - Palette InvestPro slate blue - sobre, financier, autoritaire
+ * - Headers en casse normale (pas d'UPPERCASE) pour meilleure lisibilite
+ * - Badges de statut bien visibles avec fonds satures
+ * - Groupes de formulaire avec bordure-accent gauche
+ * - Densite ergonomique, hierarchie visuelle claire
+ * - Flat design, ombres subtiles, pas de gradients
  */
 
 // ==================== COULEURS ====================
@@ -34,54 +34,54 @@ export const colors = {
   },
 
   /**
-   * Succes - Vert foret (desature, professionnel)
+   * Succes - Vert professionnel (sature pour visibilite)
    */
   success: {
-    25: '#f4f8f5',
-    50: '#eaf3ec',
-    100: '#cfe3d4',
-    200: '#a2ccac',
-    300: '#74b384',
-    400: '#539e66',
-    500: '#3f8a54',
-    600: '#347545', // Main
-    700: '#2b6239',
-    800: '#1e4428',
-    900: '#16321e',
+    25: '#f2f9f4',
+    50: '#e4f3e8',
+    100: '#c5e5ce',
+    200: '#92d0a2',
+    300: '#60ba78',
+    400: '#3fa75a',
+    500: '#31924a',
+    600: '#28793d', // Main
+    700: '#216533',
+    800: '#174925',
+    900: '#10341b',
   },
 
   /**
-   * Danger - Rouge brique (desature, serieux)
+   * Danger - Rouge professionnel (sature pour visibilite)
    */
   danger: {
-    25: '#fcf6f5',
-    50: '#f9edeb',
-    100: '#f0d3cf',
-    200: '#dea9a2',
-    300: '#c98078',
-    400: '#b86258',
-    500: '#a44e44',
-    600: '#8c3e36', // Main
-    700: '#75332d',
-    800: '#512320',
-    900: '#3a1a17',
+    25: '#fdf6f5',
+    50: '#fbeceb',
+    100: '#f4d2cf',
+    200: '#e5a8a0',
+    300: '#d47e74',
+    400: '#c45e52',
+    500: '#b04840',
+    600: '#963832', // Main
+    700: '#7d2e2a',
+    800: '#58201e',
+    900: '#3e1716',
   },
 
   /**
-   * Warning - Ocre dore (chaud, sobre)
+   * Warning - Ocre dore (sature pour meilleure visibilite)
    */
   warning: {
-    25: '#fdf9f3',
-    50: '#f9f1e1',
-    100: '#eedcb3',
-    200: '#dfc27a',
-    300: '#d0a84a',
-    400: '#c0962e',
-    500: '#a8831f',
-    600: '#8a6c17', // Main
-    700: '#725913',
-    800: '#4b3b0d',
-    900: '#362b09',
+    25: '#fdf9f2',
+    50: '#faf2e0',
+    100: '#f2e0b0',
+    200: '#e5c56e',
+    300: '#d8ab3e',
+    400: '#ca9825',
+    500: '#b3861c',
+    600: '#967015', // Main
+    700: '#7c5c11',
+    800: '#533d0c',
+    900: '#3b2c08',
   },
 
   /**
@@ -102,20 +102,20 @@ export const colors = {
   },
 
   /**
-   * Purple - Accent secondaire (indigo desature)
+   * Purple - Accent secondaire (indigo riche)
    */
   purple: {
-    25: '#f7f7fb',
-    50: '#efeff6',
-    100: '#dbdaec',
-    200: '#b5b2d5',
-    300: '#928ebe',
-    400: '#7671aa',
-    500: '#635d96',
-    600: '#524d80', // Main
-    700: '#44406b',
-    800: '#302d4b',
-    900: '#232138',
+    25: '#f7f6fb',
+    50: '#efedf6',
+    100: '#dcd8ed',
+    200: '#b8b0d8',
+    300: '#968ac3',
+    400: '#7a6baf',
+    500: '#65569a',
+    600: '#544784', // Main
+    700: '#463b6e',
+    800: '#312a4e',
+    900: '#241f39',
   },
 
   /**
@@ -699,7 +699,7 @@ export const componentStyles = {
       fontSize: typography.sizes.xs,
       fontWeight: typography.weights.semibold,
       textTransform: 'uppercase' as const,
-      letterSpacing: typography.letterSpacing.wider,
+      letterSpacing: typography.letterSpacing.wide,
       cursor: 'pointer',
       '&:hover': {
         backgroundColor: colors.neutral[50],
@@ -723,9 +723,7 @@ export const componentStyles = {
     },
     headerCell: {
       fontWeight: typography.weights.semibold,
-      fontSize: typography.sizes.xs,
-      textTransform: 'uppercase' as const,
-      letterSpacing: typography.letterSpacing.wide,
+      fontSize: typography.sizes.sm,
       color: colors.textSecondary,
       py: spacing.mui.md,
       px: spacing.mui.lg,
@@ -980,11 +978,9 @@ export const componentStyles = {
       '& th': {
         fontWeight: typography.weights.semibold,
         color: colors.textSecondary,
-        fontSize: typography.sizes.xs,
-        textTransform: 'uppercase' as const,
-        letterSpacing: '0.05em',
-        py: 1.5,
-        borderBottom: `1px solid ${colors.border}`,
+        fontSize: typography.sizes.sm,
+        py: 1.25,
+        borderBottom: `2px solid ${colors.border}`,
       },
     },
     /** Ligne de table cliquable */
@@ -1485,15 +1481,14 @@ export const componentStyles = {
     },
     /** Group header */
     groupTitle: {
-      bgcolor: colors.neutral[50],
+      bgcolor: colors.neutral[25],
       px: 2,
       py: 1.25,
       borderBottom: `1px solid ${colors.border}`,
-      fontSize: typography.sizes.sm,
+      borderLeft: `3px solid ${colors.primary[500]}`,
+      fontSize: typography.sizes.base,
       fontWeight: typography.weights.semibold,
       color: colors.textPrimary,
-      textTransform: 'uppercase' as const,
-      letterSpacing: typography.letterSpacing.wide,
     },
     /** Group body */
     groupBody: {
@@ -1647,9 +1642,7 @@ export const componentStyles = {
       bgcolor: colors.neutral[50],
       '& .MuiTableCell-head': {
         fontWeight: typography.weights.semibold,
-        fontSize: typography.sizes.xs,
-        textTransform: 'uppercase' as const,
-        letterSpacing: '0.04em',
+        fontSize: typography.sizes.sm,
         color: colors.textSecondary,
         py: 1,
         px: 1.5,
@@ -1956,12 +1949,10 @@ export const componentStyles = {
     },
     /** Section title */
     title: {
-      fontSize: typography.sizes.sm,
+      fontSize: typography.sizes.base,
       fontWeight: typography.weights.semibold,
       color: colors.textPrimary,
       flex: 1,
-      textTransform: 'uppercase' as const,
-      letterSpacing: typography.letterSpacing.wide,
     },
     /** Actions slot (right side of header) */
     actions: {
@@ -2010,273 +2001,273 @@ export const statusColors: Record<string, StatusConfig> = {
   BROUILLON: {
     label: 'Brouillon',
     color: 'neutral',
-    bgColor: colors.neutral[100],
-    textColor: colors.neutral[600],
-    dotColor: colors.neutral[400],
+    bgColor: colors.neutral[200],
+    textColor: colors.neutral[700],
+    dotColor: colors.neutral[500],
   },
   SOUMIS: {
     label: 'Soumis',
     color: 'warning',
-    bgColor: colors.warning[50],
-    textColor: colors.warning[700],
-    dotColor: colors.warning[400],
+    bgColor: colors.warning[100],
+    textColor: colors.warning[800],
+    dotColor: colors.warning[500],
   },
   VALIDE: {
     label: 'Valide',
     color: 'success',
-    bgColor: colors.success[50],
-    textColor: colors.success[700],
-    dotColor: colors.success[400],
+    bgColor: colors.success[100],
+    textColor: colors.success[800],
+    dotColor: colors.success[500],
   },
   VALIDEE: {
     label: 'Validee',
     color: 'success',
-    bgColor: colors.success[50],
-    textColor: colors.success[700],
-    dotColor: colors.success[400],
+    bgColor: colors.success[100],
+    textColor: colors.success[800],
+    dotColor: colors.success[500],
   },
   EN_EXECUTION: {
     label: 'En execution',
     color: 'info',
-    bgColor: colors.info[50],
-    textColor: colors.info[700],
-    dotColor: colors.info[400],
+    bgColor: colors.info[100],
+    textColor: colors.info[800],
+    dotColor: colors.info[500],
   },
   EN_COURS: {
     label: 'En cours',
     color: 'info',
-    bgColor: colors.info[50],
-    textColor: colors.info[700],
-    dotColor: colors.info[400],
+    bgColor: colors.info[100],
+    textColor: colors.info[800],
+    dotColor: colors.info[500],
   },
   ACHEVE: {
     label: 'Acheve',
     color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[700],
-    dotColor: colors.success[500],
+    bgColor: colors.success[200],
+    textColor: colors.success[800],
+    dotColor: colors.success[600],
   },
   TERMINE: {
     label: 'Termine',
     color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[700],
-    dotColor: colors.success[500],
+    bgColor: colors.success[200],
+    textColor: colors.success[800],
+    dotColor: colors.success[600],
   },
   REJETE: {
     label: 'Rejete',
     color: 'danger',
-    bgColor: colors.danger[50],
-    textColor: colors.danger[700],
-    dotColor: colors.danger[400],
+    bgColor: colors.danger[100],
+    textColor: colors.danger[800],
+    dotColor: colors.danger[500],
   },
   ANNULE: {
     label: 'Annule',
     color: 'danger',
-    bgColor: colors.danger[50],
-    textColor: colors.danger[600],
-    dotColor: colors.danger[400],
+    bgColor: colors.danger[100],
+    textColor: colors.danger[700],
+    dotColor: colors.danger[500],
   },
   EN_RETARD: {
     label: 'En retard',
     color: 'danger',
-    bgColor: colors.danger[50],
-    textColor: colors.danger[700],
-    dotColor: colors.danger[400],
+    bgColor: colors.danger[100],
+    textColor: colors.danger[800],
+    dotColor: colors.danger[500],
   },
   SUSPENDU: {
     label: 'Suspendu',
     color: 'warning',
-    bgColor: colors.warning[50],
-    textColor: colors.warning[700],
-    dotColor: colors.warning[400],
+    bgColor: colors.warning[100],
+    textColor: colors.warning[800],
+    dotColor: colors.warning[500],
   },
   ACTIF: {
     label: 'Actif',
     color: 'success',
-    bgColor: colors.success[50],
-    textColor: colors.success[700],
-    dotColor: colors.success[400],
+    bgColor: colors.success[100],
+    textColor: colors.success[800],
+    dotColor: colors.success[500],
   },
   INACTIF: {
     label: 'Inactif',
     color: 'neutral',
-    bgColor: colors.neutral[100],
-    textColor: colors.neutral[600],
-    dotColor: colors.neutral[400],
+    bgColor: colors.neutral[200],
+    textColor: colors.neutral[700],
+    dotColor: colors.neutral[500],
   },
   NOUVEAU: {
     label: 'Nouveau',
     color: 'purple',
-    bgColor: colors.purple[50],
-    textColor: colors.purple[700],
-    dotColor: colors.purple[400],
+    bgColor: colors.purple[100],
+    textColor: colors.purple[800],
+    dotColor: colors.purple[500],
   },
   URGENT: {
     label: 'Urgent',
     color: 'danger',
-    bgColor: colors.danger[50],
-    textColor: colors.danger[700],
-    dotColor: colors.danger[400],
+    bgColor: colors.danger[100],
+    textColor: colors.danger[800],
+    dotColor: colors.danger[500],
   },
   CADRE: {
     label: 'Cadre',
     color: 'primary',
-    bgColor: colors.primary[50],
-    textColor: colors.primary[700],
-    dotColor: colors.primary[400],
+    bgColor: colors.primary[100],
+    textColor: colors.primary[800],
+    dotColor: colors.primary[500],
   },
   SPECIFIQUE: {
     label: 'Specifique',
     color: 'purple',
-    bgColor: colors.purple[50],
-    textColor: colors.purple[700],
-    dotColor: colors.purple[400],
+    bgColor: colors.purple[100],
+    textColor: colors.purple[800],
+    dotColor: colors.purple[500],
   },
   EN_PREPARATION: {
     label: 'En preparation',
     color: 'neutral',
-    bgColor: colors.neutral[100],
-    textColor: colors.neutral[600],
-    dotColor: colors.neutral[400],
+    bgColor: colors.neutral[200],
+    textColor: colors.neutral[700],
+    dotColor: colors.neutral[500],
   },
-  // Type marché (procurement mode)
+  // Type marche (procurement mode)
   MARCHE: {
-    label: 'Marché',
+    label: 'Marche',
     color: 'primary',
-    bgColor: colors.primary[50],
-    textColor: colors.primary[700],
-    dotColor: colors.primary[400],
+    bgColor: colors.primary[100],
+    textColor: colors.primary[800],
+    dotColor: colors.primary[500],
   },
   CONTRAT: {
     label: 'Contrat',
     color: 'info',
-    bgColor: colors.info[50],
-    textColor: colors.info[700],
-    dotColor: colors.info[400],
+    bgColor: colors.info[100],
+    textColor: colors.info[800],
+    dotColor: colors.info[500],
   },
   BON_DE_COMMANDE: {
     label: 'Bon de commande',
     color: 'purple',
-    bgColor: colors.purple[50],
-    textColor: colors.purple[700],
-    dotColor: colors.purple[400],
+    bgColor: colors.purple[100],
+    textColor: colors.purple[800],
+    dotColor: colors.purple[500],
   },
   LETTRE_DE_COMMANDE: {
     label: 'Lettre de commande',
     color: 'warning',
-    bgColor: colors.warning[50],
-    textColor: colors.warning[700],
-    dotColor: colors.warning[400],
+    bgColor: colors.warning[100],
+    textColor: colors.warning[800],
+    dotColor: colors.warning[500],
   },
   // Nature prestation
   TRAVAUX: {
     label: 'Travaux',
     color: 'primary',
-    bgColor: colors.primary[50],
-    textColor: colors.primary[700],
-    dotColor: colors.primary[400],
+    bgColor: colors.primary[100],
+    textColor: colors.primary[800],
+    dotColor: colors.primary[500],
   },
   FOURNITURES: {
     label: 'Fournitures',
     color: 'info',
-    bgColor: colors.info[50],
-    textColor: colors.info[700],
-    dotColor: colors.info[400],
+    bgColor: colors.info[100],
+    textColor: colors.info[800],
+    dotColor: colors.info[500],
   },
   SERVICES: {
     label: 'Services',
     color: 'purple',
-    bgColor: colors.purple[50],
-    textColor: colors.purple[700],
-    dotColor: colors.purple[400],
+    bgColor: colors.purple[100],
+    textColor: colors.purple[800],
+    dotColor: colors.purple[500],
   },
   ETUDES: {
-    label: 'Études',
+    label: 'Etudes',
     color: 'warning',
-    bgColor: colors.warning[50],
-    textColor: colors.warning[700],
-    dotColor: colors.warning[400],
+    bgColor: colors.warning[100],
+    textColor: colors.warning[800],
+    dotColor: colors.warning[500],
   },
   // Ordres de service types
   COMMENCEMENT: {
     label: 'Commencement',
     color: 'success',
-    bgColor: colors.success[50],
-    textColor: colors.success[700],
-    dotColor: colors.success[400],
+    bgColor: colors.success[100],
+    textColor: colors.success[800],
+    dotColor: colors.success[500],
   },
   ARRET: {
-    label: 'Arrêt',
+    label: 'Arret',
     color: 'danger',
-    bgColor: colors.danger[50],
-    textColor: colors.danger[700],
-    dotColor: colors.danger[400],
+    bgColor: colors.danger[100],
+    textColor: colors.danger[800],
+    dotColor: colors.danger[500],
   },
   REPRISE: {
     label: 'Reprise',
     color: 'info',
-    bgColor: colors.info[50],
-    textColor: colors.info[700],
-    dotColor: colors.info[400],
+    bgColor: colors.info[100],
+    textColor: colors.info[800],
+    dotColor: colors.info[500],
   },
   RECEPTION_PROVISOIRE: {
-    label: 'Réception provisoire',
+    label: 'Reception provisoire',
     color: 'warning',
-    bgColor: colors.warning[50],
-    textColor: colors.warning[700],
-    dotColor: colors.warning[400],
+    bgColor: colors.warning[100],
+    textColor: colors.warning[800],
+    dotColor: colors.warning[500],
   },
   RECEPTION_DEFINITIVE: {
-    label: 'Réception définitive',
+    label: 'Reception definitive',
     color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[700],
-    dotColor: colors.success[500],
+    bgColor: colors.success[200],
+    textColor: colors.success[800],
+    dotColor: colors.success[600],
   },
   // Payment statuses
   NON_PAYE: {
     label: 'Non paye',
     color: 'danger',
-    bgColor: colors.danger[50],
-    textColor: colors.danger[700],
-    dotColor: colors.danger[400],
+    bgColor: colors.danger[100],
+    textColor: colors.danger[800],
+    dotColor: colors.danger[500],
   },
   PAYE_PARTIEL: {
     label: 'Paye partiellement',
     color: 'warning',
-    bgColor: colors.warning[50],
-    textColor: colors.warning[700],
-    dotColor: colors.warning[400],
+    bgColor: colors.warning[100],
+    textColor: colors.warning[800],
+    dotColor: colors.warning[500],
   },
   PAYE_TOTAL: {
     label: 'Paye totalement',
     color: 'success',
-    bgColor: colors.success[50],
-    textColor: colors.success[700],
-    dotColor: colors.success[400],
+    bgColor: colors.success[100],
+    textColor: colors.success[800],
+    dotColor: colors.success[500],
   },
   EXECUTE: {
     label: 'Execute',
     color: 'success',
-    bgColor: colors.success[50],
-    textColor: colors.success[700],
-    dotColor: colors.success[400],
+    bgColor: colors.success[100],
+    textColor: colors.success[800],
+    dotColor: colors.success[500],
   },
 } as const
 
 /**
- * Récupère la configuration d'un statut.
- * Retourne un style neutre par défaut si le statut n'est pas trouvé.
+ * Recupere la configuration d'un statut.
+ * Retourne un style neutre par defaut si le statut n'est pas trouve.
  */
 export function getStatusConfig(status: string): StatusConfig {
   const normalizedStatus = status?.toUpperCase().replace(/-/g, '_')
   return statusColors[normalizedStatus] ?? {
     label: status || 'Inconnu',
     color: 'neutral' as StatusColor,
-    bgColor: colors.neutral[100],
+    bgColor: colors.neutral[200],
     textColor: colors.neutral[700],
-    dotColor: colors.neutral[400],
+    dotColor: colors.neutral[500],
   }
 }
 

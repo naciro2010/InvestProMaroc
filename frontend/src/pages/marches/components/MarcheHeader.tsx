@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Button, Typography, CircularProgress, Alert } from '@mui/material'
 import { ArrowBack, Edit } from '@mui/icons-material'
 import { marchesAPI } from '../../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { colors, typography, borders, shadows, componentStyles, getStatusConfig } from '@/lib/designSystem'
 
@@ -26,6 +27,7 @@ interface MarcheBasicInfo {
  */
 const MarcheHeader = ({ marcheId }: MarcheHeaderProps) => {
   const navigate = useNavigate()
+  const { showError } = useToast()
   const [marche, setMarche] = useState<MarcheBasicInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,8 +50,8 @@ const MarcheHeader = ({ marcheId }: MarcheHeaderProps) => {
         statut: marcheData.statut || 'EN_COURS',
         dateMarche: marcheData.dateMarche,
       })
-    } catch (err) {
-      console.error('Erreur chargement header:', err)
+    } catch {
+      showError('Impossible de charger les informations du marché')
       setError('Impossible de charger les informations du marché')
     } finally {
       setLoading(false)

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Stack, CircularProgress, Button } from '@mui/material'
 import { OpenInNew, Description, Gavel } from '@mui/icons-material'
 import { marchesAPI, conventionsAPI } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import StatusBadge from '@/components/core/StatusBadge'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { colors, typography, borders, componentStyles } from '@/lib/designSystem'
@@ -32,6 +33,7 @@ interface ConventionBasicInfo {
  */
 const MarcheConventionCard = ({ marcheId }: MarcheConventionCardProps) => {
   const navigate = useNavigate()
+  const { showError } = useToast()
   const [convention, setConvention] = useState<ConventionBasicInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [noConvention, setNoConvention] = useState(false)
@@ -57,9 +59,8 @@ const MarcheConventionCard = ({ marcheId }: MarcheConventionCardProps) => {
       const { data: convResponse } = await conventionsAPI.getBasic(conventionId)
       const convData = convResponse.data || convResponse
       setConvention(convData as ConventionBasicInfo)
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Erreur inconnue'
-      console.error('Erreur chargement convention rattachée:', msg)
+    } catch {
+      showError('Erreur lors du chargement de la convention rattachée')
       setNoConvention(true)
     } finally {
       setLoading(false)

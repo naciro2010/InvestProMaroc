@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Box,
   Button,
@@ -105,6 +105,8 @@ const MarcheKanbanSection = ({ data, onCardClick }: { data: MarcheListItem[]; on
 
 export default function MarchesPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlConventionId = searchParams.get('conventionId')
   const { showSuccess, showError } = useToast()
   const [marches, setMarches] = useState<MarcheListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -165,6 +167,8 @@ export default function MarchesPage() {
 
   const filteredMarches = useMemo(() => {
     return marches.filter(m => {
+      // URL filter: convention ID from smart button navigation
+      if (urlConventionId && m.conventionId !== Number(urlConventionId)) return false
       if (showFavoritesOnly && !favoriteIds.has(m.id)) return false
       if (searchTerm) {
         const q = searchTerm.toLowerCase()
@@ -249,7 +253,10 @@ export default function MarchesPage() {
     <AppLayout>
       <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
         <ControlPanel
-          breadcrumbs={[{ label: 'Marches' }]}
+          breadcrumbs={urlConventionId
+            ? [{ label: 'Conventions', path: '/conventions' }, { label: `Convention #${urlConventionId}`, path: `/conventions/${urlConventionId}` }, { label: 'Marches' }]
+            : [{ label: 'Marches' }]
+          }
           actions={
             <>
               <Button

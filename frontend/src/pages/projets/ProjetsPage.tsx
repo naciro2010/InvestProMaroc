@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Box,
   Button,
@@ -97,6 +97,8 @@ const ProjetKanbanSection = ({ data, onCardClick }: { data: Projet[]; onCardClic
 
 const ProjetsPage = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlConventionId = searchParams.get('conventionId')
   const { showToast } = useToast()
 
   const [projets, setProjets] = useState<Projet[]>([])
@@ -155,6 +157,8 @@ const ProjetsPage = () => {
 
   const filteredData = useMemo(() => {
     return projets.filter(projet => {
+      // URL filter: convention ID from smart button navigation
+      if (urlConventionId && projet.conventionId !== Number(urlConventionId)) return false
       if (showFavoritesOnly && !favoriteIds.has(projet.id ?? 0)) return false
       if (searchQuery) {
         const q = searchQuery.toLowerCase()
@@ -171,7 +175,7 @@ const ProjetsPage = () => {
       if (f.chefProjet && projet.chefProjetNom !== f.chefProjet) return false
       return true
     })
-  }, [projets, searchQuery, advancedFilters, showFavoritesOnly, favoriteIds])
+  }, [projets, searchQuery, advancedFilters, showFavoritesOnly, favoriteIds, urlConventionId])
 
   const stats = useMemo(() => ({
     total: filteredData.length,
@@ -263,7 +267,10 @@ const ProjetsPage = () => {
     <AppLayout>
       <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
         <ControlPanel
-          breadcrumbs={[{ label: 'Projets' }]}
+          breadcrumbs={urlConventionId
+            ? [{ label: 'Conventions', path: '/conventions' }, { label: `Convention #${urlConventionId}`, path: `/conventions/${urlConventionId}` }, { label: 'Projets' }]
+            : [{ label: 'Projets' }]
+          }
           actions={
             <>
               <Button variant="contained" size="small" startIcon={<Plus size={16} />} onClick={() => navigate('/projets/nouveau')} sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}>Nouveau</Button>

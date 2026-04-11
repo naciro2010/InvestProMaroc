@@ -1,7 +1,16 @@
+/** Parse a YYYY-MM-DD string into a local Date (avoids UTC midnight timezone shift) */
+export const parseDateSafe = (dateStr: string): Date => {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
 export const formatDateInput = (value: Date | string | null | undefined): string => {
   if (!value) return ''
   if (typeof value === 'string') return value.split('T')[0]
-  return value.toISOString().split('T')[0]
+  const y = value.getFullYear()
+  const m = String(value.getMonth() + 1).padStart(2, '0')
+  const d = String(value.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 export const addMonths = (date: Date, months: number): Date => {

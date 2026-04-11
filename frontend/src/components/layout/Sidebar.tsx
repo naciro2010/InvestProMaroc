@@ -42,6 +42,7 @@ const defaultMenuGroups: MenuGroup[] = [
   ]},
   { key: 'finances', label: 'Finances', items: [
     { icon: <Wallet className="w-4 h-4" />, label: 'Budgets', path: '/budgets', implemented: true },
+    { icon: <Briefcase className="w-4 h-4" />, label: 'Ordres de paiement', path: '/ordres-paiement', implemented: true },
     { icon: <CreditCard className="w-4 h-4" />, label: 'Paiements', path: '/paiements', implemented: true },
     { icon: <DollarSign className="w-4 h-4" />, label: 'Commissions', path: '/commissions', implemented: true },
   ]},

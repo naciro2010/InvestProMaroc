@@ -5,7 +5,7 @@ import { conventionsAPI } from '@/lib/api'
 import { getEnabledConventionTypes } from '@/lib/settings/conventionSettings'
 import { useConventionConfiguration } from '@/hooks/useConventionConfiguration'
 import { incrementConventionCode } from '@/utils/conventionCode'
-import { addMonths, calculateDurationMonths, formatDateInput } from '@/utils/dateUtils'
+import { addMonths, calculateDurationMonths, formatDateInput, parseDateSafe } from '@/utils/dateUtils'
 import {
   calculateTotals,
   type ConventionWizardFormData,
@@ -165,7 +165,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
     const dateDebut = formatDate(convention.dateDebut)
     const dateFin = formatDate(convention.dateFin)
     const dureeMois = dateDebut && dateFin
-      ? calculateDurationMonths(new Date(dateDebut), new Date(dateFin))
+      ? calculateDurationMonths(parseDateSafe(dateDebut), parseDateSafe(dateFin))
       : (convention.dureeMois || 12)
 
     // Map partenaires from API response to wizard format
@@ -330,7 +330,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
       setFormData((prev) => {
         const updated = { ...prev, dateDebut: nextDateDebut }
         if (autoDateFin && prev.dureeMois) {
-          updated.dateFin = formatDateInput(addMonths(new Date(nextDateDebut), prev.dureeMois))
+          updated.dateFin = formatDateInput(addMonths(parseDateSafe(nextDateDebut), prev.dureeMois))
         }
         return updated
       })
@@ -344,7 +344,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
         dateFin: value,
         dureeMois:
           prev.dateDebut && value
-            ? calculateDurationMonths(new Date(prev.dateDebut), new Date(value))
+            ? calculateDurationMonths(parseDateSafe(prev.dateDebut), parseDateSafe(value))
             : prev.dureeMois,
       }))
       return
@@ -357,7 +357,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
         ...prev,
         dureeMois: duration,
         dateFin: prev.dateDebut
-          ? formatDateInput(addMonths(new Date(prev.dateDebut), duration))
+          ? formatDateInput(addMonths(parseDateSafe(prev.dateDebut), duration))
           : prev.dateFin,
       }))
       return
@@ -373,7 +373,7 @@ export const useConventionWizardData = (): UseConventionWizardDataResult => {
       ...prev,
       dureeMois: duration,
       dateFin: prev.dateDebut
-        ? formatDateInput(addMonths(new Date(prev.dateDebut), duration))
+        ? formatDateInput(addMonths(parseDateSafe(prev.dateDebut), duration))
         : prev.dateFin,
     }))
   }

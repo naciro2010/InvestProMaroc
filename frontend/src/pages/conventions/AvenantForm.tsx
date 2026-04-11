@@ -79,6 +79,8 @@ const AvenantForm = () => {
       if (selectedFields.dateFin) modifications.dateFin = formData.dateFin
       if (selectedFields.objet) modifications.objet = formData.objetModifie
 
+      const ancienBudget = convention?.budget ? parseFloat(String(convention.budget)) : undefined
+      const nouveauBudget = selectedFields.budget ? parseFloat(formData.budget) : undefined
       const { data } = await avenantConventionsAPI.create({
         conventionId: Number(conventionId),
         numeroAvenant: formData.numeroAvenant,
@@ -86,6 +88,9 @@ const AvenantForm = () => {
         objet: formData.objet,
         modifications,
         justification: formData.justification,
+        ancienBudget: ancienBudget || undefined,
+        nouveauBudget: nouveauBudget || undefined,
+        deltaBudget: ancienBudget && nouveauBudget ? nouveauBudget - ancienBudget : undefined,
       })
       setCreatedAvenantId(data.data.id)
       setActiveStep((prev) => prev + 1)

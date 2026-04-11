@@ -236,6 +236,39 @@ class ConventionService(
     fun remettreEnBrouillon(id: Long): Convention = rejeter(id, "Remis en brouillon")
 
     /**
+     * Remettre une convention validée directement en brouillon.
+     * Transition: VALIDE → BROUILLON
+     */
+    fun remettreEnBrouillonDepuisValide(id: Long): Convention {
+        val convention = findById(id)
+            ?: throw IllegalArgumentException("Convention $id introuvable")
+
+        require(convention.statut == StatutConvention.VALIDE) {
+            "Seules les conventions VALIDEES peuvent être remises en brouillon"
+        }
+
+        val ancienStatut = convention.statut.name
+        convention.apply {
+            statut = StatutConvention.BROUILLON
+            isLocked = false
+            motifVerrouillage = null
+            dateValidation = null
+            valideParId = null
+            dateSoumission = null
+            version = null
+        }
+
+        val saved = conventionRepository.save(convention)
+        modificationEventPublisher.publishStatusChange(
+            entityType = "CONVENTION", entityId = id,
+            description = "Convention ${saved.code} remise en brouillon depuis VALIDEE",
+            ancienStatut = ancienStatut, nouveauStatut = "BROUILLON"
+        )
+        publishWorkflowEvent(saved, "BROUILLON", "Convention remise en brouillon depuis VALIDEE")
+        return saved
+    }
+
+    /**
      * Dévalider une convention (action admin uniquement).
      * Transitions possibles:
      * - VALIDE → SOUMIS (retour avant validation)

@@ -235,23 +235,37 @@ const ConventionWorkflowActions = ({
         )}
 
         {(statut === 'VALIDEE' || statut === 'VALIDE') && (
-          <Tooltip title="Demarrer l'execution">
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<PlayArrow />}
-              onClick={handleMettreEnCours}
-              disabled={loading}
-              sx={{
-                bgcolor: colors.info[600],
-                '&:hover': { bgcolor: colors.info[700] },
-                textTransform: 'none',
-                fontWeight: 600,
-              }}
-            >
-              Demarrer
-            </Button>
-          </Tooltip>
+          <>
+            <Tooltip title="Demarrer l'execution">
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<PlayArrow />}
+                onClick={handleMettreEnCours}
+                disabled={loading}
+                sx={{
+                  bgcolor: colors.info[600],
+                  '&:hover': { bgcolor: colors.info[700] },
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
+              >
+                Demarrer
+              </Button>
+            </Tooltip>
+            <Tooltip title="Remettre en brouillon pour modification">
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Undo />}
+                onClick={handleRemettreEnBrouillon}
+                disabled={loading}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                Remettre en brouillon
+              </Button>
+            </Tooltip>
+          </>
         )}
 
         {(statut === 'EN_EXECUTION' || statut === 'EN_COURS') && (

@@ -143,7 +143,7 @@ const ExpenseCategoryRepartition = ({
   }
 
   const handleAddAllocation = () => {
-    if (!selectedCategoryId || newMontant <= 0) return
+    if (!selectedCategoryId) return
 
     const budgetLigne = budgetLignes.find((l: ConventionBudgetLigneDTO) => l.categorieDepenseId === selectedCategoryId)
     if (!budgetLigne) return
@@ -425,7 +425,7 @@ const ExpenseCategoryRepartition = ({
                   <Box sx={{ display: 'flex', gap: 0.25 }}>
                     <Tooltip title="Confirmer">
                       <IconButton size="small" onClick={handleAddAllocation}
-                        disabled={!selectedCategoryId || newMontant <= 0}
+                        disabled={!selectedCategoryId}
                         sx={{ color: colors.success[500] }}>
                         <AddCircleOutline sx={{ fontSize: 16 }} />
                       </IconButton>

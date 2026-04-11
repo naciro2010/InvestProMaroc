@@ -515,15 +515,22 @@ export interface Decompte {
 }
 
 export interface CreateDecompteDTO extends Record<string, unknown> {
+  marche?: { id: number | null }
+  numeroDecompte?: string
+  dateDecompte?: Date | string
+  periodeDebut?: Date | string
+  periodeFin?: Date | string
+  montantBrutHT?: number
+  montantTVA?: number
+  observations?: string | null
+  statut?: DecompteStatus | string
   code?: string
-  montant: number
-  netAPayer: number
-  retenues?: number
+  montant?: number
+  netAPayer?: number
+  retenues?: number | Array<{ typeRetenue: string; montant: number; description: string | null; actif: boolean }>
   montantRetenue?: number
-  dateDecompte: Date | string
   marcheId?: number
   status?: DecompteStatus
-  // Legacy form fields
   numero?: string
   observation?: string
 }

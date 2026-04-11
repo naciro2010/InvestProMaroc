@@ -488,7 +488,7 @@ const WizardStepPartenaires = ({
             variant="contained"
             size="small"
             startIcon={<AddIcon />}
-            onClick={handleAddPartenaire}
+            onMouseDown={(e: React.MouseEvent) => { e.preventDefault(); requestAnimationFrame(() => handleAddPartenaire()) }}
             disabled={!selectedPartenaire || newBudget <= 0}
             sx={{ ...componentStyles.buttonPrimary, height: 40, mt: { xs: 0, md: 0 } }}
           >

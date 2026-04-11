@@ -449,7 +449,7 @@ export default function AddPartenaireDialog({
 
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={handleClose} disabled={loading} size="small">Annuler</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={loading || (loadingPartenaires && !isEditMode)} size="small">
+          <Button onMouseDown={(e: React.MouseEvent) => { e.preventDefault(); requestAnimationFrame(() => handleSubmit()) }} variant="contained" disabled={loading || (loadingPartenaires && !isEditMode)} size="small">
             {loading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
             {loading ? (isEditMode ? 'Enregistrement...' : 'Ajout en cours...') : (isEditMode ? 'Enregistrer' : 'Ajouter')}
           </Button>

@@ -435,6 +435,7 @@ export const projetsAPI = {
   suspendre: (id: number) => api.post(`/projets/${id}/suspendre`),
   reprendre: (id: number) => api.post(`/projets/${id}/reprendre`),
   terminer: (id: number) => api.post(`/projets/${id}/terminer`),
+  getNextCode: () => api.get('/projets/next-code'),
 }
 
 // Fournisseurs API

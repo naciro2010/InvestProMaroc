@@ -203,6 +203,15 @@ class ProjetService(
         return projetRepository.save(projet)
     }
 
+    fun generateNextCode(): String {
+        val maxCode = projetRepository.findAll()
+            .mapNotNull { it.code }
+            .filter { it.startsWith("PRJ-") }
+            .mapNotNull { it.removePrefix("PRJ-").toIntOrNull() }
+            .maxOrNull() ?: 0
+        return "PRJ-%03d".format(maxCode + 1)
+    }
+
     // ========== Statistics ==========
 
     fun getStatistiques(): Map<String, Long> {

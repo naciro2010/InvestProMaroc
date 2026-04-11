@@ -204,6 +204,16 @@ class ConventionController(
         } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
     }
 
+    @PostMapping("/{id}/remettre-brouillon")
+    @AdminOnly
+    fun remettreEnBrouillonDepuisValide(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {
+        return try {
+            ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(conventionService.remettreEnBrouillonDepuisValide(id)), "Convention remise en brouillon"))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur lors du changement de statut"))
+        }
+    }
+
     @PostMapping("/{id}/devalider")
     @AdminOnly
     fun devalider(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {

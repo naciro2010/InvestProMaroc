@@ -311,14 +311,6 @@ const ConventionDetailPageModern = () => {
                 )}
 
                 <Box sx={{ mb: 2 }}>
-                  <FieldGroup title="Informations generales" columns={3}>
-                    {field({ fieldKey: 'code', label: 'Code', type: 'text', value: convention.code, editable: false })}
-                    {field({ fieldKey: 'numero', label: 'Numero', type: 'text', value: convention.numero, editable: canEdit })}
-                    {field({ fieldKey: 'typeConvention', label: 'Type', type: 'select', value: convention.typeConvention, options: TYPE_OPTIONS, displayValue: <StatusBadge status={convention.typeConvention} size="small" />, editable: canEdit })}
-                  </FieldGroup>
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
                   <ConventionKeyInfoCard
                     convention={convention} enrichedData={enrichedData}
                     canEdit={canEdit} onFieldSave={handleFieldSave}

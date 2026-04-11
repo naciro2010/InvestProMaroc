@@ -1,5 +1,6 @@
 package ma.investpro.controller
 
+import ma.investpro.dto.ApiResponse
 import ma.investpro.dto.ProjetDTO
 import ma.investpro.dto.ProjetSimpleDTO
 import ma.investpro.entity.Projet
@@ -30,6 +31,15 @@ class ProjetController(
     private val projetService: ProjetService,
     private val projetMapper: ProjetMapper
 ) {
+
+    // ========== Code Generation ==========
+
+    @GetMapping("/next-code")
+    @ReadAccess
+    fun getNextCode(): ResponseEntity<ApiResponse<Map<String, String>>> {
+        val code = projetService.generateNextCode()
+        return ResponseEntity.ok(ApiResponse(true, "Code genere", mapOf("code" to code)))
+    }
 
     // ========== CRUD Endpoints ==========
 

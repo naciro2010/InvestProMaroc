@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -66,6 +66,30 @@ const ProjetWizard = () => {
     files: [],
   })
 
+  useEffect(() => {
+    projetsAPI.getNextCode().then(res => {
+      const code = res.data?.data?.code || res.data?.code
+      if (code) setFormData(prev => prev.code ? prev : { ...prev, code })
+    }).catch(() => {})
+    // Restore draft from localStorage
+    try {
+      const draft = localStorage.getItem('projet-wizard-draft')
+      if (draft) {
+        const parsed = JSON.parse(draft) as ProjetFormData
+        if (parsed.designation) setFormData(prev => ({ ...prev, ...parsed }))
+      }
+    } catch { /* ignore */ }
+  }, [])
+
+  const saveDraft = useCallback((data: ProjetFormData) => {
+    try { localStorage.setItem('projet-wizard-draft', JSON.stringify(data)) } catch { /* */ }
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => saveDraft(formData), 2000)
+    return () => clearTimeout(timer)
+  }, [formData, saveDraft])
+
   // React Query mutation pour la création
   const createMutation = useMutation({
     mutationFn: async (data: ProjetFormData) => {
@@ -84,6 +108,7 @@ const ProjetWizard = () => {
       return await projetsAPI.create(payload)
     },
     onSuccess: () => {
+      localStorage.removeItem('projet-wizard-draft')
       navigate('/projets')
     },
   })
@@ -117,7 +142,7 @@ const ProjetWizard = () => {
           formData.descriptionRich
         )
       case 1:
-        return formData.budgetTotal > 0 && formData.dureeMois > 0
+        return formData.dureeMois >= 0
       case 2:
         return true
       default:
@@ -153,6 +178,7 @@ const ProjetWizard = () => {
                 value={formData.code}
                 onChange={handleChange('code')}
                 placeholder="PRJ-001"
+                helperText="Code auto-genere, modifiable"
               />
 
               <TextField

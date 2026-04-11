@@ -56,9 +56,21 @@ const DecompteWizard = () => {
   const createMutation = useMutation({
     mutationFn: async (data: DecompteFormData) => {
       const payload = {
-        code: data.numeroDecompte, montant: data.montantTTC, netAPayer: data.netAPayer,
-        retenues: data.totalRetenues, dateDecompte: data.dateDecompte,
-        marcheId: data.marcheId || undefined, status: data.statut, observation: data.observations,
+        marche: { id: data.marcheId },
+        numeroDecompte: data.numeroDecompte,
+        dateDecompte: data.dateDecompte,
+        periodeDebut: data.periodeDebut,
+        periodeFin: data.periodeFin,
+        montantBrutHT: data.montantBrutHT,
+        montantTVA: data.montantTVA,
+        observations: data.observations || null,
+        statut: 'BROUILLON',
+        retenues: data.retenues.map(r => ({
+          typeRetenue: r.type,
+          montant: r.montant,
+          description: r.description || null,
+          actif: true,
+        })),
       }
       return await decomptesAPI.create(payload)
     },

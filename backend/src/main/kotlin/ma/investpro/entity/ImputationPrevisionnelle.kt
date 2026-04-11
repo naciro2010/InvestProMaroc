@@ -22,7 +22,6 @@ import java.time.LocalDate
 class ImputationPrevisionnelle(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "convention_id", nullable = false)
-    @field:NotNull
     var convention: Convention? = null,
 
     @Column(length = 200)

@@ -61,7 +61,7 @@ class ConventionSubResourceController(
     @WriteAccess
     fun ajouterImputation(
         @PathVariable conventionId: Long,
-        @Valid @RequestBody imputation: ImputationPrevisionnelle
+        @RequestBody imputation: ImputationPrevisionnelle
     ): ResponseEntity<ImputationPrevisionnelleDTO> {
         return try {
             val convention = conventionService.findById(conventionId)

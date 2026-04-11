@@ -196,6 +196,7 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, refreshKey, o
                   <TableCell align="right" sx={td}>
                     <TextField size="small" value={editMontant} autoFocus
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setEditMontant(e.target.value)}
+                      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); handleSaveEdit(l.id!) } else if (e.key === 'Escape') { setEditingId(null) } }}
                       InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontSize: '9px' }}>MAD</Typography></InputAdornment> }}
                       sx={numInputSx} />
                   </TableCell>
@@ -327,6 +328,7 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, refreshKey, o
               <TableCell align="right" sx={td}>
                 <TextField size="small" value={newRow.montant} autoFocus placeholder="Budget"
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setNewRow((r: { catId: number | null; montant: string } | null) => r ? { ...r, montant: e.target.value } : r)}
+                  onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); handleSaveNew() } else if (e.key === 'Escape') { setNewRow(null) } }}
                   InputProps={{ endAdornment: <InputAdornment position="end"><Typography sx={{ fontSize: '9px' }}>MAD</Typography></InputAdornment> }}
                   sx={numInputSx} />
               </TableCell>

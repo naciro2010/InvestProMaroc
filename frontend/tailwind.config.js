@@ -88,8 +88,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Noto Sans', 'Ubuntu', 'Helvetica Neue', 'sans-serif'],
-        mono: ["'JetBrains Mono'", 'SF Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+        sans: ["'DM Sans'", '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        mono: ["'IBM Plex Mono'", 'SF Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       boxShadow: {
         'xs': '0 1px 2px 0 rgba(9, 30, 66, 0.04)',

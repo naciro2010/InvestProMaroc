@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
   Receipt, DollarSign, Briefcase, ShoppingCart, UserCog, Wallet, Tags,
-  Handshake, Search, X, Command, Sparkles, Settings, MessageSquare,
+  Handshake, Search, X, Command, Sparkles, Settings, MessageSquare, BarChart3,
 } from 'lucide-react'
 import { colors, typography, borders, transitions, shadows } from '@/lib/designSystem'
 import NotificationCenter from '@/components/core/NotificationCenter'
@@ -39,6 +39,7 @@ const defaultMenuGroups: MenuGroup[] = [
     { icon: <ShoppingCart className="w-4 h-4" />, label: 'Marches', path: '/marches', implemented: true },
     { icon: <Building2 className="w-4 h-4" />, label: 'Projets', path: '/projets', implemented: true },
     { icon: <Receipt className="w-4 h-4" />, label: 'Decomptes', path: '/decomptes', implemented: true },
+    { icon: <BarChart3 className="w-4 h-4" />, label: 'Reporting', path: '/reporting', implemented: true },
   ]},
   { key: 'finances', label: 'Finances', items: [
     { icon: <Wallet className="w-4 h-4" />, label: 'Budgets', path: '/budgets', implemented: true },
@@ -172,7 +173,7 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
       )}
 
       {/* Navigation */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 0', paddingBottom: '8px' }}>
         <SidebarLink path="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" isActive={isActive} onNavigate={handleMobileNavigate} />
         <SidebarLink path="/generateur" icon={<Sparkles className="w-4 h-4" />} label="Générateur" isActive={isActive} onNavigate={handleMobileNavigate} />
         <SidebarLink path="/messagerie" icon={<MessageSquare className="w-4 h-4" />} label="Messagerie" isActive={isActive} onNavigate={handleMobileNavigate} />

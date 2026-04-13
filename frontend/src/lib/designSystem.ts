@@ -193,10 +193,10 @@ export const typography = {
    * Priorité: Inter > System > fallbacks
    */
   fontFamily:
-    "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, 'Helvetica Neue', sans-serif",
+    "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 
   fontFamilyMono:
-    "'JetBrains Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace",
+    "'IBM Plex Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace",
 
   /**
    * Tailles de police (scale harmonique)

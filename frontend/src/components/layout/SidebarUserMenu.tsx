@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, User, Settings, ChevronDown } from 'lucide-react'
+import { LogOut, User, Settings } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { colors, typography, borders, transitions, shadows } from '@/lib/designSystem'
 
@@ -26,29 +26,29 @@ const SidebarUserMenu = () => {
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
         >
           <div style={{
-            width: 30, height: 30, backgroundColor: colors.primary[600],
+            width: 32, height: 32, backgroundColor: colors.primary[600],
             borderRadius: borders.radius.full, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', color: colors.textOnColor,
-            fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, flexShrink: 0,
+            justifyContent: 'center', color: '#fff',
+            fontWeight: typography.weights.semibold, fontSize: '0.75rem', flexShrink: 0,
           }}>
-            {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+            {user?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              margin: 0, fontSize: typography.sizes.sm,
-              fontWeight: typography.weights.medium, color: colors.textPrimary,
+              margin: 0, fontSize: '0.8125rem',
+              fontWeight: typography.weights.semibold, color: colors.textPrimary,
             }}>
-              {user?.fullName || 'User'}
+              {user?.fullName || 'Utilisateur'}
             </p>
-            <p style={{
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              margin: 0, fontSize: typography.sizes.xs, color: colors.textSecondary,
+            <span style={{
+              display: 'inline-block', fontSize: '0.6875rem', color: colors.textSecondary,
+              lineHeight: 1.2,
             }}>
-              {user?.email || ''}
-            </p>
+              {user?.roles?.[0] || 'USER'}
+            </span>
           </div>
-          <ChevronDown className="w-3.5 h-3.5" style={{ color: colors.textSecondary, flexShrink: 0 }} />
+          <Settings className="w-3.5 h-3.5" style={{ color: colors.textSecondary, flexShrink: 0, opacity: 0.7 }} />
         </button>
 
         {userMenuOpen && (

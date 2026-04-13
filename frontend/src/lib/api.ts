@@ -39,6 +39,7 @@ const API_URL = resolveApiUrl()
 
 export const api = axios.create({
   baseURL: API_URL,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -216,9 +217,24 @@ api.interceptors.response.use(
       dispatchToastEvent('⚠️ L\'élément demandé n\'a pas été trouvé.', 'warning')
     }
 
+    // ==================== 429 - Rate limited ====================
+    if (error.response?.status === 429) {
+      dispatchToastEvent('Trop de requêtes. Veuillez patienter quelques instants.', 'warning')
+    }
+
     // ==================== 500+ - Erreur serveur ====================
     if (error.response?.status && error.response.status >= 500) {
-      dispatchToastEvent('🔥 Une erreur serveur s\'est produite. Veuillez réessayer plus tard.', 'error')
+      dispatchToastEvent('Une erreur serveur s\'est produite. Veuillez réessayer plus tard.', 'error')
+    }
+
+    // ==================== Timeout ====================
+    if (error.code === 'ECONNABORTED') {
+      dispatchToastEvent('La requête a expiré. Vérifiez votre connexion et réessayez.', 'error')
+    }
+
+    // ==================== Erreur réseau ====================
+    if (!error.response && error.code === 'ERR_NETWORK') {
+      dispatchToastEvent('Impossible de contacter le serveur. Vérifiez votre connexion internet.', 'error')
     }
 
     return Promise.reject(error)

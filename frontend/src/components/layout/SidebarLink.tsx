@@ -17,6 +17,8 @@ const SidebarLink = ({ path, icon, label, isActive, indent, badge, onNavigate }:
     <Link
       to={path}
       onClick={onNavigate}
+      role="menuitem"
+      aria-current={active ? 'page' : undefined}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: indent ? '7px 16px 7px 36px' : '7px 16px',

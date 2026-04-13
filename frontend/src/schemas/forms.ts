@@ -18,7 +18,7 @@ const PATTERNS = {
 // ============================================================================
 
 export const loginSchema = z.object({
-  email: z.string().email('Email invalide'),
+  username: z.string().min(1, 'Le nom d\'utilisateur est requis'),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
 })
 
@@ -26,9 +26,14 @@ export type LoginFormData = z.infer<typeof loginSchema>
 
 export const registerSchema = z
   .object({
+    username: z.string().min(3, 'Le nom d\'utilisateur doit contenir au moins 3 caractères'),
     fullName: z.string().min(2, 'Le nom complet doit contenir au moins 2 caractères'),
     email: z.string().email('Email invalide'),
-    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+    password: z
+      .string()
+      .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+      .regex(/[A-Z]/, 'Doit contenir au moins une majuscule')
+      .regex(/[0-9]/, 'Doit contenir au moins un chiffre'),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -75,7 +80,10 @@ export const conventionBaseSchema = z.object({
   status: z.enum(['BROUILLON', 'SOUMIS', 'VALIDEE', 'EN_EXECUTION', 'ACHEVE']).optional(),
 })
 
-export const createConventionSchema = conventionBaseSchema
+export const createConventionSchema = conventionBaseSchema.refine(
+  (data) => !data.dateFin || data.dateDebut <= data.dateFin,
+  { message: 'La date de fin doit être postérieure à la date de début', path: ['dateFin'] }
+)
 
 export const updateConventionSchema = conventionBaseSchema.partial()
 
@@ -101,7 +109,10 @@ export const projectBaseSchema = z.object({
   lieu: z.string().max(200).optional(),
 })
 
-export const createProjectSchema = projectBaseSchema
+export const createProjectSchema = projectBaseSchema.refine(
+  (data) => !data.dateFin || data.dateDebut <= data.dateFin,
+  { message: 'La date de fin doit être postérieure à la date de début', path: ['dateFin'] }
+)
 
 export const updateProjectSchema = projectBaseSchema.partial()
 
@@ -143,7 +154,10 @@ export const marcheBaseSchema = z.object({
   status: z.enum(['BROUILLON', 'EN_COURS', 'CLOS']).optional(),
 })
 
-export const createMarcheSchema = marcheBaseSchema
+export const createMarcheSchema = marcheBaseSchema.refine(
+  (data) => !data.dateFin || !data.dateDebut || data.dateDebut <= data.dateFin,
+  { message: 'La date de fin doit être postérieure à la date de début', path: ['dateFin'] }
+)
 
 export const updateMarcheSchema = marcheBaseSchema.partial()
 

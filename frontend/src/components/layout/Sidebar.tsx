@@ -126,7 +126,7 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
   }
 
   return (
-    <aside style={containerStyle}>
+    <aside style={containerStyle} role="navigation" aria-label="Menu principal">
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
         <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
@@ -138,7 +138,7 @@ const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
           <NotificationCenter />
           {isMobile && (
-            <button onClick={onClose} style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: borders.radius.sm, display: 'flex' }}>
+            <button onClick={onClose} aria-label="Fermer le menu" style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: borders.radius.sm, display: 'flex' }}>
               <X className="w-5 h-5" style={{ color: colors.textSecondary }} />
             </button>
           )}

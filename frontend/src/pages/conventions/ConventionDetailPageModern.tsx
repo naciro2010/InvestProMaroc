@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Box, Container, Button, Alert, Tooltip } from '@mui/material'
-import { Plus, Pencil } from 'lucide-react'
+import { Box, Container, Button, Alert, Tooltip, Snackbar } from '@mui/material'
+import { Plus, Pencil, FileDown } from 'lucide-react'
+import { useInlineUndo } from '../../hooks/useInlineUndo'
+import { exportToPdf } from '../../lib/exportUtils'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
@@ -89,6 +91,14 @@ const ConventionDetailPageModern = () => {
   const [chatterActivities, setChatterActivities] = useState<ChatterActivity[]>([])
   const [chatterLoading, setChatterLoading] = useState(false)
 
+  const { isUndoAvailable, fieldName: undoFieldName, undo: handleUndo, trackChange } = useInlineUndo({
+    onUndo: async (fieldName, previousValue) => {
+      if (!convention || !id) return
+      await handleFieldSave(fieldName, previousValue as string | number | null)
+      showSuccess('Modification annulée')
+    },
+  })
+
   const refreshFinancialData = useCallback(() => setFinancialRefreshKey((k: number) => k + 1), [])
 
   const loadChatterActivities = useCallback(async (cid: number) => {
@@ -150,6 +160,7 @@ const ConventionDetailPageModern = () => {
 
   const handleFieldSave = async (fieldKey: string, value: string | number | null) => {
     if (!convention || !id) return
+    const previousValue = (convention as unknown as Record<string, unknown>)[fieldKey]
     const payload = {
       libelle: convention.libelle, numero: convention.numero, objet: convention.objet,
       typeConvention: convention.typeConvention, budget: convention.budget,
@@ -162,6 +173,7 @@ const ConventionDetailPageModern = () => {
     } as UpdateConventionDTO
     await conventionsAPI.update(parseInt(id), payload)
     await loadConvention(parseInt(id))
+    trackChange(fieldKey, previousValue, value)
     showSuccess('Convention mise a jour')
   }
 
@@ -240,7 +252,16 @@ const ConventionDetailPageModern = () => {
                   <Plus size={14} style={{ marginRight: 4 }} /> Avenant
                 </Button>
               </Tooltip>
-              {/* ERP: Actions menu (print, export, duplicate, share, archive) */}
+              <Tooltip title="Exporter en PDF">
+                <Button variant="outlined" size="small" onClick={() => exportToPdf({
+                  title: `Convention ${convention.code}`,
+                  subtitle: convention.libelle,
+                  filename: `convention-${convention.code}.pdf`,
+                })}
+                  sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}>
+                  <FileDown size={14} style={{ marginRight: 4 }} /> PDF
+                </Button>
+              </Tooltip>
               <ConventionActionsMenu convention={convention} onReload={() => loadConvention(convention.id)} />
             </>
           }
@@ -394,6 +415,16 @@ const ConventionDetailPageModern = () => {
           currentValue={dialogField.value} mode={dialogField.mode}
         />
       )}
+      <Snackbar
+        open={isUndoAvailable}
+        message={`Champ "${undoFieldName}" modifié`}
+        action={
+          <Button color="inherit" size="small" onClick={handleUndo} sx={{ fontWeight: 600 }}>
+            Annuler
+          </Button>
+        }
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </AppLayout>
   )
 }

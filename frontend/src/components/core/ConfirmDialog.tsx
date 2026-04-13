@@ -98,6 +98,7 @@ const ConfirmDialog = ({
       onClose={loading ? undefined : onCancel}
       maxWidth="xs"
       fullWidth
+      aria-labelledby="confirm-dialog-title"
       PaperProps={{ sx: componentStyles.dialog.paper }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: spacing.mui.md, pb: 0.5 }}>
@@ -116,7 +117,7 @@ const ConfirmDialog = ({
         >
           {config.icon}
         </Box>
-        <Typography sx={componentStyles.dialog.title}>{title}</Typography>
+        <Typography id="confirm-dialog-title" sx={componentStyles.dialog.title}>{title}</Typography>
       </DialogTitle>
 
       <DialogContent sx={{ pt: 1, pl: `calc(40px + ${spacing['2xl']})` }}>

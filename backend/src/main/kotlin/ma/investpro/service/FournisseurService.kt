@@ -3,6 +3,8 @@ package ma.investpro.service
 import ma.investpro.entity.Fournisseur
 import ma.investpro.repository.FournisseurRepository
 import mu.KotlinLogging
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,6 +20,12 @@ class FournisseurService(
     private val fournisseurRepository: FournisseurRepository
 ) {
 
+    @Transactional(readOnly = true)
+    fun findAll(pageable: org.springframework.data.domain.Pageable): org.springframework.data.domain.Page<Fournisseur> {
+        return fournisseurRepository.findAll(pageable)
+    }
+
+    @Cacheable("fournisseurs")
     fun findAll(): List<Fournisseur> {
         logger.debug { "Fetching all fournisseurs" }
         return fournisseurRepository.findAll().also { fournisseurs ->
@@ -34,6 +42,7 @@ class FournisseurService(
             }
     }
 
+    @Cacheable("fournisseurs-actifs")
     fun findAllActive(): List<Fournisseur> {
         logger.debug { "Fetching all active fournisseurs" }
         return fournisseurRepository.findByActifTrue().also { fournisseurs ->
@@ -49,6 +58,7 @@ class FournisseurService(
     }
 
     @Transactional
+    @CacheEvict(value = ["fournisseurs", "fournisseurs-actifs"], allEntries = true)
     fun save(fournisseur: Fournisseur): Fournisseur {
         logger.debug { "Saving fournisseur: ${fournisseur.code}" }
 

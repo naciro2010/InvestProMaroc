@@ -30,6 +30,9 @@ class ConventionService(
 
     fun findAll(): List<Convention> = conventionRepository.findAll()
 
+    @Transactional(readOnly = true)
+    fun findAll(pageable: org.springframework.data.domain.Pageable): org.springframework.data.domain.Page<Convention> = conventionRepository.findAll(pageable)
+
     fun findById(id: Long): Convention? = conventionRepository.findByIdOrNull(id)
 
     fun findByCode(code: String): Convention? = conventionRepository.findByCode(code)

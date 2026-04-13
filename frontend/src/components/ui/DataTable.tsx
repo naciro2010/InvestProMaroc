@@ -40,8 +40,8 @@ function DataTable<T extends { id: number | string }>({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div className="overflow-x-auto" role="region" aria-label="Tableau de données">
+      <table className="w-full" role="table">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
             {columns.map((column) => (

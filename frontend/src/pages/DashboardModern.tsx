@@ -6,8 +6,16 @@ import {
   Tooltip,
   CircularProgress,
   Skeleton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Checkbox,
+  Divider,
+  Button,
 } from '@mui/material'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Settings2, RotateCcw } from 'lucide-react'
+import { useDashboardPreferences } from '../hooks/useDashboardPreferences'
 import AppLayout from '../components/layout/AppLayout'
 import { ControlPanel, DashboardGrid } from '../components/core'
 import type { WidgetConfig } from '../components/core'
@@ -128,6 +136,8 @@ const DashboardModern = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [useLegacy, setUseLegacy] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const { isWidgetVisible, toggleWidget, resetToDefaults, hiddenCount } = useDashboardPreferences()
+  const [customizeAnchor, setCustomizeAnchor] = useState<null | HTMLElement>(null)
 
   const fetchDashboard = async () => {
     try {
@@ -155,11 +165,16 @@ const DashboardModern = () => {
     }
   }
 
-  const widgets = useMemo(() => {
+  const allWidgets = useMemo(() => {
     if (useLegacy) return buildLegacyWidgets(refreshKey)
     if (data) return buildExecutiveWidgets(data)
     return []
   }, [data, useLegacy, refreshKey])
+
+  const widgets = useMemo(
+    () => allWidgets.filter(w => isWidgetVisible(w.id)),
+    [allWidgets, isWidgetVisible]
+  )
 
   return (
     <AppLayout>
@@ -167,12 +182,46 @@ const DashboardModern = () => {
         <ControlPanel
           breadcrumbs={[{ label: 'Tableau de bord' }]}
           actions={
-            <Tooltip title="Actualiser les donnees">
-              <IconButton onClick={handleRefresh} disabled={refreshing} size="small"
-                sx={{ color: colors.textSecondary, '&:hover': { bgcolor: colors.neutral[100] } }}>
-                {refreshing ? <CircularProgress size={16} sx={{ color: colors.textSecondary }} /> : <RefreshCw size={16} />}
-              </IconButton>
-            </Tooltip>
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <Tooltip title="Personnaliser les widgets">
+                <IconButton onClick={(e) => setCustomizeAnchor(e.currentTarget)} size="small"
+                  sx={{ color: hiddenCount > 0 ? colors.primary[600] : colors.textSecondary, '&:hover': { bgcolor: colors.neutral[100] } }}>
+                  <Settings2 size={16} />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={customizeAnchor}
+                open={Boolean(customizeAnchor)}
+                onClose={() => setCustomizeAnchor(null)}
+                slotProps={{ paper: { sx: { minWidth: 240, maxHeight: 400 } } }}
+              >
+                <Box sx={{ px: 2, py: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Widgets visibles</Typography>
+                </Box>
+                <Divider />
+                {allWidgets.map(w => (
+                  <MenuItem key={w.id} onClick={() => toggleWidget(w.id)} dense>
+                    <ListItemIcon><Checkbox checked={isWidgetVisible(w.id)} size="small" /></ListItemIcon>
+                    <ListItemText>{w.title}</ListItemText>
+                  </MenuItem>
+                ))}
+                {hiddenCount > 0 && (
+                  <>
+                    <Divider />
+                    <MenuItem onClick={() => { resetToDefaults(); setCustomizeAnchor(null) }}>
+                      <ListItemIcon><RotateCcw size={16} /></ListItemIcon>
+                      <ListItemText>Tout afficher</ListItemText>
+                    </MenuItem>
+                  </>
+                )}
+              </Menu>
+              <Tooltip title="Actualiser les donnees">
+                <IconButton onClick={handleRefresh} disabled={refreshing} size="small"
+                  sx={{ color: colors.textSecondary, '&:hover': { bgcolor: colors.neutral[100] } }}>
+                  {refreshing ? <CircularProgress size={16} sx={{ color: colors.textSecondary }} /> : <RefreshCw size={16} />}
+                </IconButton>
+              </Tooltip>
+            </Box>
           }
           hideBottomRow
         />

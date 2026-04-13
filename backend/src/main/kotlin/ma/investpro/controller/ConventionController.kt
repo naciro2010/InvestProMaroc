@@ -12,6 +12,8 @@ import ma.investpro.service.ConventionPartenaireService
 import ma.investpro.security.annotations.ReadAccess
 import ma.investpro.security.annotations.WriteAccess
 import ma.investpro.security.annotations.AdminOnly
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
@@ -39,9 +41,16 @@ class ConventionController(
 
     @GetMapping
     @ReadAccess
-    fun getAll(): ResponseEntity<List<ConventionSimpleDTO>> {
+    fun getAll(): ResponseEntity<ApiResponse<List<ConventionSimpleDTO>>> {
         val conventions = conventionService.findAll()
-        return ResponseEntity.ok(conventionMapper.toSimpleDTOList(conventions))
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toSimpleDTOList(conventions)))
+    }
+
+    @GetMapping("/page")
+    @ReadAccess
+    fun getAllPaged(@PageableDefault(size = 25) pageable: Pageable): ResponseEntity<ApiResponse<PageResponse<ConventionSimpleDTO>>> {
+        val page = conventionService.findAll(pageable)
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page) { conventionMapper.toSimpleDTO(it) }))
     }
 
     @GetMapping("/{id}")
@@ -55,50 +64,44 @@ class ConventionController(
 
     @GetMapping("/code/{code}")
     @ReadAccess
-    fun getByCode(@PathVariable code: String): ResponseEntity<ConventionDTO> {
-        val convention = conventionService.findByCode(code) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(conventionMapper.toDTO(convention))
+    fun getByCode(@PathVariable code: String): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val convention = conventionService.findByCode(code)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Convention non trouvée"))
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(convention)))
     }
 
     @GetMapping("/statut/{statut}")
     @ReadAccess
-    fun getByStatut(@PathVariable statut: StatutConvention): ResponseEntity<List<ConventionSimpleDTO>> {
-        return ResponseEntity.ok(conventionMapper.toSimpleDTOList(conventionService.findByStatut(statut)))
+    fun getByStatut(@PathVariable statut: StatutConvention): ResponseEntity<ApiResponse<List<ConventionSimpleDTO>>> {
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toSimpleDTOList(conventionService.findByStatut(statut))))
     }
 
     @GetMapping("/actives")
     @ReadAccess
-    fun getActives(): ResponseEntity<List<ConventionSimpleDTO>> {
-        return ResponseEntity.ok(conventionMapper.toSimpleDTOList(conventionService.findConventionsActives()))
+    fun getActives(): ResponseEntity<ApiResponse<List<ConventionSimpleDTO>>> {
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toSimpleDTOList(conventionService.findConventionsActives())))
     }
 
     @GetMapping("/racine")
     @ReadAccess
-    fun getConventionsRacine(): ResponseEntity<List<ConventionSimpleDTO>> {
-        return ResponseEntity.ok(conventionMapper.toSimpleDTOList(conventionService.findConventionsRacine()))
+    fun getConventionsRacine(): ResponseEntity<ApiResponse<List<ConventionSimpleDTO>>> {
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toSimpleDTOList(conventionService.findConventionsRacine())))
     }
 
     @PostMapping
     @WriteAccess
     fun create(@Valid @RequestBody request: CreateConventionRequest): ResponseEntity<ApiResponse<ConventionDTO>> {
-        return try {
-            val convention = mapRequestToConvention(request)
-            val authentication = SecurityContextHolder.getContext().authentication
-            val user = authentication.principal as? User
-            convention.createdById = user?.id
+        val convention = mapRequestToConvention(request)
+        val authentication = SecurityContextHolder.getContext().authentication
+        val user = authentication.principal as? User
+        convention.createdById = user?.id
 
-            val created = conventionService.create(convention)
-            saveRelatedEntities(created.id!!, request)
+        val created = conventionService.create(convention)
+        saveRelatedEntities(created.id!!, request)
 
-            val reloaded = conventionService.findById(created.id!!) ?: created
-            ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(conventionMapper.toDTO(reloaded), "Convention créée avec succès"))
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur de validation"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la création: ${e.message}"))
-        }
+        val reloaded = conventionService.findById(created.id!!) ?: created
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(conventionMapper.toDTO(reloaded), "Convention créée avec succès"))
     }
 
     @PutMapping("/{id}")
@@ -107,101 +110,83 @@ class ConventionController(
         @PathVariable id: Long,
         @Valid @RequestBody request: CreateConventionRequest
     ): ResponseEntity<ApiResponse<ConventionDTO>> {
-        return try {
-            val convention = mapRequestToConvention(request)
-            conventionService.update(id, convention)
-            request.lignesBudget?.let { conventionBudgetLigneService.replaceAllForConvention(id, it) }
-            request.partenaires?.let { conventionPartenaireService.replaceAllForConvention(id, it) }
+        val convention = mapRequestToConvention(request)
+        conventionService.update(id, convention)
+        request.lignesBudget?.let { conventionBudgetLigneService.replaceAllForConvention(id, it) }
+        request.partenaires?.let { conventionPartenaireService.replaceAllForConvention(id, it) }
 
-            val reloaded = conventionService.findById(id)
-                ?: return ResponseEntity.notFound().build()
-            ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(reloaded), "Convention mise à jour avec succès"))
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur de validation"))
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la mise à jour: ${e.message}"))
-        }
+        val reloaded = conventionService.findById(id)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Convention non trouvée"))
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(reloaded), "Convention mise à jour avec succès"))
     }
 
     @DeleteMapping("/{id}")
     @AdminOnly
-    fun delete(@PathVariable id: Long): ResponseEntity<Void> {
-        return try {
-            conventionService.delete(id)
-            ResponseEntity.noContent().build()
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
-        }
+    fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<Nothing>> {
+        conventionService.delete(id)
+        return ResponseEntity.ok(ApiResponse.ok("Convention supprimée"))
     }
 
     // ========== Workflow ==========
 
     @PostMapping("/{id}/soumettre")
     @WriteAccess
-    fun soumettre(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
-        return try {
-            ResponseEntity.ok(conventionMapper.toDTO(conventionService.soumettre(id)))
-        } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
+    fun soumettre(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val result = conventionService.soumettre(id)
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(result), "Convention soumise"))
     }
 
     @PostMapping("/{id}/valider")
     @WriteAccess
-    fun valider(@PathVariable id: Long, @Valid @RequestBody request: Map<String, Long>): ResponseEntity<ConventionDTO> {
-        return try {
-            val valideParId = request["valideParId"] ?: return ResponseEntity.badRequest().build()
-            ResponseEntity.ok(conventionMapper.toDTO(conventionService.valider(id, valideParId)))
-        } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
+    fun valider(@PathVariable id: Long, @Valid @RequestBody request: Map<String, Long>): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val valideParId = request["valideParId"]
+            ?: return ResponseEntity.badRequest().body(ApiResponse.error("valideParId est requis"))
+        val result = conventionService.valider(id, valideParId)
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(result), "Convention validée"))
     }
 
     @PostMapping("/{id}/rejeter")
     @WriteAccess
-    fun rejeter(@PathVariable id: Long, @Valid @RequestBody request: Map<String, String>): ResponseEntity<ConventionDTO> {
-        return try {
-            val motif = request["motif"] ?: "Aucun motif fourni"
-            ResponseEntity.ok(conventionMapper.toDTO(conventionService.rejeter(id, motif)))
-        } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
+    fun rejeter(@PathVariable id: Long, @Valid @RequestBody request: Map<String, String>): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val motif = request["motif"] ?: "Aucun motif fourni"
+        val result = conventionService.rejeter(id, motif)
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(result), "Convention rejetée"))
     }
 
     @PostMapping("/{id}/mettre-en-cours")
     @WriteAccess
-    fun mettreEnCours(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
-        return try {
-            ResponseEntity.ok(conventionMapper.toDTO(conventionService.mettreEnCours(id)))
-        } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
+    fun mettreEnCours(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val result = conventionService.mettreEnCours(id)
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(result), "Convention mise en cours"))
     }
 
     @PostMapping("/{id}/annuler")
     @WriteAccess
-    fun annuler(@PathVariable id: Long, @Valid @RequestBody request: Map<String, String>): ResponseEntity<ConventionDTO> {
-        return try {
-            val motif = request["motif"] ?: "Aucun motif fourni"
-            ResponseEntity.ok(conventionMapper.toDTO(conventionService.annuler(id, motif)))
-        } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
+    fun annuler(@PathVariable id: Long, @Valid @RequestBody request: Map<String, String>): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val motif = request["motif"] ?: "Aucun motif fourni"
+        val result = conventionService.annuler(id, motif)
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(result), "Convention annulée"))
     }
 
     @PostMapping("/{id}/demarrer")
     @WriteAccess
-    fun demarrer(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
-        return try {
-            ResponseEntity.ok(conventionMapper.toDTO(conventionService.demarrer(id)))
-        } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
+    fun demarrer(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val result = conventionService.demarrer(id)
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(result), "Convention démarrée"))
     }
 
     @PostMapping("/{id}/achever")
     @WriteAccess
-    fun achever(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
-        return try {
-            ResponseEntity.ok(conventionMapper.toDTO(conventionService.achever(id)))
-        } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
+    fun achever(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val result = conventionService.achever(id)
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(result), "Convention achevée"))
     }
 
     @PostMapping("/{id}/remettre-en-brouillon")
     @WriteAccess
-    fun remettreEnBrouillon(@PathVariable id: Long): ResponseEntity<ConventionDTO> {
-        return try {
-            ResponseEntity.ok(conventionMapper.toDTO(conventionService.remettreEnBrouillon(id)))
-        } catch (e: IllegalArgumentException) { ResponseEntity.badRequest().build() }
+    fun remettreEnBrouillon(@PathVariable id: Long): ResponseEntity<ApiResponse<ConventionDTO>> {
+        val result = conventionService.remettreEnBrouillon(id)
+        return ResponseEntity.ok(ApiResponse.success(conventionMapper.toDTO(result), "Convention remise en brouillon"))
     }
 
     @PostMapping("/{id}/remettre-brouillon")

@@ -96,11 +96,12 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
       {children}
 
       {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md" role="region" aria-label="Notifications" aria-live="polite">
         <AnimatePresence>
           {toasts.map(toast => (
             <motion.div
               key={toast.id}
+              role="alert"
               initial={{ opacity: 0, x: 100, scale: 0.8 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 100, scale: 0.8 }}
@@ -114,6 +115,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
               </p>
               <button
                 onClick={() => removeToast(toast.id)}
+                aria-label="Fermer la notification"
                 className="flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity"
               >
                 <X className="w-4 h-4" />

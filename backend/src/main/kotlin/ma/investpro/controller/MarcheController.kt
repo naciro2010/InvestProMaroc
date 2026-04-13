@@ -9,6 +9,8 @@ import ma.investpro.security.annotations.ReadAccess
 import ma.investpro.security.annotations.WriteAccess
 import ma.investpro.security.annotations.AdminOnly
 import mu.KotlinLogging
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import jakarta.validation.Valid
@@ -30,6 +32,13 @@ class MarcheController(
     private val marcheService: MarcheService,
     private val marcheMapper: MarcheMapper
 ) {
+
+    @GetMapping("/page")
+    @ReadAccess
+    fun getAllPaged(@PageableDefault(size = 25) pageable: Pageable): ResponseEntity<ApiResponse<PageResponse<MarcheSimpleDTO>>> {
+        val page = marcheService.findAll(pageable)
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page) { marcheMapper.toSimpleDTO(it) }))
+    }
 
     @GetMapping("/list")
     @ReadAccess
@@ -59,61 +68,32 @@ class MarcheController(
     @GetMapping("/{id}")
     @ReadAccess
     fun getMarcheById(@PathVariable id: Long): ResponseEntity<ApiResponse<MarcheDTO>> {
-        logger.info { "🌐 API: GET /api/marches/$id (returns DTO)" }
-        return try {
-            val marche = marcheService.findById(id)
-            val dto = marcheMapper.toDTO(marche)
-            ResponseEntity.ok(ApiResponse.success(dto))
-        } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("Marché non trouvé"))
-        }
+        val marche = marcheService.findById(id)
+        val dto = marcheMapper.toDTO(marche)
+        return ResponseEntity.ok(ApiResponse.success(dto))
     }
 
     @PostMapping
     @WriteAccess
     fun createMarche(@Valid @RequestBody marche: Marche): ResponseEntity<ApiResponse<MarcheDTO>> {
-        logger.info { "🌐 API: POST /api/marches - Création marché ${marche.numeroMarche}" }
-        return try {
-            val createdMarche = marcheService.create(marche)
-            val dto = marcheMapper.toDTO(createdMarche)
-            ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(dto, "Marché créé avec succès"))
-        } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest()
-                .body(ApiResponse.error(e.message ?: "Erreur de validation"))
-        }
+        val createdMarche = marcheService.create(marche)
+        val dto = marcheMapper.toDTO(createdMarche)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto, "Marché créé avec succès"))
     }
 
     @PutMapping("/{id}")
     @WriteAccess
     fun updateMarche(@PathVariable id: Long, @Valid @RequestBody marche: Marche): ResponseEntity<ApiResponse<MarcheDTO>> {
-        logger.info { "🌐 API: PUT /api/marches/$id" }
-        return try {
-            val updatedMarche = marcheService.update(id, marche)
-            val dto = marcheMapper.toDTO(updatedMarche)
-            ResponseEntity.ok(ApiResponse.success(dto, "Marché mis à jour"))
-        } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(e.message ?: "Marché non trouvé"))
-        }
+        val updatedMarche = marcheService.update(id, marche)
+        val dto = marcheMapper.toDTO(updatedMarche)
+        return ResponseEntity.ok(ApiResponse.success(dto, "Marché mis à jour"))
     }
 
     @DeleteMapping("/{id}")
     @AdminOnly
-    fun deleteMarche(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
-        logger.info { "🌐 API: DELETE /api/marches/$id" }
-        return try {
-            marcheService.delete(id)
-            ResponseEntity.ok(ApiResponse.success(Unit, "Marché supprimé"))
-        } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(e.message ?: "Marché non trouvé"))
-        }
+    fun deleteMarche(@PathVariable id: Long): ResponseEntity<ApiResponse<Nothing>> {
+        marcheService.delete(id)
+        return ResponseEntity.ok(ApiResponse.ok("Marché supprimé"))
     }
 
     @GetMapping("/fournisseur/{fournisseurId}")

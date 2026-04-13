@@ -1242,6 +1242,38 @@ COMMENT ON COLUMN entity_modifications.donnees_apres IS 'Snapshot JSONB apres mo
 COMMENT ON COLUMN entity_modifications.champs_modifies IS 'Liste des champs modifies';
 
 -- ============================================================================
+-- SECTION 18: CHECK CONSTRAINTS FOR DATA INTEGRITY
+-- ============================================================================
+
+-- Percentages must be between 0 and 100
+ALTER TABLE conventions ADD CONSTRAINT IF NOT EXISTS chk_conventions_taux_commission CHECK (taux_commission >= 0 AND taux_commission <= 100);
+ALTER TABLE conventions ADD CONSTRAINT IF NOT EXISTS chk_conventions_taux_tva CHECK (taux_tva >= 0 AND taux_tva <= 100);
+ALTER TABLE conventions ADD CONSTRAINT IF NOT EXISTS chk_conventions_taux_tva_lignes CHECK (taux_tva_lignes >= 0 AND taux_tva_lignes <= 100);
+ALTER TABLE convention_partenaires ADD CONSTRAINT IF NOT EXISTS chk_conv_part_pourcentage CHECK (pourcentage >= 0 AND pourcentage <= 100);
+ALTER TABLE convention_budget_lignes ADD CONSTRAINT IF NOT EXISTS chk_conv_budget_pourcentage CHECK (pourcentage >= 0 AND pourcentage <= 100);
+ALTER TABLE budget_ligne_imputations ADD CONSTRAINT IF NOT EXISTS chk_budget_imp_pourcentage CHECK (pourcentage >= 0 AND pourcentage <= 100);
+ALTER TABLE marche_lignes ADD CONSTRAINT IF NOT EXISTS chk_marche_lignes_taux_tva CHECK (taux_tva >= 0 AND taux_tva <= 100);
+ALTER TABLE decompte_lignes ADD CONSTRAINT IF NOT EXISTS chk_decompte_lignes_taux_tva CHECK (taux_tva >= 0 AND taux_tva <= 100);
+ALTER TABLE decomptes ADD CONSTRAINT IF NOT EXISTS chk_decomptes_taux_tva CHECK (taux_tva >= 0 AND taux_tva <= 100);
+ALTER TABLE commissions ADD CONSTRAINT IF NOT EXISTS chk_commissions_taux CHECK (taux_commission >= 0 AND taux_commission <= 100);
+
+-- Monetary amounts must not be negative
+ALTER TABLE conventions ADD CONSTRAINT IF NOT EXISTS chk_conventions_montant_positif CHECK (montant >= 0);
+ALTER TABLE convention_budget_lignes ADD CONSTRAINT IF NOT EXISTS chk_conv_budget_montant CHECK (montant >= 0);
+ALTER TABLE marche_lignes ADD CONSTRAINT IF NOT EXISTS chk_marche_lignes_montant CHECK (montant_ht >= 0);
+ALTER TABLE decompte_lignes ADD CONSTRAINT IF NOT EXISTS chk_decompte_lignes_montant CHECK (montant_ht >= 0);
+ALTER TABLE ordres_paiement ADD CONSTRAINT IF NOT EXISTS chk_op_montant CHECK (montant_a_payer >= 0);
+ALTER TABLE paiements ADD CONSTRAINT IF NOT EXISTS chk_paiements_montant CHECK (montant_paye >= 0);
+ALTER TABLE commissions ADD CONSTRAINT IF NOT EXISTS chk_commissions_montant CHECK (montant_base >= 0);
+
+-- Composite indexes for common filter patterns
+CREATE INDEX IF NOT EXISTS idx_conventions_statut_actif ON conventions(statut, actif);
+CREATE INDEX IF NOT EXISTS idx_conventions_type_statut ON conventions(type_convention, statut);
+CREATE INDEX IF NOT EXISTS idx_marches_convention_statut ON marches(convention_id, statut);
+CREATE INDEX IF NOT EXISTS idx_decomptes_marche_statut ON decomptes(marche_id, statut);
+CREATE INDEX IF NOT EXISTS idx_op_decompte_statut ON ordres_paiement(decompte_id, statut);
+
+-- ============================================================================
 -- END OF SCHEMA DEFINITION
 -- ============================================================================
 -- Total Tables: 42+
@@ -1252,4 +1284,5 @@ COMMENT ON COLUMN entity_modifications.champs_modifies IS 'Liste des champs modi
 -- - Full audit trail with convention_modifications table
 -- - Foreign key relationships with CASCADE deletes where appropriate
 -- - Base entity fields (id, created_at, updated_at, actif) on all tables
+-- - CHECK constraints for percentages (0-100%) and monetary amounts (>= 0)
 -- ============================================================================

@@ -11,6 +11,8 @@ import ma.investpro.security.annotations.ReadAccess
 import ma.investpro.security.annotations.WriteAccess
 import ma.investpro.security.annotations.AdminOnly
 import mu.KotlinLogging
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import jakarta.validation.Valid
@@ -37,6 +39,13 @@ class DecompteController(
     private val userRepository: UserRepository
 ) {
 
+    @GetMapping("/page")
+    @ReadAccess
+    fun getAllPaged(@PageableDefault(size = 25) pageable: Pageable): ResponseEntity<ApiResponse<PageResponse<DecompteDTO>>> {
+        val page = decompteService.findAll(pageable)
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page) { decompteMapper.toDTO(it) }))
+    }
+
     @GetMapping("/list")
     @ReadAccess
     fun getDecomptesList(): ResponseEntity<List<DecompteListDTO>> {
@@ -57,59 +66,30 @@ class DecompteController(
     @GetMapping("/{id}")
     @ReadAccess
     fun getDecompteById(@PathVariable id: Long): ResponseEntity<ApiResponse<DecompteDTO>> {
-        logger.info { "🌐 API: GET /api/decomptes/$id (returns DTO)" }
-        return try {
-            val decompte = decompteService.findById(id)
-                ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Décompte non trouvé"))
-            val dto = decompteMapper.toDTO(decompte)
-            ResponseEntity.ok(ApiResponse.success(dto))
-        } catch (e: Exception) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la récupération du décompte"))
-        }
+        val decompte = decompteService.findById(id)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Décompte non trouvé"))
+        return ResponseEntity.ok(ApiResponse.success(decompteMapper.toDTO(decompte)))
     }
 
     @PostMapping
     @WriteAccess
     fun createDecompte(@Valid @RequestBody decompte: Decompte): ResponseEntity<ApiResponse<DecompteDTO>> {
-        logger.info { "🌐 API: POST /api/decomptes - Création décompte ${decompte.numeroDecompte}" }
-        return try {
-            val createdDecompte = decompteService.create(decompte)
-            val dto = decompteMapper.toDTO(createdDecompte)
-            ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto, "Décompte créé avec succès"))
-        } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.badRequest().body(ApiResponse.error(e.message ?: "Erreur de validation"))
-        }
+        val createdDecompte = decompteService.create(decompte)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(decompteMapper.toDTO(createdDecompte), "Décompte créé avec succès"))
     }
 
     @PutMapping("/{id}")
     @WriteAccess
     fun updateDecompte(@PathVariable id: Long, @Valid @RequestBody decompte: Decompte): ResponseEntity<ApiResponse<DecompteDTO>> {
-        logger.info { "🌐 API: PUT /api/decomptes/$id" }
-        return try {
-            val updatedDecompte = decompteService.update(id, decompte)
-            val dto = decompteMapper.toDTO(updatedDecompte)
-            ResponseEntity.ok(ApiResponse.success(dto, "Décompte mis à jour"))
-        } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.message ?: "Décompte non trouvé"))
-        }
+        val updatedDecompte = decompteService.update(id, decompte)
+        return ResponseEntity.ok(ApiResponse.success(decompteMapper.toDTO(updatedDecompte), "Décompte mis à jour"))
     }
 
     @DeleteMapping("/{id}")
     @AdminOnly
-    fun deleteDecompte(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
-        logger.info { "🌐 API: DELETE /api/decomptes/$id" }
-        return try {
-            decompteService.delete(id)
-            ResponseEntity.ok(ApiResponse.success(Unit, "Décompte supprimé"))
-        } catch (e: IllegalArgumentException) {
-            logger.error { "❌ API ERROR: ${e.message}" }
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.message ?: "Décompte non trouvé"))
-        }
+    fun deleteDecompte(@PathVariable id: Long): ResponseEntity<ApiResponse<Nothing>> {
+        decompteService.delete(id)
+        return ResponseEntity.ok(ApiResponse.ok("Décompte supprimé"))
     }
 
     @GetMapping("/marche/{marcheId}")

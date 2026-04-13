@@ -1268,12 +1268,6 @@ DO $$ BEGIN
   ALTER TABLE marche_lignes ADD CONSTRAINT chk_marche_lignes_taux_tva CHECK (taux_tva >= 0 AND taux_tva <= 100);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
-  ALTER TABLE decompte_lignes ADD CONSTRAINT chk_decompte_lignes_taux_tva CHECK (taux_tva >= 0 AND taux_tva <= 100);
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN
-  ALTER TABLE decomptes ADD CONSTRAINT chk_decomptes_taux_tva CHECK (taux_tva >= 0 AND taux_tva <= 100);
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN
   ALTER TABLE commissions ADD CONSTRAINT chk_commissions_taux CHECK (taux_commission >= 0 AND taux_commission <= 100);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
@@ -1286,9 +1280,6 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   ALTER TABLE marche_lignes ADD CONSTRAINT chk_marche_lignes_montant CHECK (montant_ht >= 0);
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN
-  ALTER TABLE decompte_lignes ADD CONSTRAINT chk_decompte_lignes_montant CHECK (montant_ht >= 0);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   ALTER TABLE ordres_paiement ADD CONSTRAINT chk_op_montant CHECK (montant_a_payer >= 0);

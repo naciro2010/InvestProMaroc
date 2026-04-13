@@ -26,8 +26,8 @@ WORKDIR /app
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Copy JAR from builder stage
-COPY --from=builder /build/build/libs/investpro-backend-1.0.0.jar app.jar
+# Copy JAR from builder stage (wildcard pour éviter les problèmes de version)
+COPY --from=builder /build/build/libs/*.jar app.jar
 
 # Non-root user for security
 RUN addgroup -S appuser && \
@@ -42,6 +42,9 @@ EXPOSE 8080
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+# Railway injecte PORT dynamiquement, Spring Boot utilise server.port=${PORT:8080}
+ENV PORT=8080
 
 # Run application
 ENTRYPOINT ["java", "-Xmx512m", "-Xms256m", "-jar", "app.jar"]

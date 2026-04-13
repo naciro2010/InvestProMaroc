@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Flux
+import java.util.Optional
 
 /**
  * Controller for AI-powered dashboard generation.
@@ -23,25 +24,29 @@ import reactor.core.publisher.Flux
  * POST /api/ai/dashboard/parse   - Parse instruction (sync, JSON only)
  * POST /api/ai/dashboard/stream  - Stream instruction (SSE, markdown + viz)
  * GET  /api/ai/dashboard/status  - Check if Ollama AI is available
+ *
+ * The AiDashboardService is optional - if Ollama is disabled via
+ * spring.ai.ollama.chat.enabled=false, endpoints return 503 gracefully.
  */
 @RestController
 @RequestMapping("/api/ai/dashboard")
 @ReadAccess
 class AiDashboardController(
-    private val aiDashboardService: AiDashboardService
+    private val aiDashboardService: Optional<AiDashboardService>
 ) {
     /**
      * Stream a rich AI response via Server-Sent Events.
-     * Returns markdown analysis text progressively, then a visualization config.
-     *
-     * SSE event types:
-     * - text: chunk of markdown content
-     * - visualization: ParsedInstruction JSON
-     * - done: stream complete
-     * - error: error occurred
      */
     @PostMapping("/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamInstruction(@RequestBody request: AiInstructionRequest): Flux<ServerSentEvent<AiStreamEvent>> {
+        if (!aiDashboardService.isPresent) {
+            return Flux.just(
+                ServerSentEvent.builder(AiStreamEvent.error("Service IA désactivé sur cette instance."))
+                    .event("error")
+                    .build()
+            )
+        }
+
         if (request.instruction.isBlank()) {
             return Flux.just(
                 ServerSentEvent.builder(AiStreamEvent.error("L'instruction ne peut pas être vide"))
@@ -50,7 +55,7 @@ class AiDashboardController(
             )
         }
 
-        return aiDashboardService.streamInstruction(request.instruction, request.conversationId)
+        return aiDashboardService.get().streamInstruction(request.instruction, request.conversationId)
             .map { event ->
                 ServerSentEvent.builder(event)
                     .event(event.type)
@@ -60,20 +65,22 @@ class AiDashboardController(
 
     /**
      * Parse a French text instruction into a structured dashboard query (sync).
-     * Uses Ollama LLM for intelligent parsing with conversation memory.
-     *
-     * Returns 200 with parsed instruction if AI succeeds.
-     * Returns 503 if Ollama is unavailable (frontend should use rule-based fallback).
      */
     @PostMapping("/parse")
     fun parseInstruction(@RequestBody request: AiInstructionRequest): ResponseEntity<ApiResponse<AiDashboardResponse>> {
+        if (!aiDashboardService.isPresent) {
+            return ResponseEntity.status(503).body(
+                ApiResponse.error("Service IA désactivé. Utilisez le mode hors-ligne.")
+            )
+        }
+
         if (request.instruction.isBlank()) {
             return ResponseEntity.badRequest().body(
                 ApiResponse.error("L'instruction ne peut pas être vide")
             )
         }
 
-        val result = aiDashboardService.parseInstruction(request.instruction, request.conversationId)
+        val result = aiDashboardService.get().parseInstruction(request.instruction, request.conversationId)
 
         return if (result != null) {
             ResponseEntity.ok(ApiResponse.success(result, "Instruction analysée par IA"))
@@ -89,7 +96,12 @@ class AiDashboardController(
      */
     @GetMapping("/status")
     fun checkStatus(): ResponseEntity<ApiResponse<AiStatusResponse>> {
-        val status = aiDashboardService.checkStatus()
+        if (!aiDashboardService.isPresent) {
+            return ResponseEntity.ok(
+                ApiResponse.success(AiStatusResponse(available = false, model = null, baseUrl = null))
+            )
+        }
+        val status = aiDashboardService.get().checkStatus()
         return ResponseEntity.ok(ApiResponse.success(status))
     }
 }

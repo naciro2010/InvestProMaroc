@@ -13,6 +13,7 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository
 import org.springframework.ai.chat.memory.MessageWindowChatMemory
 import org.springframework.ai.ollama.OllamaChatModel
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
@@ -28,6 +29,7 @@ private val logger = KotlinLogging.logger {}
  * The streaming mode returns rich markdown analysis + visualization config.
  */
 @Service
+@ConditionalOnProperty(name = ["spring.ai.ollama.chat.enabled"], havingValue = "true", matchIfMissing = true)
 class AiDashboardService(
     private val chatModel: OllamaChatModel,
     private val objectMapper: ObjectMapper,

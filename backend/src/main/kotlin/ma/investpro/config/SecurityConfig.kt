@@ -126,6 +126,18 @@ class SecurityConfig(
             // Configuration CORS
             .cors { it.configurationSource(corsConfigurationSource()) }
 
+            // Headers de sécurité OWASP
+            .headers { headers ->
+                headers.contentTypeOptions { }
+                headers.frameOptions { it.deny() }
+                headers.httpStrictTransportSecurity {
+                    it.includeSubDomains(true)
+                    it.maxAgeInSeconds(31536000)
+                }
+                headers.xssProtection { it.headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK) }
+                headers.referrerPolicy { it.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN) }
+            }
+
             // Session stateless (pas de session côté serveur)
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
 

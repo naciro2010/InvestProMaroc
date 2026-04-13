@@ -31,6 +31,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+
+    // Rate limiting
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.14.0")
 
     // Spring AI + Ollama
     implementation("org.springframework.ai:spring-ai-starter-model-ollama")

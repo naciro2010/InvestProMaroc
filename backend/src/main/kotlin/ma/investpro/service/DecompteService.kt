@@ -28,6 +28,9 @@ class DecompteService(
 
     fun findAll(): List<Decompte> = decompteRepository.findAll()
 
+    @Transactional(readOnly = true)
+    fun findAll(pageable: org.springframework.data.domain.Pageable): org.springframework.data.domain.Page<Decompte> = decompteRepository.findAll(pageable)
+
     fun findById(id: Long): Decompte? = decompteRepository.findByIdOrNull(id)
 
     fun findByMarche(marcheId: Long): List<Decompte> =

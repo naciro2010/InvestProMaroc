@@ -43,6 +43,11 @@ class MarcheService(
         }
     }
 
+    @Transactional(readOnly = true)
+    fun findAll(pageable: org.springframework.data.domain.Pageable): org.springframework.data.domain.Page<Marche> {
+        return marcheRepository.findAll(pageable)
+    }
+
     fun findById(id: Long): Marche {
         logger.debug { "Fetching marche by ID: $id" }
         return marcheRepository.findById(id)

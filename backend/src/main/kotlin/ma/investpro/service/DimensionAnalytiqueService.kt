@@ -5,6 +5,8 @@ import ma.investpro.entity.DimensionAnalytique
 import ma.investpro.entity.ValeurDimension
 import ma.investpro.repository.DimensionAnalytiqueRepository
 import ma.investpro.repository.ValeurDimensionRepository
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,6 +23,7 @@ class DimensionAnalytiqueService(
 
     // ========== CRUD Dimensions ==========
 
+    @Cacheable("dimensions")
     fun findAll(): List<DimensionAnalytique> = dimensionRepository.findAll()
 
     fun findById(id: Long): DimensionAnalytique? = dimensionRepository.findByIdOrNull(id)
@@ -33,6 +36,7 @@ class DimensionAnalytiqueService(
     fun findObligatoires(): List<DimensionAnalytique> =
         dimensionRepository.findByObligatoireTrue()
 
+    @CacheEvict(value = ["dimensions"], allEntries = true)
     fun create(dimension: DimensionAnalytique): DimensionAnalytique {
         require(dimension.id == null) { "Cannot create dimension with existing ID" }
         require(!dimensionRepository.existsByCode(dimension.code)) {
@@ -44,6 +48,7 @@ class DimensionAnalytiqueService(
         return dimensionRepository.save(dimension)
     }
 
+    @CacheEvict(value = ["dimensions"], allEntries = true)
     fun update(id: Long, dimension: DimensionAnalytique): DimensionAnalytique {
         val existing = findById(id)
             ?: throw IllegalArgumentException("Dimension $id introuvable")

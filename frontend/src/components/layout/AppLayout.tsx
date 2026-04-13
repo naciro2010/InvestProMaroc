@@ -1,8 +1,26 @@
 import { ReactNode } from 'react'
-import { Menu } from 'lucide-react'
+import { Menu, ChevronRight } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { useLayout } from '@/contexts/LayoutContext'
 import { colors, borders, transitions } from '@/lib/designSystem'
 import Sidebar, { SIDEBAR_WIDTH } from './Sidebar'
+
+const ROUTE_LABELS: Record<string, string> = {
+  '/dashboard': 'Tableau de bord',
+  '/conventions': 'Conventions',
+  '/marches': 'Marchés',
+  '/decomptes': 'Décomptes',
+  '/paiements': 'Paiements',
+  '/ordres-paiement': 'Ordres de paiement',
+  '/projets': 'Projets',
+  '/budgets': 'Budgets',
+  '/fournisseurs': 'Fournisseurs',
+  '/commissions': 'Commissions',
+  '/users': 'Utilisateurs',
+  '/profile': 'Profil',
+  '/messagerie': 'Messagerie',
+  '/generateur': 'Générateur',
+}
 
 interface AppLayoutProps {
   children: ReactNode
@@ -15,7 +33,14 @@ interface AppLayoutProps {
  */
 const AppLayout = ({ children }: AppLayoutProps) => {
   const { sidebarOpen, setSidebarOpen, toggleSidebar, isMobile, isTablet } = useLayout()
+  const location = useLocation()
   const isCompact = isMobile || isTablet
+
+  const getPageTitle = () => {
+    const path = location.pathname
+    const baseRoute = '/' + path.split('/').filter(Boolean)[0]
+    return ROUTE_LABELS[path] || ROUTE_LABELS[baseRoute] || ''
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: colors.background }}>
@@ -86,6 +111,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             }}>
               InvestPro
             </span>
+            {getPageTitle() && (
+              <span style={{ display: 'flex', alignItems: 'center', marginLeft: 8, color: colors.textSecondary }}>
+                <ChevronRight size={14} />
+                <span style={{ marginLeft: 4, fontSize: '0.8125rem', fontWeight: 500 }}>
+                  {getPageTitle()}
+                </span>
+              </span>
+            )}
           </div>
         )}
         <div style={{ flex: 1 }}>

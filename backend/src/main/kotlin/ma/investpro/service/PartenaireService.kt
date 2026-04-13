@@ -3,6 +3,8 @@ package ma.investpro.service
 import ma.investpro.entity.Partenaire
 import ma.investpro.repository.PartenaireRepository
 import mu.KotlinLogging
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -21,6 +23,7 @@ class PartenaireService(
     /**
      * Find all partenaires
      */
+    @Cacheable("partenaires")
     fun findAll(): List<Partenaire> {
         logger.debug { "Fetching all partenaires" }
         return partenaireRepository.findAll().also { partenaires ->
@@ -43,6 +46,7 @@ class PartenaireService(
     /**
      * Find all active partenaires
      */
+    @Cacheable("partenaires-actifs")
     fun findAllActive(): List<Partenaire> {
         logger.debug { "Fetching all active partenaires" }
         return partenaireRepository.findAll()
@@ -56,6 +60,7 @@ class PartenaireService(
      * Save or update a partenaire
      */
     @Transactional
+    @CacheEvict(value = ["partenaires", "partenaires-actifs"], allEntries = true)
     fun save(partenaire: Partenaire): Partenaire {
         logger.debug { "Saving partenaire: ${partenaire.code}" }
         return partenaireRepository.save(partenaire).also {

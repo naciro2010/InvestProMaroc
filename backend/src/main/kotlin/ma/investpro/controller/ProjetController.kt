@@ -1,6 +1,7 @@
 package ma.investpro.controller
 
 import ma.investpro.dto.ApiResponse
+import ma.investpro.dto.PageResponse
 import ma.investpro.dto.ProjetDTO
 import ma.investpro.dto.ProjetSimpleDTO
 import ma.investpro.entity.Projet
@@ -10,6 +11,8 @@ import ma.investpro.service.ProjetService
 import ma.investpro.security.annotations.ReadAccess
 import ma.investpro.security.annotations.WriteAccess
 import ma.investpro.security.annotations.AdminOnly
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -43,21 +46,28 @@ class ProjetController(
 
     // ========== CRUD Endpoints ==========
 
+    @GetMapping("/page")
+    @ReadAccess
+    fun getAllPaged(@PageableDefault(size = 25) pageable: Pageable): ResponseEntity<ApiResponse<PageResponse<ProjetSimpleDTO>>> {
+        val page = projetService.findAll(pageable)
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page) { projetMapper.toSimpleDTO(it) }))
+    }
+
     @GetMapping
     @ReadAccess
-    fun getAll(): ResponseEntity<List<ProjetDTO>> {
+    fun getAll(): ResponseEntity<ApiResponse<List<ProjetDTO>>> {
         val projets = projetService.findAll()
         val dtos = projetMapper.toDTOList(projets)
-        return ResponseEntity.ok(dtos)
+        return ResponseEntity.ok(ApiResponse.success(dtos))
     }
 
     @GetMapping("/{id}")
     @ReadAccess
-    fun getById(@PathVariable id: Long): ResponseEntity<ProjetDTO> {
+    fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<ProjetDTO>> {
         val projet = projetService.findById(id)
-            ?: return ResponseEntity.notFound().build()
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Projet non trouvé"))
         val dto = projetMapper.toDTO(projet)
-        return ResponseEntity.ok(dto)
+        return ResponseEntity.ok(ApiResponse.success(dto))
     }
 
     @GetMapping("/code/{code}")

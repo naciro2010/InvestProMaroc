@@ -22,5 +22,9 @@ data class ApiResponse<T>(
         fun <T> error(message: String): ApiResponse<T> {
             return ApiResponse(success = false, message = message, data = null)
         }
+
+        fun ok(message: String): ApiResponse<Nothing> {
+            return ApiResponse(success = true, message = message, data = null)
+        }
     }
 }

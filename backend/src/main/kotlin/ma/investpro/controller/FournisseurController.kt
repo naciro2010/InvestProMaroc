@@ -7,7 +7,10 @@ import ma.investpro.dto.FournisseurSimpleDTO
 import ma.investpro.dto.UpdateFournisseurDTO
 import ma.investpro.mapper.FournisseurMapper
 import ma.investpro.service.FournisseurService
+import ma.investpro.dto.PageResponse
 import mu.KotlinLogging
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -29,153 +32,64 @@ class FournisseurController(
     private val fournisseurMapper: FournisseurMapper
 ) {
 
-    /**
-     * Get all fournisseurs
-     */
+    @GetMapping("/page")
+    @ReadAccess
+    fun getAllPaged(@PageableDefault(size = 25) pageable: Pageable): ResponseEntity<ApiResponse<PageResponse<FournisseurSimpleDTO>>> {
+        val page = fournisseurService.findAll(pageable)
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(page) { fournisseurMapper.toSimpleDTO(it) }))
+    }
+
     @GetMapping
     @ReadAccess
     fun getAll(): ResponseEntity<ApiResponse<List<FournisseurDTO>>> {
-        logger.info { "API: GET /api/fournisseurs" }
-        return try {
-            val fournisseurs = fournisseurService.findAll()
-            val dtos: List<FournisseurDTO> = fournisseurMapper.toDTOList(fournisseurs)
-            ResponseEntity.ok(ApiResponse.success(dtos))
-        } catch (e: Exception) {
-            logger.error { "Error fetching fournisseurs: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la récupération des fournisseurs"))
-        }
+        val fournisseurs = fournisseurService.findAll()
+        return ResponseEntity.ok(ApiResponse.success(fournisseurMapper.toDTOList(fournisseurs)))
     }
 
-    /**
-     * Get all active fournisseurs (for dropdowns)
-     */
     @GetMapping("/active")
     @ReadAccess
     fun getAllActive(): ResponseEntity<ApiResponse<List<FournisseurSimpleDTO>>> {
-        logger.info { "API: GET /api/fournisseurs/active" }
-        return try {
-            val fournisseurs = fournisseurService.findAllActive()
-            val dtos: List<FournisseurSimpleDTO> = fournisseurMapper.toSimpleDTOList(fournisseurs)
-            ResponseEntity.ok(ApiResponse.success(dtos))
-        } catch (e: Exception) {
-            logger.error { "Error fetching active fournisseurs: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la récupération des fournisseurs actifs"))
-        }
+        val fournisseurs = fournisseurService.findAllActive()
+        return ResponseEntity.ok(ApiResponse.success(fournisseurMapper.toSimpleDTOList(fournisseurs)))
     }
 
-    /**
-     * Search fournisseurs by raison sociale
-     */
     @GetMapping("/search")
     @ReadAccess
     fun search(@RequestParam q: String): ResponseEntity<ApiResponse<List<FournisseurSimpleDTO>>> {
-        logger.info { "API: GET /api/fournisseurs/search?q=$q" }
-        return try {
-            val fournisseurs = fournisseurService.search(q)
-            val dtos: List<FournisseurSimpleDTO> = fournisseurMapper.toSimpleDTOList(fournisseurs)
-            ResponseEntity.ok(ApiResponse.success(dtos))
-        } catch (e: Exception) {
-            logger.error { "Error searching fournisseurs: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la recherche des fournisseurs"))
-        }
+        val fournisseurs = fournisseurService.search(q)
+        return ResponseEntity.ok(ApiResponse.success(fournisseurMapper.toSimpleDTOList(fournisseurs)))
     }
 
-    /**
-     * Get fournisseur by ID
-     */
     @GetMapping("/{id}")
     @ReadAccess
     fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<FournisseurDTO>> {
-        logger.info { "API: GET /api/fournisseurs/$id" }
-        return try {
-            val fournisseur = fournisseurService.findById(id)
-            val dto: FournisseurDTO = fournisseurMapper.toDTO(fournisseur)
-            ResponseEntity.ok(ApiResponse.success(dto))
-        } catch (e: IllegalArgumentException) {
-            logger.warn { "Fournisseur not found: ${e.message}" }
-            ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(e.message ?: "Fournisseur non trouvé"))
-        } catch (e: Exception) {
-            logger.error { "Error fetching fournisseur: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la récupération du fournisseur"))
-        }
+        val fournisseur = fournisseurService.findById(id)
+        return ResponseEntity.ok(ApiResponse.success(fournisseurMapper.toDTO(fournisseur)))
     }
 
-    /**
-     * Create a new fournisseur
-     */
     @PostMapping
     @WriteAccess
     fun create(@Valid @RequestBody dto: CreateFournisseurDTO): ResponseEntity<ApiResponse<FournisseurDTO>> {
-        logger.info { "API: POST /api/fournisseurs - Creating fournisseur: ${dto.code}" }
-        return try {
-            val fournisseur = fournisseurMapper.toEntity(dto)
-            val saved = fournisseurService.save(fournisseur)
-            val resultDto: FournisseurDTO = fournisseurMapper.toDTO(saved)
-            ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(resultDto, "Fournisseur créé avec succès"))
-        } catch (e: IllegalArgumentException) {
-            logger.warn { "Validation error creating fournisseur: ${e.message}" }
-            ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(e.message ?: "Erreur de validation"))
-        } catch (e: Exception) {
-            logger.error { "Error creating fournisseur: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la création du fournisseur"))
-        }
+        val fournisseur = fournisseurMapper.toEntity(dto)
+        val saved = fournisseurService.save(fournisseur)
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(fournisseurMapper.toDTO(saved), "Fournisseur créé avec succès"))
     }
 
-    /**
-     * Update an existing fournisseur
-     */
     @PutMapping("/{id}")
     @WriteAccess
-    fun update(
-        @PathVariable id: Long,
-        @Valid @RequestBody dto: UpdateFournisseurDTO
-    ): ResponseEntity<ApiResponse<FournisseurDTO>> {
-        logger.info { "API: PUT /api/fournisseurs/$id" }
-        return try {
-            val existing = fournisseurService.findById(id)
-            fournisseurMapper.updateEntityFromDTO(dto, existing)
-            val saved = fournisseurService.save(existing)
-            val resultDto: FournisseurDTO = fournisseurMapper.toDTO(saved)
-            ResponseEntity.ok(ApiResponse.success(resultDto, "Fournisseur modifié avec succès"))
-        } catch (e: IllegalArgumentException) {
-            logger.warn { "Fournisseur not found: ${e.message}" }
-            ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(e.message ?: "Fournisseur non trouvé"))
-        } catch (e: Exception) {
-            logger.error { "Error updating fournisseur: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la modification du fournisseur"))
-        }
+    fun update(@PathVariable id: Long, @Valid @RequestBody dto: UpdateFournisseurDTO): ResponseEntity<ApiResponse<FournisseurDTO>> {
+        val existing = fournisseurService.findById(id)
+        fournisseurMapper.updateEntityFromDTO(dto, existing)
+        val saved = fournisseurService.save(existing)
+        return ResponseEntity.ok(ApiResponse.success(fournisseurMapper.toDTO(saved), "Fournisseur modifié avec succès"))
     }
 
-    /**
-     * Delete a fournisseur (soft delete)
-     */
     @DeleteMapping("/{id}")
     @WriteAccess
-    fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<Unit>> {
-        logger.info { "API: DELETE /api/fournisseurs/$id" }
-        return try {
-            val fournisseur = fournisseurService.findById(id)
-            fournisseur.actif = false
-            fournisseurService.save(fournisseur)
-            ResponseEntity.ok(ApiResponse.success(Unit, "Fournisseur supprimé avec succès"))
-        } catch (e: IllegalArgumentException) {
-            logger.warn { "Fournisseur not found: ${e.message}" }
-            ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(e.message ?: "Fournisseur non trouvé"))
-        } catch (e: Exception) {
-            logger.error { "Error deleting fournisseur: ${e.message}" }
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Erreur lors de la suppression du fournisseur"))
-        }
+    fun delete(@PathVariable id: Long): ResponseEntity<ApiResponse<Nothing>> {
+        val fournisseur = fournisseurService.findById(id)
+        fournisseur.actif = false
+        fournisseurService.save(fournisseur)
+        return ResponseEntity.ok(ApiResponse.ok("Fournisseur supprimé avec succès"))
     }
 }

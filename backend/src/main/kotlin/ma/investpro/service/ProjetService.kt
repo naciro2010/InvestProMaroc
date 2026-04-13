@@ -18,6 +18,9 @@ class ProjetService(
 
     fun findAll(): List<Projet> = projetRepository.findAll()
 
+    @Transactional(readOnly = true)
+    fun findAll(pageable: org.springframework.data.domain.Pageable): org.springframework.data.domain.Page<Projet> = projetRepository.findAll(pageable)
+
     fun findById(id: Long): Projet? = projetRepository.findByIdOrNull(id)
 
     fun findByCode(code: String): Projet? = projetRepository.findByCode(code)

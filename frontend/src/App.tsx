@@ -8,11 +8,13 @@ import { LayoutContextProvider } from './contexts/LayoutContext'
 import { CircularProgress, Box } from '@mui/material'
 import CommandPalette from './components/core/CommandPalette'
 import KeyboardShortcutsHelp from './components/core/KeyboardShortcutsHelp'
+import ErrorBoundary from './components/core/ErrorBoundary'
 import { useGoShortcuts } from './hooks/useGoShortcuts'
 
 // Eager load - Critical path pages
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 // Lazy load - All other pages (code splitting)
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
@@ -93,7 +95,7 @@ const getBasePath = (): string => {
   return base.endsWith('/') ? base.slice(0, -1) : base
 }
 
-// Protected Route Component
+// Protected Route Component with Error Boundary
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth()
 
@@ -101,7 +103,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <PageLoader />
   }
 
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />
+  return isAuthenticated ? (
+    <ErrorBoundary level="page">
+      {children}
+    </ErrorBoundary>
+  ) : (
+    <Navigate to="/login" />
+  )
 }
 
 // Public Route Component (redirect if authenticated)
@@ -480,8 +488,8 @@ function App() {
                       }
                     />
 
-                    {/* Catch all */}
-                    <Route path="*" element={<Navigate to="/" />} />
+                    {/* Catch all - 404 */}
+                    <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </Suspense>
               </ToastProvider>

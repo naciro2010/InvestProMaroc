@@ -59,14 +59,17 @@ class EntityModification(
 )
 
 object EntityType {
+    const val CONVENTION = "CONVENTION"
     const val MARCHE = "MARCHE"
     const val PROJET = "PROJET"
     const val DECOMPTE = "DECOMPTE"
     const val BUDGET = "BUDGET"
     const val AVENANT_CONVENTION = "AVENANT_CONVENTION"
     const val FOURNISSEUR = "FOURNISSEUR"
+    const val PARTENAIRE = "PARTENAIRE"
     const val ORDRE_PAIEMENT = "ORDRE_PAIEMENT"
     const val PAIEMENT = "PAIEMENT"
+    const val DIMENSION = "DIMENSION"
 }
 
 object TypeModification {

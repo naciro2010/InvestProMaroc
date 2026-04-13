@@ -32,7 +32,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -41,9 +41,10 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+                <h2 id="modal-title" className="text-xl font-bold text-gray-900">{title}</h2>
                 <button
                   onClick={onClose}
+                  aria-label="Fermer"
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />

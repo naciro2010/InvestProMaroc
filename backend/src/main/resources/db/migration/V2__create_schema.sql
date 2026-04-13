@@ -1273,7 +1273,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Monetary amounts must not be negative
 DO $$ BEGIN
-  ALTER TABLE conventions ADD CONSTRAINT chk_conventions_montant_positif CHECK (montant >= 0);
+  ALTER TABLE conventions ADD CONSTRAINT chk_conventions_budget_positif CHECK (budget >= 0);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   ALTER TABLE convention_budget_lignes ADD CONSTRAINT chk_conv_budget_montant CHECK (montant >= 0);

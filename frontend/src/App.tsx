@@ -5,10 +5,12 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { ThemeContextProvider } from './contexts/ThemeContext'
 import { LayoutContextProvider } from './contexts/LayoutContext'
-import { CircularProgress, Box } from '@mui/material'
+import { CircularProgress, Box, Typography } from '@mui/material'
 import CommandPalette from './components/core/CommandPalette'
 import KeyboardShortcutsHelp from './components/core/KeyboardShortcutsHelp'
 import ErrorBoundary from './components/core/ErrorBoundary'
+import RouteProgress from './components/core/RouteProgress'
+import ScrollToTop from './components/core/ScrollToTop'
 import { useGoShortcuts } from './hooks/useGoShortcuts'
 
 // Eager load - Critical path pages
@@ -78,12 +80,17 @@ const PageLoader = () => (
     sx={{
       minHeight: '100vh',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
+      gap: 2,
       bgcolor: 'background.default',
     }}
   >
-    <CircularProgress size={40} />
+    <CircularProgress size={36} thickness={4} color="primary" />
+    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+      Chargement…
+    </Typography>
   </Box>
 )
 
@@ -139,6 +146,8 @@ const GlobalFeatures = () => {
   useGoShortcuts()
   return (
     <>
+      <RouteProgress />
+      <ScrollToTop />
       <CommandPalette />
       <KeyboardShortcutsHelp />
     </>

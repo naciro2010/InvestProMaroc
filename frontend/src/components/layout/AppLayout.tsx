@@ -44,6 +44,11 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: colors.background }}>
+      {/* Skip-to-content : premier élément focusable pour la navigation clavier */}
+      <a href="#main-content" className="skip-link">
+        Aller au contenu
+      </a>
+
       {/* Mobile/tablet backdrop */}
       {isCompact && sidebarOpen && (
         <div
@@ -121,9 +126,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             )}
           </div>
         )}
-        <div style={{ flex: 1 }}>
+        <main id="main-content" tabIndex={-1} style={{ flex: 1, outline: 'none' }}>
           {children}
-        </div>
+        </main>
       </div>
     </div>
   )

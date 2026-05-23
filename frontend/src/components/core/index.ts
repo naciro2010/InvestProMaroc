@@ -67,6 +67,12 @@ export { default as ResizableSection } from './ResizableSection'
 export { default as ApiAutocomplete } from './ApiAutocomplete'
 export type { AutocompleteOption, QuickCreateConfig, QuickCreateField } from './ApiAutocomplete'
 
+// Route Progress (barre de progression réseau globale - style NProgress)
+export { default as RouteProgress } from './RouteProgress'
+
+// Scroll To Top (réinitialise le scroll à chaque changement de route)
+export { default as ScrollToTop } from './ScrollToTop'
+
 // Command Palette (Ctrl+K global search)
 export { default as CommandPalette } from './CommandPalette'
 

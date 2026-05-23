@@ -9,6 +9,7 @@ import {
   DialogActions,
   Stack,
   Typography,
+  CircularProgress,
 } from '@mui/material'
 import { AttachMoney } from '@mui/icons-material'
 import DecimalInput from '@/components/ui/DecimalInput'
@@ -24,6 +25,7 @@ interface DecompteFormDialogProps {
   formData: DecompteFormData
   onFormDataChange: (data: DecompteFormData) => void
   onCalculateNet: () => void
+  isSubmitting?: boolean
 }
 
 const DecompteFormDialog = ({
@@ -34,6 +36,7 @@ const DecompteFormDialog = ({
   formData,
   onFormDataChange,
   onCalculateNet,
+  isSubmitting = false,
 }: DecompteFormDialogProps) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: componentStyles.dialog.paper }}>
@@ -138,8 +141,13 @@ const DecompteFormDialog = ({
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} sx={componentStyles.buttonSecondary}>Annuler</Button>
-        <Button onClick={onSubmit} sx={componentStyles.buttonPrimary}>
+        <Button onClick={onClose} disabled={isSubmitting} sx={componentStyles.buttonSecondary}>Annuler</Button>
+        <Button
+          onClick={onSubmit}
+          disabled={isSubmitting}
+          sx={componentStyles.buttonPrimary}
+          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+        >
           {selectedDecompte ? 'Modifier' : 'Créer'}
         </Button>
       </DialogActions>

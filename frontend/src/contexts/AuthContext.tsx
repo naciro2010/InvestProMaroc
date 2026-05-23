@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react'
 import { AxiosError } from 'axios'
 import { authAPI } from '@/lib/api'
 import authService, { StoredUser } from '@/lib/authService'
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /**
    * Connexion utilisateur.
    */
-  const login = async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     try {
       const { data } = await authAPI.login(username, password)
 
@@ -129,12 +129,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       throw new Error('Une erreur est survenue lors de la connexion')
     }
-  }
+  }, [])
 
   /**
    * Inscription utilisateur.
    */
-  const register = async (data: {
+  const register = useCallback(async (data: {
     username: string
     email: string
     password: string
@@ -176,12 +176,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       throw new Error('Une erreur est survenue lors de l\'inscription')
     }
-  }
+  }, [])
 
   /**
    * Déconnexion utilisateur.
    */
-  const logout = () => {
+  const logout = useCallback(() => {
     // Arrêter la vérification proactive
     authService.stopTokenExpirationCheck()
 
@@ -191,38 +191,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       showToast: true,
       redirect: true,
     })
-  }
+  }, [])
 
   /**
    * Vérifie si l'utilisateur a un rôle spécifique.
    */
-  const hasRole = (role: UserRole): boolean => {
-    return user?.roles?.includes(role) ?? false
-  }
+  const hasRole = useCallback(
+    (role: UserRole): boolean => user?.roles?.includes(role) ?? false,
+    [user]
+  )
 
   /**
    * Vérifie si l'utilisateur a au moins un des rôles spécifiés.
    */
-  const hasAnyRole = (roles: UserRole[]): boolean => {
-    return roles.some(role => user?.roles?.includes(role))
-  }
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user && !authService.isTokenExpired(authService.getAccessToken()),
-        isLoading,
-        login,
-        register,
-        logout,
-        hasRole,
-        hasAnyRole,
-        isAdmin: hasRole('ADMIN'),
-        isManager: hasAnyRole(['ADMIN', 'MANAGER']),
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const hasAnyRole = useCallback(
+    (roles: UserRole[]): boolean => roles.some((role) => user?.roles?.includes(role) ?? false),
+    [user]
   )
+
+  const value = useMemo<AuthContextType>(
+    () => ({
+      user,
+      isAuthenticated: !!user && !authService.isTokenExpired(authService.getAccessToken()),
+      isLoading,
+      login,
+      register,
+      logout,
+      hasRole,
+      hasAnyRole,
+      isAdmin: hasRole('ADMIN'),
+      isManager: hasAnyRole(['ADMIN', 'MANAGER']),
+    }),
+    [user, isLoading, login, register, logout, hasRole, hasAnyRole]
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

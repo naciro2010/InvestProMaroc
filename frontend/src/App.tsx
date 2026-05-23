@@ -115,7 +115,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       {children}
     </ErrorBoundary>
   ) : (
-    <Navigate to="/login" />
+    <Navigate to="/login" replace />
   )
 }
 
@@ -127,7 +127,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     return <PageLoader />
   }
 
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" />
+  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />
 }
 
 // Create React Query client

@@ -10,6 +10,7 @@ import {
   DialogActions,
   MenuItem,
   Typography,
+  CircularProgress,
 } from '@mui/material'
 import { AttachMoney } from '@mui/icons-material'
 import FileUpload from '@/components/ui/FileUpload'
@@ -24,6 +25,7 @@ interface PaiementFormDialogProps {
   selectedPaiement: Paiement | null
   formData: PaiementFormData
   onFormDataChange: (data: PaiementFormData) => void
+  isSubmitting?: boolean
 }
 
 const PaiementFormDialog = ({
@@ -33,6 +35,7 @@ const PaiementFormDialog = ({
   selectedPaiement,
   formData,
   onFormDataChange,
+  isSubmitting = false,
 }: PaiementFormDialogProps) => {
   return (
     <Dialog
@@ -142,8 +145,13 @@ const PaiementFormDialog = ({
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} sx={componentStyles.buttonSecondary}>Annuler</Button>
-        <Button onClick={onSubmit} sx={componentStyles.buttonPrimary}>
+        <Button onClick={onClose} disabled={isSubmitting} sx={componentStyles.buttonSecondary}>Annuler</Button>
+        <Button
+          onClick={onSubmit}
+          disabled={isSubmitting}
+          sx={componentStyles.buttonPrimary}
+          startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+        >
           {selectedPaiement ? 'Modifier' : 'Creer'}
         </Button>
       </DialogActions>

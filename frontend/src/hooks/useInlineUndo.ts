@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 interface UndoState {
   isUndoAvailable: boolean
@@ -27,6 +27,10 @@ export function useInlineUndo(options: UseInlineUndoOptions = {}) {
     if (timerRef.current) clearTimeout(timerRef.current)
     if (intervalRef.current) clearInterval(intervalRef.current)
   }, [])
+
+  // Arrête les timers au démontage pour éviter un setState sur composant démonté
+  // (et un onConfirm déclenché après la disparition du composant).
+  useEffect(() => clearTimers, [clearTimers])
 
   const trackChange = useCallback(
     (fieldName: string, previousValue: unknown, newValue: unknown) => {

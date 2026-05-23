@@ -23,6 +23,7 @@ interface PieceJointeDTO {
 interface ConventionDocumentsCardProps {
   conventionId: number
   canEdit?: boolean
+  onCountChange?: (count: number) => void
 }
 
 const formatSize = (bytes: number): string => {
@@ -38,7 +39,7 @@ const getFileIcon = (mime: string) => {
   return <File size={16} color={colors.primary[600]} />
 }
 
-const ConventionDocumentsCard = ({ conventionId, canEdit = true }: ConventionDocumentsCardProps) => {
+const ConventionDocumentsCard = ({ conventionId, canEdit = true, onCountChange }: ConventionDocumentsCardProps) => {
   const { showSuccess, showError } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [documents, setDocuments] = useState<PieceJointeDTO[]>([])
@@ -56,6 +57,8 @@ const ConventionDocumentsCard = ({ conventionId, canEdit = true }: ConventionDoc
   }, [conventionId])
 
   useEffect(() => { loadDocuments() }, [loadDocuments])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onCountChange?.(documents.length) }, [documents.length])
 
   const handleUpload = async (file: File) => {
     setUploading(true)

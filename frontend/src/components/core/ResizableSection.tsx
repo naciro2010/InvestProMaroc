@@ -30,6 +30,12 @@ interface ResizableSectionProps {
   actions?: ReactNode
   /** Remove padding from content area (default: false) */
   noPadding?: boolean
+  /**
+   * Autorise le débordement visible du conteneur (overflow: visible).
+   * Nécessaire pour qu'un en-tête collant (sticky) interne se positionne
+   * par rapport au viewport plutôt que d'être clippé. Default: false.
+   */
+  overflowVisible?: boolean
 }
 
 interface PersistedState {
@@ -93,6 +99,7 @@ const ResizableSection = ({
   children,
   actions,
   noPadding = false,
+  overflowVisible = false,
 }: ResizableSectionProps) => {
   const initial = loadPersistedState(storageKey, defaultCollapsed, defaultHeight)
   const [collapsed, setCollapsed] = useState<boolean>(initial.collapsed)
@@ -153,7 +160,7 @@ const ResizableSection = ({
   const styles = componentStyles.resizableSection
 
   return (
-    <Box sx={styles.container}>
+    <Box sx={{ ...styles.container, ...(overflowVisible ? { overflow: 'visible' } : {}) }}>
       {/* Header */}
       <Box
         sx={collapsed ? styles.headerCollapsed : styles.header}

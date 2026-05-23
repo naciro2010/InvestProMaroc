@@ -28,6 +28,7 @@ interface ConventionImputationsCardProps {
   canEdit?: boolean
   refreshKey?: number
   onRefresh?: () => void
+  onCountChange?: (count: number) => void
 }
 
 const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('fr-FR') : '-'
@@ -45,7 +46,7 @@ const formatCurrency = (amount: number) =>
  * ConventionImputationsCard - Pure content for ResizableSection.
  * No Paper wrapper or redundant header. Dialog extracted to ImputationFormDialog.
  */
-const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit = false, refreshKey, onRefresh }: ConventionImputationsCardProps) => {
+const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit = false, refreshKey, onRefresh, onCountChange }: ConventionImputationsCardProps) => {
   const [imputations, setImputations] = useState<ImputationPrevisionnelle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -69,6 +70,8 @@ const ConventionImputationsCard = ({ conventionId, conventionBudget = 0, canEdit
   useEffect(() => {
     loadImputations()
   }, [conventionId, refreshKey])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onCountChange?.(imputations.length) }, [imputations.length])
 
   const handleDelete = async (imputationId: number) => {
     if (!window.confirm('Supprimer cette imputation ?')) return

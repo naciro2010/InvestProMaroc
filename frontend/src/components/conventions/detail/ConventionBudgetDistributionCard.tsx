@@ -22,6 +22,7 @@ interface Props {
   canEdit: boolean
   refreshKey?: number
   onDataChanged?: () => void
+  onCountChange?: (count: number) => void
 }
 
 /* ──── Helpers ──── */
@@ -48,7 +49,7 @@ const montantCol = { ...td, ...tnum, whiteSpace: 'nowrap' as const }
 
 /* ──── Component ──── */
 
-const ConventionBudgetDistributionCard = ({ conventionId, canEdit, refreshKey, onDataChanged }: Props) => {
+const ConventionBudgetDistributionCard = ({ conventionId, canEdit, refreshKey, onDataChanged, onCountChange }: Props) => {
   const [distribution, setDistribution] = useState<BudgetLigneWithImputationsDTO[]>([])
   const [categories, setCategories] = useState<CategorieDepenseListDTO[]>([])
   const [projets, setProjets] = useState<ProjetOption[]>([])
@@ -87,6 +88,8 @@ const ConventionBudgetDistributionCard = ({ conventionId, canEdit, refreshKey, o
   }, [conventionId, refreshKey])
 
   useEffect(() => { loadData() }, [loadData])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onCountChange?.(distribution.length) }, [distribution.length])
 
   const refresh = async () => { await loadData(); onDataChanged?.() }
 

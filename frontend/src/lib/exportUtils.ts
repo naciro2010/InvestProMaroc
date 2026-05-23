@@ -120,8 +120,8 @@ export async function exportToPdf(options: PdfExportOptions): Promise<void> {
         ${styles}
         @media print {
           body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-          .pdf-header { text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #2D4A6F; }
-          .pdf-header h1 { font-size: 22px; color: #2D4A6F; margin: 0 0 4px 0; }
+          .pdf-header { text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #14a374; }
+          .pdf-header h1 { font-size: 22px; color: #14a374; margin: 0 0 4px 0; }
           .pdf-header p { font-size: 12px; color: #666; margin: 0; }
           .pdf-footer { text-align: center; font-size: 10px; color: #999; margin-top: 24px; padding-top: 12px; border-top: 1px solid #eee; }
           nav, button, .MuiDrawer-root, .no-print { display: none !important; }

@@ -37,9 +37,9 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #f4f5f7 0%, #edf1f7 40%, #d5dde9 100%)' }}>
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-[0.04]" style={{ background: 'radial-gradient(circle, #2D4A6F 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, #476693 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(160deg, #f8fafc 0%, #f1f5f9 40%, #e8eaee 100%)' }}>
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-[0.04]" style={{ background: 'radial-gradient(circle, #14a374 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, #059669 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -65,7 +65,7 @@ const LoginPage = () => {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100" style={{ boxShadow: '0 8px 32px -8px rgba(45, 74, 111, 0.12), 0 0 1px rgba(45, 74, 111, 0.08)' }}>
+        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100" style={{ boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04)' }}>
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}

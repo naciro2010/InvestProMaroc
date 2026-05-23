@@ -17,172 +17,172 @@
 
 export const colors = {
   /**
-   * Primaire - Bleu ardoise InvestPro (deep slate blue - ERP financier)
+   * Primaire - Emeraude chirurgical (private banking, profondeur premium)
    */
   primary: {
-    25: '#f5f7fa',
-    50: '#edf1f7',
-    100: '#d5dde9',
-    200: '#adbdd4',
-    300: '#849cbd',
-    400: '#617fa8',
-    500: '#476693',
-    600: '#2D4A6F', // Main - InvestPro slate blue
-    700: '#253d5c',
-    800: '#1b2e45',
-    900: '#131f30',
+    25: '#f3fbf7',
+    50: '#e7f7ef',
+    100: '#c8ecdc',
+    200: '#97dcc0',
+    300: '#5fcca0',
+    400: '#2dbf90',
+    500: '#1bb482',
+    600: '#14a374', // Main - accent emeraude
+    700: '#059669', // accent-deep (hover)
+    800: '#047857',
+    900: '#065f46',
   },
 
   /**
-   * Succes - Vert professionnel (sature pour visibilite)
+   * Succes - Emeraude (aligne sur l'accent de marque)
    */
   success: {
-    25: '#f2f9f4',
-    50: '#e4f3e8',
-    100: '#c5e5ce',
-    200: '#92d0a2',
-    300: '#60ba78',
-    400: '#3fa75a',
-    500: '#31924a',
-    600: '#28793d', // Main
-    700: '#216533',
-    800: '#174925',
-    900: '#10341b',
+    25: '#f3fbf7',
+    50: '#ecfdf5',
+    100: '#c8ecdc',
+    200: '#97dcc0',
+    300: '#5fcca0',
+    400: '#2dbf90',
+    500: '#16b386',
+    600: '#14a374', // Main
+    700: '#047857',
+    800: '#065f46',
+    900: '#064e3b',
   },
 
   /**
-   * Danger - Rouge professionnel (sature pour visibilite)
+   * Danger - Rouge financier (WCAG AA sur fond clair)
    */
   danger: {
-    25: '#fdf6f5',
-    50: '#fbeceb',
-    100: '#f4d2cf',
-    200: '#e5a8a0',
-    300: '#d47e74',
-    400: '#c45e52',
-    500: '#b04840',
-    600: '#963832', // Main
-    700: '#7d2e2a',
-    800: '#58201e',
-    900: '#3e1716',
+    25: '#fef5f5',
+    50: '#fef2f2',
+    100: '#fde0e0',
+    200: '#fab8b8',
+    300: '#f78a8a',
+    400: '#f26363',
+    500: '#ef4444', // Main
+    600: '#dc2626',
+    700: '#b91c1c',
+    800: '#991b1b',
+    900: '#7f1d1d',
   },
 
   /**
-   * Warning - Ocre dore (sature pour meilleure visibilite)
+   * Warning - Ambre (WCAG AA sur fond clair)
    */
   warning: {
-    25: '#fdf9f2',
-    50: '#faf2e0',
-    100: '#f2e0b0',
-    200: '#e5c56e',
-    300: '#d8ab3e',
-    400: '#ca9825',
-    500: '#b3861c',
-    600: '#967015', // Main
-    700: '#7c5c11',
-    800: '#533d0c',
-    900: '#3b2c08',
+    25: '#fffcf2',
+    50: '#fffbeb',
+    100: '#fdf0c8',
+    200: '#fbdf8c',
+    300: '#f8c84e',
+    400: '#f6b020',
+    500: '#f59e0b', // Main
+    600: '#d97706',
+    700: '#b45309',
+    800: '#92400e',
+    900: '#78350f',
   },
 
   /**
-   * Info - Bleu cyan (frais, informatif)
+   * Info - Bleu (frais, informatif)
    */
   info: {
-    25: '#f4f9fb',
-    50: '#e8f2f6',
-    100: '#cbe2ec',
-    200: '#9dcada',
-    300: '#6fb2c8',
-    400: '#4d9db6',
-    500: '#3888a0',
-    600: '#2e7187', // Main
-    700: '#265e70',
-    800: '#1b424e',
-    900: '#133039',
+    25: '#f5f9ff',
+    50: '#eff6ff',
+    100: '#dbeafe',
+    200: '#bfdbfe',
+    300: '#93c5fd',
+    400: '#60a5fa',
+    500: '#3b82f6', // Main
+    600: '#2563eb',
+    700: '#1d4ed8',
+    800: '#1e40af',
+    900: '#1e3a8a',
   },
 
   /**
-   * Purple - Accent secondaire (indigo riche)
+   * Purple - Accent secondaire (engine IA)
    */
   purple: {
-    25: '#f7f6fb',
-    50: '#efedf6',
-    100: '#dcd8ed',
-    200: '#b8b0d8',
-    300: '#968ac3',
-    400: '#7a6baf',
-    500: '#65569a',
-    600: '#544784', // Main
-    700: '#463b6e',
-    800: '#312a4e',
-    900: '#241f39',
+    25: '#f7f5fe',
+    50: '#f3effe',
+    100: '#e9e0fd',
+    200: '#d4c4fb',
+    300: '#b9a0f7',
+    400: '#9d7af2',
+    500: '#8b5cf6', // Main
+    600: '#7c3aed',
+    700: '#6d28d9',
+    800: '#5b21b6',
+    900: '#4c1d95',
   },
 
   /**
-   * Gris - Palette neutre (tons bleu-gris, cohesion avec primary)
+   * Gris - Palette neutre "ink" (noir profond, cohesion premium)
    */
   neutral: {
     0: '#ffffff',
-    25: '#f9fafb',
-    50: '#f4f5f7',
-    100: '#ebedf0',
-    200: '#dadde2',
-    300: '#b4b9c1',
-    400: '#8a909a',
-    500: '#676d79',
-    600: '#4c5260',
-    700: '#363b47',
-    800: '#222730',
-    900: '#14171d',
+    25: '#f8fafc',
+    50: '#f1f5f9',
+    100: '#e8eaee',
+    200: '#c4c8d2',
+    300: '#a0a6b4',
+    400: '#7d8494',
+    500: '#5a6275',
+    600: '#3d4556',
+    700: '#2a3142',
+    800: '#1c2333',
+    900: '#0a0f1a',
   },
 
   // Aliases
   gray: {
-    50: '#f4f5f7',
-    100: '#ebedf0',
-    200: '#dadde2',
-    300: '#b4b9c1',
-    400: '#8a909a',
-    500: '#676d79',
-    600: '#4c5260',
-    700: '#363b47',
-    800: '#222730',
-    900: '#14171d',
+    50: '#f1f5f9',
+    100: '#e8eaee',
+    200: '#c4c8d2',
+    300: '#a0a6b4',
+    400: '#7d8494',
+    500: '#5a6275',
+    600: '#3d4556',
+    700: '#2a3142',
+    800: '#1c2333',
+    900: '#0a0f1a',
   },
 
-  /** Fond de page - gris bleu tres clair */
-  background: '#f4f5f7',
+  /** Fond de page - ink-02 */
+  background: '#f8fafc',
 
   /** Fond blanc */
   surface: '#ffffff',
 
   /** Sidebar */
-  sidebarBg: '#f3f5f8',
+  sidebarBg: '#f8fafc',
 
-  /** Bordure standard - douce, bleu-gris */
-  border: '#dfe1e6',
+  /** Bordure standard - ink-10 */
+  border: '#e8eaee',
 
   /** Bordure subtile */
-  borderSubtle: '#ebedf0',
+  borderSubtle: '#f1f5f9',
 
   /** Separateur */
-  divider: '#edeef1',
+  divider: '#f1f5f9',
 
-  /** Texte principal - gris ardoise fonce */
-  textPrimary: '#222730',
+  /** Texte principal - ink */
+  textPrimary: '#0a0f1a',
 
-  /** Texte secondaire */
-  textSecondary: '#676d79',
+  /** Texte secondaire - ink-50 */
+  textSecondary: '#5a6275',
 
-  /** Texte desactive */
-  textDisabled: '#8a909a',
+  /** Texte desactive - ink-40 */
+  textDisabled: '#7d8494',
 
   /** Texte sur fond colore */
   textOnColor: '#ffffff',
 
-  /** Lien - bleu ardoise primaire */
-  link: '#2D4A6F',
-  linkHover: '#253d5c',
+  /** Lien - accent emeraude */
+  link: '#14a374',
+  linkHover: '#059669',
 } as const
 
 // ==================== TYPOGRAPHIE ====================
@@ -193,7 +193,7 @@ export const typography = {
    * Priorité: Inter > System > fallbacks
    */
   fontFamily:
-    "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "'Instrument Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 
   fontFamilyMono:
     "'IBM Plex Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace",
@@ -318,19 +318,19 @@ export const shadows = {
   /** Pas d'ombre */
   none: 'none',
   /** Très subtile - bordure virtuelle */
-  xs: '0 1px 2px 0 rgba(9, 30, 66, 0.04)',
+  xs: '0 1px 2px rgba(15, 23, 42, 0.04)',
   /** Légère - cartes au repos */
-  sm: '0 1px 3px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.08)',
+  sm: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)',
   /** Standard - cartes hover */
-  md: '0 4px 8px -2px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.08)',
+  md: '0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)',
   /** Élevée - dropdowns, popovers */
-  lg: '0 8px 16px -4px rgba(9, 30, 66, 0.12), 0 0 1px rgba(9, 30, 66, 0.12)',
+  lg: '0 8px 24px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.03)',
   /** Très élevée - modals */
-  xl: '0 16px 32px -8px rgba(9, 30, 66, 0.16), 0 0 1px rgba(9, 30, 66, 0.12)',
-  /** Focus ring - utilise primary */
-  focus: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.primary[400]}`,
+  xl: '0 24px 60px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06)',
+  /** Focus ring - anneau double (blanc + accent) */
+  focus: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.primary[600]}`,
   /** Focus ring danger */
-  focusDanger: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.danger[400]}`,
+  focusDanger: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.danger[500]}`,
 } as const
 
 // ==================== BORDURES ====================
@@ -339,14 +339,14 @@ export const borders = {
   /** Rayon standard */
   radius: {
     none: '0',
-    xs: '2px',
-    sm: '3px',      // Badges, tags
-    base: '4px',    // Boutons, inputs
-    md: '6px',      // Cards petites
-    lg: '8px',      // Cards standard
-    xl: '12px',     // Panels, modals
+    xs: '3px',      // radius-xs
+    sm: '4px',      // Badges, tags (radius-sm)
+    base: '6px',    // Boutons, inputs (radius-md)
+    md: '6px',      // Cards petites (radius-md)
+    lg: '8px',      // Cards standard (radius-lg)
+    xl: '12px',     // Panels, modals (radius-xl)
     '2xl': '16px',  // Large panels
-    full: '9999px', // Pills, avatars
+    full: '9999px', // Pills, avatars (radius-pill)
   },
 
   /** Épaisseurs */

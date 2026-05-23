@@ -1,3 +1,141 @@
+/* ====================================================================
+   Design tokens canoniques — identité visuelle partagée (private banking).
+   Source unique pour couleurs, rayons, ombres, anneaux focus, surfaces.
+   Permet de réutiliser tels quels les composants de l'app jumelle.
+   ==================================================================== */
+:root {
+  --font-display: 'Instrument Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Menlo', monospace;
+
+  /* Noir profond */
+  --ink: #0a0f1a;
+  --ink-90: #131927;
+  --ink-80: #1c2333;
+  --ink-70: #2a3142;
+  --ink-60: #3d4556;
+  --ink-50: #5a6275;
+  --ink-40: #7d8494;
+  --ink-30: #a0a6b4;
+  --ink-20: #c4c8d2;
+  --ink-10: #e8eaee;
+  --ink-05: #f1f5f9;
+  --ink-02: #f8fafc;
+
+  /* Emeraude chirurgical — profondeur "private banking" */
+  --accent: #14a374;
+  --accent-deep: #059669;
+  --accent-glow: rgba(20, 163, 116, 0.12);
+  --accent-muted: rgba(20, 163, 116, 0.06);
+
+  /* Semantique */
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --warning: #f59e0b;
+
+  /* Tints centralisees */
+  --danger-tint:        rgba(239, 68, 68, 0.08);
+  --danger-tint-strong: rgba(239, 68, 68, 0.25);
+  --danger-tint-soft:   rgba(239, 68, 68, 0.04);
+  --danger-tint-bg:     rgba(239, 68, 68, 0.10);
+  --warning-tint:       rgba(245, 158, 11, 0.10);
+  --warning-tint-soft:  rgba(245, 158, 11, 0.06);
+  --info-tint:          rgba(59, 130, 246, 0.12);
+  --accent-tint:        rgba(20, 163, 116, 0.10);
+  --accent-tint-strong: rgba(20, 163, 116, 0.25);
+  --accent-tint-soft:   rgba(20, 163, 116, 0.06);
+  --accent-tint-border: rgba(20, 163, 116, 0.15);
+  --accent-tint-ring:   rgba(20, 163, 116, 0.20);
+  --backdrop-dark:      rgba(15, 23, 42, 0.42);
+  --shadow-modal:       0 24px 60px rgba(15, 23, 42, 0.20), 0 2px 6px rgba(15, 23, 42, 0.08);
+  --shadow-card-hover:  0 8px 24px rgba(15, 23, 42, 0.06);
+  --danger-fg-strong:   #b91c1c;
+  --warning-fg-strong:  #b45309;
+
+  /* Aliases */
+  --slate-950: #020617; --slate-900: var(--ink); --slate-800: var(--ink-80);
+  --slate-700: var(--ink-70); --slate-600: var(--ink-60); --slate-500: var(--ink-50);
+  --slate-400: var(--ink-40); --slate-300: var(--ink-20); --slate-200: var(--ink-10);
+  --slate-100: var(--ink-05); --slate-50: var(--ink-02);
+  --teal-700: var(--accent-deep); --teal-600: var(--accent); --teal-500: #14b8a6;
+  --teal-50: rgba(20,163,116,0.06);
+  --red-600: var(--danger); --red-100: #fee2e2; --red-50: var(--danger-bg);
+  --amber-600: var(--warning); --amber-50: rgba(245,158,11,0.06);
+  --emerald-600: var(--success); --emerald-50: rgba(20,163,116,0.06);
+  --blue-600: var(--info); --blue-50: rgba(59,130,246,0.06);
+  --warning-bg: #fffbeb;
+  --success: #14a374;
+  --success-bg: #ecfdf5;
+  --info: #3b82f6;
+  --info-bg: #eff6ff;
+
+  /* Status tokens — WCAG AA sur fond clair tint */
+  --status-ok:        #047857;
+  --status-ko:        #b91c1c;
+  --status-warn:      #92400e;
+  --status-na:        #475569;
+  --status-pending:   #1e40af;
+  --status-info:      #1e40af;
+  --status-ok-tint:   rgba(4, 120, 87, 0.05);
+  --status-ko-tint:   rgba(185, 28, 28, 0.05);
+  --status-warn-tint: rgba(146, 64, 14, 0.06);
+  --status-na-tint:   rgba(71, 85, 105, 0.05);
+  --status-ok-halo:   rgba(4, 120, 87, 0.12);
+  --status-ko-halo:   rgba(185, 28, 28, 0.12);
+  --status-warn-halo: rgba(146, 64, 14, 0.12);
+  --status-na-halo:   rgba(71, 85, 105, 0.12);
+
+  /* Engine palette : systeme / IA / humain */
+  --engine-system-fg: #475569;
+  --engine-system-dot: #64748b;
+  --engine-system-bg: rgba(100, 116, 139, 0.08);
+  --engine-system-border: rgba(100, 116, 139, 0.22);
+  --engine-ai-fg: #6d28d9;
+  --engine-ai-dot: #8b5cf6;
+  --engine-ai-bg: rgba(139, 92, 246, 0.08);
+  --engine-ai-border: rgba(139, 92, 246, 0.22);
+  --engine-human-fg: #b45309;
+  --engine-human-dot: #f59e0b;
+  --engine-human-bg: rgba(245, 158, 11, 0.08);
+  --engine-human-border: rgba(245, 158, 11, 0.22);
+
+  /* Typographie */
+  --text-display: 26px;
+  --text-h1:      18px;
+  --text-h2:      14px;
+  --text-body:    13px;
+  --text-meta:    11px;
+
+  /* Radius */
+  --radius-xs:   3px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+  --radius-xl:  12px;
+  --radius-pill: 999px;
+
+  /* Ombres tres contenues (max 0.06) */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02);
+  --shadow-md: 0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.03);
+  --shadow-xl: 0 24px 60px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06);
+
+  /* Anneau focus double (blanc + accent) */
+  --focus-ring: 0 0 0 2px #fff, 0 0 0 4px var(--accent);
+  --focus-ring-danger: 0 0 0 2px #fff, 0 0 0 4px var(--danger);
+
+  /* Surfaces */
+  --surface:        #ffffff;
+  --surface-muted:  var(--ink-02);
+  --surface-sunken: var(--ink-05);
+  --surface-hover:  rgba(15, 23, 42, 0.02);
+
+  /* Bordures graduees */
+  --border-soft:   rgba(15, 23, 42, 0.06);
+  --border-medium: rgba(15, 23, 42, 0.10);
+  --border-strong: rgba(15, 23, 42, 0.16);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,7 +146,12 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    @apply font-sans antialiased;
+    background: var(--ink-02);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.55;
+    font-feature-settings: 'cv02', 'cv03', 'cv04';
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -107,7 +250,7 @@
 
 /* Selection color */
 ::selection {
-  background: rgba(45, 74, 111, 0.15);
+  background: var(--accent-glow);
   color: inherit;
 }
 
@@ -132,9 +275,9 @@
 
 /* Focus ring - consistent across all interactive elements */
 *:focus-visible {
-  outline: 2px solid rgba(45, 74, 111, 0.4);
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 /* Smooth page transitions */
@@ -158,11 +301,11 @@
 .erp-section-title {
   font-size: 0.6875rem;
   font-weight: 600;
-  color: #676d79;
+  color: var(--ink-50);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding-bottom: 6px;
-  border-bottom: 2px solid #2D4A6F;
+  border-bottom: 2px solid var(--accent);
   margin-bottom: 12px;
   display: inline-block;
 }

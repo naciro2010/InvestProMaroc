@@ -57,19 +57,19 @@ const themeOptions: ThemeOptions = {
 
   typography: {
     fontFamily: typography.fontFamily,
-    fontSize: 14,
-    h1: { fontSize: 28, fontWeight: 600, color: colors.textPrimary, lineHeight: 1.3 },
-    h2: { fontSize: 24, fontWeight: 600, color: colors.textPrimary, lineHeight: 1.3 },
-    h3: { fontSize: 20, fontWeight: 600, color: colors.neutral[700], lineHeight: 1.4 },
-    h4: { fontSize: 18, fontWeight: 600, color: colors.neutral[700], lineHeight: 1.4 },
-    h5: { fontSize: 16, fontWeight: 600, color: colors.neutral[600], lineHeight: 1.4 },
+    fontSize: 13,
+    h1: { fontSize: 26, fontWeight: 600, color: colors.textPrimary, lineHeight: 1.3 },
+    h2: { fontSize: 22, fontWeight: 600, color: colors.textPrimary, lineHeight: 1.3 },
+    h3: { fontSize: 18, fontWeight: 600, color: colors.neutral[700], lineHeight: 1.4 },
+    h4: { fontSize: 16, fontWeight: 600, color: colors.neutral[700], lineHeight: 1.4 },
+    h5: { fontSize: 15, fontWeight: 600, color: colors.neutral[600], lineHeight: 1.4 },
     h6: { fontSize: 14, fontWeight: 600, color: colors.neutral[600], lineHeight: 1.4 },
     subtitle1: { fontSize: 14, fontWeight: 600, color: colors.neutral[700], lineHeight: 1.5 },
     subtitle2: { fontSize: 13, fontWeight: 600, color: colors.neutral[600], lineHeight: 1.5 },
-    body1: { fontSize: 14, color: colors.neutral[700], lineHeight: 1.5 },
-    body2: { fontSize: 13, color: colors.neutral[600], lineHeight: 1.5 },
-    caption: { fontSize: 12, color: colors.neutral[500], lineHeight: 1.4 },
-    button: { textTransform: 'none' as const, fontWeight: 500, fontSize: 14 },
+    body1: { fontSize: 13, color: colors.neutral[700], lineHeight: 1.55 },
+    body2: { fontSize: 13, color: colors.neutral[600], lineHeight: 1.55 },
+    caption: { fontSize: 11, color: colors.neutral[500], lineHeight: 1.4 },
+    button: { textTransform: 'none' as const, fontWeight: 500, fontSize: 13 },
   },
 
   spacing: 8,
@@ -80,12 +80,12 @@ const themeOptions: ThemeOptions = {
 
   shadows: [
     'none',
-    '0 1px 3px rgba(0,0,0,0.06)',
-    '0 2px 4px rgba(0,0,0,0.06)',
-    '0 3px 6px rgba(0,0,0,0.07)',
-    '0 4px 8px rgba(0,0,0,0.07)',
-    '0 6px 12px rgba(0,0,0,0.08)',
-    '0 8px 16px rgba(0,0,0,0.08)',
+    '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)',
+    '0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)',
+    '0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)',
+    '0 8px 24px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.03)',
+    '0 8px 24px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.03)',
+    '0 24px 60px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06)',
     'none', 'none', 'none', 'none', 'none', 'none',
     'none', 'none', 'none', 'none', 'none', 'none',
     'none', 'none', 'none', 'none', 'none', 'none',
@@ -116,14 +116,14 @@ const themeOptions: ThemeOptions = {
     MuiPaper: {
       styleOverrides: {
         root: { backgroundImage: 'none' },
-        elevation1: { boxShadow: '0 1px 3px rgba(0,0,0,0.06)' },
+        elevation1: { boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)' },
       },
     },
 
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)',
           border: `1px solid ${colors.border}`,
         },
       },
@@ -158,7 +158,7 @@ const themeOptions: ThemeOptions = {
 
     MuiTableCell: {
       styleOverrides: {
-        root: { borderColor: colors.neutral[200], fontSize: 14 },
+        root: { borderColor: colors.neutral[200], fontSize: 13 },
         head: { fontWeight: 600, color: colors.neutral[700] },
       },
     },
@@ -189,7 +189,7 @@ const themeOptions: ThemeOptions = {
         root: {
           textTransform: 'none' as const,
           fontWeight: 500,
-          fontSize: 14,
+          fontSize: 13,
           color: colors.neutral[600],
           '&.Mui-selected': { color: colors.primary[600] },
         },
@@ -198,7 +198,7 @@ const themeOptions: ThemeOptions = {
 
     MuiAlert: {
       styleOverrides: {
-        root: { borderRadius: 4 },
+        root: { borderRadius: 6 },
         standardInfo: { backgroundColor: colors.info[50], color: colors.textPrimary },
         standardSuccess: { backgroundColor: colors.success[50], color: colors.textPrimary },
         standardWarning: { backgroundColor: colors.warning[50], color: colors.textPrimary },

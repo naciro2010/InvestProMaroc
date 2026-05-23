@@ -276,10 +276,10 @@ const ConventionDetailPageModern = () => {
 
         <Container maxWidth="xl" sx={{ py: 2 }}>
           {/* ERP Layout: Main content + Sidebar */}
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexDirection: { xs: 'column', lg: 'row' } }}>
 
             {/* ═══════ MAIN CONTENT (left) ═══════ */}
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
               <FormView isEditing={false} statusSteps={effectiveSteps} currentStatus={convention.statut}>
 
                 {/* Header with priority, responsible, deadline */}
@@ -355,6 +355,7 @@ const ConventionDetailPageModern = () => {
                 {/* Tabs: Partenaires, Subventions, Lignes de depenses, Projets, Marches, etc. */}
                 <ConventionRealisationSection
                   convention={convention} canEdit
+                  enrichedData={enrichedData}
                   onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
                   onAddPartenaire={() => { setEditPartenaireData(null); setAddPartenaireDialogOpen(true) }}
                   onEditPartenaire={(p) => {
@@ -382,12 +383,14 @@ const ConventionDetailPageModern = () => {
               </FormView>
             </Box>
 
-            {/* ═══════ SIDEBAR (right) ═══════ */}
+            {/* ═══════ SIDEBAR (right on desktop, stacked below on mobile/tablet) ═══════ */}
             <Box sx={{
-              width: 280, flexShrink: 0,
-              display: { xs: 'none', lg: 'flex' },
-              flexDirection: 'column', gap: 2,
-              position: 'sticky', top: 80,
+              width: { xs: '100%', lg: 280 }, flexShrink: 0,
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row', lg: 'column' },
+              gap: 2,
+              position: { lg: 'sticky' }, top: { lg: 80 },
+              '& > *': { flex: { sm: 1, lg: 'unset' }, minWidth: 0 },
             }}>
               {/* Quick Summary */}
               <ConventionQuickSummary convention={convention} enrichedData={enrichedData} />

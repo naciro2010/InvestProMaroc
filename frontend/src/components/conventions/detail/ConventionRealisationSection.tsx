@@ -31,6 +31,10 @@ interface ProjetAssociation {
   projetId: number; projetCode: string; projetNom: string; projetBudgetTotal: number; projetStatut: string
 }
 
+interface RealisationEnriched {
+  nombrePartenaires?: number
+}
+
 interface ConventionRealisationSectionProps {
   convention: ConventionBase
   canEdit?: boolean
@@ -38,6 +42,8 @@ interface ConventionRealisationSectionProps {
   refreshKey?: number
   onAddPartenaire?: () => void
   onEditPartenaire?: (partenaire: PartenaireEditRef) => void
+  /** Compteurs enrichis (pour les badges d'onglets non chargés au niveau section). */
+  enrichedData?: RealisationEnriched | null
 }
 
 interface PartenaireEditRef {
@@ -58,7 +64,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR')
 
 const ConventionRealisationSection = ({
   convention, canEdit = false, onRefresh, refreshKey,
-  onAddPartenaire, onEditPartenaire,
+  onAddPartenaire, onEditPartenaire, enrichedData,
 }: ConventionRealisationSectionProps) => {
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
@@ -73,12 +79,16 @@ const ConventionRealisationSection = ({
   const [editingSc, setEditingSc] = useState<SousConvention | null>(null)
   const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | null; id: number | null }>({ open: false, type: null, id: null })
 
+  // Chargé une fois par convention. Les mutations (lier/délier projet/marché,
+  // créer une sous-convention/avenant) rechargent déjà leur propre jeu de
+  // données, donc inutile de tout refetcher à chaque bump de refreshKey.
   useEffect(() => {
     loadAvenants()
     loadSousConventions()
     loadProjets()
     loadMarches()
-  }, [convention.id, refreshKey])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convention.id])
 
   const loadAvenants = async () => { try { const r = await avenantConventionsAPI.getByConvention(convention.id); setAvenants(r.data.data || r.data || []) } catch { setAvenants([]) } }
   const loadSousConventions = async () => { try { const r = await conventionsAPI.getSousConventions(convention.id); setSousConventions(r.data.data || []) } catch { /* ignored */ } }
@@ -118,11 +128,17 @@ const ConventionRealisationSection = ({
         storageKey="conv-real-notebook"
         icon={<ListAlt sx={{ color: colors.success[500], fontSize: 16 }} />}
         noPadding
+        overflowVisible
       >
         <Notebook
+          syncParam="tab"
+          sticky
+          stickyTop={{ xs: 56, lg: 0 }}
           tabs={[
             {
+              id: 'partenaires',
               label: 'Partenaires',
+              count: enrichedData?.nombrePartenaires,
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
                   <ConventionPartenairesCard
@@ -139,6 +155,7 @@ const ConventionRealisationSection = ({
               ),
             },
             {
+              id: 'subventions',
               label: 'Subventions',
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
@@ -153,6 +170,7 @@ const ConventionRealisationSection = ({
               ),
             },
             {
+              id: 'versements',
               label: 'Versements',
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
@@ -167,6 +185,7 @@ const ConventionRealisationSection = ({
               ),
             },
             {
+              id: 'lignes',
               label: 'Lignes de depenses',
               content: (
                 <ConventionBudgetDistributionCard
@@ -178,14 +197,17 @@ const ConventionRealisationSection = ({
               ),
             },
             {
+              id: 'projets',
               label: 'Projets', count: projets.length,
               content: <ConventionProjetsTab projets={projets} onLinkProjet={() => setLinkProjetOpen(true)} onUnlinkProjet={(pid) => setConfirmState({ open: true, type: 'unlinkProjet', id: pid })} />,
             },
             {
+              id: 'marches',
               label: 'Marches', count: marches.length,
               content: <ConventionMarchesTab marches={marches} onLinkMarche={() => setLinkMarcheOpen(true)} onUnlinkMarche={(mid) => setConfirmState({ open: true, type: 'unlinkMarche', id: mid })} />,
             },
             ...(convention.typeConvention === 'CADRE' ? [{
+              id: 'sous-conventions',
               label: 'Sous-conventions', count: sousConventions.length,
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
@@ -214,14 +236,17 @@ const ConventionRealisationSection = ({
               ),
             }] : []),
             {
+              id: 'avenants',
               label: 'Avenants', count: avenants.length,
               content: <ConventionAvenantsTab convention={convention} avenants={avenants} formatCurrency={formatCurrency} formatDate={formatDate} />,
             },
             {
+              id: 'imputations',
               label: 'Imputations',
               content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} refreshKey={refreshKey} onRefresh={refreshAll} />,
             },
             {
+              id: 'documents',
               label: 'Documents',
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>

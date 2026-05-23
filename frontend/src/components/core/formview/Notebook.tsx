@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Box, Typography, Tabs, Tab } from '@mui/material'
 import { componentStyles, colors, typography, borders } from '@/lib/designSystem'
@@ -24,7 +24,10 @@ interface NotebookProps {
   sticky?: boolean
   /** Décalage `top` du sticky (number/px ou objet responsive MUI). */
   stickyTop?: number | string | Record<string, number | string>
-  /** Notifié à chaque changement d'onglet (utile pour le chargement paresseux). */
+  /**
+   * Notifié pour l'onglet actif au montage puis à chaque changement
+   * (utile pour le chargement paresseux du contenu de l'onglet).
+   */
   onTabChange?: (index: number, id?: string) => void
 }
 
@@ -53,8 +56,13 @@ const Notebook = ({ tabs, tabActions, syncParam, sticky, stickyTop = 0, onTabCha
     } else {
       setInternalTab(val)
     }
-    onTabChange?.(val, tabs[val]?.id)
   }
+
+  // Notifie l'onglet actif au montage et à chaque changement (deep-link inclus).
+  useEffect(() => {
+    onTabChange?.(activeTab, tabs[activeTab]?.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
 
   const tabId = (tab: NotebookTab, index: number) => `notebook-tab-${tab.id ?? index}`
   const panelId = (tab: NotebookTab, index: number) => `notebook-panel-${tab.id ?? index}`

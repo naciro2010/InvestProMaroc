@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Button } from '@mui/material'
 import { ListAlt } from '@mui/icons-material'
 import { StatusBadge, InlineTable, Notebook, ResizableSection, ConfirmDialog } from '@/components/core'
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton'
 import ConventionAvenantsTab from './ConventionAvenantsTab'
 import { ConventionProjetsTab, ConventionMarchesTab } from './ConventionRelatedTab'
 import ConventionBudgetDistributionCard from './ConventionBudgetDistributionCard'
@@ -33,7 +34,13 @@ interface ProjetAssociation {
 
 interface RealisationEnriched {
   nombrePartenaires?: number
+  nombreProjets?: number
+  nombreMarches?: number
+  nombreSousConventions?: number
+  nombreAvenants?: number
 }
+
+type LazyTabId = 'projets' | 'marches' | 'avenants' | 'sous-conventions'
 
 interface ConventionRealisationSectionProps {
   convention: ConventionBase
@@ -73,33 +80,67 @@ const ConventionRealisationSection = ({
   const [marches, setMarches] = useState<Marche[]>([])
   const [sousConventions, setSousConventions] = useState<SousConvention[]>([])
   const [avenants, setAvenants] = useState<Avenant[]>([])
+  // Chargement paresseux : un jeu de données n'est récupéré qu'à l'ouverture
+  // de son onglet. Les compteurs des badges proviennent d'enrichedData, donc
+  // les badges restent corrects sans charger la liste.
+  const [loaded, setLoaded] = useState<Record<LazyTabId, boolean>>({
+    projets: false, marches: false, avenants: false, 'sous-conventions': false,
+  })
+  const [loadingTab, setLoadingTab] = useState<Record<LazyTabId, boolean>>({
+    projets: false, marches: false, avenants: false, 'sous-conventions': false,
+  })
   const [linkProjetOpen, setLinkProjetOpen] = useState(false)
   const [linkMarcheOpen, setLinkMarcheOpen] = useState(false)
   const [scDialogOpen, setScDialogOpen] = useState(false)
   const [editingSc, setEditingSc] = useState<SousConvention | null>(null)
   const [confirmState, setConfirmState] = useState<{ open: boolean; type: 'unlinkProjet' | 'unlinkMarche' | null; id: number | null }>({ open: false, type: null, id: null })
 
-  // Chargé une fois par convention. Les mutations (lier/délier projet/marché,
-  // créer une sous-convention/avenant) rechargent déjà leur propre jeu de
-  // données, donc inutile de tout refetcher à chaque bump de refreshKey.
-  useEffect(() => {
-    loadAvenants()
-    loadSousConventions()
-    loadProjets()
-    loadMarches()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [convention.id])
+  const markLoaded = (id: LazyTabId) => setLoaded(prev => ({ ...prev, [id]: true }))
+  const setTabLoading = (id: LazyTabId, v: boolean) => setLoadingTab(prev => ({ ...prev, [id]: v }))
 
-  const loadAvenants = async () => { try { const r = await avenantConventionsAPI.getByConvention(convention.id); setAvenants(r.data.data || r.data || []) } catch { setAvenants([]) } }
-  const loadSousConventions = async () => { try { const r = await conventionsAPI.getSousConventions(convention.id); setSousConventions(r.data.data || []) } catch { /* ignored */ } }
+  const loadAvenants = async () => {
+    setTabLoading('avenants', true)
+    try { const r = await avenantConventionsAPI.getByConvention(convention.id); setAvenants(r.data.data || r.data || []) }
+    catch { setAvenants([]) }
+    finally { setTabLoading('avenants', false); markLoaded('avenants') }
+  }
+  const loadSousConventions = async () => {
+    setTabLoading('sous-conventions', true)
+    try { const r = await conventionsAPI.getSousConventions(convention.id); setSousConventions(r.data.data || []) }
+    catch { /* ignored */ }
+    finally { setTabLoading('sous-conventions', false); markLoaded('sous-conventions') }
+  }
   const loadProjets = async () => {
+    setTabLoading('projets', true)
     try {
       const r = await projetConventionsAPI.getByConvention(convention.id)
       const assocs: ProjetAssociation[] = r.data.data || r.data || []
       setProjets(assocs.map(a => ({ id: a.projetId, code: a.projetCode, designation: a.projetNom, budgetTotal: a.projetBudgetTotal, statut: a.projetStatut })))
     } catch { setProjets([]) }
+    finally { setTabLoading('projets', false); markLoaded('projets') }
   }
-  const loadMarches = async () => { try { const r = await api.get(`/marches/convention/${convention.id}`); setMarches(r.data.data || r.data || []) } catch { setMarches([]) } }
+  const loadMarches = async () => {
+    setTabLoading('marches', true)
+    try { const r = await api.get(`/marches/convention/${convention.id}`); setMarches(r.data.data || r.data || []) }
+    catch { setMarches([]) }
+    finally { setTabLoading('marches', false); markLoaded('marches') }
+  }
+
+  // Charge le jeu de données d'un onglet à sa première ouverture (et au montage
+  // pour l'onglet initial / deep-link). Une nouvelle convention remonte le
+  // composant (key=convention.id côté page), réinitialisant l'état.
+  const handleTabChange = (_index: number, id?: string) => {
+    if (id === 'projets' && !loaded.projets && !loadingTab.projets) loadProjets()
+    else if (id === 'marches' && !loaded.marches && !loadingTab.marches) loadMarches()
+    else if (id === 'avenants' && !loaded.avenants && !loadingTab.avenants) loadAvenants()
+    else if (id === 'sous-conventions' && !loaded['sous-conventions'] && !loadingTab['sous-conventions']) loadSousConventions()
+  }
+
+  // Squelette tant que l'onglet paresseux n'a pas chargé ses données.
+  const lazyContent = (id: LazyTabId, node: React.ReactNode) =>
+    !loaded[id] || loadingTab[id]
+      ? <Box sx={{ px: { xs: 2, md: 3 }, py: 1 }}><LoadingSkeleton variant="table" rows={4} /></Box>
+      : node
 
   const handleConfirm = async () => {
     if (!confirmState.id || !confirmState.type) return
@@ -134,6 +175,7 @@ const ConventionRealisationSection = ({
           syncParam="tab"
           sticky
           stickyTop={{ xs: 56, lg: 0 }}
+          onTabChange={handleTabChange}
           tabs={[
             {
               id: 'partenaires',
@@ -198,18 +240,18 @@ const ConventionRealisationSection = ({
             },
             {
               id: 'projets',
-              label: 'Projets', count: projets.length,
-              content: <ConventionProjetsTab projets={projets} onLinkProjet={() => setLinkProjetOpen(true)} onUnlinkProjet={(pid) => setConfirmState({ open: true, type: 'unlinkProjet', id: pid })} />,
+              label: 'Projets', count: loaded.projets ? projets.length : enrichedData?.nombreProjets,
+              content: lazyContent('projets', <ConventionProjetsTab projets={projets} onLinkProjet={() => setLinkProjetOpen(true)} onUnlinkProjet={(pid) => setConfirmState({ open: true, type: 'unlinkProjet', id: pid })} />),
             },
             {
               id: 'marches',
-              label: 'Marches', count: marches.length,
-              content: <ConventionMarchesTab marches={marches} onLinkMarche={() => setLinkMarcheOpen(true)} onUnlinkMarche={(mid) => setConfirmState({ open: true, type: 'unlinkMarche', id: mid })} />,
+              label: 'Marches', count: loaded.marches ? marches.length : enrichedData?.nombreMarches,
+              content: lazyContent('marches', <ConventionMarchesTab marches={marches} onLinkMarche={() => setLinkMarcheOpen(true)} onUnlinkMarche={(mid) => setConfirmState({ open: true, type: 'unlinkMarche', id: mid })} />),
             },
             ...(convention.typeConvention === 'CADRE' ? [{
               id: 'sous-conventions',
-              label: 'Sous-conventions', count: sousConventions.length,
-              content: (
+              label: 'Sous-conventions', count: loaded['sous-conventions'] ? sousConventions.length : enrichedData?.nombreSousConventions,
+              content: lazyContent('sous-conventions', (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
                   <InlineTable
                     headers={[
@@ -233,12 +275,12 @@ const ConventionRealisationSection = ({
                     onAddLine={() => { setEditingSc(null); setScDialogOpen(true) }}
                   />
                 </Box>
-              ),
+              )),
             }] : []),
             {
               id: 'avenants',
-              label: 'Avenants', count: avenants.length,
-              content: <ConventionAvenantsTab convention={convention} avenants={avenants} formatCurrency={formatCurrency} formatDate={formatDate} />,
+              label: 'Avenants', count: loaded.avenants ? avenants.length : enrichedData?.nombreAvenants,
+              content: lazyContent('avenants', <ConventionAvenantsTab convention={convention} avenants={avenants} formatCurrency={formatCurrency} formatDate={formatDate} />),
             },
             {
               id: 'imputations',

@@ -354,6 +354,7 @@ const ConventionDetailPageModern = () => {
 
                 {/* Tabs: Partenaires, Subventions, Lignes de depenses, Projets, Marches, etc. */}
                 <ConventionRealisationSection
+                  key={convention.id}
                   convention={convention} canEdit
                   enrichedData={enrichedData}
                   onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}

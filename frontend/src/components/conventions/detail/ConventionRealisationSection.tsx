@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Button } from '@mui/material'
 import { ListAlt } from '@mui/icons-material'
@@ -89,6 +89,13 @@ const ConventionRealisationSection = ({
   const [loadingTab, setLoadingTab] = useState<Record<LazyTabId, boolean>>({
     projets: false, marches: false, avenants: false, 'sous-conventions': false,
   })
+  // Compteurs remontés par les cartes auto-chargées (badges des onglets
+  // sans compteur enrichi). Renseignés à la première ouverture de l'onglet.
+  const [tabCounts, setTabCounts] = useState<Record<string, number>>({})
+  const setTabCount = useCallback(
+    (id: string, n: number) => setTabCounts(prev => (prev[id] === n ? prev : { ...prev, [id]: n })),
+    [],
+  )
   const [linkProjetOpen, setLinkProjetOpen] = useState(false)
   const [linkMarcheOpen, setLinkMarcheOpen] = useState(false)
   const [scDialogOpen, setScDialogOpen] = useState(false)
@@ -199,6 +206,7 @@ const ConventionRealisationSection = ({
             {
               id: 'subventions',
               label: 'Subventions',
+              count: tabCounts.subventions,
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
                   <ConventionSubventionsCard
@@ -207,6 +215,7 @@ const ConventionRealisationSection = ({
                     canEdit={canEdit}
                     refreshKey={refreshKey}
                     onDataChanged={refreshAll}
+                    onCountChange={(n) => setTabCount('subventions', n)}
                   />
                 </Box>
               ),
@@ -214,6 +223,7 @@ const ConventionRealisationSection = ({
             {
               id: 'versements',
               label: 'Versements',
+              count: tabCounts.versements,
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
                   <ConventionVersementsCard
@@ -222,6 +232,7 @@ const ConventionRealisationSection = ({
                     canEdit={canEdit}
                     refreshKey={refreshKey}
                     onDataChanged={refreshAll}
+                    onCountChange={(n) => setTabCount('versements', n)}
                   />
                 </Box>
               ),
@@ -229,12 +240,14 @@ const ConventionRealisationSection = ({
             {
               id: 'lignes',
               label: 'Lignes de depenses',
+              count: tabCounts.lignes,
               content: (
                 <ConventionBudgetDistributionCard
                   conventionId={convention.id}
                   canEdit={canEdit}
                   refreshKey={refreshKey}
                   onDataChanged={refreshAll}
+                  onCountChange={(n) => setTabCount('lignes', n)}
                 />
               ),
             },
@@ -285,14 +298,16 @@ const ConventionRealisationSection = ({
             {
               id: 'imputations',
               label: 'Imputations',
-              content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} refreshKey={refreshKey} onRefresh={refreshAll} />,
+              count: tabCounts.imputations,
+              content: <ConventionImputationsCard conventionId={convention.id} conventionBudget={convention.budget} canEdit={canEdit} refreshKey={refreshKey} onRefresh={refreshAll} onCountChange={(n) => setTabCount('imputations', n)} />,
             },
             {
               id: 'documents',
               label: 'Documents',
+              count: tabCounts.documents,
               content: (
                 <Box sx={{ px: { xs: 1, md: 2 } }}>
-                  <ConventionDocumentsCard conventionId={convention.id} canEdit={canEdit} />
+                  <ConventionDocumentsCard conventionId={convention.id} canEdit={canEdit} onCountChange={(n) => setTabCount('documents', n)} />
                 </Box>
               ),
             },

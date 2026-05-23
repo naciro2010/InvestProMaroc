@@ -28,6 +28,7 @@ interface ConventionSubventionsCardProps {
   canEdit?: boolean
   refreshKey?: number
   onDataChanged?: () => void
+  onCountChange?: (count: number) => void
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -44,7 +45,7 @@ const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('
  * ConventionSubventionsCard - Pure content for ResizableSection.
  * No Paper wrapper or redundant header.
  */
-const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit = false, refreshKey, onDataChanged }: ConventionSubventionsCardProps) => {
+const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit = false, refreshKey, onDataChanged, onCountChange }: ConventionSubventionsCardProps) => {
   const [subventions, setSubventions] = useState<Subvention[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +66,8 @@ const ConventionSubventionsCard = ({ conventionId, conventionBudget = 0, canEdit
   }
 
   useEffect(() => { loadSubventions() }, [conventionId, refreshKey])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onCountChange?.(subventions.length) }, [subventions.length])
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Supprimer cette subvention ?')) return

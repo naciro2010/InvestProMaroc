@@ -27,6 +27,7 @@ interface ConventionVersementsCardProps {
   canEdit?: boolean
   refreshKey?: number
   onDataChanged?: () => void
+  onCountChange?: (count: number) => void
 }
 
 const formatCurrency = (amount: number) =>
@@ -45,6 +46,7 @@ const ConventionVersementsCard = ({
   canEdit = false,
   refreshKey,
   onDataChanged,
+  onCountChange,
 }: ConventionVersementsCardProps) => {
   const [versements, setVersements] = useState<VersementPrevisionnel[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,6 +68,8 @@ const ConventionVersementsCard = ({
   }
 
   useEffect(() => { loadVersements() }, [conventionId, refreshKey])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onCountChange?.(versements.length) }, [versements.length])
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Supprimer ce versement ?')) return

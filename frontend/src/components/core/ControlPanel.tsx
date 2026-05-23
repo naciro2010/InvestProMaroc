@@ -1,14 +1,5 @@
 import { ReactNode, useState } from 'react'
-import {
-  Box,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Typography,
-  Chip,
-} from '@mui/material'
 import { Search, ChevronLeft, ChevronRight, List, LayoutGrid, MapPin, X } from 'lucide-react'
-import { componentStyles, colors, typography } from '@/lib/designSystem'
 import ModernBreadcrumb, { BreadcrumbSegment } from './ModernBreadcrumb'
 
 type ViewMode = 'list' | 'kanban' | 'map'
@@ -41,9 +32,17 @@ interface ControlPanelProps {
   hideBottomRow?: boolean
 }
 
+const VIEW_ICONS: Record<ViewMode, typeof List> = {
+  list: List,
+  kanban: LayoutGrid,
+  map: MapPin,
+}
+
 /**
- * ControlPanel - Top control bar combining breadcrumb navigation,
- * search, filters, view switching, and pagination.
+ * ControlPanel - Barre d'outils des pages liste (style ocr-sage100).
+ *
+ * Combine breadcrumb, actions, bascule de vue, pagination, recherche et
+ * tags de filtres. Surface blanche, bordure bottom, densité financière.
  */
 const ControlPanel = ({
   breadcrumbs,
@@ -62,7 +61,6 @@ const ControlPanel = ({
   children,
   hideBottomRow = false,
 }: ControlPanelProps) => {
-  const styles = componentStyles.controlPanel
   const [localSearch, setLocalSearch] = useState(searchValue)
 
   const handleSearchChange = (value: string) => {
@@ -71,102 +69,109 @@ const ControlPanel = ({
   }
 
   return (
-    <Box sx={styles.container}>
+    <div className="control-panel">
       {/* Top Row: Breadcrumbs + Actions + Pager */}
-      <Box sx={styles.topRow}>
+      <div className="control-panel-top">
         <ModernBreadcrumb items={breadcrumbs} />
 
-        <Box sx={styles.actions}>
+        <div className="control-panel-actions">
           {actions}
 
           {availableViews.length > 1 && (
-            <Box sx={styles.viewSwitcher}>
-              {availableViews.includes('list') && (
-                <IconButton
-                  size="small"
-                  onClick={() => onViewModeChange?.('list')}
-                  sx={viewMode === 'list' ? styles.viewSwitcherButtonActive : styles.viewSwitcherButton}
-                >
-                  <List size={16} />
-                </IconButton>
-              )}
-              {availableViews.includes('kanban') && (
-                <IconButton
-                  size="small"
-                  onClick={() => onViewModeChange?.('kanban')}
-                  sx={viewMode === 'kanban' ? styles.viewSwitcherButtonActive : styles.viewSwitcherButton}
-                >
-                  <LayoutGrid size={16} />
-                </IconButton>
-              )}
-              {availableViews.includes('map') && (
-                <IconButton
-                  size="small"
-                  onClick={() => onViewModeChange?.('map')}
-                  sx={viewMode === 'map' ? styles.viewSwitcherButtonActive : styles.viewSwitcherButton}
-                >
-                  <MapPin size={16} />
-                </IconButton>
-              )}
-            </Box>
+            <div className="view-switcher" role="group" aria-label="Mode d'affichage">
+              {availableViews.map((view) => {
+                const Icon = VIEW_ICONS[view]
+                const isActive = viewMode === view
+                return (
+                  <button
+                    key={view}
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => onViewModeChange?.(view)}
+                    className={isActive ? 'view-switcher-btn view-switcher-btn--active' : 'view-switcher-btn'}
+                  >
+                    <Icon size={16} />
+                  </button>
+                )
+              })}
+            </div>
           )}
 
           {paginationInfo && (
-            <Box sx={styles.pager}>
-              <IconButton size="small" onClick={onPreviousPage} disabled={paginationInfo.currentStart <= 1} sx={{ p: 0.5 }}>
+            <div className="pager">
+              <button
+                type="button"
+                className="pager-btn"
+                onClick={onPreviousPage}
+                disabled={paginationInfo.currentStart <= 1}
+                aria-label="Page précédente"
+              >
                 <ChevronLeft size={16} />
-              </IconButton>
-              <Typography component="span" sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>
+              </button>
+              <span className="pager-info">
                 {paginationInfo.currentStart}-{paginationInfo.currentEnd} / {paginationInfo.total}
-              </Typography>
-              <IconButton size="small" onClick={onNextPage} disabled={paginationInfo.currentEnd >= paginationInfo.total} sx={{ p: 0.5 }}>
+              </span>
+              <button
+                type="button"
+                className="pager-btn"
+                onClick={onNextPage}
+                disabled={paginationInfo.currentEnd >= paginationInfo.total}
+                aria-label="Page suivante"
+              >
                 <ChevronRight size={16} />
-              </IconButton>
-            </Box>
+              </button>
+            </div>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {!hideBottomRow && (
-        <Box sx={styles.bottomRow}>
+        <div className="control-panel-bottom">
           {onSearchChange && (
-            <TextField
-              size="small"
-              placeholder={searchPlaceholder}
-              value={localSearch}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              sx={styles.searchBar}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={16} style={{ color: colors.textSecondary }} />
-                  </InputAdornment>
-                ),
-                endAdornment: localSearch ? (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => handleSearchChange('')} sx={{ p: 0.25 }}>
-                      <X size={14} />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null,
-              }}
-            />
+            <div className="control-search">
+              <span className="control-search-icon">
+                <Search size={16} />
+              </span>
+              <input
+                type="text"
+                className="control-search-input"
+                placeholder={searchPlaceholder}
+                value={localSearch}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
+              {localSearch && (
+                <button
+                  type="button"
+                  className="control-search-clear"
+                  onClick={() => handleSearchChange('')}
+                  aria-label="Effacer la recherche"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
           )}
 
           {filters.map((filter) => (
-            <Chip
-              key={filter.key}
-              label={`${filter.label}: ${filter.value}`}
-              size="small"
-              onDelete={onRemoveFilter ? () => onRemoveFilter(filter.key) : undefined}
-              sx={componentStyles.controlPanel.filterTag}
-            />
+            <span key={filter.key} className="filter-tag">
+              {filter.label}: {filter.value}
+              {onRemoveFilter && (
+                <button
+                  type="button"
+                  className="filter-tag-remove"
+                  onClick={() => onRemoveFilter(filter.key)}
+                  aria-label={`Retirer ${filter.label}`}
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </span>
           ))}
 
           {children}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   )
 }
 

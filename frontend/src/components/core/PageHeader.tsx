@@ -1,8 +1,6 @@
 import { ReactNode } from 'react'
-import { Box, Typography, Stack, Chip } from '@mui/material'
 import { ChevronRight } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
-import { colors, typography, spacing, componentStyles } from '@/lib/designSystem'
 
 // ==================== TYPES ====================
 
@@ -31,21 +29,21 @@ interface PageHeaderProps {
   children?: ReactNode
 }
 
+const chipToneMap: Record<ChipColor, string> = {
+  default: 'neutral',
+  primary: 'primary',
+  success: 'success',
+  warning: 'warning',
+  error: 'danger',
+  info: 'info',
+}
+
 /**
- * PageHeader - En-tête de page standard.
+ * PageHeader - En-tête de page standard (style ocr-sage100).
  *
- * Composant micro-frontend qui encapsule:
- * - Breadcrumbs (fil d'Ariane)
- * - Titre + statut
- * - Sous-titre
- * - Actions (boutons)
- * - Contenu additionnel (filtres, onglets)
- *
- * Principes:
- * - Fond blanc, bordure bottom subtile
- * - Pas de gradient, pas d'emojis
- * - Espacement cohérent (base 8px)
- * - Responsive (stack vertical sur mobile)
+ * Encapsule breadcrumbs, titre + statut, sous-titre, actions et contenu
+ * additionnel (filtres, onglets). Bordure bottom subtile, pas de gradient,
+ * titre à 18px (--text-h1), densité financière.
  *
  * @example
  * <PageHeader
@@ -67,126 +65,53 @@ const PageHeader = ({
   children,
 }: PageHeaderProps) => {
   return (
-    <Box sx={componentStyles.pageHeader}>
+    <div className="page-header">
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <Box
-          component="nav"
-          aria-label="breadcrumb"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            mb: 1.5,
-            flexWrap: 'wrap',
-          }}
-        >
+        <nav aria-label="breadcrumb" className="page-header-breadcrumb">
           {breadcrumbs.map((item, index) => {
             const isLast = index === breadcrumbs.length - 1
 
             return (
-              <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <span key={item.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 {index > 0 && (
-                  <ChevronRight
-                    size={14}
-                    style={{ color: colors.gray[400], flexShrink: 0 }}
-                  />
+                  <ChevronRight size={14} style={{ color: 'var(--ink-30)', flexShrink: 0 }} />
                 )}
                 {isLast || !item.path ? (
-                  <Typography
-                    sx={{
-                      fontSize: typography.sizes.sm,
-                      color: isLast ? colors.gray[800] : colors.gray[500],
-                      fontWeight: isLast ? typography.weights.medium : typography.weights.normal,
-                    }}
-                  >
+                  <span className={isLast ? 'page-header-crumb page-header-crumb--current' : 'page-header-crumb'}>
                     {item.label}
-                  </Typography>
+                  </span>
                 ) : (
-                  <Box
-                    component={RouterLink}
-                    to={item.path}
-                    sx={{
-                      fontSize: typography.sizes.sm,
-                      color: colors.gray[500],
-                      textDecoration: 'none',
-                      '&:hover': {
-                        color: colors.primary[600],
-                        textDecoration: 'underline',
-                      },
-                    }}
-                  >
+                  <RouterLink to={item.path} className="page-header-crumb">
                     {item.label}
-                  </Box>
+                  </RouterLink>
                 )}
-              </Box>
+              </span>
             )
           })}
-        </Box>
+        </nav>
       )}
 
       {/* Title Row */}
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        spacing={1.5}
-      >
-        {/* Title + Status */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap">
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: typography.weights.semibold,
-                color: colors.gray[900],
-                letterSpacing: '-0.01em',
-                lineHeight: typography.lineHeights.tight,
-              }}
-            >
-              {title}
-            </Typography>
+      <div className="page-header-row">
+        <div className="page-header-leading">
+          <div className="page-header-titleline">
+            <span className="page-header-title">{title}</span>
             {status && (
-              <Chip
-                label={status.label}
-                color={status.color}
-                size="small"
-                sx={{
-                  fontWeight: typography.weights.medium,
-                  fontSize: typography.sizes.xs,
-                  height: 24,
-                }}
-              />
+              <span className={`status-pill status-pill--${chipToneMap[status.color]} status-pill--sm`}>
+                {status.label}
+              </span>
             )}
-          </Stack>
-          {subtitle && (
-            <Typography
-              sx={{
-                color: colors.gray[500],
-                fontSize: typography.sizes.base,
-                mt: 0.5,
-              }}
-            >
-              {subtitle}
-            </Typography>
-          )}
-        </Box>
+          </div>
+          {subtitle && <div className="page-header-subtitle">{subtitle}</div>}
+        </div>
 
-        {/* Actions */}
-        {actions && (
-          <Stack direction="row" spacing={1} flexShrink={0}>
-            {actions}
-          </Stack>
-        )}
-      </Stack>
+        {actions && <div className="page-header-actions">{actions}</div>}
+      </div>
 
       {/* Children (filters, tabs, etc.) */}
-      {children && (
-        <Box sx={{ mt: spacing.mui.lg }}>
-          {children}
-        </Box>
-      )}
-    </Box>
+      {children && <div>{children}</div>}
+    </div>
   )
 }
 

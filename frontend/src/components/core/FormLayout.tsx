@@ -1,6 +1,4 @@
 import { ReactNode } from 'react'
-import { Box, Typography, Divider } from '@mui/material'
-import { colors, typography, spacing, componentStyles, borders, shadows } from '@/lib/designSystem'
 
 // ==================== TYPES ====================
 
@@ -48,57 +46,30 @@ interface FormFieldLabelProps {
 // ==================== COMPOSANTS ====================
 
 /**
- * FormLayout - Conteneur principal de formulaire.
+ * FormLayout - Conteneur principal de formulaire (style ocr-sage100).
  *
- * Fournit un fond blanc, des bordures subtiles et un espacement cohérent.
- * A utiliser directement dans la page, après le StickyActionBar.
+ * Fond blanc, bordure subtile, espacement cohérent. A utiliser après
+ * le StickyActionBar.
  *
  * @example
- * <form onSubmit={handleSubmit}>
- *   <StickyActionBar title="Nouvelle Convention" />
- *   <FormLayout>
- *     <FormPageSection title="Informations générales">
- *       <FormGroup>
- *         <FormField><TextField label="Code" /></FormField>
- *         <FormField><TextField label="Libellé" /></FormField>
- *       </FormGroup>
- *     </FormPageSection>
- *   </FormLayout>
- * </form>
+ * <FormLayout>
+ *   <FormPageSection title="Informations générales">
+ *     <FormGroup>
+ *       <FormField><TextField label="Code" /></FormField>
+ *     </FormGroup>
+ *   </FormPageSection>
+ * </FormLayout>
  */
 export const FormLayout = ({ children, maxWidth = 960 }: FormLayoutProps) => {
   return (
-    <Box
-      sx={{
-        maxWidth,
-        mx: 'auto',
-        backgroundColor: colors.surface,
-        borderRadius: `0 0 ${borders.radius.lg} ${borders.radius.lg}`,
-        border: `1px solid ${colors.border}`,
-        borderTop: 'none',
-        boxShadow: shadows.sm,
-      }}
-    >
-      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 2, sm: 3 } }}>
-        {children}
-      </Box>
-    </Box>
+    <div className="form-layout" style={{ maxWidth }}>
+      <div className="form-layout-inner">{children}</div>
+    </div>
   )
 }
 
 /**
- * FormPageSection - Section de formulaire avec titre.
- *
- * Sépare visuellement les groupes de champs avec un titre
- * et une description optionnelle. Séparateur horizontal entre sections.
- *
- * @example
- * <FormPageSection title="Type et Budget" description="Paramètres financiers de la convention">
- *   <FormGroup>
- *     <FormField><TextField label="Montant" /></FormField>
- *     <FormField><TextField label="Taux" /></FormField>
- *   </FormGroup>
- * </FormPageSection>
+ * FormPageSection - Section de formulaire avec titre et séparateur.
  */
 export const FormPageSection = ({
   title,
@@ -107,128 +78,49 @@ export const FormPageSection = ({
   divider = true,
 }: FormSectionProps) => {
   return (
-    <Box sx={{ ...componentStyles.formSection }}>
-      {divider && <Divider sx={{ mb: spacing.mui.xl }} />}
+    <div className="form-section">
+      {divider && <hr className="form-section-divider" />}
 
-      <Box sx={{ mb: spacing.mui.lg }}>
-        <Typography
-          sx={{
-            fontWeight: typography.weights.semibold,
-            color: colors.gray[800],
-            fontSize: typography.sizes.lg,
-            mb: description ? 0.5 : 0,
-          }}
-        >
-          {title}
-        </Typography>
-        {description && (
-          <Typography
-            sx={{
-              color: colors.gray[500],
-              fontSize: typography.sizes.sm,
-            }}
-          >
-            {description}
-          </Typography>
-        )}
-      </Box>
+      <div className="form-section-head">
+        <div className="form-section-title">{title}</div>
+        {description && <div className="form-section-desc">{description}</div>}
+      </div>
 
       {children}
-    </Box>
+    </div>
   )
 }
 
 /**
- * FormGroup - Grille de champs de formulaire.
- *
- * Organise les champs en colonnes responsives.
- * Par défaut: 2 colonnes sur desktop, 1 sur mobile.
- *
- * @example
- * <FormGroup columns={2}>
- *   <FormField><TextField label="Nom" /></FormField>
- *   <FormField><TextField label="Prénom" /></FormField>
- *   <FormField fullWidth><TextField label="Adresse" /></FormField>
- * </FormGroup>
+ * FormGroup - Grille de champs responsive (1/2/3 colonnes).
  */
 export const FormGroup = ({ children, columns = 2 }: FormGroupProps) => {
-  const gridCols = {
-    1: '1fr',
-    2: { xs: '1fr', md: '1fr 1fr' },
-    3: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' },
-  }
-
-  return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: gridCols[columns],
-        gap: spacing.mui.lg,
-        mb: spacing.mui.lg,
-      }}
-    >
-      {children}
-    </Box>
-  )
+  const className = columns === 1 ? 'form-grid' : `form-grid form-grid--${columns}`
+  return <div className={className}>{children}</div>
 }
 
 /**
- * FormField - Wrapper pour un champ de formulaire.
- *
- * Contrôle la largeur du champ dans la grille.
- * `fullWidth` fait que le champ occupe toutes les colonnes.
- *
- * @example
- * <FormGroup>
- *   <FormField><TextField label="Code" required /></FormField>
- *   <FormField fullWidth>
- *     <TextField label="Description" multiline rows={3} />
- *   </FormField>
- * </FormGroup>
+ * FormField - Wrapper d'un champ. `fullWidth` occupe toutes les colonnes.
  */
 export const FormField = ({ children, fullWidth = false }: FormFieldProps) => {
-  return (
-    <Box
-      sx={{
-        ...(fullWidth ? componentStyles.formFieldFullWidth : {}),
-      }}
-    >
-      {children}
-    </Box>
-  )
+  return <div className={fullWidth ? 'form-field--full' : undefined}>{children}</div>
 }
 
 /**
  * FormFieldLabel - Label personnalisé avec indicateur requis.
  *
- * A utiliser quand on veut un label indépendant du composant MUI.
- *
  * @example
  * <FormFieldLabel label="Montant" required helpText="En dirhams (MAD)" />
- * <DecimalInput value={montant} onChange={setMontant} />
  */
 export const FormFieldLabel = ({ label, required = false, helpText }: FormFieldLabelProps) => {
   return (
-    <Box sx={{ mb: 0.5 }}>
-      <Typography sx={componentStyles.fieldLabel}>
+    <div className="form-field-label">
+      <span className="form-field-label-text">
         {label}
-        {required && (
-          <Typography component="span" sx={componentStyles.requiredMark}>
-            *
-          </Typography>
-        )}
-      </Typography>
-      {helpText && (
-        <Typography
-          sx={{
-            fontSize: typography.sizes.xs,
-            color: colors.gray[400],
-          }}
-        >
-          {helpText}
-        </Typography>
-      )}
-    </Box>
+        {required && <span className="form-field-label-required">*</span>}
+      </span>
+      {helpText && <div className="form-field-label-help">{helpText}</div>}
+    </div>
   )
 }
 

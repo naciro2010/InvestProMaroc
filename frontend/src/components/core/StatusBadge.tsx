@@ -1,5 +1,4 @@
-import { Box, Typography } from '@mui/material'
-import { getStatusConfig, colors, borders, typography } from '@/lib/designSystem'
+import { getStatusConfig, colors } from '@/lib/designSystem'
 import type { StatusColor } from '@/lib/designSystem'
 
 // ==================== TYPES ====================
@@ -47,11 +46,12 @@ const dotColorMap: Record<StatusColor, string> = {
  */
 export const StatusDot = ({ color, size = 8 }: StatusDotProps) => {
   return (
-    <Box
-      sx={{
+    <span
+      style={{
+        display: 'inline-block',
         width: size,
         height: size,
-        borderRadius: borders.radius.full,
+        borderRadius: '50%',
         backgroundColor: dotColorMap[color] || dotColorMap.neutral,
         flexShrink: 0,
       }}
@@ -60,11 +60,11 @@ export const StatusDot = ({ color, size = 8 }: StatusDotProps) => {
 }
 
 /**
- * StatusBadge - Badge de statut avec couleur sémantique.
+ * StatusBadge - Pastille de statut (style ocr-sage100).
  *
- * Design: Atlassian-style status lozenges (flat, colored background)
- * Affiche le statut d'une entité avec un fond coloré.
- * Utilise le design system pour les couleurs.
+ * Design: pill financière — fond teinté, texte de couleur forte (WCAG AA),
+ * bordure halo subtile, point de la couleur du texte. Identique à
+ * `.status-pill` d'ocr-sage100.
  *
  * @example
  * <StatusBadge status="VALIDEE" />
@@ -80,56 +80,13 @@ const StatusBadge = ({ status, label, size = 'medium', dotOnly = false }: Status
     return <StatusDot color={config.color} size={size === 'small' ? 6 : 8} />
   }
 
-  const sizeStyles = size === 'small'
-    ? {
-        px: 1,
-        py: 0.25,
-        fontSize: typography.sizes.xs,
-        gap: 0.5,
-      }
-    : {
-        px: 1.5,
-        py: 0.5,
-        fontSize: typography.sizes.sm,
-        gap: 0.75,
-      }
+  const className = `status-pill status-pill--${config.color}${size === 'small' ? ' status-pill--sm' : ''}`
 
   return (
-    <Box
-      component="span"
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        backgroundColor: config.bgColor,
-        color: config.textColor,
-        borderRadius: borders.radius.base,
-        fontWeight: typography.weights.semibold,
-        whiteSpace: 'nowrap',
-        lineHeight: 1,
-        ...sizeStyles,
-      }}
-    >
-      <Box
-        sx={{
-          width: size === 'small' ? 6 : 8,
-          height: size === 'small' ? 6 : 8,
-          borderRadius: borders.radius.full,
-          backgroundColor: config.dotColor,
-          flexShrink: 0,
-        }}
-      />
-      <Typography
-        component="span"
-        sx={{
-          fontSize: 'inherit',
-          fontWeight: 'inherit',
-          color: 'inherit',
-          lineHeight: 1,
-        }}
-      >
-        {displayLabel}
-      </Typography>
-    </Box>
+    <span className={className}>
+      <span className="status-pill-dot" />
+      {displayLabel}
+    </span>
   )
 }
 

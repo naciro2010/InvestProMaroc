@@ -1,8 +1,6 @@
 import { ReactNode } from 'react'
-import { Box, Stack, Typography, CircularProgress, Button } from '@mui/material'
-import { ArrowBack, Save } from '@mui/icons-material'
+import { ArrowLeft, Save } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { colors, typography, componentStyles, shadows, borders } from '@/lib/designSystem'
 
 // ==================== TYPES ====================
 
@@ -36,45 +34,19 @@ interface StickyActionBarProps {
 }
 
 /**
- * StickyActionBar - Barre d'actions sticky en haut de page.
+ * StickyActionBar - Barre d'actions sticky en haut de page (style ocr-sage100).
  *
- * Composant micro-frontend pour les formulaires et pages de détail.
- * Reste collé en haut de la page pendant le scroll.
- *
- * DEUX MODES:
- * 1. Mode formulaire (par défaut): Affiche Annuler + Enregistrer
- * 2. Mode custom: Passer `actions` pour des boutons personnalisés
- *
- * PRINCIPES:
- * - Sticky en haut pendant le scroll
- * - Fond blanc, bordure bottom
- * - Titre à gauche, actions à droite
- * - Boutons plats (pas de gradient)
- * - Indicateur de chargement intégré
+ * Reste collée en haut pendant le scroll. Deux modes :
+ * 1. Mode formulaire (défaut) : Annuler + Enregistrer
+ * 2. Mode custom : passer `actions`
  *
  * @example Mode formulaire:
  * <form onSubmit={handleSubmit}>
- *   <StickyActionBar
- *     title="Nouvelle Convention"
- *     showBack
- *     backUrl="/conventions"
- *     isSubmitting={isSubmitting}
- *     submitType="submit"
- *   />
- *   // Form fields
+ *   <StickyActionBar title="Nouvelle Convention" showBack backUrl="/conventions" isSubmitting={isSubmitting} submitType="submit" />
  * </form>
  *
  * @example Mode custom:
- * <StickyActionBar
- *   title="Convention CONV-001"
- *   showBack
- *   actions={
- *     <>
- *       <Button onClick={soumettre}>Soumettre</Button>
- *       <Button onClick={valider}>Valider</Button>
- *     </>
- *   }
- * />
+ * <StickyActionBar title="Convention CONV-001" showBack actions={<>...</>} />
  */
 const StickyActionBar = ({
   title,
@@ -110,54 +82,21 @@ const StickyActionBar = ({
   }
 
   return (
-    <Box
-      sx={{
-        ...componentStyles.stickyActionBar,
-        boxShadow: shadows.sm,
-        borderRadius: `${borders.radius.lg} ${borders.radius.lg} 0 0`,
-      }}
-    >
+    <div className="sticky-actionbar">
       {/* Left side: Back + Title */}
-      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0, flex: 1 }}>
+      <div className="sticky-actionbar-left">
         {showBack && (
-          <Button
-            startIcon={<ArrowBack sx={{ fontSize: 18 }} />}
-            onClick={handleBack}
-            size="small"
-            sx={{
-              color: colors.gray[600],
-              textTransform: 'none',
-              fontWeight: typography.weights.medium,
-              fontSize: typography.sizes.sm,
-              minWidth: 'auto',
-              px: 1,
-              '&:hover': {
-                backgroundColor: colors.gray[100],
-              },
-            }}
-          >
+          <button type="button" className="ocr-btn ocr-btn--ghost ocr-btn--sm" onClick={handleBack}>
+            <ArrowLeft size={16} />
             {backLabel}
-          </Button>
+          </button>
         )}
 
-        {title && (
-          <Typography
-            sx={{
-              fontWeight: typography.weights.semibold,
-              color: colors.gray[800],
-              fontSize: typography.sizes.md,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {title}
-          </Typography>
-        )}
-      </Stack>
+        {title && <span className="sticky-actionbar-title">{title}</span>}
+      </div>
 
       {/* Right side: Actions */}
-      <Stack direction="row" spacing={1} alignItems="center" flexShrink={0}>
+      <div className="sticky-actionbar-right">
         {actions ? (
           // Mode custom
           actions
@@ -166,45 +105,28 @@ const StickyActionBar = ({
           <>
             {extraActions}
 
-            <Button
-              variant="outlined"
+            <button
+              type="button"
+              className="ocr-btn ocr-btn--secondary ocr-btn--sm"
               onClick={handleCancel}
               disabled={isSubmitting}
-              size="small"
-              sx={{
-                ...componentStyles.buttonSecondary,
-                textTransform: 'none',
-                px: 2,
-              }}
             >
               Annuler
-            </Button>
+            </button>
 
-            <Button
+            <button
               type={submitType}
-              variant="contained"
+              className="ocr-btn ocr-btn--primary ocr-btn--sm"
               onClick={submitType === 'button' ? onSubmit : undefined}
               disabled={isSubmitting || submitDisabled}
-              size="small"
-              startIcon={
-                isSubmitting ? (
-                  <CircularProgress size={16} sx={{ color: 'inherit' }} />
-                ) : (
-                  <Save sx={{ fontSize: 18 }} />
-                )
-              }
-              sx={{
-                ...componentStyles.buttonPrimary,
-                textTransform: 'none',
-                px: 2,
-              }}
             >
+              {isSubmitting ? <span className="ocr-spinner" /> : <Save size={16} />}
               {isSubmitting ? submittingLabel : submitLabel}
-            </Button>
+            </button>
           </>
         )}
-      </Stack>
-    </Box>
+      </div>
+    </div>
   )
 }
 

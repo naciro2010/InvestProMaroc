@@ -1,14 +1,12 @@
-import { Box, Typography, Button } from '@mui/material'
 import { SearchX } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { colors, typography, spacing, componentStyles } from '@/lib/designSystem'
 
 // ==================== TYPES ====================
 
 interface EmptyStateProps {
   /** Custom icon (Lucide). Defaults to SearchX when filtered, nothing otherwise. */
   icon?: ReactNode
-  /** Main title, e.g. "Aucune convention trouv\u00e9e" */
+  /** Main title, e.g. "Aucune convention trouvée" */
   title: string
   /** Optional description below the title */
   description?: string
@@ -23,22 +21,21 @@ interface EmptyStateProps {
 // ==================== COMPONENT ====================
 
 /**
- * EmptyState - Centered placeholder for empty list pages.
+ * EmptyState - Placeholder centré pour les listes vides (style ocr-sage100).
  *
- * Shows a title, optional icon, description, and action button.
- * When `filtered` is true, displays a search-specific message
- * with a SearchX icon.
+ * Affiche un titre, une icône optionnelle, une description et un bouton
+ * d'action. Quand `filtered` est vrai, affiche un message de recherche.
  *
  * @example
  * <EmptyState
- *   title="Aucune convention trouv\u00e9e"
- *   description="Cr\u00e9ez votre premi\u00e8re convention pour commencer."
+ *   title="Aucune convention trouvée"
+ *   description="Créez votre première convention pour commencer."
  *   actionLabel="Nouvelle Convention"
  *   onAction={() => navigate('/conventions/new')}
  * />
  *
  * @example
- * <EmptyState title="Aucun r\u00e9sultat" filtered />
+ * <EmptyState title="Aucun résultat" filtered />
  */
 const EmptyState = ({
   icon,
@@ -48,53 +45,29 @@ const EmptyState = ({
   onAction,
   filtered = false,
 }: EmptyStateProps) => {
-  const displayIcon = filtered ? <SearchX size={64} /> : icon
+  const displayIcon = filtered ? <SearchX size={28} /> : icon
   const displayDescription = filtered
-    ? 'Aucun r\u00e9sultat pour votre recherche. Essayez avec d\u2019autres crit\u00e8res.'
+    ? 'Aucun résultat pour votre recherche. Essayez avec d’autres critères.'
     : description
 
   return (
-    <Box sx={componentStyles.emptyState}>
-      {displayIcon && (
-        <Box sx={{ color: colors.neutral[300], mb: spacing.mui.lg }}>
-          {displayIcon}
-        </Box>
-      )}
+    <div className="empty-state">
+      {displayIcon && <div className="empty-state-icon">{displayIcon}</div>}
 
-      <Typography
-        sx={{
-          fontSize: typography.sizes.lg,
-          fontWeight: typography.weights.semibold,
-          color: colors.gray[700],
-          mb: displayDescription ? spacing.mui.sm : 0,
-        }}
-      >
-        {title}
-      </Typography>
+      <div className="empty-state-title">{title}</div>
 
       {displayDescription && (
-        <Typography
-          sx={{
-            fontSize: typography.sizes.base,
-            color: colors.gray[500],
-            maxWidth: 400,
-            mx: 'auto',
-            lineHeight: typography.lineHeights.normal,
-          }}
-        >
-          {displayDescription}
-        </Typography>
+        <div className="empty-state-desc">{displayDescription}</div>
       )}
 
       {actionLabel && onAction && (
-        <Button
-          onClick={onAction}
-          sx={{ ...componentStyles.buttonPrimary, mt: spacing.mui['2xl'] }}
-        >
-          {actionLabel}
-        </Button>
+        <div className="empty-state-actions">
+          <button type="button" className="ocr-btn ocr-btn--primary" onClick={onAction}>
+            {actionLabel}
+          </button>
+        </div>
       )}
-    </Box>
+    </div>
   )
 }
 

@@ -105,14 +105,14 @@ const DecompteTable = ({
                   </TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                      <IconButton size="small" onClick={() => onEdit(decompte)} sx={{ color: colors.neutral[500] }}>
-                        <Eye size={14} />
+                      <IconButton size="small" onClick={() => onEdit(decompte)} aria-label="Voir le décompte" sx={{ color: colors.neutral[500] }}>
+                        <Eye size={14} aria-hidden="true" />
                       </IconButton>
-                      <IconButton size="small" onClick={() => onEdit(decompte)} sx={{ color: colors.neutral[500] }}>
-                        <Edit2 size={14} />
+                      <IconButton size="small" onClick={() => onEdit(decompte)} aria-label="Modifier le décompte" sx={{ color: colors.neutral[500] }}>
+                        <Edit2 size={14} aria-hidden="true" />
                       </IconButton>
-                      <IconButton size="small" onClick={() => onDelete(decompte.id)} sx={{ color: colors.danger[500] }}>
-                        <Trash2 size={14} />
+                      <IconButton size="small" onClick={() => onDelete(decompte.id)} aria-label="Supprimer le décompte" sx={{ color: colors.danger[500] }}>
+                        <Trash2 size={14} aria-hidden="true" />
                       </IconButton>
                     </Box>
                   </TableCell>

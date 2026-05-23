@@ -38,6 +38,12 @@ const VIEW_ICONS: Record<ViewMode, typeof List> = {
   map: MapPin,
 }
 
+const VIEW_LABELS: Record<ViewMode, string> = {
+  list: 'Vue liste',
+  kanban: 'Vue kanban',
+  map: 'Vue carte',
+}
+
 /**
  * ControlPanel - Barre d'outils des pages liste (style ocr-sage100).
  *
@@ -87,10 +93,11 @@ const ControlPanel = ({
                     key={view}
                     type="button"
                     aria-pressed={isActive}
+                    aria-label={VIEW_LABELS[view]}
                     onClick={() => onViewModeChange?.(view)}
                     className={isActive ? 'view-switcher-btn view-switcher-btn--active' : 'view-switcher-btn'}
                   >
-                    <Icon size={16} />
+                    <Icon size={16} aria-hidden="true" />
                   </button>
                 )
               })}
@@ -136,6 +143,7 @@ const ControlPanel = ({
                 type="text"
                 className="control-search-input"
                 placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
                 value={localSearch}
                 onChange={(e) => handleSearchChange(e.target.value)}
               />

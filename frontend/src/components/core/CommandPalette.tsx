@@ -144,7 +144,11 @@ const CommandPalette = () => {
       />
 
       {/* Palette */}
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Palette de commandes"
+        style={{
         position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
         width: '100%', maxWidth: 560, zIndex: 9999,
         backgroundColor: colors.surface, borderRadius: borders.radius.xl,
@@ -161,6 +165,7 @@ const CommandPalette = () => {
             ref={inputRef}
             type="text"
             placeholder="Rechercher une page, une action..."
+            aria-label="Rechercher une page ou une action"
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}

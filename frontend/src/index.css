@@ -450,6 +450,7 @@
 .page-header-title {
   font-size: var(--text-h1); font-weight: 600; color: var(--ink);
   font-family: var(--font-display); line-height: 1.25; letter-spacing: -0.01em;
+  margin: 0;
 }
 .page-header-subtitle { font-size: 13px; color: var(--ink-50); line-height: 1.5; }
 .page-header-actions { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }

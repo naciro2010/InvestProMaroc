@@ -360,9 +360,11 @@ const MarcheTableRow = ({
         <IconButton
           size="small"
           onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(marche.id) }}
+          aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          aria-pressed={isFavorite}
           sx={{ p: 0.25, color: isFavorite ? colors.warning[500] : colors.neutral[300], '&:hover': { color: colors.warning[500] } }}
         >
-          <Star size={14} fill={isFavorite ? 'currentColor' : 'none'} />
+          <Star size={14} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
         </IconButton>
       </TableCell>
     )}
@@ -440,7 +442,7 @@ const MarcheTableRow = ({
       </TableCell>
     )}
     <TableCell align="center">
-      <IconButton size="small" onClick={(e) => onMenuOpen(e, marche)} sx={{ color: colors.neutral[500] }}>
+      <IconButton size="small" onClick={(e) => onMenuOpen(e, marche)} aria-label="Actions sur le marché" sx={{ color: colors.neutral[500] }}>
         <MoreVert fontSize="small" />
       </IconButton>
     </TableCell>

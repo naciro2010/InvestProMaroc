@@ -188,17 +188,17 @@ const DecomptesPage = () => {
           breadcrumbs={[{ label: 'Decomptes' }]}
           actions={
             <>
-              <IconButton size="small" onClick={() => setViewMode('list')} sx={{ color: viewMode === 'list' ? colors.primary[600] : colors.textSecondary }}>
+              <IconButton size="small" onClick={() => setViewMode('list')} aria-label="Vue liste" aria-pressed={viewMode === 'list'} sx={{ color: viewMode === 'list' ? colors.primary[600] : colors.textSecondary }}>
                 <List size={18} />
               </IconButton>
-              <IconButton size="small" onClick={() => setViewMode('kanban')} sx={{ color: viewMode === 'kanban' ? colors.primary[600] : colors.textSecondary }}>
+              <IconButton size="small" onClick={() => setViewMode('kanban')} aria-label="Vue kanban" aria-pressed={viewMode === 'kanban'} sx={{ color: viewMode === 'kanban' ? colors.primary[600] : colors.textSecondary }}>
                 <LayoutGrid size={18} />
               </IconButton>
               <Button variant="contained" size="small" startIcon={<Plus size={16} />} onClick={() => handleOpenDialog()} sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}>
                 Nouveau
               </Button>
               <ExportButton onClick={handleExport} />
-              <IconButton size="small" onClick={loadDecomptes} sx={{ color: colors.textSecondary }}>
+              <IconButton size="small" onClick={loadDecomptes} aria-label="Rafraîchir" sx={{ color: colors.textSecondary }}>
                 <RefreshCw size={16} />
               </IconButton>
             </>

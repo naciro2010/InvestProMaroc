@@ -110,7 +110,9 @@ const PaiementsPage = () => {
 
   const isList = viewMode === 'list'
   const viewBtn = (mode: ViewMode, Icon: typeof List) => (
-    <IconButton size="small" onClick={() => setViewMode(mode)} sx={{ borderRadius: 0, bgcolor: viewMode === mode ? colors.primary[50] : 'transparent', color: viewMode === mode ? colors.primary[600] : colors.textSecondary }}>
+    <IconButton size="small" onClick={() => setViewMode(mode)}
+      aria-label={mode === 'list' ? 'Vue liste' : 'Vue kanban'} aria-pressed={viewMode === mode}
+      sx={{ borderRadius: 0, bgcolor: viewMode === mode ? colors.primary[50] : 'transparent', color: viewMode === mode ? colors.primary[600] : colors.textSecondary }}>
       <Icon size={16} />
     </IconButton>
   )
@@ -126,7 +128,7 @@ const PaiementsPage = () => {
             </Box>
             <Button variant="contained" size="small" startIcon={<Plus size={16} />} onClick={() => handleOpenDialog()} sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}>Nouveau</Button>
             <ExportButton onClick={() => {}} />
-            <IconButton size="small" onClick={() => loadPaiements()} sx={{ color: colors.textSecondary }}><RefreshCw size={16} /></IconButton>
+            <IconButton size="small" onClick={() => loadPaiements()} aria-label="Rafraîchir" sx={{ color: colors.textSecondary }}><RefreshCw size={16} /></IconButton>
           </>}
           searchValue={searchTerm}
           onSearchChange={(v) => { setSearchTerm(v); setPage(0) }}

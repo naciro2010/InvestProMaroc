@@ -96,7 +96,7 @@ const PageHeader = ({
       <div className="page-header-row">
         <div className="page-header-leading">
           <div className="page-header-titleline">
-            <span className="page-header-title">{title}</span>
+            <h1 className="page-header-title">{title}</h1>
             {status && (
               <span className={`status-pill status-pill--${chipToneMap[status.color]} status-pill--sm`}>
                 {status.label}

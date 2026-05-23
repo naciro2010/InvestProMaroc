@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react'
 
@@ -60,10 +60,15 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     return () => window.removeEventListener('showToast', handleToastEvent)
   }, [showToast])
 
-  const showError = (message: string) => showToast(message, 'error')
-  const showSuccess = (message: string) => showToast(message, 'success')
-  const showWarning = (message: string) => showToast(message, 'warning')
-  const showInfo = (message: string) => showToast(message, 'info')
+  const showError = useCallback((message: string) => showToast(message, 'error'), [showToast])
+  const showSuccess = useCallback((message: string) => showToast(message, 'success'), [showToast])
+  const showWarning = useCallback((message: string) => showToast(message, 'warning'), [showToast])
+  const showInfo = useCallback((message: string) => showToast(message, 'info'), [showToast])
+
+  const contextValue = useMemo(
+    () => ({ showToast, showError, showSuccess, showWarning, showInfo }),
+    [showToast, showError, showSuccess, showWarning, showInfo]
+  )
 
   const getToastIcon = (type: ToastType) => {
     switch (type) {
@@ -92,7 +97,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <ToastContext.Provider value={{ showToast, showError, showSuccess, showWarning, showInfo }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
 
       {/* Toast Container */}

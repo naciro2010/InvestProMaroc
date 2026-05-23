@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 
@@ -11,6 +11,28 @@ interface ModalProps {
 }
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  // Accessibilité clavier : fermeture via Escape, focus initial sur le dialog
+  // et restauration du focus sur l'élément déclencheur à la fermeture.
+  useEffect(() => {
+    if (!isOpen) return
+    previousFocusRef.current = document.activeElement as HTMLElement | null
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    const focusTimer = window.setTimeout(() => dialogRef.current?.focus(), 0)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      window.clearTimeout(focusTimer)
+      previousFocusRef.current?.focus?.()
+    }
+  }, [isOpen, onClose])
+
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-2xl',
@@ -34,10 +56,12 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) =>
           {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <motion.div
+              ref={dialogRef}
+              tabIndex={-1}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden`}
+              className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden focus:outline-none`}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">

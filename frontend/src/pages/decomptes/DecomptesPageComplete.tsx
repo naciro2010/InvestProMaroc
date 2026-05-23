@@ -34,6 +34,7 @@ const DecomptesPage = () => {
   const { showToast } = useToast()
   const [decomptes, setDecomptes] = useState<Decompte[]>([])
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statutFilter, setStatutFilter] = useState<string>('ALL')
   const [openDialog, setOpenDialog] = useState(false)
@@ -100,17 +101,22 @@ const DecomptesPage = () => {
   }
 
   const handleSubmit = async () => {
+    if (submitting) return
+    setSubmitting(true)
     try {
       if (selectedDecompte) {
         await decomptesAPI.update(selectedDecompte.id, { ...formData })
       } else {
         await decomptesAPI.create({ ...formData })
       }
+      showToast(selectedDecompte ? 'Décompte modifié' : 'Décompte créé', 'success')
       setOpenDialog(false)
       setSelectedDecompte(null)
       loadDecomptes()
     } catch {
       showToast('Erreur lors de la sauvegarde du decompte', 'error')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -118,6 +124,7 @@ const DecomptesPage = () => {
     if (!confirm('Confirmer la suppression ?')) return
     try {
       await decomptesAPI.delete(id)
+      showToast('Décompte supprimé', 'success')
       loadDecomptes()
     } catch {
       showToast('Erreur lors de la suppression du decompte', 'error')
@@ -148,8 +155,20 @@ const DecomptesPage = () => {
     })
   }
 
-  const handleCardMove = (itemId: string, _fromCol: string, toCol: string) => {
-    setDecomptes(prev => prev.map(d => d.id === Number(itemId) ? { ...d, statut: toCol } : d))
+  const handleCardMove = async (itemId: string, _fromCol: string, toCol: string) => {
+    const id = Number(itemId)
+    const target = decomptes.find(d => d.id === id)
+    if (!target || target.statut === toCol) return
+    const previous = decomptes
+    // Mise à jour optimiste, puis persistance ; revert + toast en cas d'échec.
+    setDecomptes(prev => prev.map(d => (d.id === id ? { ...d, statut: toCol } : d)))
+    try {
+      await decomptesAPI.update(id, { ...target, statut: toCol })
+      loadDecomptes()
+    } catch {
+      setDecomptes(previous)
+      showToast('Erreur lors du déplacement du décompte', 'error')
+    }
   }
 
   if (loading) {
@@ -169,17 +188,17 @@ const DecomptesPage = () => {
           breadcrumbs={[{ label: 'Decomptes' }]}
           actions={
             <>
-              <IconButton size="small" onClick={() => setViewMode('list')} sx={{ color: viewMode === 'list' ? colors.primary[600] : colors.textSecondary }}>
+              <IconButton size="small" onClick={() => setViewMode('list')} aria-label="Vue liste" aria-pressed={viewMode === 'list'} sx={{ color: viewMode === 'list' ? colors.primary[600] : colors.textSecondary }}>
                 <List size={18} />
               </IconButton>
-              <IconButton size="small" onClick={() => setViewMode('kanban')} sx={{ color: viewMode === 'kanban' ? colors.primary[600] : colors.textSecondary }}>
+              <IconButton size="small" onClick={() => setViewMode('kanban')} aria-label="Vue kanban" aria-pressed={viewMode === 'kanban'} sx={{ color: viewMode === 'kanban' ? colors.primary[600] : colors.textSecondary }}>
                 <LayoutGrid size={18} />
               </IconButton>
               <Button variant="contained" size="small" startIcon={<Plus size={16} />} onClick={() => handleOpenDialog()} sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}>
                 Nouveau
               </Button>
               <ExportButton onClick={handleExport} />
-              <IconButton size="small" onClick={loadDecomptes} sx={{ color: colors.textSecondary }}>
+              <IconButton size="small" onClick={loadDecomptes} aria-label="Rafraîchir" sx={{ color: colors.textSecondary }}>
                 <RefreshCw size={16} />
               </IconButton>
             </>
@@ -249,6 +268,7 @@ const DecomptesPage = () => {
           formData={formData}
           onFormDataChange={setFormData}
           onCalculateNet={calculateNetAPayer}
+          isSubmitting={submitting}
         />
       </Box>
     </AppLayout>

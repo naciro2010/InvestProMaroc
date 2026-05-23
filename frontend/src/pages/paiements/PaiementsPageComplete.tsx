@@ -3,6 +3,7 @@ import { Box, Button, IconButton, Chip, CircularProgress } from '@mui/material'
 import { Plus, RefreshCw, List, LayoutGrid } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
 import { paiementsAPI } from '../../lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import { ControlPanel, ExportButton } from '../../components/core'
 import { colors, typography, componentStyles, getStatusConfig } from '../../lib/designSystem'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -20,8 +21,10 @@ const INITIAL_FORM: PaiementFormData = {
 }
 
 const PaiementsPage = () => {
+  const { showError, showSuccess } = useToast()
   const [paiements, setPaiements] = useState<Paiement[]>([])
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statutFilter, setStatutFilter] = useState<string>('ALL')
   const [openDialog, setOpenDialog] = useState(false)
@@ -36,7 +39,8 @@ const PaiementsPage = () => {
   const loadPaiements = async () => {
     setLoading(true)
     try { const { data } = await paiementsAPI.getAll(); setPaiements(data.data || []) }
-    catch { /* silently handle */ } finally { setLoading(false) }
+    catch { showError('Erreur lors du chargement des paiements') }
+    finally { setLoading(false) }
   }
 
   const stats = useMemo(() => ({
@@ -69,22 +73,32 @@ const PaiementsPage = () => {
   const handleCloseDialog = () => { setOpenDialog(false); setSelectedPaiement(null) }
 
   const handleSubmit = async () => {
+    if (submitting) return
+    setSubmitting(true)
     try {
       const payload = formData as unknown as Record<string, unknown>
       if (selectedPaiement) await paiementsAPI.update(selectedPaiement.id, payload)
       else await paiementsAPI.create(payload)
+      showSuccess(selectedPaiement ? 'Paiement modifié' : 'Paiement créé')
       handleCloseDialog(); loadPaiements()
-    } catch { /* silently handle */ }
+    } catch { showError('Erreur lors de la sauvegarde du paiement') }
+    finally { setSubmitting(false) }
   }
 
   const handleDelete = async (id: number) => {
     if (!confirm('Confirmer la suppression ?')) return
-    try { await paiementsAPI.delete(id); loadPaiements() } catch { /* silently handle */ }
+    try { await paiementsAPI.delete(id); showSuccess('Paiement supprimé'); loadPaiements() }
+    catch { showError('Erreur lors de la suppression du paiement') }
   }
 
   const handleCardMove = (itemId: string, _from: string, toColumnId: string) => {
     const p = paiements.find(x => String(x.id) === itemId)
-    if (p) paiementsAPI.update(p.id, { ...p, statut: toColumnId } as Record<string, unknown>).then(() => loadPaiements()).catch(() => {})
+    if (!p || p.statut === toColumnId) return
+    const previous = paiements
+    setPaiements(prev => prev.map(x => (x.id === p.id ? { ...x, statut: toColumnId } : x)))
+    paiementsAPI.update(p.id, { ...p, statut: toColumnId } as Record<string, unknown>)
+      .then(() => loadPaiements())
+      .catch(() => { setPaiements(previous); showError('Erreur lors du déplacement du paiement') })
   }
 
 
@@ -96,7 +110,9 @@ const PaiementsPage = () => {
 
   const isList = viewMode === 'list'
   const viewBtn = (mode: ViewMode, Icon: typeof List) => (
-    <IconButton size="small" onClick={() => setViewMode(mode)} sx={{ borderRadius: 0, bgcolor: viewMode === mode ? colors.primary[50] : 'transparent', color: viewMode === mode ? colors.primary[600] : colors.textSecondary }}>
+    <IconButton size="small" onClick={() => setViewMode(mode)}
+      aria-label={mode === 'list' ? 'Vue liste' : 'Vue kanban'} aria-pressed={viewMode === mode}
+      sx={{ borderRadius: 0, bgcolor: viewMode === mode ? colors.primary[50] : 'transparent', color: viewMode === mode ? colors.primary[600] : colors.textSecondary }}>
       <Icon size={16} />
     </IconButton>
   )
@@ -112,7 +128,7 @@ const PaiementsPage = () => {
             </Box>
             <Button variant="contained" size="small" startIcon={<Plus size={16} />} onClick={() => handleOpenDialog()} sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}>Nouveau</Button>
             <ExportButton onClick={() => {}} />
-            <IconButton size="small" onClick={() => loadPaiements()} sx={{ color: colors.textSecondary }}><RefreshCw size={16} /></IconButton>
+            <IconButton size="small" onClick={() => loadPaiements()} aria-label="Rafraîchir" sx={{ color: colors.textSecondary }}><RefreshCw size={16} /></IconButton>
           </>}
           searchValue={searchTerm}
           onSearchChange={(v) => { setSearchTerm(v); setPage(0) }}
@@ -146,7 +162,8 @@ const PaiementsPage = () => {
         )}
 
         <PaiementFormDialog open={openDialog} onClose={handleCloseDialog} onSubmit={handleSubmit}
-          selectedPaiement={selectedPaiement} formData={formData} onFormDataChange={setFormData} />
+          selectedPaiement={selectedPaiement} formData={formData} onFormDataChange={setFormData}
+          isSubmitting={submitting} />
       </Box>
     </AppLayout>
   )

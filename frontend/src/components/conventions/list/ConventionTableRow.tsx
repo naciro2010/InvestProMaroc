@@ -92,6 +92,8 @@ const ConventionTableRow = ({
             <IconButton
               size="small"
               onClick={(e) => { e.stopPropagation(); onToggleFavorite(conv.id) }}
+              aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              aria-pressed={isFavorite}
               sx={{ p: 0.25, color: isFavorite ? colors.warning[500] : colors.neutral[300], '&:hover': { color: colors.warning[500] } }}
             >
               {isFavorite ? <Star sx={{ fontSize: 18 }} /> : <StarBorder sx={{ fontSize: 18 }} />}
@@ -101,7 +103,9 @@ const ConventionTableRow = ({
 
         <TableCell sx={{ pl: 1, width: 40 }}>
           {hasSous && (
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onToggle() }}>
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onToggle() }}
+              aria-label={expanded ? 'Réduire les sous-conventions' : 'Afficher les sous-conventions'}
+              aria-expanded={expanded}>
               {expanded ? <KeyboardArrowDown fontSize="small" /> : <KeyboardArrowRight fontSize="small" />}
             </IconButton>
           )}
@@ -165,7 +169,7 @@ const ConventionTableRow = ({
           </TableCell>
         )}
         <TableCell align="center" sx={{ width: 50 }}>
-          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onMenuOpen(e, conv) }}>
+          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onMenuOpen(e, conv) }} aria-label="Actions sur la convention">
             <MoreVert fontSize="small" />
           </IconButton>
         </TableCell>
@@ -220,7 +224,7 @@ const ConventionTableRow = ({
                       )}
                       {isVisible('createdBy') && <TableCell />}
                       <TableCell align="center" sx={{ width: 50 }}>
-                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onMenuOpen(e, sc) }}>
+                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onMenuOpen(e, sc) }} aria-label="Actions sur la sous-convention">
                           <MoreVert fontSize="small" />
                         </IconButton>
                       </TableCell>

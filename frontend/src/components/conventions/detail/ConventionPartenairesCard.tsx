@@ -160,7 +160,7 @@ const ConventionPartenairesCard = ({
         <Box sx={{ mb: 1.5, p: 1.5, bgcolor: colors.primary[25], borderRadius: borders.radius.md, border: `1px solid ${colors.primary[100]}` }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
             <ArrowUpward sx={{ fontSize: 14, color: colors.primary[600] }} />
-            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.primary[600], textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.primary[600] }}>
               Convention principale
             </Typography>
             <Chip label={parentPartenaires.length} size="small" sx={{ height: 18, fontSize: '10px', bgcolor: colors.primary[100], color: colors.primary[700] }} />

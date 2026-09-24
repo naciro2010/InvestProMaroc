@@ -71,7 +71,7 @@ const DecompteKanbanView = ({ decomptes, onCardMove, formatCurrency }: DecompteK
   }, [decomptes])
 
   return (
-    <Box sx={{ px: { xs: 2, md: 3 }, py: 2 }}>
+    <Box sx={{ px: 0, py: 2 }}>
       <KanbanBoard<Decompte>
         columns={columns}
         getItemId={(item) => String(item.id)}

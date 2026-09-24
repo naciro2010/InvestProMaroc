@@ -181,7 +181,7 @@ const ConventionRealisationSection = ({
         <Notebook
           syncParam="tab"
           sticky
-          stickyTop={{ xs: 56, lg: 0 }}
+          stickyTop="var(--app-header-h, 0px)"
           onTabChange={handleTabChange}
           tabs={[
             {
@@ -279,7 +279,7 @@ const ConventionRealisationSection = ({
                       <Typography key="bud" sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(sc.budget)}</Typography>,
                       sc.statut === 'BROUILLON' ? (
                         <Button key="act" size="small" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingSc(sc); setScDialogOpen(true) }}
-                          sx={{ textTransform: 'none', fontSize: typography.sizes.xs, color: colors.primary[600], minWidth: 0 }}>Modifier</Button>
+                          sx={{ fontSize: typography.sizes.xs, color: colors.primary[600], minWidth: 0 }}>Modifier</Button>
                       ) : null,
                     ])}
                     onRowClick={(idx) => navigate(`/conventions/${sousConventions[idx].id}`)}

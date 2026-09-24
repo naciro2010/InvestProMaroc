@@ -54,7 +54,6 @@ export const ConventionProjetsTab = ({ projets, onLinkProjet, onUnlinkProjet }: 
           sx={{
             bgcolor: colors.primary[600],
             '&:hover': { bgcolor: colors.primary[700] },
-            textTransform: 'none',
             fontWeight: typography.weights.medium,
           }}
         >
@@ -68,11 +67,11 @@ export const ConventionProjetsTab = ({ projets, onLinkProjet, onUnlinkProjet }: 
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: colors.neutral[50] }}>
-                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Code</TableCell>
-                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Designation</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Budget Total</TableCell>
-                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Statut</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em', width: 90 }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Code</TableCell>
+                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Designation</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Budget Total</TableCell>
+                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Statut</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, width: 90 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -124,7 +123,7 @@ export const ConventionProjetsTab = ({ projets, onLinkProjet, onUnlinkProjet }: 
             size="small"
             startIcon={<Add />}
             onClick={onLinkProjet}
-            sx={{ textTransform: 'none', color: colors.primary[600] }}
+            sx={{ color: colors.primary[600] }}
           >
             Lier un projet
           </Button>
@@ -168,7 +167,6 @@ export const ConventionMarchesTab = ({ marches, onLinkMarche, onUnlinkMarche }: 
           sx={{
             bgcolor: colors.primary[600],
             '&:hover': { bgcolor: colors.primary[700] },
-            textTransform: 'none',
             fontWeight: typography.weights.medium,
           }}
         >
@@ -182,12 +180,12 @@ export const ConventionMarchesTab = ({ marches, onLinkMarche, onUnlinkMarche }: 
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: colors.neutral[50] }}>
-                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Code</TableCell>
-                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Objet</TableCell>
-                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fournisseur</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Montant TTC</TableCell>
-                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Statut</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: '0.05em', width: 90 }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Code</TableCell>
+                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Objet</TableCell>
+                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Fournisseur</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Montant TTC</TableCell>
+                  <TableCell sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs }}>Statut</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: typography.weights.semibold, color: colors.textSecondary, fontSize: typography.sizes.xs, width: 90 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -244,7 +242,7 @@ export const ConventionMarchesTab = ({ marches, onLinkMarche, onUnlinkMarche }: 
             size="small"
             startIcon={<Add />}
             onClick={onLinkMarche}
-            sx={{ textTransform: 'none', color: colors.primary[600] }}
+            sx={{ color: colors.primary[600] }}
           >
             Lier un marche
           </Button>

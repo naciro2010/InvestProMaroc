@@ -40,8 +40,8 @@ const parseMontant = (s: string): number => {
 
 const thBase = {
   fontSize: '10px', fontWeight: typography.weights.semibold,
-  color: colors.textSecondary, textTransform: 'uppercase' as const,
-  letterSpacing: '0.03em', py: 0.5, px: 1, whiteSpace: 'nowrap' as const,
+  color: colors.textSecondary,
+  py: 0.5, px: 1, whiteSpace: 'nowrap' as const,
 }
 const td = { fontSize: typography.sizes.xs, py: 0.5, px: 1 }
 const tnum = { fontVariantNumeric: 'tabular-nums' as const }

@@ -60,11 +60,10 @@ export const StatusDot = ({ color, size = 8 }: StatusDotProps) => {
 }
 
 /**
- * StatusBadge - Pastille de statut (style ocr-sage100).
+ * StatusBadge - Pastille de statut « Registre ».
  *
- * Design: pill financière — fond teinté, texte de couleur forte (WCAG AA),
- * bordure halo subtile, point de la couleur du texte. Identique à
- * `.status-pill` d'ocr-sage100.
+ * 11px 600, rayon 999px, bordure 1px, fond/texte/bordure du ton
+ * (ok, attention, erreur, info, neutre). Voir `.status-pill` (index.css).
  *
  * @example
  * <StatusBadge status="VALIDEE" />
@@ -83,10 +82,7 @@ const StatusBadge = ({ status, label, size = 'medium', dotOnly = false }: Status
   const className = `status-pill status-pill--${config.color}${size === 'small' ? ' status-pill--sm' : ''}`
 
   return (
-    <span className={className}>
-      <span className="status-pill-dot" />
-      {displayLabel}
-    </span>
+    <span className={className}>{displayLabel}</span>
   )
 }
 

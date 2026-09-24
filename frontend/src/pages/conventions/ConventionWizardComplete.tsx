@@ -348,7 +348,7 @@ const ConventionWizardComplete = () => {
               variant="outlined"
               startIcon={<CloseIcon />}
               onClick={handleDismissDraft}
-              sx={{ textTransform: 'none', color: colors.textSecondary, borderColor: colors.border }}
+              sx={{ color: colors.textSecondary, borderColor: colors.border }}
             >
               Ignorer
             </Button>
@@ -358,7 +358,6 @@ const ConventionWizardComplete = () => {
               startIcon={<RestoreIcon />}
               onClick={handleRestoreDraft}
               sx={{
-                textTransform: 'none',
                 bgcolor: colors.warning[600],
                 '&:hover': { bgcolor: colors.warning[700] },
               }}

@@ -24,8 +24,7 @@ const DashboardMonthlyTrend = ({ trends }: Props) => {
           <Box sx={{ height: 200, mb: 2 }}>
             <Typography sx={{
               fontSize: typography.sizes.xs, color: colors.textDisabled,
-              fontWeight: typography.weights.medium, mb: 1, textTransform: 'uppercase',
-              letterSpacing: '0.05em',
+              fontWeight: typography.weights.medium, mb: 1,
             }}>
               Montants (DH)
             </Typography>
@@ -85,8 +84,7 @@ const DashboardMonthlyTrend = ({ trends }: Props) => {
         <Box sx={{ height: 180, pb: 2 }}>
           <Typography sx={{
             fontSize: typography.sizes.xs, color: colors.textDisabled,
-            fontWeight: typography.weights.medium, mb: 1, textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            fontWeight: typography.weights.medium, mb: 1,
           }}>
             Volumes (nombre)
           </Typography>

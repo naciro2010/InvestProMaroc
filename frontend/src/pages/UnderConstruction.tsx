@@ -74,7 +74,7 @@ const UnderConstruction = ({
 
           {/* Features Timeline */}
           <div className="mt-12 border-t border-gray-200 pt-8">
-            <h3 className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wide mb-6">
+            <h3 className="text-center text-sm font-semibold text-gray-500 mb-6">
               Roadmap des fonctionnalités
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

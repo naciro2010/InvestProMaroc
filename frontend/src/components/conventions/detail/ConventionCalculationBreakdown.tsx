@@ -169,7 +169,7 @@ const ConventionCalculationBreakdown = ({
         <Button
           size="small" variant="text"
           endIcon={expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          sx={{ color: colors.textSecondary, fontSize: typography.sizes.xs, textTransform: 'none', pointerEvents: 'none' }}
+          sx={{ color: colors.textSecondary, fontSize: typography.sizes.xs, pointerEvents: 'none' }}
         >
           {expanded ? 'Masquer' : 'Detail'}
         </Button>
@@ -209,8 +209,8 @@ const ConventionCalculationBreakdown = ({
           <Box sx={{ bgcolor: colors.neutral[50], borderRadius: borders.radius.md, p: 2, mt: 2 }}>
             <Typography sx={{
               fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold,
-              color: colors.textSecondary, textTransform: 'uppercase',
-              letterSpacing: typography.letterSpacing.wide, mb: 1.5,
+              color: colors.textSecondary,
+              mb: 1.5,
             }}>
               Engagements actuels
             </Typography>

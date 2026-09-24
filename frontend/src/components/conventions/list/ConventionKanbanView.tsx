@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { Box, Typography, Chip } from '@mui/material'
-import { Calendar, Users, TrendingUp } from 'lucide-react'
-import { StatusBadge, KanbanBoard } from '@/components/core'
+import { Box, Typography } from '@mui/material'
+import { KanbanBoard } from '@/components/core'
 import type { KanbanColumn } from '@/components/core'
-import { colors, typography, borders } from '@/lib/designSystem'
+import { colors, typography, tones, toneOf, getStatusConfig } from '@/lib/designSystem'
+import { formatMillions, formatPercent } from '@/lib/utils'
 
 // ==================== TYPES ====================
 
@@ -24,86 +24,68 @@ interface KanbanConvention {
 
 interface ConventionKanbanViewProps {
   data: KanbanConvention[]
+  /** Colonnes à afficher (statuts de la section courante) */
+  statuses?: string[]
   onCardClick: (id: number) => void
   onStatusChange?: (conventionId: number, newStatus: string) => void
 }
 
 // ==================== HELPERS ====================
 
-const KANBAN_STATUSES = [
-  { statut: 'BROUILLON', label: 'Brouillon', color: colors.neutral[500] },
-  { statut: 'SOUMIS', label: 'Soumis', color: colors.warning[600] },
-  { statut: 'VALIDEE', label: 'Validee', color: colors.success[600] },
-  { statut: 'EN_EXECUTION', label: 'En execution', color: colors.info[600] },
-  { statut: 'ACHEVE', label: 'Acheve', color: colors.purple[600] },
-]
+const DEFAULT_STATUSES = ['BROUILLON', 'SOUMIS', 'VALIDEE', 'EN_EXECUTION', 'ACHEVE']
+
+const TYPE_LABELS: Record<string, string> = { CADRE: 'Cadre', SPECIFIQUE: 'Spécifique', NON_CADRE: 'Non cadre', AVENANT: 'Avenant' }
 
 const normalizeStatut = (statut: string): string => {
   const aliases: Record<string, string> = { VALIDE: 'VALIDEE', EN_COURS: 'EN_EXECUTION' }
   return aliases[statut] || statut
 }
 
-const formatCurrency = (amount: number): string => {
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}K`
-  return amount.toLocaleString('fr-FR')
-}
-
 // ==================== KANBAN CARD RENDER ====================
 
 const renderConventionCard = (convention: KanbanConvention, onClick: (id: number) => void) => (
   <Box onClick={() => onClick(convention.id)} sx={{ cursor: 'pointer' }}>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
-      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.primary[600] }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1, mb: 0.5 }}>
+      <Typography sx={{ fontSize: '12.5px', fontWeight: typography.weights.bold, color: colors.textPrimary }}>
         {convention.code}
       </Typography>
-      <StatusBadge status={convention.type || 'CADRE'} size="small" />
+      <Typography sx={{ fontSize: '11.5px', color: colors.textTertiary }}>
+        {TYPE_LABELS[convention.type ?? ''] ?? convention.type ?? ''}
+      </Typography>
     </Box>
     <Typography sx={{
-      fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.textPrimary,
-      lineHeight: 1.4, mb: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+      fontSize: '13px', color: colors.textSecondary, lineHeight: 1.4, mb: 1,
+      display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
     }}>
       {convention.libelle || convention.numero}
     </Typography>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
-      <TrendingUp size={12} style={{ color: colors.textSecondary }} />
-      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
-        {formatCurrency(convention.budget)} MAD
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 1 }}>
+      <Typography sx={{ fontSize: '14px', fontWeight: typography.weights.semibold, color: colors.textPrimary }}>
+        {formatMillions(convention.budget)} MAD
       </Typography>
       {convention.tauxCommission > 0 && (
-        <Chip label={`${convention.tauxCommission}%`} size="small"
-          sx={{ height: 18, fontSize: '10px', bgcolor: colors.purple[50], color: colors.purple[700], fontWeight: typography.weights.semibold }} />
+        <Typography sx={{ fontSize: '12px', color: colors.textTertiary }}>{formatPercent(convention.tauxCommission)}</Typography>
       )}
     </Box>
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      {convention.dateDebut && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Calendar size={11} style={{ color: colors.neutral[400] }} />
-          <Typography sx={{ fontSize: '11px', color: colors.neutral[400] }}>
-            {new Date(convention.dateDebut).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
-          </Typography>
-        </Box>
-      )}
-      {convention.createdByNom && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Users size={11} style={{ color: colors.neutral[400] }} />
-          <Typography sx={{ fontSize: '11px', color: colors.neutral[400] }}>{convention.createdByNom}</Typography>
-        </Box>
-      )}
-    </Box>
+    {convention.createdByNom && (
+      <Typography sx={{ fontSize: '11.5px', color: colors.textTertiary, mt: 0.5 }}>{convention.createdByNom}</Typography>
+    )}
   </Box>
 )
 
 // ==================== MAIN COMPONENT ====================
 
-const ConventionKanbanView = ({ data, onCardClick, onStatusChange }: ConventionKanbanViewProps) => {
+const ConventionKanbanView = ({ data, statuses = DEFAULT_STATUSES, onCardClick, onStatusChange }: ConventionKanbanViewProps) => {
   const columns: KanbanColumn<KanbanConvention>[] = useMemo(() =>
-    KANBAN_STATUSES.map(col => ({
-      id: col.statut,
-      title: col.label,
-      color: col.color,
-      items: data.filter(c => normalizeStatut(c.statut) === col.statut),
-    })), [data])
+    statuses.map(statut => {
+      const cfg = getStatusConfig(statut)
+      return {
+        id: statut,
+        title: cfg.label,
+        color: statut === 'EN_EXECUTION' ? colors.brass.main : tones[toneOf(cfg.color)].fg,
+        items: data.filter(c => normalizeStatut(c.statut) === statut),
+      }
+    }), [data, statuses])
 
   const handleCardMove = (itemId: string, _fromCol: string, toCol: string) => {
     const conventionId = Number(itemId)

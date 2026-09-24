@@ -57,8 +57,6 @@ const thStyle = {
   fontWeight: typography.weights.semibold,
   fontSize: typography.sizes.xs,
   color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
 }
 
 /**

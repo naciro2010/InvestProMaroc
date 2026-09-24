@@ -10,10 +10,22 @@ export interface Marche {
   id: number
   code: string
   objet: string
+  /** Taux de retenue de garantie du marché (%) */
+  retenueGarantie?: number | null
+}
+
+/** Valeurs de l'enum backend `TypeRetenue` */
+export type TypeRetenue = 'GARANTIE' | 'PENALITES' | 'AVANCES' | 'RAS'
+
+export const RETENUE_LABELS: Record<TypeRetenue, string> = {
+  GARANTIE: 'Retenue de garantie',
+  PENALITES: 'Pénalité de retard',
+  AVANCES: "Remboursement d'avance",
+  RAS: 'Retenue à la source',
 }
 
 export interface Retenue {
-  type: 'RG' | 'PENALITE' | 'AVANCE' | 'AUTRE'
+  type: TypeRetenue
   montant: number
   description: string
 }

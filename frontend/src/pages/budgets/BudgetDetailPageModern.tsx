@@ -131,7 +131,7 @@ const BudgetDetailPageModern = () => {
   if (!id) return <AppLayout><Box sx={{ p: 4 }}><Alert severity="error">ID du budget manquant</Alert></Box></AppLayout>
 
   if (loading) return (
-    <AppLayout><Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+    <AppLayout><Box sx={{ minWidth: 0 }}>
       <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
         <Skeleton variant="text" width={300} height={32} />
       </Box>
@@ -154,7 +154,7 @@ const BudgetDetailPageModern = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={[{ label: 'Budgets', path: '/budgets' }, { label: `Budget ${budget.version}` }]}
           actions={

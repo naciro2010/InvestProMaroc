@@ -1,6 +1,8 @@
-import { ReactNode, useState } from 'react'
+import { Fragment, ReactNode, useState } from 'react'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, List, LayoutGrid, MapPin, X } from 'lucide-react'
-import ModernBreadcrumb, { BreadcrumbSegment } from './ModernBreadcrumb'
+import type { BreadcrumbSegment } from './ModernBreadcrumb'
+import { findNavLocation } from '@/components/layout/navigation'
 
 type ViewMode = 'list' | 'kanban' | 'map'
 
@@ -12,6 +14,16 @@ interface FilterTag {
 
 interface ControlPanelProps {
   breadcrumbs: BreadcrumbSegment[]
+  /** Titre Garamond (par défaut : dernier élément du fil d'Ariane) */
+  title?: ReactNode
+  /** Ligne sous le titre (volumes, totaux de la sélection…) */
+  subtitle?: ReactNode
+  /** Surtitre (par défaut : fil d'Ariane parent, ou thème du menu) */
+  eyebrow?: ReactNode
+  /** Ligne au-dessus du titre (code, numéro, pastilles de statut) */
+  overline?: ReactNode
+  /** Onglets de section, entre l'en-tête et la barre de filtres */
+  tabs?: ReactNode
   actions?: ReactNode
   searchPlaceholder?: string
   searchValue?: string
@@ -44,14 +56,44 @@ const VIEW_LABELS: Record<ViewMode, string> = {
   map: 'Vue carte',
 }
 
+/** Surtitre par défaut : fil d'Ariane parent, sinon thème du menu. */
+const DefaultEyebrow = ({ breadcrumbs }: { breadcrumbs: BreadcrumbSegment[] }) => {
+  const { pathname } = useLocation()
+  const parents = breadcrumbs.slice(0, -1)
+
+  if (parents.length > 0) {
+    return (
+      <>
+        {parents.map((item, index) => (
+          <Fragment key={`${item.label}-${index}`}>
+            {index > 0 && <span className="page-eyebrow-sep" aria-hidden="true">›</span>}
+            {item.path ? <RouterLink to={item.path}>{item.label}</RouterLink> : <span>{item.label}</span>}
+          </Fragment>
+        ))}
+      </>
+    )
+  }
+
+  const location = findNavLocation(pathname)
+  if (!location) return null
+  if (location.group.key === 'accueil') return <>Pilotage · tableau de bord</>
+  return <>{location.group.hint ? `${location.group.label} · ${location.group.hint}` : location.group.label}</>
+}
+
 /**
- * ControlPanel - Barre d'outils des pages liste (style ocr-sage100).
+ * ControlPanel - En-tête de page « Registre » + barre de filtres.
  *
- * Combine breadcrumb, actions, bascule de vue, pagination, recherche et
- * tags de filtres. Surface blanche, bordure bottom, densité financière.
+ * Surtitre (filet laiton), titre Garamond, sous-titre et actions à droite ;
+ * dessous : recherche, tags de filtres, filtres propres à la page.
+ * Bascule de vue et pagination restent dans les actions.
  */
 const ControlPanel = ({
   breadcrumbs,
+  title,
+  subtitle,
+  eyebrow,
+  overline,
+  tabs,
   actions,
   searchPlaceholder = 'Rechercher...',
   searchValue = '',
@@ -76,9 +118,16 @@ const ControlPanel = ({
 
   return (
     <div className="control-panel">
-      {/* Top Row: Breadcrumbs + Actions + Pager */}
+      {/* En-tête : surtitre + titre + actions */}
       <div className="control-panel-top">
-        <ModernBreadcrumb items={breadcrumbs} />
+        <div className="control-panel-heading">
+          <nav className="page-eyebrow" aria-label="Fil d'Ariane">
+            {eyebrow ?? <DefaultEyebrow breadcrumbs={breadcrumbs} />}
+          </nav>
+          {overline && <div className="page-overline">{overline}</div>}
+          <h1 className="page-title">{title ?? breadcrumbs[breadcrumbs.length - 1]?.label}</h1>
+          {subtitle && <p className="page-subtitle">{subtitle}</p>}
+        </div>
 
         <div className="control-panel-actions">
           {actions}
@@ -132,7 +181,9 @@ const ControlPanel = ({
         </div>
       </div>
 
-      {!hideBottomRow && (
+      {tabs}
+
+      {!hideBottomRow && (onSearchChange || filters.length > 0 || children) && (
         <div className="control-panel-bottom">
           {onSearchChange && (
             <div className="control-search">

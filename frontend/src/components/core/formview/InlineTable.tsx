@@ -104,7 +104,7 @@ const InlineTable = ({
               <th key={i} style={{
                 padding: '8px 12px', textAlign: header.align || 'left',
                 fontWeight: typography.weights.semibold as number, fontSize: typography.sizes.xs,
-                textTransform: 'uppercase', letterSpacing: '0.04em', color: colors.textSecondary,
+                color: colors.textSecondary,
                 borderBottom: `2px solid ${colors.border}`, width: header.width,
               }}>
                 {header.label}

@@ -38,9 +38,9 @@ interface ColumnConfig {
 }
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { key: 'numAo', label: 'N AO', visible: true },
+  { key: 'numAo', label: 'N° AO', visible: false },
   { key: 'type', label: 'Type', visible: true },
-  { key: 'fournisseur', label: 'Fournisseur', visible: true },
+  { key: 'fournisseur', label: 'Fournisseur (colonne)', visible: false },
   { key: 'convention', label: 'Convention', visible: true },
   { key: 'montant', label: 'Montant TTC', visible: true },
   { key: 'lignes', label: 'Lignes', visible: true },
@@ -251,11 +251,11 @@ export default function MarchesPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={urlConventionId
-            ? [{ label: 'Conventions', path: '/conventions' }, { label: `Convention #${urlConventionId}`, path: `/conventions/${urlConventionId}` }, { label: 'Marches' }]
-            : [{ label: 'Marches' }]
+            ? [{ label: 'Conventions', path: '/conventions' }, { label: `Convention #${urlConventionId}`, path: `/conventions/${urlConventionId}` }, { label: 'Marchés' }]
+            : [{ label: 'Marchés' }]
           }
           actions={
             <>
@@ -345,7 +345,7 @@ export default function MarchesPage() {
           )}
         </ControlPanel>
 
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={{ pt: 0.5 }}>
           {viewMode === 'map' && (
             <Box sx={{ mt: 0 }}>
               <MarchesMapView marches={filteredMarches} />
@@ -401,7 +401,7 @@ export default function MarchesPage() {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         PaperProps={{ sx: { borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', mt: 0.5, p: 1, minWidth: 180 } }}
       >
-        <Typography sx={{ px: 1, py: 0.5, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <Typography sx={{ px: 1, py: 0.5, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary }}>
           Colonnes visibles
         </Typography>
         {columns.map((col) => (

@@ -99,7 +99,7 @@ const ConventionQuickSummary = ({ convention, enrichedData }: ConventionQuickSum
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Speed sx={{ fontSize: 16, color: healthColor }} />
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary }}>
             Resume
           </Typography>
         </Box>

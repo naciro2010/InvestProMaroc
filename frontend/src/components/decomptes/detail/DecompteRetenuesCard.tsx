@@ -132,7 +132,7 @@ const DecompteRetenuesCard = ({ decompteId }: DecompteRetenuesCardProps) => {
           <TableContainer>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ '& th': { fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.gray[500], textTransform: 'uppercase', borderBottom: `1px solid ${colors.neutral[200]}` } }}>
+                <TableRow sx={{ '& th': { fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, color: colors.gray[500], borderBottom: `1px solid ${colors.neutral[200]}` } }}>
                   <TableCell>Type</TableCell>
                   <TableCell>Libelle</TableCell>
                   <TableCell align="center">Taux %</TableCell>

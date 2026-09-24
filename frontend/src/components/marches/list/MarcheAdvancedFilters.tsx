@@ -259,7 +259,7 @@ const MarcheAdvancedFilters = ({
 
           <Divider sx={{ my: 1.5 }} />
 
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75 }}>
             Montant TTC (MAD)
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
@@ -279,7 +279,7 @@ const MarcheAdvancedFilters = ({
 
           <Divider sx={{ my: 1.5 }} />
 
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75 }}>
             Periode
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>

@@ -14,6 +14,13 @@ const KeyboardShortcutsHelp = () => {
     category: 'Navigation',
   })
 
+  useKeyboardShortcut({
+    key: 'Escape',
+    handler: () => { if (open) setOpen(false) },
+    description: 'Fermer',
+    category: 'General',
+  })
+
   if (!open) return null
 
   // Group shortcuts by category
@@ -29,18 +36,18 @@ const KeyboardShortcutsHelp = () => {
       <div
         onClick={() => setOpen(false)}
         style={{
-          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-          zIndex: 9998, backdropFilter: 'blur(4px)',
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(28,42,68,.34)',
+          zIndex: 9998,
         }}
       />
 
       {/* Modal */}
-      <div style={{
+      <div role="dialog" aria-modal="true" aria-label="Raccourcis clavier" style={{
         position: 'fixed', top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: '100%', maxWidth: 480, zIndex: 9999,
+        width: 'calc(100% - 32px)', maxWidth: 480, zIndex: 9999,
         backgroundColor: colors.surface, borderRadius: borders.radius.xl,
-        border: `1px solid ${colors.border}`, boxShadow: shadows.xl,
+        boxShadow: shadows.xl,
         overflow: 'hidden',
       }}>
         {/* Header */}
@@ -49,17 +56,20 @@ const KeyboardShortcutsHelp = () => {
           padding: '16px 20px', borderBottom: `1px solid ${colors.border}`,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Keyboard size={18} style={{ color: colors.primary[600] }} />
+            <Keyboard size={16} strokeWidth={1.75} style={{ color: colors.textSecondary }} aria-hidden="true" />
             <span style={{
-              fontSize: typography.sizes.lg,
-              fontWeight: typography.weights.semibold,
+              fontFamily: typography.fontFamilySerif,
+              fontSize: 20,
+              fontWeight: typography.weights.medium,
               color: colors.textPrimary,
             }}>
               Raccourcis clavier
             </span>
           </div>
           <button
+            type="button"
             onClick={() => setOpen(false)}
+            aria-label="Fermer"
             style={{
               padding: '4px', backgroundColor: 'transparent', border: 'none',
               cursor: 'pointer', borderRadius: borders.radius.sm, display: 'flex',
@@ -77,8 +87,6 @@ const KeyboardShortcutsHelp = () => {
                 fontSize: typography.sizes.xs,
                 fontWeight: typography.weights.semibold,
                 color: colors.textSecondary,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
                 marginBottom: 8,
               }}>
                 {category}
@@ -105,7 +113,7 @@ const KeyboardShortcutsHelp = () => {
                           border: `1px solid ${colors.neutral[200]}`,
                           borderRadius: borders.radius.sm,
                           fontSize: typography.sizes.xs,
-                          fontFamily: typography.fontFamilyMono,
+                          fontFamily: typography.fontFamily,
                           color: colors.textPrimary,
                           fontWeight: typography.weights.medium,
                         }}>
@@ -131,10 +139,10 @@ const KeyboardShortcutsHelp = () => {
         }}>
           Appuyez sur <kbd style={{
             padding: '1px 5px',
-            backgroundColor: colors.neutral[100],
-            border: `1px solid ${colors.neutral[200]}`,
+            backgroundColor: colors.surface,
+            border: `1px solid ${colors.border}`,
             borderRadius: borders.radius.sm,
-            fontFamily: typography.fontFamilyMono,
+            fontFamily: typography.fontFamily,
           }}>Ctrl+/</kbd> pour afficher/masquer
         </div>
       </div>

@@ -185,11 +185,11 @@ export default function PlanAnalytiquePage() {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', backgroundColor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={[
             { label: 'Configuration' },
-            { label: 'Plan Analytique' },
+            { label: 'Axes analytiques' },
           ]}
           actions={
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -221,7 +221,7 @@ export default function PlanAnalytiquePage() {
           searchPlaceholder="Rechercher par code, nom..."
         />
 
-        <Box sx={{ px: { xs: 2, md: 3 }, py: 2 }}>
+        <Box sx={{ px: 0, py: 2 }}>
           {filteredDimensions.length === 0 ? (
             <Card>
               <CardContent>

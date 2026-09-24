@@ -198,7 +198,7 @@ const ConventionScheduledActivities = ({ conventionId }: ConventionScheduledActi
         }}
       >
         <Schedule sx={{ fontSize: 16, color: colors.purple[500] }} />
-        <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em', flex: 1 }}>
+        <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, flex: 1 }}>
           Activités planifiées
         </Typography>
         {pendingCount > 0 && (
@@ -231,7 +231,7 @@ const ConventionScheduledActivities = ({ conventionId }: ConventionScheduledActi
                 Aucune activité planifiée
               </Typography>
               <Button size="small" startIcon={<Add />} onClick={() => setShowForm(true)}
-                sx={{ mt: 0.5, textTransform: 'none', fontSize: typography.sizes.xs, color: colors.primary[600] }}>
+                sx={{ mt: 0.5, fontSize: typography.sizes.xs, color: colors.primary[600] }}>
                 Planifier une activité
               </Button>
             </Box>
@@ -305,7 +305,7 @@ const ConventionScheduledActivities = ({ conventionId }: ConventionScheduledActi
                 <Button
                   size="small"
                   onClick={() => { setShowForm(false); setNewTitle(''); setNewNote('') }}
-                  sx={{ textTransform: 'none', fontSize: typography.sizes.xs }}
+                  sx={{ fontSize: typography.sizes.xs }}
                 >
                   Annuler
                 </Button>
@@ -315,7 +315,6 @@ const ConventionScheduledActivities = ({ conventionId }: ConventionScheduledActi
                   onClick={handleAdd}
                   disabled={!newTitle.trim() || saving}
                   sx={{
-                    textTransform: 'none',
                     fontSize: typography.sizes.xs,
                     bgcolor: colors.primary[600],
                     '&:hover': { bgcolor: colors.primary[700] },

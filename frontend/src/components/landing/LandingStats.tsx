@@ -106,7 +106,7 @@ const LandingStats = ({ deploymentPlans, testimonials, faqs }: LandingStatsProps
                   variant={plan.highlighted ? 'contained' : 'outlined'}
                   fullWidth
                   onClick={() => navigate('/login')}
-                  sx={{ textTransform: 'none', boxShadow: 'none' }}
+                  sx={{ boxShadow: 'none' }}
                 >
                   {plan.cta}
                 </Button>

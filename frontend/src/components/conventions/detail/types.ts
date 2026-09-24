@@ -119,11 +119,10 @@ export interface Marche {
 
 import { colors, typography } from '@/lib/designSystem'
 
-/** Compact table header cell style (uppercase, semibold) – used across all card tables */
+/** En-tête de colonne « Registre » (12px, 600, casse normale) – toutes les tables de fiche */
 export const thStyle = {
   fontWeight: typography.weights.semibold,
   fontSize: typography.sizes.xs,
-  color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
+  color: colors.textTertiary,
+  bgcolor: colors.surfaceAlt,
 }

@@ -65,7 +65,7 @@ const TeamMessagingPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', backgroundColor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={[{ label: 'Messagerie' }]}
           hideBottomRow

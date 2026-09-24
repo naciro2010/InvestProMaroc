@@ -1,19 +1,29 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+
+/**
+ * Point de rupture du menu : en dessous, le menu passe en tiroir.
+ */
+export const NAV_BREAKPOINT = 900
+
+const EXERCICE_KEY = 'investpro_exercice'
 
 /**
  * Layout Context Interface
  */
 interface ILayoutContext {
+  /** Tiroir mobile ouvert (sans effet au-dessus de 900px : le menu est fixe) */
   sidebarOpen: boolean
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
+  /** < 640px */
   isMobile: boolean
+  /** 640px – 899px */
   isTablet: boolean
+  /** Exercice sélectionné dans l'en-tête */
+  exercice: number
+  setExercice: (year: number) => void
 }
 
-/**
- * Create LayoutContext
- */
 const LayoutContext = createContext<ILayoutContext | undefined>(undefined)
 
 /**
@@ -27,106 +37,45 @@ export function useLayout(): ILayoutContext {
   return context
 }
 
-/**
- * Layout Provider Component
- *
- * Manages layout state (sidebar, responsive breakpoints)
- * Persists sidebar state to localStorage
- *
- * @example
- * <LayoutContextProvider>
- *   <AppLayout>
- *     <Routes />
- *   </AppLayout>
- * </LayoutContextProvider>
- */
+const readExercice = (): number => {
+  try {
+    const saved = Number(localStorage.getItem(EXERCICE_KEY))
+    return Number.isInteger(saved) && saved > 1900 ? saved : new Date().getFullYear()
+  } catch {
+    return new Date().getFullYear()
+  }
+}
+
 interface LayoutContextProviderProps {
   children: ReactNode
 }
 
+/**
+ * Layout Provider - état de l'ossature : tiroir mobile, points de rupture,
+ * exercice courant (persisté en localStorage).
+ */
 export function LayoutContextProvider({ children }: LayoutContextProviderProps): React.ReactElement {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [isMobile, setIsMobile] = useState(false)
-  const [isTablet, setIsTablet] = useState(false)
-  const [isHydrated, setIsHydrated] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [width, setWidth] = useState<number>(() => window.innerWidth)
+  const [exercice, setExerciceState] = useState<number>(readExercice)
 
-  // Initialize sidebar state from localStorage (closed on mobile)
   useEffect(() => {
-    const width = window.innerWidth
-    if (width < 1024) {
-      // Always start closed on mobile/tablet
-      setSidebarOpen(false)
-    } else {
-      const savedSidebarState = localStorage.getItem('sidebar-open')
-      if (savedSidebarState !== null) {
-        setSidebarOpen(JSON.parse(savedSidebarState))
-      }
-    }
-    setIsHydrated(true)
-  }, [])
-
-  // Update localStorage when sidebar state changes (desktop only)
-  useEffect(() => {
-    if (isHydrated && window.innerWidth >= 1024) {
-      localStorage.setItem('sidebar-open', JSON.stringify(sidebarOpen))
-    }
-  }, [sidebarOpen, isHydrated])
-
-  // Track previous width to detect actual crossings of the 1024px breakpoint
-  const prevWidthRef = useRef<number>(window.innerWidth)
-  const isHydratedRef = useRef(isHydrated)
-  useEffect(() => { isHydratedRef.current = isHydrated }, [isHydrated])
-
-  // Update breakpoint flags (runs on mount + resize, no sidebar dependency)
-  const updateBreakpoints = useCallback(() => {
-    const width = window.innerWidth
-    setIsMobile(width < 640)
-    setIsTablet(width >= 640 && width < 1024)
-  }, [])
-
-  // Handle responsive breakpoints
-  useEffect(() => {
-    // Set initial breakpoints
-    updateBreakpoints()
-
-    const handleResize = (): void => {
-      const width = window.innerWidth
-      const prevWidth = prevWidthRef.current
-      prevWidthRef.current = width
-
-      // Update breakpoint flags
-      updateBreakpoints()
-
-      if (!isHydratedRef.current) return
-
-      // Only auto-toggle sidebar when crossing the 1024px breakpoint
-      const wasDesktop = prevWidth >= 1024
-      const isNowDesktop = width >= 1024
-
-      if (wasDesktop && !isNowDesktop) {
-        // Crossed from desktop to mobile/tablet: close sidebar
-        setSidebarOpen(false)
-      } else if (!wasDesktop && isNowDesktop) {
-        // Crossed from mobile/tablet to desktop: restore sidebar
-        const saved = localStorage.getItem('sidebar-open')
-        if (saved === null || JSON.parse(saved)) {
-          setSidebarOpen(true)
-        }
-      }
-    }
-
+    const handleResize = (): void => setWidth(window.innerWidth)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [updateBreakpoints])
+  }, [])
 
-  const toggleSidebar = (): void => {
-    setSidebarOpen((prev) => !prev)
-  }
+  // Le tiroir se referme quand on repasse en mode bureau
+  useEffect(() => {
+    if (width >= NAV_BREAKPOINT) setSidebarOpen(false)
+  }, [width])
 
-  // Don't render until hydrated (avoid hydration mismatch)
-  if (!isHydrated) {
-    return <>{children}</>
-  }
+  const toggleSidebar = useCallback((): void => setSidebarOpen(prev => !prev), [])
+
+  const setExercice = useCallback((year: number): void => {
+    setExerciceState(year)
+    try { localStorage.setItem(EXERCICE_KEY, String(year)) } catch { /* ignore */ }
+  }, [])
 
   return (
     <LayoutContext.Provider
@@ -134,8 +83,10 @@ export function LayoutContextProvider({ children }: LayoutContextProviderProps):
         sidebarOpen,
         toggleSidebar,
         setSidebarOpen,
-        isMobile,
-        isTablet,
+        isMobile: width < 640,
+        isTablet: width >= 640 && width < NAV_BREAKPOINT,
+        exercice,
+        setExercice,
       }}
     >
       {children}

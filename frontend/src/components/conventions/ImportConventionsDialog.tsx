@@ -598,7 +598,7 @@ export default function ImportConventionsDialog({
                 size="small"
                 startIcon={<Download sx={{ fontSize: 16 }} />}
                 onClick={downloadTemplate}
-                sx={{ textTransform: 'none', fontSize: typography.sizes.sm }}
+                sx={{ fontSize: typography.sizes.sm }}
               >
                 Telecharger le modele
               </Button>
@@ -654,7 +654,6 @@ export default function ImportConventionsDialog({
                         bgcolor: colors.neutral[50],
                         fontWeight: typography.weights.bold,
                         fontSize: typography.sizes.xs,
-                        textTransform: 'uppercase',
                         color: colors.textSecondary,
                         whiteSpace: 'nowrap',
                       }}>

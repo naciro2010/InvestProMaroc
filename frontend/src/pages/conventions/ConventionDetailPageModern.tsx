@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Box, Container, Button, Alert, Tooltip, Snackbar } from '@mui/material'
+import { Box, Button, Alert, Tooltip, Snackbar, Divider } from '@mui/material'
 import { Plus, Pencil, FileDown } from 'lucide-react'
 import { useInlineUndo } from '../../hooks/useInlineUndo'
 import { exportToPdf } from '../../lib/exportUtils'
@@ -8,7 +8,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import AppLayout from '../../components/layout/AppLayout'
 import {
-  ControlPanel, FormView, FieldGroup, StatusBadge,
+  ControlPanel, FieldGroup, StatusBadge, StatusCircuit, Panel,
   InlineEditField, EditFieldDialog, Chatter,
   type StatusStep, type InlineEditFieldConfig, type ChatterActivity,
 } from '../../components/core'
@@ -30,7 +30,8 @@ import ConventionScheduledActivities from '../../components/conventions/detail/C
 import ConventionActionsMenu from '../../components/conventions/detail/ConventionActionsMenu'
 import ConventionTimelineCard from '../../components/conventions/detail/ConventionTimelineCard'
 import ConventionQuickSummary from '../../components/conventions/detail/ConventionQuickSummary'
-import { colors, typography, componentStyles } from '../../lib/designSystem'
+import { componentStyles } from '../../lib/designSystem'
+import { useTrackRecentRecord } from '../../hooks/useRecentRecords'
 import AddPartenaireDialog from '../../components/conventions/AddPartenaireDialog'
 import { ConventionDetailSkeleton, ConventionHeaderMetadata } from './detail'
 import type { ConventionDetailEnrichedDTO, UpdateConventionDTO } from '../../types/api'
@@ -56,9 +57,9 @@ interface PartenaireEditData { id: number; partenaireId: number; partenaireNom: 
 const STATUS_STEPS: StatusStep[] = [
   { value: 'BROUILLON', label: 'Brouillon' },
   { value: 'SOUMIS', label: 'Soumis' },
-  { value: 'VALIDEE', label: 'Validee' },
-  { value: 'EN_EXECUTION', label: 'En execution' },
-  { value: 'ACHEVE', label: 'Acheve' },
+  { value: 'VALIDEE', label: 'Validée' },
+  { value: 'EN_EXECUTION', label: 'En exécution' },
+  { value: 'ACHEVE', label: 'Achevé' },
 ]
 
 const normalizeStatut = (statut: string): string => {
@@ -193,13 +194,17 @@ const ConventionDetailPageModern = () => {
     <InlineEditField config={config} onSave={handleFieldSave} onOpenDialog={openFieldDialog} />
   )
 
+  // « Consultés récemment » dans le menu
+  useTrackRecentRecord(convention ? {
+    key: `convention-${convention.id}`, type: 'convention', code: convention.code,
+    label: convention.libelle?.replace(/<[^>]+>/g, '') ?? '', path: `/conventions/${convention.id}`,
+  } : null)
+
   if (loading) return <ConventionDetailSkeleton />
 
   if (!convention) return (
     <AppLayout>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error">{error || 'Convention non trouvee'}</Alert>
-      </Container>
+      <Alert severity="error">{error || 'Convention non trouvée'}</Alert>
     </AppLayout>
   )
 
@@ -208,10 +213,10 @@ const ConventionDetailPageModern = () => {
   const effectiveSteps: StatusStep[] = (() => {
     if (convention.statut === 'REJETE') return [
       { value: 'BROUILLON', label: 'Brouillon' }, { value: 'SOUMIS', label: 'Soumis' },
-      { value: 'REJETE', label: 'Rejete', variant: 'danger' as const },
+      { value: 'REJETE', label: 'Rejeté', variant: 'danger' as const },
     ]
     if (convention.statut === 'ANNULE') return [
-      ...STATUS_STEPS.slice(0, 4), { value: 'ANNULE', label: 'Annule', variant: 'danger' as const },
+      ...STATUS_STEPS.slice(0, 4), { value: 'ANNULE', label: 'Annulé', variant: 'danger' as const },
     ]
     return STATUS_STEPS
   })()
@@ -224,186 +229,165 @@ const ConventionDetailPageModern = () => {
     { label: convention.code },
   ]
 
+  const PRIORITY_LABELS: Record<string, string> = { BASSE: 'basse', NORMALE: 'normale', HAUTE: 'haute', CRITIQUE: 'critique' }
+  const headerFacts = [
+    convention.responsableNom && `Responsable ${convention.responsableNom}`,
+    convention.priorite && `priorité ${PRIORITY_LABELS[convention.priorite] ?? convention.priorite.toLowerCase()}`,
+  ].filter(Boolean).join(' · ')
+
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-        <ControlPanel
-          breadcrumbs={breadcrumbs}
-          actions={
-            <>
-              <ConventionWorkflowActions
-                conventionId={convention.id} statut={convention.statut} userId={user?.id}
-                isAdmin={isAdmin} isManager={isManager}
-                onSuccess={(msg: string) => showSuccess(msg)}
-                onError={(msg: string) => showError(msg)}
-                onReload={() => loadConvention(convention.id)}
-              />
-              {canEdit && (
-                <Tooltip title="Modifier la convention">
-                  <Button variant="contained" size="small" onClick={() => navigate(`/conventions/${id}/edit`)}
-                    sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.5 }}>
-                    <Pencil size={14} style={{ marginRight: 4 }} /> Modifier
-                  </Button>
-                </Tooltip>
-              )}
-              <Tooltip title="Ajouter un avenant">
-                <Button variant="outlined" size="small" onClick={() => navigate(`/conventions/${id}/avenants/nouveau`)}
-                  sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}>
-                  <Plus size={14} style={{ marginRight: 4 }} /> Avenant
+      <ControlPanel
+        breadcrumbs={breadcrumbs}
+        overline={
+          <>
+            <span>{convention.code}{convention.numero ? ` · ${convention.numero}` : ''}</span>
+            <StatusBadge status={convention.statut} />
+            <StatusBadge status={convention.typeConvention} />
+          </>
+        }
+        title={<Box component="span" sx={{ display: 'block' }}>{convention.libelle?.replace(/<[^>]+>/g, '') || convention.code}</Box>}
+        subtitle={headerFacts || undefined}
+        actions={
+          <>
+            <ConventionWorkflowActions
+              conventionId={convention.id} statut={convention.statut} userId={user?.id}
+              isAdmin={isAdmin} isManager={isManager}
+              onSuccess={(msg: string) => showSuccess(msg)}
+              onError={(msg: string) => showError(msg)}
+              onReload={() => loadConvention(convention.id)}
+            />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+            {canEdit && (
+              <Tooltip title="Modifier la convention">
+                <Button variant="outlined" onClick={() => navigate(`/conventions/${id}/edit`)} sx={componentStyles.buttonSecondary}>
+                  <Pencil size={14} style={{ marginRight: 6 }} /> Modifier
                 </Button>
               </Tooltip>
-              <Tooltip title="Exporter en PDF">
-                <Button variant="outlined" size="small" onClick={() => exportToPdf({
-                  title: `Convention ${convention.code}`,
-                  subtitle: convention.libelle,
-                  filename: `convention-${convention.code}.pdf`,
-                })}
-                  sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5 }}>
-                  <FileDown size={14} style={{ marginRight: 4 }} /> PDF
-                </Button>
-              </Tooltip>
-              <ConventionActionsMenu convention={convention} onReload={() => loadConvention(convention.id)} />
-            </>
-          }
-          hideBottomRow
-        />
+            )}
+            <Tooltip title="Ajouter un avenant">
+              <Button variant="outlined" onClick={() => navigate(`/conventions/${id}/avenants/nouveau`)} sx={componentStyles.buttonSecondary}>
+                <Plus size={14} style={{ marginRight: 6 }} /> Avenant
+              </Button>
+            </Tooltip>
+            <Tooltip title="Exporter en PDF">
+              <Button variant="outlined" onClick={() => exportToPdf({
+                title: `Convention ${convention.code}`,
+                subtitle: convention.libelle,
+                filename: `convention-${convention.code}.pdf`,
+              })} sx={componentStyles.buttonSecondary}>
+                <FileDown size={14} style={{ marginRight: 6 }} /> PDF
+              </Button>
+            </Tooltip>
+            <ConventionActionsMenu convention={convention} onReload={() => loadConvention(convention.id)} />
+          </>
+        }
+        hideBottomRow
+      />
 
-        {error && (
-          <Container maxWidth="xl" sx={{ mt: 2 }}>
-            <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>
-          </Container>
-        )}
+      <Box sx={{ mb: 2.5 }}>
+        <StatusCircuit steps={effectiveSteps} currentStatus={convention.statut} />
+      </Box>
 
-        <Container maxWidth="xl" sx={{ py: 2 }}>
-          {/* ERP Layout: Main content + Sidebar */}
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexDirection: { xs: 'column', lg: 'row' } }}>
+      {error && (
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>
+      )}
 
-            {/* ═══════ MAIN CONTENT (left) ═══════ */}
-            <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
-              <FormView isEditing={false} statusSteps={effectiveSteps} currentStatus={convention.statut}>
+      {/* Fiche : colonne principale + colonne de synthèse (300px, collée au-dessus de 1240px) */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px' }, gap: 2.5, alignItems: 'start' }}>
 
-                {/* Header with priority, responsible, deadline */}
-                <ConventionHeaderMetadata
-                  code={convention.code} numero={convention.numero}
-                  libelle={convention.libelle} objet={convention.objet}
-                  typeConvention={convention.typeConvention}
-                  dateSignature={convention.dateSignature} dateDebut={convention.dateDebut} dateFin={convention.dateFin}
-                  canEdit={canEdit} onEditField={openFieldDialog}
-                  priorite={convention.priorite}
-                  responsable={convention.responsableNom}
-                  onPriorityChange={handlePriorityChange}
-                />
+        {/* ═══════ COLONNE PRINCIPALE ═══════ */}
+        <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* Bandeaux contextuels */}
+          <ConventionAlertBanner convention={convention} enrichedData={enrichedData} refreshKey={financialRefreshKey} />
+          {convention.parentConventionId && convention.parentConventionNumero && (
+            <ParentConventionBanner
+              parentConventionId={convention.parentConventionId}
+              parentConventionNumero={convention.parentConventionNumero}
+              heriteParametres={convention.heriteParametres ?? false}
+            />
+          )}
 
-                {/* Tags & Followers bar */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
-                  <ConventionTagsCard conventionId={convention.id} canEdit={canEdit} />
-                  <ConventionFollowersCard conventionId={convention.id} />
-                </Box>
+          {/* Boutons compteurs */}
+          {enrichedData && (
+            <ConventionSmartButtons
+              conventionId={convention.id} typeConvention={convention.typeConvention}
+              nombreMarches={enrichedData.nombreMarches} nombreProjets={enrichedData.nombreProjets}
+              nombreSousConventions={enrichedData.nombreSousConventions} nombreAvenants={enrichedData.nombreAvenants}
+              nombrePartenaires={enrichedData.nombrePartenaires} montantTotalMarches={enrichedData.montantTotalMarches}
+              montantTotalProjets={enrichedData.montantTotalProjets} commissionTTC={enrichedData.commissionTTC}
+              tauxRealisation={enrichedData.tauxRealisation}
+            />
+          )}
 
-                {/* ERP: Smart Alert Banner */}
-                <ConventionAlertBanner
-                  convention={convention}
-                  enrichedData={enrichedData}
-                  refreshKey={financialRefreshKey}
-                />
+          {/* Panneau à onglets : partenaires, subventions, versements, lignes, projets, marchés… */}
+          <ConventionRealisationSection
+            key={convention.id}
+            convention={convention} canEdit
+            enrichedData={enrichedData}
+            onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
+            onAddPartenaire={() => { setEditPartenaireData(null); setAddPartenaireDialogOpen(true) }}
+            onEditPartenaire={(p) => {
+              setEditPartenaireData({
+                id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
+                budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
+                estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
+                remarques: p.remarques || undefined,
+              })
+              setAddPartenaireDialogOpen(true)
+            }}
+          />
 
-                {convention.parentConventionId && convention.parentConventionNumero && (
-                  <Box sx={{ mb: 1.5 }}>
-                    <ParentConventionBanner
-                      parentConventionId={convention.parentConventionId}
-                      parentConventionNumero={convention.parentConventionNumero}
-                      heriteParametres={convention.heriteParametres ?? false}
-                    />
-                  </Box>
-                )}
-
-                {/* Smart buttons */}
-                {enrichedData && (
-                  <Box sx={{ mb: 2 }}>
-                    <ConventionSmartButtons
-                      conventionId={convention.id} typeConvention={convention.typeConvention}
-                      nombreMarches={enrichedData.nombreMarches} nombreProjets={enrichedData.nombreProjets}
-                      nombreSousConventions={enrichedData.nombreSousConventions} nombreAvenants={enrichedData.nombreAvenants}
-                      nombrePartenaires={enrichedData.nombrePartenaires} montantTotalMarches={enrichedData.montantTotalMarches}
-                      montantTotalProjets={enrichedData.montantTotalProjets} commissionTTC={enrichedData.commissionTTC}
-                      tauxRealisation={enrichedData.tauxRealisation}
-                    />
-                  </Box>
-                )}
-
-                <Box sx={{ mb: 2 }}>
-                  <ConventionKeyInfoCard
-                    convention={convention} enrichedData={enrichedData}
-                    canEdit={canEdit} onFieldSave={handleFieldSave}
-                  />
-                </Box>
-
-                {/* Synthese financiere */}
-                <Box sx={{ mb: 3 }}>
-                  <ConventionSyntheseCard
-                    conventionId={convention.id}
-                    conventionBudget={convention.budget}
-                    tauxCommission={convention.tauxCommission}
-                    tauxTva={convention.tauxTva}
-                    commissionTTC={enrichedData?.commissionTTC}
-                    commissionMode={convention.commissionMode}
-                    baseCalcul={convention.baseCalcul}
-                    refreshKey={financialRefreshKey}
-                  />
-                </Box>
-
-                {/* Tabs: Partenaires, Subventions, Lignes de depenses, Projets, Marches, etc. */}
-                <ConventionRealisationSection
-                  key={convention.id}
-                  convention={convention} canEdit
-                  enrichedData={enrichedData}
-                  onRefresh={refreshFinancialData} refreshKey={financialRefreshKey}
-                  onAddPartenaire={() => { setEditPartenaireData(null); setAddPartenaireDialogOpen(true) }}
-                  onEditPartenaire={(p) => {
-                    setEditPartenaireData({
-                      id: p.id, partenaireId: p.partenaireId, partenaireNom: p.partenaireNom,
-                      budgetAlloue: p.budgetAlloue, pourcentage: p.pourcentage,
-                      estMaitreOeuvre: p.estMaitreOeuvre, estMaitreOeuvreDelegue: p.estMaitreOeuvreDelegue,
-                      remarques: p.remarques || undefined,
-                    })
-                    setAddPartenaireDialogOpen(true)
-                  }}
-                />
-
-                {/* Discussion / Chatter ERP */}
-                <Box sx={{ mt: 2 }}>
-                  <ConventionCommentsCard conventionId={convention.id} />
-                </Box>
-
-                {/* Activity log */}
-                <Chatter
-                  entityType="convention" entityId={convention.id}
-                  activities={chatterActivities} loading={chatterLoading}
-                  onRefresh={() => loadChatterActivities(convention.id)}
-                />
-              </FormView>
+          {/* Informations : objet, priorité, étiquettes, abonnés, paramètres (édition en ligne) */}
+          <Panel title="Informations" aside={canEdit ? 'modifiables' : 'verrouillées'}>
+            <ConventionHeaderMetadata
+              code={convention.code} numero={convention.numero}
+              libelle={convention.libelle} objet={convention.objet}
+              typeConvention={convention.typeConvention}
+              dateSignature={convention.dateSignature} dateDebut={convention.dateDebut} dateFin={convention.dateFin}
+              canEdit={canEdit} onEditField={openFieldDialog}
+              priorite={convention.priorite}
+              responsable={convention.responsableNom}
+              onPriorityChange={handlePriorityChange}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', my: 1.5, flexWrap: 'wrap', gap: 1 }}>
+              <ConventionTagsCard conventionId={convention.id} canEdit={canEdit} />
+              <ConventionFollowersCard conventionId={convention.id} />
             </Box>
+            <ConventionKeyInfoCard convention={convention} enrichedData={enrichedData} canEdit={canEdit} onFieldSave={handleFieldSave} />
+          </Panel>
 
-            {/* ═══════ SIDEBAR (right on desktop, stacked below on mobile/tablet) ═══════ */}
-            <Box sx={{
-              width: { xs: '100%', lg: 280 }, flexShrink: 0,
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row', lg: 'column' },
-              gap: 2,
-              position: { lg: 'sticky' }, top: { lg: 80 },
-              '& > *': { flex: { sm: 1, lg: 'unset' }, minWidth: 0 },
-            }}>
-              {/* Quick Summary */}
-              <ConventionQuickSummary convention={convention} enrichedData={enrichedData} />
+          {/* Discussion et historique */}
+          <Panel title="Discussion et historique">
+            <ConventionCommentsCard conventionId={convention.id} />
+            <Chatter
+              entityType="convention" entityId={convention.id}
+              activities={chatterActivities} loading={chatterLoading}
+              onRefresh={() => loadChatterActivities(convention.id)}
+            />
+          </Panel>
+        </Box>
 
-              {/* Timeline */}
-              <ConventionTimelineCard convention={convention} enrichedData={enrichedData} />
-
-              {/* Scheduled Activities (Odoo-style) */}
-              <ConventionScheduledActivities conventionId={convention.id} />
-            </Box>
-          </Box>
-        </Container>
+        {/* ═══════ COLONNE DE SYNTHÈSE ═══════ */}
+        <Box sx={{
+          minWidth: 0,
+          display: 'flex', flexDirection: 'column', gap: 2,
+          position: { lg: 'sticky' }, top: { lg: 'calc(var(--app-header-h, 0px) + 20px)' },
+        }}>
+          <ConventionSyntheseCard
+            conventionId={convention.id}
+            conventionBudget={convention.budget}
+            tauxCommission={convention.tauxCommission}
+            tauxTva={convention.tauxTva}
+            commissionTTC={enrichedData?.commissionTTC}
+            commissionMode={convention.commissionMode}
+            baseCalcul={convention.baseCalcul}
+            refreshKey={financialRefreshKey}
+          />
+          <ConventionQuickSummary convention={convention} enrichedData={enrichedData} />
+          <ConventionTimelineCard convention={convention} enrichedData={enrichedData} />
+          <ConventionScheduledActivities conventionId={convention.id} />
+        </Box>
       </Box>
 
       {convention && (

@@ -76,7 +76,7 @@ const MarcheDetailDrawer = ({
       <Box sx={{ px: 2.5, py: 2, bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, position: 'sticky', top: 0, zIndex: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: typography.weights.semibold, mb: 0.5 }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, fontWeight: typography.weights.semibold, mb: 0.5 }}>
               Detail du marche
             </Typography>
             <Typography sx={{ fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
@@ -107,7 +107,7 @@ const MarcheDetailDrawer = ({
 
         {/* Calculation chain */}
         <Box sx={{ px: 2.5, py: 2, bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}` }}>
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 1.5 }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 1.5 }}>
             Chaine de calcul
           </Typography>
           <ChainStep step={1} title="Engagement (Montant TTC)" value={fmtMAD(marcheEngagement)} hint="Montant total du marche" />
@@ -119,7 +119,7 @@ const MarcheDetailDrawer = ({
         {/* Decomptes */}
         <Box sx={{ px: 2.5, py: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary }}>
               Decomptes ({decomptes.length})
             </Typography>
           </Box>
@@ -185,7 +185,7 @@ const StatBtn = ({ icon, label, value, subtitle, color, borderRight, borderTop }
   <Box sx={{ px: 2, py: 1.5, borderRight: borderRight ? `1px solid ${colors.border}` : 'none', borderTop: borderTop ? `1px solid ${colors.border}` : 'none' }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25, color }}>
       {icon}
-      <Typography sx={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: typography.weights.semibold, letterSpacing: '0.03em' }}>{label}</Typography>
+      <Typography sx={{ fontSize: '10px', fontWeight: typography.weights.semibold }}>{label}</Typography>
     </Box>
     <Typography sx={{ fontSize: typography.sizes.base, fontWeight: typography.weights.bold, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>{value}</Typography>
     {subtitle && <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>{subtitle}</Typography>}

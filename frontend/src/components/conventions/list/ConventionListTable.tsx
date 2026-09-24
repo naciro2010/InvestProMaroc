@@ -8,12 +8,12 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  Typography,
-  Chip,
+  Skeleton,
 } from '@mui/material'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { Description, ArrowDropUp, ArrowDropDown } from '@mui/icons-material'
-import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material'
+import { colors, typography, componentStyles, getStatusConfig } from '@/lib/designSystem'
+import { formatMillions } from '@/lib/utils'
 import ConventionTableRow from './ConventionTableRow'
 
 // ==================== TYPES ====================
@@ -23,7 +23,7 @@ export interface Convention {
   code: string
   numero: string
   libelle: string
-  statut: 'BROUILLON' | 'SOUMIS' | 'VALIDE' | 'VALIDEE' | 'EN_EXECUTION' | 'ACHEVE' | 'REJETE'
+  statut: 'BROUILLON' | 'SOUMIS' | 'VALIDE' | 'VALIDEE' | 'EN_EXECUTION' | 'ACHEVE' | 'REJETE' | 'ANNULE'
   type?: 'CADRE' | 'SPECIFIQUE' | 'NON_CADRE' | 'AVENANT'
   budget: number
   tauxCommission: number
@@ -66,6 +66,8 @@ interface ConventionListTableProps {
   onRowsPerPageChange: (rpp: number) => void
   onRowClick: (id: number) => void
   onMenuOpen: (e: React.MouseEvent<HTMLElement>, conv: Convention) => void
+  /** Taux d'engagement par convention (colonne « Engagé ») */
+  engagement?: Record<number, number>
   favoriteIds?: Set<number>
   onToggleFavorite?: (id: number) => void
   selectable?: boolean
@@ -75,10 +77,12 @@ interface ConventionListTableProps {
 
 // ==================== HELPERS ====================
 
-const formatCurrency = (amount: number): string => {
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`
-  if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`
-  return amount.toLocaleString('fr-FR')
+const TYPE_LABELS: Record<string, string> = { CADRE: 'Cadre', SPECIFIQUE: 'Spécifique', NON_CADRE: 'Non cadre', AVENANT: 'Avenant' }
+
+const groupLabel = (groupBy: string, key: string): string => {
+  if (groupBy === 'statut') return getStatusConfig(key).label
+  if (groupBy === 'type') return TYPE_LABELS[key] ?? key
+  return key
 }
 
 const sortConventions = (items: ConventionWithChildren[], col: string, dir: SortDirection): ConventionWithChildren[] => {
@@ -105,22 +109,22 @@ const groupConventions = (data: ConventionWithChildren[], groupBy: string): Grou
   data.forEach((conv) => {
     let key: string
     switch (groupBy) {
-      case 'statut': key = conv.statut || 'Non defini'; break
-      case 'type': key = conv.type || 'Non defini'; break
-      case 'createdBy': key = conv.createdByNom || 'Non defini'; break
+      case 'statut': key = conv.statut || 'Non défini'; break
+      case 'type': key = conv.type || 'Non défini'; break
+      case 'createdBy': key = conv.createdByNom || 'Non défini'; break
       default: key = 'Tous'
     }
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key)!.push(conv)
   })
   return Array.from(groups.entries()).map(([key, convs]) => ({
-    key, label: key, conventions: convs,
+    key, label: groupLabel(groupBy, key), conventions: convs,
     totalBudget: convs.reduce((s, c) => s + c.budget, 0), count: convs.length,
   }))
 }
 
 const COLUMN_ALIGN: Record<string, 'left' | 'right' | 'center'> = {
-  budget: 'right', commission: 'center',
+  budget: 'right', commission: 'right', engage: 'right',
 }
 
 const listStyles = componentStyles.listView
@@ -130,16 +134,17 @@ const listStyles = componentStyles.listView
 const ConventionListTable = ({
   data, loading, groupBy, columns, page, rowsPerPage,
   onPageChange, onRowsPerPageChange, onRowClick, onMenuOpen,
-  favoriteIds, onToggleFavorite,
+  engagement, favoriteIds, onToggleFavorite,
   selectable = false, selectedIds = new Set(), onSelectionChange,
 }: ConventionListTableProps) => {
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
+  // Les sous-conventions sont affichées par défaut sous leur convention mère
+  const [collapsedRows, setCollapsedRows] = useState<Set<number>>(new Set())
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
   const [sortCol, setSortCol] = useState('dateDebut')
   const [sortDir, setSortDir] = useState<SortDirection>('desc')
 
   const toggleRow = (id: number) => {
-    setExpandedRows(prev => {
+    setCollapsedRows(prev => {
       const n = new Set(prev)
       if (n.has(id)) n.delete(id)
       else n.add(id)
@@ -173,32 +178,38 @@ const ConventionListTable = ({
 
   const visibleColumns = columns.filter(c => c.visible)
   const hasFavorites = Boolean(onToggleFavorite)
-  const totalColSpan = 3 + visibleColumns.length + (selectable ? 1 : 0) + (hasFavorites ? 1 : 0)
+  const totalColSpan = 2 + visibleColumns.length + (selectable ? 1 : 0) + (hasFavorites ? 1 : 0)
 
   const SortIcon = ({ col }: { col: string }) => {
     if (sortCol !== col) return null
     return sortDir === 'asc' ? <ArrowDropUp sx={{ fontSize: 18, ml: -0.5 }} /> : <ArrowDropDown sx={{ fontSize: 18, ml: -0.5 }} />
   }
-  const headerSx = { cursor: 'pointer', userSelect: 'none' as const, '&:hover': { bgcolor: colors.neutral[50] } }
+  const headerSx = { cursor: 'pointer', userSelect: 'none' as const, '&:hover': { color: colors.textPrimary } }
+  const ariaSort = (col: string) => (sortCol === col ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined)
 
   return (
     <Box sx={listStyles.container}>
       <TableContainer>
-        <Table size="small" sx={listStyles.table}>
+        <Table size="small" sx={{ ...listStyles.table, minWidth: 860 }}>
           <TableHead>
             <TableRow sx={listStyles.headerRow}>
               {selectable && <TableCell padding="checkbox" sx={{ width: 42 }} />}
-              {hasFavorites && <TableCell sx={{ width: 36, px: 0.5 }} />}
-              <TableCell sx={{ width: 40, pl: 1 }} />
-              <TableCell onClick={() => handleSort('code')} sx={headerSx}>
+              {hasFavorites && <TableCell sx={{ width: 40, pl: 2, pr: 0 }}><span className="sr-only">Favori</span></TableCell>}
+              <TableCell onClick={() => handleSort('code')} sx={{ ...headerSx, pl: '38px !important' }} aria-sort={ariaSort('code')}>
                 <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>Convention<SortIcon col="code" /></Box>
               </TableCell>
               {visibleColumns.map(col => (
-                <TableCell key={col.key} align={COLUMN_ALIGN[col.key] || 'left'} onClick={() => handleSort(col.key)} sx={headerSx}>
+                <TableCell
+                  key={col.key}
+                  align={COLUMN_ALIGN[col.key] || 'left'}
+                  onClick={() => col.key !== 'engage' && handleSort(col.key)}
+                  sx={col.key === 'engage' ? undefined : headerSx}
+                  aria-sort={ariaSort(col.key)}
+                >
                   <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>{col.label}<SortIcon col={col.key} /></Box>
                 </TableCell>
               ))}
-              <TableCell align="center" sx={{ width: 50 }} />
+              <TableCell align="center" sx={{ width: 48 }}><span className="sr-only">Actions</span></TableCell>
             </TableRow>
           </TableHead>
 
@@ -206,19 +217,15 @@ const ConventionListTable = ({
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={`skel-${i}`}>
-                  <TableCell colSpan={totalColSpan} sx={{ py: 1.5 }}>
-                    <Box sx={{ height: 36, bgcolor: colors.neutral[100], borderRadius: 1, animation: 'pulse 1.5s infinite' }} />
+                  <TableCell colSpan={totalColSpan} sx={{ py: 1.25, px: 3 }}>
+                    <Skeleton variant="rounded" height={32} />
                   </TableCell>
                 </TableRow>
               ))
             ) : data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={totalColSpan} align="center" sx={{ py: 8 }}>
-                  <Description sx={{ fontSize: 48, color: colors.neutral[300], mb: 1 }} />
-                  <Typography sx={{ color: colors.textSecondary }}>Aucune convention trouvee</Typography>
-                  <Typography sx={{ color: colors.neutral[400], fontSize: typography.sizes.sm, mt: 0.5 }}>
-                    Essayez de modifier vos filtres
-                  </Typography>
+                <TableCell colSpan={totalColSpan} sx={{ py: 3, px: 3, fontSize: 13, color: colors.textTertiary }}>
+                  Aucune convention ne correspond à la sélection. Essayez de modifier ou d'effacer les filtres.
                 </TableCell>
               </TableRow>
             ) : (
@@ -229,11 +236,12 @@ const ConventionListTable = ({
                   showHeader={groupBy !== ''}
                   collapsed={collapsedSections.has(group.key)}
                   onToggleSection={() => toggleSection(group.key)}
-                  expandedRows={expandedRows}
+                  collapsedRows={collapsedRows}
                   onToggleRow={toggleRow}
                   onRowClick={onRowClick}
                   onMenuOpen={onMenuOpen}
                   columns={columns}
+                  engagement={engagement}
                   favoriteIds={favoriteIds}
                   onToggleFavorite={onToggleFavorite}
                   selectable={selectable}
@@ -254,9 +262,9 @@ const ConventionListTable = ({
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={(e) => { onRowsPerPageChange(parseInt(e.target.value, 10)); onPageChange(0) }}
           rowsPerPageOptions={[10, 25, 50, 100]}
-          labelRowsPerPage="Par page:"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} sur ${count}`}
-          sx={{ borderTop: `1px solid ${colors.divider}`, '.MuiTablePagination-select': { fontWeight: typography.weights.semibold } }}
+          labelRowsPerPage="Par page :"
+          labelDisplayedRows={({ from, to, count }) => `${from}–${to} sur ${count}`}
+          sx={{ bgcolor: colors.surfaceAlt, '.MuiTablePagination-select': { fontWeight: typography.weights.semibold } }}
         />
       </TableContainer>
     </Box>
@@ -270,11 +278,12 @@ interface GroupSectionProps {
   showHeader: boolean
   collapsed: boolean
   onToggleSection: () => void
-  expandedRows: Set<number>
+  collapsedRows: Set<number>
   onToggleRow: (id: number) => void
   onRowClick: (id: number) => void
   onMenuOpen: (e: React.MouseEvent<HTMLElement>, conv: Convention) => void
   columns: ColumnConfig[]
+  engagement?: Record<number, number>
   favoriteIds?: Set<number>
   onToggleFavorite?: (id: number) => void
   selectable: boolean
@@ -284,23 +293,17 @@ interface GroupSectionProps {
 }
 
 const GroupSection = ({
-  group, showHeader, collapsed, onToggleSection, expandedRows,
-  onToggleRow, onRowClick, onMenuOpen, columns, favoriteIds, onToggleFavorite,
+  group, showHeader, collapsed, onToggleSection, collapsedRows,
+  onToggleRow, onRowClick, onMenuOpen, columns, engagement, favoriteIds, onToggleFavorite,
   selectable, selectedIds, onSelect, totalColSpan,
 }: GroupSectionProps) => (
   <>
     {showHeader && (
-      <TableRow sx={listStyles.groupHeaderRow} onClick={onToggleSection}>
-        <TableCell colSpan={totalColSpan}>
+      <TableRow sx={listStyles.groupHeaderRow} onClick={onToggleSection} aria-expanded={!collapsed}>
+        <TableCell colSpan={totalColSpan} sx={{ pl: '24px !important', color: `${colors.textSecondary} !important`, fontSize: '12px !important' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-            <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.sm }}>
-              {group.label}
-            </Typography>
-            <Chip label={group.count} size="small" sx={{ height: 20, minWidth: 24, fontSize: typography.sizes['2xs'], fontWeight: typography.weights.bold, bgcolor: colors.neutral[200] }} />
-            <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, ml: 'auto' }}>
-              Total: {formatCurrency(group.totalBudget)} MAD
-            </Typography>
+            {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+            {group.label} · {group.count} · {formatMillions(group.totalBudget)} MAD
           </Box>
         </TableCell>
       </TableRow>
@@ -309,15 +312,16 @@ const GroupSection = ({
       <ConventionTableRow
         key={conv.id}
         conv={conv}
-        expanded={expandedRows.has(conv.id)}
+        expanded={!collapsedRows.has(conv.id)}
         onToggle={() => onToggleRow(conv.id)}
         onRowClick={onRowClick}
         onMenuOpen={onMenuOpen}
         columns={columns}
-        isFavorite={favoriteIds?.has(conv.id) ?? false}
+        engagement={engagement}
+        favoriteIds={favoriteIds}
         onToggleFavorite={onToggleFavorite}
         selectable={selectable}
-        selected={selectedIds.has(conv.id)}
+        selectedIds={selectedIds}
         onSelect={onSelect}
       />
     ))}

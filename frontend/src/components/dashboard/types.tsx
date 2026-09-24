@@ -109,7 +109,7 @@ export const formatDate = (dateStr?: string): string => {
 export const getGreeting = (): string => {
   const hour = new Date().getHours()
   if (hour < 12) return 'Bonjour'
-  if (hour < 18) return 'Bon apres-midi'
+  if (hour < 18) return 'Bon après-midi'
   return 'Bonsoir'
 }
 
@@ -121,23 +121,27 @@ interface SectionHeaderProps {
   action?: ReactNode
 }
 
+/** En-tête de panneau « Registre » : titre Garamond 18px et filet bas. */
 export const SectionHeader = ({ icon, title, action }: SectionHeaderProps) => (
   <Box sx={{
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     px: 2.5,
-    py: 1.5,
-    borderBottom: `1px solid ${colors.divider}`,
+    pt: 1.75,
+    pb: 1.5,
+    borderBottom: `1px solid ${colors.border}`,
   }}>
     <Stack direction="row" alignItems="center" spacing={1}>
-      <Box sx={{ color: colors.textDisabled, display: 'flex' }}>
+      <Box sx={{ color: colors.textSecondary, display: 'flex', '& svg': { width: 16, height: 16, strokeWidth: 1.75 } }} aria-hidden="true">
         {icon}
       </Box>
-      <Typography sx={{
+      <Typography component="h2" sx={{
+        fontFamily: typography.fontFamilySerif,
         fontWeight: typography.weights.medium,
-        fontSize: typography.sizes.sm,
-        color: colors.textSecondary,
+        fontSize: '18px',
+        color: colors.textPrimary,
+        lineHeight: 1.3,
       }}>
         {title}
       </Typography>

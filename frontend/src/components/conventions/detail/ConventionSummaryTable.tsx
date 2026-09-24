@@ -372,7 +372,7 @@ const KpiCard = ({
   }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
       {icon}
-      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em', fontWeight: typography.weights.semibold }}>
+      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, fontWeight: typography.weights.semibold }}>
         {label}
       </Typography>
     </Box>
@@ -427,8 +427,6 @@ const thStyle = {
   fontSize: typography.sizes.xs,
   fontWeight: typography.weights.semibold,
   color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.03em',
   py: 1,
   px: 1.5,
   borderBottom: `1px solid ${colors.border}`,

@@ -308,8 +308,6 @@ const thStyle = {
   fontSize: typography.sizes.xs,
   fontWeight: typography.weights.semibold,
   color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.03em',
   py: 1,
   px: 1.5,
   borderBottom: `1px solid ${colors.border}`,

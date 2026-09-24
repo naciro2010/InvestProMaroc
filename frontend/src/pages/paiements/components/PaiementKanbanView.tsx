@@ -75,7 +75,7 @@ const PaiementKanbanView = ({ paiements, onCardMove, formatCurrency }: PaiementK
   )
 
   return (
-    <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
+    <Box sx={{ px: 0, pb: 3 }}>
       <KanbanBoard<Paiement>
         columns={columns}
         getItemId={(p) => String(p.id)}

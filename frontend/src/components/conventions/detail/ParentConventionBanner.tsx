@@ -108,7 +108,7 @@ const ParentConventionBanner = ({
             <ArrowUpward sx={{ color: colors.primary[600], fontSize: 16 }} />
           </Box>
           <Box>
-            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.primary[600], textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.primary[600] }}>
               Convention Principale
             </Typography>
             <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.textPrimary }}>

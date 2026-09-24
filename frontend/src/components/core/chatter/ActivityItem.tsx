@@ -74,7 +74,7 @@ const ActivityItem = ({ activity, isLast }: ActivityItemProps) => {
       {!isLast && (
         <Box sx={{
           position: 'absolute', left: 15, top: 32, bottom: -8,
-          width: 1, bgcolor: colors.border,
+          width: '1px', bgcolor: colors.border,
         }} />
       )}
 

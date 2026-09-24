@@ -110,7 +110,7 @@ const ConventionSmartSidebar = memo(({
         width: 280,
         flexShrink: 0,
         position: 'sticky',
-        top: 80,
+        top: 'calc(var(--app-header-h, 0px) + 16px)',
         alignSelf: 'flex-start',
         display: { xs: 'none', lg: 'block' },
       }}
@@ -131,8 +131,6 @@ const ConventionSmartSidebar = memo(({
               fontSize: typography.sizes.xs,
               fontWeight: typography.weights.semibold,
               color: colors.textSecondary,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
             }}
           >
             Progression
@@ -223,8 +221,6 @@ const ConventionSmartSidebar = memo(({
             fontSize: typography.sizes.xs,
             fontWeight: typography.weights.semibold,
             color: colors.textSecondary,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
             mb: 1,
           }}
         >

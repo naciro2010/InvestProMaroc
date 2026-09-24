@@ -169,8 +169,6 @@ const DashboardFinanceKPIs = ({ kpis }: Props) => {
                       fontSize: typography.sizes.xs,
                       fontWeight: typography.weights.medium,
                       color: colors.textSecondary,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
                     }}>
                       {kpi.label}
                     </Typography>

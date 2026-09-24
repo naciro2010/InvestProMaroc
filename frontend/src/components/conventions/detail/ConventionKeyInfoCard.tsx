@@ -117,7 +117,7 @@ const EditableInfoField = ({
   if (editing) {
     return (
       <Box>
-        <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1.3, mb: 0.25 }}>
+        <Typography sx={{ fontSize: '10px', color: colors.textSecondary, lineHeight: 1.3, mb: 0.25 }}>
           {label}
         </Typography>
         <ClickAwayListener onClickAway={confirmEdit}>
@@ -196,7 +196,7 @@ const EditableInfoField = ({
         } : {},
       }}
     >
-      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1.3 }}>
+      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, lineHeight: 1.3 }}>
         {label}
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
@@ -223,7 +223,7 @@ const EditableInfoField = ({
 
 const InfoField = ({ label, value }: { label: string; value: string }) => (
   <Box>
-    <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: 1.3 }}>{label}</Typography>
+    <Typography sx={{ fontSize: '10px', color: colors.textSecondary, lineHeight: 1.3 }}>{label}</Typography>
     <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.textPrimary, fontVariantNumeric: 'tabular-nums', lineHeight: 1.3 }}>
       {value}
     </Typography>
@@ -242,7 +242,7 @@ const ConventionKeyInfoCard = ({ convention, enrichedData, canEdit = false, onFi
       <Box sx={{ px: 2, py: 1.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
           <Calculate sx={{ fontSize: 15, color: colors.primary[500] }} />
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary }}>
             Parametres financiers
           </Typography>
           {editable && (
@@ -320,7 +320,7 @@ const ConventionKeyInfoCard = ({ convention, enrichedData, canEdit = false, onFi
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
             <CalendarMonth sx={{ fontSize: 15, color: colors.info[500] }} />
-            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary }}>
               Dates cles
             </Typography>
           </Box>
@@ -351,7 +351,7 @@ const ConventionKeyInfoCard = ({ convention, enrichedData, canEdit = false, onFi
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
               <Person sx={{ fontSize: 15, color: colors.purple[500] }} />
-              <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+              <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary }}>
                 Tracabilite
               </Typography>
             </Box>
@@ -373,7 +373,7 @@ const ConventionKeyInfoCard = ({ convention, enrichedData, canEdit = false, onFi
               )}
               {enrichedData.motifRejet && (
                 <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase' }}>Motif de rejet</Typography>
+                  <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>Motif de rejet</Typography>
                   <Typography sx={{ fontSize: typography.sizes.xs, color: colors.danger[600], fontWeight: typography.weights.medium }}>{enrichedData.motifRejet}</Typography>
                 </Box>
               )}

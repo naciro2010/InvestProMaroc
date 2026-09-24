@@ -82,7 +82,6 @@ const DashboardBudgetExecution = ({ budget }: Props) => {
             <Typography sx={{
               fontSize: typography.sizes.xs, color: colors.textDisabled,
               fontWeight: typography.weights.medium, mb: 1.5,
-              textTransform: 'uppercase', letterSpacing: '0.05em',
             }}>
               Par convention
             </Typography>

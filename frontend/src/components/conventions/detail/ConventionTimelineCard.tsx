@@ -154,7 +154,7 @@ const ConventionTimelineCard = ({ convention, enrichedData }: ConventionTimeline
         <Event sx={{ fontSize: 16, color: colors.info[500] }} />
         <Typography sx={{
           fontSize: typography.sizes.xs, fontWeight: typography.weights.bold,
-          color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em',
+          color: colors.textSecondary,
         }}>
           Chronologie
         </Typography>

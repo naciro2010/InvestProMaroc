@@ -124,7 +124,7 @@ export default function BudgetsPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         {/* Control Panel */}
         <ControlPanel
           breadcrumbs={[{ label: 'Budgets' }]}
@@ -195,7 +195,7 @@ export default function BudgetsPage() {
         )}
 
         {/* List View */}
-        {viewMode === 'list' && <Box sx={{ p: { xs: 2, md: 3 } }}>
+        {viewMode === 'list' && <Box sx={{ pt: 0.5 }}>
           <Box sx={listStyles.container}>
             <TableContainer>
               <Table size="small" sx={listStyles.table}>

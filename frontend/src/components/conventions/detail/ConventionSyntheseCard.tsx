@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import {
-  Box, Paper, Typography, LinearProgress, CircularProgress, Tooltip,
-} from '@mui/material'
-import { ArrowDownward, ArrowUpward, AccountBalance } from '@mui/icons-material'
+import { Box, Typography, Skeleton, Tooltip } from '@mui/material'
+import { Panel, HighlightBlock, DualProgress } from '@/components/core'
 import { conventionsAPI, subventionsAPI, marchesAPI, versementsPrevisionnelsAPI } from '@/lib/api'
-import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { colors, typography } from '@/lib/designSystem'
 import type { ConventionBudgetLigneDTO, ApiResponse } from '@/types/api'
 import type { Subvention, MarcheData, SituationPaiement } from './types'
 
@@ -40,55 +38,52 @@ interface ConventionSyntheseCardProps {
 
 // ──── Helpers ────
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(n)
+/** Montant sans devise (l'en-tête précise « Montants en MAD »). */
+const fmtN = (n: number) =>
+  new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)
 
-const pct = (n: number) => `${n.toFixed(1)}%`
+const fmt = (n: number) => `${fmtN(n)} MAD`
+
+const pct = (n: number) => `${n.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`
 
 const tnum = { fontVariantNumeric: 'tabular-nums' as const }
 
 // ──── Sub-components ────
 
 const SynthRow = ({ label, amount, color, bold, hint, indent }: {
-  label: string; amount: number; color?: string; bold?: boolean; hint?: string; indent?: boolean
+  label: string; amount: number; color?: string; bold?: boolean; hint?: string; indent?: number
 }) => (
   <Tooltip title={hint || ''} placement="left" arrow>
     <Box sx={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      px: 2, py: 0.75,
-      pl: indent ? 4 : 2,
-      '&:hover': { bgcolor: colors.neutral[50] },
-      transition: 'background-color 0.15s',
+      display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1.5,
+      px: 2.5, py: 0.6, pl: 2.5 + (indent ?? 0) * 1.5,
     }}>
       <Typography sx={{
-        fontSize: typography.sizes.sm,
-        fontWeight: bold ? typography.weights.bold : typography.weights.medium,
-        color: color || colors.textPrimary,
+        fontSize: indent ? '12.5px' : '13.5px',
+        fontWeight: bold ? typography.weights.bold : typography.weights.normal,
+        color: color || (indent ? colors.textSecondary : colors.textPrimary),
+        lineHeight: 1.35,
       }}>
         {label}
       </Typography>
       <Typography sx={{
-        fontSize: typography.sizes.sm,
-        fontWeight: bold ? typography.weights.bold : typography.weights.semibold,
-        color: color || colors.textPrimary,
+        fontSize: indent ? '12.5px' : '13.5px',
+        fontWeight: bold ? typography.weights.bold : typography.weights.normal,
+        color: color || (indent ? colors.textSecondary : colors.textPrimary),
         ...tnum,
         whiteSpace: 'nowrap',
       }}>
-        {fmt(amount)}
+        {fmtN(amount)}
       </Typography>
     </Box>
   </Tooltip>
 )
 
-const KPI = ({ label, value, color, hint }: { label: string; value: string; color: string; hint?: string }) => (
+const KPI = ({ label, value, hint }: { label: string; value: string; hint?: string }) => (
   <Tooltip title={hint || ''} placement="top" arrow>
-    <Box sx={{ minWidth: 80 }}>
-      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-        {label}
-      </Typography>
-      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color, ...tnum }}>
-        {value}
-      </Typography>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography sx={{ fontSize: '12px', color: colors.textSecondary }}>{label}</Typography>
+      <Typography sx={{ fontSize: '13.5px', fontWeight: typography.weights.bold, color: colors.textPrimary, ...tnum }}>{value}</Typography>
     </Box>
   </Tooltip>
 )
@@ -182,128 +177,67 @@ const ConventionSyntheseCard = ({
   const tauxEngagement = conventionBudget > 0 ? (totalEmplois / conventionBudget) * 100 : 0
   const tauxDecaissement = totalEngage > 0 ? (totalDepense / totalEngage) * 100 : 0
 
+  const tauxPaye = conventionBudget > 0 ? (totalPaiements / conventionBudget) * 100 : 0
+
   if (loading) {
     return (
-      <Paper sx={{ ...componentStyles.card, p: 3, textAlign: 'center' }}>
-        <CircularProgress size={24} />
-        <Typography sx={{ mt: 1, fontSize: typography.sizes.sm, color: colors.textSecondary }}>
-          Chargement de la synthese...
-        </Typography>
-      </Paper>
+      <Panel title="Synthèse financière">
+        <Skeleton variant="rounded" height={260} />
+      </Panel>
     )
   }
 
   return (
-    <Paper sx={{ ...componentStyles.card, p: 0, overflow: 'hidden' }}>
-      {/* Header */}
-      <Box sx={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        px: 2, py: 1.25, bgcolor: colors.neutral[25], borderBottom: `1px solid ${colors.border}`,
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AccountBalance sx={{ fontSize: 18, color: colors.primary[600] }} />
-          <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.primary[800], textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-            Synthese financiere
-          </Typography>
-        </Box>
-        <Typography sx={{
-          fontSize: typography.sizes.lg, fontWeight: typography.weights.bold,
-          color: disponible >= 0 ? colors.success[700] : colors.danger[700], ...tnum,
-        }}>
-          {fmt(disponible)}
-          <Typography component="span" sx={{ fontSize: typography.sizes.xs, ml: 0.5, color: colors.textSecondary, fontWeight: typography.weights.normal }}>
-            disponible
-          </Typography>
-        </Typography>
-      </Box>
-
-      {/* Budget de référence */}
-      <Box sx={{ bgcolor: colors.primary[25], borderBottom: `1px solid ${colors.borderSubtle}` }}>
-        <SynthRow label="Budget convention" amount={conventionBudget} bold color={colors.primary[800]} />
+    <Panel title="Synthèse financière" flush>
+      <Box sx={{ py: 1 }}>
+        <SynthRow label="Budget convention" amount={conventionBudget} bold />
         {totalBudgetLignes > 0 && (
           <SynthRow
-            label="Lignes de depenses"
+            label="lignes de dépenses"
             amount={totalBudgetLignes}
-            indent
-            color={Math.abs(conventionBudget - totalBudgetLignes) < 1 ? colors.success[600] : colors.warning[600]}
-            hint={Math.abs(conventionBudget - totalBudgetLignes) < 1 ? 'Aligne au budget' : `Ecart: ${fmt(conventionBudget - totalBudgetLignes)}`}
+            indent={1}
+            color={Math.abs(conventionBudget - totalBudgetLignes) < 1 ? undefined : colors.warning[700]}
+            hint={Math.abs(conventionBudget - totalBudgetLignes) < 1 ? 'Aligné sur le budget' : `Écart : ${fmt(conventionBudget - totalBudgetLignes)}`}
           />
         )}
+
+        <Box sx={{ mt: 1 }}>
+          <SynthRow label="Ressources" amount={totalRessources} bold color={colors.success[700]} hint="Entrées : partenaires et subventions" />
+          <SynthRow label="partenaires" amount={totalPrevuPart} indent={1} hint={`Réalisé : ${fmt(totalRealisePart)}`} />
+          {totalSubv > 0 && <SynthRow label="subventions" amount={totalSubv} indent={1} />}
+        </Box>
+
+        <Box sx={{ mt: 1 }}>
+          <SynthRow label="Emplois" amount={totalEmplois} bold color={colors.danger[600]} hint="Sorties : marchés engagés et commission" />
+          <SynthRow label="marchés engagés" amount={totalEngage} indent={1} />
+          {totalDepense > 0 && (
+            <SynthRow label="dont décomptés" amount={totalDepense} indent={2} hint={`Reste à décompter : ${fmt(totalEngage - totalDepense)}`} />
+          )}
+          {totalPaiements > 0 && (
+            <SynthRow label="dont payés" amount={totalPaiements} indent={2} hint={`Reste à payer : ${fmt(totalDepense - totalPaiements)}`} />
+          )}
+          <SynthRow
+            label={`Commission (${tauxCommission} % HT + TVA ${tauxTva} %)`}
+            amount={commission}
+            indent={1}
+            hint={`Mode : ${commissionMode === 'PAR_CATEGORIE' ? 'par catégorie' : 'global'} · Base : ${baseCalcul || 'Montant TTC'}`}
+          />
+        </Box>
       </Box>
 
-      {/* RESSOURCES (Entrées) */}
-      <Box sx={{ borderLeft: `4px solid ${colors.success[500]}`, borderBottom: `1px solid ${colors.borderSubtle}` }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 0.75, bgcolor: colors.success[25] }}>
-          <ArrowDownward sx={{ fontSize: 14, color: colors.success[600] }} />
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.success[800], textTransform: 'uppercase', letterSpacing: '0.03em', flex: 1 }}>
-            Ressources (Entrees)
-          </Typography>
-          <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.success[800], ...tnum }}>
-            {fmt(totalRessources)}
-          </Typography>
-        </Box>
-        <SynthRow label="Partenaires" amount={totalPrevuPart} indent hint={`Realise: ${fmt(totalRealisePart)}`} />
-        {totalSubv > 0 && (
-          <SynthRow label="Subventions" amount={totalSubv} indent color={colors.success[600]} />
-        )}
+      <Box sx={{ px: 1.5, pb: 1.5 }}>
+        <HighlightBlock label="Disponible" value={fmtN(disponible)} />
       </Box>
 
-      {/* EMPLOIS (Sorties) */}
-      <Box sx={{ borderLeft: `4px solid ${colors.danger[500]}`, borderBottom: `1px solid ${colors.borderSubtle}` }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 0.75, bgcolor: colors.danger[25] }}>
-          <ArrowUpward sx={{ fontSize: 14, color: colors.danger[600] }} />
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.danger[800], textTransform: 'uppercase', letterSpacing: '0.03em', flex: 1 }}>
-            Emplois (Sorties)
-          </Typography>
-          <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.danger[800], ...tnum }}>
-            {fmt(totalEmplois)}
-          </Typography>
-        </Box>
-        <SynthRow label="Marches engages" amount={totalEngage} indent />
-        {totalDepense > 0 && (
-          <SynthRow label="Decomptes constates" amount={totalDepense} indent color={colors.info[600]} hint={`Reste a engager: ${fmt(totalEngage - totalDepense)}`} />
-        )}
-        {totalPaiements > 0 && (
-          <SynthRow label="Paiements realises" amount={totalPaiements} indent color={colors.purple[600]} hint={`Reste a payer: ${fmt(totalDepense - totalPaiements)}`} />
-        )}
-        <SynthRow
-          label={`Commission (${tauxCommission}% HT + TVA ${tauxTva}%)`}
-          amount={commission}
-          indent
-          color={colors.warning[700]}
-          hint={`Mode: ${commissionMode === 'PAR_CATEGORIE' ? 'par categorie' : 'global'} | Base: ${baseCalcul || 'Montant TTC'}`}
-        />
-      </Box>
-
-      {/* KPIs */}
-      <Box sx={{ px: 2, py: 1.5, bgcolor: colors.neutral[25] }}>
-        <Box sx={{ display: 'flex', gap: 2.5, mb: 1, flexWrap: 'wrap' }}>
-          <KPI label="Budget" value={fmt(conventionBudget)} color={colors.textPrimary} />
-          <KPI label="Couverture" value={pct(tauxCouverture)}
-            color={tauxCouverture >= 100 ? colors.success[600] : colors.warning[600]}
-            hint="Total ressources / Budget" />
-          <KPI label="Engagement" value={pct(tauxEngagement)}
-            color={tauxEngagement > 100 ? colors.danger[600] : colors.primary[600]}
-            hint="Total emplois / Budget" />
-          <KPI label="Decaissement" value={pct(tauxDecaissement)}
-            color={colors.info[600]}
-            hint="Total depense / Total engage" />
-        </Box>
-        <LinearProgress
-          variant="determinate"
-          value={Math.min(tauxEngagement, 100)}
-          sx={{
-            height: 6, borderRadius: 3, bgcolor: colors.neutral[200],
-            '& .MuiLinearProgress-bar': { borderRadius: 3, bgcolor: tauxEngagement > 100 ? colors.danger[500] : colors.primary[500] },
-          }}
-        />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-          <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>0%</Typography>
-          <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>{pct(tauxEngagement)} engage</Typography>
-          <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>100%</Typography>
+      <Box sx={{ px: 2.5, pb: 2 }}>
+        <DualProgress engaged={tauxEngagement} paid={tauxPaye} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1, mt: 1.25 }}>
+          <KPI label="Couverture" value={pct(tauxCouverture)} hint="Total ressources / budget" />
+          <KPI label="Engagement" value={pct(tauxEngagement)} hint="Total emplois / budget" />
+          <KPI label="Décaissement" value={pct(tauxDecaissement)} hint="Total décompté / total engagé" />
         </Box>
       </Box>
-    </Paper>
+    </Panel>
   )
 }
 

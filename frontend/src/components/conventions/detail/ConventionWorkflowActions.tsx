@@ -11,18 +11,9 @@ import {
   CircularProgress,
   Tooltip,
 } from '@mui/material'
-import {
-  Send,
-  CheckCircle,
-  Cancel,
-  PlayArrow,
-  Stop,
-  Flag,
-  Undo,
-  LockOpen,
-} from '@mui/icons-material'
+import { Cancel, Stop, LockOpen } from '@mui/icons-material'
 import { conventionsAPI } from '@/lib/api'
-import { colors } from '@/lib/designSystem'
+import { colors, componentStyles } from '@/lib/designSystem'
 
 interface ConventionWorkflowActionsProps {
   conventionId: number
@@ -163,16 +154,9 @@ const ConventionWorkflowActions = ({
           <Tooltip title="Soumettre pour validation">
             <Button
               variant="contained"
-              size="small"
-              startIcon={<Send />}
               onClick={handleSoumettre}
               disabled={loading}
-              sx={{
-                bgcolor: colors.primary[600],
-                '&:hover': { bgcolor: colors.primary[700] },
-                textTransform: 'none',
-                fontWeight: 600,
-              }}
+              sx={componentStyles.buttonPrimary}
             >
               Soumettre
             </Button>
@@ -184,16 +168,9 @@ const ConventionWorkflowActions = ({
             <Tooltip title="Valider la convention">
               <Button
                 variant="contained"
-                size="small"
-                startIcon={<CheckCircle />}
                 onClick={handleValider}
                 disabled={loading}
-                sx={{
-                  bgcolor: colors.success[600],
-                  '&:hover': { bgcolor: colors.success[700] },
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
+                sx={componentStyles.buttonPrimary}
               >
                 Valider
               </Button>
@@ -201,17 +178,9 @@ const ConventionWorkflowActions = ({
             <Tooltip title="Rejeter la convention">
               <Button
                 variant="outlined"
-                size="small"
-                startIcon={<Cancel />}
                 onClick={() => setRejectDialogOpen(true)}
                 disabled={loading}
-                sx={{
-                  borderColor: colors.danger[300],
-                  color: colors.danger[600],
-                  '&:hover': { borderColor: colors.danger[600], bgcolor: colors.danger[25] },
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
+                sx={componentStyles.buttonDanger}
               >
                 Rejeter
               </Button>
@@ -223,11 +192,9 @@ const ConventionWorkflowActions = ({
           <Tooltip title="Remettre en brouillon pour correction">
             <Button
               variant="outlined"
-              size="small"
-              startIcon={<Undo />}
               onClick={handleRemettreEnBrouillon}
               disabled={loading}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
+              sx={componentStyles.buttonSecondary}
             >
               Remettre en brouillon
             </Button>
@@ -236,31 +203,22 @@ const ConventionWorkflowActions = ({
 
         {(statut === 'VALIDEE' || statut === 'VALIDE') && (
           <>
-            <Tooltip title="Demarrer l'execution">
+            <Tooltip title="Démarrer l'exécution">
               <Button
                 variant="contained"
-                size="small"
-                startIcon={<PlayArrow />}
                 onClick={handleMettreEnCours}
                 disabled={loading}
-                sx={{
-                  bgcolor: colors.info[600],
-                  '&:hover': { bgcolor: colors.info[700] },
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
+                sx={componentStyles.buttonPrimary}
               >
-                Demarrer
+                Démarrer l'exécution
               </Button>
             </Tooltip>
             <Tooltip title="Remettre en brouillon pour modification">
               <Button
                 variant="outlined"
-                size="small"
-                startIcon={<Undo />}
                 onClick={handleRemettreEnBrouillon}
                 disabled={loading}
-                sx={{ textTransform: 'none', fontWeight: 600 }}
+                sx={componentStyles.buttonSecondary}
               >
                 Remettre en brouillon
               </Button>
@@ -270,19 +228,12 @@ const ConventionWorkflowActions = ({
 
         {(statut === 'EN_EXECUTION' || statut === 'EN_COURS') && (
           <>
-            <Tooltip title="Marquer comme achevee">
+            <Tooltip title="Marquer comme achevée">
               <Button
                 variant="contained"
-                size="small"
-                startIcon={<Flag />}
                 onClick={handleAchever}
                 disabled={loading}
-                sx={{
-                  bgcolor: colors.success[600],
-                  '&:hover': { bgcolor: colors.success[700] },
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
+                sx={componentStyles.buttonPrimary}
               >
                 Achever
               </Button>
@@ -290,17 +241,9 @@ const ConventionWorkflowActions = ({
             <Tooltip title="Annuler la convention">
               <Button
                 variant="outlined"
-                size="small"
-                startIcon={<Stop />}
                 onClick={() => setCancelDialogOpen(true)}
                 disabled={loading}
-                sx={{
-                  borderColor: colors.danger[300],
-                  color: colors.danger[600],
-                  '&:hover': { borderColor: colors.danger[600], bgcolor: colors.danger[25] },
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
+                sx={componentStyles.buttonDanger}
               >
                 Annuler
               </Button>
@@ -309,26 +252,14 @@ const ConventionWorkflowActions = ({
         )}
 
         {canDevalider && (
-          <Tooltip title="Devalider la convention (action admin)">
+          <Tooltip title="Dévalider la convention (action admin)">
             <Button
               variant="outlined"
-              size="small"
-              startIcon={<LockOpen />}
               onClick={() => setDevaliderDialogOpen(true)}
               disabled={loading}
-              sx={{
-                borderColor: colors.warning[400],
-                color: colors.warning[700],
-                bgcolor: colors.warning[50],
-                '&:hover': {
-                  borderColor: colors.warning[600],
-                  bgcolor: colors.warning[100],
-                },
-                textTransform: 'none',
-                fontWeight: 600,
-              }}
+              sx={componentStyles.buttonSecondary}
             >
-              Devalider (Admin)
+              Dévalider
             </Button>
           </Tooltip>
         )}

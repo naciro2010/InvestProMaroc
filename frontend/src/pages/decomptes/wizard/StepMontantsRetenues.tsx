@@ -1,9 +1,11 @@
-import { Box, Typography, TextField, MenuItem, Divider, IconButton, Button } from '@mui/material'
-import { Add, Delete } from '@mui/icons-material'
+import { Box, TextField, MenuItem, IconButton, Button } from '@mui/material'
+import { Delete } from '@mui/icons-material'
+import { Plus } from 'lucide-react'
 import DecimalInput from '@/components/ui/DecimalInput'
-import { colors } from '@/lib/designSystem'
-import { formatCurrency } from '@/lib/utils'
-import type { DecompteFormData, Retenue } from './types'
+import { AlertBanner } from '@/components/core'
+import { colors, componentStyles, typography } from '@/lib/designSystem'
+import { formatNumber } from '@/lib/utils'
+import { RETENUE_LABELS, type DecompteFormData, type Retenue, type TypeRetenue } from './types'
 
 interface StepMontantsRetenuesProps {
   formData: DecompteFormData
@@ -11,97 +13,90 @@ interface StepMontantsRetenuesProps {
   onAddRetenue: () => void
   onUpdateRetenue: (index: number, field: keyof Retenue, value: string | number) => void
   onRemoveRetenue: (index: number) => void
+  /** Taux de retenue de garantie du marché (%) */
+  tauxRetenueGarantie?: number | null
+  /** Erreurs bloquantes de l'étape */
+  errors: string[]
 }
 
+const sectionTitle = {
+  m: 0, mb: 1.5, fontFamily: typography.fontFamilySerif, fontWeight: 500, fontSize: '18px', color: colors.textPrimary,
+}
 
+/** Étape 2 : brut HT, TVA, TTC calculé ; retenues en lignes ; validation bloquante. */
 const StepMontantsRetenues = ({
-  formData, onFormDataChange, onAddRetenue, onUpdateRetenue, onRemoveRetenue,
-}: StepMontantsRetenuesProps) => (
-  <Box sx={{ display: 'grid', gap: 3 }}>
-    <Box>
-      <Typography variant="h6" gutterBottom fontWeight={600}>Montants</Typography>
-      <Divider sx={{ mb: 3 }} />
-    </Box>
+  formData, onFormDataChange, onAddRetenue, onUpdateRetenue, onRemoveRetenue, tauxRetenueGarantie, errors,
+}: StepMontantsRetenuesProps) => {
+  const rgSuggeree = tauxRetenueGarantie ? Math.round(formData.montantBrutHT * tauxRetenueGarantie) / 100 : 0
 
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
-      <DecimalInput fullWidth label="Montant brut HT (DH)" required value={formData.montantBrutHT}
-        onChange={(value) => onFormDataChange({ montantBrutHT: value })} min={0} decimalPlaces={2} />
-      <DecimalInput fullWidth label="Taux TVA (%)" required value={formData.tauxTVA}
-        onChange={(value) => onFormDataChange({ tauxTVA: value })} min={0} max={100} decimalPlaces={2} />
-      <DecimalInput fullWidth label="Montant TTC (DH)" value={formData.montantTTC}
-        onChange={() => {}} decimalPlaces={2} InputProps={{ readOnly: true }}
-        sx={{ '& .MuiInputBase-input': { bgcolor: colors.neutral[50], fontWeight: 600, color: colors.primary[600] } }} />
-    </Box>
+  const appliquerRG = () => {
+    const index = formData.retenues.findIndex(r => r.type === 'GARANTIE')
+    if (index >= 0) onUpdateRetenue(index, 'montant', rgSuggeree)
+    else onFormDataChange({ retenues: [...formData.retenues, { type: 'GARANTIE', montant: rgSuggeree, description: `RG ${tauxRetenueGarantie} %` }] })
+  }
 
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" fontWeight={600}>Retenues</Typography>
-        <Button variant="outlined" size="small" startIcon={<Add />} onClick={onAddRetenue}>Ajouter une retenue</Button>
-      </Box>
-      <Divider sx={{ mb: 3 }} />
-    </Box>
-
-    {formData.retenues.map((retenue, index) => (
-      <Box key={index} sx={{ p: 2, bgcolor: colors.neutral[50], borderRadius: 1, border: `1px solid ${colors.neutral[200]}` }}>
-        <Box sx={{ display: 'grid', gap: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="subtitle2" fontWeight={600}>Retenue {index + 1}</Typography>
-            <IconButton size="small" color="error" onClick={() => onRemoveRetenue(index)}><Delete /></IconButton>
-          </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 2fr' }, gap: 2 }}>
-            <TextField fullWidth select label="Type" size="small" value={retenue.type}
-              onChange={(e) => onUpdateRetenue(index, 'type', e.target.value)}>
-              <MenuItem value="RG">Retenue de garantie</MenuItem>
-              <MenuItem value="PENALITE">Penalite</MenuItem>
-              <MenuItem value="AVANCE">Avance</MenuItem>
-              <MenuItem value="AUTRE">Autre</MenuItem>
-            </TextField>
-            <DecimalInput fullWidth label="Montant (DH)" size="small" value={retenue.montant}
-              onChange={(value) => onUpdateRetenue(index, 'montant', value)} min={0} decimalPlaces={2} />
-            <TextField fullWidth label="Description" size="small" value={retenue.description}
-              onChange={(e) => onUpdateRetenue(index, 'description', e.target.value)} />
-          </Box>
+  return (
+    <Box sx={{ display: 'grid', gap: 3 }}>
+      <Box>
+        <Box component="h2" sx={sectionTitle}>Montants</Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+          <DecimalInput fullWidth label="Montant brut HT (MAD)" required value={formData.montantBrutHT}
+            onChange={(value) => onFormDataChange({ montantBrutHT: value })} min={0} decimalPlaces={2} />
+          <DecimalInput fullWidth label="Taux de TVA (%)" required value={formData.tauxTVA}
+            onChange={(value) => onFormDataChange({ tauxTVA: value })} min={0} max={100} decimalPlaces={2} />
+          <DecimalInput fullWidth label="Montant TTC (calculé)" value={formData.montantTTC}
+            onChange={() => {}} decimalPlaces={2} InputProps={{ readOnly: true }}
+            sx={{ '& .MuiInputBase-root': { bgcolor: colors.surfaceAlt }, '& .MuiInputBase-input': { fontWeight: 600 } }} />
         </Box>
       </Box>
-    ))}
 
-    <Box>
-      <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 2 }}>Resume financier</Typography>
-      <Divider sx={{ mb: 2 }} />
-    </Box>
+      <Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+          <Box component="h2" sx={{ ...sectionTitle, mb: 0 }}>Retenues</Box>
+          {tauxRetenueGarantie ? (
+            <Button variant="outlined" onClick={appliquerRG} disabled={formData.montantBrutHT <= 0} sx={componentStyles.buttonSecondary}>
+              Calculer la RG ({tauxRetenueGarantie} %)
+            </Button>
+          ) : null}
+        </Box>
 
-    <Box sx={{ p: 3, bgcolor: colors.neutral[50], borderRadius: 1, border: `1px solid ${colors.neutral[200]}` }}>
-      <Box sx={{ display: 'grid', gap: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="body1" color="text.secondary">Montant brut HT</Typography>
-          <Typography variant="body1" fontWeight={600}>{formatCurrency(formData.montantBrutHT)}</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="body1" color="text.secondary">TVA ({formData.tauxTVA}%)</Typography>
-          <Typography variant="body1" fontWeight={600}>{formatCurrency(formData.montantTVA)}</Typography>
-        </Box>
-        <Divider />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="body1" color="text.secondary">Montant TTC</Typography>
-          <Typography variant="h6" color="primary">{formatCurrency(formData.montantTTC)}</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="body1" color="error">Total retenues</Typography>
-          <Typography variant="body1" fontWeight={600} color="error">{formatCurrency(formData.totalRetenues)}</Typography>
-        </Box>
-        <Divider />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="h6">Net a payer</Typography>
-          <Typography variant="h5" color={formData.netAPayer < 0 ? 'error' : 'success.main'} fontWeight={700}>{formatCurrency(formData.netAPayer)}</Typography>
-        </Box>
-        {formData.netAPayer < 0 && (
-          <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-            Les retenues depassent le montant TTC. Veuillez corriger les montants.
-          </Typography>
+        {formData.retenues.length === 0 && (
+          <Box sx={{ fontSize: 13, color: colors.textTertiary, mb: 1.5 }}>Aucune retenue sur ce décompte.</Box>
         )}
+
+        <Box sx={{ display: 'grid', gap: 1.25 }}>
+          {formData.retenues.map((retenue, index) => (
+            <Box key={index} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '220px 180px minmax(0, 1fr) 40px' }, gap: 1.5, alignItems: 'center' }}>
+              <TextField fullWidth select label="Type" size="small" value={retenue.type}
+                onChange={(e) => onUpdateRetenue(index, 'type', e.target.value as TypeRetenue)}>
+                {(Object.keys(RETENUE_LABELS) as TypeRetenue[]).map(t => (
+                  <MenuItem key={t} value={t}>{RETENUE_LABELS[t]}</MenuItem>
+                ))}
+              </TextField>
+              <DecimalInput fullWidth label="Montant (MAD)" size="small" value={retenue.montant}
+                onChange={(value) => onUpdateRetenue(index, 'montant', value)} min={0} decimalPlaces={2}
+                helperText={retenue.type === 'GARANTIE' && rgSuggeree > 0 && retenue.montant !== rgSuggeree ? `Suggestion : ${formatNumber(rgSuggeree)}` : undefined} />
+              <TextField fullWidth label="Description" size="small" value={retenue.description}
+                onChange={(e) => onUpdateRetenue(index, 'description', e.target.value)} />
+              <IconButton onClick={() => onRemoveRetenue(index)} aria-label={`Supprimer la retenue ${index + 1}`} sx={{ color: colors.danger[600] }}>
+                <Delete fontSize="small" />
+              </IconButton>
+            </Box>
+          ))}
+        </Box>
+
+        <Button onClick={onAddRetenue} startIcon={<Plus size={14} />} sx={{ ...componentStyles.buttonDashed, mt: 1.5 }}>
+          Ajouter une retenue
+        </Button>
       </Box>
+
+      {errors.length > 0 && (
+        <AlertBanner tone="e">
+          {errors.map(e => <div key={e}>{e}</div>)}
+        </AlertBanner>
+      )}
     </Box>
-  </Box>
-)
+  )
+}
 
 export default StepMontantsRetenues

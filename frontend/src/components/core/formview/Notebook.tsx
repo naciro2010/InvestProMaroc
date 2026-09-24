@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Box, Typography, Tabs, Tab } from '@mui/material'
-import { componentStyles, colors, typography, borders } from '@/lib/designSystem'
+import { componentStyles, colors, typography } from '@/lib/designSystem'
 
 interface NotebookTab {
   label: string
@@ -38,7 +38,7 @@ interface NotebookProps {
  * Supporte le deep-linking par URL et un en-tête collant, de façon optionnelle
  * et rétro-compatible.
  */
-const Notebook = ({ tabs, tabActions, syncParam, sticky, stickyTop = 0, onTabChange }: NotebookProps) => {
+const Notebook = ({ tabs, tabActions, syncParam, sticky, stickyTop = 'var(--app-header-h, 0px)', onTabChange }: NotebookProps) => {
   const styles = componentStyles.formView
   const [searchParams, setSearchParams] = useSearchParams()
   const [internalTab, setInternalTab] = useState(0)
@@ -104,17 +104,9 @@ const Notebook = ({ tabs, tabActions, syncParam, sticky, stickyTop = 0, onTabCha
                     <Typography
                       component="span"
                       sx={{
-                        fontSize: typography.sizes['2xs'],
-                        bgcolor: activeTab === index ? colors.primary[100] : colors.neutral[200],
-                        color: activeTab === index ? colors.primary[700] : colors.neutral[600],
-                        borderRadius: borders.radius.full,
-                        px: 0.75,
-                        minWidth: 18,
-                        height: 18,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: typography.weights.semibold,
+                        fontSize: '11px',
+                        color: activeTab === index ? colors.textSecondary : colors.textTertiary,
+                        fontWeight: typography.weights.medium,
                       }}
                     >
                       {tab.count}

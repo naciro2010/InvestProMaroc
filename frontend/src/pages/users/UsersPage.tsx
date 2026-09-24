@@ -95,7 +95,9 @@ export default function UsersPage() {
     try {
       setLoading(true)
       const response = await api.get('/users')
-      setUsers(response.data)
+      // L'API enveloppe la liste dans ApiResponse<T> ({ success, data })
+      const payload: unknown = response.data?.data ?? response.data
+      setUsers(Array.isArray(payload) ? (payload as UserItem[]) : [])
     } catch {
       showToast('Erreur lors du chargement des utilisateurs', 'error')
     } finally {
@@ -206,7 +208,7 @@ export default function UsersPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={[{ label: 'Utilisateurs' }]}
           actions={
@@ -251,7 +253,7 @@ export default function UsersPage() {
           })}
         </ControlPanel>
 
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={{ pt: 0.5 }}>
           <Box sx={listStyles.container}>
             <TableContainer>
               <Table size="small" sx={listStyles.table}>

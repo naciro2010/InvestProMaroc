@@ -130,8 +130,6 @@ const MarcheStatsCard = ({ marcheId }: MarcheStatsCardProps) => {
                       color: colors.textSecondary,
                       fontSize: typography.sizes.xs,
                       fontWeight: typography.weights.medium,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
                       mb: 0.5,
                     }}
                   >

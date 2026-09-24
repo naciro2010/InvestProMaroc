@@ -86,8 +86,6 @@ const DynamicTable = ({ data, title }: DynamicTableProps) => {
                     fontWeight: typography.weights.semibold,
                     fontSize: typography.sizes.xs,
                     color: colors.textSecondary,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
                     whiteSpace: 'nowrap',
                     borderBottom: `2px solid ${colors.border}`,
                   }}
@@ -177,8 +175,6 @@ const DynamicTable = ({ data, title }: DynamicTableProps) => {
                         fontWeight: typography.weights.bold,
                         color: colors.primary[700],
                         py: 1.5,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                       }}
                     >
                       {isFirstStringCol ? `TOTAL (${data.totalCount} éléments)` : ''}

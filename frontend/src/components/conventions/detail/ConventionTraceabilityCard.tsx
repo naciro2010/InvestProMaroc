@@ -64,8 +64,8 @@ const BASE_LABELS: Record<string, string> = {
 
 const sectionSx = {
   fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold,
-  color: colors.textSecondary, textTransform: 'uppercase' as const,
-  letterSpacing: '0.06em', mb: spacing.mui.sm,
+  color: colors.textSecondary,
+  mb: spacing.mui.sm,
 } as const
 
 const lbl = {

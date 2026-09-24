@@ -307,7 +307,7 @@ const VersementsPrevisionnelsPage = () => {
   return (
     <AppLayout>
       <ControlPanel
-        breadcrumbs={[{ label: 'Versements Previsionnels' }]}
+        breadcrumbs={[{ label: 'Versements prévus' }]}
         actions={
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
@@ -358,7 +358,7 @@ const VersementsPrevisionnelsPage = () => {
         </FormControl>
       </ControlPanel>
 
-      <Box sx={{ p: { xs: 2, md: 3 }, bgcolor: colors.background }}>
+      <Box sx={{ pt: 0.5 }}>
         {/* Stats Cards */}
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 3 }}>
           {statCards.map((card, index) => {
@@ -398,8 +398,6 @@ const VersementsPrevisionnelsPage = () => {
                           color: colors.textSecondary,
                           fontSize: typography.sizes.xs,
                           fontWeight: typography.weights.medium,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
                           mb: 0.5,
                         }}
                       >

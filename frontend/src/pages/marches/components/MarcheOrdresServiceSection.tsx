@@ -65,8 +65,6 @@ const sectionHeaderSx = {
   fontSize: typography.sizes.xs,
   fontWeight: typography.weights.semibold,
   color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.05em',
 }
 
 /**
@@ -414,7 +412,7 @@ interface KPICardProps {
 
 const KPICard = ({ label, value, sub, color, icon }: KPICardProps) => (
   <Box sx={{ ...componentStyles.card, p: 2, textAlign: 'center' }}>
-    <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+    <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary, mb: 0.5 }}>
       {label}
     </Typography>
     <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">

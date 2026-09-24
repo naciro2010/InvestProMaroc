@@ -1,207 +1,171 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import {
-  LayoutDashboard, FileText, Users, Building2, Map, CreditCard,
-  Receipt, DollarSign, Briefcase, ShoppingCart, UserCog, Wallet, Tags,
-  Handshake, Search, X, Command, Sparkles, Settings, MessageSquare, BarChart3,
-} from 'lucide-react'
-import { colors, typography, borders, transitions, shadows } from '@/lib/designSystem'
-import NotificationCenter from '@/components/core/NotificationCenter'
+import { useCallback, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
   useSensor, useSensors, DragEndEvent,
 } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import SortableGroup, { MenuGroup, MenuItem as MenuItemType } from './SortableGroup'
-import SidebarLink from './SidebarLink'
-import SidebarSubLink from './SidebarSubLink'
-import SidebarUserMenu from './SidebarUserMenu'
+import { useExecutiveDashboard, selectNavCounters } from '@/hooks/useExecutiveDashboard'
+import { NAV_GROUPS, DEFAULT_OPEN_GROUPS, NavGroup, findNavLocation, isNavItemActive } from './navigation'
+import SidebarNavGroup, { SidebarNavItem } from './SidebarNavGroup'
+import SidebarCreateMenu from './SidebarCreateMenu'
+import SidebarRecents from './SidebarRecents'
+import SidebarFooter from './SidebarFooter'
 
-export const SIDEBAR_WIDTH = '256px'
 const MENU_ORDER_KEY = 'investpro_menu_order_v2'
+const MENU_OPEN_KEY = 'investpro_menu_open_v1'
 
-const getSavedMenuOrder = (): string[] | null => {
-  try { const saved = localStorage.getItem(MENU_ORDER_KEY); return saved ? JSON.parse(saved) : null }
-  catch { return null }
+const readJson = <T,>(key: string): T | null => {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : null
+  } catch {
+    return null
+  }
 }
 
-const saveMenuOrder = (order: string[]) => {
-  try { localStorage.setItem(MENU_ORDER_KEY, JSON.stringify(order)) } catch { /* ignore */ }
+const writeJson = (key: string, value: unknown) => {
+  try { localStorage.setItem(key, JSON.stringify(value)) } catch { /* ignore */ }
 }
 
-const defaultMenuGroups: MenuGroup[] = [
-  { key: 'operations', label: 'Operations', items: [
-    { icon: <FileText className="w-4 h-4" />, label: 'Conventions', path: '/conventions', implemented: true, subItems: [
-      { label: 'Actives', path: '/conventions?section=actives' },
-      { label: 'En attente', path: '/conventions?section=en_attente' },
-      { label: 'Terminees', path: '/conventions?section=terminees' },
-    ]},
-    { icon: <ShoppingCart className="w-4 h-4" />, label: 'Marches', path: '/marches', implemented: true },
-    { icon: <Building2 className="w-4 h-4" />, label: 'Projets', path: '/projets', implemented: true },
-    { icon: <Receipt className="w-4 h-4" />, label: 'Decomptes', path: '/decomptes', implemented: true },
-    { icon: <BarChart3 className="w-4 h-4" />, label: 'Reporting', path: '/reporting', implemented: true },
-  ]},
-  { key: 'finances', label: 'Finances', items: [
-    { icon: <Wallet className="w-4 h-4" />, label: 'Budgets', path: '/budgets', implemented: true },
-    { icon: <Briefcase className="w-4 h-4" />, label: 'Ordres de paiement', path: '/ordres-paiement', implemented: true },
-    { icon: <CreditCard className="w-4 h-4" />, label: 'Paiements', path: '/paiements', implemented: true },
-    { icon: <DollarSign className="w-4 h-4" />, label: 'Commissions', path: '/commissions', implemented: true },
-  ]},
-  { key: 'referentiel', label: 'Referentiel', items: [
-    { icon: <Users className="w-4 h-4" />, label: 'Fournisseurs', path: '/fournisseurs', implemented: true },
-    { icon: <Handshake className="w-4 h-4" />, label: 'Partenaires', path: '/parametrage/partenaires', implemented: true },
-  ]},
-  { key: 'configuration', label: 'Configuration', items: [
-    { icon: <Settings className="w-4 h-4" />, label: 'Parametrage', path: '/parametrage/conventions', implemented: true },
-    { icon: <Map className="w-4 h-4" />, label: 'Axes Analytiques', path: '/parametrage/plan-analytique', implemented: true },
-    { icon: <Tags className="w-4 h-4" />, label: 'Categories', path: '/parametrage/categories-depenses', implemented: true },
-    { icon: <UserCog className="w-4 h-4" />, label: 'Utilisateurs', path: '/users', implemented: true },
-  ]},
-]
+const [HOME_GROUP, ...SORTABLE_GROUPS] = NAV_GROUPS
 
-interface SidebarProps { isOpen: boolean; isMobile: boolean; onClose: () => void }
+const initialGroups = (): NavGroup[] => {
+  const saved = readJson<string[]>(MENU_ORDER_KEY)
+  if (!Array.isArray(saved)) return SORTABLE_GROUPS
+  const ordered = saved
+    .map(key => SORTABLE_GROUPS.find(g => g.key === key))
+    .filter((g): g is NavGroup => Boolean(g))
+  return [...ordered, ...SORTABLE_GROUPS.filter(g => !saved.includes(g.key))]
+}
 
-const Sidebar = ({ isOpen, isMobile, onClose }: SidebarProps) => {
-  const location = useLocation()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    operations: true, finances: true, referentiel: false, configuration: false,
-  })
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+  /** Vrai sous 900px : le menu est un tiroir */
+  isDrawer: boolean
+}
 
-  const [menuGroups, setMenuGroups] = useState<MenuGroup[]>(() => {
-    const savedOrder = getSavedMenuOrder()
-    if (savedOrder) {
-      const orderedGroups: MenuGroup[] = []
-      savedOrder.forEach(key => { const g = defaultMenuGroups.find(g => g.key === key); if (g) orderedGroups.push(g) })
-      defaultMenuGroups.forEach(g => { if (!savedOrder.includes(g.key)) orderedGroups.push(g) })
-      return orderedGroups
+/**
+ * Menu latéral unique (256px) : Créer, Rechercher, groupes repliables,
+ * consultés récemment, pied utilisateur. Tiroir sous 900px.
+ */
+const Sidebar = ({ isOpen, onClose, isDrawer }: SidebarProps) => {
+  const { pathname } = useLocation()
+  const { data } = useExecutiveDashboard()
+  const counters = selectNavCounters(data)
+  const [groups, setGroups] = useState<NavGroup[]>(initialGroups)
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
+    () => ({ ...DEFAULT_OPEN_GROUPS, ...(readJson<Record<string, boolean>>(MENU_OPEN_KEY) ?? {}) }),
+  )
+
+  // Le groupe de l'écran courant est toujours ouvert
+  useEffect(() => {
+    const location = findNavLocation(pathname)
+    if (location && !openGroups[location.group.key]) {
+      setOpenGroups(prev => {
+        const next = { ...prev, [location.group.key]: true }
+        writeJson(MENU_OPEN_KEY, next)
+        return next
+      })
     }
-    return defaultMenuGroups
+  }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Échap ferme le tiroir
+  useEffect(() => {
+    if (!isDrawer || !isOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [isDrawer, isOpen, onClose])
+
+  const toggleGroup = (key: string) => setOpenGroups(prev => {
+    const next = { ...prev, [key]: !prev[key] }
+    writeJson(MENU_OPEN_KEY, next)
+    return next
   })
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
-    if (over && active.id !== over.id) {
-      setMenuGroups((items) => {
-        const oldIndex = items.findIndex((item) => item.key === active.id)
-        const newIndex = items.findIndex((item) => item.key === over.id)
-        const newOrder = arrayMove(items, oldIndex, newIndex)
-        saveMenuOrder(newOrder.map(g => g.key))
-        return newOrder
-      })
-    }
+    if (!over || active.id === over.id) return
+    setGroups(items => {
+      const next = arrayMove(
+        items,
+        items.findIndex(g => g.key === active.id),
+        items.findIndex(g => g.key === over.id),
+      )
+      writeJson(MENU_ORDER_KEY, next.map(g => g.key))
+      return next
+    })
   }, [])
 
-  const isInitialMount = useRef(true)
+  const activeItem = findNavLocation(pathname)?.item
+  const isItemActive = (path: string) => activeItem?.path === path
+  const onNavigate = isDrawer ? onClose : undefined
+  const home = HOME_GROUP.items[0]
 
-  useEffect(() => {
-    if (isInitialMount.current) { isInitialMount.current = false }
-    else if (isMobile) { onClose() }
-    const activeGroup = menuGroups.find(group => group.items.some(item => location.pathname === item.path || location.pathname.startsWith(item.path + '/')))
-    if (activeGroup && !expandedGroups[activeGroup.key]) {
-      setExpandedGroups(prev => ({ ...prev, [activeGroup.key]: true }))
-    }
-  }, [location.pathname]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const toggleGroup = (groupKey: string) => setExpandedGroups(prev => ({ ...prev, [groupKey]: !prev[groupKey] }))
-  const handleMobileNavigate = isMobile ? onClose : undefined
-  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/')
-
-  const filteredGroups = searchQuery
-    ? menuGroups.map(group => ({ ...group, items: group.items.filter(item => item.label.toLowerCase().includes(searchQuery.toLowerCase())) })).filter(group => group.items.length > 0)
-    : menuGroups
-
-  const containerStyle: React.CSSProperties = {
-    position: 'fixed', left: 0, top: 0, height: '100vh', width: SIDEBAR_WIDTH,
-    backgroundColor: colors.surface, borderRight: `1px solid ${colors.border}`,
-    display: 'flex', flexDirection: 'column', zIndex: 40,
-    transition: `transform ${transitions.normal}`,
-    boxShadow: isMobile ? shadows.lg : 'none',
-    transform: (isOpen || !isMobile) ? 'translateX(0)' : 'translateX(-100%)',
+  const openPalette = () => {
+    onNavigate?.()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
   }
 
   return (
-    <aside style={containerStyle} role="navigation" aria-label="Menu principal">
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
-        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-          <div style={{ width: 30, height: 30, backgroundColor: colors.primary[600], borderRadius: borders.radius.md, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Briefcase className="w-4 h-4 text-white" />
-          </div>
-          <span style={{ color: colors.textPrimary, fontWeight: typography.weights.bold, fontSize: typography.sizes.base, letterSpacing: typography.letterSpacing.tight }}>InvestPro</span>
-        </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-          <NotificationCenter />
-          {isMobile && (
-            <button onClick={onClose} aria-label="Fermer le menu" style={{ padding: '4px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: borders.radius.sm, display: 'flex' }}>
-              <X className="w-5 h-5" style={{ color: colors.textSecondary }} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Search */}
-      <div style={{ padding: '8px 12px' }}>
-        <button
-          onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', padding: '6px 10px', backgroundColor: colors.neutral[50], borderRadius: borders.radius.base, border: `1px solid ${colors.border}`, cursor: 'pointer', textAlign: 'left', transition: `all ${transitions.fast}` }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = colors.neutral[300]; e.currentTarget.style.backgroundColor = colors.surface }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.backgroundColor = colors.neutral[50] }}
-        >
-          <Search className="w-3.5 h-3.5" style={{ color: colors.neutral[400], flexShrink: 0 }} />
-          <span style={{ fontSize: typography.sizes.sm, color: colors.neutral[400], flex: 1 }}>Rechercher...</span>
-          <kbd style={{ padding: '1px 5px', backgroundColor: colors.neutral[100], border: `1px solid ${colors.neutral[200]}`, borderRadius: borders.radius.sm, fontSize: typography.sizes['2xs'], fontFamily: typography.fontFamilyMono, color: colors.neutral[500], display: 'flex', alignItems: 'center', gap: '2px' }}>
-            <Command className="w-2.5 h-2.5" />K
-          </kbd>
-        </button>
-      </div>
-
-      {searchQuery && (
-        <div style={{ padding: '0 12px 4px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', backgroundColor: colors.primary[25], borderRadius: borders.radius.base, border: `1px solid ${colors.primary[200]}` }}>
-            <span style={{ fontSize: typography.sizes.xs, color: colors.primary[600], flex: 1 }}>Filtre: {searchQuery}</span>
-            <button onClick={() => setSearchQuery('')} style={{ padding: '2px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', display: 'flex' }}>
-              <X className="w-3 h-3" style={{ color: colors.primary[400] }} />
-            </button>
-          </div>
-        </div>
+    <>
+      {isDrawer && isOpen && (
+        <button type="button" className="app-sidebar-backdrop" aria-label="Fermer le menu" onClick={onClose} />
       )}
+      <aside
+        id="app-sidebar"
+        className="app-sidebar"
+        data-open={isOpen}
+        aria-label="Menu principal"
+        aria-hidden={isDrawer && !isOpen ? true : undefined}
+      >
+        <div className="app-sidebar-scroll">
+          <SidebarCreateMenu onNavigate={onNavigate} />
 
-      {/* Navigation */}
-      <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 0', paddingBottom: '8px' }}>
-        <SidebarLink path="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" isActive={isActive} onNavigate={handleMobileNavigate} />
-        <SidebarLink path="/generateur" icon={<Sparkles className="w-4 h-4" />} label="Générateur" isActive={isActive} onNavigate={handleMobileNavigate} />
-        <SidebarLink path="/messagerie" icon={<MessageSquare className="w-4 h-4" />} label="Messagerie" isActive={isActive} onNavigate={handleMobileNavigate} />
+          <button type="button" className="nav-search" onClick={openPalette} aria-label="Rechercher (Ctrl K)">
+            <span>Rechercher…</span>
+            <kbd>Ctrl K</kbd>
+          </button>
 
-        <div style={{ height: '1px', backgroundColor: colors.divider, margin: '6px 16px' }} />
+          <nav aria-label="Navigation">
+            <SidebarNavItem
+              root
+              label={home.label}
+              path={home.path}
+              active={isNavItemActive(home, pathname)}
+              onNavigate={onNavigate}
+            />
 
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={filteredGroups.map(g => g.key)} strategy={verticalListSortingStrategy}>
-            {filteredGroups.map((group) => (
-              <SortableGroup key={group.key} group={group} isExpanded={expandedGroups[group.key] || !!searchQuery} hasActiveItem={group.items.some(item => isActive(item.path))} onToggle={() => toggleGroup(group.key)} isActive={isActive}>
-                <div style={{ paddingBottom: '2px' }}>
-                  {group.items.map((item, itemIndex) => (
-                    <div key={itemIndex}>
-                      <SidebarLink path={item.path} icon={item.icon} label={item.label} isActive={isActive} indent badge={!item.implemented ? 'Bientot' : undefined} onNavigate={handleMobileNavigate} />
-                      {item.subItems && isActive(item.path) && item.subItems.map((sub, subIdx) => (
-                        <SidebarSubLink key={subIdx} path={sub.path} label={sub.label} isParentActive={isActive(item.path)} onNavigate={handleMobileNavigate} />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </SortableGroup>
-            ))}
-          </SortableContext>
-        </DndContext>
-      </nav>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={groups.map(g => g.key)} strategy={verticalListSortingStrategy}>
+                {groups.map(group => (
+                  <SidebarNavGroup
+                    key={group.key}
+                    group={group}
+                    isOpen={Boolean(openGroups[group.key])}
+                    onToggle={() => toggleGroup(group.key)}
+                    isItemActive={isItemActive}
+                    counters={counters}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </nav>
 
-      <SidebarUserMenu />
-    </aside>
+          <SidebarRecents onNavigate={onNavigate} />
+        </div>
+
+        <SidebarFooter onNavigate={onNavigate} />
+      </aside>
+    </>
   )
 }
 

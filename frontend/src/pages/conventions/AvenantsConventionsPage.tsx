@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Box, Button, Skeleton } from '@mui/material'
 import AppLayout from '@/components/layout/AppLayout'
-import { ControlPanel, Panel, SegmentedControl, StatusBadge } from '@/components/core'
-import type { SegmentOption } from '@/components/core'
-import { avenantConventionsAPI } from '@/lib/api'
+import { ControlPanel, Panel, SegmentedControl, StatusBadge, type SegmentOption } from '@/components/core'
+import { avenantConventionsAPI, conventionsAPI } from '@/lib/api'
 import { colors, componentStyles } from '@/lib/designSystem'
 import { formatNumber, formatDate } from '@/lib/utils'
-import { AvenantConventionResponse } from '@/types/avenantConvention'
+import type { AvenantConventionSummary } from '@/types/avenantConvention'
+import type { Convention } from '@/types/entities'
 
 type StatutFilter = 'ALL' | 'BROUILLON' | 'SOUMIS' | 'VALIDE'
 
@@ -23,14 +23,29 @@ const AvenantsConventionsPage = () => {
   const [search, setSearch] = useState('')
   const [statut, setStatut] = useState<StatutFilter>('ALL')
 
-  const { data: avenants = [], isLoading, isError, refetch } = useQuery<AvenantConventionResponse[]>({
+  const { data: avenants = [], isLoading, isError, refetch } = useQuery<AvenantConventionSummary[]>({
     queryKey: ['avenants-conventions'],
     queryFn: async () => {
       const res = await avenantConventionsAPI.getAll()
       const payload: unknown = res.data?.data ?? res.data
-      return Array.isArray(payload) ? (payload as AvenantConventionResponse[]) : []
+      return Array.isArray(payload) ? (payload as AvenantConventionSummary[]) : []
     },
   })
+
+  // Le résumé d'avenant ne porte que le numéro de convention : libellé via la liste des conventions
+  const { data: conventions = [] } = useQuery<Convention[]>({
+    queryKey: ['conventions', 'list'],
+    queryFn: async () => {
+      const res = await conventionsAPI.getAll()
+      const payload: unknown = res.data?.data ?? res.data
+      return Array.isArray(payload) ? (payload as Convention[]) : []
+    },
+    staleTime: 1000 * 60 * 5,
+  })
+  const libelleConvention = useMemo(
+    () => new Map(conventions.map(c => [c.id, c.libelle?.replace(/<[^>]+>/g, '') ?? ''])),
+    [conventions],
+  )
 
   const counts = useMemo(() => {
     const c: Record<StatutFilter, number> = { ALL: avenants.length, BROUILLON: 0, SOUMIS: 0, VALIDE: 0 }
@@ -42,10 +57,10 @@ const AvenantsConventionsPage = () => {
     const q = search.trim().toLowerCase()
     return avenants
       .filter(a => statut === 'ALL' || a.statut === statut)
-      .filter(a => !q || [a.numeroAvenant, a.objet, a.conventionNumero, a.conventionLibelle]
+      .filter(a => !q || [a.numeroAvenant, a.objet, a.conventionNumero, libelleConvention.get(a.conventionId)]
         .some(v => v?.toLowerCase().includes(q)))
       .sort((a, b) => (b.dateAvenant ?? '').localeCompare(a.dateAvenant ?? ''))
-  }, [avenants, search, statut])
+  }, [avenants, search, statut, libelleConvention])
 
   const options: SegmentOption<StatutFilter>[] = [
     { value: 'ALL', label: 'Tous', count: counts.ALL },
@@ -108,7 +123,7 @@ const AvenantsConventionsPage = () => {
                     </Box>
                     <Box component="td">
                       <Box sx={{ fontWeight: 600, fontSize: 12.5 }}>{a.conventionNumero}</Box>
-                      <Box sx={{ color: colors.textSecondary, fontSize: 12.5 }}>{a.conventionLibelle}</Box>
+                      <Box sx={{ color: colors.textSecondary, fontSize: 12.5 }}>{libelleConvention.get(a.conventionId) ?? ''}</Box>
                     </Box>
                     <Box component="td" sx={{ whiteSpace: 'nowrap', color: colors.textSecondary }}>
                       {a.dateAvenant ? formatDate(a.dateAvenant) : '—'}

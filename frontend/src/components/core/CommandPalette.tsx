@@ -79,7 +79,7 @@ const CommandPalette = () => {
 
   // Fiches chargées à la première ouverture seulement
   const { data: conventions = [] } = useQuery<Convention[]>({
-    queryKey: ['palette', 'conventions'],
+    queryKey: ['conventions', 'list'],
     queryFn: async () => toArray<Convention>((await conventionsAPI.getAll()).data),
     enabled: open,
     staleTime: 1000 * 60 * 5,

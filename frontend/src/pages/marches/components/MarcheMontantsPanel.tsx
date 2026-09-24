@@ -1,7 +1,8 @@
 import { Box, Skeleton } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { Panel, HighlightBlock, DualProgress } from '@/components/core'
-import { marchesAPI } from '@/lib/api'
+import { marchesAPI, cascadeAPI } from '@/lib/api'
+import type { MarcheSummaryDTO } from '@/lib/api'
 import { colors } from '@/lib/designSystem'
 import { formatNumber, formatPercent } from '@/lib/utils'
 
@@ -28,6 +29,7 @@ const Row = ({ label, value, bold }: { label: string; value: number; bold?: bool
 
 /** Montants du marché : HT, TVA, TTC, décomptes, payé, reste à payer et avancement. */
 const MarcheMontantsPanel = ({ marcheId, montantHt, montantTva, montantTtc }: MarcheMontantsPanelProps) => {
+  // Situation de paiement : net à payer (après retenues), payé, reste à payer
   const { data, isLoading } = useQuery<SituationPaiement | null>({
     queryKey: ['marche-situation-paiement', marcheId],
     queryFn: async () => {
@@ -36,11 +38,21 @@ const MarcheMontantsPanel = ({ marcheId, montantHt, montantTva, montantTtc }: Ma
     },
   })
 
+  // Cumul décompté : décomptes validés uniquement, en TTC brut (avant retenues)
+  const { data: summary, isLoading: summaryLoading } = useQuery<MarcheSummaryDTO | null>({
+    queryKey: ['marche-summary', marcheId],
+    queryFn: async () => {
+      const res = await cascadeAPI.getMarcheSummary(marcheId)
+      return res.data?.data ?? null
+    },
+  })
+
   const ttc = montantTtc ?? 0
-  const decompte = data?.totalNetAPayer ?? 0
-  const paye = data?.totalMontantPaye ?? 0
+  const decompte = summary?.cumulDecomptesTTC ?? 0
+  const paye = data?.totalMontantPaye ?? summary?.montantPayeTotal ?? 0
+  const netAPayer = data?.totalNetAPayer ?? 0
   const avancement = ttc > 0 ? (decompte / ttc) * 100 : 0
-  const paiements = data?.tauxPaiement ?? (decompte > 0 ? (paye / decompte) * 100 : 0)
+  const paiements = data?.tauxPaiement ?? (netAPayer > 0 ? (paye / netAPayer) * 100 : 0)
 
   return (
     <Panel title="Montants du marché">
@@ -48,13 +60,13 @@ const MarcheMontantsPanel = ({ marcheId, montantHt, montantTva, montantTtc }: Ma
       <Row label="TVA" value={montantTva ?? ttc - (montantHt ?? 0)} />
       <Row label="Montant TTC" value={ttc} bold />
       <Box sx={{ height: 8 }} />
-      {isLoading ? <Skeleton variant="rounded" height={120} /> : (
+      {isLoading || summaryLoading ? <Skeleton variant="rounded" height={120} /> : (
         <>
           <Row label="Décomptes constatés" value={decompte} />
           <Row label="Payé" value={paye} />
           <Row label="Reste à décompter" value={Math.max(0, ttc - decompte)} />
           <Box sx={{ my: 1.5 }}>
-            <HighlightBlock label="Reste à payer" value={formatNumber(data?.resteAPayer ?? decompte - paye)} />
+            <HighlightBlock label="Reste à payer" value={formatNumber(data?.resteAPayer ?? Math.max(0, netAPayer - paye))} />
           </Box>
           <Box sx={{ fontSize: 12.5, color: colors.textSecondary, mb: 0.5 }}>Avancement {formatPercent(avancement)}</Box>
           <DualProgress engaged={avancement} label={`Avancement ${formatPercent(avancement)}`} />

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { findNavLocation, isNavItemActive, NAV_GROUPS } from '@/components/layout/navigation'
 import { pushRecentRecord } from '@/hooks/useRecentRecords'
-import { formatMillions, formatPercent } from '@/lib/utils'
+import { formatMillions, formatPercent, formatRate } from '@/lib/utils'
 import { getStatusConfig, tones, toneOf } from '@/lib/designSystem'
 
 /** Normalise les espaces insécables des formats fr-FR */
@@ -39,6 +39,12 @@ describe('formats', () => {
     expect(plain(formatMillions(1_071_500_000))).toBe('1 071,5 M')
     expect(plain(formatPercent(30.44))).toBe('30,4 %')
     expect(plain(formatPercent(Number.NaN))).toBe('0,0 %')
+  })
+
+  it('garde la précision des taux de commission', () => {
+    expect(plain(formatRate(2.75))).toBe('2,75 %')
+    expect(plain(formatRate(1.25))).toBe('1,25 %')
+    expect(plain(formatRate(3))).toBe('3 %')
   })
 })
 

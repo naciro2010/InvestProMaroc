@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
 import { Box, Typography } from '@mui/material'
-import { KanbanBoard } from '@/components/core'
-import type { KanbanColumn } from '@/components/core'
+import { KanbanBoard, type KanbanColumn } from '@/components/core'
 import { colors, typography, tones, toneOf, getStatusConfig } from '@/lib/designSystem'
-import { formatMillions, formatPercent } from '@/lib/utils'
+import { formatMillions, formatRate } from '@/lib/utils'
 
 // ==================== TYPES ====================
 
@@ -64,7 +63,7 @@ const renderConventionCard = (convention: KanbanConvention, onClick: (id: number
         {formatMillions(convention.budget)} MAD
       </Typography>
       {convention.tauxCommission > 0 && (
-        <Typography sx={{ fontSize: '12px', color: colors.textTertiary }}>{formatPercent(convention.tauxCommission)}</Typography>
+        <Typography sx={{ fontSize: '12px', color: colors.textTertiary }}>{formatRate(convention.tauxCommission)}</Typography>
       )}
     </Box>
     {convention.createdByNom && (

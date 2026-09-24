@@ -3,7 +3,7 @@ import { MoreVert, KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-mate
 import { StatusBadge } from '@/components/core'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
-import { formatMillions, formatPercent } from '@/lib/utils'
+import { formatMillions, formatPercent, formatRate } from '@/lib/utils'
 import type { Convention, ConventionWithChildren, ColumnConfig } from './ConventionListTable'
 
 // ==================== HELPERS ====================
@@ -141,7 +141,7 @@ const Row = ({
         <TableCell align="right" sx={{ ...nowrap, fontWeight: typography.weights.medium }}>{formatMillions(conv.budget)}</TableCell>
       )}
       {isVisible('commission') && (
-        <TableCell align="right" sx={{ ...nowrap, color: colors.textSecondary }}>{formatPercent(conv.tauxCommission, conv.tauxCommission % 1 === 0 ? 0 : 1)}</TableCell>
+        <TableCell align="right" sx={{ ...nowrap, color: colors.textSecondary }}>{formatRate(conv.tauxCommission)}</TableCell>
       )}
       {isVisible('engage') && (
         <TableCell align="right" sx={{ ...nowrap, fontWeight: typography.weights.medium }}>

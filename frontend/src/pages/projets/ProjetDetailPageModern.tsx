@@ -123,7 +123,7 @@ const ProjetDetailPageModern = () => {
   if (loading) {
     return (
       <AppLayout>
-        <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+        <Box sx={{ minWidth: 0 }}>
           <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
             <Skeleton variant="text" width={300} height={32} />
           </Box>
@@ -151,7 +151,7 @@ const ProjetDetailPageModern = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={[
             { label: 'Projets', path: '/projets' },

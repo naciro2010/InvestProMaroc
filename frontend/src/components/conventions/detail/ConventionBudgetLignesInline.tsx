@@ -60,8 +60,6 @@ const th = {
   fontSize: typography.sizes.xs,
   fontWeight: typography.weights.semibold,
   color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.03em',
   py: 0.75, px: 1.5,
 }
 const td = { fontSize: typography.sizes.xs, py: 0.5, px: 1.5 }

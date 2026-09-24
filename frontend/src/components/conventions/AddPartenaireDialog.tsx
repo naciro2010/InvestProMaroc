@@ -308,7 +308,7 @@ export default function AddPartenaireDialog({
 
   const sectionTitleSx = {
     fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold,
-    color: colors.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '0.04em',
+    color: colors.textSecondary,
   }
 
   return (

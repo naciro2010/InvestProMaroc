@@ -1,24 +1,59 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  FileText, ShoppingCart, Building2, Wallet, Receipt,
-  LayoutDashboard, Users, Settings, Search,
-  Handshake, Tags, Map, UserCog, CreditCard, Plus,
-  ArrowRight,
-} from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Search } from 'lucide-react'
+import api, { conventionsAPI } from '@/lib/api'
 import { colors, typography, borders, shadows, transitions } from '@/lib/designSystem'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
+import { NAV_GROUPS } from '@/components/layout/navigation'
+import type { Convention } from '@/types/entities'
+import type { MarcheListItem } from '@/components/marches/list'
+
+type CommandType = 'Écran' | 'Convention' | 'Marché' | 'Action'
 
 interface CommandItem {
   id: string
+  type: CommandType
   label: string
-  description?: string
-  icon: React.ReactElement
-  action: () => void
-  category: string
+  context?: string
+  path: string
   keywords?: string[]
 }
 
+const MAX_RECORDS = 6
+
+const SCREEN_COMMANDS: CommandItem[] = NAV_GROUPS.flatMap(group =>
+  group.items.map(item => ({
+    id: `screen-${item.path}`,
+    type: 'Écran' as const,
+    label: item.label,
+    context: group.label || 'Pilotage',
+    path: item.path,
+  })),
+)
+
+const ACTION_COMMANDS: CommandItem[] = [
+  { id: 'new-convention', type: 'Action', label: 'Nouvelle convention', context: 'Assistant en 5 étapes', path: '/conventions/nouvelle', keywords: ['creer', 'ajouter'] },
+  { id: 'new-marche', type: 'Action', label: 'Nouveau marché', context: 'Informations, prix, imputations', path: '/marches/nouveau', keywords: ['creer', 'ajouter'] },
+  { id: 'new-decompte', type: 'Action', label: 'Nouveau décompte', context: 'Montants et retenues', path: '/decomptes/nouveau', keywords: ['creer', 'ajouter', 'facture'] },
+  { id: 'new-projet', type: 'Action', label: 'Nouveau projet', path: '/projets/nouveau', keywords: ['creer', 'ajouter'] },
+  { id: 'new-budget', type: 'Action', label: 'Nouveau budget', path: '/budgets/nouveau', keywords: ['creer', 'ajouter'] },
+]
+
+/** Normalise pour une recherche insensible aux accents et à la casse. */
+const norm = (v: string | null | undefined) =>
+  (v ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+const toArray = <T,>(payload: unknown): T[] => {
+  if (Array.isArray(payload)) return payload as T[]
+  const inner = (payload as { data?: unknown } | null)?.data
+  return Array.isArray(inner) ? (inner as T[]) : []
+}
+
+/**
+ * CommandPalette - Palette de commandes (Ctrl/⌘ K, Échap pour fermer).
+ * Recherche dans les écrans, les actions, les conventions et les marchés.
+ */
 const CommandPalette = () => {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -27,7 +62,6 @@ const CommandPalette = () => {
   const listRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
-  // Toggle palette
   useKeyboardShortcut({
     key: 'k',
     ctrl: true,
@@ -36,7 +70,6 @@ const CommandPalette = () => {
     category: 'Navigation',
   })
 
-  // Close on Escape
   useKeyboardShortcut({
     key: 'Escape',
     handler: () => { if (open) setOpen(false) },
@@ -44,71 +77,55 @@ const CommandPalette = () => {
     category: 'General',
   })
 
-  const goTo = useCallback((path: string) => {
-    navigate(path)
-    setOpen(false)
-  }, [navigate])
+  // Fiches chargées à la première ouverture seulement
+  const { data: conventions = [] } = useQuery<Convention[]>({
+    queryKey: ['conventions', 'list'],
+    queryFn: async () => toArray<Convention>((await conventionsAPI.getAll()).data),
+    enabled: open,
+    staleTime: 1000 * 60 * 5,
+  })
+  const { data: marches = [] } = useQuery<MarcheListItem[]>({
+    queryKey: ['palette', 'marches'],
+    queryFn: async () => toArray<MarcheListItem>((await api.get('/marches/list')).data),
+    enabled: open,
+    staleTime: 1000 * 60 * 5,
+  })
 
-  const commands: CommandItem[] = useMemo(() => [
-    // Navigation
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, action: () => goTo('/dashboard'), category: 'Navigation', keywords: ['accueil', 'home'] },
-    { id: 'conventions', label: 'Conventions', icon: <FileText size={18} />, action: () => goTo('/conventions'), category: 'Navigation', keywords: ['contrat', 'accord'] },
-    { id: 'marches', label: 'Marches', icon: <ShoppingCart size={18} />, action: () => goTo('/marches'), category: 'Navigation', keywords: ['procurement', 'contrat'] },
-    { id: 'projets', label: 'Projets', icon: <Building2 size={18} />, action: () => goTo('/projets'), category: 'Navigation', keywords: ['programme', 'investissement'] },
-    { id: 'budgets', label: 'Budgets', icon: <Wallet size={18} />, action: () => goTo('/budgets'), category: 'Navigation', keywords: ['finance', 'comptabilite'] },
-    { id: 'decomptes', label: 'Decomptes', icon: <Receipt size={18} />, action: () => goTo('/decomptes'), category: 'Navigation', keywords: ['facture', 'paiement'] },
-    { id: 'paiements', label: 'Paiements', icon: <CreditCard size={18} />, action: () => goTo('/paiements'), category: 'Navigation', keywords: ['reglement', 'virement'] },
-    { id: 'fournisseurs', label: 'Fournisseurs', icon: <Users size={18} />, action: () => goTo('/fournisseurs'), category: 'Navigation', keywords: ['prestataire', 'entreprise'] },
-    { id: 'partenaires', label: 'Partenaires', icon: <Handshake size={18} />, action: () => goTo('/parametrage/partenaires'), category: 'Navigation' },
-    { id: 'utilisateurs', label: 'Utilisateurs', icon: <UserCog size={18} />, action: () => goTo('/users'), category: 'Navigation' },
-    { id: 'axes', label: 'Axes Analytiques', icon: <Map size={18} />, action: () => goTo('/parametrage/plan-analytique'), category: 'Configuration', keywords: ['dimension', 'analytique'] },
-    { id: 'categories', label: 'Categories de Depenses', icon: <Tags size={18} />, action: () => goTo('/parametrage/categories-depenses'), category: 'Configuration' },
-    { id: 'parametrage', label: 'Parametrage', icon: <Settings size={18} />, action: () => goTo('/parametrage/conventions'), category: 'Configuration' },
+  const filtered = useMemo<CommandItem[]>(() => {
+    const q = norm(query.trim())
+    const match = (...fields: (string | null | undefined)[]) => fields.some(f => norm(f).includes(q))
+    if (!q) return [...ACTION_COMMANDS.slice(0, 3), ...SCREEN_COMMANDS]
 
-    // Quick actions
-    { id: 'new-convention', label: 'Nouvelle Convention', description: 'Creer une convention', icon: <Plus size={18} />, action: () => goTo('/conventions/nouvelle'), category: 'Actions rapides', keywords: ['creer', 'ajouter'] },
-    { id: 'new-marche', label: 'Nouveau Marche', description: 'Creer un marche', icon: <Plus size={18} />, action: () => goTo('/marches/nouveau'), category: 'Actions rapides', keywords: ['creer', 'ajouter'] },
-    { id: 'new-projet', label: 'Nouveau Projet', description: 'Creer un projet', icon: <Plus size={18} />, action: () => goTo('/projets/nouveau'), category: 'Actions rapides', keywords: ['creer', 'ajouter'] },
-    { id: 'new-budget', label: 'Nouveau Budget', description: 'Creer un budget', icon: <Plus size={18} />, action: () => goTo('/budgets/nouveau'), category: 'Actions rapides', keywords: ['creer', 'ajouter'] },
-  ], [goTo])
+    const records: CommandItem[] = [
+      ...conventions
+        .filter(c => match(c.code, c.numero, c.libelle))
+        .slice(0, MAX_RECORDS)
+        .map(c => ({ id: `conv-${c.id}`, type: 'Convention' as const, label: `${c.code} — ${c.libelle}`, context: c.numero, path: `/conventions/${c.id}` })),
+      ...marches
+        .filter(m => match(m.numeroMarche, m.objet, m.fournisseurNom))
+        .slice(0, MAX_RECORDS)
+        .map(m => ({ id: `marche-${m.id}`, type: 'Marché' as const, label: `${m.numeroMarche} — ${m.objet}`, context: m.fournisseurNom, path: `/marches/${m.id}` })),
+    ]
+    const commands = [...SCREEN_COMMANDS, ...ACTION_COMMANDS]
+      .filter(c => match(c.label, c.context, c.type) || c.keywords?.some(k => k.includes(q)))
+    return [...commands, ...records]
+  }, [query, conventions, marches])
 
-  // Filter commands
-  const filtered = useMemo(() => {
-    if (!query.trim()) return commands
-    const q = query.toLowerCase()
-    return commands.filter(cmd =>
-      cmd.label.toLowerCase().includes(q) ||
-      cmd.description?.toLowerCase().includes(q) ||
-      cmd.category.toLowerCase().includes(q) ||
-      cmd.keywords?.some(k => k.includes(q))
-    )
-  }, [query, commands])
+  useEffect(() => { setSelectedIndex(0) }, [query])
 
-  // Group by category
-  const grouped = useMemo(() => {
-    const groups: Record<string, CommandItem[]> = {}
-    for (const item of filtered) {
-      if (!groups[item.category]) groups[item.category] = []
-      groups[item.category].push(item)
-    }
-    return groups
-  }, [filtered])
-
-  // Reset selection when filter changes
-  useEffect(() => {
-    setSelectedIndex(0)
-  }, [query])
-
-  // Focus input when opened
   useEffect(() => {
     if (open) {
       setQuery('')
       setSelectedIndex(0)
-      setTimeout(() => inputRef.current?.focus(), 50)
+      setTimeout(() => inputRef.current?.focus(), 30)
     }
   }, [open])
 
-  // Keyboard navigation
+  const run = useCallback((item: CommandItem) => {
+    navigate(item.path)
+    setOpen(false)
+  }, [navigate])
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
@@ -118,160 +135,99 @@ const CommandPalette = () => {
       setSelectedIndex(i => Math.max(i - 1, 0))
     } else if (e.key === 'Enter' && filtered[selectedIndex]) {
       e.preventDefault()
-      filtered[selectedIndex].action()
+      run(filtered[selectedIndex])
     }
-  }, [filtered, selectedIndex])
+  }, [filtered, selectedIndex, run])
 
-  // Scroll selected item into view
   useEffect(() => {
-    const el = listRef.current?.querySelector(`[data-index="${selectedIndex}"]`)
-    if (el) el.scrollIntoView({ block: 'nearest' })
+    listRef.current?.querySelector(`[data-index="${selectedIndex}"]`)?.scrollIntoView({ block: 'nearest' })
   }, [selectedIndex])
 
   if (!open) return null
 
-  let flatIndex = -1
-
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={() => setOpen(false)}
-        style={{
-          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-          zIndex: 9998, backdropFilter: 'blur(4px)',
-        }}
+        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(28,42,68,.34)', zIndex: 9998 }}
       />
 
-      {/* Palette */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Palette de commandes"
         style={{
-        position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
-        width: '100%', maxWidth: 560, zIndex: 9999,
-        backgroundColor: colors.surface, borderRadius: borders.radius.xl,
-        border: `1px solid ${colors.border}`, boxShadow: shadows.xl,
-        overflow: 'hidden',
-      }}>
-        {/* Search input */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          padding: '12px 16px', borderBottom: `1px solid ${colors.border}`,
-        }}>
-          <Search size={18} style={{ color: colors.textSecondary, flexShrink: 0 }} />
+          position: 'fixed', top: '12vh', left: '50%', transform: 'translateX(-50%)',
+          width: 'calc(100% - 32px)', maxWidth: 600, zIndex: 9999,
+          backgroundColor: colors.surface, borderRadius: borders.radius.xl,
+          boxShadow: shadows.xl, overflow: 'hidden',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 52, padding: '0 18px', borderBottom: `1px solid ${colors.border}` }}>
+          <Search size={16} strokeWidth={1.75} style={{ color: colors.textSecondary, flexShrink: 0 }} aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Rechercher une page, une action..."
-            aria-label="Rechercher une page ou une action"
+            placeholder="Écran, convention, marché, action…"
+            aria-label="Rechercher un écran, une fiche ou une action"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-palette-results"
+            aria-activedescendant={filtered[selectedIndex] ? `cmd-${filtered[selectedIndex].id}` : undefined}
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             style={{
               border: 'none', outline: 'none', backgroundColor: 'transparent',
-              fontSize: typography.sizes.base, color: colors.textPrimary,
-              width: '100%', padding: 0, fontFamily: typography.fontFamily,
+              fontSize: 16, color: colors.textPrimary, width: '100%', padding: 0,
+              fontFamily: typography.fontFamily,
             }}
           />
-          <kbd style={{
-            padding: '2px 6px', backgroundColor: colors.neutral[100],
-            color: colors.textSecondary, fontSize: typography.sizes.xs,
-            borderRadius: borders.radius.sm, border: `1px solid ${colors.neutral[200]}`,
-            fontFamily: typography.fontFamilyMono, whiteSpace: 'nowrap',
-          }}>
-            Esc
-          </kbd>
+          <kbd style={kbdStyle}>Échap</kbd>
         </div>
 
-        {/* Results */}
-        <div ref={listRef} style={{ maxHeight: 360, overflowY: 'auto', padding: '8px' }}>
+        <div ref={listRef} id="command-palette-results" role="listbox" style={{ maxHeight: '52vh', overflowY: 'auto', padding: 6 }}>
           {filtered.length === 0 ? (
-            <div style={{
-              padding: '24px 16px', textAlign: 'center',
-              color: colors.textSecondary, fontSize: typography.sizes.sm,
-            }}>
-              Aucun resultat pour &quot;{query}&quot;
+            <div style={{ padding: '22px 16px', textAlign: 'center', color: colors.textTertiary, fontSize: 13 }}>
+              Aucun résultat pour « {query} »
             </div>
-          ) : (
-            Object.entries(grouped).map(([category, items]) => (
-              <div key={category}>
-                <div style={{
-                  padding: '6px 8px', fontSize: typography.sizes.xs,
-                  fontWeight: typography.weights.semibold, color: colors.textSecondary,
-                  textTransform: 'uppercase', letterSpacing: '0.05em',
-                }}>
-                  {category}
-                </div>
-                {items.map(item => {
-                  flatIndex++
-                  const idx = flatIndex
-                  const isSelected = idx === selectedIndex
-                  return (
-                    <button
-                      key={item.id}
-                      data-index={idx}
-                      onClick={() => item.action()}
-                      onMouseEnter={() => setSelectedIndex(idx)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        width: '100%', padding: '8px 10px', border: 'none',
-                        cursor: 'pointer', textAlign: 'left',
-                        borderRadius: borders.radius.md,
-                        backgroundColor: isSelected ? colors.primary[50] : 'transparent',
-                        transition: `background-color ${transitions.fast}`,
-                      }}
-                    >
-                      <span style={{
-                        color: isSelected ? colors.primary[600] : colors.textSecondary,
-                        display: 'flex', flexShrink: 0,
-                      }}>
-                        {item.icon}
-                      </span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{
-                          fontSize: typography.sizes.base,
-                          fontWeight: typography.weights.medium,
-                          color: isSelected ? colors.primary[700] : colors.textPrimary,
-                        }}>
-                          {item.label}
-                        </span>
-                        {item.description && (
-                          <span style={{
-                            fontSize: typography.sizes.sm,
-                            color: colors.textSecondary, marginLeft: 8,
-                          }}>
-                            {item.description}
-                          </span>
-                        )}
-                      </div>
-                      {isSelected && (
-                        <ArrowRight size={14} style={{ color: colors.primary[400], flexShrink: 0 }} />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            ))
-          )}
+          ) : filtered.map((item, idx) => {
+            const isSelected = idx === selectedIndex
+            return (
+              <button
+                key={item.id}
+                id={`cmd-${item.id}`}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                data-index={idx}
+                onClick={() => run(item)}
+                onMouseEnter={() => setSelectedIndex(idx)}
+                style={{
+                  display: 'grid', gridTemplateColumns: '84px minmax(0, 1fr) auto', alignItems: 'baseline', gap: 12,
+                  width: '100%', padding: '9px 12px', border: 'none', cursor: 'pointer', textAlign: 'left',
+                  borderRadius: borders.radius.item,
+                  backgroundColor: isSelected ? colors.surfaceAlt : 'transparent',
+                  boxShadow: isSelected ? `inset 3px 0 0 ${colors.brass.main}` : 'none',
+                  transition: `background-color ${transitions.fast}`,
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 600, color: colors.textTertiary }}>{item.type}</span>
+                <span style={{ fontSize: 14, fontWeight: isSelected ? 600 : 500, color: colors.textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {item.label}
+                </span>
+                <span style={{ fontSize: 12, color: colors.textTertiary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}>
+                  {item.context}
+                </span>
+              </button>
+            )
+          })}
         </div>
 
-        {/* Footer */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '16px',
-          padding: '8px 16px', borderTop: `1px solid ${colors.border}`,
-          fontSize: typography.sizes.xs, color: colors.textSecondary,
-        }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <kbd style={kbdStyle}>&#8593;&#8595;</kbd> naviguer
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <kbd style={kbdStyle}>&#9166;</kbd> ouvrir
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <kbd style={kbdStyle}>Esc</kbd> fermer
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '8px 18px', borderTop: `1px solid ${colors.border}`, background: colors.surfaceAlt, fontSize: 12, color: colors.textSecondary }}>
+          <span><kbd style={kbdStyle}>↑↓</kbd> naviguer</span>
+          <span><kbd style={kbdStyle}>↵</kbd> ouvrir</span>
+          <span><kbd style={kbdStyle}>Échap</kbd> fermer</span>
         </div>
       </div>
     </>
@@ -279,12 +235,14 @@ const CommandPalette = () => {
 }
 
 const kbdStyle: React.CSSProperties = {
-  padding: '1px 5px',
-  backgroundColor: colors.neutral[100],
-  border: `1px solid ${colors.neutral[200]}`,
-  borderRadius: borders.radius.sm,
-  fontSize: typography.sizes['2xs'],
-  fontFamily: typography.fontFamilyMono,
+  padding: '0 5px',
+  backgroundColor: colors.surface,
+  border: `1px solid ${colors.border}`,
+  borderRadius: borders.radius.xs,
+  fontSize: 10.5,
+  fontFamily: typography.fontFamily,
+  color: colors.textSecondary,
+  whiteSpace: 'nowrap',
 }
 
 export default CommandPalette

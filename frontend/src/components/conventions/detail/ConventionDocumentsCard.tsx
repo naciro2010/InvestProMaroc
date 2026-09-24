@@ -111,7 +111,7 @@ const ConventionDocumentsCard = ({ conventionId, canEdit = true, onCountChange }
               sx={{ flex: 1, maxWidth: 300, '& .MuiOutlinedInput-root': { fontSize: typography.sizes.sm } }} />
             <Button size="small" variant="contained" startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : <Upload size={14} />}
               onClick={() => fileInputRef.current?.click()} disabled={uploading}
-              sx={{ textTransform: 'none', fontSize: typography.sizes.sm }}>
+              sx={{ fontSize: typography.sizes.sm }}>
               Ajouter un fichier
             </Button>
           </Box>

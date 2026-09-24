@@ -122,9 +122,12 @@ Path alias: `@/` maps to `src/` (configured in vite.config.ts and tsconfig.json)
 - Split into focused endpoints: `/{id}/basic`, `/{id}/stats`, `/{id}/lignes`
 - Each endpoint has its own focused DTO
 
-### Design System
-- **No hardcoded colors** - Use tokens from `designSystem.ts`
-- **No gradients** in content areas (flat Confluence/Jira/Odoo style)
+### Design System (« Registre » : bleu nuit, filet laiton, ivoire, titres Garamond)
+- **No hardcoded colors** - Use tokens from `designSystem.ts` (`colors`, `tones`, `gradients`) or the CSS variables in `index.css`
+- **Gradients only from `gradients.*`** (app header, primary button, « Net / Disponible / Reste à payer » block) - panels stay flat
+- Titles and large figures use `typography.fontFamilySerif` (EB Garamond); body text is Source Sans 3
+- Page header = `ControlPanel` (eyebrow, Garamond title, subtitle, actions, filter bar); navigation lives in `components/layout/navigation.ts`
+- Registre primitives in `components/core/registre` (`Panel`, `SegmentedControl`, `DualProgress`, `HighlightBlock`, `AlertBanner`, `CounterButton`) and `StatusCircuit`
 - Use `componentStyles.*` for cards, buttons, tables, list pages
 - Use `StatusBadge` component for all status displays
 - Use `SortableTable` + localStorage for drag & drop on all lists

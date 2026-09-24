@@ -124,7 +124,7 @@ const DecompteDetailPageModern = () => {
   if (loading) {
     return (
       <AppLayout>
-        <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+        <Box sx={{ minWidth: 0 }}>
           <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
             <Skeleton variant="text" width={300} height={32} />
           </Box>
@@ -153,14 +153,14 @@ const DecompteDetailPageModern = () => {
   const canEdit = decompte.statut === 'BROUILLON'
 
   const breadcrumbs = [
-    { label: 'Decomptes', path: '/decomptes' },
+    { label: 'Décomptes', path: '/decomptes' },
     ...(decompte.marcheId ? [{ label: decompte.marcheCode || 'Marche', path: `/marches/${decompte.marcheId}` }] : []),
     { label: decompte.numeroDecompte },
   ]
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={breadcrumbs}
           actions={

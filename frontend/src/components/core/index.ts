@@ -51,6 +51,7 @@ export {
   Field,
   Notebook,
   InlineTable,
+  StatusCircuit,
 } from './formview'
 export type { StatusStep } from './formview'
 
@@ -105,3 +106,7 @@ export type { KanbanColumn, KanbanBoardProps } from './KanbanBoard'
 // Dashboard Grid (draggable + resizable widget layout)
 export { DashboardGrid } from './DashboardGrid'
 export type { WidgetConfig, DashboardGridProps } from './DashboardGrid'
+
+// Primitives « Registre » (panneau, segmenté, barres engagé/payé, blocs de synthèse)
+export { Panel, SegmentedControl, DualProgress, HighlightBlock, AlertBanner, CounterButton } from './registre'
+export type { SegmentOption, CounterButtonProps } from './registre'

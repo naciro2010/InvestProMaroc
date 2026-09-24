@@ -6,11 +6,11 @@ import { WizardView } from '@/components/core'
 import { useToast } from '@/contexts/ToastContext'
 import { decomptesAPI, marchesAPI, cascadeAPI } from '../../lib/api'
 import type { MarcheSummaryDTO } from '../../lib/api'
-import { StepInfoGenerales, StepMontantsRetenues, StepConfirmation } from './wizard'
+import { StepInfoGenerales, StepMontantsRetenues, StepConfirmation, DecompteLiveSummary } from './wizard'
 import type { DecompteFormData, Marche, Retenue } from './wizard'
 import { createInitialFormData } from './wizard'
 
-const steps = ['Informations generales', 'Montants & Retenues', 'Pieces jointes & Confirmation']
+const steps = ['Marché et période', 'Montants et retenues', 'Confirmation']
 
 const DecompteWizard = () => {
   const navigate = useNavigate()
@@ -27,7 +27,7 @@ const DecompteWizard = () => {
     setLoadingMarches(true)
     marchesAPI.getAll()
       .then(res => setMarches(res.data.data || []))
-      .catch(() => showToast('Erreur lors du chargement des marches', 'error'))
+      .catch(() => showToast('Erreur lors du chargement des marchés', 'error'))
       .finally(() => setLoadingMarches(false))
   }, [])
 
@@ -74,7 +74,10 @@ const DecompteWizard = () => {
       }
       return await decomptesAPI.create(payload)
     },
-    onSuccess: () => navigate(prefilledMarcheId ? `/marches/${prefilledMarcheId}` : '/marches'),
+    onSuccess: (_res, data) => {
+      showToast('Décompte enregistré en brouillon', 'success')
+      navigate(data.marcheId ? `/marches/${data.marcheId}?tab=situation` : '/decomptes')
+    },
   })
 
   const handleChange = (field: keyof DecompteFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,7 +93,7 @@ const DecompteWizard = () => {
   const onFormDataChange = (updates: Partial<DecompteFormData>) => setFormData(prev => ({ ...prev, ...updates }))
 
   const addRetenue = () => setFormData(prev => ({
-    ...prev, retenues: [...prev.retenues, { type: 'RG', montant: 0, description: '' }],
+    ...prev, retenues: [...prev.retenues, { type: 'GARANTIE', montant: 0, description: '' }],
   }))
 
   const updateRetenue = (index: number, field: keyof Retenue, value: string | number) => {
@@ -108,21 +111,33 @@ const DecompteWizard = () => {
     else setActiveStep(prev => prev + 1)
   }
 
+  // Validation bloquante de l'étape « Montants et retenues »
+  const montantsErrors: string[] = []
+  if (!(formData.montantBrutHT > 0)) montantsErrors.push('Saisissez le montant brut HT.')
+  if (formData.netAPayer < 0) montantsErrors.push('Les retenues dépassent le montant TTC.')
+  if (marcheSummary && marcheSummary.montantHT > 0
+    && marcheSummary.cumulDecomptesHT + (formData.montantBrutHT || 0) > marcheSummary.montantHT + 0.005) {
+    montantsErrors.push('Le cumul des décomptes dépasse le montant HT du marché.')
+  }
+
   const isStepValid = () => {
     switch (activeStep) {
       case 0: return formData.numeroDecompte && formData.marcheId && formData.dateDecompte && formData.periodeDebut && formData.periodeFin
-      case 1: return formData.montantBrutHT > 0 && formData.totalRetenues <= formData.montantTTC && formData.netAPayer >= 0
+      case 1: return montantsErrors.length === 0 && formData.totalRetenues <= formData.montantTTC
       case 2: return true
       default: return false
     }
   }
+
+  const tauxRetenueGarantie = marches.find(m => m.id === formData.marcheId)?.retenueGarantie ?? null
 
   const renderStep = () => {
     switch (activeStep) {
       case 0: return <StepInfoGenerales formData={formData} marches={marches} marcheSummary={marcheSummary}
         prefilledMarcheId={prefilledMarcheId} onChange={handleChange} onFormDataChange={onFormDataChange} />
       case 1: return <StepMontantsRetenues formData={formData} onFormDataChange={onFormDataChange}
-        onAddRetenue={addRetenue} onUpdateRetenue={updateRetenue} onRemoveRetenue={removeRetenue} />
+        onAddRetenue={addRetenue} onUpdateRetenue={updateRetenue} onRemoveRetenue={removeRetenue}
+        tauxRetenueGarantie={tauxRetenueGarantie} errors={formData.montantBrutHT > 0 || formData.retenues.length > 0 ? montantsErrors : []} />
       case 2: return <StepConfirmation formData={formData} marches={marches} onFormDataChange={onFormDataChange}
         error={createMutation.error} />
       default: return null
@@ -132,7 +147,7 @@ const DecompteWizard = () => {
   return (
     <AppLayout>
       <WizardView
-        breadcrumbs={[{ label: 'Decomptes', path: '/decomptes' }, { label: 'Nouveau' }]}
+        breadcrumbs={[{ label: 'Décomptes', path: '/decomptes' }, { label: 'Nouveau décompte' }]}
         steps={steps.map(label => ({ label }))}
         activeStep={activeStep}
         onStepClick={setActiveStep}
@@ -141,7 +156,8 @@ const DecompteWizard = () => {
         onCancel={() => navigate(prefilledMarcheId ? `/marches/${prefilledMarcheId}` : '/decomptes')}
         isNextDisabled={!isStepValid() || createMutation.isPending || loadingMarches}
         isSubmitting={createMutation.isPending}
-        submitLabel="Creer le decompte"
+        submitLabel="Enregistrer le décompte"
+        aside={<DecompteLiveSummary formData={formData} marcheSummary={marcheSummary} />}
       >
         {renderStep()}
       </WizardView>

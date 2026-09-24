@@ -249,7 +249,7 @@ const KpiCell = ({ label, value, color, subtitle }: {
     borderRight: `1px solid ${colors.border}`,
     '&:last-child': { borderRight: 0 },
   }}>
-    <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 0.25 }}>
+    <Typography sx={{ fontSize: '10px', color: colors.textSecondary, mb: 0.25 }}>
       {label}
     </Typography>
     <Typography sx={{
@@ -288,8 +288,6 @@ const thStyle = {
   fontSize: typography.sizes.xs,
   fontWeight: typography.weights.semibold,
   color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.03em',
   py: 1,
   px: 1.5,
   borderBottom: `1px solid ${colors.border}`,

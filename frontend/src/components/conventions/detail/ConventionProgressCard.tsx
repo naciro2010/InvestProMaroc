@@ -81,7 +81,7 @@ const MilestoneItem = ({ milestone, isLast }: { key?: string; milestone: Milesto
 const ProgressBar = ({ label, value, color, hint }: { label: string; value: number; color: string; hint?: string }) => (
   <Box sx={{ flex: 1, minWidth: 100 }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.25 }}>
-      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+      <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>
         {label}
       </Typography>
       <Tooltip title={hint || ''} placement="top">
@@ -122,7 +122,7 @@ const ConventionProgressCard = ({ convention, enrichedData }: ConventionProgress
         borderBottom: `1px solid ${colors.borderSubtle}`,
       }}>
         <Timeline sx={{ fontSize: 16, color: colors.primary[500] }} />
-        <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em', flex: 1 }}>
+        <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, flex: 1 }}>
           Progression
         </Typography>
         <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.primary[600] }}>

@@ -149,8 +149,6 @@ const MarcheHeader = ({ marcheId }: MarcheHeaderProps) => {
                   fontSize: typography.sizes.xs,
                   fontWeight: typography.weights.semibold,
                   color: statusConfig.textColor,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
                 }}
               >
                 {statusConfig.label}

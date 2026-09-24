@@ -58,7 +58,7 @@ const ProjetInfoCard = ({ projetId }: ProjetInfoCardProps) => {
       {/* Description */}
       {projet.description && (
         <Box>
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.5 }}>
             Description
           </Typography>
           <RichTextDisplay html={projet.description} variant="block" />

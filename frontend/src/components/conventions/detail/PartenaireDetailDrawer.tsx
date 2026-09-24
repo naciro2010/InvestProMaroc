@@ -73,7 +73,7 @@ const fmtPct = (v: number): string => `${v.toFixed(1)}%`
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <Typography sx={{
     fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold,
-    color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 1.5,
+    color: colors.textSecondary, mb: 1.5,
   }}>
     {children}
   </Typography>
@@ -85,7 +85,7 @@ const StatBtn = ({ icon, label, value, subtitle, color, borderRight, borderTop }
   <Box sx={{ px: 2, py: 1.5, borderRight: borderRight ? `1px solid ${colors.border}` : 'none', borderTop: borderTop ? `1px solid ${colors.border}` : 'none' }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25, color }}>
       {icon}
-      <Typography sx={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: typography.weights.semibold, letterSpacing: '0.03em' }}>{label}</Typography>
+      <Typography sx={{ fontSize: '10px', fontWeight: typography.weights.semibold }}>{label}</Typography>
     </Box>
     <Typography sx={{ fontSize: typography.sizes.base, fontWeight: typography.weights.bold, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>{value}</Typography>
     {subtitle && <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>{subtitle}</Typography>}
@@ -278,11 +278,11 @@ const PartenaireDetailDrawer = ({
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ bgcolor: colors.neutral[50] }}>
-                    <TableCell sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase' }}>Date</TableCell>
-                    <TableCell sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase' }}>Volet</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase' }}>Prevu</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase' }}>Reel</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase' }}>Ecart</TableCell>
+                    <TableCell sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary }}>Date</TableCell>
+                    <TableCell sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary }}>Volet</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary }}>Prevu</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary }}>Reel</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary }}>Ecart</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

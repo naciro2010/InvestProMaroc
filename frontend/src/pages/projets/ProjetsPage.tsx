@@ -265,7 +265,7 @@ const ProjetsPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={urlConventionId
             ? [{ label: 'Conventions', path: '/conventions' }, { label: `Convention #${urlConventionId}`, path: `/conventions/${urlConventionId}` }, { label: 'Projets' }]
@@ -314,7 +314,7 @@ const ProjetsPage = () => {
           )}
         </ControlPanel>
 
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={{ pt: 0.5 }}>
           {viewMode === 'kanban' ? (
             <ProjetKanbanSection data={filteredData} onCardClick={(id) => navigate(`/projets/${id}`)} />
           ) : (

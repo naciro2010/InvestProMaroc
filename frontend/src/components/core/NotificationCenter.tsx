@@ -40,7 +40,13 @@ const formatTimeAgo = (dateStr?: string): string => {
   return `Il y a ${days}j`
 }
 
-const NotificationCenter = () => {
+interface NotificationCenterProps {
+  /** `dark` : déclencheur posé sur l'en-tête bleu nuit */
+  variant?: 'light' | 'dark'
+}
+
+const NotificationCenter = ({ variant = 'light' }: NotificationCenterProps) => {
+  const onDark = variant === 'dark'
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const panelRef = useRef<HTMLDivElement>(null)
@@ -82,18 +88,29 @@ const NotificationCenter = () => {
 
   return (
     <div ref={panelRef} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(prev => !prev)} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, backgroundColor: open ? colors.neutral[100] : 'transparent', border: 'none', cursor: 'pointer', borderRadius: borders.radius.base }}>
-        <Bell size={18} style={{ color: colors.textSecondary }} />
-        {unreadCount > 0 && <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, backgroundColor: colors.danger[500], borderRadius: borders.radius.full, border: `2px solid ${colors.surface}` }} />}
+      <button
+        type="button"
+        onClick={() => setOpen(prev => !prev)}
+        aria-label={unreadCount > 0 ? `Notifications : ${unreadCount} non lues` : 'Notifications'}
+        aria-expanded={open}
+        style={{
+          position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 36, height: 36, cursor: 'pointer', borderRadius: borders.radius.base,
+          backgroundColor: open ? (onDark ? colors.onDark.subtleBg : colors.neutral[100]) : (onDark ? 'rgba(243,238,227,.045)' : 'transparent'),
+          border: onDark ? `1px solid ${colors.onDark.border}` : 'none',
+        }}
+      >
+        <Bell size={16} strokeWidth={1.75} style={{ color: onDark ? colors.onDark.primary : colors.textSecondary }} />
+        {unreadCount > 0 && <span style={{ position: 'absolute', top: 5, right: 5, width: 8, height: 8, backgroundColor: colors.brass.main, borderRadius: borders.radius.full, border: `2px solid ${onDark ? colors.ink.main : colors.surface}` }} />}
       </button>
 
       {open && (
-        <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 360, maxHeight: 480, backgroundColor: colors.surface, borderRadius: borders.radius.lg, border: `1px solid ${colors.border}`, boxShadow: shadows.lg, overflow: 'hidden', zIndex: 1000 }}>
+        <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 'min(360px, calc(100vw - 32px))', maxHeight: 480, backgroundColor: colors.surface, borderRadius: borders.radius.lg, border: `1px solid ${colors.border}`, boxShadow: shadows.lg, overflow: 'hidden', zIndex: 1000, color: colors.textPrimary }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${colors.border}` }}>
-            <span style={{ fontSize: typography.sizes.base, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>Notifications ({unreadCount})</span>
+            <span style={{ fontFamily: typography.fontFamilySerif, fontSize: 18, fontWeight: typography.weights.medium, color: colors.textPrimary }}>Notifications ({unreadCount})</span>
             <div style={{ display: 'flex', gap: 4 }}>
-              {unreadCount > 0 && <button onClick={markAllRead} style={{ padding: 4, background: 'transparent', border: 'none', cursor: 'pointer' }}><CheckCheck size={16} style={{ color: colors.textSecondary }} /></button>}
-              <button onClick={fetchNotifications} style={{ padding: 4, background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={16} style={{ color: colors.textSecondary }} /></button>
+              {unreadCount > 0 && <button type="button" onClick={markAllRead} aria-label="Tout marquer comme lu" style={{ padding: 4, background: 'transparent', border: 'none', cursor: 'pointer' }}><CheckCheck size={16} style={{ color: colors.textSecondary }} /></button>}
+              <button type="button" onClick={() => setOpen(false)} aria-label="Fermer les notifications" style={{ padding: 4, background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={16} style={{ color: colors.textSecondary }} /></button>
             </div>
           </div>
 

@@ -243,7 +243,7 @@ const ConventionAdvancedFilters = ({
           <Divider sx={{ my: 1.5 }} />
 
           {/* Budget range */}
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75 }}>
             Budget (MAD)
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
@@ -266,7 +266,7 @@ const ConventionAdvancedFilters = ({
           </Box>
 
           {/* Commission range */}
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75 }}>
             Taux commission (%)
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
@@ -293,7 +293,7 @@ const ConventionAdvancedFilters = ({
           <Divider sx={{ my: 1.5 }} />
 
           {/* Date range */}
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 0.75 }}>
             Periode
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>

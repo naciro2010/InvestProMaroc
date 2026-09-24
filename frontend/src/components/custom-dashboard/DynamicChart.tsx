@@ -161,8 +161,6 @@ const SummaryStats = ({ data }: SummaryStatsProps) => {
               fontSize: '10px',
               fontWeight: typography.weights.semibold,
               color: colors.neutral[400],
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
               lineHeight: 1.2,
             }}>
               {stat.label}
@@ -674,8 +672,6 @@ const KPIView = ({ data, title }: { data: FetchedData; title: string }) => {
               fontSize: metric.size === 'large' ? '10px' : '9px',
               fontWeight: typography.weights.semibold,
               color: colors.neutral[400],
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
               mb: 0.25,
             }}>
               {metric.label}

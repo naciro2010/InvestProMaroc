@@ -149,7 +149,7 @@ export default function CommissionsPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={[{ label: 'Commissions' }]}
           actions={
@@ -194,7 +194,7 @@ export default function CommissionsPage() {
           )}
         </ControlPanel>
 
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={{ pt: 0.5 }}>
           <Box sx={listStyles.container}>
             <TableContainer>
               <Table size="small" sx={listStyles.table}>

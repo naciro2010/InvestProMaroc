@@ -405,8 +405,6 @@ const GeneratedWidget = ({ instruction, data, onRemove, originalText, aiPowered,
             fontSize: typography.sizes['2xs'],
             fontWeight: typography.weights.semibold,
             color: colors.neutral[400],
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
             mb: 0.5,
           }}>
             Interprétation

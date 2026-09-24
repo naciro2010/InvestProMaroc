@@ -182,8 +182,6 @@ const MarcheFinanceDashboard = ({ marcheId }: MarcheFinanceDashboardProps) => {
                     sx={{
                       fontSize: typography.sizes.xs,
                       color: colors.textSecondary,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
                     }}
                   >
                     {card.label}

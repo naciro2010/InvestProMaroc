@@ -165,7 +165,7 @@ const BudgetLigneDetailDrawer = ({
 
         {/* Formule de calcul (the key UX feature) */}
         <Box sx={{ px: 2.5, py: 2, bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}` }}>
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 1.5 }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 1.5 }}>
             Comment le calcul est fait
           </Typography>
 
@@ -212,7 +212,7 @@ const BudgetLigneDetailDrawer = ({
         {/* Marches lies */}
         <Box sx={{ px: 2.5, py: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary }}>
               Marches lies ({marchesData.length})
             </Typography>
             {marchesData.length > 0 && (
@@ -280,7 +280,7 @@ const StatButton = ({ icon, label, value, subtitle, color, borderRight, borderTo
   }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25, color }}>
       {icon}
-      <Typography sx={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: typography.weights.semibold, letterSpacing: '0.03em' }}>{label}</Typography>
+      <Typography sx={{ fontSize: '10px', fontWeight: typography.weights.semibold }}>{label}</Typography>
     </Box>
     <Typography sx={{ fontSize: typography.sizes.base, fontWeight: typography.weights.bold, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
       {value}

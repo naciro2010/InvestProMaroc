@@ -206,8 +206,6 @@ const SectionTitle = ({ children }: { children: string }) => (
       fontSize: typography.sizes.xs,
       fontWeight: typography.weights.semibold,
       color: colors.textSecondary,
-      textTransform: 'uppercase',
-      letterSpacing: '0.05em',
       mb: 1.5,
     }}
   >

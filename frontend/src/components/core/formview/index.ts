@@ -1,5 +1,6 @@
 export { default as FormView } from './FormViewContainer'
-export type { StatusStep } from './FormViewContainer'
+export type { StatusStep } from './StatusCircuit'
+export { default as StatusCircuit } from './StatusCircuit'
 export { default as FieldGroup } from './FieldGroup'
 export { default as Field } from './Field'
 export { default as Notebook } from './Notebook'

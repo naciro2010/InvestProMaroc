@@ -4,16 +4,18 @@ import {
   Box,
   Button,
   IconButton,
-  Chip,
+  Tooltip,
 } from '@mui/material'
-import { Star as StarIcon } from '@mui/icons-material'
-import { Plus, RefreshCw, Upload, Layers, Columns3 } from 'lucide-react'
+import { Plus, RefreshCw, Upload, Columns3 } from 'lucide-react'
 import { conventionsAPI } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
+import { useExecutiveDashboard } from '@/hooks/useExecutiveDashboard'
 import AppLayout from '@/components/layout/AppLayout'
-import { ControlPanel, ExportButton } from '@/components/core'
-import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { ControlPanel, ExportButton, SegmentedControl } from '@/components/core'
+import type { SegmentOption } from '@/components/core'
+import { colors, componentStyles } from '@/lib/designSystem'
+import { formatMillions } from '@/lib/utils'
 import { exportToExcel, formatCurrencyForExport, formatDateForExport } from '@/lib/exportUtils'
 import ImportConventionsDialog from '@/components/conventions/ImportConventionsDialog'
 import { getLocalDrafts } from './wizard'
@@ -24,7 +26,6 @@ import {
   ConventionListTable,
   ConventionActionDialogs,
   ConventionKanbanView,
-  GroupByPopover,
   ColumnVisibilityPopover,
   ConventionSectionTabs,
   ConventionLocalDrafts,
@@ -41,22 +42,42 @@ import {
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: 'type', label: 'Type', visible: true },
   { key: 'statut', label: 'Statut', visible: true },
-  { key: 'budget', label: 'Budget', visible: true },
+  { key: 'budget', label: 'Budget MAD', visible: true },
   { key: 'commission', label: 'Commission', visible: true },
-  { key: 'dateDebut', label: 'Periode', visible: true },
-  { key: 'createdBy', label: 'Cree par', visible: true },
+  { key: 'engage', label: 'Engagé', visible: true },
+  { key: 'dateDebut', label: 'Période', visible: true },
+  { key: 'createdBy', label: 'Créée par', visible: true },
 ]
 
-const GROUPBY_OPTIONS = [
+type GroupByKey = '' | 'statut' | 'type' | 'createdBy'
+type TypeFilter = '' | 'CADRE' | 'SPECIFIQUE'
+
+const GROUPBY_OPTIONS: SegmentOption<GroupByKey>[] = [
   { value: '', label: 'Aucun' },
   { value: 'statut', label: 'Statut' },
   { value: 'type', label: 'Type' },
-  { value: 'createdBy', label: 'Cree par' },
+  { value: 'createdBy', label: 'Créé par' },
+]
+
+const TYPE_OPTIONS: SegmentOption<TypeFilter>[] = [
+  { value: '', label: 'Tous types' },
+  { value: 'CADRE', label: 'Cadre' },
+  { value: 'SPECIFIQUE', label: 'Spécifique' },
 ]
 
 const ACTIVE_STATUSES = new Set(['VALIDE', 'VALIDEE', 'EN_EXECUTION'])
 const PENDING_STATUSES = new Set(['BROUILLON', 'SOUMIS', 'REJETE'])
-const DONE_STATUSES = new Set(['ACHEVE'])
+const DONE_STATUSES = new Set(['ACHEVE', 'ANNULE'])
+
+/** Colonnes du kanban : les statuts de la section courante. */
+const KANBAN_STATUSES: Record<Exclude<ConventionSection, 'brouillons_locaux'>, string[]> = {
+  actives: ['VALIDEE', 'EN_EXECUTION'],
+  en_attente: ['BROUILLON', 'SOUMIS', 'REJETE'],
+  terminees: ['ACHEVE', 'ANNULE'],
+}
+
+/** L'API expose `typeConvention` ; la liste lit `type`. */
+type ConventionApiItem = Convention & { typeConvention?: Convention['type'] }
 
 // ==================== MAIN PAGE ====================
 
@@ -74,7 +95,7 @@ const ConventionsTableModern = () => {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [advancedFilters, setAdvancedFilters] = useState<ConventionFilterState>(EMPTY_FILTERS)
-  const [groupBy, setGroupBy] = useState('')
+  const [groupBy, setGroupBy] = useState<GroupByKey>('')
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(25)
@@ -109,7 +130,6 @@ const ConventionsTableModern = () => {
   const [motifRejet, setMotifRejet] = useState('')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
-  const [groupByAnchor, setGroupByAnchor] = useState<HTMLButtonElement | null>(null)
   const [columnsAnchor, setColumnsAnchor] = useState<HTMLButtonElement | null>(null)
 
   useEffect(() => { fetchConventions() }, [])
@@ -123,8 +143,8 @@ const ConventionsTableModern = () => {
     try {
       setLoading(true)
       const response = await conventionsAPI.getAll()
-      const data = Array.isArray(response.data) ? response.data : (response.data?.data || [])
-      setConventions(data)
+      const data: ConventionApiItem[] = Array.isArray(response.data) ? response.data : (response.data?.data || [])
+      setConventions(data.map(c => ({ ...c, type: c.type ?? c.typeConvention })))
       setLocalDrafts(getLocalDrafts())
     } catch { showToast('Erreur lors du chargement', 'error') }
     finally { setLoading(false) }
@@ -184,6 +204,23 @@ const ConventionsTableModern = () => {
       return true
     })
   }, [sectionFilteredData, searchQuery, advancedFilters, showFavoritesOnly, favoriteIds])
+
+  // Taux d'engagement par convention (tableau de bord exécutif, déjà en cache)
+  const { data: executive } = useExecutiveDashboard()
+  const engagement = useMemo(() => Object.fromEntries(
+    (executive?.budgetExecution?.byConvention ?? []).map(c => [c.id, c.tauxEngagement]),
+  ) as Record<number, number>, [executive])
+
+  const hasActiveFilters = Boolean(searchQuery) || showFavoritesOnly || groupBy !== ''
+    || Object.values(advancedFilters).some(Boolean)
+
+  const clearFilters = () => {
+    setSearchQuery('')
+    setAdvancedFilters(EMPTY_FILTERS)
+    setShowFavoritesOnly(false)
+    setGroupBy('')
+    setPage(0)
+  }
 
   const stats = useMemo(() => ({
     total: filteredData.length,
@@ -248,7 +285,9 @@ const ConventionsTableModern = () => {
   }
 
   const handleLoadSavedFilter = useCallback((filters: ConventionFilterState, savedGroupBy: string) => {
-    setAdvancedFilters(filters); setGroupBy(savedGroupBy); setPage(0)
+    setAdvancedFilters(filters)
+    setGroupBy(GROUPBY_OPTIONS.some(o => o.value === savedGroupBy) ? savedGroupBy as GroupByKey : '')
+    setPage(0)
   }, [])
 
   const toggleColumn = (key: string) => {
@@ -266,7 +305,7 @@ const ConventionsTableModern = () => {
   const handleDeleteLocalDraft = () => {
     localStorage.removeItem('convention-wizard-draft')
     setLocalDrafts([])
-    showToast('Brouillon local supprime', 'info')
+    showToast('Brouillon local supprimé', 'info')
   }
 
   const handleResumeLocalDraft = () => {
@@ -279,90 +318,94 @@ const ConventionsTableModern = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
-        <ControlPanel
-          breadcrumbs={[{ label: 'Conventions' }]}
-          actions={
-            <>
-              <Button variant="contained" size="small" startIcon={<Plus size={16} />} onClick={() => navigate('/conventions/nouvelle')} sx={{ ...componentStyles.buttonPrimary, fontSize: typography.sizes.sm, py: 0.75 }}>Nouveau</Button>
-              <Button variant="outlined" size="small" startIcon={<Upload size={16} />} onClick={() => setImportDialogOpen(true)} sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.75 }}>Importer</Button>
-              <ExportButton onClick={handleExport} />
-              <IconButton size="small" onClick={fetchConventions} sx={{ color: colors.textSecondary }}><RefreshCw size={16} /></IconButton>
-            </>
-          }
-          searchValue={searchQuery}
-          onSearchChange={(v) => { setSearchQuery(v); setPage(0) }}
-          searchPlaceholder="Rechercher par code, libelle, numero..."
-          viewMode={viewMode}
-          onViewModeChange={(mode) => setViewMode(mode as ViewMode)}
-          availableViews={['list', 'kanban']}
-          paginationInfo={showTable && viewMode === 'list' && filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
-          onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
-          onNextPage={() => setPage(p => p + 1)}
-        >
-          {showTable && (
-            <>
-              <ConventionAdvancedFilters filters={advancedFilters} onFiltersChange={(f) => { setAdvancedFilters(f); setPage(0) }} creators={creators} />
-              <Button variant="outlined" size="small" startIcon={<Layers size={14} />} onClick={(e) => setGroupByAnchor(e.currentTarget)}
-                sx={{ ...componentStyles.buttonSecondary, fontSize: typography.sizes.sm, py: 0.5, px: 1.5, ...(groupBy && { borderColor: colors.info[300], bgcolor: colors.info[50], color: colors.info[700] }) }}>
-                {groupBy ? `Grouper: ${GROUPBY_OPTIONS.find(o => o.value === groupBy)?.label}` : 'Grouper'}
+      <ControlPanel
+        breadcrumbs={[{ label: 'Conventions' }]}
+        eyebrow="Conventions · registre"
+        subtitle={loading || !showTable ? undefined : `${stats.total} convention${stats.total > 1 ? 's' : ''} · ${formatMillions(stats.totalBudget)} MAD de budget sur la sélection`}
+        actions={
+          <>
+            <Tooltip title="Actualiser">
+              <IconButton onClick={fetchConventions} aria-label="Actualiser la liste" sx={{ color: colors.textSecondary }}>
+                <RefreshCw size={16} strokeWidth={1.75} />
+              </IconButton>
+            </Tooltip>
+            <Button variant="outlined" startIcon={<Upload size={16} strokeWidth={1.75} />} onClick={() => setImportDialogOpen(true)} sx={componentStyles.buttonSecondary}>Importer</Button>
+            <ExportButton onClick={handleExport} label="Exporter Excel" />
+            <Button variant="contained" startIcon={<Plus size={16} />} onClick={() => navigate('/conventions/nouvelle')} sx={componentStyles.buttonPrimary}>Nouvelle convention</Button>
+          </>
+        }
+        tabs={<ConventionSectionTabs activeSection={activeSection} onSectionChange={handleSectionChange} counts={sectionCounts} />}
+        searchValue={searchQuery}
+        onSearchChange={showTable ? (v) => { setSearchQuery(v); setPage(0) } : undefined}
+        searchPlaceholder="Code, libellé, numéro…"
+        paginationInfo={showTable && viewMode === 'list' && filteredData.length > 0 ? { currentStart: pStart, currentEnd: pEnd, total: filteredData.length } : undefined}
+        onPreviousPage={() => setPage(p => Math.max(0, p - 1))}
+        onNextPage={() => setPage(p => p + 1)}
+      >
+        {showTable && (
+          <>
+            <SegmentedControl
+              ariaLabel="Filtrer par type"
+              value={(advancedFilters.type || '') as TypeFilter}
+              options={TYPE_OPTIONS}
+              onChange={(type) => { setAdvancedFilters(f => ({ ...f, type })); setPage(0) }}
+            />
+            <SegmentedControl label="Grouper" ariaLabel="Grouper par" value={groupBy} options={GROUPBY_OPTIONS} onChange={setGroupBy} />
+            <Button
+              variant="outlined"
+              aria-pressed={showFavoritesOnly}
+              onClick={() => { setShowFavoritesOnly(prev => !prev); setPage(0) }}
+              sx={{
+                ...componentStyles.buttonSecondary,
+                ...(showFavoritesOnly && { borderColor: colors.brass.main, boxShadow: `inset 0 0 0 1px ${colors.brass.main}` }),
+              }}
+            >
+              <Box component="span" aria-hidden="true" sx={{ color: colors.brass.main, mr: 0.75 }}>{showFavoritesOnly ? '★' : '☆'}</Box>
+              Favoris ({favoriteIds.size})
+            </Button>
+            <ConventionAdvancedFilters filters={advancedFilters} onFiltersChange={(f) => { setAdvancedFilters(f); setPage(0) }} creators={creators} />
+            <SavedFiltersMenu currentFilters={advancedFilters} currentGroupBy={groupBy} onLoadFilter={handleLoadSavedFilter} />
+            <Tooltip title="Colonnes affichées">
+              <IconButton onClick={(e) => setColumnsAnchor(e.currentTarget)} aria-label="Choisir les colonnes" sx={{ color: colors.textSecondary }}>
+                <Columns3 size={16} strokeWidth={1.75} />
+              </IconButton>
+            </Tooltip>
+            {hasActiveFilters && (
+              <Button variant="text" onClick={clearFilters} sx={{ ...componentStyles.buttonGhost, textDecoration: 'underline', textUnderlineOffset: '2px' }}>
+                Effacer les filtres
               </Button>
-              <Button
-                variant={showFavoritesOnly ? 'contained' : 'outlined'}
-                size="small"
-                startIcon={<StarIcon sx={{ fontSize: 16 }} />}
-                onClick={() => { setShowFavoritesOnly(prev => !prev); setPage(0) }}
-                sx={{
-                  ...(showFavoritesOnly ? componentStyles.buttonPrimary : componentStyles.buttonSecondary),
-                  fontSize: typography.sizes.sm, py: 0.5, px: 1.5,
-                  ...(showFavoritesOnly && { bgcolor: colors.warning[500], '&:hover': { bgcolor: colors.warning[600] } }),
-                }}
-              >
-                Favoris{favoriteIds.size > 0 ? ` (${favoriteIds.size})` : ''}
-              </Button>
-              <SavedFiltersMenu currentFilters={advancedFilters} currentGroupBy={groupBy} onLoadFilter={handleLoadSavedFilter} />
-              <IconButton size="small" onClick={(e) => setColumnsAnchor(e.currentTarget)} sx={{ color: colors.textSecondary, p: 0.75 }}><Columns3 size={16} /></IconButton>
-            </>
-          )}
-          {!loading && showTable && (
-            <Chip label={`${stats.total} conventions — ${(stats.totalBudget / 1000000).toFixed(1)}M MAD`} size="small"
-              sx={{ bgcolor: colors.neutral[100], color: colors.textSecondary, fontSize: typography.sizes.xs, fontWeight: typography.weights.medium, height: 24, ml: 'auto' }} />
-          )}
-        </ControlPanel>
-
-        {/* Gmail-like section tabs */}
-        <Box sx={{ px: { xs: 2, md: 3 }, pt: 1 }}>
-          <ConventionSectionTabs
-            activeSection={activeSection}
-            onSectionChange={handleSectionChange}
-            counts={sectionCounts}
-          />
-        </Box>
-
-        {/* Content based on active section */}
-        {activeSection === 'brouillons_locaux' ? (
-          <ConventionLocalDrafts
-            drafts={localDrafts}
-            onResume={handleResumeLocalDraft}
-            onDelete={handleDeleteLocalDraft}
-          />
-        ) : (
-          <Box sx={{ p: { xs: 2, md: 3 } }}>
-            {viewMode === 'kanban' ? (
-              <ConventionKanbanView
-                data={filteredData.flatMap(c => [c, ...(c.sousConventions || [])])}
-                onCardClick={(id) => navigate(`/conventions/${id}`)}
-              />
-            ) : (
-              <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
-                onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
-                favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
             )}
-          </Box>
+            <Box sx={{ ml: 'auto' }}>
+              <SegmentedControl
+                ariaLabel="Mode d'affichage"
+                value={viewMode}
+                options={[{ value: 'list', label: 'Liste' }, { value: 'kanban', label: 'Kanban' }]}
+                onChange={setViewMode}
+              />
+            </Box>
+          </>
         )}
-      </Box>
+      </ControlPanel>
 
-      <GroupByPopover anchorEl={groupByAnchor} onClose={() => setGroupByAnchor(null)} options={GROUPBY_OPTIONS} currentValue={groupBy} onChange={setGroupBy} />
+      {/* Contenu de la section active */}
+      {activeSection === 'brouillons_locaux' ? (
+        <ConventionLocalDrafts
+          drafts={localDrafts}
+          onResume={handleResumeLocalDraft}
+          onDelete={handleDeleteLocalDraft}
+        />
+      ) : viewMode === 'kanban' ? (
+        <ConventionKanbanView
+          data={filteredData.flatMap(c => [c, ...(c.sousConventions || [])])}
+          statuses={KANBAN_STATUSES[activeSection]}
+          onCardClick={(id) => navigate(`/conventions/${id}`)}
+        />
+      ) : (
+        <ConventionListTable data={filteredData} loading={loading} groupBy={groupBy} columns={columns} page={page} rowsPerPage={rowsPerPage}
+          onPageChange={setPage} onRowsPerPageChange={setRowsPerPage} onRowClick={(id) => navigate(`/conventions/${id}`)} onMenuOpen={handleMenuOpen}
+          engagement={engagement} favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />
+      )}
+
       <ColumnVisibilityPopover anchorEl={columnsAnchor} onClose={() => setColumnsAnchor(null)} columns={columns} onToggle={toggleColumn} />
 
       {/* Action dialogs */}

@@ -58,24 +58,24 @@ const DroppableColumn = ({ id, title, color, count, children, emptyMessage }: Dr
         maxWidth: 360,
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: isOver ? colors.primary[25] : colors.neutral[50],
+        bgcolor: isOver ? colors.neutral[100] : 'rgba(247, 243, 234, 0.7)',
         borderRadius: borders.radius.lg,
-        border: `1px solid ${isOver ? colors.primary[200] : colors.borderSubtle}`,
+        border: `1px solid ${isOver ? colors.fieldBorder : colors.border}`,
         transition: transitions.normal,
         overflow: 'hidden',
       }}
     >
       {/* Column header */}
-      <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1, borderBottom: `1px solid ${colors.borderSubtle}` }}>
-        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accentColor, flexShrink: 0 }} />
-        <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: colors.textPrimary, flex: 1 }}>
+      <Box sx={{ px: 2, py: 1.25, display: 'flex', alignItems: 'center', gap: 1, borderBottom: `1px solid ${colors.border}`, boxShadow: `inset 0 2px 0 ${accentColor}` }}>
+        <Typography component="h3" sx={{ fontFamily: typography.fontFamilySerif, fontSize: '17px', fontWeight: typography.weights.medium, color: colors.textPrimary, flex: 1 }}>
           {title}
         </Typography>
         <Typography sx={{
-          fontSize: typography.sizes['2xs'],
-          fontWeight: typography.weights.semibold,
+          fontSize: '11px',
+          fontWeight: typography.weights.bold,
           color: colors.textSecondary,
-          bgcolor: colors.neutral[200],
+          bgcolor: colors.surface,
+          border: `1px solid ${colors.border}`,
           borderRadius: borders.radius.full,
           px: 0.75,
           minWidth: 20,
@@ -126,10 +126,10 @@ const SortableCard = ({ id, children }: SortableCardProps) => {
         p: 1.5,
         cursor: 'grab',
         bgcolor: colors.surface,
-        border: `1px solid ${colors.border}`,
-        borderRadius: borders.radius.md,
-        boxShadow: isDragging ? shadows.md : shadows.xs,
-        '&:hover': { borderColor: colors.primary[200], boxShadow: shadows.sm },
+        border: 'none',
+        borderRadius: borders.radius.lg,
+        boxShadow: isDragging ? shadows.lg : shadows.sm,
+        '&:hover': { boxShadow: shadows.lg },
         transition: transitions.normal,
       }}
     >

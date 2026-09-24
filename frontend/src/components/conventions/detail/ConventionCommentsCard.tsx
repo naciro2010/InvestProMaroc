@@ -187,7 +187,7 @@ const ConventionCommentsCard = ({ conventionId }: ConventionCommentsCardProps) =
               Reponse au commentaire #{replyTo}
             </Typography>
             <Button size="small" onClick={() => setReplyTo(null)}
-              sx={{ fontSize: '10px', textTransform: 'none', minWidth: 0, color: colors.textSecondary }}>
+              sx={{ fontSize: '10px', minWidth: 0, color: colors.textSecondary }}>
               Annuler
             </Button>
           </Box>

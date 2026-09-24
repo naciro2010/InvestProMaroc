@@ -98,7 +98,7 @@ const RichTextDisplay = ({
           size="small"
           onClick={() => setExpanded(!expanded)}
           endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
-          sx={{ mt: 0.5, textTransform: 'none', fontSize: '0.75rem' }}
+          sx={{ mt: 0.5, fontSize: '0.75rem' }}
         >
           {expanded ? 'Voir moins' : 'Voir plus'}
         </Button>

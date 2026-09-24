@@ -28,6 +28,8 @@ const ConventionWizardComplete = lazy(() => import('./pages/conventions/Conventi
 const SousConventionWizard = lazy(() => import('./pages/conventions/SousConventionWizard'))
 const AvenantForm = lazy(() => import('./pages/conventions/AvenantForm'))
 const AvenantDetailPage = lazy(() => import('./pages/conventions/AvenantDetailPage'))
+const AvenantsConventionsPage = lazy(() => import('./pages/conventions/AvenantsConventionsPage'))
+const VersementsPrevisionnelsPage = lazy(() => import('./pages/versements/VersementsPrevisionnelsPage'))
 const ConventionDetailPageModern = lazy(() => import('./pages/conventions/ConventionDetailPageModern'))
 const ParametrageConventionsPage = lazy(() => import('./pages/settings/ParametrageConventionsPage'))
 
@@ -60,6 +62,9 @@ const OrdresPaiementPageComplete = lazy(() => import('./pages/paiements/OrdresPa
 
 // Commissions
 const CommissionsPage = lazy(() => import('./pages/commissions/CommissionsPage'))
+
+// Rapports
+const ReportingPage = lazy(() => import('./pages/reporting/ReportingPage'))
 
 // Settings & Parametrage
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
@@ -252,6 +257,23 @@ function App() {
                       }
                     />
 
+                    <Route
+                      path="/avenants"
+                      element={
+                        <ProtectedRoute>
+                          <AvenantsConventionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/versements-previsionnels"
+                      element={
+                        <ProtectedRoute>
+                          <VersementsPrevisionnelsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
                     {/* Marchés */}
                     <Route
                       path="/marches"
@@ -292,6 +314,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <DecomptesPageComplete />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/decomptes/nouveau"
+                      element={
+                        <ProtectedRoute>
+                          <DecompteWizard />
                         </ProtectedRoute>
                       }
                     />
@@ -493,6 +523,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <CommissionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/reporting"
+                      element={
+                        <ProtectedRoute>
+                          <ReportingPage />
                         </ProtectedRoute>
                       }
                     />

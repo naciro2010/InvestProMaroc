@@ -1,17 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { Box, Alert, Skeleton, Typography, Button, Container } from '@mui/material'
-import { CalendarMonth } from '@mui/icons-material'
-import { ArrowLeft } from 'lucide-react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { Box, Alert, Skeleton, Button } from '@mui/material'
+import { ArrowLeft, Plus } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import {
-  ControlPanel, FormView, FieldGroup, Notebook, StatusBadge,
+  ControlPanel, FieldGroup, Notebook, StatusBadge, StatusCircuit, Panel,
   InlineEditField, EditFieldDialog, Chatter, useEntityHistory,
   type StatusStep, type InlineEditFieldConfig,
 } from '@/components/core'
-import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { marchesAPI, conventionsAPI, fournisseursAPI } from '@/lib/api'
-import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { colors, componentStyles } from '@/lib/designSystem'
 import { formatCurrency } from '@/lib/utils'
 import { useToast } from '@/contexts/ToastContext'
 import MarcheSmartButtons from './components/MarcheSmartButtons'
@@ -23,6 +21,8 @@ import MarcheSituationPaiementCard from './components/MarcheSituationPaiementCar
 import MarcheDecomptesSection from './components/MarcheDecomptesSection'
 import MarchePaiementsSection from './components/MarchePaiementsSection'
 import MarcheAvenantsSection from './components/MarcheAvenantsSection'
+import MarcheMontantsPanel from './components/MarcheMontantsPanel'
+import { useTrackRecentRecord } from '@/hooks/useRecentRecords'
 
 // ==================== TYPES ====================
 
@@ -47,7 +47,7 @@ interface DialogFieldState {
 
 const STATUS_STEPS: StatusStep[] = [
   { value: 'BROUILLON', label: 'Brouillon' }, { value: 'EN_COURS', label: 'En cours' },
-  { value: 'VALIDE', label: 'Valide' }, { value: 'TERMINE', label: 'Termine' },
+  { value: 'VALIDE', label: 'Validé' }, { value: 'TERMINE', label: 'Terminé' },
 ]
 const STATUT_OPTIONS = STATUS_STEPS.map(s => ({ value: s.value, label: s.label }))
 
@@ -57,6 +57,7 @@ const STATUT_OPTIONS = STATUS_STEPS.map(s => ({ value: s.value, label: s.label }
 const MarcheDetailPageModern = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [, setSearchParams] = useSearchParams()
   const { showToast } = useToast()
   const [marche, setMarche] = useState<MarcheData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -142,30 +143,31 @@ const MarcheDetailPageModern = () => {
     <InlineEditField config={config} onSave={handleFieldSave} onOpenDialog={openFieldDialog} />
   )
 
+  // « Consultés récemment » dans le menu
+  useTrackRecentRecord(marche ? {
+    key: `marche-${marche.id}`, type: 'marche', code: marche.numeroMarche,
+    label: marche.objet?.replace(/<[^>]+>/g, '') ?? '', path: `/marches/${marche.id}`,
+  } : null)
+
   // --- Render guards ---
-  if (!id) return <AppLayout><Box sx={{ p: 4 }}><Alert severity="error">ID du marche manquant</Alert></Box></AppLayout>
+  if (!id) return <AppLayout><Box sx={{ p: 4 }}><Alert severity="error">ID du marché manquant</Alert></Box></AppLayout>
 
   if (loading) return (
     <AppLayout>
-      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-        <Box sx={{ bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}`, px: 3, py: 1.5 }}>
-          <Skeleton variant="text" width={300} height={32} />
-        </Box>
-        <Container maxWidth="xl" sx={{ py: 3 }}>
-          <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2, mb: 2 }} />
-          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mb: 2 }} />
-          <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2, mb: 2 }} />
-          <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
-        </Container>
+      <Skeleton variant="text" width={320} height={48} />
+      <Skeleton variant="rounded" height={36} sx={{ mb: 2.5, maxWidth: 520 }} />
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px' }, gap: 2.5 }}>
+        <Skeleton variant="rounded" height={420} />
+        <Skeleton variant="rounded" height={420} />
       </Box>
     </AppLayout>
   )
 
   if (error || !marche) return (
-    <AppLayout><Container maxWidth="xl" sx={{ py: 4 }}>
-      <Alert severity="error" sx={{ mb: 2 }}>{error || 'Marche non trouve'}</Alert>
-      <Button onClick={() => navigate('/marches')} sx={componentStyles.buttonSecondary}>Retour aux marches</Button>
-    </Container></AppLayout>
+    <AppLayout>
+      <Alert severity="error" sx={{ mb: 2 }}>{error || 'Marché non trouvé'}</Alert>
+      <Button onClick={() => navigate('/marches')} sx={componentStyles.buttonSecondary}>Retour aux marchés</Button>
+    </AppLayout>
   )
 
   const convOptions = conventions.map(c => ({ value: c.id, label: `${c.code} - ${c.objet}` }))
@@ -179,147 +181,129 @@ const MarcheDetailPageModern = () => {
     ]
     if (marche.statut === 'ANNULE') return [
       ...STATUS_STEPS.slice(0, 3),
-      { value: 'ANNULE', label: 'Annule', variant: 'danger' as const },
+      { value: 'ANNULE', label: 'Annulé', variant: 'danger' as const },
     ]
     return STATUS_STEPS
   })()
 
+  const detailFields = (
+    <>
+      <FieldGroup title="Informations générales" columns={3}>
+        {field({ fieldKey: 'numeroMarche', label: 'Numéro', type: 'text', value: marche.numeroMarche, editable: false })}
+        {field({ fieldKey: 'objet', label: 'Objet', type: 'text', value: marche.objet || '', editable: canEdit, fullWidth: true })}
+        {field({ fieldKey: 'statut', label: 'Statut', type: 'select', value: marche.statut, options: STATUT_OPTIONS, displayValue: <StatusBadge status={marche.statut} />, editable: canEdit })}
+        {field({ fieldKey: 'typeMarche', label: 'Type', type: 'text', value: marche.typeMarche || '', editable: canEdit })}
+        {field({ fieldKey: 'natureMarche', label: 'Nature', type: 'text', value: marche.natureMarche || '', editable: canEdit })}
+        {field({ fieldKey: 'naturePrestation', label: 'Nature prestation', type: 'text', value: marche.naturePrestation || '', editable: canEdit })}
+        {field({ fieldKey: 'numAo', label: 'N° AO', type: 'text', value: marche.numAo || '', editable: canEdit })}
+        {field({ fieldKey: 'conventionId', label: 'Convention', type: 'select', value: marche.conventionId, options: convOptions, emptyLabel: '-- Aucune --', displayValue: marche.conventionCode || '-', isLink: !!marche.conventionId && !canEdit, onLinkClick: () => marche.conventionId && navigate(`/conventions/${marche.conventionId}`), editable: canEdit })}
+        {field({ fieldKey: 'fournisseurId', label: 'Fournisseur', type: 'select', value: marche.fournisseurId, options: fournOptions, emptyLabel: '-- Aucun --', displayValue: marche.fournisseurNom || '-', editable: canEdit })}
+      </FieldGroup>
+      <FieldGroup title="Montants" columns={3}>
+        {field({ fieldKey: 'montantHt', label: 'Montant HT', type: 'number', value: marche.montantHt ?? 0, isMoney: true, displayValue: marche.montantHt ? formatCurrency(marche.montantHt) : '-', editable: canEdit })}
+        {field({ fieldKey: 'tauxTva', label: 'Taux TVA (%)', type: 'number', value: marche.tauxTva ?? 0, displayValue: marche.tauxTva != null ? `${marche.tauxTva}%` : '-', editable: canEdit })}
+        {field({ fieldKey: 'montantTtc', label: 'Montant TTC', type: 'number', value: marche.montantTtc ?? 0, isMoney: true, displayValue: marche.montantTtc ? formatCurrency(marche.montantTtc) : '-', editable: canEdit })}
+      </FieldGroup>
+      <FieldGroup title="Dates et délais" columns={3}>
+        {field({ fieldKey: 'dateSignature', label: 'Date signature', type: 'date', value: marche.dateSignature || '', editable: canEdit })}
+        {field({ fieldKey: 'dateMarche', label: 'Date marché', type: 'date', value: marche.dateMarche || '', editable: canEdit })}
+        {field({ fieldKey: 'dateDebut', label: 'Date début', type: 'date', value: marche.dateDebut || '', editable: canEdit })}
+        {field({ fieldKey: 'dateFinPrevue', label: 'Date fin prévue', type: 'date', value: marche.dateFinPrevue || '', editable: canEdit })}
+        {field({ fieldKey: 'delaiExecution', label: 'Délai exécution (mois)', type: 'number', value: marche.delaiExecution ?? 0, displayValue: marche.delaiExecution != null ? `${marche.delaiExecution} mois` : '-', editable: canEdit })}
+        {field({ fieldKey: 'retenueGarantie', label: 'Retenue garantie (%)', type: 'number', value: marche.retenueGarantie ?? 0, displayValue: marche.retenueGarantie != null ? `${marche.retenueGarantie}%` : '-', editable: canEdit })}
+      </FieldGroup>
+      <FieldGroup title="Notes">
+        {field({ fieldKey: 'remarques', label: 'Remarques', type: 'richtext', value: marche.remarques || '', displayValue: marche.remarques || '-', editable: canEdit, fullWidth: true })}
+      </FieldGroup>
+    </>
+  )
+
+  const objetTexte = marche.objet?.replace(/<[^>]+>/g, '') || marche.numeroMarche
+
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
-        <ControlPanel
-          breadcrumbs={[
-            { label: 'Marches', path: '/marches' },
-            { label: marche.numeroMarche || `#${marche.id}` },
-          ]}
-          actions={
-            <Button size="small" startIcon={<ArrowLeft size={14} />} onClick={() => navigate('/marches')}
-              sx={{ ...componentStyles.buttonGhost, textTransform: 'none', fontSize: typography.sizes.sm }}>
+      <ControlPanel
+        breadcrumbs={[
+          { label: 'Marchés', path: '/marches' },
+          { label: marche.numeroMarche || `#${marche.id}` },
+        ]}
+        overline={
+          <>
+            <span>{marche.numeroMarche}{marche.numAo ? ` · ${marche.numAo}` : ''}</span>
+            <StatusBadge status={marche.statut} />
+            {marche.typeMarche && <StatusBadge status={marche.typeMarche} />}
+          </>
+        }
+        title={objetTexte}
+        subtitle={
+          <>
+            {marche.fournisseurNom || 'Fournisseur non renseigné'}
+            {marche.conventionId && marche.conventionCode && (
+              <> · convention{' '}
+                <Box component="a" href={`/conventions/${marche.conventionId}`}
+                  onClick={(e: React.MouseEvent) => { e.preventDefault(); navigate(`/conventions/${marche.conventionId}`) }}
+                  sx={{ fontWeight: 700, color: colors.textPrimary }}>
+                  {marche.conventionCode}
+                </Box>
+              </>
+            )}
+          </>
+        }
+        actions={
+          <>
+            <Button startIcon={<ArrowLeft size={14} />} onClick={() => navigate('/marches')} sx={componentStyles.buttonGhost}>
               Liste
             </Button>
-          }
-          hideBottomRow
-        />
+            <Button variant="contained" startIcon={<Plus size={16} />} onClick={() => navigate(`/marches/${marcheId}/decomptes/nouveau`)} sx={componentStyles.buttonPrimary}>
+              Nouveau décompte
+            </Button>
+          </>
+        }
+        hideBottomRow
+      />
 
-        <Container maxWidth="xl" sx={{ py: 2 }}>
-          <FormView isEditing={false} statusSteps={effectiveSteps} currentStatus={marche.statut}>
+      <Box sx={{ mb: 2.5 }}>
+        <StatusCircuit steps={effectiveSteps} currentStatus={marche.statut} />
+      </Box>
 
-            {/* Title + Description + Metadata */}
-            <Box sx={{ mb: 1.5 }}>
-              <Box sx={{ fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, mb: 0.5 }}>
-                <RichTextDisplay html={marche.objet || marche.numeroMarche} variant="compact" allowExpand={false} />
-              </Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px' }, gap: 2.5, alignItems: 'start' }}>
+        <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <MarcheSmartButtons
+            marcheId={marcheId}
+            nombreLignes={marche.nbLignes ?? 0}
+            nombreDecomptes={marche.nbDecomptes ?? 0}
+            nombrePaiements={marche.nbPaiements ?? 0}
+            nombreAvenants={marche.nbAvenants ?? 0}
+            montantTtc={marche.montantTtc ?? 0}
+            montantPaye={marche.montantPaye ?? 0}
+            fournisseurNom={marche.fournisseurNom ?? undefined}
+            onScrollToTab={(tab) => setSearchParams(prev => { const next = new URLSearchParams(prev); next.set('tab', tab); return next }, { replace: true })}
+          />
 
-              {/* Metadata bar with separators */}
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, py: 0.75, borderTop: `1px solid ${colors.borderSubtle}` }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>N:</Typography>
-                  <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{marche.numeroMarche}</Typography>
-                </Box>
-                {marche.numAo && (
-                  <>
-                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>AO:</Typography>
-                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{marche.numAo}</Typography>
-                    </Box>
-                  </>
-                )}
-                <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                {marche.typeMarche && <StatusBadge status={marche.typeMarche} size="small" />}
-                {(marche.naturePrestation || marche.natureMarche) && (
-                  <>
-                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                    <StatusBadge status={marche.naturePrestation || marche.natureMarche || ''} size="small" />
-                  </>
-                )}
-                {(marche.dateSignature || marche.dateMarche) && (
-                  <>
-                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CalendarMonth sx={{ fontSize: 13, color: colors.textSecondary }} />
-                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>
-                        {new Date(marche.dateSignature || marche.dateMarche).toLocaleDateString('fr-FR')}
-                        {marche.dateDebut && ` — ${new Date(marche.dateDebut).toLocaleDateString('fr-FR')}`}
-                        {marche.dateFinPrevue && ` → ${new Date(marche.dateFinPrevue).toLocaleDateString('fr-FR')}`}
-                      </Typography>
-                    </Box>
-                  </>
-                )}
-                {marche.fournisseurNom && (
-                  <>
-                    <Box sx={{ width: '1px', height: 14, bgcolor: colors.border }} />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Typography sx={{ fontSize: typography.sizes.xs, color: colors.textSecondary }}>Fournisseur:</Typography>
-                      <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textPrimary }}>{marche.fournisseurNom}</Typography>
-                    </Box>
-                  </>
-                )}
-              </Box>
-            </Box>
-
-            {/* Smart Buttons (entity counts) */}
-            <Box sx={{ mb: 2 }}>
-              <MarcheSmartButtons
-                marcheId={marcheId}
-                nombreLignes={marche.nbLignes ?? 0}
-                nombreDecomptes={marche.nbDecomptes ?? 0}
-                nombrePaiements={marche.nbPaiements ?? 0}
-                nombreAvenants={marche.nbAvenants ?? 0}
-                montantTtc={marche.montantTtc ?? 0}
-                montantPaye={marche.montantPaye ?? 0}
-                fournisseurNom={marche.fournisseurNom ?? undefined}
-              />
-            </Box>
-
-            {/* Inline-editable fields */}
-            <Box sx={{ mb: 3 }}>
-              <FieldGroup title="Informations generales" columns={3}>
-                {field({ fieldKey: 'numeroMarche', label: 'Numero', type: 'text', value: marche.numeroMarche, editable: false })}
-                {field({ fieldKey: 'objet', label: 'Objet', type: 'text', value: marche.objet || '', editable: canEdit, fullWidth: true })}
-                {field({ fieldKey: 'statut', label: 'Statut', type: 'select', value: marche.statut, options: STATUT_OPTIONS, displayValue: <StatusBadge status={marche.statut} />, editable: canEdit })}
-                {field({ fieldKey: 'typeMarche', label: 'Type', type: 'text', value: marche.typeMarche || '', editable: canEdit })}
-                {field({ fieldKey: 'natureMarche', label: 'Nature', type: 'text', value: marche.natureMarche || '', editable: canEdit })}
-                {field({ fieldKey: 'naturePrestation', label: 'Nature prestation', type: 'text', value: marche.naturePrestation || '', editable: canEdit })}
-                {field({ fieldKey: 'numAo', label: 'N° AO', type: 'text', value: marche.numAo || '', editable: canEdit })}
-                {field({ fieldKey: 'conventionId', label: 'Convention', type: 'select', value: marche.conventionId, options: convOptions, emptyLabel: '-- Aucune --', displayValue: marche.conventionCode || '-', isLink: !!marche.conventionId && !canEdit, onLinkClick: () => marche.conventionId && navigate(`/conventions/${marche.conventionId}`), editable: canEdit })}
-                {field({ fieldKey: 'fournisseurId', label: 'Fournisseur', type: 'select', value: marche.fournisseurId, options: fournOptions, emptyLabel: '-- Aucun --', displayValue: marche.fournisseurNom || '-', editable: canEdit })}
-              </FieldGroup>
-              <FieldGroup title="Montants" columns={3}>
-                {field({ fieldKey: 'montantHt', label: 'Montant HT', type: 'number', value: marche.montantHt ?? 0, isMoney: true, displayValue: marche.montantHt ? formatCurrency(marche.montantHt) : '-', editable: canEdit })}
-                {field({ fieldKey: 'tauxTva', label: 'Taux TVA (%)', type: 'number', value: marche.tauxTva ?? 0, displayValue: marche.tauxTva != null ? `${marche.tauxTva}%` : '-', editable: canEdit })}
-                {field({ fieldKey: 'montantTtc', label: 'Montant TTC', type: 'number', value: marche.montantTtc ?? 0, isMoney: true, displayValue: marche.montantTtc ? formatCurrency(marche.montantTtc) : '-', editable: canEdit })}
-              </FieldGroup>
-              <FieldGroup title="Dates et delais" columns={3}>
-                {field({ fieldKey: 'dateSignature', label: 'Date signature', type: 'date', value: marche.dateSignature || '', editable: canEdit })}
-                {field({ fieldKey: 'dateMarche', label: 'Date marche', type: 'date', value: marche.dateMarche || '', editable: canEdit })}
-                {field({ fieldKey: 'dateDebut', label: 'Date debut', type: 'date', value: marche.dateDebut || '', editable: canEdit })}
-                {field({ fieldKey: 'dateFinPrevue', label: 'Date fin prevue', type: 'date', value: marche.dateFinPrevue || '', editable: canEdit })}
-                {field({ fieldKey: 'delaiExecution', label: 'Delai execution (mois)', type: 'number', value: marche.delaiExecution ?? 0, displayValue: marche.delaiExecution != null ? `${marche.delaiExecution} mois` : '-', editable: canEdit })}
-                {field({ fieldKey: 'retenueGarantie', label: 'Retenue garantie (%)', type: 'number', value: marche.retenueGarantie ?? 0, displayValue: marche.retenueGarantie != null ? `${marche.retenueGarantie}%` : '-', editable: canEdit })}
-              </FieldGroup>
-              <FieldGroup title="Notes">
-                {field({ fieldKey: 'remarques', label: 'Remarques', type: 'richtext', value: marche.remarques || '', displayValue: marche.remarques || '-', editable: canEdit, fullWidth: true })}
-              </FieldGroup>
-            </Box>
-
-            {/* Notebook tabs - each tab loads data independently */}
-            <Box sx={{ mt: 3 }}>
-              <Notebook tabs={[
-                { label: 'Detail', content: (<Box><MarcheConventionCard marcheId={marcheId} /><Box sx={{ mt: 3 }}><MarcheInfoCard marcheId={marcheId} /></Box><Box sx={{ mt: 3 }}><MarcheOrdresServiceSection marcheId={marcheId} /></Box></Box>) },
-                { label: 'Lignes', content: <MarcheLignesSection marcheId={marcheId} /> },
-                { label: 'Situation Paiement', content: (<Box><MarcheSituationPaiementCard marcheId={marcheId} /><Box sx={{ mt: 3 }}><MarcheDecomptesSection marcheId={marcheId} /></Box><Box sx={{ mt: 3 }}><MarchePaiementsSection marcheId={marcheId} /></Box></Box>) },
-                { label: 'Avenants', content: <MarcheAvenantsSection marcheId={marcheId} /> },
+          {/* Onglets : chaque onglet charge ses propres données */}
+          <Panel flush>
+            <Box sx={{ px: 2 }}>
+              <Notebook syncParam="tab" tabs={[
+                { id: 'situation', label: 'Situation des paiements', count: marche.nbDecomptes, content: (<Box><MarcheSituationPaiementCard marcheId={marcheId} /><Box sx={{ mt: 3 }}><MarcheDecomptesSection marcheId={marcheId} /></Box><Box sx={{ mt: 3 }}><MarchePaiementsSection marcheId={marcheId} /></Box></Box>) },
+                { id: 'bordereau', label: 'Bordereau des prix', count: marche.nbLignes, content: <MarcheLignesSection marcheId={marcheId} /> },
+                { id: 'avenants', label: 'Avenants', count: marche.nbAvenants, content: <MarcheAvenantsSection marcheId={marcheId} /> },
+                { id: 'detail', label: 'Détail', content: (<Box>{detailFields}<Box sx={{ mt: 3 }}><MarcheConventionCard marcheId={marcheId} /></Box><Box sx={{ mt: 3 }}><MarcheInfoCard marcheId={marcheId} /></Box><Box sx={{ mt: 3 }}><MarcheOrdresServiceSection marcheId={marcheId} /></Box></Box>) },
               ]} />
             </Box>
+          </Panel>
 
+          <Panel title="Historique">
             <Chatter
               entityType="marche" entityId={marcheId}
               activities={chatterActivities} loading={chatterLoading}
               onRefresh={refreshChatter}
             />
-          </FormView>
-        </Container>
+          </Panel>
+        </Box>
+
+        <Box sx={{ minWidth: 0, position: { lg: 'sticky' }, top: { lg: 'calc(var(--app-header-h, 0px) + 20px)' } }}>
+          <MarcheMontantsPanel marcheId={marcheId} montantHt={marche.montantHt} montantTva={marche.montantTva} montantTtc={marche.montantTtc} />
+        </Box>
       </Box>
       {dialogField && (
         <EditFieldDialog

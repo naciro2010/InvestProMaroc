@@ -47,7 +47,7 @@ const PaiementTable = ({
   formatCurrency,
 }: PaiementTableProps) => {
   return (
-    <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
+    <Box sx={{ px: 0, pb: 3 }}>
       <Box sx={listStyles.container}>
         <TableContainer>
           <Table size="small" sx={listStyles.table}>

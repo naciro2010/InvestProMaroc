@@ -1,202 +1,268 @@
 /**
- * Design System v5.0 - InvestPro Maroc
+ * Design System v6.0 - InvestPro Maroc — style « Registre »
  *
- * STYLE: Professional ERP - lisibilite et ergonomie
- * Clean, information-dense UI with excellent readability
+ * Bleu nuit, filet laiton, ivoire, titres Garamond.
  *
  * PRINCIPES:
- * - Palette InvestPro slate blue - sobre, financier, autoritaire
- * - Headers en casse normale (pas d'UPPERCASE) pour meilleure lisibilite
- * - Badges de statut bien visibles avec fonds satures
- * - Groupes de formulaire avec bordure-accent gauche
- * - Densite ergonomique, hierarchie visuelle claire
- * - Flat design, ombres subtiles, pas de gradients
+ * - Encre bleu nuit (#1c2a44) pour le texte et l'action principale
+ * - Laiton (#a58a4a) comme unique accent : filets, onglet actif, compteurs
+ * - Fonds ivoire chauds, panneaux #fffdf8 à ombre douce
+ * - Titres et grands chiffres en EB Garamond, texte en Source Sans 3
+ * - Chiffres tabulaires partout, montants alignés à droite
+ * - Statuts en pastilles à 5 tons (ok / attention / erreur / info / neutre)
+ *
+ * Les clés historiques (primary, success, neutral…) sont conservées et
+ * remappées sur la palette Registre : tous les écrans en héritent.
  */
 
 // ==================== COULEURS ====================
 
 export const colors = {
   /**
-   * Primaire - Emeraude chirurgical (private banking, profondeur premium)
+   * Primaire - Bleu nuit (encre). 600 = teinte principale.
+   * Les teintes claires sont chaudes pour s'accorder au fond ivoire.
    */
   primary: {
-    25: '#f3fbf7',
-    50: '#e7f7ef',
-    100: '#c8ecdc',
-    200: '#97dcc0',
-    300: '#5fcca0',
-    400: '#2dbf90',
-    500: '#1bb482',
-    600: '#14a374', // Main - accent emeraude
-    700: '#059669', // accent-deep (hover)
-    800: '#047857',
-    900: '#065f46',
+    25: '#f7f3ea',
+    50: '#e3e7ef',
+    100: '#d5dbe6',
+    200: '#c9d0de',
+    300: '#9aa6bd',
+    400: '#56657f',
+    500: '#2f4160',
+    600: '#1c2a44', // Main - encre bleu nuit
+    700: '#16223a', // hover
+    800: '#111a2d',
+    900: '#0b1220',
   },
 
   /**
-   * Succes - Emeraude (aligne sur l'accent de marque)
+   * Succès - Vert sapin (ton « ok »)
    */
   success: {
-    25: '#f3fbf7',
-    50: '#ecfdf5',
-    100: '#c8ecdc',
-    200: '#97dcc0',
-    300: '#5fcca0',
-    400: '#2dbf90',
-    500: '#16b386',
-    600: '#14a374', // Main
-    700: '#047857',
-    800: '#065f46',
-    900: '#064e3b',
+    25: '#f1f6f2',
+    50: '#e1ede5',
+    100: '#d0e3d6',
+    200: '#bfd6c7',
+    300: '#8fb89c',
+    400: '#5e9474',
+    500: '#3a7552',
+    600: '#2e6a47', // Main
+    700: '#245b3c',
+    800: '#1c4a30',
+    900: '#143823',
   },
 
   /**
-   * Danger - Rouge financier (WCAG AA sur fond clair)
+   * Danger - Brique (ton « erreur »)
    */
   danger: {
-    25: '#fef5f5',
-    50: '#fef2f2',
-    100: '#fde0e0',
-    200: '#fab8b8',
-    300: '#f78a8a',
-    400: '#f26363',
-    500: '#ef4444', // Main
-    600: '#dc2626',
-    700: '#b91c1c',
-    800: '#991b1b',
-    900: '#7f1d1d',
+    25: '#fbf2f0',
+    50: '#f6e3df',
+    100: '#f0d4ce',
+    200: '#e6c4bd',
+    300: '#d4968a',
+    400: '#bf6556',
+    500: '#a83e30', // Main
+    600: '#8e2a1f',
+    700: '#7a2219',
+    800: '#651b14',
+    900: '#4f150f',
   },
 
   /**
-   * Warning - Ambre (WCAG AA sur fond clair)
+   * Warning - Ocre (ton « attention »)
    */
   warning: {
-    25: '#fffcf2',
-    50: '#fffbeb',
-    100: '#fdf0c8',
-    200: '#fbdf8c',
-    300: '#f8c84e',
-    400: '#f6b020',
-    500: '#f59e0b', // Main
-    600: '#d97706',
-    700: '#b45309',
-    800: '#92400e',
-    900: '#78350f',
+    25: '#fbf6ea',
+    50: '#f5ead2',
+    100: '#efe0bd',
+    200: '#e6d2a6',
+    300: '#d6b56f',
+    400: '#c49a45',
+    500: '#a87c24', // Main
+    600: '#93691a',
+    700: '#7d5a12',
+    800: '#65480e',
+    900: '#4d370b',
   },
 
   /**
-   * Info - Bleu (frais, informatif)
+   * Info - Ardoise (ton « info »)
    */
   info: {
-    25: '#f5f9ff',
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#3b82f6', // Main
-    600: '#2563eb',
-    700: '#1d4ed8',
-    800: '#1e40af',
-    900: '#1e3a8a',
+    25: '#f3f5f9',
+    50: '#e3e7ef',
+    100: '#d5dbe6',
+    200: '#c9d0de',
+    300: '#9aa6bd',
+    400: '#6d7c98',
+    500: '#4a5a78', // Main
+    600: '#34466a',
+    700: '#24344f',
+    800: '#1c2a44',
+    900: '#131d31',
   },
 
   /**
-   * Purple - Accent secondaire (engine IA)
+   * Purple (clé historique) - remappé sur le laiton, accent secondaire
    */
   purple: {
-    25: '#f7f5fe',
-    50: '#f3effe',
-    100: '#e9e0fd',
-    200: '#d4c4fb',
-    300: '#b9a0f7',
-    400: '#9d7af2',
-    500: '#8b5cf6', // Main
-    600: '#7c3aed',
-    700: '#6d28d9',
-    800: '#5b21b6',
-    900: '#4c1d95',
+    25: '#faf6ec',
+    50: '#f3ecd9',
+    100: '#ebdfc0',
+    200: '#dccaa0',
+    300: '#c9b27a',
+    400: '#b79c5f',
+    500: '#a58a4a', // Main
+    600: '#8c7439',
+    700: '#735e2d',
+    800: '#5b4a23',
+    900: '#43371a',
   },
 
   /**
-   * Gris - Palette neutre "ink" (noir profond, cohesion premium)
+   * Gris chauds (papier / encre)
    */
   neutral: {
-    0: '#ffffff',
-    25: '#f8fafc',
-    50: '#f1f5f9',
-    100: '#e8eaee',
-    200: '#c4c8d2',
-    300: '#a0a6b4',
-    400: '#7d8494',
-    500: '#5a6275',
-    600: '#3d4556',
-    700: '#2a3142',
-    800: '#1c2333',
-    900: '#0a0f1a',
+    0: '#fffdf8',
+    25: '#f7f3ea',
+    50: '#f2ede2',
+    100: '#ece5d6',
+    200: '#ddd5c4',
+    300: '#c9c0ad',
+    400: '#a39d90',
+    500: '#6f6f68',
+    600: '#5f6068',
+    700: '#3d4556',
+    800: '#24344f',
+    900: '#1c2a44',
   },
 
   // Aliases
   gray: {
-    50: '#f1f5f9',
-    100: '#e8eaee',
-    200: '#c4c8d2',
-    300: '#a0a6b4',
-    400: '#7d8494',
-    500: '#5a6275',
-    600: '#3d4556',
-    700: '#2a3142',
-    800: '#1c2333',
-    900: '#0a0f1a',
+    50: '#f2ede2',
+    100: '#ece5d6',
+    200: '#ddd5c4',
+    300: '#c9c0ad',
+    400: '#a39d90',
+    500: '#6f6f68',
+    600: '#5f6068',
+    700: '#3d4556',
+    800: '#24344f',
+    900: '#1c2a44',
   },
 
-  /** Fond de page - ink-02 */
-  background: '#f8fafc',
+  /** Laiton - accent unique (filets, onglet actif, compteurs) */
+  brass: {
+    main: '#a58a4a',
+    light: '#c9b27a',
+    rule: 'rgba(165, 138, 74, 0.5)',
+    halo: 'rgba(165, 138, 74, 0.38)',
+    selection: 'rgba(165, 138, 74, 0.26)',
+  },
 
-  /** Fond blanc */
-  surface: '#ffffff',
+  /** Encre bleu nuit (fonds sombres : en-tête, blocs « Net à payer ») */
+  ink: {
+    main: '#1c2a44',
+    light: '#24344f',
+    lighter: '#2f4160',
+  },
 
-  /** Sidebar */
-  sidebarBg: '#f8fafc',
+  /** Texte sur fond sombre */
+  onDark: {
+    primary: '#f3eee3',
+    secondary: '#cfc9bc',
+    tertiary: '#9a9486',
+    subtleBg: 'rgba(243, 238, 227, 0.12)',
+    hoverBg: 'rgba(243, 238, 227, 0.07)',
+    border: 'rgba(243, 238, 227, 0.18)',
+  },
 
-  /** Bordure standard - ink-10 */
-  border: '#e8eaee',
+  /** Fond de page ivoire */
+  background: '#efe9dd',
 
-  /** Bordure subtile */
-  borderSubtle: '#f1f5f9',
+  /** Surface / panneau */
+  surface: '#fffdf8',
 
-  /** Separateur */
-  divider: '#f1f5f9',
+  /** Surface secondaire (en-têtes de tableau, pieds de panneau) */
+  surfaceAlt: '#f7f3ea',
 
-  /** Texte principal - ink */
-  textPrimary: '#0a0f1a',
+  /** Menu latéral */
+  sidebarBg: '#efe9dd',
 
-  /** Texte secondaire - ink-50 */
-  textSecondary: '#5a6275',
+  /** Bordure de panneau */
+  border: '#ddd5c4',
 
-  /** Texte desactive - ink-40 */
-  textDisabled: '#7d8494',
+  /** Bordure fine (lignes de tableau) */
+  borderSubtle: '#ece5d6',
 
-  /** Texte sur fond colore */
-  textOnColor: '#ffffff',
+  /** Bordure de champ */
+  fieldBorder: '#c9c0ad',
 
-  /** Lien - accent emeraude */
-  link: '#14a374',
-  linkHover: '#059669',
+  /** Séparateur */
+  divider: '#ece5d6',
+
+  /** Texte principal - encre */
+  textPrimary: '#1c2a44',
+
+  /** Texte secondaire */
+  textSecondary: '#5f6068',
+
+  /** Texte tertiaire (en-têtes de colonnes, aides) */
+  textTertiary: '#6f6f68',
+
+  /** Texte désactivé */
+  textDisabled: '#a39d90',
+
+  /** Texte sur fond coloré */
+  textOnColor: '#f3eee3',
+
+  /** Lien */
+  link: '#1c2a44',
+  linkHover: '#a58a4a',
+} as const
+
+/**
+ * Tons de statut Registre (fond / texte / bordure)
+ */
+export type ToneKey = 'ok' | 'w' | 'e' | 'i' | 'n'
+
+export const tones: Record<ToneKey, { bg: string; fg: string; bd: string }> = {
+  ok: { bg: '#e1ede5', fg: '#245b3c', bd: '#bfd6c7' },
+  w: { bg: '#f5ead2', fg: '#7d5a12', bd: '#e6d2a6' },
+  e: { bg: '#f6e3df', fg: '#8e2a1f', bd: '#e6c4bd' },
+  i: { bg: '#e3e7ef', fg: '#1c2a44', bd: '#c9d0de' },
+  n: { bg: '#ece5d6', fg: '#5f6068', bd: '#ddd5c4' },
+}
+
+/**
+ * Dégradés autorisés (réservés à l'ossature et aux blocs de synthèse)
+ */
+export const gradients = {
+  /** En-tête d'application */
+  header: 'linear-gradient(180deg, #24344f 0%, #1c2a44 100%)',
+  /** Bouton primaire */
+  primaryButton: 'linear-gradient(180deg, #2f4160, #1c2a44)',
+  /** Bloc « Net / Disponible / Reste à payer » */
+  highlight: 'linear-gradient(135deg, #24344f, #1c2a44)',
+  /** Halo du fond de page */
+  pageHalo: 'radial-gradient(1100px 520px at 12% -8%, rgba(255,253,248,.85), rgba(255,253,248,0) 62%)',
 } as const
 
 // ==================== TYPOGRAPHIE ====================
 
 export const typography = {
-  /**
-   * Famille de polices système optimisée
-   * Priorité: Inter > System > fallbacks
-   */
+  /** Texte : Source Sans 3 */
   fontFamily:
-    "'Instrument Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "'Source Sans 3', 'Segoe UI', system-ui, -apple-system, sans-serif",
+
+  /** Titres et grands chiffres : EB Garamond */
+  fontFamilySerif:
+    "'EB Garamond', Georgia, 'Times New Roman', serif",
 
   fontFamilyMono:
-    "'IBM Plex Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace",
+    "'SF Mono', Menlo, Monaco, Consolas, monospace",
 
   /**
    * Tailles de police (scale harmonique)
@@ -305,9 +371,9 @@ export const spacing = {
    * Espacements de page
    */
   page: {
-    paddingX: '1.5rem',   // 24px
-    paddingY: '1.5rem',   // 24px
-    maxWidth: '1280px',
+    paddingX: '2.5rem',   // 40px
+    paddingY: '1.75rem',  // 28px
+    maxWidth: '1320px',
     gutter: '1.5rem',     // 24px
   },
 } as const
@@ -318,19 +384,27 @@ export const shadows = {
   /** Pas d'ombre */
   none: 'none',
   /** Très subtile - bordure virtuelle */
-  xs: '0 1px 2px rgba(15, 23, 42, 0.04)',
-  /** Légère - cartes au repos */
-  sm: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)',
-  /** Standard - cartes hover */
-  md: '0 2px 4px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(15, 23, 42, 0.02)',
-  /** Élevée - dropdowns, popovers */
-  lg: '0 8px 24px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.03)',
-  /** Très élevée - modals */
-  xl: '0 24px 60px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06)',
-  /** Focus ring - anneau double (blanc + accent) */
-  focus: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.primary[600]}`,
+  xs: '0 1px 2px rgba(28, 42, 68, 0.06)',
+  /** Légère - éléments au repos */
+  sm: '0 1px 1px rgba(28, 42, 68, 0.04), 0 1px 0 rgba(28, 42, 68, 0.03)',
+  /** Panneau Registre */
+  md: '0 1px 1px rgba(28, 42, 68, 0.04), 0 1px 0 rgba(28, 42, 68, 0.03), 0 14px 34px -20px rgba(28, 42, 68, 0.24)',
+  /** Élevée - menus déroulants, popovers */
+  lg: '0 2px 4px rgba(28, 42, 68, 0.08), 0 12px 26px -14px rgba(28, 42, 68, 0.35)',
+  /** Modale */
+  xl: '0 30px 60px -20px rgba(28, 42, 68, 0.55)',
+  /** Panneau (alias explicite) */
+  panel: '0 1px 1px rgba(28, 42, 68, 0.04), 0 1px 0 rgba(28, 42, 68, 0.03), 0 14px 34px -20px rgba(28, 42, 68, 0.24)',
+  /** Bouton primaire */
+  primaryButton: '0 1px 2px rgba(28, 42, 68, 0.25), 0 10px 22px -12px rgba(28, 42, 68, 0.55)',
+  /** Élément actif du segmenté / du menu */
+  raised: '0 1px 2px rgba(28, 42, 68, 0.1)',
+  /** Ombre interne des champs */
+  fieldInset: 'inset 0 1px 2px rgba(28, 42, 68, 0.045)',
+  /** Focus ring - halo encre */
+  focus: '0 0 0 3px rgba(28, 42, 68, 0.12)',
   /** Focus ring danger */
-  focusDanger: `0 0 0 2px #ffffff, 0 0 0 4px ${colors.danger[500]}`,
+  focusDanger: '0 0 0 3px rgba(142, 42, 31, 0.16)',
 } as const
 
 // ==================== BORDURES ====================
@@ -341,10 +415,11 @@ export const borders = {
     none: '0',
     xs: '3px',      // radius-xs
     sm: '4px',      // Badges, tags (radius-sm)
-    base: '6px',    // Boutons, inputs (radius-md)
-    md: '6px',      // Cards petites (radius-md)
-    lg: '8px',      // Cards standard (radius-lg)
-    xl: '12px',     // Panels, modals (radius-xl)
+    base: '6px',    // Boutons, champs
+    md: '6px',      // Petits blocs
+    item: '8px',    // Items de menu
+    lg: '10px',     // Panneaux
+    xl: '12px',     // Modales
     '2xl': '16px',  // Large panels
     full: '9999px', // Pills, avatars (radius-pill)
   },
@@ -361,13 +436,13 @@ export const borders = {
 
 export const transitions = {
   /** Interactions rapides */
-  fast: '100ms ease-out',
+  fast: '120ms ease',
   /** Standard */
-  normal: '150ms ease-out',
-  /** Animations */
-  slow: '250ms ease-out',
-  /** Transitions longues */
-  slower: '350ms ease-out',
+  normal: '150ms ease',
+  /** Animations (groupes du menu) */
+  slow: '250ms ease',
+  /** Tiroir mobile */
+  slower: '280ms cubic-bezier(0.2, 0.7, 0.2, 1)',
   /** Timing functions */
   easing: {
     easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
@@ -395,9 +470,9 @@ export const zIndex = {
 export const breakpoints = {
   xs: 0,
   sm: 640,
-  md: 768,
-  lg: 1024,
-  xl: 1280,
+  md: 900,
+  lg: 1240,
+  xl: 1440,
   '2xl': 1536,
 } as const
 
@@ -421,9 +496,9 @@ export const componentStyles = {
    */
   card: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.border}`,
+    border: 'none',
     borderRadius: borders.radius.lg,
-    boxShadow: shadows.none,
+    boxShadow: shadows.panel,
   },
 
   /**
@@ -431,12 +506,12 @@ export const componentStyles = {
    */
   cardElevated: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.border}`,
+    border: 'none',
     borderRadius: borders.radius.lg,
-    boxShadow: shadows.xs,
-    transition: `border-color ${transitions.normal}`,
+    boxShadow: shadows.panel,
+    transition: `box-shadow ${transitions.normal}`,
     '&:hover': {
-      borderColor: colors.neutral[300],
+      boxShadow: shadows.lg,
     },
   },
 
@@ -445,25 +520,95 @@ export const componentStyles = {
    */
   cardInteractive: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.border}`,
+    border: 'none',
     borderRadius: borders.radius.lg,
-    boxShadow: 'none',
-    transition: `all ${transitions.normal}`,
+    boxShadow: shadows.panel,
+    transition: `box-shadow ${transitions.normal}`,
     cursor: 'pointer',
     '&:hover': {
-      borderColor: colors.primary[300],
-      backgroundColor: colors.primary[25],
+      boxShadow: shadows.lg,
     },
+  },
+
+  /**
+   * Titre de panneau (H4 Garamond + filet bas)
+   */
+  panelTitle: {
+    fontFamily: typography.fontFamilySerif,
+    fontWeight: typography.weights.medium,
+    fontSize: '18px',
+    lineHeight: 1.3,
+    color: colors.textPrimary,
+    m: 0,
+    px: 3,
+    pt: 1.75,
+    pb: 1.5,
+    borderBottom: `1px solid ${colors.border}`,
+  },
+
+  /**
+   * Titre de page (H2 Garamond 30px)
+   */
+  pageTitle: {
+    fontFamily: typography.fontFamilySerif,
+    fontWeight: typography.weights.medium,
+    fontSize: { xs: '26px', md: '30px' },
+    lineHeight: 1.15,
+    color: colors.textPrimary,
+    letterSpacing: 0,
+  },
+
+  /**
+   * Surtitre de page (précédé d'un filet laiton 22×1)
+   */
+  eyebrow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '12px',
+    fontWeight: typography.weights.medium,
+    color: colors.textSecondary,
+    '&::before': {
+      content: '""',
+      width: 22,
+      height: '1px',
+      backgroundColor: colors.brass.main,
+      flexShrink: 0,
+    },
+  },
+
+  /**
+   * Bloc « Net / Disponible / Reste à payer »
+   */
+  highlightBlock: {
+    background: gradients.highlight,
+    color: colors.onDark.primary,
+    borderRadius: borders.radius.lg,
+    boxShadow: `inset 0 0 0 1px ${colors.brass.halo}`,
+    px: 2,
+    py: 1.75,
+  },
+
+  /**
+   * Chiffre KPI (Garamond 30px)
+   */
+  kpiValue: {
+    fontFamily: typography.fontFamilySerif,
+    fontWeight: typography.weights.medium,
+    fontSize: '30px',
+    lineHeight: 1.1,
+    color: colors.textPrimary,
+    fontVariantNumeric: 'tabular-nums',
   },
 
   /**
    * Header de page (Confluence style)
    */
   pageHeader: {
-    backgroundColor: colors.surface,
-    borderBottom: `1px solid ${colors.border}`,
-    px: spacing.mui['2xl'],
-    py: spacing.mui.lg,
+    backgroundColor: 'transparent',
+    px: 0,
+    pt: 0,
+    pb: spacing.mui.xl,
   },
 
   /**
@@ -473,7 +618,7 @@ export const componentStyles = {
     position: 'sticky' as const,
     top: 0,
     zIndex: zIndex.sticky,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255, 253, 248, 0.94)',
     borderBottom: `1px solid ${colors.border}`,
     px: spacing.mui['2xl'],
     py: spacing.mui.md,
@@ -481,7 +626,7 @@ export const componentStyles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     backdropFilter: 'blur(8px)',
-    boxShadow: shadows.xs,
+    boxShadow: shadows.sm,
   },
 
   /**
@@ -511,25 +656,29 @@ export const componentStyles = {
    * Bouton primaire (Atlassian style)
    */
   buttonPrimary: {
+    background: gradients.primaryButton,
     backgroundColor: colors.primary[600],
     color: colors.textOnColor,
-    fontWeight: typography.weights.medium,
-    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    fontSize: typography.sizes.sm,
     textTransform: 'none' as const,
-    boxShadow: shadows.none,
+    boxShadow: shadows.primaryButton,
     borderRadius: borders.radius.base,
+    minHeight: 36,
     px: spacing.mui.lg,
-    py: spacing.mui.sm,
+    py: 0,
     '&:hover': {
-      backgroundColor: colors.primary[700],
-      boxShadow: shadows.none,
+      background: gradients.primaryButton,
+      filter: 'brightness(1.08)',
+      boxShadow: shadows.primaryButton,
     },
     '&:focus-visible': {
-      boxShadow: shadows.focus,
+      boxShadow: `${shadows.primaryButton}, ${shadows.focus}`,
     },
     '&:disabled': {
-      backgroundColor: colors.neutral[200],
+      background: colors.neutral[200],
       color: colors.textDisabled,
+      boxShadow: shadows.none,
     },
   },
 
@@ -537,18 +686,19 @@ export const componentStyles = {
    * Bouton secondaire (outlined)
    */
   buttonSecondary: {
-    backgroundColor: 'transparent',
-    border: `1px solid ${colors.neutral[300]}`,
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.fieldBorder}`,
     color: colors.textPrimary,
     fontWeight: typography.weights.medium,
-    fontSize: typography.sizes.base,
+    fontSize: typography.sizes.sm,
     textTransform: 'none' as const,
     borderRadius: borders.radius.base,
+    minHeight: 36,
     px: spacing.mui.lg,
-    py: spacing.mui.sm,
+    py: 0,
     '&:hover': {
-      backgroundColor: colors.neutral[100],
-      borderColor: colors.neutral[400],
+      backgroundColor: colors.surface,
+      borderColor: colors.textSecondary,
     },
     '&:focus-visible': {
       boxShadow: shadows.focus,
@@ -562,32 +712,34 @@ export const componentStyles = {
     backgroundColor: 'transparent',
     color: colors.textSecondary,
     fontWeight: typography.weights.medium,
-    fontSize: typography.sizes.base,
+    fontSize: typography.sizes.sm,
     textTransform: 'none' as const,
     borderRadius: borders.radius.base,
     px: spacing.mui.md,
     py: spacing.mui.sm,
     '&:hover': {
-      backgroundColor: colors.neutral[100],
+      backgroundColor: colors.surfaceAlt,
       color: colors.textPrimary,
     },
   },
 
   /**
-   * Bouton danger
+   * Bouton danger (contour brique)
    */
   buttonDanger: {
-    backgroundColor: colors.danger[600],
-    color: colors.textOnColor,
-    fontWeight: typography.weights.medium,
-    fontSize: typography.sizes.base,
+    backgroundColor: colors.surface,
+    border: `1px solid ${colors.danger[200]}`,
+    color: colors.danger[600],
+    fontWeight: typography.weights.semibold,
+    fontSize: typography.sizes.sm,
     textTransform: 'none' as const,
     boxShadow: shadows.none,
     borderRadius: borders.radius.base,
+    minHeight: 36,
     px: spacing.mui.lg,
-    py: spacing.mui.sm,
+    py: 0,
     '&:hover': {
-      backgroundColor: colors.danger[700],
+      backgroundColor: colors.danger[50],
     },
     '&:focus-visible': {
       boxShadow: shadows.focusDanger,
@@ -598,17 +750,37 @@ export const componentStyles = {
    * Bouton success
    */
   buttonSuccess: {
-    backgroundColor: colors.success[600],
+    backgroundColor: colors.success[700],
     color: colors.textOnColor,
-    fontWeight: typography.weights.medium,
-    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    fontSize: typography.sizes.sm,
     textTransform: 'none' as const,
     boxShadow: shadows.none,
     borderRadius: borders.radius.base,
     px: spacing.mui.lg,
     py: spacing.mui.sm,
     '&:hover': {
-      backgroundColor: colors.success[700],
+      backgroundColor: colors.success[800],
+    },
+  },
+
+  /**
+   * Bouton pointillé (« + Ajouter… »)
+   */
+  buttonDashed: {
+    backgroundColor: 'transparent',
+    border: `1px dashed ${colors.fieldBorder}`,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.sm,
+    textTransform: 'none' as const,
+    borderRadius: borders.radius.base,
+    minHeight: 34,
+    px: 1.75,
+    '&:hover': {
+      backgroundColor: 'transparent',
+      borderColor: colors.textSecondary,
+      color: colors.textPrimary,
     },
   },
 
@@ -617,8 +789,8 @@ export const componentStyles = {
    */
   fieldLabel: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
-    color: colors.textPrimary,
+    fontWeight: typography.weights.medium,
+    color: colors.textSecondary,
     mb: 0.75,
     display: 'block',
   },
@@ -640,14 +812,17 @@ export const componentStyles = {
       borderRadius: borders.radius.base,
       fontSize: typography.sizes.base,
       '& fieldset': {
-        borderColor: colors.neutral[300],
+        borderColor: colors.fieldBorder,
       },
       '&:hover fieldset': {
-        borderColor: colors.neutral[400],
+        borderColor: colors.textSecondary,
       },
       '&.Mui-focused fieldset': {
-        borderColor: colors.primary[500],
-        borderWidth: '2px',
+        borderColor: colors.primary[600],
+        borderWidth: '1px',
+      },
+      '&.Mui-focused': {
+        boxShadow: shadows.focus,
       },
     },
   },
@@ -698,8 +873,6 @@ export const componentStyles = {
       color: colors.textSecondary,
       fontSize: typography.sizes.xs,
       fontWeight: typography.weights.semibold,
-      textTransform: 'uppercase' as const,
-      letterSpacing: typography.letterSpacing.wide,
       cursor: 'pointer',
       '&:hover': {
         backgroundColor: colors.neutral[50],
@@ -713,18 +886,19 @@ export const componentStyles = {
   table: {
     container: {
       backgroundColor: colors.surface,
-      border: `1px solid ${colors.border}`,
+      border: 'none',
       borderRadius: borders.radius.lg,
+      boxShadow: shadows.panel,
       overflow: 'hidden',
     },
     header: {
-      backgroundColor: colors.neutral[50],
+      backgroundColor: colors.surfaceAlt,
       borderBottom: `1px solid ${colors.border}`,
     },
     headerCell: {
       fontWeight: typography.weights.semibold,
-      fontSize: typography.sizes.sm,
-      color: colors.textSecondary,
+      fontSize: typography.sizes.xs,
+      color: colors.textTertiary,
       py: spacing.mui.md,
       px: spacing.mui.lg,
     },
@@ -732,7 +906,7 @@ export const componentStyles = {
       borderBottom: `1px solid ${colors.divider}`,
       transition: `background-color ${transitions.fast}`,
       '&:hover': {
-        backgroundColor: colors.neutral[25],
+        backgroundColor: 'rgba(247, 243, 234, 0.7)',
       },
       '&:last-child': {
         borderBottom: 'none',
@@ -751,13 +925,11 @@ export const componentStyles = {
    */
   statCard: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.border}`,
+    border: 'none',
     borderRadius: borders.radius.lg,
-    p: spacing.mui['2xl'],
-    transition: `border-color ${transitions.normal}`,
-    '&:hover': {
-      borderColor: colors.neutral[300],
-    },
+    boxShadow: shadows.panel,
+    px: 2.5,
+    py: 2,
   },
 
   /**
@@ -778,8 +950,9 @@ export const componentStyles = {
    */
   sectionCard: {
     backgroundColor: colors.surface,
-    border: `1px solid ${colors.border}`,
+    border: 'none',
     borderRadius: borders.radius.lg,
+    boxShadow: shadows.panel,
     overflow: 'hidden',
   },
 
@@ -788,8 +961,9 @@ export const componentStyles = {
    */
   sectionCardHeader: {
     px: spacing.mui['2xl'],
-    py: spacing.mui.lg,
-    borderBottom: `1px solid ${colors.divider}`,
+    pt: 1.75,
+    pb: 1.5,
+    borderBottom: `1px solid ${colors.border}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -886,11 +1060,11 @@ export const componentStyles = {
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
     '& a': {
-      color: colors.link,
-      textDecoration: 'none',
+      color: colors.textSecondary,
+      textDecoration: 'underline',
+      textUnderlineOffset: '2px',
       '&:hover': {
         color: colors.linkHover,
-        textDecoration: 'underline',
       },
     },
     '& .separator': {
@@ -905,23 +1079,25 @@ export const componentStyles = {
   listPage: {
     /** Container principal */
     container: {
-      minHeight: '100vh',
-      bgcolor: colors.background,
+      minHeight: '100%',
+      bgcolor: 'transparent',
     },
     /** Header de page avec titre et actions */
     header: {
-      bgcolor: colors.surface,
-      borderBottom: `1px solid ${colors.border}`,
-      px: { xs: 2, md: 3 },
-      py: 2.5,
+      bgcolor: 'transparent',
+      px: 0,
+      pt: 0,
+      pb: 2.5,
     },
     /** Titre principal */
     title: {
-      fontWeight: typography.weights.bold,
+      fontFamily: typography.fontFamilySerif,
+      fontWeight: typography.weights.medium,
       color: colors.textPrimary,
-      fontSize: typography.sizes['2xl'],
-      letterSpacing: '-0.01em',
-      mb: 0.5,
+      fontSize: { xs: '26px', md: '30px' },
+      lineHeight: 1.15,
+      letterSpacing: 0,
+      mb: 0.75,
     },
     /** Sous-titre / stats */
     subtitle: {
@@ -930,10 +1106,9 @@ export const componentStyles = {
     },
     /** Toolbar de recherche/filtres */
     toolbar: {
-      px: { xs: 2, md: 3 },
+      px: 0,
       py: 1.5,
-      bgcolor: colors.surface,
-      borderBottom: `1px solid ${colors.divider}`,
+      bgcolor: 'transparent',
       display: 'flex',
       gap: 1.5,
       alignItems: 'center',
@@ -943,24 +1118,22 @@ export const componentStyles = {
     searchField: {
       width: { xs: '100%', sm: 320 },
       '& .MuiOutlinedInput-root': {
-        bgcolor: colors.neutral[50],
-        borderRadius: borders.radius.lg,
+        bgcolor: colors.surface,
+        borderRadius: borders.radius.base,
         fontSize: typography.sizes.base,
+        boxShadow: shadows.fieldInset,
         transition: `all ${transitions.normal}`,
         '& fieldset': {
-          borderColor: 'transparent',
+          borderColor: colors.fieldBorder,
         },
-        '&:hover': {
-          bgcolor: colors.surface,
-          '& fieldset': {
-            borderColor: colors.neutral[300],
-          },
+        '&:hover fieldset': {
+          borderColor: colors.textSecondary,
         },
         '&.Mui-focused': {
-          bgcolor: colors.surface,
+          boxShadow: shadows.focus,
           '& fieldset': {
-            borderColor: colors.primary[400],
-            borderWidth: '2px',
+            borderColor: colors.primary[600],
+            borderWidth: '1px',
           },
         },
       },
@@ -968,19 +1141,21 @@ export const componentStyles = {
     /** Container de la table */
     tableContainer: {
       borderRadius: borders.radius.lg,
-      border: `1px solid ${colors.border}`,
+      border: 'none',
+      boxShadow: shadows.panel,
       overflow: 'hidden',
       bgcolor: colors.surface,
     },
     /** Header de table */
     tableHeader: {
-      bgcolor: colors.neutral[50],
+      bgcolor: colors.surfaceAlt,
       '& th': {
         fontWeight: typography.weights.semibold,
-        color: colors.textSecondary,
-        fontSize: typography.sizes.sm,
+        color: colors.textTertiary,
+        fontSize: typography.sizes.xs,
+        bgcolor: colors.surfaceAlt,
         py: 1.25,
-        borderBottom: `2px solid ${colors.border}`,
+        borderBottom: `1px solid ${colors.border}`,
       },
     },
     /** Ligne de table cliquable */
@@ -997,7 +1172,7 @@ export const componentStyles = {
     /** Ligne enfant (sous-convention, sous-item) */
     tableRowChild: {
       cursor: 'pointer',
-      bgcolor: colors.neutral[25],
+      bgcolor: colors.surface,
       '&:hover': {
         bgcolor: colors.primary[25],
       },
@@ -1007,29 +1182,30 @@ export const componentStyles = {
     },
     /** Pill de filtre actif - subtil, pas flashy */
     filterPillActive: {
-      bgcolor: colors.primary[50],
-      color: colors.primary[700],
+      bgcolor: colors.surface,
+      color: colors.textPrimary,
       fontWeight: typography.weights.semibold,
-      border: `1px solid ${colors.primary[200]}`,
-      borderRadius: borders.radius.full,
-      '&:hover': { bgcolor: colors.primary[100] },
+      border: `1px solid ${colors.fieldBorder}`,
+      boxShadow: shadows.raised,
+      borderRadius: borders.radius.base,
+      '&:hover': { bgcolor: colors.surface },
     },
     /** Pill de filtre inactif */
     filterPill: {
       bgcolor: 'transparent',
       color: colors.textSecondary,
       fontWeight: typography.weights.medium,
-      border: `1px solid ${colors.neutral[200]}`,
-      borderRadius: borders.radius.full,
+      border: `1px solid transparent`,
+      borderRadius: borders.radius.base,
       '&:hover': {
-        bgcolor: colors.neutral[50],
-        borderColor: colors.neutral[300],
+        bgcolor: 'rgba(255, 253, 248, 0.6)',
+        color: colors.textPrimary,
       },
     },
     /** Badge de compteur (pill active) */
     countBadge: {
-      bgcolor: colors.primary[200],
-      color: colors.primary[800],
+      bgcolor: colors.ink.main,
+      color: colors.onDark.primary,
       fontSize: typography.sizes['2xs'],
       fontWeight: typography.weights.bold,
       minWidth: 20,
@@ -1042,8 +1218,8 @@ export const componentStyles = {
     },
     /** Count badge (pill inactive) */
     countBadgeInactive: {
-      bgcolor: colors.neutral[100],
-      color: colors.neutral[500],
+      bgcolor: 'transparent',
+      color: colors.textTertiary,
       fontSize: typography.sizes['2xs'],
       fontWeight: typography.weights.bold,
       minWidth: 20,
@@ -1067,12 +1243,14 @@ export const componentStyles = {
    */
   dialog: {
     paper: {
-      borderRadius: borders.radius.lg,
-      boxShadow: shadows.lg,
+      borderRadius: borders.radius.xl,
+      boxShadow: shadows.xl,
+      bgcolor: colors.surface,
     },
     title: {
-      fontWeight: typography.weights.semibold,
-      fontSize: typography.sizes.lg,
+      fontFamily: typography.fontFamilySerif,
+      fontWeight: typography.weights.medium,
+      fontSize: '20px',
       color: colors.textPrimary,
       pb: 1,
     },
@@ -1089,14 +1267,17 @@ export const componentStyles = {
       borderRadius: borders.radius.base,
       fontSize: typography.sizes.base,
       '& fieldset': {
-        borderColor: colors.neutral[300],
+        borderColor: colors.fieldBorder,
       },
       '&:hover fieldset': {
-        borderColor: colors.neutral[400],
+        borderColor: colors.textSecondary,
       },
       '&.Mui-focused fieldset': {
-        borderColor: colors.primary[500],
-        borderWidth: '2px',
+        borderColor: colors.primary[600],
+        borderWidth: '1px',
+      },
+      '&.Mui-focused': {
+        boxShadow: shadows.focus,
       },
     },
     '& .MuiOutlinedInput-input': {
@@ -1181,10 +1362,10 @@ export const componentStyles = {
     py: 1,
     px: 2,
     gap: 1.5,
-    borderRadius: borders.radius.base,
+    borderRadius: borders.radius.lg,
     mx: 0.5,
     '&:hover': {
-      bgcolor: colors.neutral[50],
+      bgcolor: colors.surfaceAlt,
     },
   },
 
@@ -1195,9 +1376,8 @@ export const componentStyles = {
    */
   controlPanel: {
     container: {
-      bgcolor: colors.surface,
-      borderBottom: `1px solid ${colors.border}`,
-      px: { xs: 2, md: 3 },
+      bgcolor: 'transparent',
+      px: 0,
       py: 0,
     },
     /** Top row: breadcrumbs + actions */
@@ -1216,7 +1396,6 @@ export const componentStyles = {
       alignItems: 'center',
       gap: 1,
       py: 1,
-      borderTop: `1px solid ${colors.divider}`,
       flexWrap: 'wrap' as const,
     },
     /** Breadcrumb trail */
@@ -1228,20 +1407,21 @@ export const componentStyles = {
       flex: 1,
     },
     breadcrumbLink: {
-      fontSize: typography.sizes.base,
+      fontSize: typography.sizes.xs,
       fontWeight: typography.weights.medium,
-      color: colors.textPrimary,
-      textDecoration: 'none',
+      color: colors.textSecondary,
+      textDecoration: 'underline',
+      textUnderlineOffset: '2px',
       cursor: 'pointer',
       whiteSpace: 'nowrap' as const,
       '&:hover': {
-        color: colors.primary[600],
+        color: colors.brass.main,
       },
     },
     breadcrumbCurrent: {
-      fontSize: typography.sizes.base,
-      fontWeight: typography.weights.bold,
-      color: colors.textPrimary,
+      fontSize: typography.sizes.xs,
+      fontWeight: typography.weights.medium,
+      color: colors.textSecondary,
       whiteSpace: 'nowrap' as const,
       overflow: 'hidden' as const,
       textOverflow: 'ellipsis' as const,
@@ -1261,28 +1441,30 @@ export const componentStyles = {
     },
     /** View switcher (list/kanban/map) */
     viewSwitcher: {
-      display: 'flex',
-      border: `1px solid ${colors.neutral[300]}`,
+      display: 'inline-flex',
+      bgcolor: colors.neutral[100],
       borderRadius: borders.radius.base,
-      overflow: 'hidden',
+      p: '3px',
+      gap: '2px',
     },
     viewSwitcherButton: {
       p: 0.75,
-      borderRadius: 0,
-      minWidth: 36,
+      borderRadius: borders.radius.sm,
+      minWidth: 32,
       color: colors.textSecondary,
       '&:hover': {
-        bgcolor: colors.neutral[50],
+        color: colors.textPrimary,
       },
     },
     viewSwitcherButtonActive: {
       p: 0.75,
-      borderRadius: 0,
-      minWidth: 36,
-      bgcolor: colors.primary[50],
-      color: colors.primary[700],
+      borderRadius: borders.radius.sm,
+      minWidth: 32,
+      bgcolor: colors.surface,
+      color: colors.textPrimary,
+      boxShadow: shadows.raised,
       '&:hover': {
-        bgcolor: colors.primary[100],
+        bgcolor: colors.surface,
       },
     },
     /** Search bar */
@@ -1295,14 +1477,17 @@ export const componentStyles = {
         fontSize: typography.sizes.base,
         height: 36,
         '& fieldset': {
-          borderColor: colors.neutral[300],
+          borderColor: colors.fieldBorder,
         },
         '&:hover fieldset': {
-          borderColor: colors.neutral[400],
+          borderColor: colors.textSecondary,
         },
         '&.Mui-focused fieldset': {
-          borderColor: colors.primary[500],
-          borderWidth: '2px',
+          borderColor: colors.primary[600],
+          borderWidth: '1px',
+        },
+        '&.Mui-focused': {
+          boxShadow: shadows.focus,
         },
       },
     },
@@ -1313,15 +1498,15 @@ export const componentStyles = {
       gap: 0.5,
       px: 1.25,
       py: 0.5,
-      bgcolor: colors.primary[50],
-      color: colors.primary[700],
-      fontSize: typography.sizes.sm,
+      bgcolor: colors.info[50],
+      color: colors.textPrimary,
+      fontSize: typography.sizes.xs,
       fontWeight: typography.weights.medium,
-      borderRadius: borders.radius.base,
-      border: `1px solid ${colors.primary[200]}`,
+      borderRadius: borders.radius.full,
+      border: `1px solid ${colors.info[200]}`,
       cursor: 'pointer',
       '&:hover': {
-        bgcolor: colors.primary[100],
+        bgcolor: colors.surface,
       },
     },
     /** Pager (1-20 / 55) */
@@ -1342,8 +1527,9 @@ export const componentStyles = {
     /** Container */
     container: {
       bgcolor: colors.surface,
-      border: `1px solid ${colors.border}`,
+      border: 'none',
       borderRadius: borders.radius.lg,
+      boxShadow: shadows.panel,
       overflow: 'hidden',
     },
     /** Status bar (top of form with status pills) */
@@ -1354,8 +1540,8 @@ export const componentStyles = {
       flexDirection: { xs: 'column', sm: 'row' },
       px: { xs: 2, sm: 3 },
       py: 1.5,
-      gap: { xs: 1, sm: 0 },
-      bgcolor: colors.neutral[25],
+      gap: { xs: 1, sm: 2 },
+      bgcolor: colors.surfaceAlt,
       borderBottom: `1px solid ${colors.border}`,
     },
     /** Status bar buttons */
@@ -1363,91 +1549,103 @@ export const componentStyles = {
       display: 'flex',
       alignItems: 'center',
       gap: 1,
+      flexWrap: 'wrap' as const,
     },
-    /** Status pipeline (connected dots) */
+    /** Circuit (pastilles numérotées) */
     statusPipeline: {
       display: 'flex',
       alignItems: 'center',
-      gap: 0,
-      overflowX: 'auto' as const,
+      gap: 1,
+      flexWrap: 'wrap' as const,
       maxWidth: '100%',
-      '&::-webkit-scrollbar': { display: 'none' },
     },
-    /** Future/inactive step - very muted */
+    /** Étape à venir */
     statusPipelineStep: {
-      px: 1.5,
-      py: 0.5,
-      fontSize: typography.sizes.sm,
-      fontWeight: typography.weights.normal,
-      color: colors.neutral[400],
-      bgcolor: colors.neutral[50],
-      borderRight: `1px solid ${colors.neutral[200]}`,
-      cursor: 'default',
-      whiteSpace: 'nowrap' as const,
-      '&:first-of-type': {
-        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
-      },
-      '&:last-of-type': {
-        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
-        borderRight: 'none',
-      },
-    },
-    /** Active/current step - filled primary */
-    statusPipelineStepActive: {
-      px: 1.5,
-      py: 0.5,
-      fontSize: typography.sizes.sm,
-      fontWeight: typography.weights.bold,
-      color: colors.textOnColor,
-      bgcolor: colors.primary[600],
-      borderRight: `1px solid ${colors.primary[700]}`,
-      cursor: 'default',
-      whiteSpace: 'nowrap' as const,
-      '&:first-of-type': {
-        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
-      },
-      '&:last-of-type': {
-        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
-        borderRight: 'none',
-      },
-    },
-    /** Done/completed step - green with checkmark space */
-    statusPipelineStepDone: {
-      px: 1.5,
+      pl: 0.5,
+      pr: 1.5,
       py: 0.5,
       fontSize: typography.sizes.sm,
       fontWeight: typography.weights.medium,
-      color: colors.success[700],
-      bgcolor: colors.success[50],
-      borderRight: `1px solid ${colors.success[100]}`,
+      color: colors.textSecondary,
+      bgcolor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.full,
       cursor: 'default',
       whiteSpace: 'nowrap' as const,
-      '&:first-of-type': {
-        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
-      },
-      '&:last-of-type': {
-        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
-        borderRight: 'none',
-      },
     },
-    /** Danger variant for rejected/cancelled statuses */
-    statusPipelineStepDanger: {
-      px: 1.5,
+    /** Étape courante : bleu nuit cerclé de laiton */
+    statusPipelineStepActive: {
+      pl: 0.5,
+      pr: 1.5,
       py: 0.5,
       fontSize: typography.sizes.sm,
       fontWeight: typography.weights.bold,
-      color: colors.textOnColor,
-      bgcolor: colors.danger[600],
-      borderRight: `1px solid ${colors.danger[700]}`,
+      color: colors.textPrimary,
+      bgcolor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      boxShadow: shadows.raised,
+      borderRadius: borders.radius.full,
       cursor: 'default',
       whiteSpace: 'nowrap' as const,
-      '&:first-of-type': {
-        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
-      },
-      '&:last-of-type': {
-        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
-        borderRight: 'none',
-      },
+    },
+    /** Étape faite : ✓ vert */
+    statusPipelineStepDone: {
+      pl: 0.5,
+      pr: 1.5,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.medium,
+      color: colors.textPrimary,
+      bgcolor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: borders.radius.full,
+      cursor: 'default',
+      whiteSpace: 'nowrap' as const,
+    },
+    /** Rejeté / annulé : rouge « ! » */
+    statusPipelineStepDanger: {
+      pl: 0.5,
+      pr: 1.5,
+      py: 0.5,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.bold,
+      color: colors.danger[600],
+      bgcolor: colors.danger[50],
+      border: `1px solid ${colors.danger[200]}`,
+      borderRadius: borders.radius.full,
+      cursor: 'default',
+      whiteSpace: 'nowrap' as const,
+    },
+    /** Pastille numérotée du circuit */
+    statusStepMarker: {
+      width: 22,
+      height: 22,
+      borderRadius: borders.radius.full,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '11px',
+      fontWeight: typography.weights.bold,
+      flexShrink: 0,
+      mr: 0.75,
+    },
+    statusStepMarkerFuture: {
+      bgcolor: colors.surface,
+      color: colors.textSecondary,
+      border: `1px solid ${colors.fieldBorder}`,
+    },
+    statusStepMarkerActive: {
+      bgcolor: colors.ink.main,
+      color: colors.onDark.primary,
+      boxShadow: `0 0 0 2px ${colors.brass.main}`,
+    },
+    statusStepMarkerDone: {
+      bgcolor: colors.success[700],
+      color: colors.onDark.primary,
+    },
+    statusStepMarkerDanger: {
+      bgcolor: colors.danger[600],
+      color: colors.onDark.primary,
     },
     /** Sheet (main content area of form) */
     sheet: {
@@ -1455,8 +1653,10 @@ export const componentStyles = {
     },
     /** Title field (editable h1) */
     titleField: {
-      fontSize: typography.sizes['2xl'],
-      fontWeight: typography.weights.bold,
+      fontFamily: typography.fontFamilySerif,
+      fontSize: '30px',
+      lineHeight: 1.15,
+      fontWeight: typography.weights.medium,
       color: colors.textPrimary,
       border: 'none',
       outline: 'none',
@@ -1481,13 +1681,13 @@ export const componentStyles = {
     },
     /** Group header */
     groupTitle: {
-      bgcolor: colors.neutral[25],
+      bgcolor: colors.surfaceAlt,
       px: 2,
       py: 1.25,
       borderBottom: `1px solid ${colors.border}`,
-      borderLeft: `3px solid ${colors.primary[500]}`,
-      fontSize: typography.sizes.base,
-      fontWeight: typography.weights.semibold,
+      fontFamily: typography.fontFamilySerif,
+      fontSize: '17px',
+      fontWeight: typography.weights.medium,
       color: colors.textPrimary,
     },
     /** Group body */
@@ -1589,21 +1789,25 @@ export const componentStyles = {
     },
     notebookTabs: {
       borderBottom: `1px solid ${colors.border}`,
-      minHeight: 40,
+      minHeight: 42,
+      flex: 1,
       '& .MuiTab-root': {
         textTransform: 'none' as const,
         fontWeight: typography.weights.medium,
-        fontSize: typography.sizes.sm,
+        fontSize: '13.5px',
         color: colors.textSecondary,
-        minHeight: 40,
+        minHeight: 42,
+        minWidth: 0,
+        px: 1.5,
         py: 1,
+        '&:hover': { color: colors.textPrimary },
         '&.Mui-selected': {
-          color: colors.primary[700],
+          color: colors.textPrimary,
           fontWeight: typography.weights.semibold,
         },
       },
       '& .MuiTabs-indicator': {
-        backgroundColor: colors.primary[600],
+        backgroundColor: colors.brass.main,
         height: 2,
       },
     },
@@ -1611,7 +1815,7 @@ export const componentStyles = {
     chatter: {
       borderLeft: { xs: 'none', md: `1px solid ${colors.border}` },
       borderTop: { xs: `1px solid ${colors.border}`, md: 'none' },
-      bgcolor: colors.neutral[25],
+      bgcolor: colors.surfaceAlt,
       p: 2,
       minWidth: { xs: '100%', md: 320 },
       maxWidth: { xs: '100%', md: 400 },
@@ -1624,8 +1828,9 @@ export const componentStyles = {
   listView: {
     container: {
       bgcolor: colors.surface,
-      border: `1px solid ${colors.border}`,
+      border: 'none',
       borderRadius: borders.radius.lg,
+      boxShadow: shadows.panel,
       overflow: 'hidden',
     },
     /** Table in list view */
@@ -1639,19 +1844,20 @@ export const componentStyles = {
     },
     /** Header row */
     headerRow: {
-      bgcolor: colors.neutral[50],
+      bgcolor: colors.surfaceAlt,
       '& .MuiTableCell-head': {
         fontWeight: typography.weights.semibold,
-        fontSize: typography.sizes.sm,
-        color: colors.textSecondary,
-        py: 1,
+        fontSize: typography.sizes.xs,
+        color: colors.textTertiary,
+        bgcolor: colors.surfaceAlt,
+        py: 1.25,
         px: 1.5,
-        borderBottom: `2px solid ${colors.border}`,
+        borderBottom: `1px solid ${colors.border}`,
         whiteSpace: 'nowrap' as const,
         userSelect: 'none' as const,
         cursor: 'pointer',
         '&:hover': {
-          bgcolor: colors.neutral[100],
+          color: colors.textPrimary,
         },
       },
     },
@@ -1698,7 +1904,7 @@ export const componentStyles = {
     },
     /** Optional group header row */
     groupHeaderRow: {
-      bgcolor: colors.neutral[50],
+      bgcolor: 'rgba(247, 243, 234, 0.6)',
       cursor: 'pointer',
       '&:hover': {
         bgcolor: colors.neutral[100],
@@ -1712,8 +1918,8 @@ export const componentStyles = {
     },
     /** Aggregation footer */
     footerRow: {
-      bgcolor: colors.neutral[50],
-      borderTop: `2px solid ${colors.border}`,
+      bgcolor: colors.surfaceAlt,
+      borderTop: `1px solid ${colors.border}`,
       '& .MuiTableCell-body': {
         fontWeight: typography.weights.semibold,
         fontSize: typography.sizes.sm,
@@ -1729,152 +1935,123 @@ export const componentStyles = {
   wizardView: {
     /** Outer container */
     container: {
-      bgcolor: colors.background,
-      minHeight: '100vh',
+      minWidth: 0,
     },
-    /** Header bar (breadcrumbs + cancel) */
+    /** En-tête : surtitre + titre */
     header: {
-      bgcolor: colors.surface,
-      borderBottom: `1px solid ${colors.border}`,
-      px: { xs: 2, md: 3 },
-      py: 1.5,
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-end',
       justifyContent: 'space-between',
       gap: 2,
+      flexWrap: 'wrap' as const,
+      pb: 2.5,
     },
-    /** Step indicator bar */
+    /** Étapes : cartes numérotées */
     stepBar: {
-      bgcolor: colors.neutral[25],
-      borderBottom: `1px solid ${colors.border}`,
-      px: { xs: 2, md: 3 },
-      py: 1.25,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: { xs: 'flex-start', sm: 'center' },
-      gap: 0,
-      overflowX: 'auto' as const,
-      '&::-webkit-scrollbar': { display: 'none' },
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(160px, 1fr))' },
+      gap: 1.25,
+      mb: 2.5,
     },
-    /** Step pill (default / future) */
+    /** Étape à venir */
     step: {
-      px: 2,
-      py: 0.5,
-      fontSize: typography.sizes.sm,
-      fontWeight: typography.weights.medium,
-      color: colors.textSecondary,
-      bgcolor: colors.neutral[100],
-      borderRight: `1px solid ${colors.border}`,
-      cursor: 'default',
       display: 'flex',
       alignItems: 'center',
-      gap: 0.75,
-      whiteSpace: 'nowrap' as const,
-      transition: `all ${transitions.fast}`,
-      '&:first-of-type': {
-        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
-      },
-      '&:last-of-type': {
-        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
-        borderRight: 'none',
-      },
-    },
-    /** Active step pill */
-    stepActive: {
-      px: 2,
-      py: 0.5,
+      gap: 1.25,
+      px: 1.5,
+      py: 1.25,
+      borderRadius: borders.radius.lg,
+      bgcolor: colors.surface,
+      boxShadow: shadows.sm,
       fontSize: typography.sizes.sm,
       fontWeight: typography.weights.semibold,
-      color: colors.primary[700],
-      bgcolor: colors.primary[100],
-      borderRight: `1px solid ${colors.primary[200]}`,
+      color: colors.textSecondary,
       cursor: 'default',
+      minWidth: 0,
+    },
+    /** Étape active */
+    stepActive: {
       display: 'flex',
       alignItems: 'center',
-      gap: 0.75,
-      whiteSpace: 'nowrap' as const,
-      '&:first-of-type': {
-        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
-      },
-      '&:last-of-type': {
-        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
-        borderRight: 'none',
-      },
-    },
-    /** Done step pill */
-    stepDone: {
-      px: 2,
-      py: 0.5,
+      gap: 1.25,
+      px: 1.5,
+      py: 1.25,
+      borderRadius: borders.radius.lg,
+      bgcolor: colors.surface,
+      boxShadow: shadows.panel,
       fontSize: typography.sizes.sm,
-      fontWeight: typography.weights.medium,
-      color: colors.success[700],
-      bgcolor: colors.success[50],
-      borderRight: `1px solid ${colors.success[100]}`,
-      cursor: 'pointer',
+      fontWeight: typography.weights.bold,
+      color: colors.textPrimary,
+      cursor: 'default',
+      minWidth: 0,
+    },
+    /** Étape faite (cliquable pour revenir) */
+    stepDone: {
       display: 'flex',
       alignItems: 'center',
-      gap: 0.75,
-      whiteSpace: 'nowrap' as const,
-      transition: `all ${transitions.fast}`,
-      '&:hover': {
-        bgcolor: colors.success[100],
-      },
-      '&:first-of-type': {
-        borderRadius: `${borders.radius.full} 0 0 ${borders.radius.full}`,
-      },
-      '&:last-of-type': {
-        borderRadius: `0 ${borders.radius.full} ${borders.radius.full} 0`,
-        borderRight: 'none',
-      },
+      gap: 1.25,
+      px: 1.5,
+      py: 1.25,
+      borderRadius: borders.radius.lg,
+      bgcolor: colors.surface,
+      boxShadow: shadows.sm,
+      fontSize: typography.sizes.sm,
+      fontWeight: typography.weights.semibold,
+      color: colors.textPrimary,
+      cursor: 'pointer',
+      minWidth: 0,
+      transition: `box-shadow ${transitions.fast}`,
+      '&:hover': { boxShadow: shadows.lg },
     },
-    /** Step number badge */
+    /** Pastille numérotée */
     stepNumber: {
-      width: 20,
-      height: 20,
+      width: 24,
+      height: 24,
       borderRadius: borders.radius.full,
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: typography.sizes['2xs'],
+      fontSize: '12px',
       fontWeight: typography.weights.bold,
       flexShrink: 0,
     },
     stepNumberDefault: {
-      bgcolor: colors.neutral[300],
-      color: colors.surface,
+      bgcolor: colors.surface,
+      color: colors.textSecondary,
+      border: `1px solid ${colors.fieldBorder}`,
     },
     stepNumberActive: {
-      bgcolor: colors.primary[600],
-      color: colors.surface,
+      bgcolor: colors.ink.main,
+      color: colors.onDark.primary,
+      boxShadow: `0 0 0 2px ${colors.brass.main}`,
     },
     stepNumberDone: {
-      bgcolor: colors.success[600],
-      color: colors.surface,
+      bgcolor: colors.success[700],
+      color: colors.onDark.primary,
     },
     /** Content sheet */
     sheet: {
-      maxWidth: 960,
-      mx: 'auto',
-      my: 3,
-      px: { xs: 2, md: 0 },
+      minWidth: 0,
     },
-    /** Inner card */
+    /** Panneau de l'étape */
     card: {
       bgcolor: colors.surface,
-      border: `1px solid ${colors.border}`,
       borderRadius: borders.radius.lg,
+      boxShadow: shadows.panel,
       p: { xs: 2, md: 3 },
     },
-    /** Navigation bar (bottom) */
+    /** Pied de l'assistant (Précédent / Suivant) */
     navBar: {
-      maxWidth: 960,
-      mx: 'auto',
-      px: { xs: 2, md: 0 },
-      pb: 4,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 2,
+      mt: 2,
+      px: { xs: 2, md: 3 },
+      py: 1.5,
+      bgcolor: colors.surfaceAlt,
+      borderRadius: borders.radius.lg,
+      boxShadow: shadows.sm,
     },
   },
 
@@ -1892,15 +2069,12 @@ export const componentStyles = {
   resizableSection: {
     /** Outer container */
     container: {
-      border: `1px solid ${colors.border}`,
+      border: 'none',
       borderRadius: borders.radius.lg,
       bgcolor: colors.surface,
+      boxShadow: shadows.panel,
       overflow: 'hidden',
       mb: 2,
-      transition: `border-color ${transitions.normal}`,
-      '&:hover': {
-        borderColor: colors.neutral[300],
-      },
     },
     /** Clickable header bar */
     header: {
@@ -1911,11 +2085,11 @@ export const componentStyles = {
       py: 1,
       cursor: 'pointer',
       userSelect: 'none' as const,
-      bgcolor: colors.neutral[25],
-      borderBottom: `1px solid ${colors.divider}`,
+      bgcolor: colors.surface,
+      borderBottom: `1px solid ${colors.border}`,
       transition: `background-color ${transitions.fast}`,
       '&:hover': {
-        bgcolor: colors.neutral[50],
+        bgcolor: colors.surfaceAlt,
       },
     },
     /** Collapsed header (no bottom border) */
@@ -1927,10 +2101,10 @@ export const componentStyles = {
       py: 1,
       cursor: 'pointer',
       userSelect: 'none' as const,
-      bgcolor: colors.neutral[25],
+      bgcolor: colors.surface,
       transition: `background-color ${transitions.fast}`,
       '&:hover': {
-        bgcolor: colors.neutral[50],
+        bgcolor: colors.surfaceAlt,
       },
     },
     /** Chevron icon area */
@@ -1949,8 +2123,9 @@ export const componentStyles = {
     },
     /** Section title */
     title: {
-      fontSize: typography.sizes.base,
-      fontWeight: typography.weights.semibold,
+      fontFamily: typography.fontFamilySerif,
+      fontSize: '18px',
+      fontWeight: typography.weights.medium,
       color: colors.textPrimary,
       flex: 1,
     },
@@ -1995,266 +2170,66 @@ export interface StatusConfig {
   bgColor: string
   textColor: string
   dotColor: string
+  borderColor: string
+}
+
+/** Ton Registre associé à chaque famille de couleur */
+const toneOfColor: Record<StatusColor, ToneKey> = {
+  success: 'ok',
+  warning: 'w',
+  danger: 'e',
+  info: 'i',
+  primary: 'i',
+  neutral: 'n',
+  purple: 'n',
+}
+
+/** Ton Registre d'une famille de couleur de statut. */
+export const toneOf = (color: StatusColor): ToneKey => toneOfColor[color]
+
+const status = (label: string, color: StatusColor): StatusConfig => {
+  const t = tones[toneOfColor[color]]
+  return { label, color, bgColor: t.bg, textColor: t.fg, dotColor: t.fg, borderColor: t.bd }
 }
 
 export const statusColors: Record<string, StatusConfig> = {
-  BROUILLON: {
-    label: 'Brouillon',
-    color: 'neutral',
-    bgColor: colors.neutral[200],
-    textColor: colors.neutral[700],
-    dotColor: colors.neutral[500],
-  },
-  SOUMIS: {
-    label: 'Soumis',
-    color: 'warning',
-    bgColor: colors.warning[100],
-    textColor: colors.warning[800],
-    dotColor: colors.warning[500],
-  },
-  VALIDE: {
-    label: 'Valide',
-    color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[800],
-    dotColor: colors.success[500],
-  },
-  VALIDEE: {
-    label: 'Validee',
-    color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[800],
-    dotColor: colors.success[500],
-  },
-  EN_EXECUTION: {
-    label: 'En execution',
-    color: 'info',
-    bgColor: colors.info[100],
-    textColor: colors.info[800],
-    dotColor: colors.info[500],
-  },
-  EN_COURS: {
-    label: 'En cours',
-    color: 'info',
-    bgColor: colors.info[100],
-    textColor: colors.info[800],
-    dotColor: colors.info[500],
-  },
-  ACHEVE: {
-    label: 'Acheve',
-    color: 'success',
-    bgColor: colors.success[200],
-    textColor: colors.success[800],
-    dotColor: colors.success[600],
-  },
-  TERMINE: {
-    label: 'Termine',
-    color: 'success',
-    bgColor: colors.success[200],
-    textColor: colors.success[800],
-    dotColor: colors.success[600],
-  },
-  REJETE: {
-    label: 'Rejete',
-    color: 'danger',
-    bgColor: colors.danger[100],
-    textColor: colors.danger[800],
-    dotColor: colors.danger[500],
-  },
-  ANNULE: {
-    label: 'Annule',
-    color: 'danger',
-    bgColor: colors.danger[100],
-    textColor: colors.danger[700],
-    dotColor: colors.danger[500],
-  },
-  EN_RETARD: {
-    label: 'En retard',
-    color: 'danger',
-    bgColor: colors.danger[100],
-    textColor: colors.danger[800],
-    dotColor: colors.danger[500],
-  },
-  SUSPENDU: {
-    label: 'Suspendu',
-    color: 'warning',
-    bgColor: colors.warning[100],
-    textColor: colors.warning[800],
-    dotColor: colors.warning[500],
-  },
-  ACTIF: {
-    label: 'Actif',
-    color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[800],
-    dotColor: colors.success[500],
-  },
-  INACTIF: {
-    label: 'Inactif',
-    color: 'neutral',
-    bgColor: colors.neutral[200],
-    textColor: colors.neutral[700],
-    dotColor: colors.neutral[500],
-  },
-  NOUVEAU: {
-    label: 'Nouveau',
-    color: 'purple',
-    bgColor: colors.purple[100],
-    textColor: colors.purple[800],
-    dotColor: colors.purple[500],
-  },
-  URGENT: {
-    label: 'Urgent',
-    color: 'danger',
-    bgColor: colors.danger[100],
-    textColor: colors.danger[800],
-    dotColor: colors.danger[500],
-  },
-  CADRE: {
-    label: 'Cadre',
-    color: 'primary',
-    bgColor: colors.primary[100],
-    textColor: colors.primary[800],
-    dotColor: colors.primary[500],
-  },
-  SPECIFIQUE: {
-    label: 'Specifique',
-    color: 'purple',
-    bgColor: colors.purple[100],
-    textColor: colors.purple[800],
-    dotColor: colors.purple[500],
-  },
-  EN_PREPARATION: {
-    label: 'En preparation',
-    color: 'neutral',
-    bgColor: colors.neutral[200],
-    textColor: colors.neutral[700],
-    dotColor: colors.neutral[500],
-  },
-  // Type marche (procurement mode)
-  MARCHE: {
-    label: 'Marche',
-    color: 'primary',
-    bgColor: colors.primary[100],
-    textColor: colors.primary[800],
-    dotColor: colors.primary[500],
-  },
-  CONTRAT: {
-    label: 'Contrat',
-    color: 'info',
-    bgColor: colors.info[100],
-    textColor: colors.info[800],
-    dotColor: colors.info[500],
-  },
-  BON_DE_COMMANDE: {
-    label: 'Bon de commande',
-    color: 'purple',
-    bgColor: colors.purple[100],
-    textColor: colors.purple[800],
-    dotColor: colors.purple[500],
-  },
-  LETTRE_DE_COMMANDE: {
-    label: 'Lettre de commande',
-    color: 'warning',
-    bgColor: colors.warning[100],
-    textColor: colors.warning[800],
-    dotColor: colors.warning[500],
-  },
-  // Nature prestation
-  TRAVAUX: {
-    label: 'Travaux',
-    color: 'primary',
-    bgColor: colors.primary[100],
-    textColor: colors.primary[800],
-    dotColor: colors.primary[500],
-  },
-  FOURNITURES: {
-    label: 'Fournitures',
-    color: 'info',
-    bgColor: colors.info[100],
-    textColor: colors.info[800],
-    dotColor: colors.info[500],
-  },
-  SERVICES: {
-    label: 'Services',
-    color: 'purple',
-    bgColor: colors.purple[100],
-    textColor: colors.purple[800],
-    dotColor: colors.purple[500],
-  },
-  ETUDES: {
-    label: 'Etudes',
-    color: 'warning',
-    bgColor: colors.warning[100],
-    textColor: colors.warning[800],
-    dotColor: colors.warning[500],
-  },
-  // Ordres de service types
-  COMMENCEMENT: {
-    label: 'Commencement',
-    color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[800],
-    dotColor: colors.success[500],
-  },
-  ARRET: {
-    label: 'Arret',
-    color: 'danger',
-    bgColor: colors.danger[100],
-    textColor: colors.danger[800],
-    dotColor: colors.danger[500],
-  },
-  REPRISE: {
-    label: 'Reprise',
-    color: 'info',
-    bgColor: colors.info[100],
-    textColor: colors.info[800],
-    dotColor: colors.info[500],
-  },
-  RECEPTION_PROVISOIRE: {
-    label: 'Reception provisoire',
-    color: 'warning',
-    bgColor: colors.warning[100],
-    textColor: colors.warning[800],
-    dotColor: colors.warning[500],
-  },
-  RECEPTION_DEFINITIVE: {
-    label: 'Reception definitive',
-    color: 'success',
-    bgColor: colors.success[200],
-    textColor: colors.success[800],
-    dotColor: colors.success[600],
-  },
-  // Payment statuses
-  NON_PAYE: {
-    label: 'Non paye',
-    color: 'danger',
-    bgColor: colors.danger[100],
-    textColor: colors.danger[800],
-    dotColor: colors.danger[500],
-  },
-  PAYE_PARTIEL: {
-    label: 'Paye partiellement',
-    color: 'warning',
-    bgColor: colors.warning[100],
-    textColor: colors.warning[800],
-    dotColor: colors.warning[500],
-  },
-  PAYE_TOTAL: {
-    label: 'Paye totalement',
-    color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[800],
-    dotColor: colors.success[500],
-  },
-  EXECUTE: {
-    label: 'Execute',
-    color: 'success',
-    bgColor: colors.success[100],
-    textColor: colors.success[800],
-    dotColor: colors.success[500],
-  },
-} as const
+  BROUILLON: status('Brouillon', 'neutral'),
+  SOUMIS: status('Soumis', 'warning'),
+  VALIDE: status('Validé', 'success'),
+  VALIDEE: status('Validée', 'success'),
+  EN_EXECUTION: status('En exécution', 'info'),
+  EN_COURS: status('En cours', 'info'),
+  ACHEVE: status('Achevé', 'neutral'),
+  TERMINE: status('Terminé', 'neutral'),
+  REJETE: status('Rejeté', 'danger'),
+  ANNULE: status('Annulé', 'danger'),
+  EN_RETARD: status('En retard', 'danger'),
+  SUSPENDU: status('Suspendu', 'danger'),
+  ACTIF: status('Actif', 'success'),
+  INACTIF: status('Inactif', 'neutral'),
+  NOUVEAU: status('Nouveau', 'purple'),
+  URGENT: status('Urgent', 'danger'),
+  CADRE: status('Cadre', 'neutral'),
+  SPECIFIQUE: status('Spécifique', 'neutral'),
+  EN_PREPARATION: status('En préparation', 'neutral'),
+  MARCHE: status('Marché', 'neutral'),
+  CONTRAT: status('Contrat', 'info'),
+  BON_DE_COMMANDE: status('Bon de commande', 'purple'),
+  LETTRE_DE_COMMANDE: status('Lettre de commande', 'warning'),
+  TRAVAUX: status('Travaux', 'primary'),
+  FOURNITURES: status('Fournitures', 'info'),
+  SERVICES: status('Services', 'purple'),
+  ETUDES: status('Études', 'warning'),
+  COMMENCEMENT: status('Commencement', 'success'),
+  ARRET: status('Arrêt', 'danger'),
+  REPRISE: status('Reprise', 'info'),
+  RECEPTION_PROVISOIRE: status('Réception provisoire', 'warning'),
+  RECEPTION_DEFINITIVE: status('Réception définitive', 'success'),
+  NON_PAYE: status('Non payé', 'danger'),
+  PAYE_PARTIEL: status('Payé en partie', 'warning'),
+  PAYE_TOTAL: status('Payé', 'success'),
+  EXECUTE: status('Exécuté', 'success'),
+}
 
 /**
  * Recupere la configuration d'un statut.
@@ -2262,12 +2237,16 @@ export const statusColors: Record<string, StatusConfig> = {
  */
 export function getStatusConfig(status: string): StatusConfig {
   const normalizedStatus = status?.toUpperCase().replace(/-/g, '_')
+  const humanized = status
+    ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace(/_/g, ' ')
+    : 'Inconnu'
   return statusColors[normalizedStatus] ?? {
-    label: status || 'Inconnu',
+    label: humanized,
     color: 'neutral' as StatusColor,
-    bgColor: colors.neutral[200],
-    textColor: colors.neutral[700],
-    dotColor: colors.neutral[500],
+    bgColor: tones.n.bg,
+    textColor: tones.n.fg,
+    dotColor: tones.n.fg,
+    borderColor: tones.n.bd,
   }
 }
 
@@ -2275,24 +2254,24 @@ export function getStatusConfig(status: string): StatusConfig {
  * Couleurs pour les graphiques (charts)
  */
 export const chartColors = {
-  primary: colors.primary[400],
-  secondary: colors.purple[400],
+  primary: colors.primary[600],
+  secondary: colors.brass.main,
   tertiary: colors.info[400],
-  success: colors.success[400],
+  success: colors.success[500],
   warning: colors.warning[400],
   danger: colors.danger[400],
   neutral: colors.neutral[300],
   palette: [
-    colors.primary[400],
+    colors.primary[600],
+    colors.brass.main,
+    colors.success[500],
     colors.info[400],
-    colors.success[400],
-    colors.purple[400],
-    colors.warning[400],
+    colors.brass.light,
     colors.danger[400],
-    colors.primary[200],
-    colors.info[200],
-    colors.success[200],
-    colors.purple[200],
+    colors.primary[300],
+    colors.warning[400],
+    colors.success[300],
+    colors.neutral[400],
   ],
 } as const
 
@@ -2300,6 +2279,8 @@ export const chartColors = {
 
 const designSystem = {
   colors,
+  tones,
+  gradients,
   typography,
   spacing,
   shadows,

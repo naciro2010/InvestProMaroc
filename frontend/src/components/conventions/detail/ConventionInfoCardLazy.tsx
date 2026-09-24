@@ -61,8 +61,6 @@ const ConventionInfoCardLazy = ({ conventionId, canEdit }: ConventionInfoCardLaz
           fontSize: typography.sizes.xs,
           color: colors.textSecondary,
           fontWeight: typography.weights.medium,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
           mb: 0.25,
         }}>
           {label}
@@ -153,8 +151,6 @@ const ConventionInfoCardLazy = ({ conventionId, canEdit }: ConventionInfoCardLaz
               fontSize: typography.sizes.xs,
               color: colors.textSecondary,
               fontWeight: typography.weights.medium,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
               mb: 0.5,
             }}>
               Libelle
@@ -176,8 +172,6 @@ const ConventionInfoCardLazy = ({ conventionId, canEdit }: ConventionInfoCardLaz
               fontSize: typography.sizes.xs,
               color: colors.textSecondary,
               fontWeight: typography.weights.medium,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
               mb: 0.5,
             }}>
               Objet

@@ -58,14 +58,14 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
               <Button
                 variant="text"
                 onClick={() => navigate('/login')}
-                sx={{ textTransform: 'none', color: 'inherit' }}
+                sx={{ color: 'inherit' }}
               >
                 Connexion
               </Button>
               <Button
                 variant="contained"
                 onClick={() => navigate('/login')}
-                sx={{ textTransform: 'none', boxShadow: 'none' }}
+                sx={{ boxShadow: 'none' }}
               >
                 {"D\u00e9mo Gratuite"}
               </Button>
@@ -101,7 +101,7 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
                 size="large"
                 onClick={() => navigate('/login')}
                 endIcon={<FaArrowRight />}
-                sx={{ textTransform: 'none', px: 4, py: 1.5, boxShadow: 'none' }}
+                sx={{ px: 4, py: 1.5, boxShadow: 'none' }}
               >
                 Essayer maintenant
               </Button>
@@ -109,7 +109,7 @@ const LandingHero = ({ stats }: LandingHeroProps) => {
                 variant="outlined"
                 size="large"
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                sx={{ textTransform: 'none', px: 4, py: 1.5 }}
+                sx={{ px: 4, py: 1.5 }}
               >
                 En savoir plus
               </Button>

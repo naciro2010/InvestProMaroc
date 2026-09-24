@@ -183,9 +183,9 @@ const DecomptesPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
-          breadcrumbs={[{ label: 'Decomptes' }]}
+          breadcrumbs={[{ label: 'Décomptes' }]}
           actions={
             <>
               <IconButton size="small" onClick={() => setViewMode('list')} aria-label="Vue liste" aria-pressed={viewMode === 'list'} sx={{ color: viewMode === 'list' ? colors.primary[600] : colors.textSecondary }}>
@@ -236,7 +236,7 @@ const DecomptesPage = () => {
           </Box>
         </ControlPanel>
 
-        <Box sx={{ px: { xs: 2, md: 3 }, py: 2 }}>
+        <Box sx={{ px: 0, py: 2 }}>
           {viewMode === 'list' ? (
             <DecompteTable
               decomptes={paginatedDecomptes}

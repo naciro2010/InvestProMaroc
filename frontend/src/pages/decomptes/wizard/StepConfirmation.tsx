@@ -1,5 +1,6 @@
 import { Box, Typography, Divider, Chip, Alert } from '@mui/material'
 import FileUploadZone from '../../../components/common/FileUploadZone'
+import { AlertBanner } from '@/components/core'
 import { colors } from '@/lib/designSystem'
 import { formatCurrency } from '@/lib/utils'
 import type { DecompteFormData, Marche } from './types'
@@ -14,16 +15,20 @@ interface StepConfirmationProps {
 
 const StepConfirmation = ({ formData, marches, onFormDataChange, error }: StepConfirmationProps) => (
   <Box sx={{ display: 'grid', gap: 3 }}>
+    <AlertBanner tone="i">
+      Le décompte est enregistré en brouillon, puis soumis à validation avant paiement.
+    </AlertBanner>
+
     <Box>
-      <Typography variant="h6" gutterBottom fontWeight={600}>Pieces jointes</Typography>
+      <Typography variant="h6" gutterBottom fontWeight={600}>Pièces jointes</Typography>
       <Divider sx={{ mb: 3 }} />
     </Box>
 
     <FileUploadZone files={formData.files} onFilesChange={(files) => onFormDataChange({ files })}
-      maxFiles={10} maxSizeMB={10} label="Documents du decompte" />
+      maxFiles={10} maxSizeMB={10} label="Documents du décompte" />
 
     <Box>
-      <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 3 }}>Recapitulatif</Typography>
+      <Typography variant="h6" gutterBottom fontWeight={600} sx={{ mt: 3 }}>Récapitulatif</Typography>
       <Divider sx={{ mb: 3 }} />
     </Box>
 

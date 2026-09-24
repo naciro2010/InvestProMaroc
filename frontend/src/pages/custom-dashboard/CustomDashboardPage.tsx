@@ -541,8 +541,7 @@ const CustomDashboardPage = () => {
   return (
     <AppLayout>
       <Box sx={{
-        minHeight: '100vh',
-        backgroundColor: colors.neutral[25],
+        minHeight: 'calc(100vh - var(--app-header-h, 0px) - 116px)',
         display: 'flex',
         flexDirection: 'column',
       }}>

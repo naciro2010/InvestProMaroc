@@ -24,7 +24,6 @@ const ColumnVisibilityPopover = ({ anchorEl, onClose, columns, onToggle }: Colum
     <Typography sx={{
       px: 1, py: 0.5, fontSize: typography.sizes.xs,
       fontWeight: typography.weights.semibold, color: colors.textSecondary,
-      textTransform: 'uppercase', letterSpacing: '0.04em',
     }}>
       Colonnes visibles
     </Typography>

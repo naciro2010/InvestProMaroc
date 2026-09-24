@@ -172,7 +172,7 @@ const AvenantDetailPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ bgcolor: colors.background, minHeight: '100vh' }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={breadcrumbs}
           actions={

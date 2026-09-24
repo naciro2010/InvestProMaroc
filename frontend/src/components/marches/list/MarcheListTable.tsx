@@ -168,7 +168,7 @@ export default function MarcheListTable({
   }
   const headerSx = { cursor: 'pointer', userSelect: 'none' as const, '&:hover': { bgcolor: colors.neutral[50] } }
 
-  const totalColSpan = 4 + (hasFavorites ? 1 : 0) +
+  const totalColSpan = 3 + (hasFavorites ? 1 : 0) +
     (isColumnVisible('numAo') ? 1 : 0) + (isColumnVisible('type') ? 1 : 0) +
     (isColumnVisible('fournisseur') ? 1 : 0) + (isColumnVisible('convention') ? 1 : 0) +
     (isColumnVisible('montant') ? 1 : 0) + (isColumnVisible('lignes') ? 1 : 0) +
@@ -182,13 +182,10 @@ export default function MarcheListTable({
             <TableRow sx={listStyles.headerRow}>
               {hasFavorites && <TableCell sx={{ width: 36, px: 0.5 }} />}
               <TableCell onClick={() => handleSort('numeroMarche')} sx={headerSx}>
-                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>N Marche<SortIcon col="numeroMarche" /></Box>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>Marché<SortIcon col="numeroMarche" /></Box>
               </TableCell>
-              {isColumnVisible('numAo') && <TableCell>N AO</TableCell>}
+              {isColumnVisible('numAo') && <TableCell>N° AO</TableCell>}
               {isColumnVisible('type') && <TableCell>Type</TableCell>}
-              <TableCell onClick={() => handleSort('objet')} sx={{ ...headerSx, minWidth: 200 }}>
-                <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>Objet<SortIcon col="objet" /></Box>
-              </TableCell>
               {isColumnVisible('fournisseur') && (
                 <TableCell onClick={() => handleSort('fournisseurNom')} sx={headerSx}>
                   <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>Fournisseur<SortIcon col="fournisseurNom" /></Box>
@@ -362,17 +359,20 @@ const MarcheTableRow = ({
           onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(marche.id) }}
           aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
           aria-pressed={isFavorite}
-          sx={{ p: 0.25, color: isFavorite ? colors.warning[500] : colors.neutral[300], '&:hover': { color: colors.warning[500] } }}
+          sx={{ p: 0.25, color: isFavorite ? colors.brass.main : colors.neutral[300], '&:hover': { color: colors.brass.main } }}
         >
           <Star size={14} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
         </IconButton>
       </TableCell>
     )}
-    <TableCell
-      onClick={() => onRowClick(marche.id)}
-      sx={{ cursor: 'pointer', fontWeight: typography.weights.medium, color: colors.primary[700] }}
-    >
-      {marche.numeroMarche}
+    <TableCell onClick={() => onRowClick(marche.id)} sx={{ cursor: 'pointer', minWidth: 260 }}>
+      <Box sx={{ fontWeight: typography.weights.semibold, color: colors.textPrimary, whiteSpace: 'nowrap' }}>{marche.numeroMarche}</Box>
+      <Box sx={{ display: 'flex', gap: 0.5, color: colors.textSecondary, fontSize: 13, minWidth: 0 }}>
+        <RichTextDisplay html={marche.objet} variant="inline" sx={{ maxWidth: 300, color: colors.textSecondary, fontSize: 13 }} />
+        {marche.fournisseurNom && !isColumnVisible('fournisseur') && (
+          <Box component="span" sx={{ whiteSpace: 'nowrap' }}>· {marche.fournisseurNom}</Box>
+        )}
+      </Box>
     </TableCell>
     {isColumnVisible('numAo') && (
       <TableCell onClick={() => onRowClick(marche.id)} sx={{ cursor: 'pointer', color: colors.textSecondary }}>
@@ -384,9 +384,6 @@ const MarcheTableRow = ({
         <StatusBadge status={marche.typeMarche || 'MARCHE'} size="small" />
       </TableCell>
     )}
-    <TableCell onClick={() => onRowClick(marche.id)} sx={{ cursor: 'pointer', maxWidth: 280 }}>
-      <RichTextDisplay html={marche.objet} variant="inline" sx={{ maxWidth: 280 }} />
-    </TableCell>
     {isColumnVisible('fournisseur') && (
       <TableCell onClick={() => onRowClick(marche.id)} sx={{ cursor: 'pointer' }}>
         {marche.fournisseurNom}
@@ -420,7 +417,7 @@ const MarcheTableRow = ({
     )}
     {isColumnVisible('montant') && (
       <TableCell onClick={() => onRowClick(marche.id)} align="right"
-        sx={{ cursor: 'pointer', fontWeight: typography.weights.semibold, color: colors.primary[700] }}>
+        sx={{ cursor: 'pointer', fontWeight: typography.weights.semibold, whiteSpace: 'nowrap' }}>
         {formatCurrency(marche.montantTtc)}
       </TableCell>
     )}
@@ -429,7 +426,7 @@ const MarcheTableRow = ({
         <Box component="span" sx={{
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           minWidth: 24, height: 24, borderRadius: '6px',
-          bgcolor: colors.primary[100], color: colors.primary[700],
+          bgcolor: colors.neutral[100], color: colors.textSecondary,
           fontWeight: typography.weights.semibold, fontSize: typography.sizes.xs, px: 1,
         }}>
           {marche.nbLignes}
@@ -438,7 +435,7 @@ const MarcheTableRow = ({
     )}
     {isColumnVisible('statut') && (
       <TableCell onClick={() => onRowClick(marche.id)} align="center" sx={{ cursor: 'pointer' }}>
-        <StatusBadge status={marche.statut} />
+        <Box component="span" sx={{ whiteSpace: 'nowrap' }}><StatusBadge status={marche.statut} /></Box>
       </TableCell>
     )}
     <TableCell align="center">

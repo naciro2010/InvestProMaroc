@@ -99,7 +99,7 @@ const SubventionDetailDrawer = ({
         {/* Currency conversion */}
         {isDeviseEtrangere && (
           <Box sx={{ px: 2.5, py: 2, bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}` }}>
-            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 1.5 }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 1.5 }}>
               Conversion de devise
             </Typography>
             <FormulaStep step={1} title={`Montant en ${subvention.devise}`} formula={fmtCur(subvention.montantTotal, subvention.devise)} hint={`Devise d'origine: ${subvention.devise}`} />
@@ -110,7 +110,7 @@ const SubventionDetailDrawer = ({
 
         {/* Budget impact */}
         <Box sx={{ px: 2.5, py: 2, bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}` }}>
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 1.5 }}>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 1.5 }}>
             Impact budgetaire
           </Typography>
           <FormulaStep step={1} title="Budget convention" formula={fmtMAD(conventionBudget)} hint="Budget total de la convention" />
@@ -121,7 +121,7 @@ const SubventionDetailDrawer = ({
         {/* Full conditions */}
         {subvention.conditions && (
           <Box sx={{ px: 2.5, py: 2, bgcolor: colors.surface, borderBottom: `1px solid ${colors.border}` }}>
-            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', mb: 1 }}>
+            <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, mb: 1 }}>
               Conditions et termes
             </Typography>
             <Box sx={{ p: 1.5, bgcolor: colors.neutral[25], borderRadius: 1, border: `1px solid ${colors.border}` }}>
@@ -151,7 +151,7 @@ const StatBtn = ({ icon, label, value, subtitle, color, borderRight, borderTop }
   <Box sx={{ px: 2, py: 1.5, borderRight: borderRight ? `1px solid ${colors.border}` : 'none', borderTop: borderTop ? `1px solid ${colors.border}` : 'none' }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25, color }}>
       {icon}
-      <Typography sx={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: typography.weights.semibold, letterSpacing: '0.03em' }}>{label}</Typography>
+      <Typography sx={{ fontSize: '10px', fontWeight: typography.weights.semibold }}>{label}</Typography>
     </Box>
     <Typography sx={{ fontSize: typography.sizes.base, fontWeight: typography.weights.bold, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>{value}</Typography>
     {subtitle && <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>{subtitle}</Typography>}

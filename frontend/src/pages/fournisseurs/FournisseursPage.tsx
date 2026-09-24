@@ -169,7 +169,7 @@ const FournisseursPage = () => {
         </ControlPanel>
 
         {/* Table */}
-        <Box sx={{ px: { xs: 2, md: 3 }, py: 2 }}>
+        <Box sx={{ px: 0, py: 2 }}>
           <TableContainer sx={styles.tableContainer}>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={paginatedData.map((f) => f.id)} strategy={verticalListSortingStrategy}>

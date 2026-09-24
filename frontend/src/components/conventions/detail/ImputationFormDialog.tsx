@@ -45,8 +45,6 @@ const sectionTitleSx = {
   fontSize: typography.sizes.xs,
   fontWeight: typography.weights.semibold,
   color: colors.textSecondary,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.04em',
 }
 
 const ImputationFormDialog = ({ open, conventionId, onClose, onSuccess, editingImputation }: ImputationFormDialogProps) => {

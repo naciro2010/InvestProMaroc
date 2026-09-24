@@ -32,10 +32,10 @@ const ReportingPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         {/* Control Panel */}
         <ControlPanel
-          breadcrumbs={[{ label: 'Reporting' }]}
+          breadcrumbs={[{ label: 'Rapports' }]}
           actions={
             <Tooltip title="Actualiser les donnees">
               <IconButton
@@ -51,7 +51,7 @@ const ReportingPage = () => {
           hideBottomRow
         />
 
-        <Box sx={{ px: { xs: 2, md: 3 }, py: 3 }}>
+        <Box sx={{ px: 0, py: 3 }}>
           <Notebook
             tabs={[
               {

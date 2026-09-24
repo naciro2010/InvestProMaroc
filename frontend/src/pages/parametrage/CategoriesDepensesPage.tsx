@@ -134,7 +134,7 @@ const CategoriesDepensesPage = () => {
   if (loading) {
     return (
       <AppLayout>
-        <Box sx={{ minHeight: '100vh', bgcolor: colors.background, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <CircularProgress size={40} />
         </Box>
       </AppLayout>
@@ -146,11 +146,11 @@ const CategoriesDepensesPage = () => {
 
   return (
     <AppLayout>
-      <Box sx={{ minHeight: '100vh', bgcolor: colors.background }}>
+      <Box sx={{ minWidth: 0 }}>
         <ControlPanel
           breadcrumbs={[
             { label: 'Configuration', path: '/parametrage/conventions' },
-            { label: 'Categories de depenses' },
+            { label: 'Catégories de dépenses' },
           ]}
           searchValue={searchQuery}
           onSearchChange={(v) => { setSearchQuery(v); setPage(0) }}
@@ -176,7 +176,7 @@ const CategoriesDepensesPage = () => {
           onNextPage={() => setPage(p => p + 1)}
         />
 
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={{ pt: 0.5 }}>
           <Box sx={listStyles.container}>
             <TableContainer>
               <Table size="small" sx={listStyles.table}>

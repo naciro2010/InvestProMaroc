@@ -72,7 +72,7 @@ const Chatter = ({
           <History size={16} style={{ color: colors.textSecondary }} />
           <Typography sx={{
             fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold,
-            color: colors.textPrimary, textTransform: 'uppercase', letterSpacing: '0.04em',
+            color: colors.textPrimary,
           }}>
             Historique
           </Typography>

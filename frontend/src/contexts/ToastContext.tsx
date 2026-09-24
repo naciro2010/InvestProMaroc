@@ -1,6 +1,23 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react'
+import { colors, borders, typography } from '@/lib/designSystem'
+
+/** Durée par défaut : 2,6 s (confirmations) ; les erreurs restent plus longtemps. */
+const DEFAULT_DURATION: Record<ToastType, number> = {
+  success: 2600,
+  info: 2600,
+  warning: 4000,
+  error: 5000,
+}
+
+/** Pastille de ton à gauche du message (le toast reste bleu nuit). */
+const ACCENT: Record<ToastType, string> = {
+  success: '#8fc3a1',
+  info: colors.brass.light,
+  warning: '#e6c67c',
+  error: '#e59a8c',
+}
 
 type ToastType = 'success' | 'error' | 'warning' | 'info'
 
@@ -36,7 +53,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     setToasts(prev => prev.filter(toast => toast.id !== id))
   }, [])
 
-  const showToast = useCallback((message: string, type: ToastType = 'info', duration = 5000) => {
+  const showToast = useCallback((message: string, type: ToastType = 'info', duration = DEFAULT_DURATION[type]) => {
     const id = Math.random().toString(36).substring(2, 9)
     const toast: Toast = { id, message, type, duration }
 
@@ -71,28 +88,16 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   )
 
   const getToastIcon = (type: ToastType) => {
+    const props = { size: 16, strokeWidth: 1.75, 'aria-hidden': true }
     switch (type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5" />
+        return <CheckCircle {...props} />
       case 'error':
-        return <AlertCircle className="w-5 h-5" />
+        return <AlertCircle {...props} />
       case 'warning':
-        return <AlertTriangle className="w-5 h-5" />
+        return <AlertTriangle {...props} />
       case 'info':
-        return <Info className="w-5 h-5" />
-    }
-  }
-
-  const getToastStyles = (type: ToastType) => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-50 border-green-200 text-green-800'
-      case 'error':
-        return 'bg-red-50 border-red-200 text-red-800'
-      case 'warning':
-        return 'bg-yellow-50 border-yellow-200 text-yellow-800'
-      case 'info':
-        return 'bg-blue-50 border-blue-200 text-blue-800'
+        return <Info {...props} />
     }
   }
 
@@ -100,30 +105,50 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     <ToastContext.Provider value={contextValue}>
       {children}
 
-      {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md" role="region" aria-label="Notifications" aria-live="polite">
+      {/* Toasts : bleu nuit, centrés en bas, halo laiton */}
+      <div
+        role="region"
+        aria-label="Notifications"
+        aria-live="polite"
+        style={{
+          position: 'fixed', left: '50%', bottom: 24, transform: 'translateX(-50%)', zIndex: 1400,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          width: 'max-content', maxWidth: 'calc(100vw - 32px)', pointerEvents: 'none',
+        }}
+      >
         <AnimatePresence>
           {toasts.map(toast => (
             <motion.div
               key={toast.id}
-              role="alert"
-              initial={{ opacity: 0, x: 100, scale: 0.8 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 100, scale: 0.8 }}
-              className={`flex items-start space-x-3 p-4 rounded-lg border shadow-lg ${getToastStyles(toast.type)}`}
+              role={toast.type === 'error' ? 'alert' : 'status'}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              transition={{ duration: 0.18 }}
+              style={{
+                pointerEvents: 'auto',
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px 10px 16px', maxWidth: 560,
+                background: colors.ink.main, color: colors.onDark.primary,
+                borderRadius: borders.radius.lg,
+                boxShadow: `inset 0 0 0 1px ${colors.brass.halo}, 0 18px 40px -18px rgba(28,42,68,.6)`,
+                fontFamily: typography.fontFamily, fontSize: 13.5, fontWeight: 500, lineHeight: 1.4,
+              }}
             >
-              <div className="flex-shrink-0 mt-0.5">
+              <span style={{ color: ACCENT[toast.type], display: 'inline-flex', flexShrink: 0 }}>
                 {getToastIcon(toast.type)}
-              </div>
-              <p className="flex-1 text-sm font-medium">
-                {toast.message}
-              </p>
+              </span>
+              <span style={{ flex: 1 }}>{toast.message}</span>
               <button
+                type="button"
                 onClick={() => removeToast(toast.id)}
                 aria-label="Fermer la notification"
-                className="flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+                style={{
+                  display: 'inline-flex', flexShrink: 0, padding: 4, border: 0, borderRadius: borders.radius.sm,
+                  background: 'transparent', color: colors.onDark.secondary, cursor: 'pointer',
+                }}
               >
-                <X className="w-4 h-4" />
+                <X size={14} aria-hidden="true" />
               </button>
             </motion.div>
           ))}

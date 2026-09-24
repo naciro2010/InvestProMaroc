@@ -33,7 +33,7 @@ interface ConventionFinancialFlowCardProps {
 
 const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(n)
 const pct = (n: number) => `${n.toFixed(1)}%`
-const th = { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '0.03em', py: 0.75, px: 1.5 }
+const th = { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: colors.textSecondary, py: 0.75, px: 1.5 }
 const td = { fontSize: typography.sizes.xs, py: 0.5, px: 1.5 }
 const tnum = { fontVariantNumeric: 'tabular-nums' as const }
 const clickRow = { cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] } }
@@ -41,7 +41,7 @@ const clickRow = { cursor: 'pointer', '&:hover': { bgcolor: colors.primary[25] }
 const SectionHdr = ({ icon, label, total, color, bg }: { icon: React.ReactNode; label: string; total: string; color: string; bg: string }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1, bgcolor: bg }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>{icon}
-      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color, textTransform: 'uppercase' }}>{label}</Typography>
+      <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color }}>{label}</Typography>
     </Box>
     <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color, ...tnum }}>{total}</Typography>
   </Box>
@@ -187,7 +187,7 @@ const ConventionFinancialFlowCard = ({
               )
             })}
             {subventions.length > 0 && <TableRow><TableCell colSpan={resCols} sx={{ py: 0.25, bgcolor: colors.neutral[25] }}>
-              <Typography sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary, textTransform: 'uppercase' }}>Subventions & financements externes</Typography>
+              <Typography sx={{ fontSize: '10px', fontWeight: typography.weights.semibold, color: colors.textSecondary }}>Subventions & financements externes</Typography>
             </TableCell></TableRow>}
             {subventions.map(s => {
               const mad = s.montantTotal * (s.tauxChange || 1)
@@ -306,7 +306,7 @@ const ConventionFinancialFlowCard = ({
       {/* ═══ SECTION 4: SYNTHÈSE FINANCIÈRE ═══ */}
       <Box sx={{ borderTop: `2px solid ${colors.border}`, bgcolor: colors.neutral[25], px: 2, py: 1.5 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em' }}>Synthese financiere</Typography>
+          <Typography sx={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: colors.textSecondary }}>Synthese financiere</Typography>
           <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: disponible >= 0 ? colors.success[700] : colors.danger[700], ...tnum }}>
             Disponible: {fmt(disponible)}
           </Typography>
@@ -350,7 +350,7 @@ const ConventionFinancialFlowCard = ({
 const KPI = ({ label, value, color, hint }: { label: string; value: string; color: string; hint?: string }) => (
   <Tooltip title={hint || ''} placement="top" arrow>
     <Box sx={{ minWidth: 80 }}>
-      <Typography sx={{ fontSize: '10px', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</Typography>
+      <Typography sx={{ fontSize: '10px', color: colors.textSecondary }}>{label}</Typography>
       <Typography sx={{ fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color, ...tnum }}>{value}</Typography>
     </Box>
   </Tooltip>

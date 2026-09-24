@@ -8,7 +8,7 @@ interface Props {
   funnel: WorkflowFunnelDTO
 }
 
-const STATUS_ORDER = ['BROUILLON', 'SOUMIS', 'VALIDEE', 'EN_EXECUTION', 'EN_COURS', 'ACHEVE', 'TERMINE', 'REJETE', 'ANNULE']
+const STATUS_ORDER = ['BROUILLON', 'SOUMIS', 'VALIDE', 'VALIDEE', 'EN_EXECUTION', 'EN_COURS', 'ACHEVE', 'TERMINE', 'REJETE', 'ANNULE']
 
 const STATUS_COLORS: Record<string, string> = {
   BROUILLON: colors.neutral[300],

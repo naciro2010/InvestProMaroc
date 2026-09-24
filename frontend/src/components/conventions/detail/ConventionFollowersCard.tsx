@@ -87,7 +87,7 @@ const ConventionFollowersCard = ({ conventionId }: ConventionFollowersCardProps)
           startIcon={toggling ? <CircularProgress size={12} color="inherit" /> :
             (isFollowing ? <BellOff size={14} /> : <Bell size={14} />)}
           sx={{
-            height: 28, fontSize: '11px', textTransform: 'none', borderRadius: '6px',
+            height: 28, fontSize: '11px', borderRadius: '6px',
             ...(isFollowing
               ? { borderColor: colors.border, color: colors.textSecondary }
               : { bgcolor: colors.primary[600], '&:hover': { bgcolor: colors.primary[700] } }),

@@ -77,8 +77,6 @@ const DecomptePaiementsSubRow = ({ open, paiements, colSpan }: DecomptePaiements
                         fontSize: typography.sizes.xs,
                         fontWeight: typography.weights.semibold,
                         color: colors.textSecondary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         borderBottom: `1px solid ${colors.border}`,
                         py: 0.75,
                       }}
@@ -90,8 +88,6 @@ const DecomptePaiementsSubRow = ({ open, paiements, colSpan }: DecomptePaiements
                         fontSize: typography.sizes.xs,
                         fontWeight: typography.weights.semibold,
                         color: colors.textSecondary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         borderBottom: `1px solid ${colors.border}`,
                         py: 0.75,
                       }}
@@ -103,8 +99,6 @@ const DecomptePaiementsSubRow = ({ open, paiements, colSpan }: DecomptePaiements
                         fontSize: typography.sizes.xs,
                         fontWeight: typography.weights.semibold,
                         color: colors.textSecondary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         borderBottom: `1px solid ${colors.border}`,
                         py: 0.75,
                       }}
@@ -117,8 +111,6 @@ const DecomptePaiementsSubRow = ({ open, paiements, colSpan }: DecomptePaiements
                         fontSize: typography.sizes.xs,
                         fontWeight: typography.weights.semibold,
                         color: colors.textSecondary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         borderBottom: `1px solid ${colors.border}`,
                         py: 0.75,
                       }}
@@ -130,8 +122,6 @@ const DecomptePaiementsSubRow = ({ open, paiements, colSpan }: DecomptePaiements
                         fontSize: typography.sizes.xs,
                         fontWeight: typography.weights.semibold,
                         color: colors.textSecondary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         borderBottom: `1px solid ${colors.border}`,
                         py: 0.75,
                       }}
@@ -143,8 +133,6 @@ const DecomptePaiementsSubRow = ({ open, paiements, colSpan }: DecomptePaiements
                         fontSize: typography.sizes.xs,
                         fontWeight: typography.weights.semibold,
                         color: colors.textSecondary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
                         borderBottom: `1px solid ${colors.border}`,
                         py: 0.75,
                       }}

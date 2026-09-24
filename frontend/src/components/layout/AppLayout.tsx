@@ -1,133 +1,37 @@
 import { ReactNode } from 'react'
-import { Menu, ChevronRight } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
 import { useLayout } from '@/contexts/LayoutContext'
-import { colors, borders, transitions } from '@/lib/designSystem'
-import Sidebar, { SIDEBAR_WIDTH } from './Sidebar'
-
-const ROUTE_LABELS: Record<string, string> = {
-  '/dashboard': 'Tableau de bord',
-  '/conventions': 'Conventions',
-  '/marches': 'Marchés',
-  '/decomptes': 'Décomptes',
-  '/paiements': 'Paiements',
-  '/ordres-paiement': 'Ordres de paiement',
-  '/projets': 'Projets',
-  '/budgets': 'Budgets',
-  '/fournisseurs': 'Fournisseurs',
-  '/commissions': 'Commissions',
-  '/users': 'Utilisateurs',
-  '/profile': 'Profil',
-  '/messagerie': 'Messagerie',
-  '/generateur': 'Générateur',
-}
+import AppHeader from './AppHeader'
+import Sidebar from './Sidebar'
 
 interface AppLayoutProps {
   children: ReactNode
 }
 
 /**
- * AppLayout - Clean ERP-inspired application shell.
- * No header bar - content goes edge-to-edge, ControlPanel serves as page header.
- * Mobile: sticky top bar with hamburger button to open sidebar.
+ * AppLayout - Ossature « Registre » : en-tête bleu nuit collé en haut,
+ * menu latéral unique (tiroir sous 900px) et zone de contenu centrée
+ * (max 1320px, padding 28px 40px 88px ; 20px 16px 72px sur mobile).
  */
 const AppLayout = ({ children }: AppLayoutProps) => {
-  const { sidebarOpen, setSidebarOpen, toggleSidebar, isMobile, isTablet } = useLayout()
-  const location = useLocation()
-  const isCompact = isMobile || isTablet
-
-  const getPageTitle = () => {
-    const path = location.pathname
-    const baseRoute = '/' + path.split('/').filter(Boolean)[0]
-    return ROUTE_LABELS[path] || ROUTE_LABELS[baseRoute] || ''
-  }
+  const { sidebarOpen, setSidebarOpen, isMobile, isTablet } = useLayout()
+  const isDrawer = isMobile || isTablet
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: colors.background }}>
+    <div className="app-canvas">
       {/* Skip-to-content : premier élément focusable pour la navigation clavier */}
       <a href="#main-content" className="skip-link">
         Aller au contenu
       </a>
 
-      {/* Mobile/tablet backdrop */}
-      {isCompact && sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          onTouchEnd={() => setSidebarOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            zIndex: 30,
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        />
-      )}
+      <AppHeader />
 
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} isMobile={isCompact} onClose={() => setSidebarOpen(false)} />
+      <div className="app-body">
+        <Sidebar isOpen={isDrawer && sidebarOpen} isDrawer={isDrawer} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main content */}
-      <div style={{
-        flex: 1,
-        width: '100%',
-        marginLeft: isCompact ? 0 : SIDEBAR_WIDTH,
-        transition: `margin-left ${transitions.normal}`,
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
-        {/* Mobile top bar with hamburger - always visible on compact */}
-        {isCompact && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '8px 12px',
-            backgroundColor: colors.surface,
-            borderBottom: `1px solid ${colors.border}`,
-            position: 'sticky',
-            top: 0,
-            zIndex: 20,
-          }}>
-            <button
-              onClick={toggleSidebar}
-              aria-label={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-              style={{
-                width: 40,
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'transparent',
-                border: `1px solid ${colors.border}`,
-                borderRadius: borders.radius.base,
-                cursor: 'pointer',
-                WebkitTapHighlightColor: 'transparent',
-                touchAction: 'manipulation',
-              }}
-            >
-              <Menu className="w-5 h-5" style={{ color: colors.textPrimary }} />
-            </button>
-            <span style={{
-              marginLeft: 12,
-              fontWeight: 600,
-              fontSize: '0.9375rem',
-              color: colors.textPrimary,
-            }}>
-              InvestPro
-            </span>
-            {getPageTitle() && (
-              <span style={{ display: 'flex', alignItems: 'center', marginLeft: 8, color: colors.textSecondary }}>
-                <ChevronRight size={14} />
-                <span style={{ marginLeft: 4, fontSize: '0.8125rem', fontWeight: 500 }}>
-                  {getPageTitle()}
-                </span>
-              </span>
-            )}
+        <main id="main-content" tabIndex={-1} className="app-main">
+          <div className="app-main-inner">
+            {children}
           </div>
-        )}
-        <main id="main-content" tabIndex={-1} style={{ flex: 1, outline: 'none' }}>
-          {children}
         </main>
       </div>
     </div>

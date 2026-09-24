@@ -1,41 +1,27 @@
-import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  IconButton,
-  Typography,
-  Chip,
-  Collapse,
-  Checkbox,
-} from '@mui/material'
-import {
-  MoreVert,
-  KeyboardArrowDown,
-  KeyboardArrowRight,
-  FolderOpen,
-  Description,
-  Star,
-  StarBorder,
-} from '@mui/icons-material'
+import { Box, TableCell, TableRow, IconButton, Checkbox } from '@mui/material'
+import { MoreVert, KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material'
 import { StatusBadge } from '@/components/core'
 import RichTextDisplay from '@/components/ui/RichTextDisplay'
 import { colors, typography, componentStyles } from '@/lib/designSystem'
+import { formatMillions, formatPercent, formatRate } from '@/lib/utils'
 import type { Convention, ConventionWithChildren, ColumnConfig } from './ConventionListTable'
 
 // ==================== HELPERS ====================
 
-const formatCurrency = (amount: number): string => {
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`
-  if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`
-  return amount.toLocaleString('fr-FR')
+const TYPE_LABELS: Record<string, string> = {
+  CADRE: 'Cadre',
+  SPECIFIQUE: 'Spécifique',
+  NON_CADRE: 'Non cadre',
+  AVENANT: 'Avenant',
 }
 
-const formatDate = (date?: string): string => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+const monthYear = (date?: string): string => {
+  if (!date) return '…'
+  const d = new Date(date)
+  return Number.isNaN(d.getTime()) ? '…' : `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
 }
+
+const nowrap = { whiteSpace: 'nowrap' as const }
 
 // ==================== PROPS ====================
 
@@ -46,196 +32,176 @@ interface ConventionTableRowProps {
   onRowClick: (id: number) => void
   onMenuOpen: (e: React.MouseEvent<HTMLElement>, conv: Convention) => void
   columns: ColumnConfig[]
-  isFavorite?: boolean
+  /** Taux d'engagement par convention (tableau de bord exécutif) */
+  engagement?: Record<number, number>
+  favoriteIds?: Set<number>
   onToggleFavorite?: (id: number) => void
   selectable: boolean
-  selected: boolean
+  selectedIds: Set<number>
   onSelect: (id: number) => void
+}
+
+interface RowProps extends Omit<ConventionTableRowProps, 'conv' | 'expanded' | 'onToggle' | 'favoriteIds' | 'selectedIds'> {
+  conv: Convention
+  isChild: boolean
+  childCount?: number
+  expanded?: boolean
+  onToggle?: () => void
+  isFavorite: boolean
+  selected: boolean
 }
 
 const listStyles = componentStyles.listView
 
-// ==================== COMPONENT ====================
+// ==================== LIGNE ====================
 
-const ConventionTableRow = ({
-  conv, expanded, onToggle, onRowClick, onMenuOpen, columns,
-  isFavorite = false, onToggleFavorite, selectable, selected, onSelect,
-}: ConventionTableRowProps) => {
-  const hasSous = conv.sousConventions && conv.sousConventions.length > 0
+const Row = ({
+  conv, isChild, childCount = 0, expanded, onToggle, onRowClick, onMenuOpen, columns, engagement,
+  isFavorite, onToggleFavorite, selectable, selected, onSelect,
+}: RowProps) => {
   const isVisible = (key: string) => columns.find(c => c.key === key)?.visible !== false
+  const taux = engagement?.[conv.id]
 
   return (
-    <>
-      <TableRow
-        hover
-        onClick={() => onRowClick(conv.id)}
-        sx={{
-          ...listStyles.dataRow,
-          ...(selected ? listStyles.dataRowSelected : {}),
-          borderLeft: conv.type === 'CADRE' ? `3px solid ${colors.primary[600]}` : 'none',
-        }}
-      >
-        {selectable && (
-          <TableCell padding="checkbox" sx={{ width: 42 }}>
-            <Checkbox
-              size="small"
-              checked={selected}
-              onClick={(e) => e.stopPropagation()}
-              onChange={() => onSelect(conv.id)}
-              sx={{ p: 0.5 }}
-            />
-          </TableCell>
-        )}
-
-        {onToggleFavorite && (
-          <TableCell sx={{ width: 36, px: 0.5 }}>
-            <IconButton
-              size="small"
-              onClick={(e) => { e.stopPropagation(); onToggleFavorite(conv.id) }}
-              aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-              aria-pressed={isFavorite}
-              sx={{ p: 0.25, color: isFavorite ? colors.warning[500] : colors.neutral[300], '&:hover': { color: colors.warning[500] } }}
-            >
-              {isFavorite ? <Star sx={{ fontSize: 18 }} /> : <StarBorder sx={{ fontSize: 18 }} />}
-            </IconButton>
-          </TableCell>
-        )}
-
-        <TableCell sx={{ pl: 1, width: 40 }}>
-          {hasSous && (
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onToggle() }}
-              aria-label={expanded ? 'Réduire les sous-conventions' : 'Afficher les sous-conventions'}
-              aria-expanded={expanded}>
-              {expanded ? <KeyboardArrowDown fontSize="small" /> : <KeyboardArrowRight fontSize="small" />}
-            </IconButton>
-          )}
+    <TableRow
+      hover
+      tabIndex={0}
+      onClick={() => onRowClick(conv.id)}
+      onKeyDown={(e) => { if (e.key === 'Enter') onRowClick(conv.id) }}
+      sx={{ ...listStyles.dataRow, ...(selected ? listStyles.dataRowSelected : {}) }}
+    >
+      {selectable && (
+        <TableCell padding="checkbox" sx={{ width: 42 }}>
+          <Checkbox
+            size="small"
+            checked={selected}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => onSelect(conv.id)}
+            inputProps={{ 'aria-label': `Sélectionner ${conv.code}` }}
+            sx={{ p: 0.5 }}
+          />
         </TableCell>
+      )}
 
-        <TableCell>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <FolderOpen sx={{ fontSize: 18, color: conv.type === 'CADRE' ? colors.primary[600] : colors.neutral[400] }} />
-            <Box>
-              <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.base, color: colors.textPrimary }}>
-                {conv.code}
-              </Typography>
-              <RichTextDisplay html={conv.libelle} variant="inline" sx={{ maxWidth: 300, display: 'block', color: colors.textSecondary }} />
-            </Box>
-            {hasSous && (
-              <Chip
-                label={`${conv.sousConventions.length}`}
-                size="small"
-                sx={{ bgcolor: colors.neutral[100], fontSize: typography.sizes['2xs'], fontWeight: typography.weights.bold, height: 20, minWidth: 20 }}
-              />
-            )}
+      {onToggleFavorite && (
+        <TableCell sx={{ width: 40, pl: 2, pr: 0 }}>
+          <Box
+            component="button"
+            type="button"
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); onToggleFavorite(conv.id) }}
+            aria-label={isFavorite ? `Retirer ${conv.code} des favoris` : `Ajouter ${conv.code} aux favoris`}
+            aria-pressed={isFavorite}
+            sx={{
+              border: 0, background: 'transparent', cursor: 'pointer', p: 0.25, fontSize: 15, lineHeight: 1,
+              color: isFavorite ? colors.brass.main : colors.neutral[300],
+              '&:hover': { color: colors.brass.main },
+            }}
+          >
+            {isFavorite ? '★' : '☆'}
           </Box>
         </TableCell>
-
-        {isVisible('type') && (
-          <TableCell>
-            <Chip
-              label={conv.type || '-'}
-              size="small"
-              sx={{
-                bgcolor: conv.type === 'CADRE' ? colors.primary[50] : colors.neutral[50],
-                color: conv.type === 'CADRE' ? colors.primary[700] : colors.neutral[600],
-                fontWeight: typography.weights.medium,
-                fontSize: typography.sizes.xs,
-                height: 22,
-              }}
-            />
-          </TableCell>
-        )}
-        {isVisible('statut') && <TableCell><StatusBadge status={conv.statut} /></TableCell>}
-        {isVisible('budget') && (
-          <TableCell align="right">
-            <Typography sx={{ fontWeight: typography.weights.semibold, fontSize: typography.sizes.base, fontVariantNumeric: 'tabular-nums' }}>
-              {formatCurrency(conv.budget)} MAD
-            </Typography>
-          </TableCell>
-        )}
-        {isVisible('commission') && (
-          <TableCell align="center">
-            <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>{conv.tauxCommission}%</Typography>
-          </TableCell>
-        )}
-        {isVisible('dateDebut') && (
-          <TableCell>
-            <Typography sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>{formatDate(conv.dateDebut)}</Typography>
-          </TableCell>
-        )}
-        {isVisible('createdBy') && (
-          <TableCell>
-            <Typography sx={{ color: colors.textSecondary, fontSize: typography.sizes.sm }}>{conv.createdByNom || '-'}</Typography>
-          </TableCell>
-        )}
-        <TableCell align="center" sx={{ width: 50 }}>
-          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onMenuOpen(e, conv) }} aria-label="Actions sur la convention">
-            <MoreVert fontSize="small" />
-          </IconButton>
-        </TableCell>
-      </TableRow>
-
-      {/* Sous-conventions */}
-      {hasSous && (
-        <TableRow>
-          <TableCell colSpan={20} sx={{ p: 0, border: 0 }}>
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
-              <Table size="small">
-                <TableBody>
-                  {conv.sousConventions.map((sc) => (
-                    <TableRow
-                      key={sc.id}
-                      hover
-                      onClick={() => onRowClick(sc.id)}
-                      sx={{ ...listStyles.dataRow, bgcolor: colors.neutral[25], '&:hover': { bgcolor: colors.primary[25] } }}
-                    >
-                      {selectable && <TableCell padding="checkbox" sx={{ width: 42 }} />}
-                      {onToggleFavorite && <TableCell sx={{ width: 36, px: 0.5 }} />}
-                      <TableCell sx={{ width: 40 }} />
-                      <TableCell sx={{ pl: 6 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Description sx={{ fontSize: 16, color: colors.neutral[400] }} />
-                          <Box>
-                            <Typography sx={{ fontWeight: typography.weights.medium, fontSize: typography.sizes.base }}>{sc.code}</Typography>
-                            <RichTextDisplay html={sc.libelle} variant="inline" sx={{ color: colors.textSecondary }} />
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      {isVisible('type') && (
-                        <TableCell>
-                          <Chip label="SPECIFIQUE" size="small" sx={{ bgcolor: colors.purple[50], color: colors.purple[700], fontSize: typography.sizes.xs, height: 22 }} />
-                        </TableCell>
-                      )}
-                      {isVisible('statut') && <TableCell><StatusBadge status={sc.statut} /></TableCell>}
-                      {isVisible('budget') && (
-                        <TableCell align="right">
-                          <Typography sx={{ fontSize: typography.sizes.base, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(sc.budget)} MAD</Typography>
-                        </TableCell>
-                      )}
-                      {isVisible('commission') && (
-                        <TableCell align="center">
-                          <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>{sc.tauxCommission}%</Typography>
-                        </TableCell>
-                      )}
-                      {isVisible('dateDebut') && (
-                        <TableCell>
-                          <Typography sx={{ fontSize: typography.sizes.sm, color: colors.textSecondary }}>{formatDate(sc.dateDebut)}</Typography>
-                        </TableCell>
-                      )}
-                      {isVisible('createdBy') && <TableCell />}
-                      <TableCell align="center" sx={{ width: 50 }}>
-                        <IconButton size="small" onClick={(e) => { e.stopPropagation(); onMenuOpen(e, sc) }} aria-label="Actions sur la sous-convention">
-                          <MoreVert fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Collapse>
-          </TableCell>
-        </TableRow>
       )}
+
+      <TableCell sx={{ minWidth: 240 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 0.5,
+            ...(isChild && { ml: 3, pl: 1.5, boxShadow: `inset 1px 0 0 ${colors.border}` }),
+          }}
+        >
+          {!isChild && (
+            <Box sx={{ width: 22, flexShrink: 0, mt: '-1px' }}>
+              {childCount > 0 && (
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); onToggle?.() }}
+                  aria-label={expanded ? 'Masquer les sous-conventions' : `Afficher les ${childCount} sous-conventions`}
+                  aria-expanded={expanded}
+                  sx={{ p: 0.25, color: colors.textSecondary }}
+                >
+                  {expanded ? <KeyboardArrowDown sx={{ fontSize: 18 }} /> : <KeyboardArrowRight sx={{ fontSize: 18 }} />}
+                </IconButton>
+              )}
+            </Box>
+          )}
+          <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ fontWeight: typography.weights.semibold, fontSize: 14, color: colors.textPrimary, ...nowrap }}>
+              {conv.code}
+            </Box>
+            <RichTextDisplay html={conv.libelle} variant="inline" sx={{ maxWidth: 270, display: 'block', color: colors.textSecondary, fontSize: 13 }} />
+          </Box>
+        </Box>
+      </TableCell>
+
+      {isVisible('type') && <TableCell sx={nowrap}>{TYPE_LABELS[conv.type ?? ''] ?? (conv.type || '—')}</TableCell>}
+      {isVisible('statut') && <TableCell sx={nowrap}><StatusBadge status={conv.statut} /></TableCell>}
+      {isVisible('budget') && (
+        <TableCell align="right" sx={{ ...nowrap, fontWeight: typography.weights.medium }}>{formatMillions(conv.budget)}</TableCell>
+      )}
+      {isVisible('commission') && (
+        <TableCell align="right" sx={{ ...nowrap, color: colors.textSecondary }}>{formatRate(conv.tauxCommission)}</TableCell>
+      )}
+      {isVisible('engage') && (
+        <TableCell align="right" sx={{ ...nowrap, fontWeight: typography.weights.medium }}>
+          {taux !== undefined ? formatPercent(taux) : '—'}
+        </TableCell>
+      )}
+      {isVisible('dateDebut') && (
+        <TableCell sx={{ ...nowrap, color: colors.textSecondary, fontSize: 13 }}>
+          {monthYear(conv.dateDebut)} → {monthYear(conv.dateFin)}
+        </TableCell>
+      )}
+      {isVisible('createdBy') && (
+        <TableCell sx={{ ...nowrap, color: colors.textSecondary, fontSize: 13 }}>{conv.createdByNom || '—'}</TableCell>
+      )}
+      <TableCell align="center" sx={{ width: 48, pr: 2 }}>
+        <IconButton
+          size="small"
+          onClick={(e) => { e.stopPropagation(); onMenuOpen(e, conv) }}
+          aria-label={`Actions sur ${conv.code}`}
+          sx={{ color: colors.textSecondary }}
+        >
+          <MoreVert fontSize="small" />
+        </IconButton>
+      </TableCell>
+    </TableRow>
+  )
+}
+
+// ==================== CONVENTION + SOUS-CONVENTIONS ====================
+
+/**
+ * Ligne de convention suivie de ses sous-conventions, en retrait avec un
+ * filet gauche, dans le même tableau (colonnes alignées).
+ */
+const ConventionTableRow = ({
+  conv, expanded, onToggle, favoriteIds, selectedIds, ...rest
+}: ConventionTableRowProps) => {
+  const children = conv.sousConventions ?? []
+  return (
+    <>
+      <Row
+        {...rest}
+        conv={conv}
+        isChild={false}
+        childCount={children.length}
+        expanded={expanded}
+        onToggle={onToggle}
+        isFavorite={favoriteIds?.has(conv.id) ?? false}
+        selected={selectedIds.has(conv.id)}
+      />
+      {expanded && children.map(sc => (
+        <Row
+          key={sc.id}
+          {...rest}
+          conv={{ ...sc, type: sc.type ?? 'SPECIFIQUE' }}
+          isChild
+          isFavorite={favoriteIds?.has(sc.id) ?? false}
+          selected={selectedIds.has(sc.id)}
+        />
+      ))}
     </>
   )
 }
